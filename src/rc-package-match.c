@@ -33,7 +33,7 @@
 #include "rc-xml.h"
 
 struct _RCPackageMatch {
-  RCChannel *channel;
+  char *channel_id;
 
   RCPackageDep *dep;
 
@@ -60,7 +60,7 @@ void
 rc_package_match_free (RCPackageMatch *match)
 {
   if (match != NULL) {
-    rc_channel_unref (match->channel);
+    g_free (match->channel_id);
     rc_package_dep_unref (match->dep);
     g_free (match->name_glob);
     if (match->pattern_spec)
@@ -76,15 +76,27 @@ rc_package_match_set_channel (RCPackageMatch *match,
 			      RCChannel *channel)
 {
   g_return_if_fail (match != NULL);
-  rc_channel_unref (match->channel);
-  match->channel = rc_channel_ref (channel);
+  g_free (match->channel_id);
+  if (channel)
+    rc_package_match_set_channel_id (match, rc_channel_get_id (channel));
+  else
+    rc_package_match_set_channel_id (match, rc_channel_get_id (channel));
 }
 
-RCChannel *
-rc_package_match_get_channel (RCPackageMatch *match)
+void
+rc_package_match_set_channel_id (RCPackageMatch *match,
+				 const char     *cid)
+{
+  g_return_if_fail (match != NULL);
+  g_free (match->channel_id);
+  match->channel_id = g_strdup (cid);
+}
+
+const char *
+rc_package_match_get_channel_id (RCPackageMatch *match)
 {
   g_return_val_if_fail (match != NULL, NULL);
-  return match->channel;
+  return match->channel_id;
 }
 	
 void
@@ -170,10 +182,9 @@ rc_package_match_equal (RCPackageMatch *a,
     return FALSE;
 
   /* Check the channel */
-  if ((a->channel == NULL) ^ (b->channel == NULL))
+  if ((a->channel_id == NULL) ^ (b->channel_id == NULL))
     return FALSE;
-  if (a->channel && b->channel
-      && rc_channel_get_id (a->channel) != rc_channel_get_id (b->channel))
+  if (a->channel_id && b->channel_id && strcmp (a->channel_id, b->channel_id))
     return FALSE;
 
   /* Check the importance */
@@ -207,8 +218,8 @@ rc_package_match_test (RCPackageMatch *match,
   g_return_val_if_fail (match != NULL, FALSE);
   g_return_val_if_fail (pkg != NULL, FALSE);
   
-  if (match->channel) {
-    if (pkg->channel == NULL || rc_channel_get_id (match->channel) != rc_channel_get_id (pkg->channel))
+  if (pkg->channel && match->channel_id) {
+    if (! rc_channel_equal_id (pkg->channel, match->channel_id))
       return FALSE;
   }
 
@@ -228,14 +239,18 @@ rc_package_match_test (RCPackageMatch *match,
   }
 
   if (match->dep) {
+    RCPackman *packman;
     RCPackageDep *pkg_dep;
     gboolean check;
+
+    packman = rc_packman_get_global ();
+    g_assert (packman != NULL);
+
     pkg_dep = rc_package_dep_new_from_spec (RC_PACKAGE_SPEC (pkg),
 					    RC_RELATION_EQUAL,
 					    pkg->channel,
 					    FALSE, FALSE);
-    check = rc_package_dep_verify_relation (rc_world_get_packman (world),
-					    match->dep, pkg_dep);
+    check = rc_package_dep_verify_relation (packman, match->dep, pkg_dep);
     rc_package_dep_unref (pkg_dep);
     return check;
   }
@@ -254,9 +269,8 @@ rc_package_match_to_xml_node (RCPackageMatch *match)
 
   node = xmlNewNode (NULL, "match");
 
-  if (match->channel) {
-    xmlNewTextChild (node, NULL, "channel",
-		     rc_channel_get_id (match->channel));
+  if (match->channel_id) {
+    xmlNewTextChild (node, NULL, "channel", match->channel_id);
   }
 
   if (match->dep) {
@@ -296,10 +310,9 @@ rc_package_match_from_xml_node (xmlNode *node,
 
     if (! g_strcasecmp (node->name, "channel")) {
 
-      gchar *id_str = xml_get_content (node);
-      RCChannel *channel = rc_world_get_channel_by_id (world, id_str);
-      rc_package_match_set_channel (match, channel);
-      g_free (id_str);
+      char *cid = xml_get_content (node);
+      rc_package_match_set_channel_id (match, cid);
+      g_free (cid);
 
     } else if (! g_strcasecmp (node->name, "dep")) {
 

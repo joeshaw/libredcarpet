@@ -216,7 +216,7 @@ distro_check_eval_list (GSList *checks)
 
 /* A distribution record */
 
-typedef struct {
+struct _RCDistro {
     char                *name;
     char                *version;
     RCArch               arch;
@@ -224,18 +224,16 @@ typedef struct {
     char                *target;
     RCDistroStatus       status;
     time_t               death_date;
-} Distro;
+};
 
-static Distro *system_distro = NULL;
-
-static Distro *
-distro_new (void)
+static RCDistro *
+rc_distro_new (void)
 {
-    return g_new0 (Distro, 1);
+    return g_new0 (RCDistro, 1);
 }
 
-static void
-distro_free (Distro *distro)
+void
+rc_distro_free (RCDistro *distro)
 {
     g_free (distro->name);
     g_free (distro->version);
@@ -268,14 +266,14 @@ typedef struct {
     GSList        *state;
 
     /* Our current potential distribution, and the checks for it */
-    Distro        *cur_distro;
+    RCDistro      *cur_distro;
     GSList        *cur_checks;
 
     /* Character data accumulator */
     GString       *text_buffer;
 
     /* Once we find a matching distro, it gets returned here */
-    Distro        *our_distro;
+    RCDistro      *our_distro;
 
     /* The compatability list for our system architecture */ 
     GSList        *compat_arch_list;
@@ -348,7 +346,7 @@ sax_start_element (void *data, const xmlChar *name, const xmlChar **attrs)
     if (!strcmp (name, "distro")) {
         if (parser_get_state (state) == PARSER_DISTROS) {
             parser_push_state (state, PARSER_DISTRO);
-            state->cur_distro = distro_new ();
+            state->cur_distro = rc_distro_new ();
         } else
             parser_push_state (state, PARSER_UNKNOWN);
         return;
@@ -564,7 +562,7 @@ sax_end_element (void *data, const xmlChar *name)
                 state->our_distro = state->cur_distro;
                 sax_parser_disable (state);
             } else
-                distro_free (state->cur_distro);
+                rc_distro_free (state->cur_distro);
         }
         else {
             if (rc_arch_get_compat_score (
@@ -574,7 +572,7 @@ sax_end_element (void *data, const xmlChar *name)
                 state->our_distro = state->cur_distro;
                 sax_parser_disable (state);
             } else
-                distro_free (state->cur_distro);
+                rc_distro_free (state->cur_distro);
         }
         g_slist_foreach (state->cur_checks, (GFunc) distro_check_free, NULL);
         g_slist_free (state->cur_checks);
@@ -622,7 +620,7 @@ sax_parser_disable (DistroParseState *state)
 
 /* Public methods */
 
-gboolean
+RCDistro *
 rc_distro_parse_xml (const char *xml_buf,
                      guint compressed_length)
 {
@@ -636,6 +634,7 @@ rc_distro_parse_xml (const char *xml_buf,
 
         if (distro_file) {
             RCBuffer *buffer;
+            RCDistro *distro;
 
             if (!g_file_test (distro_file, G_FILE_TEST_EXISTS)) {
                 rc_debug (RC_DEBUG_LEVEL_CRITICAL,
@@ -652,7 +651,9 @@ rc_distro_parse_xml (const char *xml_buf,
                 goto ERROR;
             }
 
-            if (!rc_distro_parse_xml (buffer->data, 0)) {
+            distro = rc_distro_parse_xml (buffer->data, 0);
+
+            if (!distro) {
                 rc_debug (RC_DEBUG_LEVEL_CRITICAL,
                           "Unable to parse RC_DISTRIBUTIONS_FILE %s",
                           distro_file);
@@ -662,7 +663,7 @@ rc_distro_parse_xml (const char *xml_buf,
 
             rc_buffer_unmap_file (buffer);
 
-            return TRUE;
+            return distro;
         } else {
             xml_buf = distros_xml;
             compressed_length = distros_xml_len;
@@ -698,70 +699,78 @@ rc_distro_parse_xml (const char *xml_buf,
     xmlFreeParserCtxt (ctxt);
 
     if (state.our_distro) {
-        if (system_distro)
-            distro_free (system_distro);
-        system_distro = state.our_distro;
-        if (byte_array)
+        if (byte_array) {
             g_byte_array_free (byte_array, TRUE);
-        if (system_distro->name && system_distro->version &&
-            system_distro->target)
-            return TRUE;
-        distro_free (system_distro);
-        system_distro = NULL;
+            byte_array = NULL;
+        }
+
+        if (state.our_distro->name &&
+            state.our_distro->version &&
+            state.our_distro->target)
+            return state.our_distro;
+        else
+            rc_distro_free (state.our_distro);
     }
 
   ERROR:
     if (byte_array)
         g_byte_array_free (byte_array, TRUE);
 
-    return FALSE;
+    return NULL;
 }
 
 const char *
-rc_distro_get_name (void)
+rc_distro_get_name (RCDistro *distro)
 {
-    g_assert (system_distro);
-    return (const char *)system_distro->name;
+    g_return_val_if_fail (distro != NULL, NULL);
+
+    return distro->name;
 }
 
 const char *
-rc_distro_get_version (void)
+rc_distro_get_version (RCDistro *distro)
 {
-    g_assert (system_distro);
-    return (const char *)system_distro->version;
+    g_return_val_if_fail (distro != NULL, NULL);
+
+    return distro->version;
 }
 
 RCArch
-rc_distro_get_arch (void)
+rc_distro_get_arch (RCDistro *distro)
 {
-    g_assert (system_distro);
-    return system_distro->arch;
+    g_return_val_if_fail (distro != NULL, RC_ARCH_UNKNOWN);
+
+    return distro->arch;
 }
 
 RCDistroPackageType
-rc_distro_get_package_type (void)
+rc_distro_get_package_type (RCDistro *distro)
 {
-    g_assert (system_distro);
-    return system_distro->type;
+    g_return_val_if_fail (distro != NULL, RC_DISTRO_PACKAGE_TYPE_UNKNOWN);
+
+    return distro->type;
 }
 
 const char *
-rc_distro_get_target (void)
+rc_distro_get_target (RCDistro *distro)
 {
-    g_assert (system_distro);
-    return (const char *)system_distro->target;
+    g_return_val_if_fail (distro != NULL, NULL);
+
+    return distro->target;
 }
 
 RCDistroStatus
-rc_distro_get_status (void)
+rc_distro_get_status (RCDistro *distro)
 {
-    g_assert (system_distro);
-    return system_distro->status;
+    g_return_val_if_fail (distro != NULL, RC_DISTRO_STATUS_UNSUPPORTED);
+
+    return distro->status;
 }
 
 time_t
-rc_distro_get_death_date (void)
+rc_distro_get_death_date (RCDistro *distro)
 {
-    g_assert (system_distro);
-    return system_distro->death_date;
+    g_return_val_if_fail (distro != NULL, -1);
+
+    return distro->death_date;
 }

@@ -53,6 +53,8 @@ libredcarpet_public_headers = 		\
 	rc-dep-or.h			\
         rc-distman.h                    \
 	rc-distro.h			\
+	rc-extract-channels.h		\
+	rc-extract-packages.h		\
 	rc-line-buf.h			\
         rc-md5.h                        \
 	rc-package.h			\
@@ -64,6 +66,7 @@ libredcarpet_public_headers = 		\
 	rc-package-update.h		\
 	rc-package-section.h		\
         rc-packman.h                    \
+	rc-pending.h			\
 	rc-queue-item.h			\
 	rc-resolver.h			\
 	rc-resolver-compare.h		\
@@ -71,12 +74,17 @@ libredcarpet_public_headers = 		\
 	rc-resolver-info.h		\
 	rc-resolver-queue.h		\
 	rc-rollback.h			\
+	rc-subscription.h		\
 	rc-util.h			\
 	rc-verification.h		\
 	rc-world.h			\
-	rc-world-dump.h			\
-	rc-world-import.h		\
-	rc-world-subscriptions.h	\
+	rc-world-local-dir.h		\
+	rc-world-multi.h		\
+	rc-world-service.h		\
+	rc-world-store.h		\
+	rc-world-synthetic.h		\
+	rc-world-system.h		\
+	rc-world-undump.h		\
 	rc-xml.h			\
         xml-util.h
 
@@ -84,13 +92,13 @@ libredcarpettmp_a_SOURCES =		\
 	distributions-xml.h		\
 	rc-arch.c			\
 	rc-channel.c			\
-	rc-channel-private.c		\
-	rc-channel-private.h		\
 	rc-debman-general.c		\
 	rc-debug.c			\
 	rc-dep-or.c			\
         rc-distman.c                    \
 	rc-distro.c			\
+	rc-extract-channels.c		\
+	rc-extract-packages.c		\
 	rc-line-buf.c			\
 	rc-line-buf-private.h		\
 	rc-marshal.c			\
@@ -107,6 +115,7 @@ libredcarpettmp_a_SOURCES =		\
 	rc-package-section.c		\
         rc-packman.c                    \
         rc-packman-private.h            \
+	rc-pending.c			\
 	rc-queue-item.c			\
 	rc-resolver.c			\
 	rc-resolver-compare.c		\
@@ -114,13 +123,18 @@ libredcarpettmp_a_SOURCES =		\
 	rc-resolver-info.c		\
 	rc-resolver-queue.c		\
 	rc-rollback.c			\
+	rc-subscription.c		\
 	rc-util.c			\
 	rc-verification.c		\
 	rc-verification-private.h	\
 	rc-world.c			\
-	rc-world-dump.c			\
-	rc-world-import.c		\
-	rc-world-subscriptions.c	\
+	rc-world-local-dir.c		\
+	rc-world-multi.c		\
+	rc-world-service.c		\
+	rc-world-store.c		\
+	rc-world-synthetic.c		\
+	rc-world-system.c		\
+	rc-world-undump.c		\
 	rc-xml.c			\
         xml-util.c                      \
 	$(libredcarpet_public_headers)	\
@@ -132,7 +146,6 @@ libredcarpettmp_a_SOURCES =		\
 EXTRA_DIST =				\
 	$(rpm_sources)			\
 	$(dpkg_sources)			\
-	rc-channel-private.h		\
 	rc-dpkg-helper.c 		\
 	make_stub.sh			\
 	distributions.xml		\
@@ -243,3 +256,4 @@ rc-marshal.c: rc-marshal.list
 	&& rm -f xgen-gmc xgen-gmc~
 
 CLEANFILES += $(MAYBECLEAN)
+

@@ -25,307 +25,183 @@
 
 #include <config.h>
 #include "rc-world.h"
-#include "rc-world-import.h"
 
+#include "rc-marshal.h"
 #include "rc-debug.h"
-#include "rc-channel-private.h"
 #include "rc-util.h"
 #include "rc-dep-or.h"
 #include "rc-xml.h"
+#include "rc-subscription.h"
 
 /* Gross hack */
 static RCWorld *das_global_world = NULL;
-
-struct _RCWorld {
-
-    GHashTable *packages_by_name;
-    GHashTable *provides_by_name;
-    GHashTable *requires_by_name;
-    GHashTable *children_by_name;
-    GHashTable *conflicts_by_name;
-
-    int freeze_count;
-
-    GSList *channels;
-    GSList *locks;
-
-    GHashTable *subscriptions;
-
-    RCPackman *packman;
-    int database_changed_id;
-
-    gchar *synthetic_package_db;
-
-    /* The sequence numbers gets incremented every
-       time the RCWorld is changed. */
-
-    gboolean changed_packages;
-    gboolean changed_channels;
-    gboolean changed_subscriptions;
-
-    guint seq_no_packages;
-    guint seq_no_channels;
-    guint seq_no_subscriptions;
-
-    /* Set if we know package db has changed. */
-    gboolean dirty;
-};
-
-typedef struct _RCPackageAndDep RCPackageAndDep;
-struct _RCPackageAndDep {
-    RCPackage *package;
-    RCPackageDep *dep;
-};
-
-static RCPackageAndDep *
-rc_package_and_dep_new_pair (RCPackage *package, RCPackageDep *dep)
-{
-    RCPackageAndDep *pad;
-
-    pad = g_new0 (RCPackageAndDep, 1);
-    pad->package = rc_package_ref (package);
-    pad->dep = rc_package_dep_ref (dep);
-
-    return pad;
-}
-
-void
-rc_package_and_dep_free (RCPackageAndDep *pad)
-{
-    if (pad) {
-        rc_package_dep_unref (pad->dep);
-        rc_package_unref (pad->package);
-        g_free (pad);
-    }
-}
+static RCWorld *das_refreshed_global_world = NULL;
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
-typedef struct _SListAnchor SListAnchor;
-struct _SListAnchor {
-    GQuark key;
-    GSList *slist;
+static GObjectClass *parent_class;
+
+enum {
+    CHANGED_PACKAGES,
+    CHANGED_CHANNELS,
+    CHANGED_SUBSCRIPTIONS,
+    CHANGED_LOCKS,
+    REFRESHED,
+    LAST_SIGNAL
 };
 
-static GHashTable *
-hashed_slist_new (void)
+static guint signals[LAST_SIGNAL] = { 0 };
+
+static int
+rc_world_foreach_lock_impl (RCWorld         *world,
+                            RCPackageMatchFn callback,
+                            gpointer         user_data)
 {
-    return g_hash_table_new (NULL, NULL);
-}
+    GList *iter;
+    int count = 0;
 
-static void
-hashed_slist_destroy (GHashTable *hash)
-{
-    g_hash_table_destroy (hash);
-}
-
-static void
-hashed_slist_add (GHashTable *hash,
-                  GQuark key,
-                  gpointer val)
-{
-    SListAnchor *anchor;
-
-    anchor = g_hash_table_lookup (hash, GINT_TO_POINTER (key));
-
-    if (anchor == NULL) {
-        anchor = g_new0 (SListAnchor, 1);
-        anchor->key = key;
-        g_hash_table_insert (hash, GINT_TO_POINTER (anchor->key), anchor);
+    for (iter = world->lock_store; iter != NULL; iter = iter->next) {
+        RCPackageMatch *lock = iter->data;
+        if (callback != NULL && ! callback (lock, user_data))
+            return -1;
+        ++count;
     }
 
-    anchor->slist = g_slist_prepend (anchor->slist, val);
-}
-
-static GSList *
-hashed_slist_get (GHashTable *hash,
-                  GQuark key)
-{
-    SListAnchor *anchor;
-
-    anchor = g_hash_table_lookup (hash, GINT_TO_POINTER (key));
-    return anchor ? anchor->slist : NULL;
-}
-
-struct ForeachInfo {
-    void (*fn) (gpointer, gpointer, gpointer);
-    gpointer user_data;
-};
-
-static void
-hashed_slist_foreach_cb (gpointer key, gpointer val, gpointer user_data)
-{
-    SListAnchor *anchor = val;
-    GSList *iter = anchor->slist;
-    struct ForeachInfo *info = user_data;
-
-    while (iter) {
-        info->fn (GINT_TO_POINTER (anchor->key), iter->data, info->user_data);
-        iter = iter->next;
-    }
+    return count;
 }
 
 static void
-hashed_slist_foreach (GHashTable *hash,
-                      void (*fn) (gpointer key, gpointer val, gpointer user_data),
-                      gpointer user_data)
+rc_world_add_lock_impl (RCWorld        *world,
+                        RCPackageMatch *lock)
 {
-    struct ForeachInfo info;
-
-    info.fn = fn;
-    info.user_data = user_data;
-
-    g_hash_table_foreach (hash,
-                          hashed_slist_foreach_cb,
-                          &info);
-}
-
-struct ForeachRemoveInfo {
-    gboolean (*func) (gpointer item, gpointer user_data);
-    gpointer user_data;
-};
-
-static gboolean
-foreach_remove_func (gpointer key, gpointer val, gpointer user_data)
-{
-    SListAnchor *anchor = val;
-    GSList *iter = anchor->slist;
-    struct ForeachRemoveInfo *info = user_data;
-
-    while (iter != NULL) {
-        GSList *next = iter->next;
-        if (info->func (iter->data, info->user_data)) {
-            anchor->slist = g_slist_delete_link (anchor->slist, iter);
-        }
-        iter = next;
-    }
-
-    if (anchor->slist == NULL) {
-        g_free (anchor);
-        return TRUE;
-    }
-    
-    return FALSE;
+    world->lock_store = g_list_prepend (world->lock_store, lock);
 }
 
 static void
-hashed_slist_foreach_remove (GHashTable *hash,
-                             gboolean (*func) (gpointer val, gpointer user_data),
-                             gpointer user_data)
+rc_world_remove_lock_impl (RCWorld        *world,
+                           RCPackageMatch *lock)
 {
-    struct ForeachRemoveInfo info;
-    
-    info.func = func;
-    info.user_data = user_data;
+    world->lock_store = g_list_prepend (world->lock_store, lock);
+}
 
-    g_hash_table_foreach_remove (hash,
-                                 foreach_remove_func,
-                                 &info);
+static void
+rc_world_clear_locks_impl (RCWorld *world)
+{
+    g_list_foreach (world->lock_store, 
+                    (GFunc) rc_package_match_free,
+                    NULL);
+    g_list_free (world->lock_store);
+    world->lock_store = NULL;
+}
+
+static void
+rc_world_finalize (GObject *obj)
+{
+    RCWorld *world = RC_WORLD (obj);
+
+    rc_world_clear_locks_impl (world);
+
+    if (parent_class->finalize)
+        parent_class->finalize (obj);
+}
+
+static void
+rc_world_class_init (RCWorldClass *klass)
+{
+    GObjectClass *obj_class = G_OBJECT_CLASS (klass);
+
+    parent_class = g_type_class_peek_parent (klass);
+
+    klass->foreach_lock_fn = rc_world_foreach_lock_impl;
+    klass->add_lock_fn     = rc_world_add_lock_impl;
+    klass->remove_lock_fn  = rc_world_remove_lock_impl;
+    klass->clear_lock_fn   = rc_world_clear_locks_impl;
+
+    obj_class->finalize = rc_world_finalize;
+
+    signals[CHANGED_PACKAGES] =
+        g_signal_new ("changed_packages",
+                      G_TYPE_FROM_CLASS (klass),
+                      G_SIGNAL_RUN_LAST,
+                      G_STRUCT_OFFSET (RCWorldClass, changed_packages),
+                      NULL, NULL,
+                      rc_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);
+
+    signals[CHANGED_CHANNELS] =
+        g_signal_new ("changed_channels",
+                      G_TYPE_FROM_CLASS (klass),
+                      G_SIGNAL_RUN_LAST,
+                      G_STRUCT_OFFSET (RCWorldClass, changed_channels),
+                      NULL, NULL,
+                      rc_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);
+
+    signals[CHANGED_SUBSCRIPTIONS] =
+        g_signal_new ("changed_subscriptions",
+                      G_TYPE_FROM_CLASS (klass),
+                      G_SIGNAL_RUN_LAST,
+                      G_STRUCT_OFFSET (RCWorldClass, changed_subscriptions),
+                      NULL, NULL,
+                      rc_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);
+
+    signals[CHANGED_LOCKS] =
+        g_signal_new ("changed_locks",
+                      G_TYPE_FROM_CLASS (klass),
+                      G_SIGNAL_RUN_LAST,
+                      G_STRUCT_OFFSET (RCWorldClass, changed_locks),
+                      NULL, NULL,
+                      rc_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);
+
+    signals[REFRESHED] =
+        g_signal_new ("refreshed",
+                      G_TYPE_FROM_CLASS (klass),
+                      G_SIGNAL_RUN_LAST,
+                      G_STRUCT_OFFSET (RCWorldClass, refreshed),
+                      NULL, NULL,
+                      rc_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);
+}
+
+static void
+rc_world_init (RCWorld *world)
+{
+    world->seq_no_packages      = 1;
+    world->seq_no_channels      = 1;
+    world->seq_no_subscriptions = 1;
+    world->seq_no_locks         = 1;
+
+    world->no_changed_signals = FALSE;
+}
+
+GType
+rc_world_get_type (void)
+{
+    static GType type = 0;
+
+    if (!type) {
+        static GTypeInfo type_info = {
+            sizeof (RCWorldClass),
+            NULL, NULL,
+            (GClassInitFunc) rc_world_class_init,
+            NULL, NULL,
+            sizeof (RCWorld),
+            0,
+            (GInstanceInitFunc) rc_world_init
+        };
+
+        type = g_type_register_static (G_TYPE_OBJECT,
+                                       "RCWorld",
+                                       &type_info,
+                                       0);
+    }
+
+    return type;
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
-
-/* Packmanish operations */
-
-static gboolean
-channel_match (const RCChannel *a, const RCChannel *b)
-{
-    if (a == RC_CHANNEL_ANY
-        || b == RC_CHANNEL_ANY)
-        return TRUE;
-    
-    if (a == RC_CHANNEL_SYSTEM)
-        return b == NULL;
-    if (b == RC_CHANNEL_SYSTEM)
-        return a == NULL;
-
-    if (a == RC_CHANNEL_NON_SYSTEM)
-        return b != NULL;
-    if (b == RC_CHANNEL_NON_SYSTEM)
-        return a != NULL;
-
-    return a == b;
-}
-
-static void
-rc_world_sync (RCWorld *world)
-{
-    if (world->packman == NULL)
-        return;
-
-    if (rc_packman_is_locked (world->packman)) {
-        rc_debug (RC_DEBUG_LEVEL_MESSAGE,
-                  "Skipping sync: database is locked");
-        return;
-    }
-
-    if (!world->dirty && rc_packman_is_database_changed (world->packman))
-        world->dirty = TRUE;
-
-    if (world->dirty) {
-        rc_debug (RC_DEBUG_LEVEL_MESSAGE,
-                  "Database changed; rescanning system packages");
-
-        if (rc_world_get_system_packages (world))
-            world->dirty = FALSE;
-    }
-}
-
-static void
-rc_world_conditional_sync (RCWorld *world, RCChannel *channel)
-{
-    if (rc_channel_equal (channel, RC_CHANNEL_SYSTEM))
-        rc_world_sync (world);
-}
-
-static void
-database_changed_cb (RCPackman *packman, gpointer user_data)
-{
-    RCWorld *world = user_data;
-    
-    world->dirty = TRUE;
-    
-    rc_world_sync (world);
-}
-
-RCPackman *
-rc_world_get_packman (RCWorld *world)
-{
-    g_return_val_if_fail (world != NULL, NULL);
-
-    return world->packman;
-} /* rc_world_get_packman */
-
-gboolean
-rc_world_get_system_packages (RCWorld *world)
-{
-    GSList *system_packages = NULL;
-
-    g_return_val_if_fail (world != NULL, FALSE);
-    g_return_val_if_fail (world->packman != NULL, FALSE);
-
-    system_packages = rc_packman_query_all (world->packman);
-    if (rc_packman_get_error (world->packman)) {
-        rc_debug (RC_DEBUG_LEVEL_MESSAGE,
-                  "System query failed: %s",
-                  rc_packman_get_reason (world->packman));
-        if (system_packages) {
-            rc_package_slist_unref (system_packages);
-            g_slist_free (system_packages);
-        }
-        return FALSE;
-    }
-
-    rc_world_remove_packages (world, RC_CHANNEL_SYSTEM);
-
-    rc_world_add_packages_from_slist (world, system_packages);
-    rc_package_slist_unref (system_packages);
-    g_slist_free (system_packages);
-
-    rc_world_load_synthetic_packages (world);
-
-    return TRUE;
-}
 
 guint
 rc_world_get_package_sequence_number (RCWorld *world)
@@ -333,12 +209,6 @@ rc_world_get_package_sequence_number (RCWorld *world)
     g_return_val_if_fail (world != NULL, 0);
 
     rc_world_sync (world);
-
-    if (world->changed_packages) {
-        ++world->seq_no_packages;
-        world->changed_packages = FALSE;
-    }
-
     return world->seq_no_packages;
 }
 
@@ -346,11 +216,6 @@ guint
 rc_world_get_channel_sequence_number (RCWorld *world)
 {
     g_return_val_if_fail (world != NULL, 0);
-
-    if (world->changed_channels) {
-        ++world->seq_no_channels;
-        world->changed_channels = FALSE;
-    }
 
     return world->seq_no_channels;
 }
@@ -360,12 +225,15 @@ rc_world_get_subscription_sequence_number (RCWorld *world)
 {
     g_return_val_if_fail (world != NULL, 0);
     
-    if (world->changed_subscriptions) {
-        ++world->seq_no_subscriptions;
-        world->changed_subscriptions = FALSE;
-    }
-
     return world->seq_no_subscriptions;
+}
+
+guint
+rc_world_get_lock_sequence_number (RCWorld *world)
+{
+    g_return_val_if_fail (world != NULL, 0);
+    
+    return world->seq_no_locks;
 }
 
 void
@@ -373,7 +241,9 @@ rc_world_touch_package_sequence_number (RCWorld *world)
 {
     g_return_if_fail (world != NULL);
 
-    world->changed_packages = TRUE;
+    ++world->seq_no_packages;
+    if (! world->no_changed_signals)
+        g_signal_emit (world, signals[CHANGED_PACKAGES], 0);
 }
 
 void
@@ -381,7 +251,9 @@ rc_world_touch_channel_sequence_number (RCWorld *world)
 {
     g_return_if_fail (world != NULL);
 
-    world->changed_channels = TRUE;
+    ++world->seq_no_channels;
+    if (! world->no_changed_signals)
+        g_signal_emit (world, signals[CHANGED_CHANNELS], 0);
 }
 
 void
@@ -389,7 +261,19 @@ rc_world_touch_subscription_sequence_number (RCWorld *world)
 {
     g_return_if_fail (world != NULL);
 
-    world->changed_subscriptions = TRUE;
+    ++world->seq_no_subscriptions;
+    if (! world->no_changed_signals)
+        g_signal_emit (world, signals[CHANGED_SUBSCRIPTIONS], 0);
+}
+
+void
+rc_world_touch_lock_sequence_number (RCWorld *world)
+{
+    g_return_if_fail (world != NULL);
+
+    ++world->seq_no_locks;
+    if (! world->no_changed_signals)
+        g_signal_emit (world, signals[CHANGED_LOCKS], 0);
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
@@ -403,7 +287,7 @@ rc_set_world (RCWorld *world)
         return;
     }
 
-    das_global_world = world;
+    das_global_world = g_object_ref (world);
 }
 
 /**
@@ -420,427 +304,316 @@ rc_set_world (RCWorld *world)
 RCWorld *
 rc_get_world (void)
 {
-    g_assert (das_global_world);
-/*
-    if (world == NULL) 
-        world = rc_world_new ();
-*/
-
+    g_assert (das_global_world != NULL);
     return das_global_world;
 }
 
-/**
- * rc_world_new:
- * 
- * Creates a new #RCWorld.
- * 
- * Return value: a new #RCWorld
- **/
-RCWorld *
-rc_world_new (RCPackman *packman)
-{
-    RCWorld *world = g_new0 (RCWorld, 1);
-
-    world->changed_packages      = FALSE;
-    world->changed_channels      = FALSE;
-    world->changed_subscriptions = FALSE;
-
-    world->subscriptions = g_hash_table_new_full (g_str_hash,
-                                                  g_str_equal,
-                                                  g_free,
-                                                  NULL);
-
-    world->seq_no_packages       = 1;
-    world->seq_no_channels       = 1;
-    world->seq_no_subscriptions  = 1;
-
-	world->packages_by_name = hashed_slist_new ();
-    world->provides_by_name = hashed_slist_new ();
-    world->requires_by_name = hashed_slist_new ();
-    world->children_by_name = hashed_slist_new ();
-    world->conflicts_by_name = hashed_slist_new ();
-
-    world->packman = packman;
-    g_object_ref (packman);
-
-    world->database_changed_id =
-        g_signal_connect (packman,
-                          "database_changed",
-                          G_CALLBACK (database_changed_cb),
-                          world);
-	
-	return world;
-}
-
-/**
- * rc_world_free:
- * @world: an #RCWorld
- * 
- * Destroys the #RCWorld, freeing all associated memory.
- * This function is a no-op if @world is %NULL.
- **/
 void
-rc_world_free (RCWorld *world)
+rc_sync_world (void)
 {
-	if (world) {
-        GSList *iter;
-
-        rc_world_remove_packages (world, RC_CHANNEL_ANY);
-
-        g_hash_table_destroy (world->subscriptions);
-
-        hashed_slist_destroy (world->packages_by_name);
-        hashed_slist_destroy (world->provides_by_name);
-        hashed_slist_destroy (world->requires_by_name);
-        hashed_slist_destroy (world->children_by_name);
-        hashed_slist_destroy (world->conflicts_by_name);
-
-        g_signal_handler_disconnect (world->packman,
-                                     world->database_changed_id);
-        g_object_unref (world->packman);
-
-        /* Free our channels */
-        for (iter = world->channels; iter != NULL; iter = iter->next) {
-            RCChannel *channel = iter->data;
-
-            /* Set the channel's world to NULL, so that there won't
-               be a dangling pointer if someone else is holding a reference
-               to this channel. */
-            channel->world = NULL;
-
-            rc_channel_unref (channel);
-        }
-        g_slist_free (world->channels);
-
-        /* Free our locks */
-        for (iter = world->locks; iter != NULL; iter = iter->next) {
-            RCPackageMatch *lock = iter->data;
-            rc_package_match_free (lock);
-        }
-        g_slist_free (world->locks);
-
-        g_free (world->synthetic_package_db);
-
-		g_free (world);
-
-	}
+    if (das_refreshed_global_world != NULL) {
+        g_object_unref (das_global_world);
+        das_global_world = das_refreshed_global_world;
+        das_refreshed_global_world = NULL;
+        
+    }
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
-RCChannel *
-rc_world_add_channel_with_priorities (RCWorld *world,
-                                      const char *channel_name,
-                                      const char *alias,
-                                      const char *channel_id,
-                                      gboolean is_silent,
-                                      RCChannelType type,
-                                      int subd_priority,
-                                      int unsubd_priority)
+gboolean
+rc_world_sync (RCWorld *world)
 {
-    static int bogus_id = 1;
-    RCChannel *channel;
-    gboolean is_transient;
-
-    g_return_val_if_fail (world != NULL, NULL);
-    g_return_val_if_fail (channel_name && *channel_name, NULL);
-    g_return_val_if_fail (alias, NULL);
-
-    is_transient = (type == RC_CHANNEL_TYPE_UNKNOWN);
-
-    if (! is_silent)
-        rc_world_touch_channel_sequence_number (world);
-
-    if (channel_id == NULL) {
-        static char *bogus_id_str = NULL;
-        g_free (bogus_id_str);
-        bogus_id_str = g_strdup_printf ("!@#$^&*()bogus: %d", bogus_id);
-        ++bogus_id;
-        channel_id = bogus_id_str;
-    }
-
-    channel = rc_channel_new ();
-
-    channel->world            = world;
-    channel->id               = g_strdup (channel_id);
-    channel->name             = g_strdup (channel_name);
-    channel->alias            = g_strdup (alias);
-    channel->type             = type;
-    channel->transient        = is_transient;
-    channel->silent           = is_silent;
-    channel->priority         = subd_priority;
-    channel->priority_unsubd  = unsubd_priority;
+    g_return_val_if_fail (world != NULL && RC_IS_WORLD (world), FALSE);
     
-    world->channels = g_slist_prepend (world->channels,
-                                       channel);
+    if (RC_WORLD_GET_CLASS (world)->sync_fn)
+        return RC_WORLD_GET_CLASS (world)->sync_fn (world, NULL);
 
-    rc_debug (RC_DEBUG_LEVEL_DEBUG,
-              "Adding %schannel '%s' (id='%s')",
-              is_silent ? "silent " : "",
-              channel_name, channel_id);
-
-    return channel;
-}
-
-RCChannel *
-rc_world_add_channel (RCWorld *world,
-                      const char *channel_name,
-                      const char *alias,
-                      const char *channel_id,
-                      RCChannelType type)
-{
-    return rc_world_add_channel_with_priorities (world,
-                                                 channel_name,
-                                                 alias,
-                                                 channel_id,
-                                                 FALSE,
-                                                 type,
-                                                 -1, -1);
-}
-
-static void
-add_package_cb (RCPackage *package, gpointer user_data)
-{
-    GSList **packages = user_data;
-
-    *packages = g_slist_prepend (*packages, rc_package_ref (package));
-}
-
-/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
-
-void
-rc_world_set_subscription (RCWorld   *world,
-                           RCChannel *channel,
-                           gboolean   is_subscribed)
-{
-    const char *id;
-
-    g_return_if_fail (world != NULL);
-    g_return_if_fail (channel != NULL);
-
-    if (! (rc_world_is_subscribed (world, channel) ^ is_subscribed))
-        return;
-
-    id = rc_channel_get_id (channel);
-
-    if (is_subscribed) {
-        g_hash_table_insert (world->subscriptions, g_strdup (id), (gpointer)1);
-    } else {
-        g_hash_table_remove (world->subscriptions, id);
-    }
-
-    rc_world_touch_subscription_sequence_number (world);
+    return TRUE;
 }
 
 gboolean
-rc_world_is_subscribed (RCWorld   *world,
-                        RCChannel *channel)
+rc_world_sync_conditional (RCWorld *world, RCChannel *channel)
 {
-    const char *id;
+    g_return_val_if_fail (world != NULL && RC_IS_WORLD (world), FALSE);
 
-    g_return_val_if_fail (world != NULL, FALSE);
-    g_return_val_if_fail (channel != NULL, FALSE);
+    if (RC_WORLD_GET_CLASS (world)->sync_fn)
+        return RC_WORLD_GET_CLASS (world)->sync_fn (world, channel);;
 
-    id = rc_channel_get_id (channel);
+    return TRUE;
+}
 
-    return g_hash_table_lookup (world->subscriptions, id) != NULL;
+RCPending *
+rc_world_refresh (RCWorld *world)
+{
+    RCWorldClass *klass;
+
+    g_return_val_if_fail (world != NULL && RC_IS_WORLD (world), NULL);
+
+    klass = RC_WORLD_GET_CLASS (world);
+
+    world->refresh_pending = TRUE;
+
+    if (klass->refresh_fn)
+        return klass->refresh_fn (world);
+    else {
+        rc_world_refresh_complete (world);
+        return NULL;
+    }
+}
+
+gboolean
+rc_world_has_refresh (RCWorld *world)
+{
+    g_return_val_if_fail (RC_IS_WORLD (world), FALSE);
+
+    return RC_WORLD_GET_CLASS (world)->refresh_fn != NULL;
+}
+
+gboolean
+rc_world_is_refreshing (RCWorld *world)
+{
+    g_return_val_if_fail (world != NULL && RC_IS_WORLD (world), FALSE);
+    return world->refresh_pending;
+}
+
+void
+rc_world_refresh_complete (RCWorld *world)
+{
+    g_return_if_fail (world != NULL && RC_IS_WORLD (world));
+    g_return_if_fail (world->refresh_pending);
+
+    world->refresh_pending = FALSE;
+    g_signal_emit (world, signals[REFRESHED], 0);
+
+#if 0
+    /* If the world that just finished refreshing is the global
+       world, store new_world.  new_world will become the global
+       world the next time that rc_sync_world() is called. */
+
+    if (das_global_world == world
+        && das_refreshed_global_world != new_world) {
+
+        if (new_world)
+            g_object_ref (new_world);
+
+        if (das_refreshed_global_world)
+            g_object_unref (das_refreshed_global_world);
+
+        das_refreshed_global_world = new_world;
+    }
+#endif
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
-void
-rc_world_migrate_channel (RCWorld *world,
-                          RCChannel *channel)
-{
-    RCPackageSList *packages = NULL;
-
-    g_return_if_fail (world != NULL);
-    g_return_if_fail (channel != NULL);
-    g_return_if_fail (channel->world != NULL);
-
-    rc_channel_foreach_package (channel, add_package_cb, &packages);
-    rc_world_remove_packages (channel->world, channel);
-    channel->world->channels = g_slist_remove (channel->world->channels,
-                                               channel);
-
-    channel->world = world;
-
-    world->channels = g_slist_prepend (world->channels, channel);
-
-    rc_world_add_packages_from_slist (world, packages);
-    rc_package_slist_unref (packages);
-    g_slist_free (packages);
-}
-
-void
-rc_world_remove_channel (RCWorld *world,
-                         RCChannel *channel)
-{
-    GSList *iter;
-
-    g_return_if_fail (world != NULL);
-    g_return_if_fail (channel != NULL);
-    
-    for (iter = world->channels; iter != NULL; iter = iter->next) {
-        if (iter->data == channel) {
-
-            /* We we remove a channel, we also remove all of its
-               packages. */
-            rc_world_remove_packages (world, channel);
-
-            if (! rc_channel_get_silent (channel))
-                rc_world_touch_channel_sequence_number (world);
-
-            /* Set the channel's world to NULL, so that there won't
-               be a dangling pointer if someone else is holding a reference
-               to this channel. */
-            channel->world = NULL;
-            
-            rc_channel_unref (channel);
-            world->channels = g_slist_delete_link (world->channels,
-                                                   iter);
-            return;
-        }
-    }
-
-    g_warning ("Couldn't remove channel '%s'", channel->name);
-}
-
-void
+int
 rc_world_foreach_channel (RCWorld *world,
                           RCChannelFn fn,
                           gpointer user_data)
 {
-    GSList *iter;
-    GSList *next;
+    g_return_val_if_fail (world != NULL, -1);
 
-    g_return_if_fail (world != NULL);
-    g_return_if_fail (fn != NULL);
+    g_assert (RC_WORLD_GET_CLASS (world)->foreach_channel_fn != NULL);
+    return RC_WORLD_GET_CLASS (world)->foreach_channel_fn (world,
+                                                           fn,
+                                                           user_data);
+}
 
-    iter = world->channels;
-    while (iter) {
-        next = iter->next;
+struct ContainsChannelInfo {
+    RCChannel *match;
+    gboolean found;
+};
 
-        fn (iter->data, user_data);
+static gboolean
+contains_channel_cb (RCChannel *ch, gpointer user_data)
+{
+    struct ContainsChannelInfo *info = user_data;
+    if (rc_channel_equal (ch, info->match))
+        info->found = TRUE;
+    return ! info->found;
+}
 
-        iter = next;
+gboolean
+rc_world_contains_channel (RCWorld   *world,
+                           RCChannel *channel)
+{
+    struct ContainsChannelInfo info;
+
+    g_return_val_if_fail (world != NULL && RC_IS_WORLD (world), FALSE);
+
+    info.match = channel;
+    info.found = FALSE;
+
+    rc_world_foreach_channel (world, contains_channel_cb, &info);
+    return info.found;
+}
+
+void
+rc_world_set_subscription (RCWorld *world,
+                           RCChannel *channel,
+                           gboolean is_subscribed)
+{
+    RCWorldClass *klass;
+    gboolean curr_subs_status;
+
+    g_return_if_fail (world != NULL && RC_IS_WORLD (world));
+    g_return_if_fail (channel != NULL);
+
+    if (rc_channel_is_system (channel)) {
+        g_warning ("Can't subscribe to system channel '%s'",
+                   rc_channel_get_name (channel));
+        return;
     }
+
+    curr_subs_status = rc_world_is_subscribed (world, channel);
+
+    klass = RC_WORLD_GET_CLASS (world);
+    if (klass->set_subscribed_fn)
+        klass->set_subscribed_fn (world, channel, is_subscribed);
+    else
+        rc_subscription_set_status (channel, is_subscribed);
+
+    if (curr_subs_status != rc_world_is_subscribed (world, channel))
+        rc_world_touch_subscription_sequence_number (world);
+}
+
+gboolean
+rc_world_is_subscribed (RCWorld *world,
+                        RCChannel *channel)
+{
+    RCWorldClass *klass;
+
+    g_return_val_if_fail (world != NULL && RC_IS_WORLD (world), FALSE);
+    g_return_val_if_fail (channel != NULL, FALSE);
+
+    if (rc_channel_is_system (channel))
+        return FALSE;
+
+    /* Just a bit of paranoia, since gboolean is really an integer
+       type and can contain values other than 0 and 1.  (Notice that
+       in rc_world_set_subscription we use the != operator to compare
+       two gbooleans that come out of rc_world_is_subscribed calls. */
+
+    klass = RC_WORLD_GET_CLASS (world);
+    if (klass->get_subscribed_fn)
+        return klass->get_subscribed_fn (world, channel) ? TRUE : FALSE;
+
+    return rc_subscription_get_status (channel) ? TRUE : FALSE;
+}
+
+struct FindChannelInfo {
+    const char *match_string;
+    const char *(*channel_str_fn) (RCChannel *);
+    RCChannel *match;
+};
+
+static gboolean
+find_channel_cb (RCChannel *channel,
+                 gpointer   user_data)
+{
+    struct FindChannelInfo *info = user_data;
+    
+    if (! g_strcasecmp (info->channel_str_fn (channel), info->match_string)) {
+        info->match = channel;
+        return FALSE;
+    }
+    
+    return TRUE;
 }
 
 RCChannel *
 rc_world_get_channel_by_name (RCWorld *world,
                               const char *channel_name)
 {
-    GSList *iter;
+    struct FindChannelInfo info;
 
     g_return_val_if_fail (world != NULL, NULL);
     g_return_val_if_fail (channel_name && *channel_name, NULL);
 
-    for (iter = world->channels; iter != NULL; iter = iter->next) {
-        RCChannel *channel = iter->data;
-        if (!g_strcasecmp (channel->name, channel_name))
-            return channel;
-    }
+    info.match_string = channel_name;
+    info.channel_str_fn = rc_channel_get_name;
+    info.match = NULL;
 
-    return NULL;
+    rc_world_foreach_channel (world, find_channel_cb, &info);
+
+    return info.match;
 }
 
 RCChannel *
 rc_world_get_channel_by_alias (RCWorld *world,
                                const char *alias)
 {
-    GSList *iter;
+    struct FindChannelInfo info;
 
     g_return_val_if_fail (world != NULL, NULL);
     g_return_val_if_fail (alias && *alias, NULL);
 
-    for (iter = world->channels; iter != NULL; iter = iter->next) {
-        RCChannel *channel = iter->data;
-        if (channel->alias
-            && !g_strcasecmp (channel->alias, alias))
-            return channel;
-    }
-    
-    return NULL;
+    info.match_string = alias;
+    info.channel_str_fn = rc_channel_get_alias;
+    info.match = NULL;
+
+    rc_world_foreach_channel (world, find_channel_cb, &info);
+
+    return info.match;
 }
 
 RCChannel *
 rc_world_get_channel_by_id (RCWorld *world,
                             const char *channel_id)
 {
-    GSList *iter;
+    struct FindChannelInfo info;
 
     g_return_val_if_fail (world != NULL, NULL);
-    g_return_val_if_fail (channel_id != NULL, NULL);
+    g_return_val_if_fail (channel_id && *channel_id, NULL);
 
-    for (iter = world->channels; iter != NULL; iter = iter->next) {
-        RCChannel *channel = iter->data;
-        if (rc_channel_equal_id (channel, channel_id))
-            return channel;
-    }
+    info.match_string = channel_id;
+    info.channel_str_fn = rc_channel_get_id;
+    info.match = NULL;
 
-    return NULL;
+    rc_world_foreach_channel (world, find_channel_cb, &info);
+
+    return info.match;
 }
 
-void
-rc_world_add_lock (RCWorld        *world,
-                   RCPackageMatch *lock)
-{
-    g_return_if_fail (world != NULL);
-    g_return_if_fail (lock != NULL);
 
-    world->locks = g_slist_append (world->locks, lock);
-}
-
-void
-rc_world_remove_lock (RCWorld        *world,
-                      RCPackageMatch *lock)
-{
-    g_return_if_fail (world != NULL);
-    g_return_if_fail (lock != NULL);
-
-    world->locks = g_slist_remove (world->locks, lock);
-}
-
-void
-rc_world_clear_locks (RCWorld *world)
-{
-    GSList *iter;
-
-    g_return_if_fail (world != NULL);
-
-    for (iter = world->locks; iter != NULL; iter = iter->next) {
-        RCPackageMatch *lock = iter->data;
-        rc_package_match_free (lock);
-    }
-
-    g_slist_free (world->locks);
-    world->locks = NULL;
-}
-
-void
+int
 rc_world_foreach_lock (RCWorld         *world,
                        RCPackageMatchFn fn,
                        gpointer         user_data)
 {
-    GSList *iter;
-    
-    g_return_if_fail (world != NULL);
+    g_return_val_if_fail (world != NULL, -1);
 
-    if (fn == NULL)
-        return;
-
-    for (iter = world->locks; iter != NULL; iter = iter->next) {
-        RCPackageMatch *lock = iter->data;
-        fn (lock, user_data);
-    }
+    g_assert (RC_WORLD_GET_CLASS (world)->foreach_lock_fn != NULL);
+    return RC_WORLD_GET_CLASS (world)->foreach_lock_fn (world, fn, user_data);
 }
+
+struct IsLockedInfo {
+    RCPackage *package;
+    RCWorld   *world;
+    gboolean   is_locked;
+};
+
+static gboolean
+is_locked_cb (RCPackageMatch *match,
+              gpointer        user_data)
+{
+    struct IsLockedInfo *info = user_data;
+
+    if (rc_package_match_test (match, info->package, info->world)) {
+        info->is_locked = TRUE;
+        return FALSE;
+    }
+
+    return TRUE;
+}
+              
 
 gboolean
 rc_world_package_is_locked (RCWorld   *world,
                             RCPackage *package)
 {
-    GSList *iter;
+    struct IsLockedInfo info;
 
     g_return_val_if_fail (world != NULL, FALSE);
     g_return_val_if_fail (package != NULL, FALSE);
@@ -848,582 +621,75 @@ rc_world_package_is_locked (RCWorld   *world,
     if (package->hold)
         return TRUE;
 
-    for (iter = world->locks; iter != NULL; iter = iter->next) {
-        RCPackageMatch *lock = iter->data;
-        
-        if (rc_package_match_test (lock, package, world))
-            return TRUE;
-    }
+    info.package = package;
+    info.world   = world;
+    info.is_locked = FALSE;
+
+    rc_world_foreach_lock (world, is_locked_cb, &info);
     
-    return FALSE;
+    return info.is_locked;
 }
 
-
-/**
- * rc_world_freeze:
- * @world: An #RCWorld.
- * 
- * Freezes the hash tables inside of an #RCWorld, which
- * can improve performance if you need to add a
- * large number of packages to @world via
- * multiple calls to rc_world_add_package() more
- * efficient.  Be sure to call rc_world_thaw() after you
- * are done modifying the #RCWorld and before making any
- * queries against it.
- * 
- **/
 void
-rc_world_freeze (RCWorld *world)
+rc_world_add_lock (RCWorld        *world,
+                   RCPackageMatch *lock)
 {
-    g_return_if_fail (world != NULL);
+    RCWorldClass *klass;
 
-    ++world->freeze_count;
+    g_return_if_fail (RC_IS_WORLD (world));
 
-    if (world->freeze_count == 1) {
+    if (lock == NULL)
+        return;
 
-        g_hash_table_freeze (world->packages_by_name);
-        g_hash_table_freeze (world->provides_by_name);
-        g_hash_table_freeze (world->requires_by_name);
-        g_hash_table_freeze (world->children_by_name);
-        g_hash_table_freeze (world->conflicts_by_name);
+    klass = RC_WORLD_GET_CLASS (world);
 
-    }
+    g_assert (klass->add_lock_fn);
+    klass->add_lock_fn (world, lock);
 }
 
-/**
- * rc_world_thaw:
- * @world: An #RCWorld.
- * 
- * Thaws the hash tables inside of #RCWorld.  This function
- * should always be called before making queries against
- * @world.
- * 
- **/
 void
-rc_world_thaw (RCWorld *world)
+rc_world_remove_lock (RCWorld        *world,
+                      RCPackageMatch *lock)
 {
-    g_return_if_fail (world != NULL);
-    g_return_if_fail (world->freeze_count > 0);
+    RCWorldClass *klass;
 
-    --world->freeze_count;
-    
-    if (world->freeze_count == 0) {
+    g_return_if_fail (RC_IS_WORLD (world));
 
-        g_hash_table_thaw (world->packages_by_name);
-        g_hash_table_thaw (world->provides_by_name);
-        g_hash_table_thaw (world->requires_by_name);
-        g_hash_table_thaw (world->children_by_name);
-        g_hash_table_thaw (world->conflicts_by_name);
+    if (lock == NULL)
+        return;
 
-    }
+    klass = RC_WORLD_GET_CLASS (world);
+
+    g_assert (klass->remove_lock_fn != NULL);
+    klass->remove_lock_fn (world, lock);
 }
 
-#ifdef SIZE_TRACKING_FUNCTIONS
-static int
-spec_size (RCPackageSpec *spec)
-{
-    int size = sizeof (RCPackageSpec);
-    if (spec->name)
-        size += strlen (spec->name);
-    if (spec->version)
-        size += strlen (spec->version);
-    if (spec->release)
-        size += strlen (spec->release);
-    return size;
-}
-
-static int
-dep_size (RCPackageDep *dep)
-{
-    int size = spec_size (&dep->spec);
-    size += sizeof (RCPackageDep) - sizeof (RCPackageSpec);
-
-    return size;
-}
-
-static int
-dep_slist_size (RCPackageDepSList *slist)
-{
-    int size = 0;
-
-    while (slist) {
-        size += sizeof (*slist);
-        size += dep_size (slist->data);
-        slist = slist->next;
-    }
-
-    return size;
-}
-
-static int
-package_size (RCPackage *package)
-{
-    int size = spec_size (&package->spec);
-    size += sizeof (RCPackage) - sizeof (RCPackageSpec);
-    
-    if (package->summary)
-        size += strlen (package->summary);
-    if (package->description)
-        size += strlen (package->description);
-    if (package->package_filename)
-        size += strlen (package->package_filename);
-    if (package->signature_filename)
-        size += strlen (package->signature_filename);
-
-    size += dep_slist_size (package->requires);
-    size += dep_slist_size (package->provides);
-    size += dep_slist_size (package->conflicts);
-    size += dep_slist_size (package->obsoletes);
-    size += dep_slist_size (package->suggests);
-    size += dep_slist_size (package->recommends);
-
-    return size;
-}
-#endif
-
-/**
- * rc_world_add_package:
- * @world: An #RCWorld.
- * @package: An #RCPackage to be added to @world.
- * 
- * Stores @package inside of @world and indexes all of its
- * dependency information for fast look-ups later on.
- * 
- **/
-gboolean
-rc_world_add_package (RCWorld *world, RCPackage *package)
-{
-    /* const RCPackageDepSList *iter; */
-    GSList *compat_arch_list;
-    RCPackageAndDep *pad;
-    const char *package_name;
-    int i, arch_score;
-    gboolean actually_added_package = FALSE;
-
-    g_return_val_if_fail (world != NULL, FALSE);
-    g_return_val_if_fail (package != NULL, FALSE);
-
-    compat_arch_list = \
-        rc_arch_get_compat_list (rc_arch_get_system_arch ());
-
-    arch_score = rc_arch_get_compat_score (compat_arch_list,
-                                           package->arch);
-
-
-    /* Before we do anything, check to make sure that a package of the
-       same name isn't already in that channel.  If there is a
-       duplicate, we keep the one with the most recent version number
-       and drop the other.
-
-       This check only applies to packages in a channel.  We have
-       to allow for multiple installs.  Grrrr...
-    */
-
-    if (! rc_package_is_installed (package)) {
-
-        RCPackage *dup_package;
-        int dup_arch_score;
-
-        /* Filter out packages with totally incompatible arches */
-        if (arch_score < 0) {
-            rc_debug (RC_DEBUG_LEVEL_DEBUG,
-                      "Ignoring package with incompatible arch: %s",
-                      rc_package_to_str_static (package));
-            goto finished;
-        }
-
-        
-        package_name = g_quark_to_string (RC_PACKAGE_SPEC (package)->nameq);
-        dup_package = rc_world_get_package (world,
-                                            package->channel,
-                                            package_name);
-
-
-        /* This shouldn't happen (and would be caught by the check
-           below, because cmp will equal 0), but it never hurts to
-           check and produce a more explicit warning message. */
-
-        if (package == dup_package) {
-            rc_debug (RC_DEBUG_LEVEL_WARNING,
-                      "Ignoring re-add of package '%s'",
-                      package_name);
-            goto finished;
-        }
-
-        if (dup_package != NULL) {
-            
-            int cmp;
-            
-            cmp = rc_packman_version_compare (world->packman,
-                                              RC_PACKAGE_SPEC (package),
-                                              RC_PACKAGE_SPEC (dup_package));
-
-            dup_arch_score = rc_arch_get_compat_score (compat_arch_list,
-                                                       dup_package->arch);
-        
-
-            /* If the package we are trying to add has a lower 
-               version number, just ignore it. */
-
-            if (cmp < 0) {
-                rc_debug (RC_DEBUG_LEVEL_INFO,
-                          "Not adding package '%s'.  A newer version is "
-                          "already in the channel.",
-                          rc_package_to_str_static (package));
-                goto finished;
-            }
-
-
-            /* If the version numbers are equal, we ignore the package to
-               add if it has a less-preferable arch.  If both
-               packages have the same version # and arch, we favor the
-               first package and just return. */
-
-            if (cmp == 0 && arch_score > dup_arch_score) {
-                rc_debug (RC_DEBUG_LEVEL_INFO,
-                          "Not adding package '%s'.  Another package "
-                          "with the same version but with a preferred arch "
-                          "is already in the channel.",
-                          rc_package_to_str_static (package));
-                goto finished;
-            }
-
-
-            /* Otherwise we throw out the old package and proceed with
-               adding the newer one. */
-
-            rc_debug (RC_DEBUG_LEVEL_INFO,
-                      "Replacing package '%s'.  Another package in "
-                      "the channel has the same name and a superior %s.",
-                      rc_package_to_str_static (dup_package),
-                      cmp ? "version" : "arch");
-
-            rc_world_remove_package (world, dup_package);
-        }
-    }
-
-    actually_added_package = TRUE;
-
-    if (! (package->channel && rc_channel_get_silent (package->channel)))
-        rc_world_touch_package_sequence_number (world);
-
-    /* The world holds a reference to the package */
-    rc_package_ref (package);
-
-    /* Store all of our packages in a hash by name. */
-    hashed_slist_add (world->packages_by_name,
-                      package->spec.nameq,
-                      package);
-
-    /* Store all of the package's provides in a hash by name. */
-
-    if (package->provides_a)
-        for (i = 0; i < package->provides_a->len; i++) {
-            pad = rc_package_and_dep_new_pair (
-                package, package->provides_a->data[i]);
-
-            hashed_slist_add (world->provides_by_name,
-                              RC_PACKAGE_SPEC (pad->dep)->nameq,
-                              pad);
-        }
-
-    /* Store all of the package's requires in a hash by name. */
-
-    if (package->requires_a)
-        for (i = 0; i < package->requires_a->len; i++) {
-            pad = rc_package_and_dep_new_pair (
-                package, package->requires_a->data[i]);
-
-            hashed_slist_add (world->requires_by_name,
-                              RC_PACKAGE_SPEC (pad->dep)->nameq,
-                              pad);
-        }
-
-    /* Store all of the package's children in a hash by name. */
-
-    if (package->children_a)
-        for (i = 0; i < package->children_a->len; i++) {
-            pad = rc_package_and_dep_new_pair (
-                package, package->children_a->data[i]);
-
-            hashed_slist_add (world->children_by_name,
-                              RC_PACKAGE_SPEC (pad->dep)->nameq,
-                              pad);
-        }
-
-    /* "Recommends" are treated as requirements. */
-
-    if (package->recommends_a)
-        for (i = 0; i < package->recommends_a->len; i++) {
-            pad = rc_package_and_dep_new_pair (
-                package, package->recommends_a->data[i]);
-
-            hashed_slist_add (world->requires_by_name,
-                              RC_PACKAGE_SPEC (pad->dep)->nameq,
-                              pad);
-        }
-
-    /* Store all of the package's conflicts in a hash by name. */
-
-    if (package->conflicts_a)
-        for (i = 0; i < package->conflicts_a->len; i++) {
-            pad = rc_package_and_dep_new_pair (
-                package, package->conflicts_a->data[i]);
-
-            hashed_slist_add (world->conflicts_by_name,
-                              RC_PACKAGE_SPEC (pad->dep)->nameq,
-                              pad);
-        }
-
-    
- finished:
-    /* Clean-up */
-    g_slist_free (compat_arch_list);
-
-    return actually_added_package;
-}
-
-
-/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
-
-static gboolean
-remove_package_cb (gpointer val, gpointer user_data)
-{
-    RCPackage *package = val;
-    RCPackage *package_to_remove = user_data;
-
-    if (package_to_remove && package == package_to_remove) {
-        rc_package_unref (package);
-        return TRUE;
-    }
-
-    return FALSE;
-}
-
-static gboolean
-remove_package_struct_cb (gpointer val, gpointer user_data)
-{
-    RCPackageAndDep *pad = val;
-    RCPackage *package_to_remove = user_data;
-
-    if (pad && package_to_remove && pad->package == package_to_remove) {
-        rc_package_and_dep_free (pad);
-        return TRUE;
-    }
-
-    return FALSE;
-}
-
-/**
- * rc_world_remove_package:
- * @world: An #RCWorld.
- * @package: An #RCPackage that is stored in @world.
- * 
- * Removes the #RCPackage @package from @world.  
- *
- * As currently
- * implemented, this function is not very efficient; if you need
- * to remove a large number of packages, use rc_world_remove_packages()
- * if possible.
- * 
- **/
 void
-rc_world_remove_package (RCWorld *world,
-                         RCPackage *package)
+rc_world_clear_locks (RCWorld *world)
 {
-    g_return_if_fail (world != NULL);
-    g_return_if_fail (package != NULL);
+    RCWorldClass *klass;
 
-    if (! (package->channel && rc_channel_get_silent (package->channel)))
-        rc_world_touch_package_sequence_number (world);
+    g_return_if_fail (RC_IS_WORLD (world));
 
-    /* FIXME: This is fairly inefficient */
-
-    hashed_slist_foreach_remove (world->provides_by_name,
-                                 remove_package_struct_cb,
-                                 package);
-
-    hashed_slist_foreach_remove (world->requires_by_name,
-                                 remove_package_struct_cb,
-                                 package);
-
-    hashed_slist_foreach_remove (world->children_by_name,
-                                 remove_package_struct_cb,
-                                 package);
-
-    hashed_slist_foreach_remove (world->conflicts_by_name,
-                                 remove_package_struct_cb,
-                                 package);
+    klass = RC_WORLD_GET_CLASS (world);
     
-    hashed_slist_foreach_remove (world->packages_by_name,
-                                 remove_package_cb,
-                                 package);
-
+    g_assert (klass->clear_lock_fn != NULL);
+    klass->clear_lock_fn (world);
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 static gboolean
-remove_package_by_channel_cb (gpointer val, gpointer user_data)
+installed_version_cb (RCPackage *pkg, gpointer user_data)
 {
-    RCPackage *package = val;
-    RCChannel *channel = user_data;
-
-    if (package && channel_match (package->channel, channel)) {
-        rc_package_unref (package);
-        return  TRUE;
-    }
-
-    return FALSE;
-}
-
-static gboolean
-remove_package_struct_by_channel_cb (gpointer val, gpointer user_data)
-{
-    RCPackageAndDep *pad = val;
-    RCChannel *channel = user_data;
+    RCPackage **installed = user_data;
     
-    if (pad && channel_match (pad->package->channel, channel)) {
-        rc_package_and_dep_free (pad);
-        return TRUE;
-    }
-
-    return FALSE;
-}
-
-/**
- * rc_world_remove_packages:
- * @world:  An #RCWorld.
- * @channel: An #RCChannel or a channel wildcard.
- * 
- * Removes all of the packages from @world whose
- * channel matches @channel. 
- * 
- * This function should be favored over rc_world_remove_package() when
- * removing a large number of packages simulatenously.
- * 
- **/
-void
-rc_world_remove_packages (RCWorld *world,
-                          RCChannel *channel)
-{
-    g_return_if_fail (world != NULL);
-
-    if (channel == RC_CHANNEL_SYSTEM
-        || channel == RC_CHANNEL_ANY
-        || channel == RC_CHANNEL_NON_SYSTEM
-        || ! rc_channel_get_silent (channel))
-        rc_world_touch_package_sequence_number (world);
-
-    hashed_slist_foreach_remove (world->provides_by_name,
-                                 remove_package_struct_by_channel_cb,
-                                 channel);
-    
-    hashed_slist_foreach_remove (world->requires_by_name,
-                                 remove_package_struct_by_channel_cb,
-                                 channel);
-
-    hashed_slist_foreach_remove (world->children_by_name,
-                                 remove_package_struct_by_channel_cb,
-                                 channel);
-
-    hashed_slist_foreach_remove (world->conflicts_by_name,
-                                 remove_package_struct_by_channel_cb,
-                                 channel);
-
-    hashed_slist_foreach_remove (world->packages_by_name,
-                                 remove_package_by_channel_cb,
-                                 channel);
-
-}
-
-/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
-
-void
-rc_world_set_synthetic_package_db (RCWorld *world,
-                                   const char *filename)
-{
-    g_return_if_fail (world != NULL);
-    g_return_if_fail (filename && *filename);
-    g_return_if_fail (world->synthetic_package_db == NULL);
-    
-    world->synthetic_package_db = g_strdup (filename);
-}
-
-gboolean
-rc_world_load_synthetic_packages (RCWorld *world)
-{
-    char *file_contents;
-
-    g_return_val_if_fail (world != NULL, FALSE);
-
-    if (world->synthetic_package_db == NULL)
-        return TRUE;
-
-    if (! g_file_test (world->synthetic_package_db, G_FILE_TEST_EXISTS))
-        return TRUE;
-
-    if (! g_file_get_contents (world->synthetic_package_db,
-                               &file_contents, NULL, NULL)) {
-        rc_debug (RC_DEBUG_LEVEL_WARNING,
-                  "Couldn't read synthetic package db '%s'",
-                  world->synthetic_package_db);
+    if (rc_package_is_installed (pkg)) {
+        *installed = pkg;
         return FALSE;
     }
-
-    rc_world_add_packages_from_buffer (world, RC_CHANNEL_SYSTEM,
-                                       file_contents,
-                                       0 /* not compressed */);
-
-    g_free (file_contents);
-
     return TRUE;
 }
-
-static void
-save_synthetic_packages_cb (RCPackage *package, gpointer user_data)
-{
-    xmlNode *parent = user_data;
-
-    if (rc_package_is_synthetic (package)) {
-        xmlNode *package_node = rc_package_to_xml_node (package);
-        xmlAddChild (parent, package_node);
-    }
-}
-
-gboolean
-rc_world_save_synthetic_packages (RCWorld *world)
-{
-    xmlDoc *doc;
-    xmlNode *root;
-    FILE *out;
-
-    g_return_val_if_fail (world != NULL, FALSE);
-
-    if (world->synthetic_package_db == NULL)
-        return TRUE;
-
-    out = fopen (world->synthetic_package_db, "w");
-    if (out == NULL) /* FIXME: better error handling needed */
-        return FALSE;
-
-    doc = xmlNewDoc ("1.0");
-    root = xmlNewNode (NULL, "synthetic_packages");
-    xmlDocSetRootElement (doc, root);
-
-    rc_world_foreach_package (world,
-                              RC_CHANNEL_SYSTEM,
-                              save_synthetic_packages_cb,
-                              root);
-
-    xmlDocDump (out, doc);
-    fclose (out);
-
-    return TRUE;
-}
-
-/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
-
 
 /**
  * rc_world_find_installed_version:
@@ -1441,26 +707,39 @@ RCPackage *
 rc_world_find_installed_version (RCWorld *world,
                                  RCPackage *package)
 {
-    GSList *iter;
+    RCPackage *installed = NULL;
 
     g_return_val_if_fail (world != NULL, NULL);
     g_return_val_if_fail (package != NULL, NULL);
 
     rc_world_sync (world);
 
-    iter = hashed_slist_get (world->packages_by_name,
-                             package->spec.nameq);
+    rc_world_foreach_package_by_name (world,
+                                      rc_package_get_name (package),
+                                      RC_CHANNEL_ANY, /* is this right? */
+                                      installed_version_cb,
+                                      &installed);
+
+    return installed;
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+struct GetPackageInfo {
+    RCChannel *channel;
+    RCPackage *package;
+};
+
+static gboolean
+get_package_cb (RCPackage *pkg, gpointer user_data)
+{
+    struct GetPackageInfo *info = user_data;
     
-    while (iter != NULL) {
-        RCPackage *this_package = iter->data;
-
-        if (this_package && rc_package_is_installed (this_package))
-            return this_package;
-        
-        iter = iter->next;
+    if (rc_channel_equal (pkg->channel, info->channel)) {
+        info->package = pkg;
+        return FALSE;
     }
-
-    return NULL;
+    return TRUE;
 }
 
 /**
@@ -1481,25 +760,22 @@ rc_world_get_package (RCWorld *world,
                       RCChannel *channel,
                       const char *name)
 {
-    GSList *slist;
+    struct GetPackageInfo info;
 
     g_return_val_if_fail (world != NULL, NULL);
     g_return_val_if_fail (channel != RC_CHANNEL_ANY
                           && channel != RC_CHANNEL_NON_SYSTEM, NULL);
     g_return_val_if_fail (name && *name, NULL);
 
-    rc_world_conditional_sync (world, channel);
+    rc_world_sync_conditional (world, channel);
 
-    slist = hashed_slist_get (world->packages_by_name,
-                              g_quark_try_string (name));
-    while (slist) {
-        RCPackage *package = slist->data;
-        if (package && package->channel == channel)
-            return package;
-        slist = slist->next;
-    }
+    info.channel = channel;
+    info.package = NULL;
 
-    return NULL;
+    rc_world_foreach_package_by_name (world, name, channel,
+                                      get_package_cb, &info);
+
+    return info.package;
 }
 
 /**
@@ -1540,14 +816,20 @@ rc_world_get_package_with_constraint (RCWorld *world,
     pkg = rc_world_get_package (world, channel, name);
 
     if (pkg != NULL && constraint != NULL) {
+        RCPackman *packman;
         RCPackageDep *dep;
+
+        packman = rc_packman_get_global ();
+        g_assert (packman != NULL);
+
         dep = rc_package_dep_new_from_spec (&(pkg->spec),
                                             RC_RELATION_EQUAL,
                                             pkg->channel,
                                             FALSE, FALSE);
-        if (! rc_package_dep_verify_relation (
-                rc_world_get_packman (world), constraint, dep))
+        
+        if (! rc_package_dep_verify_relation (packman, constraint, dep))
             pkg = NULL;
+
         rc_package_dep_unref (dep);
     }
 
@@ -1577,9 +859,6 @@ RCChannel *
 rc_world_guess_package_channel (RCWorld *world,
                                 RCPackage *package)
 {
-    GSList *iter;
-    RCPackageUpdateSList *updates;
-    
     g_return_val_if_fail (world != NULL, NULL);
     g_return_val_if_fail (package != NULL, NULL);
 
@@ -1589,51 +868,10 @@ rc_world_guess_package_channel (RCWorld *world,
     /* We don't need to call rc_world_sync, because we are searching
        over the channel data --- not the installed packages. */
 
-    iter = hashed_slist_get (world->packages_by_name,
-                             RC_PACKAGE_SPEC (package)->nameq);
-
-    while (iter != NULL) {
-        RCPackage *iter_pkg = iter->data;
-
-        if (iter_pkg && iter_pkg->channel) {
-            updates = iter_pkg->history;
-
-            while (updates != NULL) {
-
-                if (rc_package_spec_equal (RC_PACKAGE_SPEC (updates->data),
-                                           RC_PACKAGE_SPEC (package)))
-                    return iter_pkg->channel;
-                
-                updates = updates->next;
-            }
-        }
-
-        iter = iter->next;
-    }
+    /* FIXME! */
+    g_assert_not_reached ();
     
     return NULL;
-}
-
-struct ForeachPackageInfo {
-    RCChannel *channel;
-    RCPackageFn fn;
-    gpointer user_data;
-    int count;
-};
-
-static void
-foreach_package_cb (gpointer key, gpointer val, gpointer user_data)
-{
-    struct ForeachPackageInfo *info = user_data;
-    RCPackage *package = val;
-
-    /* FIXME: we should filter out dup uninstalled packages. */
-
-    if (package && channel_match (info->channel, package->channel)) {
-        if (info->fn)
-            info->fn (package, info->user_data);
-        ++info->count;
-    }
 }
 
 /**
@@ -1656,22 +894,16 @@ rc_world_foreach_package (RCWorld *world,
                           RCPackageFn fn,
                           gpointer user_data)
 {
-    struct ForeachPackageInfo info;
-
     g_return_val_if_fail (world != NULL, -1);
 
-    rc_world_conditional_sync (world, channel);
-    
-    info.channel = channel;
-    info.fn = fn;
-    info.user_data = user_data;
-    info.count = 0;
+    rc_world_sync_conditional (world, channel);
 
-    hashed_slist_foreach (world->packages_by_name,
-                          foreach_package_cb,
-                          &info);
-
-    return info.count;
+    g_assert (RC_WORLD_GET_CLASS (world)->foreach_package_fn != NULL);
+    return RC_WORLD_GET_CLASS (world)->foreach_package_fn (world,
+                                                           NULL,
+                                                           channel,
+                                                           fn,
+                                                           user_data);
 }
 
 /**
@@ -1696,42 +928,16 @@ rc_world_foreach_package_by_name (RCWorld *world,
                                   RCPackageFn fn,
                                   gpointer user_data)
 {
-    GSList *slist, *iter;
-    GHashTable *installed;
-    int count = 0;
-
     g_return_val_if_fail (world != NULL, -1);
-    g_return_val_if_fail (name && *name, -1);
 
-    rc_world_conditional_sync (world, channel);
+    rc_world_sync_conditional (world, channel);
 
-    slist = hashed_slist_get (world->packages_by_name,
-                              g_quark_try_string (name));
-
-    installed = g_hash_table_new (rc_package_spec_hash,
-                                  rc_package_spec_equal);
-
-    for (iter = slist; iter != NULL; iter = iter->next) {
-        RCPackage *package = iter->data;
-        if (package && rc_package_is_installed (package))
-            g_hash_table_insert (installed, & package->spec, package);
-    }
-    
-    for (iter = slist; iter != NULL; iter = iter->next) {
-        RCPackage *package = iter->data;
-        if (package && channel_match (channel, package->channel)) {
-            if (rc_package_is_installed (package)
-                || g_hash_table_lookup (installed, & package->spec) == NULL) {
-                if (fn) 
-                    fn (package, user_data);
-                ++count;
-            }
-        }
-    }
-
-    g_hash_table_destroy (installed);
-
-    return count;
+    g_assert (RC_WORLD_GET_CLASS (world)->foreach_package_fn != NULL);
+    return RC_WORLD_GET_CLASS (world)->foreach_package_fn (world,
+                                                           name,
+                                                           channel,
+                                                           fn,
+                                                           user_data);
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
@@ -1744,7 +950,7 @@ struct ForeachMatchInfo {
     int count;
 };
 
-void
+gboolean
 foreach_match_fn (RCPackage *pkg,
                   gpointer   user_data)
 {
@@ -1755,6 +961,8 @@ foreach_match_fn (RCPackage *pkg,
             info->fn (pkg, info->user_data);
         ++info->count;
     }
+
+    return TRUE;
 }
 
 int
@@ -1792,22 +1000,32 @@ struct ForeachUpgradeInfo {
     RCWorld *world;
 };
 
-static void
+static gboolean
 foreach_upgrade_cb (RCPackage *package, gpointer user_data)
 {
     struct ForeachUpgradeInfo *info = user_data;
+    RCWorld *world = info->world;
+    RCPackman *packman;
+    int cmp;
+    
+    packman = rc_packman_get_global ();
+    g_assert (packman != NULL);
 
-    if (rc_packman_version_compare (
-            info->world->packman, RC_PACKAGE_SPEC (info->original_package),
-            RC_PACKAGE_SPEC (package)) >= 0)
-        return;
+    cmp = rc_packman_version_compare (packman,
+                                      RC_PACKAGE_SPEC (info->original_package),
+                                      RC_PACKAGE_SPEC (package));
+                                       
+    if (cmp >= 0)
+        return TRUE;
 
-    if (rc_world_package_is_locked (info->world, package))
-        return;
+    if (rc_world_package_is_locked (world, package))
+        return TRUE;
 
     if (info->fn)
         info->fn (package, info->user_data);
     ++info->count;
+
+    return TRUE;
 }
 
 /**
@@ -1839,7 +1057,7 @@ rc_world_foreach_upgrade (RCWorld *world,
     g_return_val_if_fail (world != NULL, -1);
     g_return_val_if_fail (package != NULL, -1);
 
-    rc_world_conditional_sync (world, channel);
+    rc_world_sync_conditional (world, channel);
 
     info.original_package = package;
     info.fn = fn;
@@ -1862,24 +1080,30 @@ struct BestUpgradeInfo {
     RCWorld *world;
 };
 
-static void
+static gboolean
 get_best_upgrade_cb (RCPackage *package, gpointer user_data)
 {
     struct BestUpgradeInfo *info = user_data;
+    RCPackman *packman;
+    int cmp;
 
     if (info->subscribed_only)
-        if (!(package->channel && rc_channel_subscribed (package->channel)))
-            return;
+        if (!(package->channel && rc_channel_is_subscribed (package->channel)))
+            return TRUE;
 
     if (rc_world_package_is_locked (info->world, package))
-        return;
+        return TRUE;
 
-    if (rc_packman_version_compare (
-            info->world->packman, RC_PACKAGE_SPEC (info->best_upgrade),
-            RC_PACKAGE_SPEC (package)) < 0)
-    {
+    packman = rc_packman_get_global ();
+    g_assert (packman != NULL);
+    cmp = rc_packman_version_compare (packman,
+                                      RC_PACKAGE_SPEC (info->best_upgrade),
+                                      RC_PACKAGE_SPEC (package));
+
+    if (cmp < 0)
         info->best_upgrade = package;
-    }
+
+    return TRUE;
 }
 
 /**
@@ -1935,7 +1159,7 @@ struct SystemUpgradeInfo {
     int count;
 };
 
-static void
+static gboolean
 system_upgrade_cb (RCPackage *package, gpointer user_data)
 {
     struct SystemUpgradeInfo *info = user_data;
@@ -1943,7 +1167,7 @@ system_upgrade_cb (RCPackage *package, gpointer user_data)
 
     /* If the package is excluded, skip it. */
     if (rc_world_package_is_locked (info->world, package))
-        return;
+        return TRUE;
 
     upgrade = rc_world_get_best_upgrade (info->world, package,
                                          info->subscribed_only);
@@ -1953,6 +1177,8 @@ system_upgrade_cb (RCPackage *package, gpointer user_data)
             info->fn (package, upgrade, info->user_data);
         ++info->count;
     }
+
+    return TRUE;
 }
 
 /**
@@ -2027,15 +1253,12 @@ rc_world_foreach_providing_package (RCWorld           *world,
                                     RCPackageAndSpecFn fn,
                                     gpointer           user_data)
 {
-    GSList *slist, *iter;
-    int count = 0;
-    GHashTable *installed;
-
     g_return_val_if_fail (world != NULL, -1);
     g_return_val_if_fail (dep != NULL, -1);
 
     if (rc_package_dep_is_or (dep)) {
         RCPackageDepSList *deps, *iter;
+        int count = 0;
         deps = rc_dep_string_to_or_dep_slist (
             g_quark_to_string (RC_PACKAGE_SPEC (dep)->nameq));
         for (iter = deps; iter != NULL; iter = iter->next) {
@@ -2046,134 +1269,13 @@ rc_world_foreach_providing_package (RCWorld           *world,
         return count;
     }
 
-    rc_world_conditional_sync (world, rc_package_dep_get_channel (dep));
+    rc_world_sync_conditional (world, rc_package_dep_get_channel (dep));
 
-    slist = hashed_slist_get (world->provides_by_name,
-                              RC_PACKAGE_SPEC (dep)->nameq);
-
-    installed = g_hash_table_new (rc_package_spec_hash,
-                                  rc_package_spec_equal);
-
-    for (iter = slist; iter != NULL; iter = iter->next) {
-        RCPackageAndDep *pad = iter->data;
-        if (pad && pad->package && rc_package_is_installed (pad->package))
-            g_hash_table_insert (installed, & pad->package->spec, pad);
-    }
-
-    for (iter = slist; iter != NULL; iter = iter->next) {
-        RCPackageAndDep *pad = iter->data;
-
-        if (pad
-            && rc_package_dep_verify_relation (
-                rc_world_get_packman (world), dep, pad->dep)) {
-
-            /* If we have multiple identical packages in RCWorld, we want to only
-               include the package that is installed and skip the rest. */
-            if (rc_package_is_installed (pad->package)
-                || g_hash_table_lookup (installed, & pad->package->spec) == NULL) {
-                
-                if (fn)
-                    fn (pad->package, RC_PACKAGE_SPEC (pad->dep), user_data);
-                ++count;
-            }
-        }
-
-        slist = slist->next;
-    }
-
-    g_hash_table_destroy (installed);
-
-    return count;
-}
-
-/**
- * rc_world_check_providing_package:
- * @world: An #RCWorld.
- * @dep: An #RCPackageDep.
- * @filter_dups_of_installed: If %TRUE, we skip uninstalled versions of installed packages.
- * This is the default behavior for the other rc_world_* iterator functions.
- * @fn: A callback function.
- * @user_data: Pointer to be passed to the callback function.
- * 
- * This function behaves almost exactly the same as
- * rc_world_foreach_providing_package, except in two ways.  It allows
- * iteration over all packages in all channels, without skipping
- * uninstalled versions of installed packages, by passing %FALSE in
- * for the @filter_dups_of_installed argument.  Also, the callback
- * function returns a #gboolean and the iteratior will terminate if it
- * returns %FALSE.
- * 
- * Return value: Returns %TRUE if the iteration was prematurely terminated by the
- * callback function, and %FALSE otherwise.
- **/
-gboolean
-rc_world_check_providing_package (RCWorld                *world,
-                                  RCPackageDep           *dep,
-                                  gboolean                filter_dups_of_installed,
-                                  RCPackageAndSpecCheckFn fn,
-                                  gpointer                user_data)
-{
-    GSList *slist, *iter;
-    GHashTable *installed;
-    gboolean ret = FALSE;
-
-    g_return_val_if_fail (world != NULL, TRUE);
-    g_return_val_if_fail (dep != NULL, TRUE);
-    g_return_val_if_fail (fn != NULL, TRUE);
-
-    if (rc_package_dep_is_or (dep)) {
-        RCPackageDepSList *deps, *iter;
-        gboolean terminated = FALSE;
-        deps = rc_dep_string_to_or_dep_slist (
-            g_quark_to_string (RC_PACKAGE_SPEC (dep)->nameq));
-        for (iter = deps; iter != NULL && !terminated; iter = iter->next) {
-            terminated = rc_world_check_providing_package (world,
-                                                           iter->data,
-                                                           filter_dups_of_installed,
-                                                           fn, user_data);
-        }
-        rc_package_dep_slist_free (deps);
-        return terminated;
-    }
-
-    rc_world_conditional_sync (world, rc_package_dep_get_channel (dep));
-
-    slist = hashed_slist_get (world->provides_by_name,
-                              RC_PACKAGE_SPEC (dep)->nameq);
-
-    installed = g_hash_table_new (rc_package_spec_hash,
-                                  rc_package_spec_equal);
-
-    if (filter_dups_of_installed) {
-        for (iter = slist; iter != NULL; iter = iter->next) {
-            RCPackageAndDep *pad = iter->data;
-            if (pad && pad->package && rc_package_is_installed (pad->package))
-                g_hash_table_insert (installed, & pad->package->spec, pad);
-        }
-    }
-
-    for (iter = slist; iter != NULL; iter = iter->next) {
-        RCPackageAndDep *pad = iter->data;
-
-        if (pad && rc_package_dep_verify_relation (
-                rc_world_get_packman (world), dep, pad->dep)) {
-
-            /* Skip uninstalled dups */
-            if ((! filter_dups_of_installed) 
-                || rc_package_is_installed (pad->package)
-                || (g_hash_table_lookup (installed, & pad->package->spec) == NULL) ) {
-
-                if (! fn (pad->package, RC_PACKAGE_SPEC (pad->dep), user_data)) {
-                    ret = TRUE;
-                    break;
-                }
-            }
-        }
-    }
-
-    g_hash_table_destroy (installed);
-
-    return ret;
+    g_assert (RC_WORLD_GET_CLASS (world)->foreach_providing_fn);
+    return RC_WORLD_GET_CLASS (world)->foreach_providing_fn (world,
+                                                             dep,
+                                                             fn,
+                                                             user_data);
 }
 
 /**
@@ -2207,97 +1309,34 @@ rc_world_foreach_requiring_package (RCWorld          *world,
                                     RCPackageAndDepFn fn,
                                     gpointer          user_data)
 {
-    GSList *slist, *iter;
-    GHashTable *installed;
-    int count = 0;
-
     g_return_val_if_fail (world != NULL, -1);
     g_return_val_if_fail (dep != NULL, -1);
 
-    rc_world_conditional_sync (world, rc_package_dep_get_channel (dep));
+    rc_world_sync_conditional (world, rc_package_dep_get_channel (dep));
 
-    slist = hashed_slist_get (world->requires_by_name,
-                              RC_PACKAGE_SPEC (dep)->nameq);
-
-    installed = g_hash_table_new (rc_package_spec_hash,
-                                  rc_package_spec_equal);
-
-    for (iter = slist; iter != NULL; iter = iter->next) {
-        RCPackageAndDep *pad = iter->data;
-        if (pad && pad->package && rc_package_is_installed (pad->package))
-            g_hash_table_insert (installed, & pad->package->spec, pad);
-    }
-
-    for (iter = slist; iter != NULL; iter = iter->next) {
-        RCPackageAndDep *pad = iter->data;
-
-        if (pad && rc_package_dep_verify_relation (
-                rc_world_get_packman (world), pad->dep, dep)) {
-
-            /* Skip dups if one of them in installed. */
-            if (rc_package_is_installed (pad->package)
-                || g_hash_table_lookup (installed, & pad->package->spec) == NULL) {
-
-                if (fn)
-                    fn (pad->package, pad->dep, user_data);
-                ++count;
-            }
-        }
-    }
-
-    g_hash_table_destroy (installed);
-
-    return count;
+    g_assert (RC_WORLD_GET_CLASS (world)->foreach_requiring_fn != NULL);
+    return RC_WORLD_GET_CLASS (world)->foreach_requiring_fn (world,
+                                                             dep,
+                                                             fn,
+                                                             user_data);
 }
 
-/* cut&pasted from above: ugh */
 int
 rc_world_foreach_parent_package (RCWorld          *world,
                                  RCPackageDep     *dep,
                                  RCPackageAndDepFn fn,
                                  gpointer          user_data)
 {
-    GSList *slist, *iter;
-    GHashTable *installed;
-    int count = 0;
-
     g_return_val_if_fail (world != NULL, -1);
     g_return_val_if_fail (dep != NULL, -1);
 
-    rc_world_conditional_sync (world, rc_package_dep_get_channel (dep));
+    rc_world_sync_conditional (world, rc_package_dep_get_channel (dep));
 
-    slist = hashed_slist_get (world->children_by_name,
-                              RC_PACKAGE_SPEC (dep)->nameq);
-
-    installed = g_hash_table_new (rc_package_spec_hash,
-                                  rc_package_spec_equal);
-
-    for (iter = slist; iter != NULL; iter = iter->next) {
-        RCPackageAndDep *pad = iter->data;
-        if (pad && pad->package && rc_package_is_installed (pad->package))
-            g_hash_table_insert (installed, & pad->package->spec, pad);
-    }
-
-    for (iter = slist; iter != NULL; iter = iter->next) {
-        RCPackageAndDep *pad = iter->data;
-
-        if (pad && rc_package_dep_verify_relation (
-                rc_world_get_packman (world), pad->dep, dep)) {
-
-            /* Skip dups if one of them in installed. */
-            if (rc_package_is_installed (pad->package)
-                || g_hash_table_lookup (installed, & pad->package->spec) == NULL) {
-
-                if (fn)
-                    fn (pad->package, pad->dep, user_data);
-                ++count;
-            }
-        }
-    }
-
-    g_hash_table_destroy (installed);
-
-    return count;
+    g_assert (RC_WORLD_GET_CLASS (world)->foreach_package_fn);
+    return RC_WORLD_GET_CLASS (world)->foreach_parent_fn (world,
+                                                          dep,
+                                                          fn,
+                                                          user_data);
 }
 
 int
@@ -2306,47 +1345,16 @@ rc_world_foreach_conflicting_package (RCWorld          *world,
                                       RCPackageAndDepFn fn,
                                       gpointer          user_data)
 {
-    GSList *slist, *iter;
-    GHashTable *installed;
-    int count = 0;
-
     g_return_val_if_fail (world != NULL, -1);
     g_return_val_if_fail (dep != NULL, -1);
 
-    rc_world_conditional_sync (world, rc_package_dep_get_channel (dep));
-
-    slist = hashed_slist_get (world->conflicts_by_name,
-                              RC_PACKAGE_SPEC (dep)->nameq);
-
-    installed = g_hash_table_new (rc_package_spec_hash,
-                                  rc_package_spec_equal);
-
-    for (iter = slist; iter != NULL; iter = iter->next) {
-        RCPackageAndDep *pad = iter->data;
-        if (pad && pad->package && rc_package_is_installed (pad->package))
-            g_hash_table_insert (installed, & pad->package->spec, pad);
-    }
-
-    for (iter = slist; iter != NULL; iter = iter->next) {
-        RCPackageAndDep *pad = iter->data;
-
-        if (pad && rc_package_dep_verify_relation (
-                rc_world_get_packman (world), pad->dep, dep)) {
-
-            /* Skip dups if one of them in installed. */
-            if (rc_package_is_installed (pad->package)
-                || g_hash_table_lookup (installed, & pad->package->spec) == NULL) {
-
-                if (fn)
-                    fn (pad->package, pad->dep, user_data);
-                ++count;
-            }
-        }
-    }
-
-    g_hash_table_destroy (installed);
-
-    return count;
+    rc_world_sync_conditional (world, rc_package_dep_get_channel (dep));
+    
+    g_assert (RC_WORLD_GET_CLASS (world)->foreach_conflicting_fn);
+    return RC_WORLD_GET_CLASS (world)->foreach_conflicting_fn (world,
+                                                               dep,
+                                                               fn,
+                                                               user_data);
 }
 
 struct SingleProviderInfo {
@@ -2355,13 +1363,15 @@ struct SingleProviderInfo {
     int count;
 };
 
-static void
-single_provider_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data)
+static gboolean 
+single_provider_cb (RCPackage     *package, 
+                    RCPackageSpec *spec, 
+                    gpointer       user_data)
 {
     struct SingleProviderInfo *info = user_data;
 
     if (! rc_channel_equal (package->channel, info->channel))
-        return;
+        return TRUE;
 
     if (info->package == NULL) {
         
@@ -2372,6 +1382,8 @@ single_provider_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data)
                                           RC_PACKAGE_SPEC (info->package))) {
         ++info->count;
     }
+
+    return TRUE;
 }
 
 gboolean
@@ -2404,213 +1416,230 @@ rc_world_get_single_provider (RCWorld *world,
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
-void
+gboolean
+rc_world_can_transact_package (RCWorld   *world,
+                               RCPackage *package)
+{
+    RCWorldClass *klass;
+
+    g_return_val_if_fail (world != NULL && RC_IS_WORLD (world), FALSE);
+
+    klass = RC_WORLD_GET_CLASS (world);
+
+    /* If we haven't set transact_fn in the vtable,
+       then obviously we can't transact anything! */
+    if (klass->transact_fn == NULL)
+        return FALSE;
+
+    /* If package is NULL, we just check if there is a can_transact_fn
+       entry in the vtable.  If not, this world isn't capable of
+       transacting anything. */
+    if (package == NULL) 
+        return klass->can_transact_fn != NULL;
+
+    if (klass->can_transact_fn == NULL)
+        return FALSE;
+
+    return klass->can_transact_fn (world, package);
+}
+
+gboolean
 rc_world_transact (RCWorld *world,
                    RCPackageSList *install_packages,
                    RCPackageSList *remove_packages,
                    int flags)
 {
-    RCPackman *packman;
-    RCPackageSList *syn_install_packages = NULL;
-    RCPackageSList *syn_remove_packages = NULL;
-    RCPackageSList *real_install_packages = NULL;
-    RCPackageSList *real_remove_packages = NULL;
+    RCWorldClass *klass;
     GSList *iter;
+    gboolean had_problem = FALSE;
 
-    g_return_if_fail (world != NULL);
+    g_return_val_if_fail (world != NULL && RC_IS_WORLD (world), FALSE);
 
-    /* FIXME: we need to respect the flags and not write out the
-       synthetic packages in the case of a dry-run, no-act etc. */
-    
-    packman = rc_world_get_packman (world);
-    g_return_if_fail (packman != NULL);
+    /* If both lists are empty, our transaction succeeds trivially. */
+    if (install_packages == NULL && remove_packages == NULL)
+        return TRUE;
+
+    /* Check to ensure that all of the packages in both lists are
+       transactable by this world.  If not, spew a warning for
+       every non-transactable package before returning FALSE. */
 
     for (iter = install_packages; iter != NULL; iter = iter->next) {
-        RCPackage *package = iter->data;
-
-        if (rc_package_is_synthetic (package))
-            syn_install_packages = g_slist_prepend (syn_install_packages,
-                                                    rc_package_ref (package));
-        else
-            real_install_packages = g_slist_prepend (real_install_packages,
-                                                     rc_package_ref (package));
+        RCPackage *pkg = iter->data;
+        if (! rc_world_can_transact_package (world, pkg)) {
+            g_warning ("World can't install package '%s'",
+                       rc_package_to_str_static (pkg));
+            had_problem = TRUE;
+        }
     }
 
     for (iter = remove_packages; iter != NULL; iter = iter->next) {
-        RCPackage *package = iter->data;
-
-        if (rc_package_is_synthetic (package))
-            syn_remove_packages = g_slist_prepend (syn_remove_packages,
-                                                   rc_package_ref (package));
-        else
-            real_remove_packages = g_slist_prepend (real_remove_packages,
-                                                    rc_package_ref (package));
+        RCPackage *pkg = iter->data;
+        if (! rc_world_can_transact_package (world, pkg)) {
+            g_warning ("World can't remove package '%s'",
+                       rc_package_to_str_static (pkg));
+            had_problem = TRUE;
+        }
     }
 
-    if (syn_install_packages || syn_remove_packages) {
+    if (had_problem)
+        return FALSE;
 
-        for (iter = syn_install_packages; iter != NULL; iter = iter->next) {
-            RCPackage *package = iter->data;
-            RCPackage *sys_package = rc_package_copy (package);
+    klass = RC_WORLD_GET_CLASS (world);
 
-            rc_channel_unref (sys_package->channel);
-            sys_package->channel = RC_CHANNEL_SYSTEM;
-            rc_world_add_package (world, sys_package);
-            rc_package_unref (sys_package);
-        }
-
-        for (iter = syn_remove_packages; iter != NULL; iter = iter->next) {
-            RCPackage *package = iter->data;
-            RCPackage *sys_package;
-            sys_package = rc_world_find_installed_version (world, package);
-            if (sys_package)
-                rc_world_remove_package (world, sys_package);
-        }
-
-        /* FIXME: check for errors */
-        rc_world_save_synthetic_packages (world);
-    }
-
-    rc_packman_transact (packman,
-                         real_install_packages,
-                         real_remove_packages,
-                         flags);
-
-    rc_package_slist_unref (syn_install_packages);
-    g_slist_free (syn_install_packages);
-
-    rc_package_slist_unref (syn_remove_packages);
-    g_slist_free (syn_remove_packages);
-
-    rc_package_slist_unref (real_install_packages);
-    g_slist_free (real_install_packages);
-
-    rc_package_slist_unref (real_remove_packages);
-    g_slist_free (real_remove_packages);
+    g_assert (klass->transact_fn);
+    return klass->transact_fn (world, install_packages, 
+                               remove_packages, flags);
 }
-
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
-static void
-foreach_package_by_name_cb (gpointer key, gpointer val, gpointer user_data)
+xmlNode *
+rc_world_membership_to_xml (RCWorld *world)
 {
-    FILE *out = user_data;
-    char *name = key;
-    SListAnchor *anchor = val;
-    GSList *iter = anchor->slist;
+    RCWorldClass *klass;
+    xmlNode *world_root;
+    
+    g_return_val_if_fail (world != NULL && RC_IS_WORLD (world), NULL);
+    
+    world_root = xmlNewNode (NULL, "world");
+    xmlNewProp (world_root, "type", G_OBJECT_TYPE_NAME (world));
 
-    fprintf (out, "PKG %s: ", name);
-    while (iter) {
-        RCPackage *package = iter->data;
-        if (package) {
-            fprintf (out, rc_package_to_str_static (package));
-            fprintf (out, " ");
-        } else {
-            fprintf (out, "(null) ");
-        }
-        iter = iter->next;
-    }
-    fprintf (out, "\n");
+    klass = RC_WORLD_GET_CLASS (world);
+    if (klass->membership_to_xml_fn != NULL)
+        klass->membership_to_xml_fn (world, world_root);
+
+    return world_root;
 }
 
-static void
-foreach_provides_by_name_cb (gpointer key, gpointer val, gpointer user_data)
-{
-    FILE *out = user_data;
-    char *name = key;
-    SListAnchor *anchor = val;
-    GSList *iter = anchor->slist;
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
-    fprintf (out, "PRV %s: ", name);
-    while (iter) {
-        RCPackageAndDep *pad = iter->data;
-        if (pad) {
-            fprintf (out, rc_package_to_str_static (pad->package));
-            fprintf (out, "::");
-            fprintf (out, rc_package_dep_to_string_static (pad->dep));
-            fprintf (out, " ");
-        } else {
-            fprintf (out, "(null) ");
-        }
-        iter = iter->next;
-    }
-    fprintf (out, "\n");
+static gboolean
+add_lock_xml_cb (RCPackageMatch *lock,
+                 gpointer        user_data)
+{
+    xmlNode *parent = user_data;
+    xmlNode *node = rc_package_match_to_xml_node (lock);
+    if (node)
+        xmlAddChild (parent, node);
+    return TRUE;
 }
 
-static void
-foreach_requires_by_name_cb (gpointer key, gpointer val, gpointer user_data)
+static gboolean
+add_package_xml_cb (RCPackage *package,
+                    gpointer   user_data)
 {
-    FILE *out = user_data;
-    char *name = key;
-    SListAnchor *anchor = val;
-    GSList *iter = anchor->slist;
+    xmlNode *parent = user_data;
+    xmlNode *node;
 
-    fprintf (out, "REQ %s: ", name);
-    while (iter) {
-        RCPackageAndDep *pad = iter->data;
-        if (pad) {
-            fprintf (out, rc_package_to_str_static (pad->package));
-            fprintf (out, "::");
-            fprintf (out, rc_package_spec_to_str_static (
-                         RC_PACKAGE_SPEC (pad->dep)));
-            fprintf (out, " ");
-        } else {
-            fprintf (out, "(null) ");
-        }
-        iter = iter->next;
-    }
-    fprintf (out, "\n");
+    node = rc_package_to_xml_node (package);
+    xmlAddChild (parent, node);
+    return TRUE;
 }
 
-static void
-foreach_child_by_name_cb (gpointer key, gpointer val, gpointer user_data)
-{
-    FILE *out = user_data;
-    char *name = key;
-    SListAnchor *anchor = val;
-    GSList *iter = anchor->slist;
+typedef struct {
+    RCWorld *world;
+    xmlNode *parent;
+} AddChannelClosure;
 
-    fprintf (out, "CHI %s: ", name);
-    while (iter) {
-        RCPackageAndDep *pad = iter->data;
-        if (pad) {
-            fprintf (out, rc_package_to_str_static (pad->package));
-            fprintf (out, "::");
-            fprintf (out, rc_package_spec_to_str_static (
-                         RC_PACKAGE_SPEC (pad->dep)));
-            fprintf (out, " ");
-        } else {
-            fprintf (out, "(null) ");
-        }
-        iter = iter->next;
-    }
-    fprintf (out, "\n");
+static gboolean
+add_channel_packages_cb (RCChannel *channel,
+                         gpointer   user_data)
+{
+    AddChannelClosure *closure = user_data;
+    xmlNode *node;
+
+    node = rc_channel_to_xml_node (channel);
+    rc_world_foreach_package (closure->world,
+                              channel,
+                              add_package_xml_cb,
+                              node);
+
+    xmlAddChild (closure->parent, node);
+    return TRUE;
 }
 
-static void
-foreach_conflicts_by_name_cb (gpointer key, gpointer val, gpointer user_data)
+xmlNode *
+rc_world_dump_to_xml (RCWorld *world,
+                      xmlNode *extra_xml)
+{
+    xmlNode *parent;
+    xmlNode *system_packages;
+    xmlNode *locks;
+    AddChannelClosure channel_closure;
+   
+    g_return_val_if_fail (world != NULL, NULL);
+
+    parent = xmlNewNode (NULL, "world");
+    
+    if (extra_xml != NULL)
+        xmlAddChild (parent, extra_xml);
+
+    locks = xmlNewNode (NULL, "locks");
+    rc_world_foreach_lock (world, add_lock_xml_cb, locks);
+    xmlAddChild (parent, locks);
+
+    system_packages = xmlNewNode (NULL, "system_packages");
+    xmlAddChild (parent, system_packages);
+
+    rc_world_foreach_package (world,
+                              RC_CHANNEL_SYSTEM,
+                              add_package_xml_cb,
+                              system_packages);
+
+    channel_closure.world = world;
+    channel_closure.parent = parent;
+
+    rc_world_foreach_channel (world,
+                              add_channel_packages_cb,
+                              &channel_closure);
+
+    return parent;
+}
+
+char *
+rc_world_dump (RCWorld *world, xmlNode *extra_xml)
+{
+    xmlNode *dump;
+    xmlDoc *doc;
+    xmlChar *data;
+    int data_size;
+
+    g_return_val_if_fail (world != NULL, NULL);
+
+    dump = rc_world_dump_to_xml (world, extra_xml);
+    g_return_val_if_fail (dump != NULL, NULL);
+
+    doc = xmlNewDoc ("1.0");
+    xmlDocSetRootElement (doc, dump);
+    xmlDocDumpMemory (doc, &data, &data_size);
+    xmlFreeDoc (doc);
+
+    return data;
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+RCWorld *
+rc_world_dup (RCWorld *old_world)
+{
+    RCWorld *new_world;
+
+    g_assert (RC_WORLD_GET_CLASS (old_world)->dup_fn);
+
+    new_world = RC_WORLD_GET_CLASS (old_world)->dup_fn (old_world);
+
+    return new_world;
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+static gboolean
+spew_cb (RCPackage *pkg, gpointer user_data)
 {
     FILE *out = user_data;
-    char *name = key;
-    SListAnchor *anchor = val;
-    GSList *iter = anchor->slist;
 
-    fprintf (out, "CON %s: ", name);
-    while (iter) {
-        RCPackageAndDep *pad = iter->data;
-        if (pad) {
-            fprintf (out, rc_package_to_str_static (pad->package));
-            fprintf (out, "::");
-            fprintf (out, rc_package_spec_to_str_static (
-                         RC_PACKAGE_SPEC (pad->dep)));
-            fprintf (out, " ");
-        } else {
-            fprintf (out, "(null) ");
-        }
-        iter = iter->next;
-    }
-    fprintf (out, "\n");
+    fprintf (out, "%s\n", rc_package_to_str_static (pkg));
+    return TRUE;
 }
 
 /**
@@ -2627,25 +1656,9 @@ void
 rc_world_spew (RCWorld *world, FILE *out)
 {
     rc_world_sync (world);
-
-    g_hash_table_foreach (world->packages_by_name,
-                          foreach_package_by_name_cb,
-                          out);
-
-    g_hash_table_foreach (world->provides_by_name,
-                          foreach_provides_by_name_cb,
-                          out);
-
-    g_hash_table_foreach (world->requires_by_name,
-                          foreach_requires_by_name_cb,
-                          out);
-
-    g_hash_table_foreach (world->children_by_name,
-                          foreach_child_by_name_cb,
-                          out);
-
-    g_hash_table_foreach (world->conflicts_by_name,
-                          foreach_conflicts_by_name_cb,
-                          out);
-
+    if (RC_WORLD_GET_CLASS (world)->spew_fn) {
+        RC_WORLD_GET_CLASS (world)->spew_fn (world, out);
+    } else {
+        rc_world_foreach_package (world, RC_CHANNEL_ANY, spew_cb, out);
+    }
 }

@@ -639,7 +639,7 @@ install_count_cb (RCPackage      *pkg,
                   RCPackageStatus status,
                   gpointer        user_data)
 {
-    if (pkg->channel != NULL) {
+    if (! rc_package_is_installed (pkg)) {
         int *count = user_data;
         ++*count;
     }
@@ -662,7 +662,7 @@ uninstall_count_cb (RCPackage       *pkg,
                     RCPackageStatus status,
                     gpointer        user_data)
 {
-    if (pkg->channel == NULL) {
+    if (rc_package_is_installed (pkg)) {
         int *count = user_data;
         ++*count;
     }
@@ -1105,9 +1105,8 @@ rc_resolver_context_requirement_is_met (RCResolverContext *context,
     info.context = context;
     info.flag = FALSE;
 
-    rc_world_check_providing_package (rc_resolver_context_get_world (context),
-                                      dep, FALSE,
-                                      requirement_met_cb, &info);
+    rc_world_foreach_providing_package (rc_resolver_context_get_world (context),
+                                        dep, requirement_met_cb, &info);
     
     return info.flag;
 }
@@ -1138,9 +1137,8 @@ rc_resolver_context_requirement_is_possible (RCResolverContext *context,
     info.context = context;
     info.flag = FALSE;
 
-    rc_world_check_providing_package (rc_resolver_context_get_world (context),
-                                      dep, FALSE, 
-                                      requirement_possible_cb, &info);
+    rc_world_foreach_providing_package (rc_resolver_context_get_world (context),
+                                        dep, requirement_possible_cb, &info);
     
     return info.flag;
 }
@@ -1209,7 +1207,7 @@ rc_resolver_context_is_parallel_install (RCResolverContext *context,
 
 gint
 rc_resolver_context_get_channel_priority (RCResolverContext *context,
-                                          const RCChannel *channel)
+                                          RCChannel *channel)
 {
     gboolean is_subscribed;
     int priority;
@@ -1217,7 +1215,7 @@ rc_resolver_context_get_channel_priority (RCResolverContext *context,
     g_return_val_if_fail (context != NULL, 0);
     g_return_val_if_fail (channel != NULL, 0);
 
-    is_subscribed = rc_channel_subscribed (channel);
+    is_subscribed = rc_channel_is_subscribed (channel);
     priority = rc_channel_get_priority (channel, is_subscribed);
 
     return priority;

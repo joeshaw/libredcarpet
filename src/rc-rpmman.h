@@ -98,6 +98,8 @@ struct _RCRpmman {
 
     int (*headerGetEntry)(Header, int_32, int_32 *, void **, int_32 *);
     void (*headerFree)(Header);
+    unsigned int (*headerSizeof) (Header, int);
+    Header (*headerLoad) (const void *);
 
     int (*readLead)(FD_t, struct rpmlead *);
     int (*rpmReadConfigFiles)(const char *, const char *);
@@ -199,5 +201,13 @@ struct _RCRpmmanClass {
 GType rc_rpmman_get_type (void);
 
 RCRpmman *rc_rpmman_new (void);
+
+/* Functions exported mainly for the apt-rpm loader */
+void rc_rpmman_depends_fill (RCRpmman  *rpmman,
+                             Header     header,
+                             RCPackage *package);
+void rc_rpmman_read_header  (RCRpmman  *rpmman,
+                             Header     header,
+                             RCPackage *package);
 
 #endif /* _RC_RPMMAN_H */

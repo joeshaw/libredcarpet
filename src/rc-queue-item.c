@@ -303,11 +303,12 @@ install_item_is_satisfied (RCQueueItem *item, RCResolverContext *context)
     return rc_resolver_context_package_is_present (context, install->package);
 }
 
-static void
+static gboolean
 build_conflict_list (RCPackage *package, RCPackageDep *dep, gpointer user_data)
 {
     GSList **slist = user_data;
     *slist = g_slist_prepend (*slist, package);
+    return TRUE;
 }
 
 static gboolean
@@ -436,7 +437,7 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
     if (package->requires_a)
         for (i = 0; i < package->requires_a->len; i++) {
             RCPackageDep *dep = package->requires_a->data[i];
-
+            
             if (!rc_resolver_context_requirement_is_met (context, dep)) {
                 RCQueueItem *req_item = rc_queue_item_new_require (rc_queue_item_get_world (item), dep);
                 rc_queue_item_require_add_package (req_item, package);
@@ -541,7 +542,7 @@ install_item_cmp (const RCQueueItem *item_a, const RCQueueItem *item_b)
     const RCQueueItem_Install *b = (const RCQueueItem_Install *) item_b;
 
     return rc_packman_version_compare (
-        rc_world_get_packman (item_a->world),
+        rc_packman_get_global (),
         RC_PACKAGE_SPEC (a->package),
         RC_PACKAGE_SPEC (b->package));
 }
@@ -725,7 +726,7 @@ struct RequireProcessInfo {
     GHashTable *uniq;
 };
 
-static void
+static gboolean
 require_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data)
 {
     struct RequireProcessInfo *info = user_data;
@@ -742,9 +743,11 @@ require_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data)
         info->providers = g_slist_prepend (info->providers, package);
         g_hash_table_insert (info->uniq, package, GINT_TO_POINTER (1));
     }
+
+    return TRUE;
 }
 
-static void
+static gboolean
 no_installable_providers_info_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data)
 {
     struct RequireProcessInfo *info = user_data;
@@ -786,13 +789,15 @@ no_installable_providers_info_cb (RCPackage *package, RCPackageSpec *spec, gpoin
                                           msg_str);
     }
     
+    return TRUE;
 }
 
-static void
+static gboolean
 look_for_upgrades_cb (RCPackage *package, gpointer user_data)
 {
     GSList **slist = user_data;
     *slist = g_slist_prepend (*slist, package);
+    return TRUE;
 }
 
 static gboolean
@@ -1108,7 +1113,7 @@ require_item_cmp (const RCQueueItem *item_a, const RCQueueItem *item_b)
     const RCQueueItem_Require *a = (const RCQueueItem_Require *) item_a;
     const RCQueueItem_Require *b = (const RCQueueItem_Require *) item_b;
 
-    cmp = rc_packman_version_compare (rc_world_get_packman (item_a->world),
+    cmp = rc_packman_version_compare (rc_packman_get_global (),
                                       RC_PACKAGE_SPEC (a->dep),
                                       RC_PACKAGE_SPEC (b->dep));
     if (cmp)
@@ -1594,7 +1599,7 @@ struct ConflictProcessInfo {
     guint actually_an_obsolete : 1;
 };
 
-static void
+static gboolean
 conflict_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data)
 {
     struct ConflictProcessInfo *info = (struct ConflictProcessInfo *) user_data;
@@ -1607,7 +1612,7 @@ conflict_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data
      * package with this provide may exist on the system at a time. */
     if (info->conflicting_package
         && rc_package_spec_equal (& package->spec, & info->conflicting_package->spec))
-        return;
+        return TRUE;
 
     /* FIXME: This should probably be a capability. */
     /* Obsoletes don't apply to virtual provides, only the packages
@@ -1618,7 +1623,7 @@ conflict_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data
     if (info->actually_an_obsolete
         && !rc_package_spec_equal (RC_PACKAGE_SPEC (package), spec))
     {
-        return;
+        return TRUE;
     }
 
     pkg_str = rc_package_spec_to_str (& package->spec);
@@ -1711,6 +1716,8 @@ conflict_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data
 
     g_free (pkg_str);
     g_free (spec_str);
+
+    return TRUE;
 }
 
 static gboolean
@@ -1778,7 +1785,7 @@ conflict_item_cmp (const RCQueueItem *item_a, const RCQueueItem *item_b)
     const RCQueueItem_Conflict *a = (const RCQueueItem_Conflict *) item_a;
     const RCQueueItem_Conflict *b = (const RCQueueItem_Conflict *) item_b;
 
-    cmp = rc_packman_version_compare (rc_world_get_packman (item_a->world),
+    cmp = rc_packman_version_compare (rc_packman_get_global (),
                                       RC_PACKAGE_SPEC (a->dep),
                                       RC_PACKAGE_SPEC (b->dep));
     if (cmp)
@@ -1846,21 +1853,23 @@ struct UnlinkCheckInfo {
     guint cancel_unlink : 1;
 };
 
-static void
+static gboolean
 unlink_check_cb (RCPackage *package, RCPackageDep *dep, gpointer user_data)
 {
     struct UnlinkCheckInfo *info = user_data;
 
     if (info->cancel_unlink)
-        return;
+        return TRUE; 
 
     if (! rc_resolver_context_package_is_present (info->context, package))
-        return;
+        return TRUE;
 
     if (rc_resolver_context_requirement_is_met (info->context, dep))
-        return;
+        return TRUE;
 
     info->cancel_unlink = TRUE;
+
+    return TRUE;
 }
 
 struct UninstallProcessInfo {
@@ -1872,17 +1881,17 @@ struct UninstallProcessInfo {
     guint remove_only   : 1;
 };
 
-static void
+static gboolean
 uninstall_process_cb (RCPackage *package, RCPackageDep *dep, gpointer user_data)
 {
     struct UninstallProcessInfo *info = user_data;
     RCQueueItem *require_item = NULL;
 
     if (! rc_resolver_context_package_is_present (info->context, package))
-        return;
+        return TRUE;
 
     if (rc_resolver_context_requirement_is_met (info->context, dep))
-        return;
+        return TRUE;
 
     require_item = rc_queue_item_new_require (info->world, dep);
     rc_queue_item_require_add_package (require_item, package);
@@ -1892,6 +1901,8 @@ uninstall_process_cb (RCPackage *package, RCPackageDep *dep, gpointer user_data)
     ((RCQueueItem_Require *) require_item)->lost_package = info->uninstalled_package;
 
     *info->require_items = g_slist_prepend (*info->require_items, require_item);
+
+    return TRUE;
 }
 
 static gboolean
@@ -2088,7 +2099,7 @@ uninstall_item_cmp (const RCQueueItem *item_a, const RCQueueItem *item_b)
     const RCQueueItem_Uninstall *b = (const RCQueueItem_Uninstall *) item_b;
 
     return rc_packman_version_compare (
-        rc_world_get_packman (item_a->world),
+        rc_packman_get_global (),
         RC_PACKAGE_SPEC (a->package),
         RC_PACKAGE_SPEC (b->package));
 }

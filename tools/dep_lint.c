@@ -28,7 +28,7 @@
 
 #include "libredcarpet.h"
 
-static void
+static gboolean
 try_to_install_cb (RCPackage *pkg, gpointer user_data)
 {
   RCWorld *world = rc_get_world ();
@@ -40,7 +40,7 @@ try_to_install_cb (RCPackage *pkg, gpointer user_data)
   if (installed != NULL
       && rc_package_spec_equal (RC_PACKAGE_SPEC (pkg),
 				RC_PACKAGE_SPEC (installed)))
-    return;
+    return TRUE;
 
   g_print ("-----------------------------------------------\n");
   g_print ("%s\n", rc_package_to_str_static (pkg));
@@ -69,6 +69,8 @@ try_to_install_cb (RCPackage *pkg, gpointer user_data)
   g_print ("\n");
 
   rc_resolver_free (resolver);
+
+  return TRUE;
 }
 
 void
@@ -83,29 +85,6 @@ try_to_install_everything (void)
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
-
-static void
-undump_file (const char *filename)
-{
-  RCWorld *world;
-  char *dump_file_contents = NULL;
-
-  fprintf (stderr, "Undumping %s...\n", filename);
-
-  if ((! g_file_get_contents (filename, &dump_file_contents, NULL, NULL))
-      || dump_file_contents == NULL
-      || ! *dump_file_contents) {
-    fprintf (stderr, "Unable to load dump file '%s'.  Aborting.\n", filename);
-    exit (-1);
-  }
-
-  world = rc_get_world ();
-  rc_world_undump (world, dump_file_contents);
-  g_free (dump_file_contents);
-}
-
-/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
-
 
 int
 main (int argc, char *argv[])
@@ -122,9 +101,13 @@ main (int argc, char *argv[])
   rc_distro_parse_xml (NULL, 0);
 
   packman = rc_distman_new ();
-  world = rc_world_new (packman);
+
+  fprintf (stderr, "Undumping %s...\n", argv[1]);
+
+  world = rc_world_undump_new (argv[1]);
   rc_set_world (world);
 
-  undump_file (argv[1]);
   try_to_install_everything ();
+
+  return 0;
 }

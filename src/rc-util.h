@@ -61,15 +61,30 @@ guint32 rc_string_to_guint32_with_default(const char *n, guint32 def);
 
 /* Wrappers around libz's compression/uncompression functions. */
 
-gint     rc_uncompress_memory    (const guint8 *input_buffer,
-                                  guint32       input_length,
-                                  GByteArray  **out_ba);
+gint     rc_uncompress_memory       (const guint8 *input_buffer,
+                                     guint32       input_length,
+                                     GByteArray  **out_ba);
+gint     rc_compress_memory         (const guint8 *input_buffer,
+                                     guint32       input_length,
+                                     GByteArray  **out_ba);
+gboolean rc_memory_looks_compressed (const guint8 *buffer,
+                                     guint32       size);
 
-gint     rc_compress_memory      (const guint8 *input_buffer,
-                                  guint32       input_length,
-                                  GByteArray  **out_ba);
+gint     rc_gunzip_memory           (const guint8 *input_buffer,
+                                     guint32       input_length,
+                                     GByteArray  **out_ba);
+gint     rc_gzip_memory             (const guint8 *input_buffer,
+                                     guint32       input_length,
+                                     GByteArray  **out_ba);
+gboolean rc_memory_looks_gzipped    (const guint8 *buffer);
 
-gboolean rc_memory_looks_gzipped (const guint8 *buffer);
+gint     rc_bunzip2_memory          (const guint8 *input_buffer,
+                                     guint32       input_length,
+                                     GByteArray  **out_ba);
+gint     rc_bzip2_memory            (const guint8 *input_buffer,
+                                     guint32       input_length,
+                                     GByteArray  **out_ba);
+gboolean rc_memory_looks_bzip2ed    (const guint8 *buffer);
 
 
 /* An easy way to map files.  If we map a compressed file,

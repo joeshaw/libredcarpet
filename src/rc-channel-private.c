@@ -34,8 +34,6 @@ rc_channel_new (void)
     channel = g_new0 (RCChannel, 1);
 
     channel->refs = 1;
-    
-    channel->type = RC_CHANNEL_TYPE_HELIX; /* default */
 
     channel->priority = -1;
     channel->priority_unsubd = -1;

@@ -44,8 +44,6 @@ struct _RCChannel {
     gint priority;         /* subscribed */
     gint priority_unsubd;  /* unsubscribed */
 
-    RCChannelType type;
-
     GSList *distro_target;
 
     gchar *path;
@@ -63,8 +61,9 @@ struct _RCChannel {
 
     void (*refresh_magic) (RCChannel *);
 
-    gboolean transient  : 1;
-    gboolean silent     : 1;
+    unsigned system_flag : 1;
+    unsigned transient   : 1;
+    unsigned silent      : 1;
 };
 
 RCChannel *rc_channel_new  (void);

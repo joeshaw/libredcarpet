@@ -62,7 +62,9 @@ struct _RCPackageDepArray {
 #include "rc-packman.h"
 #include "rc-channel.h"
 
-typedef void (*RCPackageAndDepFn) (RCPackage *, RCPackageDep *, gpointer);
+typedef gboolean (*RCPackageAndDepFn) (RCPackage *, 
+                                       RCPackageDep *, 
+                                       gpointer);
 
 RCPackageRelation
 rc_package_relation_from_string (const gchar *relation);

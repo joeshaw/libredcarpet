@@ -225,4 +225,7 @@ const gchar *rc_packman_get_repackage_dir (RCPackman *packman);
 void rc_packman_set_transaction_tracking (RCPackman *packman,
                                           gboolean   enabled);
 
+RCPackman *rc_packman_get_global (void);
+void       rc_packman_set_global (RCPackman *packman);
+
 #endif /* _RC_PACKMAN_H */

@@ -422,16 +422,16 @@ rc_resolver_queue_split_first_branch (RCResolverQueue *queue,
                 int priority, priority2;
 
                 priority = rc_channel_get_priority (pkg->channel,
-                                                    rc_channel_subscribed (pkg->channel));
+                                                    rc_channel_is_subscribed (pkg->channel));
 
                 priority2 = rc_channel_get_priority (pkg2->channel,
-                                                     rc_channel_subscribed (pkg2->channel));
+                                                     rc_channel_is_subscribed (pkg2->channel));
 
                 if (priority != priority2 && spec->nameq == spec2->nameq) {
                     RCPackman *packman;
 
-                    packman = rc_world_get_packman (
-                        rc_resolver_context_get_world (queue->context));
+                    packman = rc_packman_get_global ();
+                    g_assert (packman != NULL);
 
                     if (strcmp (spec->version, spec2->version) == 0
                         || (priority < priority2 &&

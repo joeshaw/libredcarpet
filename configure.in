@@ -44,6 +44,14 @@ dnl Check for libz to handle compressed xml files
 AC_CHECK_LIB(z, inflate, LIBREDCARPET_LIBS="$LIBREDCARPET_LIBS -lz",
   AC_ERROR([libredcarpet requires zlib]))
 
+dnl Check for libbzip2
+AC_CHECK_LIB(bz2, BZ2_bzCompress, have_bz2=yes, have_bz2=no)
+
+if test "x$have_bz2" = "xyes"; then
+  AC_DEFINE(HAVE_BZ2)
+  LIBREDCARPET_LIBS="$LIBREDCARPET_LIBS -lbz2"
+fi
+
 dnl not everyone has mkdtemp
 AC_CHECK_FUNCS(mkdtemp)
 
@@ -189,6 +197,40 @@ if test "x$enable_backend_dpkg" = "xyes"; then
   AC_DEFINE(ENABLE_DPKG)
 fi
 
+dnl Check which backend the user prefers.  Defaults to rpm if the support is
+dnl compiled in.
+
+AC_ARG_ENABLE(preferred-backend,
+  [  --enable-preferred-backend=[rpm|dpkg|none]  set this backend as the default],
+  preferred_backend=$enableval, preferred_backend=none)
+
+if test "x$preferred_backend" = "xnone"; then
+  if test "x$enable_backend_rpm" = "xyes"; then
+    preferred_backend="rpm"
+  elif test "x$enable_backend_dpkg" = "xyes"; then
+    preferred_backend="dpkg"
+  fi
+fi
+
+if test "x$preferred_backend" != "xnone"; then
+  AC_MSG_CHECKING(preferred packaging backend)
+
+  if test "x$preferred_backend" = "xrpm"; then
+    if test "x$enable_backend_rpm" != "xyes"; then
+      AC_ERROR([RPM backend cannot be preferred if it is not enabled])
+    fi
+  elif test "x$preferred_backend" = "xdpkg"; then
+    if test "x$enable_backend_dpkg" != "xyes"; then
+      AC_ERROR([dpkg backend cannot be preferred if it is not enabled])
+    fi
+  fi
+
+  AC_MSG_RESULT($preferred_backend)
+
+  AC_DEFINE_UNQUOTED(DEFAULT_BACKEND, "$preferred_backend",
+                     [Default packaging backend])
+fi
+
 dnl gtk-doc
 AM_CONDITIONAL(ENABLE_GTK_DOC, test x$enable_gtk_doc = xyes)
 
@@ -214,6 +256,9 @@ Configuration:
 
   Include DPKG support:         ${enable_backend_dpkg}
   Include RPM support:          ${enable_backend_rpm}
+  Preferred backend:            ${preferred_backend}
+
+  bz2 support:                  ${have_bz2}
 
   LIBREDCARPET_CFLAGS:          ${LIBREDCARPET_CFLAGS}
   LIBREDCARPET_LIBS:            ${LIBREDCARPET_LIBS}

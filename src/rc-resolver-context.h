@@ -166,7 +166,7 @@ gboolean           rc_resolver_context_is_parallel_install (RCResolverContext *,
                                                             RCPackage *);
 
 gint               rc_resolver_context_get_channel_priority (RCResolverContext *,
-                                                             const RCChannel *);
+                                                             RCChannel *);
 
 
 

@@ -23,36 +23,77 @@
 #include <glib.h>
 #include <libxml/tree.h>
 
+struct _RCWorld;
+
 typedef struct _RCChannel RCChannel;
 typedef GSList RCChannelSList;
+typedef enum _RCChannelType RCChannelType;
 typedef gboolean (*RCChannelFn) (RCChannel *, gpointer);
+typedef gboolean (*RCChannelAndSubdFn) (RCChannel *, gboolean, gpointer);
 
 #include "rc-package.h"
 
-/*
-  HELIX   packageinfo.xml
-   DEBIAN  debian Packages.gz 
-   REDHAT  up2date RDF [?]
-*/
-typedef enum {
-    RC_CHANNEL_TYPE_HELIX,  
-    RC_CHANNEL_TYPE_DEBIAN,
-    RC_CHANNEL_TYPE_REDHAT,   
-    RC_CHANNEL_TYPE_UNKNOWN,
-    RC_CHANNEL_TYPE_LAST
-} RCChannelType;
+#define RC_CHANNEL_SYSTEM     ((RCChannel *) GINT_TO_POINTER (1))
+#define RC_CHANNEL_ANY        ((RCChannel *) GINT_TO_POINTER (2))
+#define RC_CHANNEL_NON_SYSTEM ((RCChannel *) GINT_TO_POINTER (3))
 
-#define RC_CHANNEL_SYSTEM     (NULL)
-#define RC_CHANNEL_ANY        ((RCChannel *) 0x1)
-#define RC_CHANNEL_NON_SYSTEM ((RCChannel *) 0x2)
+enum _RCChannelType {
+    RC_CHANNEL_TYPE_UNKNOWN = -1,
+    RC_CHANNEL_TYPE_HELIX,
+    RC_CHANNEL_TYPE_DEBIAN,
+    RC_CHANNEL_TYPE_APTRPM
+};
 
 int rc_channel_priority_parse (const char *);
 
 RCChannel *rc_channel_ref   (RCChannel *channel);
 void       rc_channel_unref (RCChannel *channel);
 
+/* Constructor / setters */
+
+RCChannel *rc_channel_new (const char *id,
+                           const char *name,
+                           const char *alias,
+                           const char *description);
+
+void rc_channel_set_id_prefix (RCChannel  *channel,
+                               const char *prefix);
+
+void rc_channel_set_world (RCChannel *channel,
+                           struct _RCWorld *world);
+
+void rc_channel_set_type (RCChannel     *channel,
+                          RCChannelType  type);
+
+void rc_channel_set_priorities (RCChannel *channel,
+                                gint subd_priority,
+                                gint unsubd_priority);
+
+void rc_channel_set_path (RCChannel  *channel,
+                          const char *path);
+
+void rc_channel_set_file_path (RCChannel  *channel,
+                               const char *file_path);
+
+void rc_channel_set_icon_file (RCChannel  *channel,
+                               const char *icon_file);
+
+void rc_channel_set_pkginfo_file (RCChannel  *channel,
+                                  const char *pkginfo_file);
+
+void rc_channel_set_system (RCChannel *channel);
+
+void     rc_channel_make_immutable (RCChannel *channel);
+
+gboolean rc_channel_is_immutable   (RCChannel *channel);
+
+
 /* Accessors */
- 
+
+struct _RCWorld *rc_channel_get_world    (RCChannel *channel);
+
+RCChannelType rc_channel_get_type        (RCChannel *channel);
+
 const char   *rc_channel_get_id          (RCChannel *channel);
 
 const char   *rc_channel_get_name        (RCChannel *channel);
@@ -64,49 +105,34 @@ const char   *rc_channel_get_description (RCChannel *channel);
 int           rc_channel_get_priority    (RCChannel *channel,
                                           gboolean   is_subscribed);
 
-RCChannelType rc_channel_get_type        (RCChannel *channel);
+const char   *rc_channel_get_pkginfo_file (RCChannel *channel);
 
+const char   *rc_channel_get_path         (RCChannel *channel);
 
-const char   *rc_channel_get_pkginfo_file       (RCChannel *channel);
+const char   *rc_channel_get_file_path    (RCChannel *channel);
 
-gboolean      rc_channel_get_pkginfo_compressed (RCChannel *channel);
+const char   *rc_channel_get_icon_file    (RCChannel *channel);
 
-time_t        rc_channel_get_last_update        (RCChannel *channel);
+/* Distro target functions */
 
-const char   *rc_channel_get_path               (RCChannel *channel);
+void     rc_channel_add_distro_target (RCChannel  *channel,
+                                       const char *target);
 
-const char   *rc_channel_get_icon_file          (RCChannel *channel);
-
+gboolean rc_channel_has_distro_target (RCChannel  *channel,
+                                       const char *target);
 
 /* Subscription management */
 
-gboolean rc_channel_subscribed       (RCChannel *channel);
+gboolean rc_channel_is_subscribed    (RCChannel *channel);
 
-void     rc_channel_set_subscription (RCChannel       *channel,
-                                      gboolean         subscribed);
-
-/* Iterators/Accessors for channel packages */
-
-int rc_channel_foreach_package (RCChannel *channel,
-                                RCPackageFn fn,
-                                gpointer user_data);
-
-int rc_channel_package_count (RCChannel *channel);
-
+void     rc_channel_set_subscription (RCChannel *channel,
+                                      gboolean   subscribed);
 
 /* Other */
 
-gboolean rc_channel_has_refresh_magic (RCChannel *);
-gboolean rc_channel_use_refresh_magic (RCChannel *);
+gboolean rc_channel_is_system (RCChannel *);
 
-gboolean rc_channel_get_transient (RCChannel *);
-gboolean rc_channel_get_silent    (RCChannel *);
-
-const char *rc_channel_get_id_by_name (RCChannelSList *channels, char *name);
-
-RCChannel *rc_channel_get_by_id (RCChannelSList *channels, const char *id);
-
-RCChannel *rc_channel_get_by_name (RCChannelSList *channels, char *name);
+gboolean rc_channel_is_hidden (RCChannel *);
 
 gboolean rc_channel_is_wildcard (RCChannel *a);
 gboolean rc_channel_equal       (RCChannel *a, RCChannel *b);

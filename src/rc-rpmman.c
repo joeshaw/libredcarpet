@@ -1662,7 +1662,7 @@ rc_rpmman_section_to_package_section (const gchar *rpmsection)
    of the elements, since they are just pointers into the rpm header structure.
    Just remember to free the header later! */
 
-static void
+void
 rc_rpmman_read_header (RCRpmman *rpmman, Header header, RCPackage *package)
 {
     int_32 type, count;
@@ -1927,7 +1927,7 @@ depends_fill_helper (RCRpmman *rpmman, Header header, int names_tag,
     g_free (has_epochs);
 }
 
-static void
+void
 rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
 {
     RCPackageDep *dep;
@@ -3086,13 +3086,19 @@ load_fake_syms (RCRpmman *rpmman)
     /* FIXME: untested */
     rpmman->headerGetEntry = ((void **)hdrVec)[16];
     rpmman->headerFree = ((void **)hdrVec)[2];
+    rpmman->headerSizeof = ((void **)hdrVec)[6];
+    rpmman->headerLoad = ((void **)hdrVec)[10];
 #elif RPM_VERSION >= 40004 /* RPM 4.0.4 only */
     /* FIXME: untested */
     rpmman->headerGetEntry = ((void **)hdrVec)[15];
     rpmman->headerFree = ((void **)hdrVec)[1];
+    rpmman->headerSizeof = ((void **)hdrVec)[5];
+    rpmman->headerLoad = ((void **)hdrVec)[9];
 #else
     rpmman->headerGetEntry = &headerGetEntry;
     rpmman->headerFree = &headerFree;
+    rpmman->headerSizeof = &headerSizeof;
+    rpmman->headerLoad = &headerLoad;
 #endif
     rpmman->readLead = &readLead;
     rpmman->rpmReadConfigFiles = &rpmReadConfigFiles;
@@ -3221,11 +3227,15 @@ load_rpm_syms (RCRpmman *rpmman)
         if (rpmman->version == 40004) { /* RPM 4.0.4 only */
             rpmman->headerFree = *(*hdrfuncs + 1);
             rpmman->headerGetEntry = *(*hdrfuncs + 15);
+            rpmman->headerSizeof = *(*hdrfuncs + 5);
+            rpmman->headerLoad = *(*hdrfuncs + 9);
         }
         else if (rpmman->version >= 40100 &&
                  rpmman->version <= 40200) { /* RPM 4.1-4.2 inclusive */
             rpmman->headerFree = *(*hdrfuncs + 2);
             rpmman->headerGetEntry = *(*hdrfuncs + 16);
+            rpmman->headerSizeof = *(*hdrfuncs + 6);
+            rpmman->headerLoad = *(*hdrfuncs + 10);
         }
         else
             g_assert_not_reached ();
@@ -3236,6 +3246,14 @@ load_rpm_syms (RCRpmman *rpmman)
         }
         if (!g_module_symbol (rpmman->rpm_lib, "headerFree",
                               ((gpointer)&rpmman->headerFree))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "headerSizeof",
+                              ((gpointer)&rpmman->headerSizeof))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "headerLoad",
+                              ((gpointer)&rpmman->headerLoad))) {
             return (FALSE);
         }
     }

@@ -27,27 +27,61 @@
 
 #include <libxml/tree.h>
 
-#include "rc-channel-private.h"
 #include "rc-world.h"
 #include "rc-util.h"
 #include "rc-debug.h"
 #include "xml-util.h"
 
+struct _RCChannel {
+    gint refs;
+
+    struct _RCWorld *world;
+
+    RCChannelType type;
+
+    gchar *id;
+
+    gchar *name;
+    gchar *alias;
+    gchar *description;
+                            /* priority if channel is... */
+    gint priority;          /* subscribed */
+    gint priority_unsubd;   /* unsubscribed */
+
+    gchar *path;
+    gchar *file_path;
+    gchar *icon_file;
+    gchar *pkginfo_file;
+
+    GSList *distro_targets; /* List of targets (char *) for this channel */
+
+    time_t last_update;
+
+    gboolean system    : 1;
+    gboolean hidden    : 1;
+    gboolean immutable : 1;
+};
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
 #define DEFAULT_CHANNEL_PRIORITY 1600
 #define UNSUBSCRIBED_CHANNEL_ADJUSTMENT(x) ((x)/2)
 #define BAD_CHANNEL_PRIORITY     0 
 
-static struct ChannelPriorityTable {
+typedef struct {
     const char *str;
     int priority;
-} channel_priority_table[] = { { "private",     6400 },
-                               { "ximian",      3200 },
-                               { "distro",      1600 },
-                               { "third_party",  800 },
-                               { "preview",      400 },
-                               { "untested",     200 },
-                               { "snapshot",     100 },
-                               { NULL,             0 } };
+} ChannelPriorityPair;
+
+ChannelPriorityPair channel_priority_table[] = \
+    { { "private",     6400 },
+      { "ximian",      3200 },
+      { "distro",      1600 },
+      { "third_party",  800 },
+      { "preview",      400 },
+      { "untested",     200 },
+      { "snapshot",     100 },
+      { NULL,             0 } };
 
 int
 rc_channel_priority_parse (const char *priority_str)
@@ -106,16 +140,13 @@ rc_channel_unref (RCChannel *channel)
             g_free (channel->alias);
             g_free (channel->description);
 
-            g_slist_foreach (channel->distro_target, (GFunc)g_free, NULL);
-            g_slist_free (channel->distro_target);
-
             g_free (channel->path);
             g_free (channel->file_path);
-
             g_free (channel->pkginfo_file);
-            g_free (channel->pkgset_file);
-
             g_free (channel->icon_file);
+
+            g_slist_foreach (channel->distro_targets, (GFunc) g_free, NULL);
+            g_slist_free (channel->distro_targets);
             
             g_free (channel);
         }
@@ -124,13 +155,187 @@ rc_channel_unref (RCChannel *channel)
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
+RCChannel *
+rc_channel_new (const char *id,
+                const char *name,
+                const char *alias,
+                const char *description)
+{
+    static int fake_id = 1;
+    char fake_id_buffer[32];
+
+    RCChannel *channel = g_new0 (RCChannel, 1);
+
+    if (id == NULL) {
+        g_snprintf (fake_id_buffer, 32, "fake-id-%d", fake_id);
+        ++fake_id;
+        id = fake_id_buffer;
+    }
+
+    if (name == NULL)
+        name = "Unnamed Channel";
+
+    if (alias == NULL)
+        alias = name;
+
+    if (description == NULL)
+        description = "No description available.";
+
+    channel->refs = 1;
+
+    channel->type = RC_CHANNEL_TYPE_UNKNOWN;
+    
+    channel->priority = -1;
+    channel->priority_unsubd = -1;
+
+    channel->id          = g_strdup (id);
+    channel->name        = g_strdup (name);
+    channel->alias       = g_strdup (alias);
+    channel->description = g_strdup (description);
+
+    return channel;
+}
+
+void
+rc_channel_set_id_prefix (RCChannel *channel,
+                          const char *prefix)
+{
+    g_return_if_fail (channel != NULL);
+    if (prefix && *prefix) {
+        char *new_id = g_strconcat (prefix, "|", channel->id, NULL);
+        g_free (channel->id);
+        channel->id = new_id;
+    }
+}
+
+void
+rc_channel_set_world (RCChannel *channel,
+                      RCWorld *world)
+{
+    g_return_if_fail (channel != NULL);
+    g_return_if_fail (world != NULL && RC_IS_WORLD (world));
+
+    channel->world = world;
+}
+
+void
+rc_channel_set_type (RCChannel *channel, RCChannelType type)
+{
+    g_return_if_fail (channel != NULL);
+    g_return_if_fail (!rc_channel_is_immutable (channel));
+
+    channel->type = type;
+}
+
+void
+rc_channel_set_priorities (RCChannel *channel,
+                           gint subd_priority,
+                           gint unsubd_priority)
+{
+    g_return_if_fail (channel != NULL);
+    g_return_if_fail (! rc_channel_is_immutable (channel));
+
+    channel->priority = subd_priority;
+    channel->priority_unsubd = unsubd_priority;
+}
+
+void
+rc_channel_set_path (RCChannel *channel, const char *path)
+{
+    g_return_if_fail (channel != NULL);
+    g_return_if_fail (!rc_channel_is_immutable (channel));
+    g_return_if_fail (path != NULL);
+
+    if (channel->path)
+        g_free (channel->path);
+
+    channel->path = g_strdup (path);
+}
+
+void
+rc_channel_set_file_path (RCChannel *channel, const char *file_path)
+{
+    g_return_if_fail (channel != NULL);
+    g_return_if_fail (!rc_channel_is_immutable (channel));
+
+    if (channel->file_path)
+        g_free (channel->file_path);
+
+    channel->file_path = g_strdup (file_path);
+}
+
+void
+rc_channel_set_icon_file (RCChannel *channel, const char *icon_file)
+{
+    g_return_if_fail (channel != NULL);
+    g_return_if_fail (!rc_channel_is_immutable (channel));
+
+    if (channel->icon_file)
+        g_free (channel->icon_file);
+
+    channel->icon_file = g_strdup (icon_file);
+}
+
+void
+rc_channel_set_pkginfo_file (RCChannel *channel, const char *pkginfo_file)
+{
+    g_return_if_fail (channel != NULL);
+    g_return_if_fail (!rc_channel_is_immutable (channel));
+
+    if (channel->pkginfo_file)
+        g_free (channel->pkginfo_file);
+
+    channel->pkginfo_file = g_strdup (pkginfo_file);
+}
+
+void
+rc_channel_set_system (RCChannel *channel)
+{
+    g_return_if_fail (channel != NULL);
+    g_return_if_fail (! rc_channel_is_immutable (channel));
+
+    channel->system = TRUE;
+}
+
+void
+rc_channel_make_immutable (RCChannel *channel)
+{
+    g_return_if_fail (channel != NULL);
+
+    channel->immutable = TRUE;
+}
+
+gboolean
+rc_channel_is_immutable (RCChannel *channel)
+{
+    g_return_val_if_fail (channel != NULL, FALSE);
+
+    return channel->immutable;
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+struct _RCWorld *
+rc_channel_get_world (RCChannel *channel)
+{
+    g_return_val_if_fail (channel != NULL, NULL);
+
+    return channel->world;
+}
+
+RCChannelType
+rc_channel_get_type (RCChannel *channel)
+{
+    g_return_val_if_fail (channel != NULL, RC_CHANNEL_TYPE_UNKNOWN);
+
+    return channel->type;
+}
+
 const char *
 rc_channel_get_id (RCChannel *channel)
 {
-    if (channel == RC_CHANNEL_SYSTEM)
-        return "system";
-
     g_return_val_if_fail (channel != NULL, NULL);
+    g_return_val_if_fail (rc_channel_is_wildcard (channel) == FALSE, NULL);
     
     return channel->id;
 }
@@ -174,7 +379,7 @@ rc_channel_get_priority (RCChannel *channel,
     g_return_val_if_fail (channel != NULL, BAD_CHANNEL_PRIORITY);
 
     priority = channel->priority;
-    if (priority < 0)
+    if (priority <= 0)
         priority = DEFAULT_CHANNEL_PRIORITY;
 
     if (!is_subscribed) {
@@ -188,37 +393,6 @@ rc_channel_get_priority (RCChannel *channel,
     return priority;
 }
 
-RCChannelType
-rc_channel_get_type (RCChannel *channel)
-{
-    g_return_val_if_fail (channel != NULL, RC_CHANNEL_TYPE_UNKNOWN);
-
-    return channel->type;
-}
-
-const char *
-rc_channel_get_pkginfo_file (RCChannel *channel)
-{
-    g_return_val_if_fail (channel != NULL, NULL);
-
-    return channel->pkginfo_file;
-}
-
-gboolean
-rc_channel_get_pkginfo_compressed (RCChannel *channel)
-{
-    g_return_val_if_fail (channel != NULL, FALSE);
-
-    return channel->pkginfo_compressed;
-}
-
-time_t
-rc_channel_get_last_update (RCChannel *channel)
-{
-    g_return_val_if_fail (channel != NULL, (time_t) 0);
-    return channel->last_update;
-}
-
 const char *
 rc_channel_get_path (RCChannel *channel)
 {
@@ -227,16 +401,79 @@ rc_channel_get_path (RCChannel *channel)
 }
 
 const char *
+rc_channel_get_file_path (RCChannel *channel)
+{
+    static char *file_path = NULL;
+
+    g_return_val_if_fail (channel != NULL, NULL);
+
+    g_free (file_path);
+
+    file_path = rc_maybe_merge_paths (channel->path, channel->file_path);
+
+    return file_path;
+}
+
+const char *
 rc_channel_get_icon_file (RCChannel *channel)
 {
+    static char *icon_file = NULL;
+
     g_return_val_if_fail (channel != NULL, NULL);
-    return channel->icon_file;
+
+    g_free (icon_file);
+
+    icon_file = rc_maybe_merge_paths (channel->path, channel->icon_file);
+
+    return icon_file;
+}
+
+const char *
+rc_channel_get_pkginfo_file (RCChannel *channel)
+{
+    static char *pkginfo_file = NULL;
+
+    g_return_val_if_fail (channel != NULL, NULL);
+
+    g_free (pkginfo_file);
+
+    pkginfo_file = rc_maybe_merge_paths (channel->path, channel->pkginfo_file);
+
+    return pkginfo_file;
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+void
+rc_channel_add_distro_target (RCChannel *channel, const char *target)
+{
+    g_return_if_fail (channel != NULL);
+    g_return_if_fail (target != NULL);
+
+    channel->distro_targets = g_slist_prepend (channel->distro_targets,
+                                               g_strdup (target));
+}
+
+gboolean
+rc_channel_has_distro_target (RCChannel *channel, const char *target)
+{
+    GSList *iter;
+
+    g_return_val_if_fail (channel != NULL, FALSE);
+    g_return_val_if_fail (target != NULL, FALSE);
+
+    for (iter = channel->distro_targets; iter != NULL; iter = iter->next) {
+        if (g_strcasecmp ((char *) iter->data, target) == 0)
+            return TRUE;
+    }
+
+    return FALSE;
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 gboolean
-rc_channel_subscribed (RCChannel *channel)
+rc_channel_is_subscribed (RCChannel *channel)
 {
     g_return_val_if_fail (channel != NULL, FALSE);
 
@@ -254,194 +491,21 @@ rc_channel_set_subscription (RCChannel *channel,
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
-int
-rc_channel_foreach_package (RCChannel *channel,
-                            RCPackageFn fn,
-                            gpointer user_data)
+gboolean
+rc_channel_is_system (RCChannel *channel)
 {
-    g_return_val_if_fail (channel != NULL, -1);
-
-    if (channel->world == NULL) {
-        g_warning ("rc_channel_foreach_package called on an unattached channel!");
-        return -1;
-    }
-
-    return rc_world_foreach_package (channel->world, 
-                                     (RCChannel *) channel,
-                                     fn, user_data);
-}
-
-int
-rc_channel_package_count (RCChannel *channel)
-{
-    g_return_val_if_fail (channel != NULL, -1);
-
-    if (channel->world == NULL) {
-        g_warning ("rc_channel_package_count called on an unattached channel!");
-        return -1;
-    }
-
-    return rc_channel_foreach_package (channel, NULL, NULL);
-}
-                          
-
-/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
-
-#if 0
-RCChannelSList *
-rc_channel_parse_apt_sources(const char *filename)
-{
-    RCChannelSlist *cl = NULL;
-    int fd;
-    int bytes;
-    char buf[16384];
-    GByteArray *data;
-    char **lines;
-    char *l;
-    int id = -1;
-
-    fd = open(filename, O_RDONLY);
-    if (fd < 0) {
-	g_warning("Unable to open file %s", filename);
-	return NULL;
-    }
-
-    data = g_byte_array_new();
-
-    do {
-	bytes = read(fd, buf, 16384);
-	if (bytes)
-	    g_byte_array_append(data, buf, bytes);
-    } while (bytes > 0);
-
-    fclose(fd);
-    g_byte_array_append(data, "\0", 1);
-    lines = g_strsplit(data->data, "\n", 0);
-    g_byte_array_free(data);
+    g_return_val_if_fail (channel != NULL, FALSE);
     
-    for (l = lines; l; l++) {
-	char **s;
-	char c;
-
-	if (*l == '#')
-	    continue;
-
-	s = g_strsplit(l, " ", 0);
-	if (g_strcasecmp(s[0], "deb") != 0) {
-	    g_strfreev(s);
-	    continue;
-	}
-
-	/* So, we need to see if the last character of the distribution field
-	   in the sources line ends with a slash. If it does, then it is an
-	   absolutely path. Otherwise, it is a distribution name. */
-	if (s[2][strlen(s[2])-1] == '/') {
-	    RCChannel *channel;
-
-	    channel = rc_channel_new();
-
-	    channel->id = id;
-	    channel->path = g_strconcat(s[1], "/", s[2], NULL);
-	    channel->name = g_strdup(channel->path);
-	    channel->description = g_strdup(channel->path);
-	    channel->pkginfo_file = g_strdup("Packages.gz");
-	    channel->pkginfo_compressed = TRUE;
-	    channel->type = RC_CHANNEL_TYPE_DEBIAN;
-
-	    id--;
-	}
-
-	/* FIXME: Write the rest of me. Bad Joey! */
-    }
-} /* rc_channel_parse_apt_sources */
-#endif
-
-gboolean
-rc_channel_has_refresh_magic (RCChannel *channel)
-{
-    g_return_val_if_fail (channel != NULL, FALSE);
-
-    return channel->refresh_magic != NULL;
+    return channel->system;
 }
 
 gboolean
-rc_channel_use_refresh_magic (RCChannel *channel)
+rc_channel_is_hidden (RCChannel *channel)
 {
     g_return_val_if_fail (channel != NULL, FALSE);
 
-    if (channel->refresh_magic) {
-        channel->refresh_magic (channel);
-        return TRUE;
-    }
-
-    return FALSE;
+    return channel->hidden;
 }
-
-gboolean
-rc_channel_get_transient (RCChannel *channel)
-{
-    g_return_val_if_fail (channel != NULL, FALSE);
-
-    return channel->transient;
-}
-
-gboolean
-rc_channel_get_silent (RCChannel *channel)
-{
-    g_return_val_if_fail (channel != NULL, FALSE);
-
-    return channel->silent;
-}
-
-const char *
-rc_channel_get_id_by_name (RCChannelSList *channels, char *name)
-{
-    RCChannelSList *iter;
-      
-    iter = channels;
-
-    while (iter) {
-        RCChannel *channel = iter->data;
-
-        if (g_strcasecmp (channel->name, name) == 0)
-            return channel->id;
-
-        iter = iter->next;
-    }
-
-    return NULL;
-} /* rc_channel_get_id_by_name */
-
-RCChannel *
-rc_channel_get_by_id (RCChannelSList *channels, const char *id)
-{
-    RCChannelSList *iter;
-    
-    iter = channels;
-
-    while (iter) {
-        RCChannel *channel = iter->data;
-
-        if (! strcmp (channel->id, id))
-            return (channel);
-
-        iter = iter->next;
-    }
-
-    return (NULL);
-} /* rc_channel_get_by_id */
-
-RCChannel *
-rc_channel_get_by_name(RCChannelSList *channels, char *name)
-{
-    const char *id;
-    RCChannel *channel;
-    
-    id = rc_channel_get_id_by_name(channels, name);
-    channel = rc_channel_get_by_id(channels, id);
-
-    return channel;
-} /* rc_channel_get_by_name */
 
 gboolean
 rc_channel_is_wildcard (RCChannel *a)
@@ -457,15 +521,22 @@ rc_channel_equal (RCChannel *a, RCChannel *b)
     if (a == RC_CHANNEL_ANY || b == RC_CHANNEL_ANY)
         return TRUE;
 
-    if (a == RC_CHANNEL_SYSTEM || b == RC_CHANNEL_SYSTEM)
+    if (rc_channel_is_wildcard (a) && rc_channel_is_wildcard (b))
         return a == b;
 
-    if (a == RC_CHANNEL_NON_SYSTEM)
-        return b != RC_CHANNEL_SYSTEM;
+    /* So at this point we know that between a and b there is
+       at most one wildcard. */
 
-    if (b == RC_CHANNEL_NON_SYSTEM)
-        return a != RC_CHANNEL_SYSTEM;
+    if (a == RC_CHANNEL_SYSTEM)
+        return rc_channel_is_system (b);
+    else if (a == RC_CHANNEL_NON_SYSTEM)
+        return ! rc_channel_is_system (b);
 
+    if (b == RC_CHANNEL_SYSTEM)
+        return rc_channel_is_system (a);
+    else if (b == RC_CHANNEL_NON_SYSTEM)
+        return ! rc_channel_is_system (a);
+    
     return rc_channel_equal_id (a, rc_channel_get_id (b));
 }
 
@@ -474,3 +545,4 @@ rc_channel_equal_id (RCChannel *a, const char *id)
 {
     return ! strcmp (rc_channel_get_id (a), id);
 }
+

@@ -1,3 +1,10 @@
+2003-08-16  Joe Shaw  <joe@ximian.com>
+
+	* Land libredcarpet-multiserver-branch onto the trunk.  Adds
+	multiple worlds, which makes the implementation of package sets
+	and undumped worlds much cleaner and allows us to have multiple
+	servers.
+
 2003-06-27  Jose Mercado    <jose@ximian.com>
 
 	* distributions.xml: SLD's version is "1" not "1.0".
@@ -11,7 +18,10 @@
 	current check might be for the system version of the package.  To
 	fix this, we compare the pointers as well as the specs.
 
-2003-06-15  Jon Trowbridge  <trow@ximian.com>
+2003-06-15  Jon Trowbridge  <jon@trowbridge.org>
+
+	* rc-world.c: Use the global packman instead of our lame
+	virtualized version comparison function.
 
 	* rc-channel.h: For some reason, a bunch of the rc_channel
 	functions tooks const RCChannel pointers as args.  This was

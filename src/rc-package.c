@@ -23,7 +23,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "rc-channel-private.h"
 #include "rc-world.h"
 #include "rc-arch.h"
 
@@ -171,14 +170,17 @@ char *
 rc_package_to_str (RCPackage *package)
 {
     char *str, *specstr;
+    gboolean not_system;
 
     g_return_val_if_fail (package != NULL, NULL);
 
     specstr = rc_package_spec_to_str (&package->spec);
 
+    not_system = package->channel && ! rc_channel_is_system (package->channel);
+
     str = g_strconcat (specstr,
-                       package->channel ? "[" : NULL,
-                       package->channel ? rc_channel_get_name (package->channel) : NULL,
+                       not_system ? "[" : NULL,
+                       not_system ? rc_channel_get_name (package->channel) : NULL,
                        "]",
                        NULL);
 
@@ -197,6 +199,13 @@ rc_package_to_str_static (RCPackage *package)
     return str;
 }
 
+const char *
+rc_package_get_name (RCPackage *package)
+{
+    g_return_val_if_fail (package != NULL, NULL);
+    return rc_package_spec_get_name (RC_PACKAGE_SPEC (package));
+}
+
 gboolean
 rc_package_is_installed (RCPackage *package)
 {
@@ -204,8 +213,8 @@ rc_package_is_installed (RCPackage *package)
 
     if (package->local_package)
         return FALSE;
-    else
-        return package->channel == NULL || package->installed;
+
+    return package->channel && rc_channel_is_system (package->channel);
 }
 
 gboolean
@@ -222,18 +231,6 @@ rc_package_is_synthetic (RCPackage *package)
     g_return_val_if_fail (package != NULL, FALSE);
 
     return rc_package_is_package_set (package);
-}
-
-RCPackage *
-rc_package_get_best_upgrade (RCPackage *package, gboolean subscribed_only)
-{
-    g_return_val_if_fail (package != NULL, NULL);
-
-    if (package->channel == NULL || package->channel->world)
-        return NULL;
-
-    return rc_world_get_best_upgrade (package->channel->world, package,
-                                      subscribed_only);
 }
 
 RCPackageSList *

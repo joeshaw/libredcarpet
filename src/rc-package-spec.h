@@ -46,6 +46,8 @@ void rc_package_spec_copy (RCPackageSpec *new, RCPackageSpec *old);
 
 void rc_package_spec_free_members (RCPackageSpec *rcps);
 
+const char *rc_package_spec_get_name (RCPackageSpec *rcps);
+
 gint rc_package_spec_compare_name (void *a, void *b);
 
 guint rc_package_spec_hash (gconstpointer ptr);

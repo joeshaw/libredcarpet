@@ -35,7 +35,7 @@ struct _RCWorld; /* forward declaration */
 
 typedef struct _RCPackageMatch RCPackageMatch;
 
-typedef void (*RCPackageMatchFn) (struct _RCPackageMatch *, gpointer);
+typedef gboolean (*RCPackageMatchFn) (struct _RCPackageMatch *, gpointer);
 
 RCPackageMatch *rc_package_match_new (void);
 
@@ -45,7 +45,10 @@ void            rc_package_match_free (RCPackageMatch *package_match);
 void            rc_package_match_set_channel (RCPackageMatch *match,
 					      RCChannel      *channel);
 
-RCChannel      *rc_package_match_get_channel (RCPackageMatch *match);
+void            rc_package_match_set_channel_id (RCPackageMatch *match,
+						 const char     *cid);
+
+const char     *rc_package_match_get_channel_id (RCPackageMatch *match);
 
 void            rc_package_match_set_dep     (RCPackageMatch *match,
 					      RCPackageDep   *dep);

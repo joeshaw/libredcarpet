@@ -32,6 +32,8 @@
 
 #include "rc-arch.h"
 
+typedef struct _RCDistro RCDistro;
+
 typedef enum {
     RC_DISTRO_PACKAGE_TYPE_UNKNOWN,
     RC_DISTRO_PACKAGE_TYPE_RPM,
@@ -46,29 +48,17 @@ typedef enum {
     RC_DISTRO_STATUS_RETIRED,
 } RCDistroStatus;
 
-gboolean
-rc_distro_parse_xml (const char *xml_buf,
-                     guint compressed_length);
+RCDistro *rc_distro_parse_xml (const char *xml_buf,
+                                          guint compressed_length);
 
-const char *
-rc_distro_get_name (void);
+void rc_distro_free (RCDistro *);
 
-const char *
-rc_distro_get_version (void);
-
-RCArch
-rc_distro_get_arch (void);
-
-RCDistroPackageType
-rc_distro_get_package_type (void);
-
-const char *
-rc_distro_get_target (void);
-
-RCDistroStatus
-rc_distro_get_status (void);
-
-time_t
-rc_distro_get_death_date (void);
+const char          *rc_distro_get_name         (RCDistro *);
+const char          *rc_distro_get_version      (RCDistro *);
+RCArch               rc_distro_get_arch         (RCDistro *);
+RCDistroPackageType  rc_distro_get_package_type (RCDistro *);
+const char          *rc_distro_get_target       (RCDistro *);
+RCDistroStatus       rc_distro_get_status       (RCDistro *);
+time_t               rc_distro_get_death_date   (RCDistro *);
 
 #endif

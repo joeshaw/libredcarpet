@@ -35,6 +35,7 @@
 #include "rc-package.h"
 
 #include "rc-channel.h"
+#include "rc-subscription.h"
 
 #include "rc-distro.h"
 
@@ -51,10 +52,17 @@
 
 #include "rc-rollback.h"
 
+#include "rc-extract-channels.h"
+#include "rc-extract-packages.h"
+
 #include "rc-world.h"
-#include "rc-world-import.h"
-#include "rc-world-dump.h"
-#include "rc-world-subscriptions.h"
+#include "rc-world-local-dir.h"
+#include "rc-world-multi.h"
+#include "rc-world-service.h"
+#include "rc-world-store.h"
+#include "rc-world-system.h"
+#include "rc-world-synthetic.h"
+#include "rc-world-undump.h"
 
 #include "rc-xml.h"
 

@@ -24,8 +24,12 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <zlib.h>
 #include <string.h>
+
+#include <zlib.h>
+#ifdef HAVE_BZ2
+#  include <bzlib.h>
+#endif
 
 #include <sys/mman.h>
 #include <sys/time.h>
@@ -421,13 +425,12 @@ count_gzip_header (const guint8 *buf, guint32 input_length)
 }
 
 gint
-rc_uncompress_memory (const guint8 *input_buffer, guint32 input_length,
-                      GByteArray **out_ba)
+rc_gunzip_memory (const guint8 *input_buffer, guint32 input_length,
+                  GByteArray **out_ba)
 {
     z_stream zs;
     gchar *outbuf = NULL;
     GByteArray *ba = NULL;
-    guint32 data_len = 0;
     int zret;
 
     int gzip_hdr;
@@ -462,7 +465,6 @@ rc_uncompress_memory (const guint8 *input_buffer, guint32 input_length,
             break;
 
         g_byte_array_append (ba, outbuf, 10000 - zs.avail_out);
-        data_len += 10000 - zs.avail_out;
         zs.next_out = outbuf;
         zs.avail_out = 10000;
 
@@ -487,13 +489,12 @@ rc_uncompress_memory (const guint8 *input_buffer, guint32 input_length,
 }
 
 gint
-rc_compress_memory (const guint8 *input_buffer, guint input_length,
+rc_gzip_memory (const guint8 *input_buffer, guint input_length,
                     GByteArray **out_ba)
 {
     z_stream zs;
     gchar *outbuf = NULL;
     GByteArray *ba = NULL;
-    guint32 data_len = 0;
     int zret;
 
     g_return_val_if_fail (input_buffer, -1);
@@ -524,7 +525,6 @@ rc_compress_memory (const guint8 *input_buffer, guint input_length,
             break;
 
         g_byte_array_append (ba, outbuf, 10000 - zs.avail_out);
-        data_len += 10000 - zs.avail_out;
         zs.next_out = outbuf;
         zs.avail_out = 10000;
 
@@ -545,7 +545,7 @@ rc_compress_memory (const guint8 *input_buffer, guint input_length,
 
     *out_ba = ba;
     return zret;
-} /* rc_compress_memory */
+} /* rc_gzip_memory */
 
 gboolean
 rc_memory_looks_gzipped (const guint8 *buffer)
@@ -556,6 +556,192 @@ rc_memory_looks_gzipped (const guint8 *buffer)
 
     return buffer[0] == gz_magic[0]  /* ID1 */
         && buffer[1] == gz_magic[1]; /* ID2 */
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+static char bz2_magic[3] = { 'B', 'Z', 'h' };
+
+gint
+rc_bunzip2_memory (const guint8 *input_buffer, guint32 input_length,
+                   GByteArray **out_ba)
+{
+#ifndef HAVE_BZ2
+
+    g_warning ("bz2 support not compiled in");
+    *out_ba = NULL;
+
+    return -1;
+
+#else
+
+    bz_stream bzs;
+    GByteArray *ba;
+    gchar *outbuf;
+    int bzret;
+
+    g_return_val_if_fail (input_buffer, -1);
+    g_return_val_if_fail (input_length, -1);
+    g_return_val_if_fail (out_ba, -1);
+
+    ba = g_byte_array_new ();
+
+    bzs.next_in = (guint8 *) input_buffer;
+    bzs.avail_in = input_length;
+    bzs.bzalloc = NULL;
+    bzs.bzfree = NULL;
+    bzs.opaque = NULL;
+
+    outbuf = g_malloc (10000);
+    bzs.next_out = outbuf;
+    bzs.avail_out = 10000;
+
+    BZ2_bzDecompressInit (&bzs, 1, 0);
+
+    while (1) {
+        bzret = BZ2_bzDecompress (&bzs);
+        if (bzret != BZ_OK && bzret != BZ_STREAM_END)
+            break;
+
+        g_byte_array_append (ba, outbuf, 10000 - bzs.avail_out);
+        bzs.next_out = outbuf;
+        bzs.avail_out = 10000;
+
+        if (bzret == BZ_STREAM_END)
+            break;
+    }
+
+    BZ2_bzDecompressEnd (&bzs);
+    g_free (outbuf);
+
+    if (bzret != BZ_STREAM_END) {
+        g_warning ("libbzip2 decompress failed (%d)", bzret);
+        g_byte_array_free (ba, TRUE);
+        ba = NULL;
+    } else {
+        g_byte_array_append (ba, "", 1);
+        bzret = 0;
+    }
+
+    *out_ba = ba;
+    return bzret;
+#endif
+}
+
+gint
+rc_bzip2_memory (const guint8 *input_buffer, guint input_length,
+                 GByteArray **out_ba)
+{
+#ifndef HAVE_BZ2
+
+    g_warning ("bz2 support not compiled in");
+    *out_ba = NULL;
+
+    return -1;
+
+#else
+
+    bz_stream bzs;
+    GByteArray *ba;
+    gchar *outbuf;
+    int bzret;
+
+    g_return_val_if_fail (input_buffer, -1);
+    g_return_val_if_fail (input_length, -1);
+    g_return_val_if_fail (out_ba, -1);
+
+    ba = g_byte_array_new ();
+
+    bzs.next_in = (guint8 *) input_buffer;
+    bzs.avail_in = input_length;
+    bzs.bzalloc = NULL;
+    bzs.bzfree = NULL;
+    bzs.opaque = NULL;
+
+    outbuf = g_malloc (10000);
+    bzs.next_out = outbuf;
+    bzs.avail_out = 10000;
+
+    BZ2_bzCompressInit (&bzs, 5, 1, 0);
+
+    while (1) {
+        if (bzs.avail_in)
+            bzret = BZ2_bzCompress (&bzs, BZ_RUN);
+        else
+            bzret = BZ2_bzCompress (&bzs, BZ_FINISH);
+            
+        if (bzret != BZ_OK && bzret != BZ_STREAM_END)
+            break;
+
+        g_byte_array_append (ba, outbuf, 10000 - bzs.avail_out);
+        bzs.next_out = outbuf;
+        bzs.avail_out = 10000;
+
+        if (bzret == BZ_STREAM_END)
+            break;
+    }
+
+    BZ2_bzCompressEnd (&bzs);
+    g_free (outbuf);
+
+    if (bzret != BZ_STREAM_END) {
+        g_warning ("bz2 compress failed! (%d)", bzret);
+        g_byte_array_free (ba, TRUE);
+        ba = NULL;
+    } else {
+        bzret = 0;
+    }
+
+    *out_ba = ba;
+    return bzret;
+#endif
+}
+
+gboolean
+rc_memory_looks_bzip2ed (const guint8 *buffer)
+{
+    g_return_val_if_fail (buffer != NULL, FALSE);
+
+    return buffer[0] == bz2_magic[0]
+        && buffer[1] == bz2_magic[1]
+        && buffer[2] == bz2_magic[2];
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+gint
+rc_uncompress_memory (const guint8 *input_buffer, guint32 input_length,
+                      GByteArray **out_ba)
+{
+    if (input_length > 2 && rc_memory_looks_bzip2ed (input_buffer))
+        return rc_bunzip2_memory (input_buffer, input_length, out_ba);
+    else if (input_length > 3 && rc_memory_looks_gzipped (input_buffer))
+        return rc_gunzip_memory (input_buffer, input_length, out_ba);
+    else
+        return -1;
+}
+
+gint
+rc_compress_memory (const guint8 *input_buffer,
+                    guint32       input_length,
+                    GByteArray  **out_ba)
+{
+    /* FIXME: Is this what we want to do here? */
+    return rc_gzip_memory (input_buffer, input_length, out_ba);
+}
+
+gboolean
+rc_memory_looks_compressed (const guint8 *buffer, guint32 size)
+{
+#ifdef HAVE_BZ2
+    if (size > 2 && rc_memory_looks_bzip2ed (buffer))
+        return TRUE;
+#endif
+
+    if (size > 4 && rc_memory_looks_gzipped (buffer))
+        return TRUE;
+
+    return FALSE;
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
@@ -590,7 +776,7 @@ rc_buffer_map_file(const char *filename)
         return NULL;
 
     /* Transparently uncompress */
-    if (s.st_size > 3 && rc_memory_looks_gzipped (data)) {
+    if (rc_memory_looks_compressed (data, s.st_size)) {
         GByteArray *byte_array = NULL;
 
         if (rc_uncompress_memory (data, s.st_size, &byte_array)) {
@@ -643,8 +829,9 @@ rc_parse_xml_from_buffer (const guint8 *input_buffer,
 
     if (input_length > 3 && rc_memory_looks_gzipped (input_buffer)) { 
         GByteArray *buf;       
-        if (rc_uncompress_memory (input_buffer, input_length, &buf))
+        if (rc_uncompress_memory (input_buffer, input_length, &buf)) {
             return NULL;
+        }
         doc = xmlParseMemory (buf->data, buf->len - 1);
         g_byte_array_free (buf, TRUE);
     } else {

@@ -486,7 +486,7 @@ typedef struct {
     RCPackageUpdate *matching_update;
 } PackageMatchInfo;
 
-static void
+static gboolean
 package_match_cb (RCPackage *package, gpointer user_data)
 {
     PackageMatchInfo *pmi = user_data;
@@ -494,13 +494,13 @@ package_match_cb (RCPackage *package, gpointer user_data)
 
     if (pmi->matching_package) {
         /* Already found a match, we don't care anymore */
-        return;
+        return TRUE;
     }
 
     /* Make sure this is the package we're looking for */
     if (RC_PACKAGE_SPEC (package)->nameq !=
         RC_PACKAGE_SPEC (pmi->dep_to_match)->nameq)
-        return;
+        return TRUE;
 
     for (iter = package->history; iter; iter = iter->next) {
         RCPackageUpdate *update = iter->data;
@@ -521,9 +521,11 @@ package_match_cb (RCPackage *package, gpointer user_data)
         if (match) {
             pmi->matching_package = package;
             pmi->matching_update = update;
-            return;
+            return TRUE;
         }
     }
+
+    return TRUE;
 }
 
 static GSList *
@@ -643,7 +645,7 @@ get_action_from_xml_node (xmlNode    *node,
     epoch = xml_get_prop (node, "old_epoch");
     release = xml_get_prop (node, "old_release");
 
-    pmi.packman = rc_world_get_packman (world);
+    pmi.packman = rc_packman_get_global ();
     pmi.dep_to_match = rc_package_dep_new (name,
                                            epoch != NULL ? TRUE : FALSE,
                                            epoch != NULL ? atoi (epoch) : 0,

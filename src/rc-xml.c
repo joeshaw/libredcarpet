@@ -22,7 +22,6 @@
 #include "rc-debug.h"
 #include "rc-dep-or.h"
 #include "rc-util.h"
-#include "rc-channel-private.h"
 
 /* SAX Parser */
 
@@ -478,14 +477,14 @@ parser_history_end(RCPackageSAXContext *ctx, const xmlChar *name)
 static void
 parser_update_end(RCPackageSAXContext *ctx, const xmlChar *name)
 {
-    char *url_prefix = NULL;
+    const char *url_prefix = NULL;
 
     g_assert(ctx->current_package != NULL);
     g_assert(ctx->current_update != NULL);
 
     if (ctx->current_package->channel &&
-        ctx->current_package->channel->file_path)
-        url_prefix = ctx->current_package->channel->file_path;
+        rc_channel_get_file_path (ctx->current_package->channel))
+        url_prefix = rc_channel_get_file_path (ctx->current_package->channel);
 
     if (!strcmp(name, "update")) {
         rc_package_add_update (ctx->current_package,
@@ -712,7 +711,7 @@ rc_package_sax_context_parse_chunk(RCPackageSAXContext *ctx,
             &sax_handler, ctx, NULL, 0, NULL);
     }
 
-    if (xmlbuf[size] == '\0')
+    if (xmlbuf[size-1] == '\0')
         terminate = TRUE;
 
     xmlParseChunk(ctx->xml_context, xmlbuf, size, terminate);
@@ -1210,10 +1209,8 @@ rc_xml_node_to_package_update (const xmlNode *node, const RCPackage *package)
     
     update->spec.nameq = package->spec.nameq;
 
-    if (package->channel && package->channel->file_path)
-    {
-        url_prefix = package->channel->file_path;
-    }
+    if (package->channel)
+        url_prefix = rc_channel_get_file_path (package->channel);
 
     iter = node->xmlChildrenNode;
 
@@ -1294,7 +1291,7 @@ rc_channel_to_xml_node (RCChannel *channel)
     if (rc_channel_get_alias (channel))
         xmlNewProp (node, "alias", rc_channel_get_alias (channel));
 
-    sprintf (tmp, "%d", rc_channel_subscribed (channel) ? 1 : 0);
+    sprintf (tmp, "%d", rc_channel_is_subscribed (channel) ? 1 : 0);
     xmlNewProp (node, "subscribed", tmp);
 
     sprintf (tmp, "%d", rc_channel_get_priority (channel, TRUE));

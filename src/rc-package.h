@@ -27,7 +27,7 @@
 #define RC_PACKAGE_FIND_LEAKS
 
 typedef struct _RCPackage RCPackage;
-typedef void (*RCPackageFn) (struct _RCPackage *, gpointer);
+typedef gboolean (*RCPackageFn) (struct _RCPackage *, gpointer);
 
 typedef GSList RCPackageSList;
 
@@ -45,8 +45,7 @@ typedef GHashTable RCPackageHashTableBySpec;
 #include "rc-arch.h"
 
 typedef void     (*RCPackagePairFn) (RCPackage *, RCPackage *, gpointer);
-typedef void     (*RCPackageAndSpecFn) (RCPackage *, RCPackageSpec *, gpointer);
-typedef gboolean (*RCPackageAndSpecCheckFn) (RCPackage *, RCPackageSpec *, gpointer);
+typedef gboolean (*RCPackageAndSpecFn) (RCPackage *, RCPackageSpec *, gpointer);
 
 struct _RCPackage {
     RCPackageSpec spec;
@@ -102,12 +101,11 @@ void       rc_package_spew_leaks (void);
 char       *rc_package_to_str        (RCPackage *package);
 const char *rc_package_to_str_static (RCPackage *package);
 
+const char *rc_package_get_name (RCPackage *package);
+
 gboolean   rc_package_is_installed     (RCPackage *package);
 gboolean   rc_package_is_package_set   (RCPackage *package);
 gboolean   rc_package_is_synthetic     (RCPackage *package);
-
-RCPackage *rc_package_get_best_upgrade (RCPackage *package,
-                                        gboolean subscribed_only);
 
 RCPackageSList *rc_package_slist_ref   (RCPackageSList *packages);
 void            rc_package_slist_unref (RCPackageSList *packages);

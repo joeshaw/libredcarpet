@@ -25,6 +25,8 @@
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 
+#define xml_node_match(node, str) (! g_strcasecmp ((node)->name, str))
+
 /* The former will get either a property or a tag, whereas the latter will
    get only a property */
 

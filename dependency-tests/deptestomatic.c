@@ -39,11 +39,23 @@ static RCPackman *packman = NULL;
 
 static RCWorld *world = NULL;
 
-static void
+static gboolean
 mark_as_system_cb (RCPackage *package, gpointer user_data)
 {
     package->installed = TRUE;
     package->channel = NULL;
+    return TRUE;
+}
+
+static gboolean
+add_to_world_cb (RCPackage *package, gpointer user_data)
+{
+    RCWorldStore *store = RC_WORLD_STORE (user_data);
+
+    rc_world_store_add_package (store, package);
+    rc_package_unref (package);
+
+    return TRUE;
 }
 
 static void
@@ -52,44 +64,40 @@ load_channel (const char *name,
               const char *type,
               gboolean system_packages)
 {
+    RCChannelType chan_type = RC_CHANNEL_TYPE_UNKNOWN;
     RCChannel *channel;
-    RCChannelType channel_type;
-    gboolean is_compressed;
     guint count;
-    char *buffer;
-    gsize file_size;
-
-    is_compressed =  g_pattern_match_simple ("*.gz", filename);
-
-    if (! g_file_get_contents (filename, &buffer, &file_size, NULL)) {
-        g_warning ("Can't open file '%s'", filename);
-        return;
-    }
-
-    channel_type = RC_CHANNEL_TYPE_HELIX;
 
     if (type) {
         if (g_strcasecmp(type, "helix") == 0)
-            channel_type = RC_CHANNEL_TYPE_HELIX;
+            chan_type = RC_CHANNEL_TYPE_HELIX;
         else if (g_strcasecmp(type, "debian") == 0)
-            channel_type = RC_CHANNEL_TYPE_DEBIAN;
+            chan_type = RC_CHANNEL_TYPE_DEBIAN;
+        else
+            g_warning ("Unknown channel type '%s', defaulting to helix",
+                       type);
     }
 
-    channel = rc_world_add_channel_from_buffer (world,
-                                                name, /* name */
-                                                name, /* alias */
-                                                "bogus id",
-                                                channel_type, buffer,
-                                                is_compressed ? file_size : 0);
+    if (chan_type == RC_CHANNEL_TYPE_UNKNOWN) { /* default to helix */
+        chan_type = RC_CHANNEL_TYPE_HELIX;
+    }
 
-    g_free (buffer);
+    channel = rc_channel_new (name, name, name, name);
+    rc_world_store_add_channel (RC_WORLD_STORE (rc_get_world ()), channel);
+    rc_channel_unref (channel);
 
-    if (channel == NULL) {
-        g_print ("Couldn't load packages from %s\n", filename);
+    if (chan_type == RC_CHANNEL_TYPE_HELIX) {
+        count = rc_extract_packages_from_helix_file (filename, channel,
+                                                     add_to_world_cb,
+                                                     world);
+    } else if (chan_type == RC_CHANNEL_TYPE_DEBIAN) {
+        count = rc_extract_packages_from_debian_file (filename, channel,
+                                                      add_to_world_cb,
+                                                      world);
+    } else {
+        g_assert_not_reached ();
         return;
     }
-    
-    count = rc_channel_package_count (channel);
 
     if (system_packages) {
         rc_world_foreach_package (world,
@@ -105,33 +113,17 @@ load_channel (const char *name,
 static void
 undump (const char *filename)
 {
-    char *buffer = NULL;
-    gsize len;
-    gboolean is_compressed;
+    RCWorld *undump_world;
 
-    is_compressed =  g_pattern_match_simple ("*.gz", filename);
-
-    if (g_file_get_contents (filename, &buffer, &len, NULL)) {
-        
-        if (is_compressed) {
-            GByteArray *un_z = NULL;
-            if (rc_uncompress_memory (buffer, len, &un_z)) {
-                rc_debug (RC_DEBUG_LEVEL_WARNING,
-                          "Uncompression of '%s' failed",
-                          filename);
-                return;
-            }
-
-            g_free (buffer);
-            buffer = un_z->data;
-            g_byte_array_free (un_z, FALSE);
-        }
-        
-        rc_world_undump (world, buffer);
-        g_free (buffer);
-    } else {
+    undump_world = rc_world_undump_new (filename);
+    if (undump_world == NULL) {
         g_warning ("Couldn't undump from file '%s'", filename);
+        return;
     }
+
+    rc_world_multi_add_subworld ((RCWorldMulti *) world,
+                                 undump_world);
+    g_object_unref (undump_world);
 }
 
 static RCPackage *
@@ -190,7 +182,7 @@ parse_xml_setup (xmlNode *node)
         if (! g_strcasecmp (node->name, "system")) {
             gchar *file = xml_get_prop (node, "file");
             g_assert (file);
-            load_channel ("SYSTEM", file, RC_CHANNEL_TYPE_HELIX, TRUE);
+            load_channel ("SYSTEM", file, "helix", TRUE);
             g_free (file);
         } else if (! g_strcasecmp (node->name, "channel")) {
             gchar *name = xml_get_prop (node, "name");
@@ -240,7 +232,8 @@ parse_xml_setup (xmlNode *node)
                            package_name);
             } else {
                 g_print (">!> Force-uninstalling '%s'\n", package_name);
-                rc_world_remove_package (world, package);
+                g_warning ("force-install failed.");
+                /* rc_world_remove_package (world, package); */
             }
 
 
@@ -672,9 +665,11 @@ main (int argc, char *argv[])
     rc_distro_parse_xml (NULL, 0);
 
     packman = rc_distman_new ();
+    rc_packman_set_global (packman);
 
-    world = rc_world_new (packman);
+    world = rc_world_store_new ();
     rc_set_world (world);
+    g_object_unref (world);
 
     if (argc != 2) {
         g_print ("Usage: deptestomatic testfile.xml\n");
@@ -683,7 +678,6 @@ main (int argc, char *argv[])
 
     process_xml_test_file (argv[1]);
 
-    rc_world_free (world);
     rc_package_spew_leaks ();
 
     return 0;

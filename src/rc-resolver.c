@@ -28,6 +28,8 @@
 
 #include <stdlib.h>
 #include "rc-world.h"
+#include "rc-world-multi.h"
+#include "rc-world-store.h"
 #include "rc-resolver-queue.h"
 #include "rc-resolver-compare.h"
 
@@ -199,7 +201,7 @@ rc_resolver_add_extra_conflict (RCResolver   *resolver,
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
-static void
+static gboolean
 verify_system_cb (RCPackage *package, gpointer user_data)
 {
     RCResolver *resolver  = user_data;
@@ -208,6 +210,8 @@ verify_system_cb (RCPackage *package, gpointer user_data)
         g_slist_insert_sorted (resolver->packages_to_verify,
                                package,
                                (GCompareFunc) rc_package_spec_compare_name);
+
+    return TRUE;
 }
 
 
@@ -292,12 +296,13 @@ remove_head (GSList *slist)
 void
 rc_resolver_resolve_dependencies (RCResolver *resolver)
 {
-    RCWorld *world;
+    RCWorld *world, *local_world = NULL, *local_multiworld = NULL;
     RCResolverQueue *initial_queue;
-    RCChannel *local_pkg_channel;
+    RCChannel *local_channel = NULL;
     GSList *iter;
     time_t t_start, t_now;
     gboolean extremely_noisy = getenv ("RC_SPEW") != NULL;
+    gboolean have_local_packages = FALSE;
 
     g_return_if_fail (resolver != NULL);
 
@@ -305,19 +310,36 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
     if (world == NULL)
         world = rc_get_world ();
 
-    /* Create a dummy channel for our local packages, so that the
-       RCWorld can see than and take their dependencies into
-       account.*/
-    local_pkg_channel = 
-        rc_world_add_channel_with_priorities (world,
-                                              "Local Packages",
-                                              "local-pkg-alias-blah-blah-blah",
-                                              NULL,
-                                              TRUE, /* a silent channel */
-                                              RC_CHANNEL_TYPE_UNKNOWN,
-                                              -1, -1 /* default
-                                                        priorities */
-                                              );
+    /* Walk through are list of to-be-installed packages and see
+       if any of them are local. */
+    for (iter = resolver->packages_to_install; iter != NULL; iter = iter->next) {
+        RCPackage *pkg = iter->data;
+        if (pkg->local_package) {
+            have_local_packages = TRUE;
+            break;
+        }
+    }
+
+    if (have_local_packages) {
+        local_multiworld = rc_world_multi_new ();
+        local_world = rc_world_store_new ();
+
+        local_channel = rc_channel_new (NULL,
+                                        "Local Packages",
+                                        "@local",
+                                        NULL);
+
+        rc_world_store_add_channel ((RCWorldStore *) local_world,
+                                    local_channel);
+        
+        rc_world_multi_add_subworld ((RCWorldMulti *) local_multiworld, 
+                                     local_world);
+        rc_world_multi_add_subworld ((RCWorldMulti *) local_multiworld,
+                                     world);
+
+        world = g_object_ref (local_multiworld);
+    }
+
 
     initial_queue = rc_resolver_queue_new ();
     
@@ -342,8 +364,9 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
         
         /* Add local packages to our dummy channel. */
         if (pkg->local_package) {
-            pkg->channel = rc_channel_ref (local_pkg_channel);
-            rc_world_add_package (world, pkg);
+            g_assert (local_channel != NULL);
+            pkg->channel = rc_channel_ref (local_channel);
+            rc_world_store_add_package ((RCWorldStore *) local_world, pkg);
         }
         
         rc_resolver_queue_add_package_to_install (initial_queue, pkg);
@@ -466,7 +489,11 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
                  g_slist_length (resolver->invalid_queues));
     }
 
-    /* Clean up our local package channel. */
-    rc_world_remove_channel (world, local_pkg_channel);
+    /* Clean up */
+    if (local_world)
+        g_object_unref (local_world);
+    
+    if (local_multiworld)
+        g_object_unref (local_multiworld);
 }
 

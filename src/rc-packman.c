@@ -748,3 +748,26 @@ rc_packman_set_rollback_enabled (RCPackman *packman, gboolean enabled)
 
     packman->priv->rollback_enabled = enabled;
 }
+
+static RCPackman *das_global_packman = NULL;
+
+RCPackman *
+rc_packman_get_global (void)
+{
+    return das_global_packman;
+}
+
+void
+rc_packman_set_global (RCPackman *packman)
+{
+    if (das_global_packman)
+        g_object_unref (das_global_packman);
+
+    das_global_packman = NULL;
+
+    if (packman) {
+        g_return_if_fail (RC_IS_PACKMAN (packman));
+
+        das_global_packman = g_object_ref (packman);
+    }
+}

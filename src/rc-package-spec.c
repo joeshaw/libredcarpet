@@ -58,6 +58,13 @@ rc_package_spec_free_members (RCPackageSpec *rcps)
     g_free (rcps->release);
 } /* rc_package_spec_free_members */
 
+const char *
+rc_package_spec_get_name (RCPackageSpec *rcps)
+{
+    g_return_val_if_fail (rcps != NULL, NULL);
+    return g_quark_to_string (rcps->nameq);
+}
+
 gint
 rc_package_spec_compare_name (void *a, void *b)
 {
