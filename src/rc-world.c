@@ -1028,7 +1028,7 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
                packages have the same version # and arch, we favor the
                first package and just return. */
 
-            if (cmp == 0 && arch_score <= dup_arch_score) {
+            if (cmp == 0 && arch_score > dup_arch_score) {
                 rc_debug (RC_DEBUG_LEVEL_INFO,
                           "Not adding package '%s'.  Another package "
                           "with the same version but with a preferred arch "
