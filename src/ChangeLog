@@ -1,3 +1,8 @@
+2003-09-26  Joe Shaw  <joe@ximian.com>
+
+	* rc-world-multi.c: Add subworld_added and subworld_removed
+	signals.
+
 2003-09-23  Joe Shaw  <joe@ximian.com>
 
 	* rc-rpmman.c (vercmp): Remove #ifdefs for STRICT_RPM_ORDER.

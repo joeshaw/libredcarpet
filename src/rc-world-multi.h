@@ -56,6 +56,9 @@ struct _RCWorldMulti {
 
 struct _RCWorldMultiClass {
     RCWorldClass parent_class;
+
+    void (*subworld_added)   (RCWorldMulti *multi, RCWorld *subworld);
+    void (*subworld_removed) (RCWorldMulti *multi, RCWorld *subworld);
 };
 
 GType    rc_world_multi_get_type (void);

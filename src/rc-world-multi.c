@@ -24,9 +24,20 @@
  */
 
 #include <config.h>
+
 #include "rc-world-multi.h"
 
+#include "rc-marshal.h"
+
 static GObjectClass *parent_class;
+
+enum {
+    SUBWORLD_ADDED,
+    SUBWORLD_REMOVED,
+    LAST_SIGNAL
+};
+
+static guint signals[LAST_SIGNAL] = { 0 };
 
 typedef struct _SubworldInfo SubworldInfo;
 struct _SubworldInfo {
@@ -710,6 +721,28 @@ rc_world_multi_foreach_conflicting_fn (RCWorld          *world,
     return count;
 }
 
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+static void
+touch_all_sequence_numbers (RCWorldMulti *multi)
+{
+    rc_world_touch_package_sequence_number (RC_WORLD (multi));
+    rc_world_touch_channel_sequence_number (RC_WORLD (multi));
+    rc_world_touch_subscription_sequence_number (RC_WORLD (multi));
+    rc_world_touch_lock_sequence_number (RC_WORLD (multi));
+}
+
+static void
+rc_world_multi_subworld_added (RCWorldMulti *multi, RCWorld *subworld)
+{
+    touch_all_sequence_numbers (multi);
+}
+
+static void
+rc_world_multi_subworld_removed (RCWorldMulti *multi, RCWorld *subworld)
+{
+    touch_all_sequence_numbers (multi);
+}
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
@@ -736,6 +769,29 @@ rc_world_multi_class_init (RCWorldMultiClass *klass)
     world_class->foreach_requiring_fn   = rc_world_multi_foreach_requiring_fn;
     world_class->foreach_parent_fn      = rc_world_multi_foreach_parent_fn;
     world_class->foreach_conflicting_fn = rc_world_multi_foreach_conflicting_fn;
+
+    klass->subworld_added   = rc_world_multi_subworld_added;
+    klass->subworld_removed = rc_world_multi_subworld_removed;
+
+    signals[SUBWORLD_ADDED] =
+        g_signal_new ("subworld_added",
+                      G_TYPE_FROM_CLASS (klass),
+                      G_SIGNAL_RUN_LAST,
+                      G_STRUCT_OFFSET (RCWorldMultiClass, subworld_added),
+                      NULL, NULL,
+                      rc_marshal_VOID__OBJECT,
+                      G_TYPE_NONE, 1,
+                      G_TYPE_OBJECT);
+
+    signals[SUBWORLD_REMOVED] =
+        g_signal_new ("subworld_removed",
+                      G_TYPE_FROM_CLASS (klass),
+                      G_SIGNAL_RUN_LAST,
+                      G_STRUCT_OFFSET (RCWorldMultiClass, subworld_removed),
+                      NULL, NULL,
+                      rc_marshal_VOID__OBJECT,
+                      G_TYPE_NONE, 1,
+                      G_TYPE_OBJECT);
 }
 
 static void
@@ -775,15 +831,6 @@ RCWorld *
 rc_world_multi_new (void)
 {
     return g_object_new (RC_TYPE_WORLD_MULTI, NULL);
-}
-
-static void
-touch_all_sequence_numbers (RCWorldMulti *multi)
-{
-    rc_world_touch_package_sequence_number (RC_WORLD (multi));
-    rc_world_touch_channel_sequence_number (RC_WORLD (multi));
-    rc_world_touch_subscription_sequence_number (RC_WORLD (multi));
-    rc_world_touch_lock_sequence_number (RC_WORLD (multi));
 }
 
 typedef struct {
@@ -847,7 +894,7 @@ rc_world_multi_add_subworld (RCWorldMulti *multi,
     info = subworld_info_new (subworld, multi);
     multi->subworlds = g_slist_append (multi->subworlds, info);
 
-    touch_all_sequence_numbers (multi);
+    g_signal_emit (multi, signals[SUBWORLD_ADDED], 0, subworld);
 }
 
 void
@@ -863,9 +910,11 @@ rc_world_multi_remove_subworld (RCWorldMulti *multi,
     for (iter = multi->subworlds; iter != NULL; iter = iter->next) {
         info = iter->data;
         if (info->subworld == subworld) {
+            g_object_ref (subworld);
             subworld_info_free (info);
             multi->subworlds = g_slist_remove_link (multi->subworlds, iter);
-            touch_all_sequence_numbers (multi);
+            g_signal_emit (multi, signals[SUBWORLD_REMOVED], 0, subworld);
+            g_object_unref (subworld);
             return;
         }
     }
