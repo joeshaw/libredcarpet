@@ -1,3 +1,9 @@
+2002-03-22  Peter Bowen  <pzb@ximian.com>
+
+	* rc-rpmman.c (vercmp): add comments, remove #if 0 code,
+				small amount of refactoring
+	(rc_rpmman_version_compare): bring code inline with rpmlib
+
 2002-03-20  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c: minor fix to how we parse EVRs

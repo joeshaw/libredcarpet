@@ -2021,21 +2021,6 @@ vercmp(const char * a, const char * b)
         while (*one && !isalnum(*one)) one++;
         while (*two && !isalnum(*two)) two++;
 
-#if 0
-        /* Looks like we don't need this now, but just in case */
-
-        while (*one && !isalnum(*one)) one++;
-        while (!strncmp (one, "mdk", 3)) {
-            one += 3;
-            while (*one && !isalnum(*one)) one++;
-        }
-        while (*two && !isalnum(*two)) two++;
-        while (!strncmp (two, "mdk", 3)) {
-            two += 3;
-            while (*two && !isalnum(*two)) two++;
-        }
-#endif
-
         str1 = one;
         str2 = two;
 
@@ -2059,30 +2044,17 @@ vercmp(const char * a, const char * b)
         oldch2 = *str2;
         *str2 = '\0';
 
-        /* Here's how we handle comparing numeric and non-numeric
-         * segments -- non-numeric (ximian.1) always sorts higher than
-         * numeric (0_helix_1).  Original code is #if 0'd out
-         * below. */
-        if (one == str1) {
-            if (isdigit (*two)) {
-                return (1);
-            } else {
-                return (-1);
-            }
-        }
-        if (two == str2) {
-            if (isdigit (*one)) {
-                return (-1);
-            } else {
-                return (1);
-            }
-        }
-#if 0
+	/* This should only happen if someone is changing the string */
+	/* behind our back.  It should be a _very_ rare race condition */
+        if (one == str1) return -1; /* arbitrary */
+
         /* take care of the case where the two version segments are */
         /* different types: one numeric and one alpha */
-        if (one == str1) return -1; /* arbitrary */
-        if (two == str2) return -1;
-#endif
+
+	/* Here's how we handle comparing numeric and non-numeric
+	 * segments -- non-numeric (ximian.1) always sorts higher than
+	 * numeric (0_helix_1). */
+        if (two == str2) return (isnum ? -1 : 1);
 
         if (isnum) {
             /* this used to be done by converting the digit segments */
@@ -2126,47 +2098,44 @@ rc_rpmman_version_compare (RCPackman *packman,
                            RCPackageSpec *spec1,
                            RCPackageSpec *spec2)
 {
-    gint rc;
+    gint rc = 0;
 
     g_assert (spec1);
     g_assert (spec2);
-
-    if (spec1->epoch && spec2->epoch) {
-        rc = spec1->epoch - spec2->epoch;
-
-        if (rc) {
-            return (rc);
-        }
-    }
-
+    
     if (spec1->name || spec2->name) {
         rc = strcmp (spec1->name ? spec1->name : "",
                      spec2->name ? spec2->name : "");
-
-        if (rc) {
-            return (rc);
-        }
     }
+    if (rc) return rc;
+    
+    /* WARNING: This is partially broken, because you cannot
+     * tell the difference between an epoch of zero and no epoch */
+    /* NOTE: when the code is changed, foo->spec.epoch will be an
+     * existance test for the epoch and foo->spec.epoch > 0 will 
+     * be a test for > 0.  Right now these are the same, but
+     * please leave the code as-is. */
 
-    if (spec1->version || spec2->version) {
-        rc = vercmp (spec1->version ? spec1->version : "",
-                     spec2->version ? spec2->version : "");
-
-        if (rc) {
-            return (rc);
-        }
+    if (spec1->epoch && spec2->epoch) {
+        rc = spec1->epoch - spec2->epoch;
+    } else if (spec1->epoch && spec1->epoch > 0) {
+	    /* legacy epoch-less requires/conflicts compatibility */
+	    /* this is so we match rpmlib */
+	    rc = 0;
+    } else if (spec2->epoch && spec2->epoch > 0) {
+	    rc = -1;
     }
+    if (rc) return rc;
 
-    if (spec1->release || spec2->release) {
+    rc = vercmp (spec1->version ? spec1->version : "",
+                 spec2->version ? spec2->version : "");
+    if (rc) return rc;
+
+    if (spec1->release && *(spec1->release) && spec2->release && *(spec2->release)) {
         rc = vercmp (spec1->release ? spec1->release : "",
                      spec2->release ? spec2->release : "");
-
-        if (rc) {
-            return (rc);
-        }
     }
-
-    return (0);
+    return rc;
 }
 
 static RCPackage *
