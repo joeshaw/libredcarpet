@@ -1,5 +1,11 @@
 2003-08-19  Joe Shaw  <joe@ximian.com>
 
+	* rc-distro.c (rc_distro_parse_xml): Make the size a required
+	parameter, and decompress the data on the fly.
+
+	* rc-world.c (rc_set_world, rc_get_world): Be less strict about
+	having a global world set.
+
 	* rc-extract-packages.c (rc_extract_packages_from_directory): Call
 	g_dir_close() when we're finished.
 

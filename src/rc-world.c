@@ -281,13 +281,16 @@ rc_world_touch_lock_sequence_number (RCWorld *world)
 void
 rc_set_world (RCWorld *world)
 {
-    if (das_global_world) {
-        rc_debug (RC_DEBUG_LEVEL_ERROR,
-                  "rc_set_world called multiple times");
-        return;
-    }
+    if (das_global_world)
+        g_object_unref (das_global_world);
 
-    das_global_world = g_object_ref (world);
+    das_global_world = NULL;
+
+    if (world) {
+        g_return_if_fail (RC_IS_WORLD (world));
+
+        das_global_world = g_object_ref (world);
+    }
 }
 
 /**
@@ -304,7 +307,6 @@ rc_set_world (RCWorld *world)
 RCWorld *
 rc_get_world (void)
 {
-    g_assert (das_global_world != NULL);
     return das_global_world;
 }
 

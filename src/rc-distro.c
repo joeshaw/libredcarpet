@@ -621,15 +621,14 @@ sax_parser_disable (DistroParseState *state)
 /* Public methods */
 
 RCDistro *
-rc_distro_parse_xml (const char *xml_buf,
-                     guint compressed_length)
+rc_distro_parse_xml (const char *data, guint size)
 {
     DistroParseState state;
     xmlParserCtxt *ctxt;
     GByteArray *byte_array = NULL;
     const char *buf;
 
-    if (xml_buf == NULL) {
+    if (data == NULL) {
         char *distro_file = getenv ("RC_DISTRIBUTIONS_FILE");
 
         if (distro_file) {
@@ -651,7 +650,7 @@ rc_distro_parse_xml (const char *xml_buf,
                 goto ERROR;
             }
 
-            distro = rc_distro_parse_xml (buffer->data, 0);
+            distro = rc_distro_parse_xml (buffer->data, buffer->size);
 
             if (!distro) {
                 rc_debug (RC_DEBUG_LEVEL_CRITICAL,
@@ -665,23 +664,23 @@ rc_distro_parse_xml (const char *xml_buf,
 
             return distro;
         } else {
-            xml_buf = distros_xml;
-            compressed_length = distros_xml_len;
+            data = distros_xml;
+            size = distros_xml_len;
         }
     }
 
-    if (compressed_length) {
-        if (rc_uncompress_memory ((char *)xml_buf, compressed_length,
-                                  &byte_array))
-        {
+    if (rc_memory_looks_compressed (data, size)) {
+        if (rc_uncompress_memory (data, size, &byte_array)) {
             rc_debug (RC_DEBUG_LEVEL_WARNING, "Uncompression failed");
-            return FALSE;
+            return NULL;
         }
-        buf = byte_array->data;
-    } else
-        buf = xml_buf;
 
-    ctxt = xmlCreateDocParserCtxt ((char *)buf);
+        buf = byte_array->data;
+    }
+    else
+        buf = data;
+
+    ctxt = xmlCreateDocParserCtxt ((char *) buf);
     if (!ctxt)
         goto ERROR;
 
