@@ -142,7 +142,7 @@ rc_world_service_register (const char *scheme, GType world_type)
     }
 
     g_hash_table_insert (scheme_handlers, g_strdup (scheme),
-                         GINT_TO_POINTER (world_type));
+                         GUINT_TO_POINTER (world_type));
 }
 
 void
@@ -164,7 +164,7 @@ rc_world_service_lookup (const char *scheme)
     if (!scheme_handlers)
         return 0;
 
-    return GPOINTER_TO_INT (g_hash_table_lookup (scheme_handlers, scheme));
+    return GPOINTER_TO_UINT (g_hash_table_lookup (scheme_handlers, scheme));
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */

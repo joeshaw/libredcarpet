@@ -1,5 +1,10 @@
 2003-11-13  Joe Shaw  <joe@ximian.com>
 
+	* rc-world-service.c (rc_world_service_register,
+	rc_world_service_lookup): GTypes are unsigned ints, so use
+	the unsigned variants of the glib integer/pointer conversion
+	macros.
+
 	* rc-line-buf.c (rc_line_buf_cb): Make bytes_read a gsize from
 	a guint for 64-bit cleanliness.
 
