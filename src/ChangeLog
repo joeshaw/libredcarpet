@@ -1,3 +1,7 @@
+2003-11-06  Joe Shaw  <joe@ximian.com>
+
+	* distributions.xml: Add support for Fedora Core 1 (fedora-1-i386).
+
 2003-11-03  Joe Shaw  <joe@ximian.com>
 
 	* rc-distro.c (sax_parser_enable): Set ctxt->sax->initialized to 1

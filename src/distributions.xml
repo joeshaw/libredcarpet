@@ -186,6 +186,7 @@
                         <file source="/etc/mandrake-release" substring="9.2"/>
                 </detect>
         </distro>
+
         <distro>
                 <name>Red Hat Enterprise Linux AS</name>
                 <version>2.1</version>
@@ -351,6 +352,18 @@
                 <status>supported</status>
                 <detect>
                         <file source="/etc/redhat-release" substring="Red Hat Linux release 9 (Shrike)"/>
+                </detect>
+        </distro>
+
+        <distro>
+                <name>Fedora Core</name>
+                <version>1</version>
+                <arch>i386</arch>
+                <type>rpm</type>
+                <target>fedora-1-i386</target>
+                <status>supported</status>
+                <detect>
+                        <file source="/etc/fedora-release" substring="Fedora Core release 1 (Yarrow)"/>
                 </detect>
         </distro>
 
