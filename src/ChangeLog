@@ -1,5 +1,9 @@
 2001-07-31  Vladimir Vukicevic  <vladimir@ximian.com>
 
+	* rc-deps-util.c: Don't keep rof as a static struct,
+	and make sure we update the subchannel's hash tables
+	if they exist.
+
 	* rc-deps-util.c: Keep rof as a static struct, so that
 	we can call dep_or_process multiple times.
 
