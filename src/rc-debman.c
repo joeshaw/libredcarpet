@@ -223,7 +223,7 @@ mark_purge_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
 }
 
 static void
-mark_purge_read_done_cb (RCLineBuf *lb, gpointer data)
+mark_purge_read_done_cb (RCLineBuf *lb, RCLineBufStatus status, gpointer data)
 {
     DebmanMarkPurgeInfo *dmpi = (DebmanMarkPurgeInfo *)data;
 
@@ -337,7 +337,7 @@ do_purge_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
 }
 
 static void
-do_purge_read_done_cb (RCLineBuf *lb, gpointer data)
+do_purge_read_done_cb (RCLineBuf *lb, RCLineBufStatus status, gpointer data)
 {
     DebmanDoPurgeInfo *ddpi = (DebmanDoPurgeInfo *)data;
 
@@ -433,7 +433,6 @@ do_purge (RCPackman *p, DebmanInstallState *dis)
     }
 
     if (!(WIFEXITED (status)) || WEXITSTATUS (status)) {
-        printf ("Fwoops!\n");
         rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
                               "Unable to run dpkg to finish purging selected "
                               "packages.  Packages were marked for removal, "
@@ -521,7 +520,7 @@ do_unpack_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
 }
 
 static void
-do_unpack_read_done_cb (RCLineBuf *lb, gpointer data)
+do_unpack_read_done_cb (RCLineBuf *lb, RCLineBufStatus status, gpointer data)
 {
     DebmanDoUnpackInfo *ddui = (DebmanDoUnpackInfo *)data;
 
@@ -679,7 +678,7 @@ do_configure_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
 {
     DebmanDoConfigureInfo *ddci = (DebmanDoConfigureInfo *)data;
 
-    printf ("DEBMAN: %s\n", line);
+    printf ("%s\n", line);
 
     if (!strncmp (line, "Setting up ", strlen ("Setting up "))) {
         rc_packman_configure_step (ddci->pman, ++ddci->dis->seqno,
@@ -688,7 +687,8 @@ do_configure_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
 }
 
 static void
-do_configure_read_done_cb (RCLineBuf *lb, gpointer data)
+do_configure_read_done_cb (RCLineBuf *lb, RCLineBufStatus status,
+                           gpointer data)
 {
     DebmanDoConfigureInfo *ddci = (DebmanDoConfigureInfo *)data;
 
@@ -712,20 +712,9 @@ do_configure (RCPackman *p, DebmanInstallState *dis)
     DebmanDoConfigureInfo ddci;
     GMainLoop *loop;
 
-#if 0
-    int wfds[2];
-    GIOChannel *channel;
-#endif
-
     pipe (rfds);
     fcntl (rfds[0], F_SETFL, O_NONBLOCK);
     fcntl (rfds[1], F_SETFL, O_NONBLOCK);
-
-#if 0
-    pipe (wfds);
-    fcntl (wfds[0], F_SETFL, O_NONBLOCK);
-    fcntl (wfds[1], F_SETFL, O_NONBLOCK);
-#endif
 
     unlock_database (RC_DEBMAN (p));
 
@@ -753,12 +742,6 @@ do_configure (RCPackman *p, DebmanInstallState *dis)
         close (rfds[0]);
         dup2 (rfds[1], STDOUT_FILENO);
 
-#if 0
-        fflush (stdin);
-        close (wfds[1]);
-        dup2 (wfds[0], STDIN_FILENO);
-#endif
-
         fclose (stderr);
 
         execl ("/usr/bin/dpkg", "/usr/bin/dpkg", "--configure", "--pending",
@@ -767,9 +750,6 @@ do_configure (RCPackman *p, DebmanInstallState *dis)
 
     default:
         close (rfds[1]);
-#if 0
-        close (wfds[0]);
-#endif
 
         loop = g_main_new (FALSE);
 
@@ -779,20 +759,12 @@ do_configure (RCPackman *p, DebmanInstallState *dis)
 
         lb = rc_line_buf_new ();
 
-#if 0
-        channel = g_io_channel_unix_new (wfds[1]);
-#endif
-
         gtk_signal_connect (GTK_OBJECT (lb), "read_line",
                             GTK_SIGNAL_FUNC (do_configure_read_line_cb),
                             (gpointer) &ddci);
         gtk_signal_connect (GTK_OBJECT (lb), "read_done",
                             GTK_SIGNAL_FUNC (do_configure_read_done_cb),
                             (gpointer) &ddci);
-
-#if 0
-        g_io_add_watch (channel, G_IO_OUT, (GIOFunc) test_func, NULL);
-#endif
 
         rc_line_buf_set_fd (lb, rfds[0]);
 
@@ -1275,7 +1247,7 @@ query_all_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
 }
 
 static void
-query_all_read_done_cb (RCLineBuf *lb, gpointer data)
+query_all_read_done_cb (RCLineBuf *lb, RCLineBufStatus status, gpointer data)
 {
     DebmanQueryInfo *dqi = (DebmanQueryInfo *)data;
 
@@ -1285,6 +1257,8 @@ query_all_read_done_cb (RCLineBuf *lb, gpointer data)
     gtk_signal_disconnect_by_func (GTK_OBJECT (lb),
                                    GTK_SIGNAL_FUNC (query_all_read_done_cb),
                                    data);
+
+    dqi->error = (status == RC_LINE_BUF_ERROR);
 
     g_main_quit (dqi->loop);
 }
@@ -1500,6 +1474,204 @@ rc_debman_query_file (RCPackman *p, gchar *filename)
     return (NULL);
 }
 
+typedef struct _DebmanVerifyStatusInfo DebmanVerifyStatusInfo;
+
+struct _DebmanVerifyStatusInfo {
+    int out_fd;
+    gboolean error;
+    GMainLoop *loop;
+    guint read_line_id;
+    guint read_done_id;
+};
+
+static void
+verify_status_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
+{
+    gchar **tokens;
+    gchar *tmp;
+    DebmanVerifyStatusInfo *dvsi = (DebmanVerifyStatusInfo *)data;
+
+    if (strncmp (line, "Status:", strlen ("Status:"))) {
+        /* This isn't a status line, so we don't need to do anything other than
+           to write it to the new file */
+        write (dvsi->out_fd, line, strlen (line));
+        write (dvsi->out_fd, "\n", 1);
+        return;
+    }
+
+    tmp = g_strdup (line + strlen ("Status:"));
+    tmp = g_strchug (tmp);
+
+    tokens = g_strsplit (tmp, " ", 3);
+
+    if (tokens[3] || !tokens[2] || !tokens[1] || !tokens[0]) {
+        /* There aren't exactly 3 tokens here */
+        goto BROKEN;
+    }
+
+    /* we want the status to be ok */
+    if (strcmp (tokens[1], "ok")) {
+        goto BROKEN;
+    }
+
+    /* installed, not-installed, and config-files are ok, everything else I
+       consider problematic */
+    if (strcmp (tokens[2], "installed") &&
+        strcmp (tokens[2], "not-installed") &&
+        strcmp (tokens[2], "config-files"))
+    {
+        goto BROKEN;
+    }
+
+    /* If the package is installed, set the selection to install, and use
+       whatever middle token the user had */
+    if (!strcmp (tokens[2], "installed")) {
+        if (!strcmp (tokens[0], "install") || !strcmp (tokens[0], "hold")) {
+            write (dvsi->out_fd, line, strlen (line));
+            write (dvsi->out_fd, "\n", 1);
+            goto END;
+        }
+        write (dvsi->out_fd, "Status: install ", strlen ("Status: install "));
+        write (dvsi->out_fd, tokens[1], strlen (tokens[1]));
+        write (dvsi->out_fd, " installed\n", strlen (" installed\n"));
+        goto END;
+    }
+
+    /* If the package is not-installed, just write the normal line if the
+       selection was purge or deinstall, otherwise set the seletion to purge.
+       Of course, use whatever middle token the user had. */
+    if (!strcmp (tokens[2], "not-installed")) {
+        if (!strcmp (tokens[0], "purge")) {
+            write (dvsi->out_fd, line, strlen (line));
+            write (dvsi->out_fd, "\n", 1);
+            goto END;
+        }
+        if (!strcmp (tokens[0], "deinstall")) {
+            write (dvsi->out_fd, line, strlen (line));
+            write (dvsi->out_fd, "\n", 1);
+            goto END;
+        }
+        write (dvsi->out_fd, "Status: purge ", strlen ("Status: purge "));
+        write (dvsi->out_fd, tokens[1], strlen (tokens[1]));
+        write (dvsi->out_fd, " not-installed\n", strlen (" not-installed\n"));
+        goto END;
+    }
+
+    /* If the package is config-files only, set the selection to deinstall,
+       middle token as the user had it. */
+    if (!strcmp (tokens[2], "config-files")) {
+        write (dvsi->out_fd, "Status: deinstall ",
+               strlen ("Status: deinstall "));
+        write (dvsi->out_fd, tokens[1], strlen (tokens[1]));
+        write (dvsi->out_fd, " config-files\n", strlen (" config-files\n"));
+        goto END;
+    }
+
+  BROKEN:
+    dvsi->error = TRUE;
+    gtk_signal_disconnect (GTK_OBJECT (lb), dvsi->read_line_id);
+    gtk_signal_disconnect (GTK_OBJECT (lb), dvsi->read_done_id);
+    g_main_quit (dvsi->loop);
+
+  END:
+    g_strfreev (tokens);
+    g_free (tmp);
+}
+
+static void
+verify_status_read_done_cb (RCLineBuf *lb, RCLineBufStatus status,
+                            gpointer data)
+{
+    DebmanVerifyStatusInfo *dvsi = (DebmanVerifyStatusInfo *)data;
+
+    gtk_signal_disconnect (GTK_OBJECT (lb), dvsi->read_line_id);
+    gtk_signal_disconnect (GTK_OBJECT (lb), dvsi->read_done_id);
+
+    g_main_quit (dvsi->loop);
+}
+
+static gboolean
+verify_status (RCPackman *p)
+{
+    DebmanVerifyStatusInfo dvsi;
+    GMainLoop *loop;
+    int in_fd, out_fd;
+    RCLineBuf *lb;
+
+    rc_packman_set_error (p, RC_PACKMAN_ERROR_NONE, NULL);
+
+    if ((in_fd = open ("/var/lib/dpkg/status", O_RDONLY)) == -1) {
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_FATAL,
+                              "Unable to open /var/lib/dpkg/status for "
+                              "reading");
+        return (FALSE);
+    }
+
+    if ((out_fd = creat ("/var/lib/dpkg/status.redcarpet", 644)) == -1) {
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_FATAL,
+                              "Unable to open /var/lib/dpkg/status.redcarpet "
+                              "for writing");
+        close (in_fd);
+        return (FALSE);
+    }
+
+    loop = g_main_new (FALSE);
+
+    dvsi.out_fd = out_fd;
+    dvsi.loop = loop;
+    dvsi.error = FALSE;
+
+    lb = rc_line_buf_new ();
+
+    dvsi.read_line_id =
+        gtk_signal_connect (GTK_OBJECT (lb), "read_line",
+                            GTK_SIGNAL_FUNC (verify_status_read_line_cb),
+                            (gpointer) &dvsi);
+    dvsi.read_done_id =
+        gtk_signal_connect (GTK_OBJECT (lb), "read_done",
+                            GTK_SIGNAL_FUNC (verify_status_read_done_cb),
+                            (gpointer) &dvsi);
+
+    rc_line_buf_set_fd (lb, in_fd);
+
+    g_main_run (loop);
+
+    gtk_object_unref (GTK_OBJECT (lb));
+
+    g_main_destroy (loop);
+
+    close (in_fd);
+    close (out_fd);
+
+    if (dvsi.error) {
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_FATAL,
+                              "The /var/lib/dpkg/status file appears to have "
+                              "errors or be malformed.  Until these errors "
+                              "are corrected, it is not safe for the "
+                              "application to perform package management "
+                              "operations on your system.  Please check this "
+                              "file by hand, or use one of the Debian "
+                              "programs, such as dpkg or apt-get, to correct "
+                              "it.");
+        return (FALSE);
+    }
+
+    if (rename ("/var/lib/dpkg/status.redcarpet", "/var/lib/dpkg/status")) {
+        unlink ("/var/lib/dpkg/status.redcarpet");
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_FATAL,
+                              "Unable to rename RC status file");
+        return (FALSE);
+    }
+
+    return (TRUE);
+}
+
+static RCVerificationSList *
+rc_debman_verify (RCPackman *p, gchar *filename)
+{
+    return (NULL);
+}
+
 static void
 rc_debman_destroy (GtkObject *obj)
 {
@@ -1527,6 +1699,7 @@ rc_debman_class_init (RCDebmanClass *klass)
     rcpc->rc_packman_real_query = rc_debman_query;
     rcpc->rc_packman_real_query_file = rc_debman_query_file;
     rcpc->rc_packman_real_query_all = rc_debman_query_all;
+    rcpc->rc_packman_real_verify = rc_debman_verify;
 
     putenv ("DEBIAN_FRONTEND=noninteractive");
 
@@ -1544,8 +1717,15 @@ rc_debman_init (RCDebman *obj)
 
     obj->lock_fd = -1;
 
-    if (!(lock_database (obj))) {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_FATAL,
+    obj->pkg_hash = g_hash_table_new (g_str_hash, g_str_equal);
+    obj->hash_valid = FALSE;
+
+    if (geteuid ()) {
+        return;
+    }
+
+    if (!lock_database (obj)) {
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
                               "The dpkg database (/var/lib/dpkg/status) is "
                               "currently locked by another process.  Without "
                               "this lock, this application cannot safely "
@@ -1553,10 +1733,9 @@ rc_debman_init (RCDebman *obj)
                               "Please end any other program accessing the "
                               "database (such as dpkg, dselect, or apt), and "
                               "try again.");
+    } else {
+        verify_status (p);
     }
-
-    obj->pkg_hash = g_hash_table_new (g_str_hash, g_str_equal);
-    obj->hash_valid = FALSE;
 }
 
 RCDebman *

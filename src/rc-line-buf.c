@@ -7,7 +7,6 @@ static GtkObjectClass *rc_line_buf_parent;
 
 enum SIGNALS {
     READ_LINE,
-    READ_ERROR,
     READ_DONE,
     LAST_SIGNAL
 };
@@ -45,12 +44,8 @@ rc_line_buf_destroy (GtkObject *obj)
         g_string_free (lb->buf, TRUE);
     }
 
-    if (lb->read_id) {
-        g_source_remove (lb->read_id);
-    }
-
-    if (lb->hup_id) {
-        g_source_remove (lb->hup_id);
+    if (lb->cb_id) {
+        g_source_remove (lb->cb_id);
     }
 
     if (lb->channel) {
@@ -71,7 +66,6 @@ rc_line_buf_class_init (RCLineBufClass *klass)
     object_class->destroy = rc_line_buf_destroy;
 
     klass->read_line  = NULL;
-    klass->read_error = NULL;
     klass->read_done  = NULL;
 
     rc_line_buf_parent = gtk_type_class (gtk_object_get_type ());
@@ -85,21 +79,14 @@ rc_line_buf_class_init (RCLineBufClass *klass)
                         GTK_TYPE_NONE, 1,
                         GTK_TYPE_STRING);
 
-    signals[READ_ERROR] =
-        gtk_signal_new ("read_error",
-                        GTK_RUN_LAST,
-                        object_class->type,
-                        GTK_SIGNAL_OFFSET (RCLineBufClass, read_error),
-                        gtk_marshal_NONE__NONE,
-                        GTK_TYPE_NONE, 0);
-
     signals[READ_DONE] =
         gtk_signal_new ("read_done",
                         GTK_RUN_LAST,
                         object_class->type,
                         GTK_SIGNAL_OFFSET (RCLineBufClass, read_done),
-                        gtk_marshal_NONE__NONE,
-                        GTK_TYPE_NONE, 0);
+                        gtk_marshal_NONE__ENUM,
+                        GTK_TYPE_NONE, 1,
+                        GTK_TYPE_ENUM);
 
     gtk_object_class_add_signals (object_class, signals, LAST_SIGNAL);
 }
@@ -108,13 +95,12 @@ static void
 rc_line_buf_init (RCLineBuf *obj)
 {
     obj->channel = NULL;
-    obj->read_id = 0;
-    obj->hup_id = 0;
+    obj->cb_id = 0;
     obj->buf = NULL;
 }
 
 static gboolean
-rc_line_buf_read_cb (GIOChannel *source, GIOCondition condition,
+rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
                      gpointer data)
 {
     RCLineBuf *lb = (RCLineBuf *)data;
@@ -124,7 +110,13 @@ rc_line_buf_read_cb (GIOChannel *source, GIOCondition condition,
     guint base = 0;
     gchar *buf;
 
-    g_assert (condition == G_IO_IN);
+    if (condition == G_IO_HUP) {
+        gtk_signal_emit (GTK_OBJECT (lb), signals[READ_DONE],
+                         RC_LINE_BUF_OK);
+        g_source_remove (lb->cb_id);
+        lb->cb_id = 0;
+        return (FALSE);
+    }
 
     buf = g_new0 (gchar, 101);
 
@@ -141,27 +133,29 @@ rc_line_buf_read_cb (GIOChannel *source, GIOCondition condition,
     case G_IO_ERROR_INVAL:
     case G_IO_ERROR_UNKNOWN:
         /* Bork bork */
-        gtk_signal_emit ((GtkObject *)lb, signals[READ_ERROR]);
+        gtk_signal_emit ((GtkObject *)lb, signals[READ_DONE],
+                         RC_LINE_BUF_ERROR);
         /* I don't think I should have to do this, but this is the solution to
            the infamous big bad oh-what-the-fuck bug, so... */
-        g_source_remove (lb->read_id);
-        lb->read_id = 0;
+        g_source_remove (lb->cb_id);
+        lb->cb_id = 0;
         g_free (buf);
         return (FALSE);
         break;
 
     case G_IO_ERROR_NONE:
         if (bytes_read == 0) {
-            gtk_signal_emit ((GtkObject *)lb, signals[READ_DONE]);
+            gtk_signal_emit ((GtkObject *)lb, signals[READ_DONE],
+                             RC_LINE_BUF_OK);
             /* I don't think I should have to do this, but this is the
-               solution to the infamous big bad oh-what-the-fuck bug, so... */
-            g_source_remove (lb->read_id);
-            lb->read_id = 0;
+                   solution to the infamous big bad oh-what-the-fuck bug, so */
+            g_source_remove (lb->cb_id);
+            lb->cb_id = 0;
             g_free (buf);
             return (FALSE);
         }
 
-        buf[bytes_read + 1] = '\0';
+        buf[bytes_read] = '\0';
 
         for (count = 0; count < bytes_read; count++) {
             if (buf[count] == '\n') {
@@ -187,22 +181,6 @@ rc_line_buf_read_cb (GIOChannel *source, GIOCondition condition,
     return (FALSE);
 }
 
-static gboolean
-rc_line_buf_hup_cb (GIOChannel *channel, GIOCondition condition,
-                    gpointer data)
-{
-    RCLineBuf *lb = (RCLineBuf *)data;
-
-    g_assert (condition == G_IO_HUP);
-
-    while (rc_line_buf_read_cb (channel, G_IO_IN, lb));
-
-    gtk_signal_emit ((GtkObject *)lb, signals[READ_DONE]);
-
-    lb->hup_id = 0;
-    return (FALSE);
-}
-
 RCLineBuf *
 rc_line_buf_new ()
 {
@@ -219,11 +197,7 @@ rc_line_buf_set_fd (RCLineBuf *lb, int fd)
 {
     lb->channel = g_io_channel_unix_new (fd);
 
-    lb->read_id = g_io_add_watch (lb->channel, G_IO_IN,
-                                  (GIOFunc) rc_line_buf_read_cb,
-                                  (gpointer) lb);
-
-    lb->hup_id = g_io_add_watch (lb->channel, G_IO_HUP,
-                                 (GIOFunc) rc_line_buf_hup_cb,
-                                 (gpointer) lb);
+    lb->cb_id = g_io_add_watch (lb->channel, G_IO_IN | G_IO_HUP,
+                                (GIOFunc) rc_line_buf_cb,
+                                (gpointer) lb);
 }

@@ -521,6 +521,11 @@ int main (int argc, char **argv)
 
     p = rc_distman_new ();
 
+    if (p->error) {
+        printf ("ERROR: %s\n", p->reason);
+        exit (-1);
+    }
+
     gtk_signal_connect (GTK_OBJECT (p), "transaction_progress",
                         GTK_SIGNAL_FUNC (transaction_progress_cb), NULL);
     gtk_signal_connect (GTK_OBJECT (p), "transaction_step",
@@ -575,7 +580,7 @@ int main (int argc, char **argv)
         free (buf);
     }
 
-    gtk_object_destroy (GTK_OBJECT (p));
+    gtk_object_unref (GTK_OBJECT (p));
 
     return (0);
 }

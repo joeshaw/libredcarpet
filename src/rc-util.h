@@ -55,4 +55,7 @@ rc_hash_table_copy (GHashTable *ht, GHashFunc hfunc, GCompareFunc cfunc);
 gint rc_uncompress_memory (guint8 *input_buffer, guint32 input_length,
                            GByteArray **out_ba);
 
+/* Safely write a buffer to a fd (handle all those pesky EINTR issues) */
+gboolean rc_write (int fd, const void *buf, size_t count);
+
 #endif

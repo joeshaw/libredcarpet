@@ -18,19 +18,33 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include "rc-packman-private.h"
+#include <config.h>
 
+#include "rc-packman-private.h"
 #include "rc-rpmman.h"
+#include "rc-util.h"
 
 #include <fcntl.h>
 #include <string.h>
+
 #include <rpm/rpmurl.h>
 #include <rpm/rpmmacro.h>
 #include <rpm/misc.h>
 #include <rpm/header.h>
+#include <rpm/rpmlib.h>
+
+#ifndef HAVE_RPM_4_0
+#include <rpmlead-3-0-x.h>
+#include <signature-3-0-x.h>
+#else
+#include <rpmlead.h>
+#include <signature.h>
+#endif
 
 static void rc_rpmman_class_init (RCRpmmanClass *klass);
 static void rc_rpmman_init       (RCRpmman *obj);
+
+static GtkObjectClass *rc_rpmman_parent;
 
 guint
 rc_rpmman_get_type (void)
@@ -1095,24 +1109,170 @@ rc_rpmman_version_compare (RCPackman *p, RCPackageSpec *s1, RCPackageSpec *s2)
         return rpmvercmp(r1, r2);
 }
 
-#if 0
-static gboolean
-rc_rpmman_verify (RCPackman *p, RCPackage *d)
+static RCVerificationSList *
+rc_rpmman_verify (RCPackman *p, gchar *filename)
 {
-    return (TRUE);
+    struct rpmlead lead;
+    FD_t in_fd = NULL;
+    Header sig_hdr = NULL;
+    int data_fd = 0;
+    int sig_fd = 0;
+    RCVerificationSList *ret = NULL;
+    RCVerification *rcv = NULL;
+    char *sig_name = g_strdup ("/tmp/rpm-sig-XXXXXX");
+    char *data_name = g_strdup ("/tmp/rpm-data-XXXXXX");
+    gint32 count;
+    guchar buffer[128];
+    ssize_t num_bytes;
+    gboolean gpg_sig = FALSE, md5_sig = FALSE, size_sig = FALSE;
+    guint8 *md5;
+    guint32 size;
+    gchar *buf;
+
+    in_fd = Fopen (filename, "r.ufdio");
+    if (in_fd == NULL || Ferror (in_fd)) {
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+                              "Unable to open the RPM for verification");
+        goto END;
+    }
+
+    if (readLead (in_fd, &lead)) {
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+                              "Unable to read the RPM file for verification");
+        goto END;
+    }
+
+    if (rpmReadSignature (in_fd, &sig_hdr, lead.signature_type) ||
+        (sig_hdr == NULL))
+    {
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+                              "Unable to read the RPM signature section");
+        goto END;
+    }
+
+    count = 0;
+    headerGetEntry (sig_hdr, RPMSIGTAG_GPG, NULL, (void **)&buf, &count);
+    if (count > 0) {
+        if ((sig_fd = mkstemp (sig_name)) == -1) {
+            rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+                                  "Unable to create a temporary signature "
+                                  "file");
+            goto END;
+        }
+        if (!rc_write (sig_fd, buf, count)) {
+            rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+                                  "Unable to write a temporary signature "
+                                  "file");
+            goto END;
+        }
+        close (sig_fd);
+        gpg_sig = TRUE;
+    }
+
+    count = 0;
+    headerGetEntry (sig_hdr, RPMSIGTAG_MD5, NULL, (void **)&buf, &count);
+    if (count > 0) {
+        md5_sig = TRUE;
+        md5 = g_new (guint8, count);
+        memcpy (md5, buf, count);
+    }
+
+    count = 0;
+    headerGetEntry (sig_hdr, RPMSIGTAG_SIZE, NULL, (void **)&buf, &count);
+    if (count > 0) {
+        size_sig = TRUE;
+        size = *((guint32 *)buf);
+    }
+
+    if (gpg_sig || md5_sig || size_sig) {
+        if ((data_fd = mkstemp (data_name)) == -1) {
+            rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+                                  "Unable to create temporary payload file");
+            goto END;
+        }
+
+        while ((num_bytes = Fread (buffer, sizeof (char), sizeof (buffer),
+                                   in_fd)) > 0) {
+            if (!rc_write (data_fd, buffer, num_bytes)) {
+                rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+                                      "Unable to write a temporary payload "
+                                      "file");
+                goto END;
+            }
+        }
+
+        close (data_fd);
+    }
+
+    if (gpg_sig) {
+        rcv = rc_verify_gpg (data_name, sig_name);
+
+        ret = g_slist_append (ret, rcv);
+    }
+
+    if (md5_sig) {
+        rcv = rc_verify_md5 (data_name, md5);
+
+        ret = g_slist_append (ret, rcv);
+    }
+
+    if (size_sig) {
+        rcv = rc_verify_size (data_name, size);
+
+        ret = g_slist_append (ret, rcv);
+    }
+
+  END:
+    if (gpg_sig) {
+        unlink (sig_name);
+    }
+    if (gpg_sig || md5_sig || size_sig) {
+        unlink (data_name);
+    }
+    if (in_fd) {
+        Fclose (in_fd);
+    }
+    g_free (sig_name);
+    g_free (data_name);
+    g_free (md5);
+    headerFree (sig_hdr);
+    if (sig_fd) {
+        close (sig_fd);
+    }
+    if (data_fd) {
+        close (data_fd);
+    }
+
+    return (ret);
 } /* rc_rpmman_verify */
-#endif
+
+static void
+rc_rpmman_destroy (GtkObject *obj)
+{
+    RCRpmman *r = RC_RPMMAN (obj);
+
+    g_free (r->rpmroot);
+
+    if (GTK_OBJECT_CLASS (rc_rpmman_parent)->destroy)
+        (* GTK_OBJECT_CLASS (rc_rpmman_parent)->destroy) (obj);
+}
 
 static void
 rc_rpmman_class_init (RCRpmmanClass *klass)
 {
+    GtkObjectClass *object_class = (GtkObjectClass *) klass;
     RCPackmanClass *hpc = (RCPackmanClass *) klass;
+
+    object_class->destroy = rc_rpmman_destroy;
+
+    rc_rpmman_parent = gtk_type_class (rc_packman_get_type ());
 
     hpc->rc_packman_real_transact = rc_rpmman_transact;
     hpc->rc_packman_real_query = rc_rpmman_query;
     hpc->rc_packman_real_query_all = rc_rpmman_query_all;
     hpc->rc_packman_real_query_file = rc_rpmman_query_file;
     hpc->rc_packman_real_version_compare = rc_rpmman_version_compare;
+    hpc->rc_packman_real_verify = rc_rpmman_verify;
 } /* rc_rpmman_class_init */
 
 static void

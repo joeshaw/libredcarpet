@@ -5,6 +5,7 @@
 
 #include <glib.h>
 
-gchar *rc_md5 (const gchar *filename);
+guint8 *rc_md5 (const gchar *filename);
+gchar *rc_md5_string (const gchar *filename);
 
 #endif /* RC_MD5 */

@@ -24,6 +24,7 @@
 #include <gtk/gtk.h>
 
 #include "rc-package.h"
+#include "rc-verification.h"
 
 #define GTK_TYPE_RC_PACKMAN        (rc_packman_get_type ())
 #define RC_PACKMAN(obj)            (GTK_CHECK_CAST ((obj), \
@@ -41,7 +42,9 @@
 typedef struct _RCPackman      RCPackman;
 typedef struct _RCPackmanClass RCPackmanClass;
 
-typedef enum _RCPackmanError {
+typedef enum _RCPackmanError RCPackmanError;
+
+enum _RCPackmanError {
     /* No error */
     RC_PACKMAN_ERROR_NONE = 0,
     /* Packman object is busy in another operation */
@@ -49,11 +52,11 @@ typedef enum _RCPackmanError {
     /* The requested operation was aborted due to detected error */
     RC_PACKMAN_ERROR_ABORT,
     /* An error occured at the package manager level or lower, and the
-       requested operation was aborted */
+       requested operation did not complete */
     RC_PACKMAN_ERROR_FAIL,
     /* An error from which we cannot and should not attempt to recover */
     RC_PACKMAN_ERROR_FATAL,
-} RCPackmanError;
+};
 
 struct _RCPackman {
     GtkObject parent;
@@ -104,8 +107,8 @@ struct _RCPackmanClass {
                                             RCPackageSpec *s1,
                                             RCPackageSpec *s2);
 
-    gboolean (*rc_packman_real_verify)(RCPackman *p,
-                                       RCPackage *pkg);
+    RCVerificationSList *(*rc_packman_real_verify)(RCPackman *p,
+                                                   gchar *filename);
 };
 
 guint rc_packman_get_type (void);
@@ -155,9 +158,7 @@ gint rc_packman_version_compare (RCPackman *p,
                                  RCPackageSpec *s1,
                                  RCPackageSpec *s2);
 
-/* Don't worry about this function yet, I haven't decided firmly on how to
-   handle this stuff. */
-gboolean rc_packman_verify (RCPackman *p, RCPackage *pkg);
+RCVerificationSList *rc_packman_verify (RCPackman *p, gchar *filename);
 
 /* Return the object's error code from the last operation. */
 guint rc_packman_get_error (RCPackman *p);

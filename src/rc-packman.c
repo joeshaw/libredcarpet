@@ -348,25 +348,25 @@ rc_packman_version_compare (RCPackman *p,
     return (_CLASS (p)->rc_packman_real_version_compare (p, s1, s2));
 }
 
-gboolean
-rc_packman_verify (RCPackman *p, RCPackage *pkg)
+RCVerificationSList *
+rc_packman_verify (RCPackman *p, gchar *filename)
 {
-    gboolean ret = FALSE;
+    RCVerificationSList *ret = FALSE;
 
-    g_return_val_if_fail(p, FALSE);
+    g_return_val_if_fail(p, NULL);
 
     rc_packman_set_error (p, RC_PACKMAN_ERROR_NONE, NULL);
 
     if (p->busy) {
         rc_packman_set_error (p, RC_PACKMAN_ERROR_BUSY, NULL);
-        return (FALSE);
+        return (NULL);
     }
 
     g_assert (_CLASS (p)->rc_packman_real_verify);
 
     p->busy = TRUE;
 
-    ret = _CLASS (p)->rc_packman_real_verify (p, pkg);
+    ret = _CLASS (p)->rc_packman_real_verify (p, filename);
 
     p->busy = FALSE;
 

@@ -23,6 +23,7 @@
 #include <dirent.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -319,4 +320,33 @@ rc_uncompress_memory (guint8 *input_buffer, guint32 input_length,
     g_byte_array_append (ba, "", 1);
     *out_ba = ba;
     return 0;
+}
+
+gboolean rc_write (int fd, const void *buf, size_t count)
+{
+    size_t bytes_remaining = count;
+    void *ptr = buf;
+
+    while (bytes_remaining) {
+        size_t bytes_written;
+
+        bytes_written = write (fd, ptr, bytes_remaining);
+
+        if (bytes_written == -1) {
+            if (errno == EAGAIN || errno == EINTR) {
+                continue;
+            } else {
+                break;
+            }
+        }
+
+        bytes_remaining -= bytes_written;
+        ptr += bytes_written;
+    }
+
+    if (bytes_remaining) {
+        return (FALSE);
+    }
+
+    return (TRUE);
 }

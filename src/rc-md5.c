@@ -303,15 +303,13 @@ nibble_to_hex (gint8 nibble)
     return '#';
 }
 
-gchar *
+guint8 *
 rc_md5 (const gchar *filename)
 {
     MD5Context context;
     int fd;
-    guint8 buf[16];
+    guint8 *buf;
     gint length;
-    gchar *result = g_new0 (gchar, 33);
-    int i;
 
     MD5Init (&context);
 
@@ -319,11 +317,31 @@ rc_md5 (const gchar *filename)
         return NULL;
     }
 
+    buf = g_new (guint8, 16);
+
     while ((length = read (fd, buf, 16))) {
         MD5Update (&context, buf, length);
     }
 
     MD5Final (buf, &context);
+
+    return (buf);
+}
+
+gchar *
+rc_md5_string (const gchar *filename)
+{
+    guint8 *buf;
+    gchar *result;
+    int i;
+
+    buf = rc_md5 (filename);
+
+    if (!buf) {
+        return (NULL);
+    }
+
+    result = g_new0 (gchar, 33);
 
     for (i = 0; i < 16; i++) {
         result[i * 2] = nibble_to_hex ((buf[i] & 0xf0) >> 4);

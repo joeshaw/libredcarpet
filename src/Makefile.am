@@ -4,7 +4,8 @@ INCLUDES =				\
 	$(RPMLIB_CFLAGS)		\
 	$(GTK_CFLAGS)			\
 	$(XML_CFLAGS)			\
-	-DG_LOG_DOMAIN=\"libredcarpet\"
+	-DG_LOG_DOMAIN=\"libredcarpet\" \
+	-DSHAREDIR=\""$(datadir)/redcarpet"\"
 
 noinst_LIBRARIES = libredcarpet.a
 
@@ -28,6 +29,8 @@ libredcarpet_a_SOURCES =		\
 	rc-package-set.h		\
 	rc-package.c			\
 	rc-package.h			\
+	rc-verification.c		\
+	rc-verification.h		\
 	rc-channel.h			\
 	rc-channel.c			\
 	rc-util.c			\
