@@ -1,3 +1,12 @@
+2001-02-12  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c: Attempt to fix brokenness introduced by earlier
+	commit.  Removes are more intelligent and robust now (we can use
+	upgrade_or_remove knowing that the remove will happen corerctly
+	later).
+
+	* rc-debug-misc.c, rc-debug-misc.h: Added debug_rc_package_slist_dump.
+
 2001-02-10  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c: Do more intelligent checking when deciding what to
