@@ -1,3 +1,12 @@
+2003-05-30  Joe Shaw  <joe@ximian.com>
+
+	* rc-rollback.c (add_tracked_package): Make sure we save the
+	package epochs if they're present.
+	(package_match_cb): Fix up some broken matching... we care about
+	name matches only at the package level, not total dep relations.
+	(get_action_from_xml_node): Read the epoch from the XML file and
+	pass it into rc_package_dep_new().
+
 2003-05-29  Joe Shaw  <joe@ximian.com>
 
 	* rc-rpmman.c (rc_rpmman_transact): Add RPMPROB_FILTER_REPLACEPKG

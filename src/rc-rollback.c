@@ -216,11 +216,23 @@ add_tracked_package (RCRollbackInfo *rollback_info,
                 g_quark_to_string (new_package->spec.nameq));
 
     if (old_package) {
+        if (old_package->spec.has_epoch) {
+            tmp = g_strdup_printf ("%d", old_package->spec.epoch);
+            xmlNewProp (package_node, "old_epoch", tmp);
+            g_free (tmp);
+        }
+
         xmlNewProp (package_node, "old_version", old_package->spec.version);
         xmlNewProp (package_node, "old_release", old_package->spec.release);
     }
 
     if (new_package) {
+        if (new_package->spec.has_epoch) {
+            tmp = g_strdup_printf ("%d", new_package->spec.epoch);
+            xmlNewProp (package_node, "new_epoch", tmp);
+            g_free (tmp);
+        }
+
         xmlNewProp (package_node, "new_version", new_package->spec.version);
         xmlNewProp (package_node, "new_release", new_package->spec.release);
     }
@@ -478,8 +490,6 @@ static void
 package_match_cb (RCPackage *package, gpointer user_data)
 {
     PackageMatchInfo *pmi = user_data;
-    RCPackageDep *package_dep;
-    gboolean match;
     RCPackageUpdateSList *iter;
 
     if (pmi->matching_package) {
@@ -488,18 +498,8 @@ package_match_cb (RCPackage *package, gpointer user_data)
     }
 
     /* Make sure this is the package we're looking for */
-    package_dep = rc_package_dep_new_from_spec (RC_PACKAGE_SPEC (package),
-                                                RC_RELATION_EQUAL,
-                                                RC_CHANNEL_ANY,
-                                                FALSE, FALSE);
-
-    match = rc_package_dep_verify_relation (pmi->packman,
-                                            pmi->dep_to_match,
-                                            package_dep);
-
-    rc_package_dep_unref (package_dep);
-
-    if (!match) /* Nope */
+    if (RC_PACKAGE_SPEC (package)->nameq !=
+        RC_PACKAGE_SPEC (pmi->dep_to_match)->nameq)
         return;
 
     for (iter = package->history; iter; iter = iter->next) {
@@ -600,7 +600,7 @@ get_action_from_xml_node (xmlNode    *node,
                           GHashTable *action_hash)
 {
     RCWorld *world = rc_get_world ();
-    char *name, *version, *release;
+    char *name, *epoch, *version, *release;
     RCRollbackAction *action, *old_action;
     PackageMatchInfo pmi;
     xmlNode *changes_node;
@@ -640,10 +640,13 @@ get_action_from_xml_node (xmlNode    *node,
         return action;
     }
 
+    epoch = xml_get_prop (node, "old_epoch");
     release = xml_get_prop (node, "old_release");
 
     pmi.packman = rc_world_get_packman (world);
-    pmi.dep_to_match = rc_package_dep_new (name, FALSE, 0,
+    pmi.dep_to_match = rc_package_dep_new (name,
+                                           epoch != NULL ? TRUE : FALSE,
+                                           epoch != NULL ? atoi (epoch) : 0,
                                            version, release,
                                            RC_RELATION_EQUAL,
                                            RC_CHANNEL_ANY,
