@@ -116,56 +116,6 @@ rc_package_update_slist_sort (RCPackageUpdateSList *old_slist)
     return (new_slist);
 }
 
-xmlNode *
-rc_package_update_to_xml_node (RCPackageUpdate *update)
-{
-    xmlNode *update_node;
-    gchar *tmp_string;
-
-    update_node = xmlNewNode (NULL, "update");
-
-    if (update->spec.epoch) {
-	    tmp_string = g_strdup_printf("%d", update->spec.epoch);
-	    xmlNewTextChild (update_node, NULL, "epoch", tmp_string);
-	    g_free(tmp_string);
-    }
-
-    xmlNewTextChild (update_node, NULL, "version", update->spec.version);
-
-    xmlNewTextChild (update_node, NULL, "release", update->spec.release);
-
-    xmlNewTextChild (update_node, NULL, "filename",
-                     g_basename (update->package_url));
-
-    tmp_string = g_strdup_printf ("%d", update->package_size);
-    xmlNewTextChild (update_node, NULL, "filesize", tmp_string);
-    g_free (tmp_string);
-
-    tmp_string = g_strdup_printf ("%d", update->installed_size);
-    xmlNewTextChild (update_node, NULL, "installedsize", tmp_string);
-    g_free (tmp_string);
-
-    if (update->signature_url) {
-        xmlNewTextChild (update_node, NULL, "signaturename",
-                         update->signature_url);
-
-        tmp_string = g_strdup_printf ("%d", update->signature_size);
-        xmlNewTextChild (update_node, NULL, "signaturesize", tmp_string);
-        g_free (tmp_string);
-    }
-
-    if (update->md5sum) {
-        xmlNewTextChild (update_node, NULL, "md5sum", update->md5sum);
-    }
-
-    xmlNewTextChild (update_node, NULL, "importance",
-                     rc_package_importance_to_string (update->importance));
-
-    xmlNewTextChild (update_node, NULL, "description", update->description);
-
-    return (update_node);
-}
-
 RCPackageUpdate *
 rc_xml_node_to_package_update (const xmlNode *node, const RCPackage *package)
 {

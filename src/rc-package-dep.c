@@ -733,66 +733,6 @@ rc_package_dep_system_is_rpmish (gboolean is_rpm)
     rpmish = is_rpm;
 }
 
-/**
- ** XML conversion functions
- **/
-
-static xmlNode *
-rc_package_dep_item_to_xml_node (const RCPackageDepItem *dep_item)
-{
-    xmlNode *dep_node;
-
-    dep_node = xmlNewNode (NULL, "dep");
-
-    xmlSetProp (dep_node, "name", dep_item->spec.name);
-
-    if (dep_item->relation != RC_RELATION_ANY) {
-        xmlSetProp (dep_node, "op",
-                    rc_package_relation_to_string (dep_item->relation, FALSE));
-
-        if (dep_item->spec.epoch > 0) {
-            gchar *tmp;
-
-            tmp = g_strdup_printf ("%d", dep_item->spec.epoch);
-            xmlSetProp (dep_node, "epoch", tmp);
-            g_free (tmp);
-        }
-
-        if (dep_item->spec.version) {
-            xmlSetProp (dep_node, "version", dep_item->spec.version);
-        }
-
-        if (dep_item->spec.release) {
-            xmlSetProp (dep_node, "release", dep_item->spec.release);
-        }
-    }
-
-    return (dep_node);
-}
-
-xmlNode *
-rc_package_dep_to_xml_node (const RCPackageDep *dep)
-{
-    if (!dep->next) {
-        /* The simple case, a single non-OR dependency */
-
-        return (rc_package_dep_item_to_xml_node
-                ((RCPackageDepItem *)dep->data));
-    } else {
-        xmlNode *or_node;
-        const RCPackageDep *dep_iter;
-
-        or_node = xmlNewNode (NULL, "or");
-
-        for (dep_iter = dep; dep_iter; dep_iter = dep_iter->next) {
-            RCPackageDepItem *dep_item = (RCPackageDepItem *)(dep_iter->data);
-            xmlAddChild (or_node, rc_package_dep_item_to_xml_node (dep_item));
-        }
-
-        return (or_node);
-    }
-}
-
 static RCPackageDepItem *
 rc_xml_node_to_package_dep_item (const xmlNode *node)
 {

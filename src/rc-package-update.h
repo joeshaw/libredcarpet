@@ -68,8 +68,6 @@ void rc_package_update_slist_free (RCPackageUpdateSList *update_slist);
 RCPackageUpdateSList
 *rc_package_update_slist_sort (RCPackageUpdateSList *old_slist);
 
-xmlNode *rc_package_update_to_xml_node (RCPackageUpdate *update);
-
 RCPackageUpdate *rc_xml_node_to_package_update (const xmlNode *,
                                                 const RCPackage *package);
 

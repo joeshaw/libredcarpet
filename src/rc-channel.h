@@ -114,8 +114,6 @@ gint rc_channel_compare_func (gconstpointer a, gconstpointer b);
 
 RCSubchannel *rc_channel_get_subchannel (RCChannel *channel, guint preference);
 
-xmlNode *rc_channel_to_xml_node (RCChannel *);
-
 guint rc_xml_node_to_channel (RCChannel *, xmlNode *);
 
 #endif /* _RC_CHANNEL_H */

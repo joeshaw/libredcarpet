@@ -92,8 +92,6 @@ RCPackageSList *rc_package_hash_table_by_string_to_list (RCPackageHashTableBySpe
 
 RCPackageUpdate *rc_package_get_latest_update(RCPackage *package);
 
-xmlNode *rc_package_to_xml_node (RCPackage *);
-
 RCPackage *rc_xml_node_to_package (const xmlNode *,
                                    const RCSubchannel *subchannel);
 

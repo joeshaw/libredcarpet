@@ -618,11 +618,6 @@
 	* rc-channel.c (rc_subchannel_free): Don't destroy the 
 	dep_table if it is NULL.
 
-2000-12-01  Joe Shaw  <joe@helixcode.com>
-
-	* rc-package-update.c (rc_package_update_to_xml_node): 
-	Don't write out the epoch to XML if one isn't set (saves space).
-
 2000-11-29  Joe Shaw  <joe@helixcode.com>
 
 	* rc-channel.c (rc_xml_node_to_channel): Back out the
@@ -777,7 +772,6 @@
 	stuff, fixicate the include lines
 	(struct _RCSubchannel): move the dep_table from the RCChannel into
 	here, as it would otherwise be /really/ broken
-	(rc_channel_to_xml_node): convert an RCChannel* to an xmlNode*
 	(rc_xml_node_to_channel): convert an xmlNode* to an RCChannel*
 
 	* rc-channel.c: fixicate the include lines, include some
@@ -792,11 +786,6 @@
 	free, free the package set list, free the subchannels.  Whoops.
 	(my_little_helper): a static helper function to add children to an
 	xmlNode	from a hash table
-	(rc_subchannel_to_xml_node): static, given a subchannel, convert it to
-	an xmlNode*.  Used by rc_channel_to_xml_node.
-	(rc_channel_to_xml_node): convert an RCChannel to an xmlNode*,
-	basically by calling rc_subchannel_to_xml_node a lot on all of the
-	subchannels.
 	(rc_xml_node_to_subchannel): static, given an xmlNode*, recreate the
 	RCSubchannel.  Using the url_prefix given by the RCChannel, fix the
 	package_url and signature_url fields of the RCPackageUpdates deep in
@@ -822,9 +811,6 @@
 	fixicate some includes
 	(rc_string_to_package_relation): added.
 	(rc_package_relation_to_string): added.
-	(rc_package_dep_item_to_xml_node): static, added.  Used by
-	rc_package_dep_to_xml_node.
-	(rc_package_dep_to_xml_node): added.
 	(rc_xml_node_to_package_dep_item): static, added.  Used by
 	rc_xml_node_to_package_dep.
 	(rc_xml_node_to_package_dep): added.
@@ -853,13 +839,11 @@
 	them around
 	(rc_string_to_package_importance): added
 	(rc_package_importance_to_string): added
-	(rc_package_update_to_xml_node): added
 	(rc_xml_node_to_package_update): added
 	There's a pattern here, pay close attention
 
 	* rc-package.h, rc-package.c: fixicate some includes,
 	fiddle with some field names
-	(rc_package_to_xml_node): added
 	(rc_xml_node_to_package): added
 
 	* rc-verification.c: fixicate some includes

@@ -465,50 +465,6 @@ rc_channel_get_subchannel (RCChannel *channel, guint preference)
     return (NULL);
 }
 
-static void
-my_little_helper (gchar *key, RCPackage *package, xmlNode *subchannel_node)
-{
-    xmlAddChild (subchannel_node, rc_package_to_xml_node (package));
-}
-
-static xmlNode *
-rc_subchannel_to_xml_node (RCSubchannel *subchannel)
-{
-    xmlNode *subchannel_node;
-    gchar *tmp;
-
-    subchannel_node = xmlNewNode (NULL, "subchannel");
-
-    xmlSetProp (subchannel_node, "name", subchannel->name);
-
-    tmp = g_strdup_printf ("%d", subchannel->preference);
-    xmlSetProp (subchannel_node, "preference", tmp);
-    g_free (tmp);
-
-    g_hash_table_foreach (subchannel->packages, (GHFunc) my_little_helper,
-                          (gpointer) subchannel_node);
-
-    return (subchannel_node);
-}
-
-xmlNode *
-rc_channel_to_xml_node (RCChannel *channel)
-{
-    xmlNode *channel_node;
-    RCSubchannelSList *sub_iter;
-
-    channel_node = xmlNewNode (NULL, "channel");
-
-    for (sub_iter = channel->subchannels; sub_iter; sub_iter = sub_iter->next)
-    {
-        RCSubchannel *subchannel = (RCSubchannel *)(sub_iter->data);
-
-        xmlAddChild (channel_node, rc_subchannel_to_xml_node (subchannel));
-    }
-
-    return (channel_node);
-}
-
 static RCSubchannel *
 rc_xml_node_to_subchannel (xmlNode *node, const RCChannel *channel)
 {

@@ -136,7 +136,6 @@ RCPackageRelation rc_string_to_package_relation (const gchar *relation);
 const gchar *rc_package_relation_to_string (RCPackageRelation relation,
                                             gboolean words);
 
-xmlNode *rc_package_dep_to_xml_node (const RCPackageDep *);
 RCPackageDep *rc_xml_node_to_package_dep (const xmlNode *);
 
 #endif /* _RC_PACKAGE_DEP_H */
