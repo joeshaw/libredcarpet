@@ -260,7 +260,7 @@
 	</distro>
 	<distro>
 		<name>TurboLinux</name>
-		<version>6.0</version>
+		<version>7.0</version>
 		<arch>i386</arch>
 		<type>rpm</type>
 		<target>turbolinux-70-i386</target>

@@ -232,7 +232,7 @@ parse_dep_attrs(RCPackageDep **dep, const xmlChar **attrs)
             tmp_name = value;
         else if (!g_strcasecmp(attr, "op")) {
             op_present = TRUE;
-            relation = rc_string_to_package_relation(value);
+            relation = rc_package_relation_from_string (value);
         }
         else if (!g_strcasecmp(attr, "epoch")) {
             tmp_epoch = rc_string_to_guint32_with_default(value, 0);
@@ -349,12 +349,18 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
                  iter; iter = iter->next) {
                 RCPackageDep *dep = iter->data;
                 
-                if (dep->relation == RC_RELATION_EQUAL &&
-                    !strcmp(dep->spec.name, ctx->current_package->spec.name)) {
-                    ctx->current_package->spec.epoch   = dep->spec.epoch;
-                    ctx->current_package->spec.has_epoch = dep->spec.has_epoch;
-                    ctx->current_package->spec.version = g_strdup (dep->spec.version);
-                    ctx->current_package->spec.release = g_strdup (dep->spec.release);
+                if (rc_package_dep_get_relation (dep) == RC_RELATION_EQUAL &&
+                    !strcmp(RC_PACKAGE_SPEC (dep)->name,
+                            ctx->current_package->spec.name))
+                {
+                    ctx->current_package->spec.epoch =
+                        RC_PACKAGE_SPEC (dep)->epoch;
+                    ctx->current_package->spec.has_epoch =
+                        RC_PACKAGE_SPEC (dep)->has_epoch;
+                    ctx->current_package->spec.version =
+                        g_strdup (RC_PACKAGE_SPEC (dep)->version);
+                    ctx->current_package->spec.release =
+                        g_strdup (RC_PACKAGE_SPEC (dep)->release);
                     break;
                 }
             }
@@ -1056,12 +1062,17 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
             for (i = 0; i < package->provides_a->len; i++) {
                 RCPackageDep *dep = package->provides_a->data[i];
             
-                if (dep->relation == RC_RELATION_EQUAL
-                    && ! strcmp (dep->spec.name, package->spec.name)) {
-                    package->spec.epoch   = dep->spec.epoch;
-                    package->spec.has_epoch = dep->spec.has_epoch;
-                    package->spec.version = g_strdup (dep->spec.version);
-                    package->spec.release = g_strdup (dep->spec.release);
+                if (rc_package_dep_get_relation (dep) == RC_RELATION_EQUAL &&
+                    !strcmp (RC_PACKAGE_SPEC (dep)->name, package->spec.name))
+                {
+                    package->spec.epoch =
+                        RC_PACKAGE_SPEC (dep)->epoch;
+                    package->spec.has_epoch =
+                        RC_PACKAGE_SPEC (dep)->has_epoch;
+                    package->spec.version =
+                        g_strdup (RC_PACKAGE_SPEC (dep)->version);
+                    package->spec.release =
+                        g_strdup (RC_PACKAGE_SPEC (dep)->release);
                     break;
                 }
             }
@@ -1097,7 +1108,7 @@ rc_xml_node_to_package_dep_internal (const xmlNode *node)
     tmp = xml_get_prop (node, "op");
     if (tmp) {
         guint epoch;
-        relation = rc_string_to_package_relation (tmp);
+        relation = rc_package_relation_from_string (tmp);
         if (xml_get_guint32_value (node, "epoch", &epoch)) {
             has_epoch = 1;
             epoch = epoch;
@@ -1424,9 +1435,10 @@ rc_package_dep_to_xml_node (RCPackageDep *dep_item)
 {
     xmlNode *dep_node;
 
-    if (dep_item->is_or) {
+    if (rc_package_dep_is_or (dep_item)) {
         RCPackageDepSList *dep_or_slist;
-        dep_or_slist = rc_dep_string_to_or_dep_slist (dep_item->spec.name);
+        dep_or_slist = rc_dep_string_to_or_dep_slist (
+            RC_PACKAGE_SPEC (dep_item)->name);
         dep_node = rc_package_dep_or_slist_to_xml_node (dep_or_slist);
         rc_package_dep_slist_free (dep_or_slist);
         return dep_node;
@@ -1434,26 +1446,29 @@ rc_package_dep_to_xml_node (RCPackageDep *dep_item)
 
     dep_node = xmlNewNode (NULL, "dep");
 
-    xmlSetProp (dep_node, "name", dep_item->spec.name);
+    xmlSetProp (dep_node, "name", RC_PACKAGE_SPEC (dep_item)->name);
 
-    if (dep_item->relation != RC_RELATION_ANY) {
+    if (rc_package_dep_get_relation (dep_item) != RC_RELATION_ANY) {
         xmlSetProp (dep_node, "op",
-                    rc_package_relation_to_string (dep_item->relation, FALSE));
+                    rc_package_relation_to_string (
+                        rc_package_dep_get_relation (dep_item), FALSE));
 
-        if (dep_item->spec.has_epoch) {
+        if (RC_PACKAGE_SPEC (dep_item)->has_epoch) {
             gchar *tmp;
 
-            tmp = g_strdup_printf ("%d", dep_item->spec.epoch);
+            tmp = g_strdup_printf ("%d", RC_PACKAGE_SPEC (dep_item)->epoch);
             xmlSetProp (dep_node, "epoch", tmp);
             g_free (tmp);
         }
 
-        if (dep_item->spec.version) {
-            xmlSetProp (dep_node, "version", dep_item->spec.version);
+        if (RC_PACKAGE_SPEC (dep_item)->version) {
+            xmlSetProp (dep_node, "version",
+                        RC_PACKAGE_SPEC (dep_item)->version);
         }
 
-        if (dep_item->spec.release) {
-            xmlSetProp (dep_node, "release", dep_item->spec.release);
+        if (RC_PACKAGE_SPEC (dep_item)->release) {
+            xmlSetProp (dep_node, "release",
+                        RC_PACKAGE_SPEC (dep_item)->release);
         }
     }
 

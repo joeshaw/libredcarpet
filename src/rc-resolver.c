@@ -173,7 +173,7 @@ rc_resolver_add_extra_dependency (RCResolver *resolver,
     g_return_if_fail (dep != NULL);
 
     resolver->extra_deps = 
-        g_slist_prepend (resolver->extra_deps, rc_package_dep_copy (dep));
+        g_slist_prepend (resolver->extra_deps, rc_package_dep_ref (dep));
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */

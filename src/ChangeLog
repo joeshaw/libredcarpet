@@ -1,3 +1,48 @@
+2002-08-08  Ian Peters  <itp@ximian.com>
+
+	* distributions.xml: fix a typo in the version of TurboLinux 7.0
+
+	* rc-package-dep.c, rc-package-dep.h: massively cleaned up and
+	refactored.  RCPackageDep is now an opaque struct, for the most
+	part... modulo the opening exposed by the RCPackageSpec.
+	Functions are cleaned up, dead code removed, and lots of the stuff
+	from last night has been commented.
+
+	* rc-debman.c (query_all_read_line_cb): whoops, don't post-munge
+	the pre bit of the RCPackageDeps in the pre-depends: section,
+	we've already taken care of it
+
+	* rc-dep-or.c (rc_dep_or_dep_slist_to_string): opaque
+	RCPackageDeps
+	(rc_dep_string_to_or_dep_slist): ditto
+
+	* rc-queue-item.c (dep_slist_to_string): opaque RCPackageDeps
+	(require_item_process): ditto
+	(require_item_to_string): ditto
+	(conflict_item_process) ditto
+	(conflict_item_to_string): ditto
+	(uninstall_item_process): ditto
+
+	* rc-resolver.c (rc_resolver_add_extra_dependency):
+	rc_package_dep_copy is just an rc_package_dep_ref
+
+	* rc-world.c (rc_package_and_dep_new_package): opaque
+	RCPackageDeps
+	(rc_world_add_package): ditto
+	(rc_world_foreach_providing_package): ditto
+	(rc_world_check_providing_package): ditto
+	(rc_world_foreach_requiring_package): ditto
+	(rc_world_foreach_conflicting_package): ditto
+	(foreach_provides_by_name_cb): ditto
+	(foreach_requires_by_name_cb): ditto
+	(foreach_conflicts_by_name_cb): ditto
+
+	* rc-xml.c (parse_dep_attrs): opaque RCPackageDeps
+	(parser_package_end): ditto
+	(rc_xml_node_to_package): ditto
+	(rc_xml_node_to_package_dep_internal): ditto
+	(rc_package_dep_to_xml_node): ditto
+
 2002-08-08  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-resolver-info.c (rc_resolver_info_type_to_str): Added.

@@ -66,7 +66,7 @@ rc_package_and_dep_new_package (RCPackage *package)
     pad->dep = rc_package_dep_new_from_spec (&package->spec,
                                              RC_RELATION_EQUAL,
                                              FALSE, FALSE);
-    pad->dep->spec.type = RC_PACKAGE_SPEC_TYPE_PACKAGE;
+    RC_PACKAGE_SPEC (pad->dep)->type = RC_PACKAGE_SPEC_TYPE_PACKAGE;
 
     return pad;
 }
@@ -711,7 +711,7 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
 
     pad = rc_package_and_dep_new_package (package);
     hashed_slist_add (world->provides_by_name,
-                      pad->dep->spec.name,
+                      RC_PACKAGE_SPEC (pad->dep)->name,
                       pad);
 
     if (package->provides_a)
@@ -720,7 +720,7 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
                 package, package->provides_a->data[i]);
 
             hashed_slist_add (world->provides_by_name,
-                              pad->dep->spec.name,
+                              RC_PACKAGE_SPEC (pad->dep)->name,
                               pad);
         }
 
@@ -732,7 +732,7 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
                 package, package->requires_a->data[i]);
 
             hashed_slist_add (world->requires_by_name,
-                              pad->dep->spec.name,
+                              RC_PACKAGE_SPEC (pad->dep)->name,
                               pad);
         }
 
@@ -744,7 +744,7 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
                 package, package->conflicts_a->data[i]);
 
             hashed_slist_add (world->conflicts_by_name,
-                              pad->dep->spec.name,
+                              RC_PACKAGE_SPEC (pad->dep)->name,
                               pad);
         }
 
@@ -1415,9 +1415,9 @@ rc_world_foreach_providing_package (RCWorld *world, RCPackageDep *dep,
     g_return_val_if_fail (world != NULL, -1);
     g_return_val_if_fail (dep != NULL, -1);
 
-    if (dep->is_or) {
+    if (rc_package_dep_is_or (dep)) {
         RCPackageDepSList *deps, *iter;
-        deps = rc_dep_string_to_or_dep_slist (dep->spec.name);
+        deps = rc_dep_string_to_or_dep_slist (RC_PACKAGE_SPEC (dep)->name);
         for (iter = deps; iter != NULL; iter = iter->next) {
             count += rc_world_foreach_providing_package (world, iter->data,
                                                          channel, fn, user_data);
@@ -1429,7 +1429,7 @@ rc_world_foreach_providing_package (RCWorld *world, RCPackageDep *dep,
     rc_world_conditional_sync (world, channel);
 
     slist = hashed_slist_get (world->provides_by_name,
-                              dep->spec.name);
+                              RC_PACKAGE_SPEC (dep)->name);
 
     installed = g_hash_table_new (rc_package_spec_hash,
                                   rc_package_spec_equal);
@@ -1453,7 +1453,7 @@ rc_world_foreach_providing_package (RCWorld *world, RCPackageDep *dep,
                 || g_hash_table_lookup (installed, & pad->package->spec) == NULL) {
                 
                 if (fn)
-                    fn (pad->package, &pad->dep->spec, user_data);
+                    fn (pad->package, RC_PACKAGE_SPEC (pad->dep), user_data);
                 ++count;
             }
         }
@@ -1498,10 +1498,10 @@ rc_world_check_providing_package (RCWorld *world, RCPackageDep *dep,
     g_return_val_if_fail (dep != NULL, TRUE);
     g_return_val_if_fail (fn != NULL, TRUE);
 
-    if (dep->is_or) {
+    if (rc_package_dep_is_or (dep)) {
         RCPackageDepSList *deps, *iter;
         gboolean terminated = FALSE;
-        deps = rc_dep_string_to_or_dep_slist (dep->spec.name);
+        deps = rc_dep_string_to_or_dep_slist (RC_PACKAGE_SPEC (dep)->name);
         for (iter = deps; iter != NULL && !terminated; iter = iter->next) {
             terminated = rc_world_check_providing_package (world, iter->data,
                                                            channel, filter_dups_of_installed,
@@ -1514,7 +1514,7 @@ rc_world_check_providing_package (RCWorld *world, RCPackageDep *dep,
     rc_world_conditional_sync (world, channel);
 
     slist = hashed_slist_get (world->provides_by_name,
-                              dep->spec.name);
+                              RC_PACKAGE_SPEC (dep)->name);
 
     installed = g_hash_table_new (rc_package_spec_hash,
                                   rc_package_spec_equal);
@@ -1539,7 +1539,7 @@ rc_world_check_providing_package (RCWorld *world, RCPackageDep *dep,
                 || rc_package_is_installed (pad->package)
                 || (g_hash_table_lookup (installed, & pad->package->spec) == NULL) ) {
 
-                if (! fn (pad->package, &pad->dep->spec, user_data)) {
+                if (! fn (pad->package, RC_PACKAGE_SPEC (pad->dep), user_data)) {
                     ret = TRUE;
                     break;
                 }
@@ -1592,7 +1592,7 @@ rc_world_foreach_requiring_package (RCWorld *world, RCPackageDep *dep,
     rc_world_conditional_sync (world, channel);
 
     slist = hashed_slist_get (world->requires_by_name,
-                              dep->spec.name);
+                              RC_PACKAGE_SPEC (dep)->name);
 
     installed = g_hash_table_new (rc_package_spec_hash,
                                   rc_package_spec_equal);
@@ -1641,7 +1641,7 @@ rc_world_foreach_conflicting_package (RCWorld *world, RCPackageDep *dep,
     rc_world_conditional_sync (world, channel);
 
     slist = hashed_slist_get (world->conflicts_by_name,
-                              dep->spec.name);
+                              RC_PACKAGE_SPEC (dep)->name);
 
     installed = g_hash_table_new (rc_package_spec_hash,
                                   rc_package_spec_equal);
@@ -1714,7 +1714,7 @@ foreach_provides_by_name_cb (gpointer key, gpointer val, gpointer user_data)
         if (pad) {
             fprintf (out, rc_package_to_str_static (pad->package));
             fprintf (out, "::");
-            fprintf (out, rc_package_dep_to_str_static (pad->dep));
+            fprintf (out, rc_package_dep_to_string_static (pad->dep));
             fprintf (out, " ");
         } else {
             fprintf (out, "(null) ");
@@ -1738,7 +1738,8 @@ foreach_requires_by_name_cb (gpointer key, gpointer val, gpointer user_data)
         if (pad) {
             fprintf (out, rc_package_to_str_static (pad->package));
             fprintf (out, "::");
-            fprintf (out, rc_package_spec_to_str_static (& pad->dep->spec));
+            fprintf (out, rc_package_spec_to_str_static (
+                         RC_PACKAGE_SPEC (pad->dep)));
             fprintf (out, " ");
         } else {
             fprintf (out, "(null) ");
@@ -1762,7 +1763,8 @@ foreach_conflicts_by_name_cb (gpointer key, gpointer val, gpointer user_data)
         if (pad) {
             fprintf (out, rc_package_to_str_static (pad->package));
             fprintf (out, "::");
-            fprintf (out, rc_package_spec_to_str_static (& pad->dep->spec));
+            fprintf (out, rc_package_spec_to_str_static (
+                         RC_PACKAGE_SPEC (pad->dep)));
             fprintf (out, " ");
         } else {
             fprintf (out, "(null) ");

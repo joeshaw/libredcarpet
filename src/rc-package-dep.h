@@ -42,22 +42,25 @@ typedef enum {
     RC_RELATION_NOT_EQUAL          = RELATION_LESS | RELATION_GREATER,
     RC_RELATION_NONE               = RELATION_NONE,
 
-/* A weak relation is one that has to be satisfied only if there is
- * a strong relation in the set, or if the spec is otherwise
- * installed/to be installed. Otherwise it should be ignored. (i.e.
- * it should never add new packages)
- */
+    /* A weak relation is one that has to be satisfied only if there
+     * is a strong relation in the set, or if the spec is otherwise
+     * installed/to be installed. Otherwise it should be
+     * ignored. (i.e. it should never add new packages) */
+
     RC_RELATION_WEAK               = RELATION_WEAK,
-    /* Note that WEAK_ANY doesn't really make sense, since to get this, it would require
-     * an original dep of none, which no packaging system can express as a dependency */
-    RC_RELATION_WEAK_ANY           = RELATION_WEAK | RELATION_ANY,
-    RC_RELATION_WEAK_EQUAL         = RELATION_WEAK | RELATION_EQUAL,
-    RC_RELATION_WEAK_LESS          = RELATION_WEAK | RELATION_LESS,
-    RC_RELATION_WEAK_LESS_EQUAL    = RELATION_WEAK | RELATION_LESS | RELATION_EQUAL,
-    RC_RELATION_WEAK_GREATER       = RELATION_WEAK | RELATION_GREATER,
-    RC_RELATION_WEAK_GREATER_EQUAL = RELATION_WEAK | RELATION_GREATER | RELATION_EQUAL,
-    RC_RELATION_WEAK_NOT_EQUAL     = RELATION_WEAK | RELATION_LESS | RELATION_GREATER,
-    RC_RELATION_WEAK_NONE          = RELATION_WEAK | RELATION_NONE,
+
+    /* Note that WEAK_ANY doesn't really make sense, since to get
+     * this, it would require an original dep of none, which no
+     * packaging system can express as a dependency */
+
+    RC_RELATION_WEAK_ANY           = RC_RELATION_ANY | RELATION_WEAK,
+    RC_RELATION_WEAK_EQUAL         = RC_RELATION_EQUAL | RELATION_WEAK,
+    RC_RELATION_WEAK_LESS          = RC_RELATION_LESS | RELATION_WEAK,
+    RC_RELATION_WEAK_LESS_EQUAL    = RC_RELATION_LESS_EQUAL | RELATION_WEAK,
+    RC_RELATION_WEAK_GREATER       = RC_RELATION_GREATER | RELATION_WEAK,
+    RC_RELATION_WEAK_GREATER_EQUAL = RC_RELATION_GREATER_EQUAL | RELATION_WEAK,
+    RC_RELATION_WEAK_NOT_EQUAL     = RC_RELATION_NOT_EQUAL | RELATION_WEAK,
+    RC_RELATION_WEAK_NONE          = RC_RELATION_NONE | RELATION_WEAK,
 } RCPackageRelation;
 
 typedef struct _RCPackageDep RCPackageDep;
@@ -71,65 +74,77 @@ struct _RCPackageDepArray {
     guint len;
 };
 
-RCPackageDepArray *
-rc_package_dep_array_from_slist (RCPackageDepSList **list);
-
-void
-rc_package_dep_array_free (RCPackageDepArray *array);
-
 /* These are included later, so as to avoid circular #include hell */
 
 #include <libxml/tree.h>
 
-#include "rc-package-spec.h"
 #include "rc-package.h"
+#include "rc-package-spec.h"
 
 typedef void (*RCPackageAndDepFn) (RCPackage *, RCPackageDep *, gpointer);
 
-/* THE SPEC MUST BE FIRST */
-struct _RCPackageDep {
-    RCPackageSpec spec;
-    gint refs     : 20;
-    gint relation : 8;
-    guint is_or   : 1;
-    guint pre     : 1;
-};
+RCPackageRelation
+rc_package_relation_from_string (const gchar *relation);
 
-RCPackageDep *rc_package_dep_ref (RCPackageDep *dep);
+const gchar *
+rc_package_relation_to_string (RCPackageRelation relation,
+                               gint              words);
 
-void rc_package_dep_unref (RCPackageDep *dep);
+RCPackageDep *
+rc_package_dep_ref (RCPackageDep *dep);
 
-RCPackageDep *rc_package_dep_new (const gchar *name,
-                                  gboolean has_epoch,
-                                  guint32 epoch,
-                                  const gchar *version,
-                                  const gchar *release,
-                                  RCPackageRelation relation,
-                                  gboolean pre,
-                                  gboolean is_or);
+void
+rc_package_dep_unref (RCPackageDep *dep);
 
-RCPackageDep *rc_package_dep_new_from_spec (
-    RCPackageSpec *spec,
-    RCPackageRelation relation,
-    gboolean pre,
-    gboolean is_or);
+RCPackageDep *
+rc_package_dep_new (const char        *name,
+                    gboolean           has_epoch,
+                    guint32            epoch,
+                    const char        *version,
+                    const char        *release,
+                    RCPackageRelation  relation,
+                    gboolean           pre,
+                    gboolean           is_or);
 
-RCPackageDep *rc_package_dep_copy (RCPackageDep *rcpdi);
+RCPackageDep *
+rc_package_dep_new_from_spec (RCPackageSpec     *spec,
+                              RCPackageRelation  relation,
+                              gboolean           pre,
+                              gboolean           is_or);
 
-RCPackageSList *rc_package_dep_slist_copy (RCPackageSList *old);
-RCPackageDepArray *rc_package_dep_array_copy (RCPackageDepArray *old);
+RCPackageRelation
+rc_package_dep_get_relation (RCPackageDep *dep);
 
-void rc_package_dep_slist_free (RCPackageDepSList *deps);
+gboolean
+rc_package_dep_is_or (RCPackageDep *dep);
 
-char       *rc_package_dep_to_str (RCPackageDep *dep);
-const char *rc_package_dep_to_str_static (RCPackageDep *dep);
+gboolean
+rc_package_dep_is_pre (RCPackageDep *dep);
 
-/* Dep verification */
-gboolean rc_package_dep_verify_relation (RCPackageDep *dep,
-                                         RCPackageDep *prov);
+char *
+rc_package_dep_to_string (RCPackageDep *dep);
 
-RCPackageRelation rc_string_to_package_relation (const gchar *relation);
-const gchar *rc_package_relation_to_string (RCPackageRelation relation,
-                                            gint words);
+const char *
+rc_package_dep_to_string_static (RCPackageDep *dep);
+
+RCPackageSList *
+rc_package_dep_slist_copy (RCPackageSList *list);
+
+void
+rc_package_dep_slist_free (RCPackageDepSList *list);
+
+/* Consumes the list */
+RCPackageDepArray *
+rc_package_dep_array_from_slist (RCPackageDepSList **list);
+
+RCPackageDepArray *
+rc_package_dep_array_copy (RCPackageDepArray *array);
+
+void
+rc_package_dep_array_free (RCPackageDepArray *array);
+
+gboolean
+rc_package_dep_verify_relation (RCPackageDep *dep,
+                                RCPackageDep *prov);
 
 #endif /* _RC_PACKAGE_DEP_H */

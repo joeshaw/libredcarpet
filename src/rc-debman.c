@@ -2592,22 +2592,12 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
     }
 
     if (!strncmp (line, "pre-depends:", strlen ("pre-depends:"))) {
-        RCPackageDepSList *tmp = NULL, *iter;
-
         ptr = line + strlen ("pre-depends:");
         while (*ptr && isspace (*ptr)) {
             ptr++;
         }
-
-        tmp = rc_debman_fill_depends (ptr, TRUE);
-
-        for (iter = tmp; iter; iter = iter->next) {
-            ((RCPackageDep *)(iter->data))->pre = 1;
-        }
-
         query_info->requires_buf = g_slist_concat (
-            query_info->requires_buf, tmp);
-
+            query_info->requires_buf, rc_debman_fill_depends (ptr, TRUE));
         return;
     }
 

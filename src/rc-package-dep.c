@@ -23,17 +23,83 @@
 #include <config.h>
 #endif
 
+#include <libxml/tree.h>
+
+#include "rc-debug.h"
+#include "rc-dep-or.h"
 #include "rc-package-dep.h"
 #include "rc-packman.h"
 #include "xml-util.h"
-#include "rc-debug.h"
-#include "rc-dep-or.h"
 
-#include <libxml/tree.h>
-
+/* FIXME: This really needs to not happen */
 extern RCPackman *das_global_packman;
 
+/* Our pool of RCPackageDep structures.  We try to return a match from
+ * here rather than allocating new ones, when possible */
 static GHashTable *global_deps = NULL;
+
+RCPackageRelation
+rc_package_relation_from_string (const gchar *relation)
+{
+    if (!strcmp (relation, "(any)"))
+        return RC_RELATION_ANY;
+    else if (!strcmp (relation, "="))
+        return RC_RELATION_EQUAL;
+    else if (!strcmp (relation, "<"))
+        return RC_RELATION_LESS;
+    else if (!strcmp (relation, "<="))
+        return RC_RELATION_LESS_EQUAL;
+    else if (!strcmp (relation, ">"))
+        return RC_RELATION_GREATER;
+    else if (!strcmp (relation, ">="))
+        return RC_RELATION_GREATER_EQUAL;
+    else if (!strcmp (relation, "!="))
+        return RC_RELATION_NOT_EQUAL;
+    else if (!strcmp (relation, "!!"))
+        return RC_RELATION_NONE;
+    else
+        return RC_RELATION_INVALID;
+}
+
+const gchar *
+rc_package_relation_to_string (RCPackageRelation relation, gint words)
+{
+    /* Weak relations should never find their way to the user */
+    if (relation & RC_RELATION_WEAK)
+        relation &= ~RC_RELATION_WEAK;
+
+    switch (relation) {
+    case RC_RELATION_ANY:
+        return "(any)";
+    case RC_RELATION_EQUAL:
+        return words == 1 ? "equal to" : "=";
+    case RC_RELATION_LESS:
+        return words == 1 ? "less than" : words == 2 ? "&lt" : "<";
+    case RC_RELATION_LESS_EQUAL:
+        return words == 1 ? "less than or equal to" :
+            words == 2 ? "&lt;=" : "<=";
+    case RC_RELATION_GREATER:
+        return words == 1 ? "greater than" : words == 2 ? "&gt;" : ">";
+    case RC_RELATION_GREATER_EQUAL:
+        return words == 1 ? "greater than or equal to" :
+            words == 2 ? "&gt;=" : ">=";
+    case RC_RELATION_NOT_EQUAL:
+        return words == 1 ? "not equal to" : "!=";
+    case RC_RELATION_NONE:
+        return words == 1 ? "not installed" : "!!";
+    default:
+        return "(invalid)";
+    }
+}
+
+/* THE SPEC MUST BE FIRST */
+struct _RCPackageDep {
+    RCPackageSpec spec;
+    gint          refs     : 20;
+    gint          relation : 5;
+    guint         is_or    : 1;
+    guint         is_pre   : 1;
+};
 
 RCPackageDep *
 rc_package_dep_ref (RCPackageDep *dep)
@@ -63,6 +129,12 @@ rc_package_dep_unref (RCPackageDep *dep)
             list = g_hash_table_lookup (global_deps, dep->spec.name);
             g_assert (list);
             list = g_slist_remove (list, dep);
+
+            /* If there's still data in the list (ie, there are still
+             * other deps with the same spec.name), we need to replace
+             * it in the hash, -by some other deps spec.name-, since
+             * we're about to potentially free the key.  Otherwise, we
+             * need to pull it from the hash. */
             if (list)
                 g_hash_table_replace (
                     global_deps,
@@ -78,15 +150,16 @@ rc_package_dep_unref (RCPackageDep *dep)
     }
 }
 
+/* Actually creates a new RCPackageDep struct when we need one. */
 static RCPackageDep *
-dep_new (const gchar *name,
-         gboolean has_epoch,
-         guint32 epoch,
-         const gchar *version,
-         const gchar *release,
-         RCPackageRelation relation,
-         gboolean pre,
-         gboolean is_or)
+dep_new (const gchar       *name,
+         gboolean           has_epoch,
+         guint32            epoch,
+         const gchar       *version,
+         const gchar       *release,
+         RCPackageRelation  relation,
+         gboolean           is_pre,
+         gboolean           is_or)
 {
     RCPackageDep *dep = g_new0 (RCPackageDep, 1);
 
@@ -94,7 +167,7 @@ dep_new (const gchar *name,
                           version, release);
 
     dep->relation = relation;
-    dep->pre      = pre;
+    dep->is_pre   = is_pre;
     dep->is_or    = is_or;
 
     dep->refs     = 1;
@@ -102,19 +175,21 @@ dep_new (const gchar *name,
     return dep;
 }
 
+/* Check to see whether two RCPackageDep structs are exactly equal.
+ * This is used to decide if we need to actually allocate a new one or
+ * not.  Since we looked up the dep in a hash table by name, we
+ * already know the name is the same, so we don't need to check
+ * that. */
 static gboolean
-dep_equal (RCPackageDep *dep,
-           const gchar *name,
-           gboolean has_epoch,
-           guint32 epoch,
-           const gchar *version,
-           const gchar *release,
-           RCPackageRelation relation,
-           gboolean pre,
-           gboolean is_or)
+dep_equal (RCPackageDep      *dep,
+           gboolean           has_epoch,
+           guint32            epoch,
+           const gchar       *version,
+           const gchar       *release,
+           RCPackageRelation  relation,
+           gboolean           is_pre,
+           gboolean           is_or)
 {
-    if (strcmp (dep->spec.name, name))
-        return FALSE;
     if (dep->spec.has_epoch != has_epoch)
         return FALSE;
     if (dep->spec.epoch != epoch)
@@ -131,7 +206,7 @@ dep_equal (RCPackageDep *dep,
         return FALSE;
     if (dep->relation != relation)
         return FALSE;
-    if (dep->pre != pre)
+    if (dep->is_pre != is_pre)
         return FALSE;
     if (dep->is_or != is_or)
         return FALSE;
@@ -140,14 +215,14 @@ dep_equal (RCPackageDep *dep,
 }
 
 RCPackageDep *
-rc_package_dep_new (const gchar *name,
-                    gboolean has_epoch,
-                    guint32 epoch,
-                    const gchar *version,
-                    const gchar *release,
-                    RCPackageRelation relation,
-                    gboolean pre,
-                    gboolean is_or)
+rc_package_dep_new (const gchar       *name,
+                    gboolean           has_epoch,
+                    guint32            epoch,
+                    const gchar       *version,
+                    const gchar       *release,
+                    RCPackageRelation  relation,
+                    gboolean           is_pre,
+                    gboolean           is_or)
 {
     GSList *list;
 
@@ -157,32 +232,41 @@ rc_package_dep_new (const gchar *name,
     list = g_hash_table_lookup (global_deps, name);
 
     if (!list) {
+        /* We haven't even created an RCPackageDep with the same name yet.
+         * Create the dep, create a new list, and shove it into our hash
+         * table. */
         RCPackageDep *dep;
 
         dep = dep_new (name, has_epoch, epoch, version, release, relation,
-                       pre, is_or);
+                       is_pre, is_or);
         list = g_slist_append (NULL, dep);
         g_hash_table_insert (global_deps, dep->spec.name, list);
 
         return dep;
     } else {
+        /* We've already created some RCPackageDeps with this name.
+         * One of them might be us! */
         GSList *iter;
         RCPackageDep *dep;
 
         iter = list;
         while (iter) {
             dep = iter->data;
-            if (dep_equal (dep, name, has_epoch, epoch, version, release,
-                           relation, pre, is_or))
+            if (dep_equal (dep, has_epoch, epoch, version, release,
+                           relation, is_pre, is_or))
             {
+                /* This is the exact dep we were looking for! */
                 rc_package_dep_ref (dep);
                 return dep;
             }
             iter = iter->next;
         }
 
+        /* Nope, nothing is exactly like us.  Create ourselves, add us
+         * to our name's list, and stuff it back into the hash
+         * table. */
         dep = dep_new (name, has_epoch, epoch, version, release, relation,
-                       pre, is_or);
+                       is_pre, is_or);
         list = g_slist_prepend (list, dep);
         g_hash_table_replace (
             global_deps,
@@ -194,51 +278,36 @@ rc_package_dep_new (const gchar *name,
 }
 
 RCPackageDep *
-rc_package_dep_new_from_spec (RCPackageSpec *spec,
-                              RCPackageRelation relation,
-                              gboolean pre,
-                              gboolean is_or)
+rc_package_dep_new_from_spec (RCPackageSpec     *spec,
+                              RCPackageRelation  relation,
+                              gboolean           is_pre,
+                              gboolean           is_or)
 {
     return rc_package_dep_new (
         spec->name, spec->has_epoch, spec->epoch, spec->version,
-        spec->release, relation, pre, is_or);
+        spec->release, relation, is_pre, is_or);
 }
 
-RCPackageDep *
-rc_package_dep_copy (RCPackageDep *dep)
+RCPackageRelation
+rc_package_dep_get_relation (RCPackageDep *dep)
 {
-    rc_package_dep_ref (dep);
-
-    return dep;
+    return dep->relation;
 }
 
-/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
-
-RCPackageDepSList *
-rc_package_dep_slist_copy (RCPackageDepSList *old)
+gboolean
+rc_package_dep_is_or (RCPackageDep *dep)
 {
-    RCPackageDepSList *iter;
-    RCPackageDepSList *new = NULL;
-
-    for (iter = old; iter; iter = iter->next) {
-        RCPackageDep *dep = iter->data;
-
-        rc_package_dep_ref (dep);
-        new = g_slist_append (new, dep);
-    }
-
-    return new;
+    return dep->is_or;
 }
 
-void
-rc_package_dep_slist_free (RCPackageDepSList *list)
+gboolean
+rc_package_dep_is_pre (RCPackageDep *dep)
 {
-    g_slist_foreach (list, (GFunc) rc_package_dep_unref, NULL);
-    g_slist_free (list);
+    return dep->is_pre;
 }
 
 char *
-rc_package_dep_to_str (RCPackageDep *dep)
+rc_package_dep_to_string (RCPackageDep *dep)
 {
     char *spec_str;
     char *str;
@@ -247,26 +316,114 @@ rc_package_dep_to_str (RCPackageDep *dep)
 
     spec_str = rc_package_spec_to_str (&dep->spec);
     str = g_strconcat (rc_package_relation_to_string (dep->relation, 0),
-                       spec_str,
-                       NULL);
+                       spec_str, NULL);
     g_free (spec_str);
 
     return str;
-} /* rc_package_dep_to_str */
+}
 
 const char *
-rc_package_dep_to_str_static (RCPackageDep *dep)
+rc_package_dep_to_string_static (RCPackageDep *dep)
 {
     static char *str = NULL;
 
     g_return_val_if_fail (dep != NULL, NULL);
 
-    g_free (str);
-    str = rc_package_dep_to_str (dep);
-    return str;
-} /* rc_package_dep_to_str_static */
+    if (str)
+        g_free (str);
+    str = rc_package_dep_to_string (dep);
 
-/* Dep verification */
+    return str;
+}
+
+RCPackageDepSList *
+rc_package_dep_slist_copy (RCPackageDepSList *list)
+{
+    RCPackageDepSList *iter;
+    RCPackageDepSList *new = NULL;
+
+    for (iter = list; iter; iter = iter->next) {
+        RCPackageDep *dep = iter->data;
+
+        rc_package_dep_ref (dep);
+        new = g_slist_prepend (new, dep);
+    }
+
+    new = g_slist_reverse (new);
+
+    return new;
+}
+
+void
+rc_package_dep_slist_free (RCPackageDepSList *list)
+{
+    g_slist_foreach (list, (GFunc)rc_package_dep_unref, NULL);
+    g_slist_free (list);
+}
+
+RCPackageDepArray *
+rc_package_dep_array_from_slist (RCPackageDepSList **list)
+{
+    RCPackageDepArray *array;
+    RCPackageDepSList *iter;
+    int i;
+
+    array = g_new0 (RCPackageDepArray, 1);
+    array->len = g_slist_length (*list);
+    array->data = g_new0 (RCPackageDep *, array->len);
+
+    i = 0;
+    iter = *list;
+
+    while (iter) {
+        array->data[i] = iter->data;
+        iter = iter->next;
+        i++;
+    }
+    
+    g_slist_free (*list);
+
+    *list = NULL;
+
+    return array;
+}
+
+RCPackageDepArray *
+rc_package_dep_array_copy (RCPackageDepArray *array)
+{
+    int i;
+    RCPackageDepArray *new;
+
+    if (!array)
+        return NULL;
+
+    new = g_new0 (RCPackageDepArray, 1);
+    new->len = array->len;
+    new->data = g_new0 (RCPackageDep *, array->len);
+
+    for (i = 0; i < array->len; i++) {
+        new->data[i] = array->data[i];
+        rc_package_dep_ref (new->data[i]);
+    }
+
+    return new;
+}
+
+void
+rc_package_dep_array_free (RCPackageDepArray *array)
+{
+    int i;
+
+    if (!array)
+        return;
+
+    for (i = 0; i < array->len; i++)
+        rc_package_dep_unref (array->data[i]);
+
+    g_free (array->data);
+
+    g_free (array);
+}
 
 gboolean
 rc_package_dep_verify_relation (RCPackageDep *dep,
@@ -305,13 +462,6 @@ rc_package_dep_verify_relation (RCPackageDep *dep,
             return FALSE;
         }
     }
-    
-    /* WARNING: This is partially broken, because you cannot
-     * tell the difference between an epoch of zero and no epoch */
-    /* NOTE: when the code is changed, foo->spec.epoch will be an
-     * existance test for the epoch and foo->spec.epoch > 0 will 
-     * be a test for > 0.  Right now these are the same, but
-     * please leave the code as-is. */
     
     if (dep->spec.has_epoch && prov->spec.has_epoch) {
         /* HACK: This sucks, but I don't know a better way to compare 
@@ -373,131 +523,4 @@ rc_package_dep_verify_relation (RCPackageDep *dep,
     }
     
     return FALSE;
-} /* rc_package_dep_verify_relation */
-
-RCPackageRelation
-rc_string_to_package_relation (const gchar *relation)
-{
-    if (!strcmp (relation, "(any)")) {
-        return (RC_RELATION_ANY);
-    } else if (!strcmp (relation, "=")) {
-        return (RC_RELATION_EQUAL);
-    } else if (!strcmp (relation, "<")) {
-        return (RC_RELATION_LESS);
-    } else if (!strcmp (relation, "<=")) {
-        return (RC_RELATION_LESS_EQUAL);
-    } else if (!strcmp (relation, ">")) {
-        return (RC_RELATION_GREATER);
-    } else if (!strcmp (relation, ">=")) {
-        return (RC_RELATION_GREATER_EQUAL);
-    } else if (!strcmp (relation, "!=")) {
-        return (RC_RELATION_NOT_EQUAL);
-    } else if (!strcmp (relation, "!!")) {
-        return (RC_RELATION_NONE);
-    } else {
-        return (RC_RELATION_INVALID);
-    }
-} /* rc_string_to_package_relation */
-
-const gchar *
-rc_package_relation_to_string (RCPackageRelation relation, gint words)
-{
-    if (relation & RC_RELATION_WEAK)
-        /* this should never get back to the user */
-        return rc_package_relation_to_string (relation & ~RC_RELATION_WEAK, words);
-
-    switch (relation) {
-    case RC_RELATION_ANY:
-        return ("(any)");
-        break;
-    case RC_RELATION_EQUAL:
-        return (words == 1 ? "equal to" : "=");
-        break;
-    case RC_RELATION_LESS:
-        return (words == 1 ? "less than" : words == 2 ? "&lt" : "<");
-        break;
-    case RC_RELATION_LESS_EQUAL:
-        return (words == 1 ? "less than or equal to" : words == 2 ? "&lt;=" : "<=");
-        break;
-    case RC_RELATION_GREATER:
-        return (words == 1 ? "greater than" : words == 2 ? "&gt;" : ">");
-        break;
-    case RC_RELATION_GREATER_EQUAL:
-        return (words == 1 ? "greater than or equal to" : words == 2 ? "&gt;=" : ">=");
-        break;
-    case RC_RELATION_NOT_EQUAL:
-        return (words == 1 ? "not equal to" : "!=");
-        break;
-    case RC_RELATION_NONE:
-        return (words == 1 ? "not installed" : "!!");
-        break;
-    default:
-        return ("(invalid)");
-        break;
-    }
-} /* rc_package_dep_slist_remove_duplicates */
-
-/* Consumes *list */
-RCPackageDepArray *
-rc_package_dep_array_from_slist (RCPackageDepSList **list)
-{
-    RCPackageDepArray *array;
-    RCPackageDepSList *iter;
-    int i;
-
-    array = g_new0 (RCPackageDepArray, 1);
-    array->len = g_slist_length (*list);
-    array->data = g_new0 (RCPackageDep *, array->len);
-
-    i = 0;
-    iter = *list;
-
-    while (iter) {
-        array->data[i] = iter->data;
-        iter = iter->next;
-        i++;
-    }
-    
-    g_slist_free (*list);
-
-    *list = NULL;
-
-    return array;
-}
-
-void
-rc_package_dep_array_free (RCPackageDepArray *array)
-{
-    int i;
-
-    if (!array)
-        return;
-
-    for (i = 0; i < array->len; i++)
-        rc_package_dep_unref (array->data[i]);
-
-    g_free (array->data);
-
-    g_free (array);
-}
-
-RCPackageDepArray *
-rc_package_dep_array_copy (RCPackageDepArray *old)
-{
-    int i;
-    RCPackageDepArray *new;
-
-    if (!old)
-        return NULL;
-
-    new = g_new0 (RCPackageDepArray, 1);
-    new->len = old->len;
-    new->data = g_new0 (RCPackageDep *, old->len);
-
-    for (i = 0; i < old->len; i++) {
-        new->data[i] = old->data[i];
-        rc_package_dep_ref (new->data[i]);
-    }
-
-    return new;
 }

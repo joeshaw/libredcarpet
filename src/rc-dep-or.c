@@ -134,30 +134,32 @@ rc_dep_or_dep_slist_to_string (RCPackageDepSList *dep)
 
     while (dep) {
         RCPackageDep *pdi = (RCPackageDep *) dep->data;
+        RCPackageRelation relation = rc_package_dep_get_relation (pdi);
 
-        if (pdi->relation & RC_RELATION_WEAK) {
+        if (relation & RC_RELATION_WEAK) {
             g_error ("Bork bork bork! munge or dep with weak dep!");
         }
 
-        g_string_append (gstr, pdi->spec.name);
+        g_string_append (gstr, RC_PACKAGE_SPEC (pdi)->name);
 
-        if (pdi->relation != RC_RELATION_ANY) {
-            const gchar *rel = rc_package_relation_to_string (pdi->relation, FALSE);
+        if (relation != RC_RELATION_ANY) {
+            const gchar *rel = rc_package_relation_to_string (relation, FALSE);
             g_string_append (gstr, "&");
             g_string_append (gstr, rel);
             g_string_append (gstr, "&");
 
-            if (pdi->spec.epoch) {
-                gchar *s = g_strdup_printf ("%d:", pdi->spec.epoch);
+            if (RC_PACKAGE_SPEC (pdi)->epoch) {
+                gchar *s = g_strdup_printf (
+                    "%d:", RC_PACKAGE_SPEC (pdi)->epoch);
                 g_string_append (gstr, s);
                 g_free (s);
             }
 
-            g_string_append (gstr, pdi->spec.version);
+            g_string_append (gstr, RC_PACKAGE_SPEC (pdi)->version);
 
-            if (pdi->spec.release) {
+            if (RC_PACKAGE_SPEC (pdi)->release) {
                 g_string_append (gstr, "-");
-                g_string_append (gstr, pdi->spec.release);
+                g_string_append (gstr, RC_PACKAGE_SPEC (pdi)->release);
             }
         }
 
@@ -234,7 +236,7 @@ rc_dep_string_to_or_dep_slist (gchar *munged)
             /* text between p and e is an operator */
             strncpy (op, p, e - p);
             op[e - p] = 0;
-            relation = rc_string_to_package_relation (op);
+            relation = rc_package_relation_from_string (op);
 
             e++;
             if (z) {

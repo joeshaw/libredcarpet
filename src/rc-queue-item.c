@@ -225,10 +225,12 @@ dep_slist_to_string (GSList *slist)
     i = 0;
     while (slist) {
         RCPackageDep *dep = slist->data;
-        strv[i] = g_strconcat (rc_package_relation_to_string (dep->relation, 0),
-                               " ",
-                               rc_package_spec_to_str_static (& dep->spec),
-                               NULL);
+        strv[i] = g_strconcat (
+            rc_package_relation_to_string (
+                rc_package_dep_get_relation (dep), 0),
+            " ",
+            rc_package_spec_to_str_static (RC_PACKAGE_SPEC (dep)),
+            NULL);
         slist = slist->next;
         ++i;
     }
@@ -723,7 +725,7 @@ require_item_process (RCQueueItem *item,
             msg = g_strconcat ("There are no ",
                                require->remove_only ? "alternative installed" : "installable",
                                " providers of ",
-                               rc_package_dep_to_str_static (require->dep),
+                               rc_package_dep_to_string_static (require->dep),
                                require->requiring_package ? " for " : NULL,
                                require->requiring_package ? 
                                rc_package_to_str_static (require->requiring_package) : NULL,
@@ -923,13 +925,15 @@ require_item_to_string (RCQueueItem *item)
 {
     RCQueueItem_Require *require = (RCQueueItem_Require *) item;
 
-    return g_strconcat ("require ",
-                        rc_package_relation_to_string (require->dep->relation, 0),
-                        " ",
-                        rc_package_spec_to_str_static (& require->dep->spec),
-                        require->requiring_package ? " for " : NULL,
-                        require->requiring_package ? rc_package_to_str_static (require->requiring_package) : NULL,
-                        NULL);
+    return g_strconcat (
+        "require ",
+        rc_package_relation_to_string (
+            rc_package_dep_get_relation (require->dep), 0),
+        " ",
+        rc_package_spec_to_str_static (RC_PACKAGE_SPEC (require->dep)),
+        require->requiring_package ? " for " : NULL,
+        require->requiring_package ? rc_package_to_str_static (require->requiring_package) : NULL,
+        NULL);
 }
 
 RCQueueItem *
@@ -1262,10 +1266,12 @@ conflict_item_process (RCQueueItem *item,
     info.context              = context;
     info.new_items            = new_items;
     info.pkg_str              = rc_package_spec_to_str (& conflict->conflicting_package->spec);
-    info.dep_str              = g_strconcat (rc_package_relation_to_string (conflict->dep->relation, 0),
-                                             " ",
-                                             rc_package_spec_to_str_static (& conflict->dep->spec),
-                                             NULL);
+    info.dep_str              = g_strconcat (
+        rc_package_relation_to_string (
+            rc_package_dep_get_relation (conflict->dep), 0),
+        " ",
+        rc_package_spec_to_str_static (RC_PACKAGE_SPEC (conflict->dep)),
+        NULL);
     info.actually_an_obsolete = conflict->actually_an_obsolete;
 
 
@@ -1305,13 +1311,15 @@ conflict_item_to_string (RCQueueItem *item)
 
     package_str = rc_package_to_str (conflict->conflicting_package);
 
-    str = g_strconcat ("conflict ",
-                       rc_package_relation_to_string (conflict->dep->relation, 0),
-                       " ",
-                       rc_package_spec_to_str_static (& conflict->dep->spec),
-                       " from ",
-                       package_str,
-                       NULL);
+    str = g_strconcat (
+        "conflict ",
+        rc_package_relation_to_string (
+            rc_package_dep_get_relation (conflict->dep), 0),
+        " ",
+        rc_package_spec_to_str_static (RC_PACKAGE_SPEC (conflict->dep)),
+        " from ",
+        package_str,
+        NULL);
 
     g_free (package_str);
     
@@ -1394,7 +1402,7 @@ uninstall_item_process (RCQueueItem *item,
     pkg_str = rc_package_spec_to_str (& uninstall->package->spec);
 
     if (uninstall->dep_leading_to_uninstall)
-        dep_str = rc_package_dep_to_str (uninstall->dep_leading_to_uninstall);
+        dep_str = rc_package_dep_to_string (uninstall->dep_leading_to_uninstall);
     
     status = rc_resolver_context_get_status (context, uninstall->package);
 
@@ -1480,7 +1488,7 @@ uninstall_item_to_string (RCQueueItem *item)
                         rc_package_to_str_static (uninstall->package),
                         " ",
                         uninstall->dep_leading_to_uninstall ?
-                        rc_package_dep_to_str_static (uninstall->dep_leading_to_uninstall) : NULL,
+                        rc_package_dep_to_string_static (uninstall->dep_leading_to_uninstall) : NULL,
                         NULL);
 }
 
