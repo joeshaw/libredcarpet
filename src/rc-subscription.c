@@ -34,7 +34,7 @@
 #define OLD_SUBSCRIPTION_PATH "/var/lib/redcarpet"
 #define SUBSCRIPTION_NAME "/subscriptions.xml"
 
-#define SUBSCRIPTION_FILE SUBSCRIPTION_PATH SUBSCRIPTION_NAME
+#define DEFAULT_SUBSCRIPTION_FILE SUBSCRIPTION_PATH SUBSCRIPTION_NAME
 #define OLD_SUBSCRIPTION_FILE OLD_SUBSCRIPTION_PATH SUBSCRIPTION_NAME
 
 /* Old subscriptions expire in 60 days */
@@ -42,6 +42,7 @@
 
 static GList   *subscriptions = NULL;
 static gboolean subscriptions_changed = FALSE;
+static char    *subscription_file = DEFAULT_SUBSCRIPTION_FILE;
 
 typedef struct _RCSubscription RCSubscription;
 struct _RCSubscription {
@@ -139,18 +140,6 @@ rc_subscription_save (void)
     if (! subscriptions_changed)
         return;
 
-    if (! g_file_test (SUBSCRIPTION_PATH, G_FILE_TEST_EXISTS)) {
-        if (rc_mkdir (SUBSCRIPTION_PATH, 0755)) {
-            rc_debug (RC_DEBUG_LEVEL_WARNING,
-                      "Unable to create directory '%s' "
-                      "to save subscription data to.",
-                      SUBSCRIPTION_PATH);
-            rc_debug (RC_DEBUG_LEVEL_WARNING,
-                      "Subscription will not be saved!");
-            return;
-        }
-    }
-
     time (&now);
 
     root = xmlNewNode (NULL, "subscriptions");
@@ -184,7 +173,7 @@ rc_subscription_save (void)
             xmlNewProp (sub_node, "old", "1");
     }
 
-    save_retval = xmlSaveFile (SUBSCRIPTION_FILE, doc);
+    save_retval = xmlSaveFile (subscription_file, doc);
     xmlFreeDoc (doc);
 
     if (save_retval > 0) {
@@ -193,7 +182,7 @@ rc_subscription_save (void)
     } else {
         rc_debug (RC_DEBUG_LEVEL_WARNING,
                   "Unable to save subscription data to '%s'",
-                  SUBSCRIPTION_FILE);
+                  subscription_file);
         rc_debug (RC_DEBUG_LEVEL_WARNING,
                   "Subscription will not be saved!");
     }
@@ -270,16 +259,16 @@ rc_subscription_load (void)
     xmlDoc *doc;
     xmlNode *node;
 
-    if (! g_file_test (SUBSCRIPTION_FILE, G_FILE_TEST_EXISTS)) {
+    if (! g_file_test (subscription_file, G_FILE_TEST_EXISTS)) {
         rc_subscription_load_old_subscriptions ();
         return;
     }
 
-    doc = xmlParseFile (SUBSCRIPTION_FILE);
+    doc = xmlParseFile (subscription_file);
     if (doc == NULL) {
         rc_debug (RC_DEBUG_LEVEL_ERROR,
                   "Can't parse subscription file '%s'",
-                  SUBSCRIPTION_FILE);
+                  subscription_file);
         return;
     }
 
@@ -288,7 +277,7 @@ rc_subscription_load (void)
     if (! xml_node_match (node, "subscriptions")) {
         rc_debug (RC_DEBUG_LEVEL_ERROR,
                   "Subscription file '%s' is malformed",
-                  SUBSCRIPTION_FILE);
+                  subscription_file);
         return;
     }
 
@@ -328,6 +317,16 @@ rc_subscription_load (void)
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+void
+rc_subscription_set_file (const char *path)
+{
+    static char *old_file = NULL;
+
+    g_free (old_file);
+    subscription_file = g_strdup (path);
+    old_file = subscription_file;
+}
 
 gboolean
 rc_subscription_get_status (RCChannel *channel)

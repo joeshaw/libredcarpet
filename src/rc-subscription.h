@@ -32,6 +32,8 @@
    the subscriptions to be loaded from disk (if this hasn't
    happened already). */
 
+void     rc_subscription_set_file   (const char *file);
+
 gboolean rc_subscription_get_status (RCChannel *channel);
 
 void     rc_subscription_set_status (RCChannel *channel,
