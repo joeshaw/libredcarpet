@@ -2531,8 +2531,20 @@ rc_debman_verify (RCPackman *packman, RCPackage *package)
     g_assert (package);
     g_assert (package->package_filename);
 
-    if (package->history)
+    if (package->history) {
         update = rc_package_get_latest_update(package);
+    } else {
+        return (NULL);
+    }
+
+    if (update && update->package_filename && (update->package_size > 0)) {
+        RCVerification *verification;
+
+        verification = rc_verify_size (update->package_filename,
+                                       update->package_size);
+
+        ret = g_slist_append (ret, verification);
+    }
 
     if (update && update->md5sum) {
         RCVerification *verification;

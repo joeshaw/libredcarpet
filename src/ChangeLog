@@ -1,3 +1,8 @@
+2001-04-20  Ian Peters  <itp@ximian.com>
+
+	* rc-debman.c: in rc_debman_verify, check the size of the file as
+	well
+
 2001-04-20  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-distro.c: We can't create a hash in dtype->extra_hash
