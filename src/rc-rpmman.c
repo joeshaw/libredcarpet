@@ -2504,6 +2504,8 @@ rc_rpmman_init (RCRpmman *obj)
         }
     }
 
+    rc_packman_set_file_extension(packman, "rpm");
+
     packman->priv->features =
         RC_PACKMAN_FEATURE_PRE_CONFIG |
         RC_PACKMAN_FEATURE_PKG_PROGRESS;

@@ -2896,6 +2896,8 @@ rc_debman_init (RCDebman *debman)
         }
     }
 
+    rc_packman_set_file_extension(packman, "deb");
+
     rc_package_dep_system_is_rpmish (FALSE);
 
     RC_EXIT;

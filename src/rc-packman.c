@@ -214,6 +214,7 @@ rc_packman_init (RCPackman *packman)
 
     packman->priv->error = RC_PACKMAN_ERROR_NONE;
     packman->priv->reason = NULL;
+    packman->priv->extension = NULL;
 
     packman->priv->busy = FALSE;
 
@@ -409,6 +410,26 @@ rc_packman_find_file (RCPackman *packman, const gchar *filename)
     g_assert (klass->rc_packman_real_find_file);
 
     return (klass->rc_packman_real_find_file (packman, filename));
+}
+
+void
+rc_packman_set_file_extension(RCPackman *packman, const gchar *extension)
+{
+    g_return_if_fail(packman);
+    
+    g_free(packman->priv->extension);
+    packman->priv->extension = NULL;
+    
+    if (extension)
+        packman->priv->extension = g_strdup(extension);
+}
+
+const gchar *
+rc_packman_get_file_extension(RCPackman *packman)
+{
+    g_return_if_fail(packman);
+
+    return packman->priv->extension;
 }
 
 /* Methods to access the error stuff */

@@ -1,3 +1,17 @@
+2001-05-15  Joe Shaw  <joe@ximian.com>
+
+	* rc-packman-private.h (RCPackmanPrivate): Add an extension field for
+	the default file extension. Added prototype for
+	rc_packman_set_file_extension().
+
+	* rc-packman.c (rc_packman_init): Set extension to NULL.
+	(rc_packman_set_file_extension): Added.
+	(rc_packman_get_file_extension): Added.
+	
+	* rc-debman.c (rc_debman_init): Set the file extension to "deb".
+
+	* rc-rpmman.c (rc_rpmman_init): Set the file extension to "rpm".
+
 2001-05-14  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-channel.c (rc_channel_parse_xml): if file_path isn't specified,

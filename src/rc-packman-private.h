@@ -32,10 +32,15 @@ struct _RCPackmanPrivate {
     guint error;
     gchar *reason;
 
+    /* The file extension of this package format, for ease in searching. */
+    gchar *extension;
+
     gboolean busy;
 
     RCPackmanFeatures features;
 };
+
+void rc_packman_set_file_extension(RCPackman *packman, const gchar *extension);
 
 void rc_packman_clear_error (RCPackman *packman);
 

@@ -157,6 +157,8 @@ RCVerificationSList *rc_packman_verify (RCPackman *packman,
 
 RCPackage *rc_packman_find_file (RCPackman *packman, const gchar *filename);
 
+const gchar *rc_packman_get_file_extension(RCPackman *packman);
+
 guint rc_packman_get_error (RCPackman *packman);
 
 const gchar *rc_packman_get_reason (RCPackman *packman);
