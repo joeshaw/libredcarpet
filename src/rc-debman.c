@@ -119,7 +119,7 @@ i18n_fixer ()
     path = g_strdup_printf("PATH=%s:/sbin:/usr/sbin:/usr/local/sbin",
                            getenv("PATH"));
 
-    putenv ("PATH");
+    putenv (path);
     putenv ("LANG");
     putenv ("LC_ALL");
 }
