@@ -50,6 +50,8 @@ void             rc_resolver_queue_add_package_to_remove  (RCResolverQueue *queu
                                                            gboolean remove_only_mode);
 void             rc_resolver_queue_add_package_to_verify  (RCResolverQueue *queue,
                                                            RCPackage *package);
+void             rc_resolver_queue_add_extra_dependency   (RCResolverQueue *queue,
+                                                           RCPackageDep *dep);
 
 gboolean         rc_resolver_queue_is_empty (RCResolverQueue *);
 gboolean         rc_resolver_queue_is_invalid (RCResolverQueue *);

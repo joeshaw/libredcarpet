@@ -1,5 +1,15 @@
 2002-07-11  Jon Trowbridge  <trow@ximian.com>
 
+	* rc-resolver-queue.c (rc_resolver_queue_add_extra_dependency): A
+	corresponding "extra dependency" function, which just creates
+	a RCQueueItem_Require item for the given RCPackageDep and adds
+	it to the item queue.
+
+	* rc-resolver.c (rc_resolver_add_extra_dependency): Add an "extra
+	dependency", which is just a RCPackageDep which we want to have
+	satisfied.
+	(rc_resolver_free): Clean up our list of extra dependencies.
+
 	* rc-xml.c (rc_package_to_xml_node): Add the file_size and
 	installed_size to the XML.
 

@@ -66,6 +66,9 @@ rc_resolver_free (RCResolver *resolver)
                          (GFunc) rc_resolver_queue_free,
                          NULL);
 
+        if (resolver->extra_deps)
+            rc_package_dep_slist_free (resolver->extra_deps);
+
         g_slist_free (resolver->packages_to_install);
         g_slist_free (resolver->packages_to_remove);
         g_slist_free (resolver->packages_to_verify);
@@ -162,6 +165,17 @@ rc_resolver_add_packages_to_remove_from_slist (RCResolver *resolver,
                                            slist->data);
         slist = slist->next;
     }
+}
+
+void
+rc_resolver_add_extra_dependency (RCResolver *resolver,
+                                  RCPackageDep *dep)
+{
+    g_return_if_fail (resolver != NULL);
+    g_return_if_fail (dep != NULL);
+
+    resolver->extra_deps = 
+        g_slist_prepend (resolver->extra_deps, rc_package_dep_copy (dep));
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */

@@ -40,6 +40,7 @@ struct _RCResolver {
     GSList *packages_to_install;
     GSList *packages_to_remove;
     GSList *packages_to_verify;
+    GSList *extra_deps;
 
     GSList *pending_queues;
     GSList *pruned_queues;
@@ -69,6 +70,8 @@ void        rc_resolver_add_packages_to_install_from_slist (RCResolver *, GSList
 
 void        rc_resolver_add_package_to_remove              (RCResolver *, RCPackage *);
 void        rc_resolver_add_packages_to_remove_from_slist  (RCResolver *, GSList *);
+
+void        rc_resolver_add_extra_dependency               (RCResolver *, RCPackageDep *);
 
 void        rc_resolver_verify_system          (RCResolver *);
 void        rc_resolver_resolve_dependencies   (RCResolver *);

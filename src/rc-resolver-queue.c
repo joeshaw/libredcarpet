@@ -131,6 +131,23 @@ rc_resolver_queue_add_package_to_verify (RCResolverQueue *queue,
     }
 }
 
+void
+rc_resolver_queue_add_extra_dependency (RCResolverQueue *queue,
+                                        RCPackageDep *dep)
+{
+    RCWorld *world;
+    RCQueueItem *item;
+
+    g_return_if_fail (queue != NULL);
+    g_return_if_fail (dep != NULL);
+
+    world = rc_resolver_context_get_world (queue->context);
+
+    item = rc_queue_item_new_require (world, dep);
+
+    queue->items = g_slist_prepend (queue->items, item);
+}
+
 gboolean
 rc_resolver_queue_is_empty (RCResolverQueue *queue)
 {
