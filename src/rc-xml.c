@@ -51,6 +51,8 @@ struct _RCPackageSAXContext {
     RCPackageDepSList **toplevel_dep_list;
     RCPackageDepSList **current_dep_list;
 
+    RCPackageDepSList *obsoletes;
+
     char *text_buffer;
 };
 
@@ -128,9 +130,28 @@ parser_package_start(RCPackageSAXContext *ctx,
             &ctx->current_package->suggests;
     }
     else if (!strcmp(name, "conflicts")) {
+        gboolean is_obsolete = FALSE;
+        int i;
+
         ctx->state = PARSER_DEP;
-        ctx->current_dep_list = ctx->toplevel_dep_list =
-            &ctx->current_package->conflicts;
+
+        for (i = 0; attrs && attrs[i]; i += 2) {
+            char *attr = g_strdup (attrs[i]);
+
+            g_strdown (attr);
+
+            if (!strcmp (attr, "obsoletes"))
+                is_obsolete = TRUE;
+
+            g_free (attr);
+        }
+
+        if (is_obsolete)
+            ctx->current_dep_list = ctx->toplevel_dep_list = &ctx->obsoletes;
+        else {
+            ctx->current_dep_list = ctx->toplevel_dep_list =
+                &ctx->current_package->conflicts;
+        }
     }
     else if (!strcmp(name, "obsoletes")) {
         ctx->state = PARSER_DEP;
@@ -166,7 +187,7 @@ parser_history_start(RCPackageSAXContext *ctx,
         rc_debug(RC_DEBUG_LEVEL_DEBUG, "! Not handling %s\n", name);
 }
 
-static void
+static gboolean
 parse_dep_attrs(RCPackageDep *dep, const xmlChar **attrs)
 {
     int i;
@@ -176,6 +197,7 @@ parse_dep_attrs(RCPackageDep *dep, const xmlChar **attrs)
     gboolean has_epoch = 0;
     char *tmp_version = NULL;
     char *tmp_release = NULL;
+    gboolean is_obsolete = FALSE;
 
     for (i = 0; attrs[i]; i++) {
         char *attr = g_strdup(attrs[i++]);
@@ -196,6 +218,8 @@ parse_dep_attrs(RCPackageDep *dep, const xmlChar **attrs)
             tmp_version = g_strdup(value);
         else if (!strcmp(attr, "release"))
             tmp_release = g_strdup(value);
+        else if (!strcmp (attr, "obsoletes"))
+            is_obsolete = TRUE;
         else
             rc_debug(RC_DEBUG_LEVEL_DEBUG, "! Unknown attribute: %s = %s", attr, value);
 
@@ -213,6 +237,8 @@ parse_dep_attrs(RCPackageDep *dep, const xmlChar **attrs)
         g_free(tmp_version);
         g_free(tmp_release);
     }
+
+    return is_obsolete;
 } /* parse_dep_attrs */
 
 static void
@@ -223,11 +249,18 @@ parser_dep_start(RCPackageSAXContext *ctx,
     RCPackageDep *dep;
 
     if (!strcmp(name, "dep")) {
+        gboolean is_obsolete;
+
         dep = g_new0(RCPackageDep, 1);
 
-        parse_dep_attrs(dep, attrs);
-
-        *ctx->current_dep_list = g_slist_append(*ctx->current_dep_list, dep);
+        is_obsolete = parse_dep_attrs(dep, attrs);
+        
+        if (is_obsolete)
+            ctx->obsoletes = g_slist_append (ctx->obsoletes, dep);
+        else {
+            *ctx->current_dep_list = g_slist_append (
+                *ctx->current_dep_list, dep);
+        }
     }
     else if (!strcmp(name, "or"))
         ctx->current_dep_list = g_new0(RCPackageDepSList *, 1);
@@ -310,6 +343,9 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
 
         ctx->package_list = g_slist_append(
             ctx->package_list, ctx->current_package);
+
+        ctx->current_package->obsoletes = g_slist_concat (
+            ctx->current_package->obsoletes, ctx->obsoletes);
         
         ctx->current_package = NULL;
         ctx->state = PARSER_TOPLEVEL;
