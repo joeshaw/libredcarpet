@@ -49,6 +49,8 @@
 #include "rc-resolver.h"
 #include "rc-resolver-queue.h"
 
+#include "rc-rollback.h"
+
 #include "rc-world.h"
 #include "rc-world-import.h"
 #include "rc-world-dump.h"

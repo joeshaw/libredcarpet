@@ -1,3 +1,9 @@
+2003-05-12  Joe Shaw  <joe@ximian.com>
+
+	* libredcarpet.h: Add rc-rollback.h.
+
+	* rc-packman.h: Nuke the RC_PACKMAN_CAP_REPACKAGING define.
+
 2003-05-12  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-world-import.c (rc_world_add_channel_from_directory): Instead

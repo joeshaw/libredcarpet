@@ -91,7 +91,6 @@ typedef enum {
 #define RC_PACKMAN_CAP_PROVIDE_ALL_VERSIONS  (1 << 0)
 #define RC_PACKMAN_CAP_IGNORE_ABSENT_EPOCHS  (1 << 2)
 #define RC_PACKMAN_CAP_ROLLBACK              (1 << 3)
-#define RC_PACKMAN_CAP_REPACKAGING              (1 << 3)
 #define RC_PACKMAN_CAP_ALWAYS_VERIFY_RELEASE (1 << 4)
 
 #define RC_TRANSACT_FLAG_NONE      (0)
