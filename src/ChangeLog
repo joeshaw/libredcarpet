@@ -1,3 +1,19 @@
+2001-03-07  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c (transaction_add_install_packages): guint instead of
+	gboolean, return the expected number of package installations, 0
+	on error
+	(transaction_add_remove_packages): same as above, more pertinent
+	given the multi-install problem addressed on 3/5.  Some other
+	random cleanups / clarifications when handling rpm return values
+	to hopefully be more clear about what's an error and what's not.
+	(rc_rpmman_transact): put state on the stack so we don't need to
+	worry about leaking it, I was leaking it before.  Get
+	install_total and remove_total from _add_install_packages and
+	_add_remove_packages.  Pass it by reference into the callback.
+	Only add install and remove packages if install_packages or
+	remove_packages are non-NULL.  General clarifications.
+
 2001-03-06  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c (transaction_add_remove_packages): move the

@@ -160,7 +160,7 @@ transact_cb (const Header h, const rpmCallbackType what,
     return NULL;
 } /* transact_cb */
 
-static gboolean
+static guint
 transaction_add_install_packages (RCPackman *packman,
                                   rpmTransactionSet transaction,
                                   RCPackageSList *install_packages)
@@ -169,6 +169,7 @@ transaction_add_install_packages (RCPackman *packman,
     FD_t fd;
     Header header;
     int rc;
+    guint count = 0;
 
     for (iter = install_packages; iter; iter = iter->next) {
         gchar *filename = ((RCPackage *)(iter->data))->package_filename;
@@ -179,7 +180,7 @@ transaction_add_install_packages (RCPackman *packman,
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "unable to open %s", filename);
 
-            return (FALSE);
+            return (0);
         }
 
         rc = rpmReadPackageHeader (fd, &header, NULL, NULL, NULL);
@@ -191,7 +192,7 @@ transaction_add_install_packages (RCPackman *packman,
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "can't read RPM header in %s", filename);
 
-            return (FALSE);
+            return (0);
 
         default:
             Fclose (fd);
@@ -199,11 +200,12 @@ transaction_add_install_packages (RCPackman *packman,
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "%s is not installable", filename);
 
-            return (FALSE);
+            return (0);
 
         case 0:
             rc = rpmtransAddPackage (transaction, header, NULL, filename, 1,
                                      NULL);
+            count++;
             headerFree (header);
             Fclose (fd);
 
@@ -215,18 +217,24 @@ transaction_add_install_packages (RCPackman *packman,
                 rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                       "error reading from %s", filename);
 
-                return (FALSE);
+                return (0);
 
             case 2:
                 rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                       "%s requires newer rpmlib", filename);
 
-                return (FALSE);
+                return (0);
+
+            default:
+                rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                      "%s is not installable", filename);
+
+                return (0);
             }
         }
     }
 
-    return (TRUE);
+    return (count);
 } /* transaction_add_install_pkgs */
 
 static gchar *
@@ -256,12 +264,13 @@ rc_package_to_rpm_name (RCPackage *package)
 
 #ifdef HAVE_RPM_4_0
 
-static gboolean
+static guint
 transaction_add_remove_packages (RCPackman *packman,
                                  rpmTransactionSet transaction,
                                  RCPackageSList *remove_packages)
 {
     RCPackageSList *iter;
+    guint count = 0;
 
     for (iter = remove_packages; iter; iter = iter->next) {
         RCPackage *package = (RCPackage *)(iter->data);
@@ -276,14 +285,16 @@ transaction_add_remove_packages (RCPackman *packman,
         count = rpmdbGetIteratorCount (mi);
 
         if (count <= 0) {
-            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                  "package %s is not installed", package_name);
+            rc_packman_set_error
+                (packman, RC_PACKMAN_ERROR_ABORT,
+                 "package %s does not appear to be installed (%d)",
+                 package_name, count);
 
             rpmdbFreeIterator (mi);
 
             g_free (package_name);
 
-            return (FALSE);
+            return (0);
         }
 
 /* So, this sucks, but apparently having multiple packages that are
@@ -300,7 +311,7 @@ transaction_add_remove_packages (RCPackman *packman,
 
             g_free (package_name);
 
-            return (FALSE);
+            return (0);
         }
 #endif
 
@@ -308,6 +319,8 @@ transaction_add_remove_packages (RCPackman *packman,
             offset = rpmdbGetIteratorOffset (mi);
 
             rpmtransRemovePackage (transaction, offset);
+
+            count++;
         }
 
         rpmdbFreeIterator (mi);
@@ -315,7 +328,7 @@ transaction_add_remove_packages (RCPackman *packman,
         g_free (package_name);
     }
 
-    return (TRUE);
+    return (count);
 }
 
 #else /* !HAVE_RPM_4_0 */
@@ -328,7 +341,7 @@ transaction_add_remove_packages (RCPackman *packman,
     int rc;
     RCPackageSList *iter;
     int i;
-    int count;
+    guint count = 0;
 
     for (iter = remove_packages; iter; iter = iter->next) {
         RCPackage *package = (RCPackage *)(iter->data);
@@ -339,58 +352,25 @@ transaction_add_remove_packages (RCPackman *packman,
                                &matches);
 
         switch (rc) {
-        case 1:
-            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                  "package %s is not installed", package_name);
-
-            g_free (package_name);
-
-            return (FALSE);
-
-        case 2:
-            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                  "unspecified error removing %s",
-                                  package_name);
-
-            g_free (package_name);
-
-            return (FALSE);
-
-        default:
-            count = 0;
-            for (i = 0; i < dbiIndexSetCount (matches); i++) {
-                if (dbiIndexRecordOffset (matches, i)) {
-                    count++;
-                }
-            }
-
-/* See the comment above for the RPM 4.0 case, la la la broken
- * libraries la la la */
-#if 0
-            if (count > 1) {
-                rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                      "%s matches multiple packages",
-                                      package_name);
-
-                g_free (package_name);
-
-                return (FALSE);
-            }
-#endif
+        case 0:
+            /* So we're no longer bothering to check for multiple
+             * matches anymore (see the comment above for the RPM 4.x
+             * case */
 
             for (i = 0; i < dbiIndexSetCount (matches); i++) {
                 unsigned int offset = dbiIndexRecordOffset (matches, i);
 
                 if (offset) {
                     rpmtransRemovePackage (transaction, offset);
+                    count++;
                 } else {
                     rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                          "unable to locate %s",
+                                          "unable to locate %s in database",
                                           package_name);
 
                     g_free (package_name);
 
-                    return (FALSE);
+                    return (0);
                 }
             }
 
@@ -399,10 +379,31 @@ transaction_add_remove_packages (RCPackman *packman,
             g_free (package_name);
 
             break;
+
+        case 1:
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "package %s does not appear to be installed",
+                                  package_name);
+
+            g_free (package_name);
+
+            return (0);
+
+/*
+        case 2:
+*/
+        default:
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "unspecified error removing %s",
+                                  package_name);
+
+            g_free (package_name);
+
+            return (0);
         }
     }
 
-    return (TRUE);
+    return (count);
 } /* transaction_add_remove_pkgs */
 
 #endif /* !HAVE_RPM_4_0 */
@@ -414,8 +415,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     rpmTransactionSet transaction;
     int rc;
     rpmProblemSet probs = NULL;
-    InstallState *state;
-    guint extras = 0;
+    InstallState state;
     RCPackageSList *iter;
     struct rpmDependencyConflict *conflicts;
     int transaction_flags, problem_filter;
@@ -430,33 +430,66 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
 
     transaction = rpmtransCreateSet (rpmman->db, RC_RPMMAN (packman)->rpmroot);
 
-    if (!(transaction_add_install_packages (packman, transaction,
-                                            install_packages)))
-    {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              "error adding packages to install");
+    if (install_packages) {
+        if (!(state.install_total = transaction_add_install_packages (
+                  packman, transaction, install_packages)))
+        {
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "error adding packages to install");
 
-        rpmtransFree (transaction);
+            rpmtransFree (transaction);
 
-        goto ERROR;
+            goto ERROR;
+        }
     }
 
-    if (!(transaction_add_remove_packages (packman, transaction,
-                                           remove_packages)))
-    {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              "error adding packages to remove");
+    /* If we're actually installing packages we should expect there to
+     * be configuration steps */
+    if (state.install_total) {
+        state.configuring = TRUE;
+    } else {
+        state.configuring = FALSE;
+    }
 
-        rpmtransFree (transaction);
+    if (remove_packages) {
+        if (!(state.remove_total = transaction_add_remove_packages (
+                  packman, transaction, remove_packages)))
+        {
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "error adding packages to remove");
 
-        goto ERROR;
+            rpmtransFree (transaction);
+
+            goto ERROR;
+        }
     }
 
     if (rpmdepCheck (transaction, &conflicts, &rc) || rc) {
+        struct rpmDependencyConflict *conflict = conflicts;
+        guint count;
+
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "dependencies are not met");
 
-        /* FIXME: display some magic conflict information */
+        for (count = 0; count < rc; count++) {
+            fprintf (stderr, "%s", conflict->byName);
+            if (conflict->byVersion) {
+                fprintf (stderr, "-%s", conflict->byVersion);
+                if (conflict->byRelease) {
+                    fprintf (stderr, "-%s", conflict->byRelease);
+                }
+            }
+
+            fprintf (stderr, " requires %s", conflict->needsName);
+            if (conflict->needsVersion) {
+                fprintf (stderr, "-%s", conflict->needsVersion);
+            }
+
+            fprintf (stderr, ", relation %d, sense %d\n", conflict->needsFlags,
+                     conflict->sense);
+
+            conflict++;
+        }
 
         rpmdepFreeConflicts (conflicts, rc);
 
@@ -467,12 +500,17 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
 
     if (rpmdepOrder (transaction)) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              "dependencies are not met");
+                              "circular dependencies in selected packages");
 
         rpmtransFree (transaction);
 
         goto ERROR;
     }
+
+    /* Let's check for packages which are upgrades rather than new
+     * installs -- we're going to get two transaction steps for these,
+     * not just one */
+    state.install_extra = 0;
 
     for (iter = install_packages; iter; iter = iter->next) {
         RCPackage *package = (RCPackage *)(iter->data);
@@ -486,19 +524,11 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         package->spec.release = NULL;
 
         if ((package = rc_packman_query (packman, package))->installed) {
-            extras++;
+            state.install_extra++;
         }
 
         rc_package_free (package);
     }
-
-    state = g_new0 (InstallState, 1);
-    state->packman = packman;
-    state->seqno = 0;
-    state->install_total = g_slist_length (install_packages);
-    state->install_extra = extras;
-    state->remove_total = g_slist_length (remove_packages);
-    state->configuring = state->install_total ? TRUE : FALSE;
 
     rpm_error = 0;
     rpm_reason = NULL;
@@ -506,15 +536,15 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     /* If we're installing any packages at all, expect to get the
        configure steps first.  Otherwise, you'll go directly to
        transacts for the removed packages. */
-    if (state->install_total) {
+    if (state.install_total) {
         gtk_signal_emit_by_name (GTK_OBJECT (packman), "configure_start",
-                                 state->install_total);
+                                 state.install_total);
     } else {
         gtk_signal_emit_by_name (GTK_OBJECT (packman), "transact_start",
-                                 state->remove_total);
+                                 state.remove_total);
     }
 
-    rc = rpmRunTransactions (transaction, transact_cb, (void *) state,
+    rc = rpmRunTransactions (transaction, transact_cb, (void *) &state,
                              NULL, &probs, transaction_flags, problem_filter);
 
     if (rc) {
