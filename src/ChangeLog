@@ -1,3 +1,8 @@
+2004-09-02  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-package-match.h: Use typedef'ed RCPackageMatch everywhere,
+	otherwise poor gapi-parser gets confused about it.
+
 2004-09-01  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-package.c (rc_package_get_file_size): Implement.
