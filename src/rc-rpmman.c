@@ -505,10 +505,10 @@ rc_rpmman_remove (RCPackman *p, RCPackageSList *pkgs)
         RCPackage *ptr = (RCPackage *)(iter->data);
 
         /* Must at least name the package */
-        g_assert (p->spec.name);
+        g_assert (ptr->spec.name);
 
         /* If you've got a release, you've gotta have a version */
-        g_assert (!p->spec.release || p->spec.version);
+        g_assert (!ptr->spec.release || ptr->spec.version);
 
         if (ptr->spec.version && ptr->spec.release) {
             pkgv[i] = g_strconcat (ptr->spec.name, "-", ptr->spec.version, "-",
