@@ -31,7 +31,11 @@ rc_package_new (void)
 RCPackage *
 rc_package_copy (RCPackage *old_pkg)
 {
-    RCPackage *pkg = rc_package_copy_spec (old_pkg);
+    RCPackage *pkg = rc_package_new ();
+
+    g_return_val_if_fail (old_pkg, NULL);
+
+    rc_package_spec_copy ((RCPackageSpec *)old_pkg, (RCPackageSpec *)pkg);
 
     pkg->already_installed = old_pkg->already_installed;
 
@@ -48,22 +52,17 @@ rc_package_copy (RCPackage *old_pkg)
 
     pkg->hold = old_pkg->hold;
 
+    pkg->filename = g_strdup (old_pkg->filename);
+    pkg->signature = g_strdup (old_pkg->signature);
+
     return (pkg);
-}
-
-RCPackage *
-rc_package_copy_spec (RCPackage *orig)
-{
-    RCPackage *rcp = rc_package_new ();
-
-    rc_package_spec_copy ((RCPackageSpec *) orig, (RCPackageSpec *) rcp);
-
-    return (rcp);
 }
 
 void
 rc_package_free (RCPackage *rcp)
 {
+    g_return_if_fail (rcp);
+
     rc_package_spec_free_members (RC_PACKAGE_SPEC (rcp));
 
     rc_package_dep_slist_free (rcp->requires);
@@ -76,6 +75,9 @@ rc_package_free (RCPackage *rcp)
     g_free (rcp->description);
 
     rc_package_update_slist_free (rcp->history);
+
+    g_free (rcp->filename);
+    g_free (rcp->signature);
 
     g_free (rcp);
 } /* rc_package_free */
@@ -91,11 +93,8 @@ rc_package_slist_free (RCPackageSList *rcpsl)
 RCPackageUpdateSList *
 rc_package_slist_sort (RCPackageSList *rcpusl)
 {
-    RCPackageSList *list = NULL;
-
-    list = g_slist_sort (rcpusl, (GCompareFunc) rc_package_spec_compare_name);
-
-    return (list);
+    return (g_slist_sort (rcpusl,
+                          (GCompareFunc) rc_package_spec_compare_name));
 }
 
 RCPackageImportance 

@@ -62,6 +62,8 @@ RCVerification *rc_verify_gpg (gchar *filename, gchar *sig);
 
 RCVerification *rc_verify_md5 (gchar *filename, guint8 *md5);
 
+RCVerification *rc_verify_md5_string (gchar *filename, gchar *md5);
+
 RCVerification *rc_verify_size (gchar *filename, guint32 size);
 
 #endif

@@ -34,7 +34,6 @@ static void packman_test_query_all (RCPackman *p, gchar *buf);
 static void packman_test_query_file (RCPackman *p, gchar *buf);
 static void packman_test_quit (RCPackman *p, gchar *buf);
 static void packman_test_run (RCPackman *p, gchar *buf);
-static void packman_test_verify (RCPackman *p, gchar *buf);
 
 typedef void (*command_func)(RCPackman *p, gchar *buf);
 
@@ -70,8 +69,6 @@ Command commands[] = {
       "Add a package to be removed to the transaction", "remove <package>" },
     { "run", (command_func) packman_test_run,
       "Run the pending transaction", "run" },
-    { "verify", (command_func) packman_test_verify,
-      "Verify a package", "verify <filename>" },
     { (gchar *)NULL, (command_func)NULL, (gchar *)NULL, (gchar *)NULL }
 };
 
@@ -527,72 +524,6 @@ packman_test_run (RCPackman *p, gchar *line)
 
     rc_package_slist_free (transaction.remove_pkgs);
     transaction.remove_pkgs = NULL;
-}
-
-static void
-packman_test_verify (RCPackman *p, gchar *line)
-{
-    gchar **tokens;
-    RCVerificationSList *rcvsl;
-    RCVerificationSList *iter;
-
-    tokens = pop_token (line);
-
-    if (tokens[1]) {
-        printf ("ERROR: extraneous characters after \"%s\"\n", tokens[0]);
-        return;
-    }
-
-    rcvsl = rc_packman_verify (p, tokens[0]);
-
-    if (rc_packman_get_error (p)) {
-        printf ("ERROR: %s\n", rc_packman_get_reason (p));
-        goto END;
-    }
-
-    for (iter = rcvsl; iter; iter = iter->next) {
-        RCVerification *rcv = iter->data;
-
-        printf ("%s: ", tokens[0]);
-
-        switch (rcv->type) {
-        case RC_VERIFICATION_TYPE_MD5:
-            printf ("(md5)  ");
-            break;
-
-        case RC_VERIFICATION_TYPE_GPG:
-            printf ("(gpg)  ");
-            break;
-
-        case RC_VERIFICATION_TYPE_SIZE:
-            printf ("(size) ");
-            break;
-        }
-
-        switch (rcv->status) {
-        case RC_VERIFICATION_STATUS_PASS:
-            printf ("PASS");
-            break;
-
-        case RC_VERIFICATION_STATUS_FAIL:
-            printf ("FAIL");
-            break;
-
-        case RC_VERIFICATION_STATUS_UNDEF:
-            printf ("UNDEF");
-            break;
-        }
-
-        if (rcv->info) {
-            printf (" [%s]", rcv->info);
-        }
-        printf ("\n");
-    }
-
-    rc_verification_slist_free (rcvsl);
-
-  END:
-    g_strfreev (tokens);
 }
 
 char *

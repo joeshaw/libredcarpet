@@ -108,7 +108,7 @@ struct _RCPackmanClass {
                                             RCPackageSpec *s2);
 
     RCVerificationSList *(*rc_packman_real_verify)(RCPackman *p,
-                                                   gchar *filename);
+                                                   RCPackage *pkg);
 };
 
 guint rc_packman_get_type (void);
@@ -158,7 +158,7 @@ gint rc_packman_version_compare (RCPackman *p,
                                  RCPackageSpec *s1,
                                  RCPackageSpec *s2);
 
-RCVerificationSList *rc_packman_verify (RCPackman *p, gchar *filename);
+RCVerificationSList *rc_packman_verify (RCPackman *p, RCPackage *pkg);
 
 /* Return the object's error code from the last operation. */
 guint rc_packman_get_error (RCPackman *p);

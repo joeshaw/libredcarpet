@@ -49,6 +49,11 @@ struct _RCPackage {
 
     /* Don't upgrade this package */
     gboolean hold;
+
+    /* After downloading this package, fill in the local file name, and
+       signature, if appropriate */
+    gchar *filename;
+    gchar *signature;
 };
 
 /* Used if key is a string, i.e. name */
@@ -60,8 +65,6 @@ typedef GHashTable RCPackageHashTableBySpec;
 RCPackage *rc_package_new (void);
 
 RCPackage *rc_package_copy (RCPackage *);
-
-RCPackage *rc_package_copy_spec (RCPackage *);
 
 void rc_package_free (RCPackage *rcp);
 

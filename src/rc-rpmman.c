@@ -1112,7 +1112,7 @@ rc_rpmman_version_compare (RCPackman *p, RCPackageSpec *s1, RCPackageSpec *s2)
 }
 
 static RCVerificationSList *
-rc_rpmman_verify (RCPackman *p, gchar *filename)
+rc_rpmman_verify (RCPackman *p, RCPackage *pkg)
 {
     struct rpmlead lead;
     FD_t in_fd = NULL;
@@ -1131,7 +1131,11 @@ rc_rpmman_verify (RCPackman *p, gchar *filename)
     guint32 size = 0;
     gchar *buf;
 
-    in_fd = Fopen (filename, "r.ufdio");
+    if (!pkg->filename) {
+        goto END;
+    }
+
+    in_fd = Fopen (pkg->filename, "r.ufdio");
     if (in_fd == NULL || Ferror (in_fd)) {
         rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
                               "Unable to open the RPM for verification");

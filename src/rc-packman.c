@@ -349,7 +349,7 @@ rc_packman_version_compare (RCPackman *p,
 }
 
 RCVerificationSList *
-rc_packman_verify (RCPackman *p, gchar *filename)
+rc_packman_verify (RCPackman *p, RCPackage *pkg)
 {
     RCVerificationSList *ret = FALSE;
 
@@ -366,7 +366,7 @@ rc_packman_verify (RCPackman *p, gchar *filename)
 
     p->busy = TRUE;
 
-    ret = _CLASS (p)->rc_packman_real_verify (p, filename);
+    ret = _CLASS (p)->rc_packman_real_verify (p, pkg);
 
     p->busy = FALSE;
 

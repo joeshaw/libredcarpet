@@ -31,10 +31,13 @@
 #include <signal.h>
 #include <errno.h>
 #include <ctype.h>
+#include <pty.h>
+
 #include <sys/wait.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/poll.h>
+#include <sys/stat.h>
 
 #include <gdk/gdkkeysyms.h>
 
@@ -1905,9 +1908,34 @@ verify_status (RCPackman *p)
 }
 
 static RCVerificationSList *
-rc_debman_verify (RCPackman *p, gchar *filename)
+rc_debman_verify (RCPackman *p, RCPackage *pkg)
 {
-    return (NULL);
+    RCPackageUpdate *update;
+    RCVerificationSList *ret = NULL;
+
+    g_assert (p);
+    g_assert (pkg);
+    g_assert (pkg->filename);
+
+    update = (RCPackageUpdate *)pkg->history->data;
+
+    if (update->md5sum) {
+        RCVerification *verification;
+
+        verification = rc_verify_md5_string (pkg->filename, update->md5sum);
+
+        ret = g_slist_append (ret, verification);
+    }
+
+    if (pkg->signature) {
+        RCVerification *verification;
+
+        verification = rc_verify_gpg (pkg->filename, pkg->signature);
+
+        ret = g_slist_append (ret, verification);
+    }
+
+    return (ret);
 }
 
 static void

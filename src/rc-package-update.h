@@ -28,10 +28,15 @@ struct _RCPackageUpdate {
 
     RCPackageImportance importance;
     gchar *url;                 /* URL for the filename of this pkg */
+    guint32 package_size;
+
     gchar *md5sum;
+
+    gchar *signature_url;
+    guint32 signature_size;
+
     gchar *description;
     guint32 installed_size;
-    guint32 package_size;
     time_t time;
 };
 

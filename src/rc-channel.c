@@ -107,7 +107,7 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
         doc = xmlParseMemory(ba->data, ba->len - 1);
         g_byte_array_free (ba, TRUE);
     } else {
-	doc = xmlParseMemory(xmlbuf, strlen(xmlbuf));
+        doc = xmlParseMemory(xmlbuf, strlen(xmlbuf));
     }
 
     if (!doc) {
@@ -138,32 +138,32 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
         char *tmp;
         RCChannel *channel;
 
-	channel = rc_channel_new();
+        channel = rc_channel_new();
 
         channel->name = xml_get_prop(node, "name");
         channel->path = xml_get_prop(node, "path");
         channel->file_path = xml_get_prop(node, "file_path");
-	channel->icon_file = xml_get_prop(node, "icon");
-	channel->title_file = xml_get_prop(node, "title");
+        channel->icon_file = xml_get_prop(node, "icon");
+        channel->title_file = xml_get_prop(node, "title");
         channel->description = xml_get_prop(node, "description");
-	channel->distro_target = xml_get_prop(node, "distro_target");
+        channel->distro_target = xml_get_prop(node, "distro_target");
         channel->pkginfo_file = xml_get_prop(node, "pkginfo_file");
-	tmp = xml_get_prop(node, "mirrored");
-	if (tmp) {
-	    channel->mirrored = TRUE;
-	    g_free(tmp);
-	}
-	else {
-	    channel->mirrored = FALSE;
-	}
-	tmp = xml_get_prop(node, "available_select");
-	if (tmp) {
-	    channel->available_select = TRUE;
-	    g_free(tmp);
-	}
-	else {
-	    channel->available_select = FALSE;
-	}
+        tmp = xml_get_prop(node, "mirrored");
+        if (tmp) {
+            channel->mirrored = TRUE;
+            g_free(tmp);
+        }
+        else {
+            channel->mirrored = FALSE;
+        }
+        tmp = xml_get_prop(node, "available_select");
+        if (tmp) {
+            channel->available_select = TRUE;
+            g_free(tmp);
+        }
+        else {
+            channel->available_select = FALSE;
+        }
         tmp = xml_get_prop(node, "pkginfo_compressed");
         if (tmp) {
             channel->pkginfo_compressed = TRUE;
@@ -171,15 +171,15 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
         } else {
             channel->pkginfo_compressed = FALSE;
         }
-	channel->subs_url = xml_get_prop(node, "subs_url");
+        channel->subs_url = xml_get_prop(node, "subs_url");
         channel->unsubs_url = xml_get_prop(node, "unsubs_url");
         tmp = xml_get_prop(node, "id");
-	channel->id = atoi(tmp);
+        channel->id = atoi(tmp);
         g_free(tmp);
-	tmp = xml_get_prop(node, "last_update");
-	if (tmp)
-	    channel->last_update = atol(tmp);
-	g_free(tmp);
+        tmp = xml_get_prop(node, "last_update");
+        if (tmp)
+            channel->last_update = atol(tmp);
+        g_free(tmp);
         tmp = xml_get_prop(node, "type");
         if (tmp) {
             if (g_strcasecmp (tmp, "helix") == 0)
