@@ -629,26 +629,12 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
 #endif
     } else if (rc > 0) {
         guint count;
-#ifndef INSTALL_PERCENT
-        rpmProblem problem = probs->probs;
-#else
         rpmProblem *problem = probs->probs;
-#endif
         GString *report = g_string_new ("");
 
         for (count = 0; count < probs->numProblems; count++) {
-#ifndef INSTALL_PERCENT
             g_string_sprintfa (report, "\n%s",
-                               rpmman->rpmProblemString (problem));
-#else
-            if (rpmman->major_version == 4 && rpmman->micro_version == 2) {
-                g_string_sprintfa (report, "\n%s",
-                                   rpmman->rpmProblemString (problem));
-            } else {
-                g_string_sprintfa (report, "\n%s",
-                                   rpmman->rpmProblemString (*problem));
-            }
-#endif
+                               rpmman->rpmProblemString (*problem));
             problem++;
         }
 
