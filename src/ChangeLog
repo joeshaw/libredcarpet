@@ -1,3 +1,10 @@
+2002-07-30  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c (close_database): s/close/rc_close
+	(open_database): try to get a shared lock on the rpm database
+	prior to opening it, to avoid the rpm database locking bug
+	discovered yesterday
+
 2002-07-30  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-resolver-context.c

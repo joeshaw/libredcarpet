@@ -167,7 +167,7 @@ close_database (RCRpmman *rpmman)
         rpmman->db_status = RC_RPMMAN_DB_NONE;
 
         if (rpmman->lock_fd) {
-            close (rpmman->lock_fd);
+            rc_close (rpmman->lock_fd);
         }
     }
 }
@@ -177,6 +177,9 @@ open_database (RCRpmman *rpmman, gboolean write)
 {
     int flags;
     gboolean root;
+    struct flock fl;
+    int db_fd = -1;
+    gchar *db_filename = NULL;
 
     if (getenv ("RC_RPM_NO_DB"))
         return FALSE;
@@ -196,23 +199,39 @@ open_database (RCRpmman *rpmman, gboolean write)
         ((flags = O_RDWR) && (rpmman->db_status = RC_RPMMAN_DB_RDWR)) :
         ((flags = O_RDONLY) && (rpmman->db_status = RC_RPMMAN_DB_RDONLY));
 
+    if (rpmman->version < 40000)
+        db_filename = g_strconcat (rpmman->rpmroot,
+                                   "/var/lib/rpm/packages.rpm", NULL);
+    else
+        db_filename = g_strconcat (rpmman->rpmroot,
+                                   "/var/lib/rpm/Packages", NULL);
+
+    if (!(db_fd = open (db_filename, O_RDONLY))) {
+        rc_packman_set_error (RC_PACKMAN (rpmman), RC_PACKMAN_ERROR_ABORT,
+                              "unable to open %s", db_filename);
+        goto ERROR;
+    }
+
+    fl.l_type = F_RDLCK;
+    fl.l_whence = SEEK_SET;
+    fl.l_start = 0;
+    fl.l_len = 0;
+
+    if (fcntl (db_fd, F_SETLK, &fl) == -1) {
+        rc_packman_set_error (RC_PACKMAN (rpmman), RC_PACKMAN_ERROR_ABORT,
+                              "unable to open shared lock on %s", db_filename);
+        goto ERROR;
+    }
+
     if (rpmman->rpmdbOpen (rpmman->rpmroot, &rpmman->db, flags, 0644)) {
         rc_packman_set_error (RC_PACKMAN (rpmman), RC_PACKMAN_ERROR_ABORT,
                               "rpmdbOpen failed");
         goto ERROR;
     }
 
+    rc_close (db_fd);
+
     if (write) {
-        struct flock fl;
-        gchar *db_filename;
-
-        if (rpmman->version < 40000)
-            db_filename = g_strconcat (rpmman->rpmroot,
-                                       "/var/lib/rpm/packages.rpm", NULL);
-        else
-            db_filename = g_strconcat (rpmman->rpmroot,
-                                       "/var/lib/rpm/Packages", NULL);
-
         rpmman->lock_fd = open (db_filename, O_RDWR);
 
         if (rpmman->lock_fd == -1) {
@@ -234,6 +253,8 @@ open_database (RCRpmman *rpmman, gboolean write)
             goto ERROR;
         }
     }
+
+    g_free (db_filename);
 
     if (root && rpmman->version >= 40003) {
         if (!(rpmman->rpmExpandNumeric ("%{?__dbi_cdb:1}"))) {
