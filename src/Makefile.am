@@ -101,8 +101,6 @@ libredcarpettmp_a_SOURCES =		\
         xml-util.c                      \
 	rc-line-buf.c			\
 	rc-line-buf-private.h		\
-	rc-query.c			\
-	rc-query.h			\
 	rc-debman-general.c		\
 	rc-marshal.c			\
 	$(libredcarpet_public_headers)	\

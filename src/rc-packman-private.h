@@ -24,8 +24,6 @@
 
 #include <glib.h>
 
-typedef struct _RCPackmanPrivate RCPackmanPrivate;
-
 #include "rc-package-spec.h"
 #include "rc-packman.h"
 

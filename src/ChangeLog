@@ -1,5 +1,10 @@
 2002-05-23  Jon Trowbridge  <trow@ximian.com>
 
+	* rc-packman.h: Don't include rc-packman-private.h; actually make
+	it private instead.
+
+2002-05-23  Jon Trowbridge  <trow@ximian.com>
+
 	* Makefile.am: Fixed to install libredcarpet and its headers like
 	any other library.
 

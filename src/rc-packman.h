@@ -37,6 +37,7 @@
 
 typedef struct _RCPackman        RCPackman;
 typedef struct _RCPackmanClass   RCPackmanClass;
+typedef struct _RCPackmanPrivate RCPackmanPrivate;
     
 typedef enum {
     /* No error */
@@ -60,9 +61,9 @@ typedef enum {
 #define RC_PACKMAN_CAP_SELF_CONFLICT         (1 << 2)
 #define RC_PACKMAN_CAP_LEGACY_EPOCH_HANDLING (1 << 3)
 
-#include "rc-packman-private.h"
 #include "rc-package.h"
 #include "rc-verification.h"
+
 
 struct _RCPackman {
     GObject parent;
