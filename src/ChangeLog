@@ -1,3 +1,9 @@
+2003-09-18  Joe Shaw  <joe@ximian.com>
+
+	* rc-rpmman.c (rc_rpmman_depends_fill): Make sure the package
+	filename is valid UTF-8 before adding it as a provide.  Works
+	around some broken SuSE packages.
+
 2003-09-17  Joe Shaw  <joe@ximian.com>
 
 	* rc-debman.c (rc_debman_find_file): Return an RCPackageSList.

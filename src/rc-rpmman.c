@@ -1982,12 +1982,18 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
             gchar *tmp = g_strconcat (dirnames[dirindexes[i]], basenames[i],
                                       NULL);
 
-            if (dont_filter || in_set (tmp, file_dep_set)) {
-                dep = rc_package_dep_new (tmp, 0, 0, NULL, NULL,
-                                          RC_RELATION_ANY, RC_CHANNEL_ANY,
-                                          FALSE, FALSE);
+            if (g_utf8_validate (tmp, -1, NULL)) {
+                if (dont_filter || in_set (tmp, file_dep_set)) {
+                    dep = rc_package_dep_new (tmp, 0, 0, NULL, NULL,
+                                              RC_RELATION_ANY, RC_CHANNEL_ANY,
+                                              FALSE, FALSE);
 
-                provides = g_slist_prepend (provides, dep);
+                    provides = g_slist_prepend (provides, dep);
+                }
+            } else {
+                rc_debug (RC_DEBUG_LEVEL_WARNING,
+                          "File '%s' is not valid UTF-8; dropping it from "
+                          "the list of file provides", tmp);
             }
 
             g_free (tmp);
