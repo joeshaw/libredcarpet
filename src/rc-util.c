@@ -220,7 +220,6 @@ rc_hash_table_slist_insert_unique (GHashTable *ht, gpointer key, gpointer value,
                                    GCompareFunc eqfunc)
 {
     GSList *sl = NULL;
-    gboolean found = FALSE;
 
     sl = g_hash_table_lookup (ht, key);
     if (sl) {
@@ -231,9 +230,6 @@ rc_hash_table_slist_insert_unique (GHashTable *ht, gpointer key, gpointer value,
         }
     } else {
         sl = g_slist_append (sl, value);
-    }
-
-    if (!found) {
         g_hash_table_insert (ht, key, sl);
     }
 }

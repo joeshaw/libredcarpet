@@ -1,3 +1,11 @@
+2002-01-29  Joe Shaw  <joe@ximian.com>
+
+	* rc-package-info.c (rc_subchannel_parse_helix): If we don't have
+	an XML document, we really shouldn't be continuing to parse that.
+	This function was crack-smoking.
+
+	* rc-util.c (rc_hash_table_slist_insert_unique): Fix a potential leak.
+
 2002-01-14  Joe Shaw  <joe@ximian.com>
 
 	* rc-rpmman.c (rc_rpmman_query_file): First check to see if the
