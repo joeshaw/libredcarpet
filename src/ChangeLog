@@ -1,5 +1,11 @@
 2001-04-23  Vladimir Vukicevic  <vladimir@ximian.com>
 
+	* rc-deps.c: sort of reverted older commit where we were passing a
+	dep to upgrade_or_remove package -- this doesn't make sense,
+	as we're trying to upgrade the /package/ not the dep -- so, the case
+	of foo-dev 1.0 requiring foo 1.0; we don't want to know about the
+	foo 1.0 dependency, we just want a newer foo.
+
 	* rc-deps.c: don't pull in an older version while trying to remove
 	the intermediate failed dependency on system package version; we
 	need to check if the "existing" package is newer, not merely
