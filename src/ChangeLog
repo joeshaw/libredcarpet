@@ -1,3 +1,9 @@
+2003-06-04  Joe Shaw  <joe@ximian.com>
+
+	* rc-world-import.c (add_packages_from_hash_cb): Set the
+	package_url in the RCPackageUpdate to be a file URL pointed at the
+	file on disk.
+
 2003-06-03  Joe Shaw  <joe@ximian.com>
 
 	* rc-package.h: Add an "install_only" flag for kernel packages

@@ -622,6 +622,7 @@ add_packages_from_hash_cb (gpointer key,
     update = rc_package_update_new ();
     rc_package_spec_copy (RC_PACKAGE_SPEC (update),
                           RC_PACKAGE_SPEC (pkg));
+    update->package_url = g_strconcat ("file://", pkg->package_filename, NULL);
     pkg->history = g_slist_prepend (pkg->history, update);
 
     rc_world_add_package (world, pkg);
