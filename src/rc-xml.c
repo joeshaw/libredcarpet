@@ -683,6 +683,8 @@ void
 rc_package_sax_context_parse_chunk(RCPackageSAXContext *ctx,
                                    const char *xmlbuf, int size)
 {
+    gboolean terminate = FALSE;
+
     xmlSubstituteEntitiesDefault(TRUE);
     
     if (!ctx->xml_context) {
@@ -690,7 +692,10 @@ rc_package_sax_context_parse_chunk(RCPackageSAXContext *ctx,
             &sax_handler, ctx, NULL, 0, NULL);
     }
 
-    xmlParseChunk(ctx->xml_context, xmlbuf, size, 0);
+    if (xmlbuf[size] == '\0')
+        terminate = TRUE;
+
+    xmlParseChunk(ctx->xml_context, xmlbuf, size, terminate);
 }
 
 RCPackageSList *
@@ -1515,7 +1520,7 @@ rc_package_update_to_xml_node (RCPackageUpdate *update)
 
     if (update->hid) {
         tmp_string = g_strdup_printf ("%d", update->hid);
-        xmlNewTextChild (update_node, NULL, "hid", update->hid);
+        xmlNewTextChild (update_node, NULL, "hid", tmp_string);
         g_free (tmp_string);
     }
 

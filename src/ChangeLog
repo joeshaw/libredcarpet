@@ -1,3 +1,12 @@
+2003-04-15  Joe Shaw  <joe@ximian.com>
+
+	* rc-xml.c (rc_package_sax_context_parse_chunk): Check to see if
+	the last character is a nul character and terminate XML processing
+	there.  This'll fix the harmless but annoying "extra content"
+	warnings when parsing channel data.
+	(rc_package_update_to_xml_node): Write out the temporary string,
+	not the integer-casted-to-a-string.
+
 2003-04-08  Joe Shaw  <joe@ximian.com>
 
 	* rc-distro.c (rc_distro_parse_xml): Check to see if
