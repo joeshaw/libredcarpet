@@ -61,6 +61,6 @@ void rc_debug_set_log_level (guint level);
 
 void rc_debug_set_log_file (FILE *file);
 
-void rc_debug (RCDebugLevel level, gchar *format, ...);
+void rc_debug (RCDebugLevel level, const gchar *format, ...);
 
 #endif

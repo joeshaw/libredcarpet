@@ -71,7 +71,7 @@ rc_debug_set_log_file (FILE *file)
 }
 
 void
-rc_debug (RCDebugLevel level, gchar *format, ...)
+rc_debug (RCDebugLevel level, const gchar *format, ...)
 {
     va_list args;
     char *str;

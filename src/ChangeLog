@@ -1,3 +1,11 @@
+2002-06-03  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-queue-item.c (install_item_process): Fix the relation tag on
+	the RCPackageDep we build to find conflicting packages.  This
+	fixes a bug with versioned conflicts.
+
+	* rc-debug.c (rc_debug): Make the format string arg const.
+
 2002-05-30  Joe Shaw  <joe@ximian.com>
 
 	* rc-world.c (rc_world_get_packman): Get the packman associated
@@ -48,8 +56,6 @@
 
 	* rc-channel-private.h: Added subscribed flag (and made two other
 	gbooleans into single-bit entries.)
-
-2002-05-23  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-world.c (rc_world_register_packman): The beginnings of
 	our RCWorld/RCPackman integration...

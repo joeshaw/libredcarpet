@@ -421,7 +421,7 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
     /* Constuct uninstall items for things that conflict with us. */
     conflicts = NULL;
     pkg_dep = rc_package_dep_new_from_spec (&package->spec,
-                                            RC_RELATION_ANY);
+                                            RC_RELATION_EQUAL);
     rc_world_foreach_conflicting_package (rc_queue_item_get_world (item),
                                           pkg_dep,
                                           NULL,
