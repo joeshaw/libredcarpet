@@ -43,6 +43,9 @@ struct _RCDebman {
     RCPackman parent;
 
     int lock_fd;
+
+    GHashTable *pkg_hash;
+    gboolean hash_valid;
 };
 
 struct _RCDebmanClass {

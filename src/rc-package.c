@@ -9,6 +9,27 @@ rc_package_new (void)
 } /* rc_package_new */
 
 RCPackage *
+rc_package_copy (RCPackage *old_pkg)
+{
+    RCPackage *pkg = rc_package_copy_spec (old_pkg);
+
+    pkg->already_installed = old_pkg->already_installed;
+
+    pkg->requires = rc_package_dep_slist_copy (old_pkg->requires);
+    pkg->provides = rc_package_dep_slist_copy (old_pkg->provides);
+    pkg->conflicts = rc_package_dep_slist_copy (old_pkg->conflicts);
+    pkg->suggests = rc_package_dep_slist_copy (old_pkg->suggests);
+    pkg->recommends = rc_package_dep_slist_copy (old_pkg->recommends);
+
+    pkg->summary = g_strdup (old_pkg->summary);
+    pkg->description = g_strdup (old_pkg->description);
+
+    pkg->history = rc_package_update_slist_copy (old_pkg->history);
+
+    return (pkg);
+}
+
+RCPackage *
 rc_package_copy_spec (RCPackage *orig)
 {
     RCPackage *rcp = rc_package_new ();
@@ -26,6 +47,8 @@ rc_package_free (RCPackage *rcp)
     rc_package_dep_slist_free (rcp->requires);
     rc_package_dep_slist_free (rcp->provides);
     rc_package_dep_slist_free (rcp->conflicts);
+    rc_package_dep_slist_free (rcp->suggests);
+    rc_package_dep_slist_free (rcp->recommends);
 
     g_free (rcp->summary);
     g_free (rcp->description);

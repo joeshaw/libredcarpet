@@ -29,6 +29,18 @@ rc_package_dep_item_new_from_spec (RCPackageSpec *spec,
     return (rcpdi);
 } /* rc_package_dep_item_new_from_spec */
 
+RCPackageDepItem *
+rc_package_dep_item_copy (RCPackageDepItem *rcpdi)
+{
+    RCPackageDepItem *new = g_new0 (RCPackageDepItem, 1); /* That sucks */
+
+    rc_package_spec_copy ((RCPackageSpec *) rcpdi, (RCPackageSpec *) new);
+
+    new->relation = rcpdi->relation;
+
+    return (new);
+}
+
 void
 rc_package_dep_item_free (RCPackageDepItem *rcpdi)
 {
@@ -37,12 +49,29 @@ rc_package_dep_item_free (RCPackageDepItem *rcpdi)
     g_free (rcpdi);
 } /* rc_package_dep_item_free */
 
-RCPackageDep *rc_package_dep_new_with_item (RCPackageDepItem *rcpdi)
+RCPackageDep *
+rc_package_dep_new_with_item (RCPackageDepItem *rcpdi)
 {
     RCPackageDep *rcpd;
     rcpd = g_slist_append (NULL, rcpdi);
     return rcpd;
 } /* rc_package_dep_new_with_item */
+
+RCPackageDep *
+rc_package_dep_copy (RCPackageDep *old)
+{
+    RCPackageDep *iter;
+    RCPackageDep *dep = NULL;
+
+    for (iter = old; iter; iter = iter->next) {
+        RCPackageDepItem *di = (RCPackageDepItem *)(iter->data);
+        RCPackageDepItem *new = rc_package_dep_item_copy (di);
+
+        dep = g_slist_append (dep, new);
+    }
+
+    return (dep);
+}
 
 void
 rc_package_dep_free (RCPackageDep *rcpd)
@@ -51,6 +80,22 @@ rc_package_dep_free (RCPackageDep *rcpd)
 
     g_slist_free (rcpd);
 } /* rc_package_dep_free */
+
+RCPackageDepSList *
+rc_package_dep_slist_copy (RCPackageDepSList *old)
+{
+    RCPackageDepSList *iter;
+    RCPackageDepSList *new = NULL;
+
+    for (iter = old; iter; iter = iter->next) {
+        RCPackageDep *old_dep = (RCPackageDep *)(iter->data);
+        RCPackageDep *dep = rc_package_dep_copy (old_dep);
+
+        new = g_slist_append (new, dep);
+    }
+
+    return (new);
+}
 
 void
 rc_package_dep_slist_free (RCPackageDepSList *rcpdsl)

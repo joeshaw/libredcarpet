@@ -29,15 +29,21 @@ RCPackageDepItem *rc_package_dep_item_new_from_spec (
     RCPackageSpec *spec,
     RCPackageRelation relation);
 
+RCPackageDepItem *rc_package_dep_item_copy (RCPackageDepItem *rcpdi);
+
 void rc_package_dep_item_free (RCPackageDepItem *rcpdi);
 
 typedef GSList RCPackageDep;
 
 RCPackageDep *rc_package_dep_new_with_item (RCPackageDepItem *rcpdi);
 
+RCPackageDep *rc_package_dep_copy (RCPackageDep *orig);
+
 void rc_package_dep_free (RCPackageDep *rcpd);
 
 typedef GSList RCPackageDepSList;
+
+RCPackageDepSList *rc_package_dep_slist_copy (RCPackageDepSList *old);
 
 void rc_package_dep_slist_free (RCPackageDepSList *rcpdsl);
 

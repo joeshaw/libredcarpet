@@ -37,9 +37,13 @@ struct _RCPackageUpdate {
 
 RCPackageUpdate *rc_package_update_new (void);
 
+RCPackageUpdate *rc_package_update_copy (RCPackageUpdate *old);
+
 void rc_package_update_free (RCPackageUpdate *rcpu);
 
 typedef GSList RCPackageUpdateSList;
+
+RCPackageUpdateSList *rc_package_update_slist_copy (RCPackageUpdateSList *old);
 
 void rc_package_update_slist_free (RCPackageUpdateSList *rcpusl);
 

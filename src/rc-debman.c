@@ -63,6 +63,19 @@ rc_debman_get_type (void)
     return type;
 } /* rc_debman_get_type */
 
+static void
+hash_destroy_pair (gchar *key, RCPackage *pkg)
+{
+    rc_package_free (pkg);
+}
+
+static void
+hash_destroy (RCDebman *d)
+{
+    g_hash_table_foreach (d->pkg_hash, (GHFunc) hash_destroy_pair, NULL);
+    g_hash_table_destroy (d->pkg_hash);
+}
+
 /* Since I only want to scan through /var/lib/dpkg/status once, I need a
    shorthand way to match potentially many strings.  Returns the name of the
    package that matched, or NULL if none did. */
@@ -552,8 +565,7 @@ rc_debman_transact (RCPackman *p, GSList *install_pkgs,
        --purge --pending at the end to make sure everything gets cleaned up. */
     if (remove_pkgs) {
         if (!(mark_purge (p, remove_pkgs))) {
-            g_free (state);
-            return;
+            goto END;
         }
     }
 
@@ -562,8 +574,7 @@ rc_debman_transact (RCPackman *p, GSList *install_pkgs,
        catch that, too, and generate a transaction step signal. */
     if (install_pkgs) {
         if (!(do_unpack (p, install_pkgs, state))) {
-            g_free (state);
-            return;
+            goto END;
         }
     }
 
@@ -571,8 +582,7 @@ rc_debman_transact (RCPackman *p, GSList *install_pkgs,
        by dpkg in the course of installing new things */
     if (remove_pkgs && (state->seqno < state->total)) {
         if (!(do_purge (p, state))) {
-            g_free (state);
-            return;
+            goto END;
         }
     }
 
@@ -582,10 +592,14 @@ rc_debman_transact (RCPackman *p, GSList *install_pkgs,
     /* We need to --configure the unpacked packages here */
     if (install_pkgs) {
         if (!(do_configure (p, state))) {
-            g_free (state);
-            return;
+            goto END;
         }
     }
+
+  END:
+    g_free (state);
+    RC_DEBMAN (p)->hash_valid = FALSE;
+    hash_destroy (RC_DEBMAN (p));
 }
 
 /* Takes a string of format [<epoch>:]<version>[-<release>], and returns those
@@ -748,6 +762,7 @@ rc_debman_fill_depends (gchar *input, RCPackageDepSList *list)
                 g_free (release);
             }
 
+            g_free (depname);
             dep = g_slist_append (dep, depi);
         }
 
@@ -764,12 +779,13 @@ rc_debman_fill_depends (gchar *input, RCPackageDepSList *list)
 /* Given a file pointer to the beginning of a block of package information,
    fill in the data in the RCPackage fields. */
 static void
-rc_debman_query_helper (RCLineBuf *lb, RCPackage *pkg)
+rc_debman_query_helper (RCLineBuf *lb, RCPackage **old_pkg)
 {
     gchar *buf;
     RCPackageDepItem *item;
     RCPackageDep *dep = NULL;
     gboolean desc = FALSE;
+    RCPackage *pkg = rc_package_new ();
 
     while ((buf = rc_line_buf_read (lb)) && buf[0]) {
         if (!strncmp (buf, "Status: install ok installed",
@@ -907,16 +923,112 @@ rc_debman_query_helper (RCLineBuf *lb, RCPackage *pkg)
 
     g_free (buf);
 
-    /* Make sure to provide myself, for the dep code! */
-    item = rc_package_dep_item_new (pkg->spec.name, pkg->spec.epoch,
-                                    pkg->spec.version, pkg->spec.release,
-                                    RC_RELATION_EQUAL);
-    dep = g_slist_append (NULL, item);
-    pkg->provides = g_slist_append (pkg->provides, dep);
+    /* Trim the trailing \n in the description */
+    if (pkg->description) {
+        guint length = strlen (pkg->description);
+        if (length > 1) {
+            pkg->description[length - 2] = '\0';
+        }
+    }
+
+    if (!(strcmp ((*old_pkg)->spec.name, "gaim"))) {
+        sleep (1);
+    }
+
+    /* Check and see if this is what I was looking for */
+    if ((!((*old_pkg)->spec.version) ||
+         !strcmp ((*old_pkg)->spec.version, pkg->spec.version)) &&
+        (!((*old_pkg)->spec.release) ||
+         !strcmp ((*old_pkg)->spec.release, pkg->spec.release))) {
+
+        pkg->spec.name = g_strdup ((*old_pkg)->spec.name);
+        /* Make sure to provide myself, for the dep code! */
+        item = rc_package_dep_item_new (pkg->spec.name, pkg->spec.epoch,
+                                        pkg->spec.version, pkg->spec.release,
+                                        RC_RELATION_EQUAL);
+        dep = g_slist_append (NULL, item);
+        pkg->provides = g_slist_append (pkg->provides, dep);
+
+        rc_package_free (*old_pkg);
+        *old_pkg = pkg;
+    } else {
+        rc_package_free (pkg);
+    }
 }
 
+static void
+rc_debman_query_all_real (RCPackman *p)
+{
+    FILE *fp;
+    gchar *buf;
+    RCLineBuf *lb;
+    RCDebman *d = RC_DEBMAN (p);
+
+    if (!(fp = fopen ("/var/lib/dpkg/status", "r"))) {
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+                              "Unable to open /var/lib/dpkg/status");
+        return;
+    }
+
+    lb = rc_line_buf_new (fp);
+
+    while ((buf = rc_line_buf_read (lb))) {
+        RCPackage *pkg = rc_package_new ();
+
+        if (strncmp (buf, "Package: ", strlen ("Package: "))) {
+            rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+                                  "Malformed /var/lib/dpkg/status file");
+            g_free (buf);
+            rc_package_free (pkg);
+            return;
+        }
+
+        pkg->spec.name = g_strdup (buf + strlen ("Package: "));
+
+        g_free (buf);
+
+        rc_debman_query_helper (lb, &pkg);
+
+        if (pkg->spec.installed) {
+            g_hash_table_insert (d->pkg_hash,
+                                 (gpointer) pkg->spec.name,
+                                 (gpointer) pkg);
+        } else {
+            rc_package_free (pkg);
+        }
+    }
+
+    d->hash_valid = TRUE;
+
+    rc_line_buf_destroy (lb);
+    fclose (fp);
+}
+
+static void
+pkg_list_append (gchar *name, RCPackage *pkg, RCPackageSList **pkg_list)
+{
+    *pkg_list = g_slist_append (*pkg_list, rc_package_copy (pkg));
+}
+
+static RCPackageSList *
+rc_debman_query_all (RCPackman *p)
+{
+    GHashTable *hash_table = RC_DEBMAN (p)->pkg_hash;
+    RCPackageSList *pkgs = NULL;
+
+    if (!(RC_DEBMAN (p)->hash_valid)) {
+        rc_debman_query_all_real (p);
+    }
+
+    g_hash_table_foreach (hash_table, (GHFunc) pkg_list_append,
+                          &pkgs);
+
+    return pkgs;
+}
+
+#if 0
 static RCPackage *
-rc_debman_query (RCPackman *p, RCPackage *pkg)
+rc_debman_query_real (RCPackman *p, RCPackage *pkg)
 {
     FILE *fp;
     gchar *buf;
@@ -940,7 +1052,7 @@ rc_debman_query (RCPackman *p, RCPackage *pkg)
     while ((buf = rc_line_buf_read (lb))) {
         if (!strcmp (buf, target)) {
             g_free (buf);
-            rc_debman_query_helper (lb, pkg);
+            rc_debman_query_helper (lb, &pkg);
             break;
         }
 
@@ -952,6 +1064,37 @@ rc_debman_query (RCPackman *p, RCPackage *pkg)
     fclose (fp);
     
     return (pkg);
+}
+#endif
+
+static RCPackage *
+rc_debman_query (RCPackman *p, RCPackage *pkg)
+{
+    RCDebman *d = RC_DEBMAN (p);
+    RCPackage *lpkg;
+
+    g_assert (pkg);
+    g_assert (pkg->spec.name);
+
+    if (!d->hash_valid) {
+#if 0
+        return (rc_debman_query_real (p, pkg));
+#endif
+        rc_debman_query_all_real (p);
+    }
+
+    lpkg = g_hash_table_lookup (d->pkg_hash, (gconstpointer) pkg->spec.name);
+
+    if (lpkg &&
+        (!pkg->spec.version ||
+         !strcmp (lpkg->spec.version, pkg->spec.version)) &&
+        (!pkg->spec.release ||
+         !strcmp (lpkg->spec.release, pkg->spec.release))) {
+        rc_package_free (pkg);
+        return (rc_package_copy (lpkg));
+    } else {
+        return (pkg);
+    }
 }
 
 static RCPackage *
@@ -1004,7 +1147,7 @@ rc_debman_query_file (RCPackman *p, gchar *filename)
 
     g_free (buf);
 
-    rc_debman_query_helper (lb, pkg);
+    rc_debman_query_helper (lb, &pkg);
     rc_line_buf_destroy (lb);
     fclose (fp);
 
@@ -1015,59 +1158,14 @@ rc_debman_query_file (RCPackman *p, gchar *filename)
     return (pkg);
 }
 
-static RCPackageSList *
-rc_debman_query_all (RCPackman *p)
-{
-    FILE *fp;
-    gchar *buf;
-    RCPackageSList *pkgs = NULL;
-    RCLineBuf *lb;
-
-    if (!(fp = fopen ("/var/lib/dpkg/status", "r"))) {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
-                              "Unable to open /var/lib/dpkg/status");
-        return (NULL);
-    }
-
-    lb = rc_line_buf_new (fp);
-
-    while ((buf = rc_line_buf_read (lb))) {
-        RCPackage *pkg = rc_package_new ();
-
-        if (strncmp (buf, "Package: ", strlen ("Package: "))) {
-            rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
-                                  "Malformed /var/lib/dpkg/status file");
-            g_free (buf);
-            rc_package_free (pkg);
-            rc_package_slist_free (pkgs);
-            return (NULL);
-        }
-
-        pkg->spec.name = g_strdup (buf + strlen ("Package: "));
-
-        g_free (buf);
-
-        rc_debman_query_helper (lb, pkg);
-
-        if (pkg->spec.installed) {
-            pkgs = g_slist_append (pkgs, pkg);
-        } else {
-            rc_package_free (pkg);
-        }
-    }
-
-    rc_line_buf_destroy (lb);
-    fclose (fp);
-
-    return (pkgs);
-}
-
 static void
 rc_debman_destroy (GtkObject *obj)
 {
     RCDebman *d = RC_DEBMAN (obj);
 
     unlock_database (d);
+
+    hash_destroy (d);
 
     if (GTK_OBJECT_CLASS (rc_debman_parent)->destroy)
         (* GTK_OBJECT_CLASS (rc_debman_parent)->destroy) (obj);
@@ -1105,6 +1203,9 @@ rc_debman_init (RCDebman *obj)
     obj->lock_fd = -1;
 
     lock_database (obj);
+
+    obj->pkg_hash = g_hash_table_new (g_str_hash, g_str_equal);
+    obj->hash_valid = FALSE;
 } /* rc_debman_init */
 
 RCDebman *
