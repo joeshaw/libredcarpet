@@ -478,20 +478,49 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
 
         for (count = 0; count < rc; count++) {
             fprintf (stderr, "%s", conflict->byName);
-            if (conflict->byVersion) {
+            if (conflict->byVersion && conflict->byVersion[0]) {
                 fprintf (stderr, "-%s", conflict->byVersion);
-                if (conflict->byRelease) {
+                if (conflict->byRelease && conflict->byRelease[0]) {
                     fprintf (stderr, "-%s", conflict->byRelease);
                 }
             }
 
-            fprintf (stderr, " requires %s", conflict->needsName);
-            if (conflict->needsVersion) {
-                fprintf (stderr, "-%s", conflict->needsVersion);
+            fprintf (stderr, " %s ", conflict->sense ? "conflicts with" :
+                     "requires");
+
+            fprintf (stderr, "%s", conflict->needsName);
+
+            if (conflict->needsVersion && conflict->needsVersion[0]) {
+                switch (conflict->needsFlags) {
+                case RPMSENSE_LESS:
+                    fprintf (stderr, " < ");
+                    break;
+
+                case RPMSENSE_EQUAL:
+                    fprintf (stderr, " = ");
+                    break;
+
+                case RPMSENSE_GREATER:
+                    fprintf (stderr, " > ");
+                    break;
+
+                case (RPMSENSE_LESS & RPMSENSE_EQUAL):
+                    fprintf (stderr, " <= ");
+                    break;
+
+                case (RPMSENSE_GREATER & RPMSENSE_EQUAL):
+                    fprintf (stderr, " >= ");
+                    break;
+
+                default:
+                    fprintf (stderr, " ?? ");
+                    break;
+                }
+
+                fprintf (stderr, "%s", conflict->needsVersion);
             }
 
-            fprintf (stderr, ", relation %d, sense %d\n", conflict->needsFlags,
-                     conflict->sense);
+            fprintf (stderr, "\n");
 
             conflict++;
         }
