@@ -141,7 +141,7 @@ rc_package_spec_version_to_str (RCPackageSpec *spec)
     return (g_strdup_printf (
                 "%s%s%s%s",
                 epoch_buf,
-                spec->version,
+                (spec->version ? spec->version : ""),
                 (spec->release ? "-" : ""),
                 (spec->release ? spec->release : "")));
 }

@@ -1,5 +1,10 @@
 2002-06-05  Ian Peters  <itp@ximian.com>
 
+	* rc-package-spec.c (rc_package_spec_version_to_str): man solaris
+	sucks
+
+2002-06-05  Ian Peters  <itp@ximian.com>
+
 	* rc-rpmman.c (parse_version): added, guts of parse_versions
 	(parse_versions): just calls parse_version now
 
