@@ -1,3 +1,13 @@
+2001-02-01  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.h: move the rpmdb into the RCRpmman struct
+
+	* rc-rpmman.c: remove all calls to rpmdbOpen, rpmdbClose, etc.
+	(rc_rpmman_init): rpmdbOpen here
+	(rc_rpmman_destroy): rpmdbClose here
+	(rc_rpmman_transact): check the rpmRunTransactions return code and
+	do something intelligent with it
+
 2001-01-31  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c (rc_rpmman_error_cb): Stupid rpmlib doesn't

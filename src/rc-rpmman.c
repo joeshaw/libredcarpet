@@ -268,7 +268,7 @@ rc_package_to_rpm_name (RCPackage *package)
 
 static gboolean
 transaction_add_remove_packages (RCPackman *packman,
-                                 rpmTransactionSet transaction, rpmdb db,
+                                 rpmTransactionSet transaction,
                                  RCPackageSList *remove_packages)
 {
     RCPackageSList *iter;
@@ -324,7 +324,7 @@ transaction_add_remove_packages (RCPackman *packman,
 
 static gboolean
 transaction_add_remove_packages (RCPackman *packman,
-                                 rpmTransactionSet transaction, rpmdb db,
+                                 rpmTransactionSet transaction,
                                  RCPackageSList *remove_packages)
 {
     int rc;
@@ -408,7 +408,6 @@ static void
 rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
                     RCPackageSList *remove_packages)
 {
-    rpmdb db = NULL;
     rpmTransactionSet transaction;
     int rc;
     rpmProblemSet probs = NULL;
@@ -416,15 +415,6 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     guint extras = 0;
     RCPackageSList *iter;
     struct rpmDependencyConflict *conflicts;
-
-    if (rpmdbOpen (RC_RPMMAN (packman)->rpmroot, &db,
-                   O_RDWR | O_CREAT, 0644))
-    {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              "unable to open RPM database");
-
-        goto ERROR;
-    }
 
     transaction = rpmtransCreateSet (db, RC_RPMMAN (packman)->rpmroot);
 
@@ -435,8 +425,6 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
                               "error adding packages to install");
 
         rpmtransFree (transaction);
-
-        rpmdbClose (db);
 
         goto ERROR;
     }
@@ -449,8 +437,6 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
 
         rpmtransFree (transaction);
 
-        rpmdbClose (db);
-
         goto ERROR;
     }
 
@@ -460,8 +446,6 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
 
         rpmtransFree (transaction);
 
-        rpmdbClose (db);
-
         goto ERROR;
     }
 
@@ -470,8 +454,6 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
                               "dependencies are not met");
 
         rpmtransFree (transaction);
-
-        rpmdbClose (db);
 
         goto ERROR;
     }
@@ -507,9 +489,12 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     rc = rpmRunTransactions (transaction, transact_cb, (void *) state,
                              NULL, &probs, 0, 0);
 
-    if (rpm_error) {
+    if (rc) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "%d -- %s", rpm_error, rpm_reason);
+
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "RPM transaction failed");
 
         goto ERROR;
     }
@@ -518,8 +503,6 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     GTKFLUSH;
 
     rpmtransFree (transaction);
-
-    rpmdbClose (db);
 
     return;
 
@@ -994,16 +977,8 @@ rc_rpmman_check_match (Header header, RCPackage *package)
 static RCPackage *
 rc_rpmman_query (RCPackman *packman, RCPackage *package)
 {
-    rpmdb db;
     rpmdbMatchIterator mi = NULL;
     Header header;
-
-    if (rpmdbOpen (RC_RPMMAN (packman)->rpmroot, &db, O_RDONLY, 0444)) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              "unable to open RPM database");
-
-        goto ERROR;
-    }
 
     mi = rpmdbInitIterator (db, RPMDBI_LABEL, package->spec.name, 0);
 
@@ -1016,8 +991,6 @@ rc_rpmman_query (RCPackman *packman, RCPackage *package)
                               "unable to initialize database search");
 #endif
 
-        rpmdbClose (db);
-
 #if 0
         goto ERROR;
 #else
@@ -1028,7 +1001,6 @@ rc_rpmman_query (RCPackman *packman, RCPackage *package)
     while ((header = rpmdbNextIterator (mi))) {
         if (rc_rpmman_check_match (header, package)) {
             rpmdbFreeIterator (mi);
-            rpmdbClose (db);
 
             package->installed = TRUE;
 
@@ -1039,7 +1011,6 @@ rc_rpmman_query (RCPackman *packman, RCPackage *package)
     package->installed = FALSE;
 
     rpmdbFreeIterator (mi);
-    rpmdbClose (db);
 
     return (package);
 
@@ -1057,29 +1028,17 @@ rc_rpmman_query (RCPackman *packman, RCPackage *package)
 static RCPackage *
 rc_rpmman_query (RCPackman *packman, RCPackage *package)
 {
-    rpmdb db;
     dbiIndexSet matches;
     guint i;
-
-    if (rpmdbOpen (RC_RPMMAN (packman)->rpmroot, &db, O_RDONLY, 0444)) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              "unable to open RPM database");
-
-        goto ERROR;
-    }
 
     switch (rpmdbFindPackage (db, package->spec.name, &matches)) {
     case -1:
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "unable to initialize database search");
 
-        rpmdbClose (db);
-
         goto ERROR;
 
     case 1:
-        rpmdbClose (db);
-
         package->installed = FALSE;
 
         return (package);
@@ -1095,15 +1054,12 @@ rc_rpmman_query (RCPackman *packman, RCPackage *package)
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "unable to fetch RPM header from database");
 
-            rpmdbClose (db);
-
             goto ERROR;
         }
 
         if (rc_rpmman_check_match (header, package)) {
             headerFree (header);
             dbiFreeIndexRecord (matches);
-            rpmdbClose (db);
             return (package);
         }
 
@@ -1113,7 +1069,6 @@ rc_rpmman_query (RCPackman *packman, RCPackage *package)
     package->installed = FALSE;
 
     dbiFreeIndexRecord (matches);
-    rpmdbClose (db);
 
     return (package);
 
@@ -1174,25 +1129,15 @@ rc_rpmman_query_file (RCPackman *packman, const gchar *filename)
 static RCPackageSList *
 rc_rpmman_query_all (RCPackman *packman)
 {
-    rpmdb db;
     RCPackageSList *list = NULL;
     rpmdbMatchIterator mi = NULL;
     Header header;
-
-    if (rpmdbOpen (RC_RPMMAN (packman)->rpmroot, &db, O_RDONLY, 0444)) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              "unable to open RPM database");
-
-        goto ERROR;
-    }
 
     mi = rpmdbInitIterator (db, RPMDBI_PACKAGES, NULL, 0);
 
     if (!mi) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "unable to initialize database search");
-
-        rpmdbClose (db);
 
         goto ERROR;
     }
@@ -1215,8 +1160,6 @@ rc_rpmman_query_all (RCPackman *packman)
         headerFree (header);
     }
 
-    rpmdbClose (db);
-
     return (list);
 
   ERROR:
@@ -1231,22 +1174,12 @@ rc_rpmman_query_all (RCPackman *packman)
 static RCPackageSList *
 rc_rpmman_query_all (RCPackman *packman)
 {
-    rpmdb db;
     RCPackageSList *list = NULL;
     guint recno;
-
-    if (rpmdbOpen (RC_RPMMAN (packman)->rpmroot, &db, O_RDONLY, 0444)) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              "unable to open RPM database");
-
-        goto ERROR;
-    }
 
     if (!(recno = rpmdbFirstRecNum (db))) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "unable to access RPM database");
-
-        rpmdbClose (db);
 
         goto ERROR;
     }
@@ -1258,8 +1191,6 @@ rc_rpmman_query_all (RCPackman *packman)
         if (!(header = rpmdbGetRecord (db, recno))) {
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "Unable to read RPM database entry");
-
-            rpmdbClose (db);
 
             rc_package_slist_free (list);
 
@@ -1281,8 +1212,6 @@ rc_rpmman_query_all (RCPackman *packman)
 
         headerFree(header);
     }
-
-    rpmdbClose (db);
 
     return (list);
 
@@ -1621,25 +1550,15 @@ rc_rpmman_version_compare (RCPackman *packman,
 static RCPackage *
 rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
 {
-    rpmdb db;
     rpmdbMatchIterator mi = NULL;
     Header header;
     RCPackage *package;
-
-    if (rpmdbOpen (RC_RPMMAN (packman)->rpmroot, &db, O_RDONLY, 0444)) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              "unable to open rpm database");
-
-        goto ERROR;
-    }
 
     mi = rpmdbInitIterator (db, RPMTAG_BASENAMES, filename, 0);
 
     if (!mi) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "unable to initialize database iterator");
-
-        rpmdbClose (db);
 
         goto ERROR;
     }
@@ -1651,7 +1570,6 @@ rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
                               "found owners != 1");
 
         rpmdbFreeIterator (mi);
-        rpmdbClose (db);
 
         goto ERROR;
     }
@@ -1664,7 +1582,6 @@ rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
                            &package->summary, &package->description);
 
     rpmdbFreeIterator (mi);
-    rpmdbClose (db);
 
     return (package);
 
@@ -1680,21 +1597,11 @@ rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
 static RCPackage *
 rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
 {
-    rpmdb db;
     dbiIndexSet matches;
     Header header;
     RCPackage *package;
 
-    if (rpmdbOpen (RC_RPMMAN (packman)->rpmroot, &db, O_RDONLY, 0444)) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              "unable to open rpm database");
-
-        goto ERROR;
-    }
-
     if (rpmdbFindByFile (db, filename, &matches) == -1) {
-        rpmdbClose (db);
-
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "RPM database search failed");
 
@@ -1702,8 +1609,6 @@ rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
     }
 
     if (matches.count != 1) {
-        rpmdbClose (db);
-
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "found owners != 1");
 
@@ -1711,8 +1616,6 @@ rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
     }
 
     if (!(header = rpmdbGetRecord (db, matches.recs[0].recOffset))) {
-        rpmdbClose (db);
-
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "read of RPM header failed");
 
@@ -1727,7 +1630,6 @@ rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
                            &package->summary, &package->description);
 
     dbiFreeIndexRecord (matches);
-    rpmdbClose (db);
 
     return (package);
 
@@ -1746,6 +1648,8 @@ rc_rpmman_destroy (GtkObject *obj)
     RCRpmman *rpmman = RC_RPMMAN (obj);
 
     g_free (rpmman->rpmroot);
+
+    rpmdbClose (rpmman->db);
 
     if (GTK_OBJECT_CLASS (parent_class)->destroy)
         (* GTK_OBJECT_CLASS (parent_class)->destroy) (obj);
@@ -1773,8 +1677,8 @@ rc_rpmman_class_init (RCRpmmanClass *klass)
 static void
 rc_rpmman_error_cb ()
 {
-//    rpm_error = rpmErrorCode ();
-//    rpm_reason = rpmErrorString ();
+    rpm_error = rpmErrorCode ();
+    rpm_reason = rpmErrorString ();
 }
 
 static void
@@ -1791,6 +1695,11 @@ rc_rpmman_init (RCRpmman *obj)
         obj->rpmroot = g_strdup (tmp);
     } else {
         obj->rpmroot = g_strdup ("/");
+    }
+
+    if (rpmdbOpen (obj->rpmroot, &obj->db, O_RDWR | O_CREAT, 0644)) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
+                              "unable to open RPM database");
     }
 
     packman->priv->features =

@@ -44,8 +44,7 @@ typedef struct _RCRpmmanClass RCRpmmanClass;
 struct _RCRpmman {
     RCPackman parent;
 
-    gint package_count;
-    gint package_total;
+    rpmdb db;
 
     gchar *rpmroot;
 };
