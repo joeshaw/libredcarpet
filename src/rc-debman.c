@@ -2493,6 +2493,7 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
         query_info->provides_buf = NULL;
         /* All debian packages "have" epochs */
         query_info->package_buf->spec.has_epoch = 1;
+        query_info->package_buf->arch = RC_ARCH_NOARCH;
 
         ptr = line + strlen ("package:");
         while (isspace (*ptr)) {
@@ -2613,6 +2614,16 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
 
         query_info->package_buf->section =
             rc_debman_section_to_package_section (section);
+
+        return;
+    }
+
+    if (!strncmp (line, "architecture:", strlen ("architecture:"))) {
+        ptr = line + strlen ("architecture:");
+        while (*ptr && isspace (*ptr))
+            ptr++;
+
+        query_info->package_buf->arch = rc_arch_from_string (ptr);
 
         return;
     }

@@ -1,3 +1,9 @@
+2003-02-07  Joe Shaw  <joe@ximian.com>
+
+	* rc-debman.c (query_all_read_line_cb): Set the arch to NOARCH by
+	default, read the "architecture" setting out of the
+	/var/lib/dpkg/status file if it's there.
+
 2003-02-06  Joe Shaw  <joe@ximian.com>
 
 	* rc-rpmman-types.h, rc-rpmman.h: Change RPM includes to remove
