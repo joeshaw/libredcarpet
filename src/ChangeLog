@@ -1,5 +1,10 @@
 2003-09-15  Joe Shaw  <joe@ximian.com>
 
+	* rc-world-multi.c (rc_world_multi_refresh_fn): If the pending
+	isn't active after we call rc_world_refresh(), don't add it to the
+	pending list.  We'll just be mucking around with freed data and we
+	don't care about watching it if it doesn't work anymore anyway.
+
 	* rc-distro.c (rc_distro_parse_xml): Set up a push parser instead
 	of a doc parser so that we don't have to null-terminate our distro
 	data.

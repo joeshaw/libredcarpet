@@ -386,7 +386,11 @@ rc_world_multi_refresh_fn (RCWorld *world)
 
         subworld_pending = rc_world_refresh (info->refreshed_subworld);
 
-        if (subworld_pending) {
+        /*
+         * It's possible that the pending could have completed during
+         * rc_world_refresh(), that's why we check is_active().
+         */
+        if (subworld_pending && rc_pending_is_active (subworld_pending)) {
             refresh_info->subworld_pending = g_object_ref (subworld_pending);
 
             multi->subworld_pendings =
