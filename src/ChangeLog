@@ -1,4 +1,10 @@
-2001-04-19  unknown  <vladimir@ximian.com>
+2001-04-19  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c: stopped calling deps_fix_missing in loop.  This
+	probably isn't necessary any more; will need a good chunk of testing
+	to make sure, though.
+
+2001-04-19  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c: don't make a conflict in some cases, but wait until
 	the end to see if it can indeed be provided
