@@ -1,5 +1,10 @@
 2002-08-07  Ian Peters  <itp@ximian.com>
 
+	* rc-verification.c (rc_verify_gpg): refactored to use g_spawn
+	instead of handling it myself.  Other miscellaneous cleanups, too.
+
+2002-08-07  Ian Peters  <itp@ximian.com>
+
 	* rc-distro.c (child_setup_func): added, dup2 stderr to stdout.
 	(distro_check_command_eval): use g_spawn_async_with_pipes instead
 	or pipe/fork/exec ourselves
