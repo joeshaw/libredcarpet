@@ -1,3 +1,8 @@
+2002-06-21  Jon Trowbridge  <trow@ximian.com>
+
+	* pkg_to_xml.c: Added.  A small tool to query packages and dump
+	out the associated XML.
+
 2002-06-06  Ian Peters  <itp@ximian.com>
 
 	* packman_test.c: updated to work with HEAD

@@ -1,6 +1,7 @@
 Makefile
 Makefile.in
 *.o
+pkg_to_xml
 cur_to_xml
 packman_test
 .libs
