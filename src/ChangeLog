@@ -1,3 +1,22 @@
+2003-05-27  Joe Shaw  <joe@ximian.com>
+
+	* rc-rollback.c (strip_whitespace_node_recursive): Added, removes
+	text nodes so that xmlSaveFormat() always saves a nicely-formatted
+	XML file (since whitespace is not significant in this file).
+	(rc_rollback_info_save): Call strip_whitespace_node_recursive() on
+	the root node.
+	(package_match_cb): Check to make sure the package matches the
+	RCPackageDep.
+	(get_file_changes): Skip over comments, text regions and any
+	non-"file" nodes.
+	(get_action_from_xml_node): Call rc_world_foreach_package()
+	instead of rc_world_foreach_package_by_name() because we don't
+	want any filtering of channel vs. installed packages to happen.
+	(rc_rollback_restore_files): Correctly handle files that have been
+	removed.
+
+	* xml-util.c (xml_get_node): Return NULL if nothing matches.
+
 2003-05-21  Joe Shaw  <joe@ximian.com>
 
 	* distributions.xml: Update the detection and arch for SLEC

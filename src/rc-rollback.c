@@ -338,6 +338,23 @@ ERROR:
     return NULL;
 }
 
+static void
+strip_whitespace_node_recursive (xmlNode *root)
+{
+    xmlNode *node, *next;
+
+    for (node = root->xmlChildrenNode; node; node = next) {
+        next = node->next;
+
+        if (xmlIsBlankNode (node)) {
+            xmlUnlinkNode (node);
+            xmlFreeNode (node);
+        }
+        else
+            strip_whitespace_node_recursive (node);
+    }
+}
+
 void
 rc_rollback_info_save (RCRollbackInfo *rollback_info)
 {
@@ -345,6 +362,12 @@ rc_rollback_info_save (RCRollbackInfo *rollback_info)
      * FIXME: How can we better handle errors here?  An error fucks any
      * ability of rollback
      */
+
+    /*
+     * Strip out whitespace so xmlSaveFormatFile() saves nicely.
+     */
+    strip_whitespace_node_recursive (
+        xmlDocGetRootElement (rollback_info->doc));
 
     if (xmlSaveFormatFile (RC_ROLLBACK_XML,
                            rollback_info->doc, 1) < 0) {
@@ -455,12 +478,29 @@ static void
 package_match_cb (RCPackage *package, gpointer user_data)
 {
     PackageMatchInfo *pmi = user_data;
+    RCPackageDep *package_dep;
+    gboolean match;
     RCPackageUpdateSList *iter;
 
     if (pmi->matching_package) {
         /* Already found a match, we don't care anymore */
         return;
     }
+
+    /* Make sure this is the package we're looking for */
+    package_dep = rc_package_dep_new_from_spec (RC_PACKAGE_SPEC (package),
+                                                RC_RELATION_EQUAL,
+                                                RC_CHANNEL_ANY,
+                                                FALSE, FALSE);
+
+    match = rc_package_dep_verify_relation (pmi->packman,
+                                            pmi->dep_to_match,
+                                            package_dep);
+
+    rc_package_dep_unref (package_dep);
+
+    if (!match) /* Nope */
+        return;
 
     for (iter = package->history; iter; iter = iter->next) {
         RCPackageUpdate *update = iter->data;
@@ -493,8 +533,17 @@ get_file_changes (xmlNode *changes_node)
     xmlNode *iter;
 
     for (iter = changes_node->xmlChildrenNode; iter; iter = iter->next) {
-        FileChange *item = g_new0 (FileChange, 1);
+        FileChange *item;
         char *tmp;
+
+        /* Skip comments and text regions and any non-file node */
+        if (iter->type != XML_ELEMENT_NODE ||
+            g_strcasecmp (iter->name, "file") != 0)
+        {
+            continue;
+        }
+
+        item = g_new0 (FileChange, 1);
 
         item->filename = xml_get_prop (iter, "filename");
         tmp = xml_get_value (iter, "was_removed");
@@ -602,8 +651,8 @@ get_action_from_xml_node (xmlNode    *node,
     pmi.matching_package = NULL;
     pmi.matching_update = NULL;
 
-    rc_world_foreach_package_by_name (world, name, RC_CHANNEL_NON_SYSTEM,
-                                      package_match_cb, &pmi);
+    rc_world_foreach_package (world, RC_CHANNEL_NON_SYSTEM,
+                              package_match_cb, &pmi);
 
     rc_package_dep_unref (pmi.dep_to_match);
 
@@ -737,25 +786,29 @@ rc_rollback_restore_files (RCRollbackActionSList *actions)
 
         for (citer = action->file_changes; citer; citer = citer->next) {
             FileChange *change = citer->data;
-            char *tmp;
-            char *backup_filename;
 
-            tmp = escape_pathname (change->filename);
-            backup_filename = g_strconcat (change_dir, "/", tmp, NULL);
-            g_free (tmp);
+            if (change->was_removed)
+                unlink (change->filename);
+            else {
+                char *tmp;
+                char *backup_filename;
 
-            if (rc_cp (backup_filename, change->filename) < 0) {
-                g_warning ("Unable to copy saved '%s' to '%s'!",
-                           backup_filename, change->filename);
-            }
+                tmp = escape_pathname (change->filename);
+                backup_filename = g_strconcat (change_dir, "/", tmp, NULL);
+                g_free (tmp);
 
-            g_free (backup_filename);
+                if (rc_cp (backup_filename, change->filename) < 0) {
+                    g_warning ("Unable to copy saved '%s' to '%s'!",
+                               backup_filename, change->filename);
+                }
 
-            chown (change->filename, change->uid, change->gid);
+                g_free (backup_filename);
+
+                chown (change->filename, change->uid, change->gid);
             
-            if (change->mode != -1)
-                chmod (change->filename, change->mode);
-
+                if (change->mode != -1)
+                    chmod (change->filename, change->mode);
+            }
         }
     }
 }

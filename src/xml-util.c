@@ -193,4 +193,6 @@ xml_get_node (const xmlNode *node, const char *name)
         if (g_strcasecmp (iter->name, name) == 0)
             return iter;
     }
+
+    return NULL;
 }
