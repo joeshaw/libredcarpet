@@ -19,3 +19,5 @@ aclocal.m4
 intl
 *.flc
 libredcarpet.pc
+autom4te*
+stamp-h1
