@@ -34,10 +34,12 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+#ifdef HAVE_LIBRPM
+#include <rpm/rpmlib.h>
+#endif
+
 #include <rc-distro.h>
 #include <rc-distman.h>
-#include <rc-rollback.h>
-#include <rc-world.h>
 
 /* DEBUG ONLY */
 #include <rc-util.h>
@@ -65,7 +67,6 @@ static void packman_test_query (RCPackman *p, gchar *buf);
 static void packman_test_query_all (RCPackman *p, gchar *buf);
 static void packman_test_query_file (RCPackman *p, gchar *buf);
 static void packman_test_file_list (RCPackman *p, gchar *buf);
-static void packman_test_rollback (RCPackman *p, gchar *buf);
 static void packman_test_quit (RCPackman *p, gchar *buf);
 static void packman_test_run (RCPackman *p, gchar *buf);
 
@@ -99,9 +100,6 @@ Command commands[] = {
       "Query a local package file.", "query_file <filename>" },
     { "file_list", (command_func) packman_test_file_list,
       "List the files in a package", "file_list <name>" },
-    { "rollback", (command_func) packman_test_rollback,
-      "List the actions necessary to rollback to a certain time",
-      "rollback <unix time>" },
     { "quit", (command_func) packman_test_quit,
       "Quit packman_test.", "quit" },
     { "remove", (command_func) packman_test_remove,
@@ -500,39 +498,6 @@ packman_test_file_list (RCPackman *p, char *line)
     rc_package_unref (package);
 }
 
-static void
-packman_test_rollback (RCPackman *p, char *line)
-{
-    char *time_str;
-    time_t when;
-    RCRollbackActionSList *actions, *iter;
-
-    CHECK_PARAMS (line, "rollback");
-
-    line = pop_token (line, &time_str);
-    when = atoll (time_str);
-
-    actions = rc_rollback_get_actions (when);
-    for (iter = actions; iter; iter = iter->next) {
-        RCRollbackAction *action = iter->data;
-        
-        if (rc_rollback_action_is_install (action)) {
-            RCPackageUpdate *update =
-                rc_rollback_action_get_package_update (action);
-
-            printf ("install %s\n",
-                    rc_package_spec_to_str_static (RC_PACKAGE_SPEC (update)));
-        }
-        else {
-            RCPackage *package = rc_rollback_action_get_package (action);
-
-            printf ("remove %s\n",
-                    rc_package_spec_to_str_static (RC_PACKAGE_SPEC (package)));
-        }
-    }
-
-    rc_rollback_action_slist_free (actions);
-}
 
 static void
 packman_test_help (RCPackman *p, char *line)
@@ -695,10 +660,8 @@ packman_test_run (RCPackman *p, char *line)
     else if (test && !strcmp (test, "repackage"))
         flags |= RC_TRANSACT_FLAG_REPACKAGE;
 
-    rc_world_transact (rc_get_world (),
-                       transaction.install_pkgs,
-                       transaction.remove_pkgs,
-                       flags);
+    rc_packman_transact (p, transaction.install_pkgs, transaction.remove_pkgs,
+                         flags);
 
     if (rc_packman_get_error (p)) {
         packman_test_print (
@@ -751,7 +714,6 @@ packman_completion (char *text, int start, int end)
 int main (int argc, char **argv)
 {
     RCPackman *p;
-    RCWorld *world;
     gboolean done = FALSE;
 
     rl_initialize ();
@@ -771,9 +733,6 @@ int main (int argc, char **argv)
         printf ("ERROR: %s\n", rc_packman_get_reason (p));
         exit (-1);
     }
-    
-    world = rc_world_new (p);
-    rc_set_world (world);
 
     g_signal_connect (p, "transact_start",
                       (GCallback) transact_start_cb, NULL);
