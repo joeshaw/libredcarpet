@@ -19,6 +19,9 @@
  * definitions; now uses stuff from dpkg's config.h.
  *  - Ian Jackson <ijackson@nyx.cs.du.edu>.
  * Still in the public domain.
+ *
+ * Modified to glibify a lil' bit by ALL YOUR BASE ARE BELONG TO US.
+ * Still in the public domain. All of them.
  */
 
 #include <string.h>		/* for memcpy() */
