@@ -36,6 +36,8 @@ typedef GHashTable RCPackageHashTableBySpec;
 
 RCPackage *rc_package_new (void);
 
+RCPackage *rc_package_copy_spec (RCPackage *);
+
 void rc_package_free (RCPackage *rcp);
 
 typedef GSList RCPackageSList;

@@ -58,6 +58,8 @@ void rc_package_spec_init (RCPackageSpec *rcps,
                            guint32 channel,
                            guint32 subchannel);
 
+void rc_package_spec_copy (RCPackageSpec *old, RCPackageSpec *new);
+
 void rc_package_spec_free_members (RCPackageSpec *rcps);
 
 gint rc_package_spec_compare_name (void *a, void *b);
@@ -68,7 +70,5 @@ gint rc_package_spec_compare (gconstpointer ptra, gconstpointer ptrb);
 gint rc_package_spec_equal (gconstpointer ptra, gconstpointer ptrb);
 
 gchar *rc_package_spec_to_str (RCPackageSpec *spec);
-
-void rc_package_spec_copy (RCPackageSpec *src, RCPackageSpec *dst);
 
 #endif /* _RC_PACKAGE_SPEC_H */

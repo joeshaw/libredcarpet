@@ -32,10 +32,6 @@
 static void rc_rpmman_class_init (RCRpmmanClass *klass);
 static void rc_rpmman_init       (RCRpmman *obj);
 
-int rc_rpmInstall(const char * rootdir, const char ** fileArgv, int transFlags, 
-                  int interfaceFlags, int probFilter, 
-                  rpmRelocation * relocations);
-
 static gchar *rpmroot;
 
 guint
@@ -60,21 +56,25 @@ rc_rpmman_get_type (void)
     return type;
 } /* rc_rpmman_get_type */
 
-/* Ugly ugly ugly, need this global to point to the rpmman object so that the
-   rpmCallback has access to the object to emit signals.  Anyone want to fix
-   this? */
+typedef struct _InstallState InstallState;
 
-static RCPackman *ghp;
+struct _InstallState {
+    RCPackman *p;
+    gint seqno;
+    gint install_total;
+    gint remove_total;
+    gboolean configuring;
+};
 
-/* an rpmlib callback, gutted of the hash mark printing feature, and replaced
-   with code to emit pkg_installed signals for RCPackman */
-
-static void * showProgress(const Header h, const rpmCallbackType what,
-                           const unsigned long amount,
-                           const unsigned long total,
-                           const void * pkgKey, void * data) {
+static void *
+transact_cb (const Header h, const rpmCallbackType what,
+             const unsigned long amount,
+             const unsigned long total,
+             const void * pkgKey, void * data)
+{
     const char * filename = pkgKey;
     static FD_t fd;
+    InstallState *state = (InstallState *)data;
 
     switch (what) {
     case RPMCALLBACK_INST_OPEN_FILE:
@@ -86,482 +86,236 @@ static void * showProgress(const Header h, const rpmCallbackType what,
         break;
 
     case RPMCALLBACK_INST_PROGRESS:
-        /* The exact behavior here is debatable. I have changed this case so
-           that a pkg_progress signal is emitted whenever there is a change.
-           This includes when the package as finished. The progress signal
-           is always emitted first. Then, if the package has finished
-           installing, a pkg_installed signal is also emitted secondly. */
-        rc_packman_package_progress (ghp, pkgKey, amount, total);
+        rc_packman_transaction_progress (state->p, amount, total);
         if (amount == total) {
-            RC_RPMMAN (ghp)->package_count++;
-            rc_packman_package_installed(
-                ghp, pkgKey, RC_RPMMAN (ghp)->package_count,
-                RC_RPMMAN (ghp)->package_total);
+            rc_packman_transaction_step (state->p, ++state->seqno,
+                                         state->install_total +
+                                         state->remove_total);
         }
         break;
 
     case RPMCALLBACK_TRANS_PROGRESS:
-        rc_packman_config_progress (ghp, amount, total);
+        if (state->configuring) {
+            rc_packman_configure_step (state->p, ++state->seqno,
+                                       state->install_total);
+            if (state->seqno == state->install_total) {
+                state->configuring = FALSE;
+                state->seqno = 0;
+                rc_packman_configure_done (state->p);
+            }
+        } else {
+            rc_packman_transaction_step (state->p, ++state->seqno,
+                                         state->install_total +
+                                         state->remove_total);
+        }
         break;
 
     case RPMCALLBACK_INST_START:
+        break;
+
+    case RPMCALLBACK_TRANS_START:
+        state->configuring = TRUE;
+        break;
+
     case RPMCALLBACK_UNINST_START:
     case RPMCALLBACK_UNINST_STOP:
     case RPMCALLBACK_UNINST_PROGRESS:
-    case RPMCALLBACK_TRANS_START:
     case RPMCALLBACK_TRANS_STOP:
         /* ignore */
         break;
     }
 
     return NULL;
-} /* showProgress */
+} /* transact_cb */
 
-/* This can probably go at some point(?) */
-
-#ifndef _
-#define _
-#endif
-
-/* straight copy of rpmInstall from rpmlib 3.0.4, we need this so that we can
-   redefine the callback used by rpmRunTransactions to emit packman signals.
-   It's ugly, I know. */
-
-int rc_rpmInstall(const char * rootdir, const char ** fileArgv, int transFlags, 
-               int interfaceFlags, int probFilter, 
-               rpmRelocation * relocations)
+static gboolean
+transaction_add_install_pkgs (RCPackman *p, rpmTransactionSet transaction,
+                              GSList *install_pkgs)
 {
-    rpmdb db = NULL;
+    GSList *iter;
     FD_t fd;
+    Header hdr;
+    int rc;
+
+    for (iter = install_pkgs; iter; iter = iter->next) {
+        gchar *filename = (gchar *)(iter->data);
+
+        fd = Fopen (filename, "r.ufdio");
+
+        if (fd == NULL || Ferror (fd)) {
+            /* FIXME: Fatal error opening the file */
+            return (FALSE);
+        }
+
+        rc = rpmReadPackageHeader (fd, &hdr, NULL, NULL, NULL);
+
+        switch (rc) {
+        case 1:
+            Fclose (fd);
+            /* FIXME: not an RPM package? */
+            return (FALSE);
+            break;
+
+        default:
+            Fclose (fd);
+            /* FIXME: cannot be installed? */
+            return (FALSE);
+            break;
+
+        case 0:
+            rc = rpmtransAddPackage (transaction, hdr, NULL, filename, 1,
+                                     NULL);
+            headerFree (hdr);
+            Fclose (fd);
+
+            switch (rc) {
+            case 0:
+                break;
+
+            case 1:
+                /* FIXME: Error reading from file */
+                return (FALSE);
+                break;
+
+            case 2:
+                /* FIXME: Requires newer RPM */
+                return (FALSE);
+                break;
+            }
+        }
+    }
+
+    return (TRUE);
+} /* transaction_add_install_pkgs */
+
+static gchar *
+rc_package_to_rpm_name (RCPackage *pkg)
+{
+    gchar *ret = NULL;
+
+    g_assert (pkg);
+    g_assert (pkg->spec.name);
+
+    ret = g_strdup (pkg->spec.name);
+
+    if (pkg->spec.version) {
+        gchar *tmp = g_strconcat (ret, "-", pkg->spec.version, NULL);
+        g_free (ret);
+        ret = tmp;
+
+        if (pkg->spec.release) {
+            tmp = g_strconcat (ret, "-", pkg->spec.release, NULL);
+            g_free (ret);
+            ret = tmp;
+        }
+    }
+
+    return (ret);
+} /* rc_package_to_rpm_name */
+
+static gboolean
+transaction_add_remove_pkgs (RCPackman *p, rpmTransactionSet transaction,
+                             rpmdb db, RCPackageSList *remove_pkgs)
+{
+    int rc;
+    RCPackageSList *iter;
+    dbiIndexSet matches;
     int i;
-    int mode, rc, major;
-    const char ** pkgURL = NULL;
-    const char ** tmppkgURL = NULL;
-    const char ** fileURL;
-    int numPkgs;
-    int numTmpPkgs = 0, numRPMS = 0, numSRPMS = 0;
-    int numFailed = 0;
-    Header h;
-    int isSource;
-    rpmTransactionSet rpmdep = NULL;
-    int numConflicts;
-    int stopInstall = 0;
-    int notifyFlags = interfaceFlags | (rpmIsVerbose() ? INSTALL_LABEL : 0 );
-    int dbIsOpen = 0;
-    const char ** sourceURL;
-    rpmRelocation * defaultReloc;
+    int count;
 
-    if (transFlags & RPMTRANS_FLAG_TEST) 
-	mode = O_RDONLY;
-    else
-	mode = O_RDWR | O_CREAT;
+    for (iter = remove_pkgs; iter; iter = iter->next) {
+        RCPackage *pkg = (RCPackage *)(iter->data);
+        gchar *pkg_name = rc_package_to_rpm_name (pkg);
 
-    for (defaultReloc = relocations; defaultReloc && defaultReloc->oldPath;
-	 defaultReloc++);
-    if (defaultReloc && !defaultReloc->newPath) defaultReloc = NULL;
+        rc = rpmdbFindByLabel (db, pkg_name, &matches);
 
-    rpmMessage(RPMMESS_DEBUG, _("counting packages to install\n"));
-    for (fileURL = fileArgv, numPkgs = 0; *fileURL; fileURL++, numPkgs++)
-	;
+        g_free (pkg_name);
 
-    rpmMessage(RPMMESS_DEBUG, _("found %d packages\n"), numPkgs);
+        switch (rc) {
+        case 1:
+            /* FIXME: package is not installed */
+            return (FALSE);
+            break;
 
-    pkgURL = calloc( (numPkgs + 1), sizeof(*pkgURL) );
-    tmppkgURL = calloc( (numPkgs + 1), sizeof(*tmppkgURL) );
+        case 2:
+            /* FIXME: couldn't find that package? */
+            return (FALSE);
+            break;
 
-    rpmMessage(RPMMESS_DEBUG, _("looking for packages to download\n"));
-    for (fileURL = fileArgv, i = 0; *fileURL; fileURL++) {
+        default:
+            count = 0;
+            for (i = 0; i < dbiIndexSetCount (matches); i++) {
+                if (dbiIndexRecordOffset (matches, i)) {
+                    count++;
+                }
+            }
 
-	switch (urlIsURL(*fileURL)) {
-	case URL_IS_FTP:
-	case URL_IS_HTTP:
-	{   int myrc;
-        int j;
-        const char *tfn;
-        const char ** argv;
-        int argc;
+            if (count > 1) {
+                /* FIXME: multiple matches!  (fucking rpm) */
+                return (FALSE);
+            }
 
-        myrc = rpmGlob(*fileURL, &argc, &argv);
-        if (myrc) {
-            rpmMessage(RPMMESS_ERROR, 
-                       _("skipping %s - rpmGlob failed(%d)\n"),
-                       *fileURL, myrc);
-            numFailed++;
-            pkgURL[i] = NULL;
+            for (i = 0; i < dbiIndexSetCount (matches); i++) {
+                unsigned int offset = dbiIndexRecordOffset (matches, i);
+
+                if (offset) {
+                    rpmtransRemovePackage (transaction, offset);
+                }
+            }
+
+            dbiFreeIndexRecord (matches);
             break;
         }
-        if (argc > 1) {
-            numPkgs += argc - 1;
-            pkgURL = realloc(pkgURL, (numPkgs + 1) * sizeof(*pkgURL));
-            tmppkgURL = realloc(tmppkgURL, (numPkgs + 1) * sizeof(*tmppkgURL));
-        }
-
-        for (j = 0; j < argc; j++) {
-
-            if (rpmIsVerbose())
-                fprintf(stdout, _("Retrieving %s\n"), argv[j]);
-
-            {   char tfnbuf[64];
-            strcpy(tfnbuf, "rpm-xfer.XXXXXX");
-            /*@-unrecog@*/ mktemp(tfnbuf) /*@=unrecog@*/;
-            tfn = rpmGenPath(rootdir, "%{_tmppath}/", tfnbuf);
-            }
-
-            /* XXX undefined %{name}/%{version}/%{release} here */
-            /* XXX %{_tmpdir} does not exist */
-            rpmMessage(RPMMESS_DEBUG, _(" ... as %s\n"), tfn);
-            myrc = urlGetFile(argv[j], tfn);
-            if (myrc < 0) {
-                rpmMessage(RPMMESS_ERROR, 
-                           _("skipping %s - transfer failed - %s\n"), 
-                           argv[j], ftpStrerror(myrc));
-                numFailed++;
-                pkgURL[i] = NULL;
-                free((char *)tfn);
-            } else {
-                tmppkgURL[numTmpPkgs++] = pkgURL[i++] = tfn;
-            }
-        }
-        if (argv) {
-            for (j = 0; j < argc; j++)
-                free((char *)argv[j]);
-            free(argv);
-            argv = NULL;
-        }
-	}   break;
-	case URL_IS_PATH:
-	default:
-	    pkgURL[i++] = *fileURL;
-	    break;
-	}
-    }
-    pkgURL[i] = NULL;
-    tmppkgURL[numTmpPkgs] = NULL;
-
-    sourceURL = alloca(sizeof(*sourceURL) * i);
-
-    rpmMessage(RPMMESS_DEBUG, _("retrieved %d packages\n"), numTmpPkgs);
-
-    /* Build up the transaction set. As a special case, v1 source packages
-       are installed right here, only because they don't have headers and
-       would create all sorts of confusion later. */
-
-    for (fileURL = pkgURL; *fileURL; fileURL++) {
-	const char * fileName;
-	(void) urlPath(*fileURL, &fileName);
-	fd = Fopen(*fileURL, "r.ufdio");
-	if (fd == NULL || Ferror(fd)) {
-	    rpmMessage(RPMMESS_ERROR, _("cannot open file %s: %s\n"), *fileURL,
-                       Fstrerror(fd));
-	    if (fd) Fclose(fd);
-	    numFailed++;
-	    pkgURL[i] = NULL;
-	    continue;
-	}
-
-	rc = rpmReadPackageHeader(fd, &h, &isSource, &major, NULL);
-
-	switch (rc) {
-	case 1:
-	    Fclose(fd);
-	    rpmMessage(RPMMESS_ERROR, 
-                       _("%s does not appear to be a RPM package\n"), 
-                       *fileURL);
-	    break;
-	default:
-	    rpmMessage(RPMMESS_ERROR, _("%s cannot be installed\n"), *fileURL);
-	    numFailed++;
-	    pkgURL[i] = NULL;
-	    break;
-	case 0:
-	    if (isSource) {
-		sourceURL[numSRPMS++] = fileName;
-		Fclose(fd);
-	    } else {
-		if (!dbIsOpen) {
-		    if (rpmdbOpen(rootdir, &db, mode, 0644)) {
-			const char *dn;
-			dn = rpmGetPath( (rootdir ? rootdir : ""), 
-                                         "%{_dbpath}", NULL);
-			rpmMessage(RPMMESS_ERROR, 
-                                   _("cannot open %s/packages.rpm\n"), dn);
-			free((char *)dn);
-			exit(EXIT_FAILURE);
-		    }
-		    rpmdep = rpmtransCreateSet(db, rootdir);
-		    dbIsOpen = 1;
-		}
-
-		if (defaultReloc) {
-		    const char ** paths;
-		    int c;
-
-		    if (headerGetEntry(h, RPMTAG_PREFIXES, NULL,
-				       (void **) &paths, &c) && (c == 1)) {
-			defaultReloc->oldPath = strdup(paths[0]);
-			free(paths);
-		    } else {
-			const char * name;
-			headerNVR(h, &name, NULL, NULL);
-			rpmMessage(RPMMESS_ERROR, 
-                                   _("package %s is not relocateable\n"), name);
-
-			goto errxit;
-			/*@notreached@*/
-		    }
-		}
-
-		rc = rpmtransAddPackage(rpmdep, h, NULL, fileName,
-                                        (interfaceFlags & INSTALL_UPGRADE) != 0,
-                                        relocations);
-
-		headerFree(h);	/* XXX reference held by transaction set */
-		Fclose(fd);
-
-		switch(rc) {
-		case 0:
-                    break;
-		case 1:
-                    rpmMessage(RPMMESS_ERROR, 
-                               _("error reading from file %s\n"), *fileURL);
-                    goto errxit;
-                    /*@notreached@*/ break;
-		case 2:
-                    rpmMessage(RPMMESS_ERROR, 
-                               _("file %s requires a newer version of RPM\n"),
-                               *fileURL);
-                    goto errxit;
-                    /*@notreached@*/ break;
-		}
-
-		if (defaultReloc) {
-		    free((char *)(defaultReloc->oldPath));
-		    defaultReloc->oldPath = NULL;
-		}
-
-		numRPMS++;
-	    }
-	    break;
-	}
     }
 
-    rpmMessage(RPMMESS_DEBUG, _("found %d source and %d binary packages\n"), 
-               numSRPMS, numRPMS);
-
-    if (numRPMS && !(interfaceFlags & INSTALL_NODEPS)) {
-	struct rpmDependencyConflict * conflicts;
-	if (rpmdepCheck(rpmdep, &conflicts, &numConflicts)) {
-	    numFailed = numPkgs;
-	    stopInstall = 1;
-	}
-
-	if (!stopInstall && conflicts) {
-	    rpmMessage(RPMMESS_ERROR, _("failed dependencies:\n"));
-	    printDepProblems(stderr, conflicts, numConflicts);
-	    rpmdepFreeConflicts(conflicts, numConflicts);
-	    numFailed = numPkgs;
-	    stopInstall = 1;
-	}
-    }
-
-    if (numRPMS && !(interfaceFlags & INSTALL_NOORDER)) {
-	if (rpmdepOrder(rpmdep)) {
-	    numFailed = numPkgs;
-	    stopInstall = 1;
-	}
-    }
-
-    if (numRPMS && !stopInstall) {
-	rpmProblemSet probs = NULL;
-	rpmMessage(RPMMESS_DEBUG, _("installing binary packages\n"));
-	rc = rpmRunTransactions(rpmdep, showProgress, (void *) notifyFlags, 
-                                NULL, &probs, transFlags, probFilter);
-
-	if (rc < 0) {
-	    numFailed += numRPMS;
-	} else if (rc > 0) {
-	    numFailed += rc;
-	    rpmProblemSetPrint(stderr, probs);
-	}
-
-	if (probs) rpmProblemSetFree(probs);
-    }
-
-    if (numRPMS) rpmtransFree(rpmdep);
-
-    if (numSRPMS && !stopInstall) {
-	for (i = 0; i < numSRPMS; i++) {
-	    fd = Fopen(sourceURL[i], "r.ufdio");
-	    if (fd == NULL || Ferror(fd)) {
-		rpmMessage(RPMMESS_ERROR, _("cannot open file %s: %s\n"), 
-			   sourceURL[i], Fstrerror(fd));
-		if (fd) Fclose(fd);
-		continue;
-	    }
-
-	    if (!(transFlags & RPMTRANS_FLAG_TEST))
-		numFailed += rpmInstallSourcePackage(rootdir, fd, NULL,
-                                                     showProgress,
-                                                     (void *) notifyFlags,
-                                                     NULL);
-
-	    Fclose(fd);
-	}
-    }
-
-    for (i = 0; i < numTmpPkgs; i++) {
-	Unlink(tmppkgURL[i]);
-	free((char *)tmppkgURL[i]);
-    }
-    free(tmppkgURL);
-    free(pkgURL);
-
-    /* FIXME how do we close our various fd's? */
-
-    if (dbIsOpen) rpmdbClose(db);
-
-    return numFailed;
-
-errxit:
-    if (tmppkgURL) {
-	for (i = 0; i < numTmpPkgs; i++)
-	    free((char *)tmppkgURL[i]);
-	free(tmppkgURL);
-    }
-    if (pkgURL)
-	free(pkgURL);
-    if (dbIsOpen) rpmdbClose(db);
-    return numPkgs;
-} /* rpmInstall */
-
-/* Gets a GSList of RCPackmanPackage, converts to a NULL terminated array of
-   filenames, and passes to rpmInstall.  Emits the install_done signal at
-   the end. */
+    return (TRUE);
+} /* transaction_add_remove_pkgs */
 
 static void
-rc_rpmman_install (RCPackman *p, GSList *pkgs)
+rc_rpmman_transact (RCPackman *p, GSList *install_pkgs,
+                    RCPackageSList *remove_pkgs)
 {
-    GSList *iter = pkgs;
-    guint length;
-    gchar **pkgv;
-    int i;
-    int ret;
+    rpmdb db = NULL;
+    rpmTransactionSet transaction;
+    int rc;
+    rpmProblemSet probs = NULL;
+    InstallState *state;
 
-    length = g_slist_length (pkgs);
-
-    RC_RPMMAN (p)->package_total = length;
-
-    pkgv = g_new0 (char *, length + 1);
-
-    for (i = 0; i < length; i++) {
-        gchar *ptr = (gchar *)(iter->data);
-
-        /* Gotta give a filename */
-        g_assert (ptr);
-
-        pkgv[i] = g_strdup (ptr);
-
-        iter = iter->next;
+    if (rpmdbOpen (rpmroot, &db, O_RDWR | O_CREAT, 0644)) {
+        /* FIXME: Fatal error opening the database */
+        return;
     }
 
-    /* Set the gross hack global pointer to the current object for callback
-       purposes */
+    transaction = rpmtransCreateSet (db, rpmroot);
 
-    ghp = p;
-
-    /* Zero the package count */
-
-    RC_RPMMAN (p)->package_count = 0;
-
-    ret = rc_rpmInstall (rpmroot, (const char **)pkgv, 0,
-                      INSTALL_NOORDER | INSTALL_UPGRADE | INSTALL_NODEPS, 0,
-                      NULL);
-
-    /* Although in this case, it should be safe to argue that no elements of
-       pkgv are NULL (except for the terminating NULL), I'm trying to move away
-       from g_strfreev in general, so I'll do it by hand here */
-
-    for (i = 0; i < length; i++) {
-        g_free (pkgv[i]);
+    if (!(transaction_add_install_pkgs (p, transaction, install_pkgs))) {
+        /* FIXME: Uh oh */
+        return;
     }
 
-    g_free (pkgv);
-
-    /* I have no idea what return codes are possible, so I hope I'm
-       interpreting how rpmlib works correctly.  Given my track record,
-       probably not, but... */
-
-    if (ret) {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
-                              "RPM installation failed.");
-        rc_packman_install_done (p);
-    } else {
-        rc_packman_install_done (p);
-    }
-} /* rc_rpmman_install */
-
-/* Given a list of packages to remove, with names and optionally versions and
-   releases, remove them from the system.  The epoch isn't taken into
-   consideration, because rpmlib can't, it seems.  Doesn't matter, because
-   vlad tells me you can't have two packages installed which differ only in
-   epoch.  So oh well. */
-
-static void
-rc_rpmman_remove (RCPackman *p, RCPackageSList *pkgs)
-{
-    RCPackageSList *iter = pkgs;
-    guint length;
-    gchar **pkgv;
-    int i;
-    int ret;
-
-    length = g_slist_length (pkgs);
-
-    pkgv = g_new0 (gchar *, length + 1);
-
-    for (i = 0; i < length; i++) {
-        RCPackage *ptr = (RCPackage *)(iter->data);
-
-        /* Must at least name the package */
-        g_assert (ptr->spec.name);
-
-        /* If you've got a release, you've gotta have a version */
-        g_assert (!ptr->spec.release || ptr->spec.version);
-
-        /* <name>-<version>-<release>, or <name>-<version>, or <name> */
-        if (ptr->spec.version && ptr->spec.release) {
-            pkgv[i] = g_strconcat (ptr->spec.name, "-", ptr->spec.version, "-",
-                                   ptr->spec.release, NULL);
-        } else if (ptr->spec.version) {
-            pkgv[i] = g_strconcat (ptr->spec.name, "-", ptr->spec.version,
-                                   NULL);
-        } else {
-            pkgv[i] = g_strdup (ptr->spec.name);
-        }
-
-        iter = iter->next;
+    if (!(transaction_add_remove_pkgs (p, transaction, db, remove_pkgs))) {
+        /* FIXME: Uh oh */
+        return;
     }
 
-    ret = rpmErase (rpmroot, (const char **)pkgv, 0, 0);
-
-    /* Once again, duck around the g_strfreev for anality */
-
-    for (i = 0; i < length; i++) {
-        g_free (pkgv[i]);
+    if (rpmdepOrder (transaction)) {
+        /* FIXME: Failed to order transaction */
+        return;
     }
 
-    g_free (pkgv);
+    state = g_new0 (InstallState, 1);
+    state->p = p;
+    state->seqno = 0;
+    state->install_total = g_slist_length (install_pkgs);
+    state->remove_total = g_slist_length (remove_pkgs);
 
-    /* I have no idea what error codes are possible... */
+    rc = rpmRunTransactions (transaction, transact_cb, (void *) state,
+                             NULL, &probs, 0, 0);
 
-    if (ret) {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
-                              "RPM removal failed");
-        rc_packman_remove_done (p);
-    } else {
-        rc_packman_remove_done (p);
-    }
-} /* rc_rpmman_remove */
+    rc_packman_transaction_done (p);
+
+    rpmdbClose (db);
+} /* rc_rpmman_transact */
 
 /* Helper function to read values out of an rpm header safely.  If any of the
    paramaters are NULL, they're ignored.  Remember, you don't need to free any
@@ -1209,8 +963,7 @@ rc_rpmman_class_init (RCRpmmanClass *klass)
 /*    GtkObjectClass *object_class = (GtkObjectClass *) klass; */
     RCPackmanClass *hpc = (RCPackmanClass *) klass;
 
-    hpc->rc_packman_real_install = rc_rpmman_install;
-    hpc->rc_packman_real_remove = rc_rpmman_remove;
+    hpc->rc_packman_real_transact = rc_rpmman_transact;
     hpc->rc_packman_real_query = rc_rpmman_query;
     hpc->rc_packman_real_query_all = rc_rpmman_query_all;
     hpc->rc_packman_real_query_file = rc_rpmman_query_file;

@@ -41,6 +41,8 @@ typedef struct _RCDebmanClass RCDebmanClass;
 
 struct _RCDebman {
     RCPackman parent;
+
+    int lock_fd;
 };
 
 struct _RCDebmanClass {

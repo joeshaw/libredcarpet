@@ -51,6 +51,8 @@ typedef enum _RCPackmanError {
     /* An error occured at the package manager level or lower, and the
        requested operation was aborted */
     RC_PACKMAN_ERROR_FAIL,
+    /* An error from which we cannot and should not attempt to recover */
+    RC_PACKMAN_ERROR_FATAL,
 } RCPackmanError;
 
 struct _RCPackman {
@@ -78,21 +80,19 @@ struct _RCPackmanClass {
 
     /* Signals */
 
-    void (*config_progress)(RCPackman *, gint amount, gint total);
-    void (*pkg_progress)(RCPackman *, gchar *file, gint amount, gint total);
-
-    void (*pkg_installed)(RCPackman *, gchar *file, gint sequence, gint total);
-    void (*install_done)(RCPackman *);
+    void (*configure_progress)(RCPackman *, gint amount, gint total);
+    void (*configure_step)(RCPackman *, gint seqno, gint total);
     void (*configure_done)(RCPackman *);
 
-    void (*pkg_removed)(RCPackman *, gchar *name, gint sequence);
-    void (*remove_done)(RCPackman *);
+    void (*transaction_progress)(RCPackman *, gint amount, gint total);
+    void (*transaction_step)(RCPackman *, gint seqno, gint total);
+    void (*transaction_done)(RCPackman *);
 
     /* Virtual functions */
 
-    void (*rc_packman_real_install)(RCPackman *p, GSList *filenames);
-
-    void (*rc_packman_real_remove)(RCPackman *p, RCPackageSList *pkgs);
+    void (*rc_packman_real_transact)(RCPackman *p,
+                                     RCPackageSList *install_pkgs,
+                                     RCPackageSList *remove_pkgs);
 
     RCPackage *(*rc_packman_real_query)(RCPackman *p, RCPackage *pkg);
 
@@ -120,17 +120,8 @@ RCPackman *rc_packman_new (void);
 void rc_packman_query_interface (RCPackman *p, gboolean *config, gboolean *pkg,
                                  gboolean *post);
 
-/* Given a list of filenames of packages to install, use the system package
-   manager to install them.  Sets the error code (and possibly reason field)
-   after install.  Should make every effort to insure that the listed packages
-   are either all installed, or none installed. */
-void rc_packman_install (RCPackman *p, GSList *filenames);
-
-/* Given a list of RCPackages, remove the listed packages from the system using
-   the system package manager.  Sets the error code (and possibly reason field)
-   after removal.  Should make every effort to insure that the listed packages
-   are either all removed, or none removed. */
-void rc_packman_remove (RCPackman *p, RCPackageSList *pkgs);
+void rc_packman_transact (RCPackman *p, RCPackageSList *install_pkgs,
+                          RCPackageSList *remove_pkgs);
 
 /* Queries the system package database for a given RCPackage.  Fills in any
    missing information, including version, release, epoch, dependency lists,
@@ -178,25 +169,15 @@ gchar *rc_packman_get_reason (RCPackman *p);
 
 void rc_packman_config_progress (RCPackman *p, gint amount, gint total);
 
-void rc_packman_package_progress(RCPackman *p,
-                                 const gchar *filename,
-                                 gint amount,
-                                 gint total);
-
-void rc_packman_package_installed (RCPackman *p,
-                                   const gchar *filename,
-                                   gint seqno,
-                                   gint total);
-
-void rc_packman_install_done (RCPackman *p);
+void rc_packman_configure_step (RCPackman *p, gint seqno, gint total);
 
 void rc_packman_configure_done (RCPackman *p);
 
-void rc_packman_package_removed (RCPackman *p,
-                                 const gchar *filename,
-                                 gint seqno);
+void rc_packman_transaction_progress (RCPackman *p, gint amount, gint total);
 
-void rc_packman_remove_done (RCPackman *p);
+void rc_packman_transaction_step (RCPackman *p, gint seqno, gint total);
+
+void rc_packman_transaction_done (RCPackman *p);
 
 /* Helper function to build RCPackageSList's easily */
 

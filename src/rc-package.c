@@ -8,6 +8,16 @@ rc_package_new (void)
     return (rcp);
 } /* rc_package_new */
 
+RCPackage *
+rc_package_copy_spec (RCPackage *orig)
+{
+    RCPackage *rcp = rc_package_new ();
+
+    rc_package_spec_copy ((RCPackageSpec *) orig, (RCPackageSpec *) rcp);
+
+    return (rcp);
+}
+
 void
 rc_package_free (RCPackage *rcp)
 {

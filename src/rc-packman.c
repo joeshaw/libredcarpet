@@ -27,13 +27,12 @@ static void rc_packman_init       (RCPackman *obj);
 static GtkObjectClass *rc_packman_parent;
 
 enum SIGNALS {
-    CONFIG_PROGRESS,
-    PKG_PROGRESS,
-    PKG_INSTALLED,
-    INSTALL_DONE,
+    CONFIGURE_PROGRESS,
+    CONFIGURE_STEP,
     CONFIGURE_DONE,
-    PKG_REMOVED,
-    REMOVE_DONE,
+    TRANSACTION_PROGRESS,
+    TRANSACTION_STEP,
+    TRANSACTION_DONE,
     LAST_SIGNAL
 };
 
@@ -72,10 +71,6 @@ rc_packman_destroy (GtkObject *obj)
         (* GTK_OBJECT_CLASS(rc_packman_parent)->destroy) (obj);
 }
 
-#define gtk_marshal_NONE__STRING_INT_INT gtk_marshal_NONE__POINTER_INT_INT
-#define gtk_marshal_NONE__INT_STRING     gtk_marshal_NONE__INT_POINTER
-#define gtk_marshal_NONE__STRING_INT     gtk_marshal_NONE__POINTER_INT
-
 static void
 rc_packman_class_init (RCPackmanClass *klass)
 {
@@ -85,69 +80,60 @@ rc_packman_class_init (RCPackmanClass *klass)
 
     rc_packman_parent = gtk_type_class (gtk_object_get_type ());
 
-    signals[CONFIG_PROGRESS] =
-        gtk_signal_new ("config_progress",
+    signals[CONFIGURE_PROGRESS] =
+        gtk_signal_new ("configure_progress",
                         GTK_RUN_LAST,
                         object_class->type,
-                        GTK_SIGNAL_OFFSET (RCPackmanClass, config_progress),
+                        GTK_SIGNAL_OFFSET (RCPackmanClass, configure_progress),
                         gtk_marshal_NONE__INT_INT,
                         GTK_TYPE_NONE, 2,
                         GTK_TYPE_INT,
                         GTK_TYPE_INT);
 
-    signals[PKG_PROGRESS] =
-        gtk_signal_new("pkg_progress",
-                       GTK_RUN_LAST,
-                       object_class->type,
-                       GTK_SIGNAL_OFFSET(RCPackmanClass, pkg_progress),
-                       gtk_marshal_NONE__STRING_INT_INT,
-                       GTK_TYPE_NONE, 3,
-                       GTK_TYPE_STRING,
-                       GTK_TYPE_INT,
-                       GTK_TYPE_INT);
-
-    signals[PKG_INSTALLED] =
-        gtk_signal_new ("pkg_installed",
+    signals[CONFIGURE_STEP] =
+        gtk_signal_new ("configure_step",
                         GTK_RUN_LAST,
                         object_class->type,
-                        GTK_SIGNAL_OFFSET (RCPackmanClass, pkg_installed),
-                        gtk_marshal_NONE__STRING_INT_INT,
-                        GTK_TYPE_NONE, 3,
-                        GTK_TYPE_STRING,
+                        GTK_SIGNAL_OFFSET (RCPackmanClass, configure_step),
+                        gtk_marshal_NONE__INT_INT,
+                        GTK_TYPE_NONE, 2,
                         GTK_TYPE_INT,
                         GTK_TYPE_INT);
-    
-    signals[INSTALL_DONE] =
-        gtk_signal_new ("install_done",
-                        GTK_RUN_LAST | GTK_RUN_NO_RECURSE,
-                        object_class->type,
-                        GTK_SIGNAL_OFFSET (RCPackmanClass, install_done),
-                        gtk_marshal_NONE__NONE,
-                        GTK_TYPE_NONE, 0);
-    
+
     signals[CONFIGURE_DONE] =
         gtk_signal_new ("configure_done",
                         GTK_RUN_LAST | GTK_RUN_NO_RECURSE,
                         object_class->type,
-                        GTK_SIGNAL_OFFSET (RCPackmanClass, install_done),
+                        GTK_SIGNAL_OFFSET (RCPackmanClass, configure_done),
                         gtk_marshal_NONE__NONE,
                         GTK_TYPE_NONE, 0);
-    
-    signals[PKG_REMOVED] =
-        gtk_signal_new ("pkg_removed",
+
+    signals[TRANSACTION_PROGRESS] =
+        gtk_signal_new ("transaction_progress",
                         GTK_RUN_LAST,
                         object_class->type,
-                        GTK_SIGNAL_OFFSET (RCPackmanClass, pkg_removed),
-                        gtk_marshal_NONE__STRING_INT,
+                        GTK_SIGNAL_OFFSET (RCPackmanClass,
+                                           transaction_progress),
+                        gtk_marshal_NONE__INT_INT,
                         GTK_TYPE_NONE, 2,
-                        GTK_TYPE_STRING,
+                        GTK_TYPE_INT,
                         GTK_TYPE_INT);
 
-    signals[REMOVE_DONE] =
-        gtk_signal_new ("remove_done",
+    signals[TRANSACTION_STEP] =
+        gtk_signal_new ("transaction_step",
                         GTK_RUN_LAST,
                         object_class->type,
-                        GTK_SIGNAL_OFFSET (RCPackmanClass, remove_done),
+                        GTK_SIGNAL_OFFSET (RCPackmanClass, transaction_step),
+                        gtk_marshal_NONE__INT_INT,
+                        GTK_TYPE_NONE, 2,
+                        GTK_TYPE_INT,
+                        GTK_TYPE_INT);
+
+    signals[TRANSACTION_DONE] =
+        gtk_signal_new ("transaction_done",
+                        GTK_RUN_LAST,
+                        object_class->type,
+                        GTK_SIGNAL_OFFSET (RCPackmanClass, transaction_done),
                         gtk_marshal_NONE__NONE,
                         GTK_TYPE_NONE, 0);
     
@@ -155,8 +141,7 @@ rc_packman_class_init (RCPackmanClass *klass)
 
     /* Subclasses should provide real implementations of these functions, and
        we're just NULLing these for clarity (and paranoia!) */
-    klass->rc_packman_real_install = NULL;
-    klass->rc_packman_real_remove = NULL;
+    klass->rc_packman_real_transact = NULL;
     klass->rc_packman_real_query = NULL;
     klass->rc_packman_real_query_file = NULL;
     klass->rc_packman_real_query_all = NULL;
@@ -203,9 +188,10 @@ rc_packman_query_interface (RCPackman *p, gboolean *pre_config,
 /* Wrappers around all of the virtual functions */
 
 void
-rc_packman_install (RCPackman *p, GSList *files)
+rc_packman_transact (RCPackman *p, RCPackageSList *install_pkgs,
+                     RCPackageSList *remove_pkgs)
 {
-    g_return_if_fail(p);
+    g_return_if_fail (p);
 
     rc_packman_set_error (p, RC_PACKMAN_ERROR_NONE, NULL);
 
@@ -214,32 +200,11 @@ rc_packman_install (RCPackman *p, GSList *files)
         return;
     }
 
-    g_assert (_CLASS (p)->rc_packman_real_install);
+    g_assert (_CLASS (p)->rc_packman_real_transact);
 
     p->busy = TRUE;
 
-    _CLASS (p)->rc_packman_real_install (p, files);
-
-    p->busy = FALSE;
-}
-
-void
-rc_packman_remove (RCPackman *p, RCPackageSList *pkgs)
-{
-    g_return_if_fail(p);
-
-    rc_packman_set_error (p, RC_PACKMAN_ERROR_NONE, NULL);
-
-    if (p->busy) {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_BUSY, NULL);
-        return;
-    }
-
-    g_assert (_CLASS (p)->rc_packman_real_remove);
-
-    p->busy = TRUE;
-
-    _CLASS (p)->rc_packman_real_remove (p, pkgs);
+    _CLASS (p)->rc_packman_real_transact (p, install_pkgs, remove_pkgs);
 
     p->busy = FALSE;
 }
@@ -411,57 +376,21 @@ rc_packman_verify (RCPackman *p, RCPackage *pkg)
 /* Public functions to emit signals */
 
 void
-rc_packman_config_progress (RCPackman *p, gint amount, gint total)
+rc_packman_configure_progress (RCPackman *p, gint amount, gint total)
 {
     g_return_if_fail (p);
 
-    gtk_signal_emit (GTK_OBJECT (p), signals[CONFIG_PROGRESS], amount, total);
-
     while (gtk_events_pending ()) {
         gtk_main_iteration ();
     }
 }
 
 void
-rc_packman_package_progress(RCPackman *p, const gchar *filename,
-                            gint amount, gint total)
+rc_packman_configure_step (RCPackman *p, gint seqno, gint total)
 {
-    g_return_if_fail(p);
+    g_return_if_fail (p);
 
-    gtk_signal_emit(
-        GTK_OBJECT(p), signals[PKG_PROGRESS], filename, amount, total);
-
-    while (gtk_events_pending ()) {
-        gtk_main_iteration ();
-    }
-} /* rc_packman_package_progress */
-
-void
-rc_packman_package_installed (RCPackman *p,
-                              const gchar *filename,
-                              gint seqno,
-                              gint total)
-{
-    g_return_if_fail(p);
-
-    gtk_signal_emit ((GtkObject *)p, signals[PKG_INSTALLED], filename, seqno,
-                     total);
-    /* Why is this here? --Joe */
-    while (gtk_events_pending ()) {
-	gtk_main_iteration ();
-    }
-}
-
-void
-rc_packman_install_done (RCPackman *p)
-{
-    g_return_if_fail(p);
-
-    gtk_signal_emit ((GtkObject *)p, signals[INSTALL_DONE]);
-
-    while (gtk_events_pending ()) {
-	gtk_main_iteration ();
-    }
+    gtk_signal_emit ((GtkObject *)p, signals[CONFIGURE_STEP], seqno, total);
 }
 
 void
@@ -477,21 +406,28 @@ rc_packman_configure_done (RCPackman *p)
 }
 
 void
-rc_packman_package_removed (RCPackman *p,
-                            const gchar *filename,
-                            gint seqno)
+rc_packman_transaction_progress (RCPackman *p, gint amount, gint total)
 {
-    g_return_if_fail(p);
+    g_return_if_fail (p);
 
-    gtk_signal_emit ((GtkObject *)p, signals[PKG_REMOVED], filename, seqno);
+    gtk_signal_emit ((GtkObject *)p, signals[TRANSACTION_PROGRESS],
+                     amount, total);
 }
 
 void
-rc_packman_remove_done (RCPackman *p)
+rc_packman_transaction_step (RCPackman *p, gint seqno, gint total)
 {
-    g_return_if_fail(p);
+    g_return_if_fail (p);
 
-    gtk_signal_emit ((GtkObject *)p, signals[REMOVE_DONE]);
+    gtk_signal_emit ((GtkObject *)p, signals[TRANSACTION_STEP], seqno, total);
+}
+
+void
+rc_packman_transaction_done (RCPackman *p)
+{
+    g_return_if_fail (p);
+
+    gtk_signal_emit ((GtkObject *)p, signals[TRANSACTION_DONE]);
 }
 
 /* Methods to access the error stuff */
