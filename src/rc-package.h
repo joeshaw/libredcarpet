@@ -106,8 +106,7 @@ void            rc_package_slist_unref (RCPackageSList *packages);
 RCPackageSList *rc_package_slist_copy  (RCPackageSList *packages);
 
 RCPackageSList *rc_package_slist_sort_by_name (RCPackageSList *packages);
-RCPackageSList *rc_package_slist_sort_by_spec (RCPackageSList *packages);
-RCPackageSList *rc_package_slist_sort_by_spec_reverse (RCPackageSList *packages);
+
 RCPackageSList *rc_package_slist_sort_by_pretty_name (RCPackageSList *packages);
 
 RCPackageSList *rc_package_hash_table_by_spec_to_list (RCPackageHashTableBySpec *ht);
@@ -116,9 +115,5 @@ RCPackageSList *rc_package_hash_table_by_string_to_list (RCPackageHashTableBySpe
 void             rc_package_add_update        (RCPackage *package,
                                                RCPackageUpdate *update);
 RCPackageUpdate *rc_package_get_latest_update (RCPackage *package);
-
-GSList *rc_package_slist_find_duplicates (RCPackageSList *pkgs);
-RCPackageSList *rc_package_slist_remove_older_duplicates (RCPackageSList *packages,
-                                                          RCPackageSList **removed_packages);
 
 #endif /* _RC_PACKAGE_H */

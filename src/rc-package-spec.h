@@ -47,7 +47,6 @@ void rc_package_spec_copy (RCPackageSpec *new, RCPackageSpec *old);
 void rc_package_spec_free_members (RCPackageSpec *rcps);
 
 gint rc_package_spec_compare_name (void *a, void *b);
-gint rc_package_spec_compare (void *a, void *b);
 
 guint rc_package_spec_hash (gconstpointer ptr);
 
@@ -60,49 +59,6 @@ const gchar *rc_package_spec_version_to_str_static (RCPackageSpec *spec);
 
 gpointer rc_package_spec_slist_find_name (GSList *specs, gchar *name);
 
-#ifdef __GNUC__
-__inline__ static
-gint rc_package_spec_equal (gconstpointer a, gconstpointer b) {
-    RCPackageSpec *one = RC_PACKAGE_SPEC (a);
-    RCPackageSpec *two = RC_PACKAGE_SPEC (b);
-
-    g_assert (one);
-    g_assert (two);
-
-    /* Why isn't there a logical XOR in C? */
-    if (!((one->has_epoch && two->has_epoch) ||
-          (!one->has_epoch && !two->has_epoch)))
-    {
-        return (FALSE);
-    }
-
-    if (one->has_epoch && (one->epoch != two->epoch)) {
-        return (FALSE);
-    }
-
-    if (one->nameq != two->nameq)
-        return FALSE;
-
-    if (one->version && two->version) {
-        if (strcmp (one->version, two->version)) {
-            return (FALSE);
-        }
-    } else if (one->version || two->version) {
-        return (FALSE);
-    }
-
-    if (one->release && two->release) {
-        if (strcmp (one->release, two->release)) {
-            return (FALSE);
-        }
-    } else if (one->release || two->release) {
-        return (FALSE);
-    }
-
-    return (TRUE);
-}
-#else
 gint rc_package_spec_equal (gconstpointer ptra, gconstpointer ptrb);
-#endif
 
 #endif /* _RC_PACKAGE_SPEC_H */

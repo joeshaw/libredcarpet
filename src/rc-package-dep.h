@@ -80,6 +80,7 @@ struct _RCPackageDepArray {
 
 #include "rc-package.h"
 #include "rc-package-spec.h"
+#include "rc-packman.h"
 
 typedef void (*RCPackageAndDepFn) (RCPackage *, RCPackageDep *, gpointer);
 
@@ -144,7 +145,8 @@ void
 rc_package_dep_array_free (RCPackageDepArray *array);
 
 gboolean
-rc_package_dep_verify_relation (RCPackageDep *dep,
+rc_package_dep_verify_relation (RCPackman    *packman,
+                                RCPackageDep *dep,
                                 RCPackageDep *prov);
 
 #endif /* _RC_PACKAGE_DEP_H */

@@ -506,8 +506,10 @@ install_item_cmp (const RCQueueItem *item_a, const RCQueueItem *item_b)
     const RCQueueItem_Install *a = (const RCQueueItem_Install *) item_a;
     const RCQueueItem_Install *b = (const RCQueueItem_Install *) item_b;
 
-    return rc_package_spec_compare (RC_PACKAGE_SPEC (a->package),
-                                    RC_PACKAGE_SPEC (b->package));
+    return rc_packman_version_compare (
+        rc_world_get_packman (item_a->world),
+        RC_PACKAGE_SPEC (a->package),
+        RC_PACKAGE_SPEC (b->package));
 }
 
 static char *
@@ -1648,8 +1650,10 @@ uninstall_item_cmp (const RCQueueItem *item_a, const RCQueueItem *item_b)
     const RCQueueItem_Uninstall *a = (const RCQueueItem_Uninstall *) item_a;
     const RCQueueItem_Uninstall *b = (const RCQueueItem_Uninstall *) item_b;
 
-    return rc_package_spec_compare (RC_PACKAGE_SPEC (a->package),
-                                    RC_PACKAGE_SPEC (b->package));
+    return rc_packman_version_compare (
+        rc_world_get_packman (item_a->world),
+        RC_PACKAGE_SPEC (a->package),
+        RC_PACKAGE_SPEC (b->package));
 }
 
 static char *

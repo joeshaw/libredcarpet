@@ -29,8 +29,6 @@
 
 #include "rc-marshal.h"
 
-RCPackman *das_global_packman = NULL;
-
 static void rc_packman_class_init (RCPackmanClass *klass);
 static void rc_packman_init       (RCPackman *obj);
 
@@ -683,10 +681,4 @@ rc_packman_generic_version_compare (RCPackageSpec *spec1,
     }
 
     return (0);
-}
-
-void
-rc_packman_set_packman (RCPackman *packman)
-{
-    das_global_packman = packman;
 }

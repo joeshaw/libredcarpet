@@ -98,7 +98,7 @@ int main (int argc, char *argv[])
     rc_package_spec_init (spec2, "package", has_epoch,
                           epoch, version, release);
 
-    rc = rc_package_spec_compare (spec1, spec2);
+    rc = rc_packman_version_compare (packman, spec1, spec2);
     if (rc > 0)
         printf ("gt\n");
     else if (rc < 0)

@@ -174,6 +174,4 @@ guint rc_packman_get_error (RCPackman *packman);
 
 const gchar *rc_packman_get_reason (RCPackman *packman);
 
-void rc_packman_set_packman (RCPackman *packman);
-
 #endif /* _RC_PACKMAN_H */

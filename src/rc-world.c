@@ -33,6 +33,9 @@
 #include "rc-dep-or.h"
 #include "rc-xml.h"
 
+/* Gross hack */
+static RCWorld *das_global_world = NULL;
+
 struct _RCWorld {
 
     GHashTable *packages_by_name;
@@ -209,6 +212,8 @@ hashed_slist_foreach_remove (GHashTable *hash,
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
+/* Packmanish operations */
+
 static gboolean
 channel_match (const RCChannel *a, const RCChannel *b)
 {
@@ -228,93 +233,6 @@ channel_match (const RCChannel *a, const RCChannel *b)
 
     return a == b;
 }
-
-/**
- * rc_get_world:
- * 
- * This is a convenience function for applications that want
- * to use a single global #RCWorld for storing its state.
- * A new #RCWorld object is constructed and returned the first
- * time the function is called, and that same #RCWorld is
- * returned by all subsequent calls.
- * 
- * Return value: the global #RCWorld
- **/
-RCWorld *
-rc_get_world (void)
-{
-    static RCWorld *world = NULL;
-
-    if (world == NULL) 
-        world = rc_world_new ();
-
-    return world;
-}
-
-/**
- * rc_world_new:
- * 
- * Creates a new #RCWorld.
- * 
- * Return value: a new #RCWorld
- **/
-RCWorld *
-rc_world_new (void)
-{
-	RCWorld *world = g_new0 (RCWorld, 1);
-
-    world->changed = FALSE;
-    world->seq_no  = 1;
-
-	world->packages_by_name = hashed_slist_new ();
-    world->provides_by_name = hashed_slist_new ();
-    world->requires_by_name = hashed_slist_new ();
-    world->conflicts_by_name = hashed_slist_new ();
-	
-	return world;
-}
-
-/**
- * rc_world_free:
- * @world: an #RCWorld
- * 
- * Destroys the #RCWorld, freeing all associated memory.
- * This function is a no-op if @world is %NULL.
- **/
-void
-rc_world_free (RCWorld *world)
-{
-	if (world) {
-        GSList *iter;
-
-        rc_world_remove_packages (world, RC_WORLD_ANY_CHANNEL);
-
-        hashed_slist_destroy (world->packages_by_name);
-        hashed_slist_destroy (world->provides_by_name);
-        hashed_slist_destroy (world->requires_by_name);
-        hashed_slist_destroy (world->conflicts_by_name);
-
-        /* Free our channels */
-        for (iter = world->channels; iter != NULL; iter = iter->next) {
-            RCChannel *channel = iter->data;
-
-            /* Set the channel's world to NULL, so that there won't
-               be a dangling pointer if someone else is holding a reference
-               to this channel. */
-            channel->world = NULL;
-
-            rc_channel_unref (channel);
-        }
-        g_slist_free (world->channels);
-
-		g_free (world);
-
-	}
-}
-
-/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
-
-/* Packmanish operations */
 
 static void
 rc_world_sync (RCWorld *world)
@@ -355,26 +273,6 @@ database_changed_cb (RCPackman *packman, gpointer user_data)
     world->dirty = TRUE;
     
     rc_world_sync (world);
-}
-
-void
-rc_world_register_packman (RCWorld *world,
-                           RCPackman *packman)
-{
-    g_return_if_fail (world != NULL);
-    g_return_if_fail (RC_IS_PACKMAN (packman));
-    
-    if (world->packman) {
-        g_warning ("Multiple packman registry is not allowed!");
-        return;
-    }
-
-    world->packman = packman;
-
-    g_signal_connect (packman,
-                      "database_changed",
-                      G_CALLBACK (database_changed_cb),
-                      world);
 }
 
 RCPackman *
@@ -424,6 +322,111 @@ rc_world_sequence_number (RCWorld *world)
     }
 
     return world->seq_no;
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+ 
+void
+rc_set_world (RCWorld *world)
+{
+    if (das_global_world) {
+        rc_debug (RC_DEBUG_LEVEL_ERROR,
+                  "rc_set_world called multiple times");
+        return;
+    }
+
+    das_global_world = world;
+}
+
+/**
+ * rc_get_world:
+ * 
+ * This is a convenience function for applications that want
+ * to use a single global #RCWorld for storing its state.
+ * A new #RCWorld object is constructed and returned the first
+ * time the function is called, and that same #RCWorld is
+ * returned by all subsequent calls.
+ * 
+ * Return value: the global #RCWorld
+ **/
+RCWorld *
+rc_get_world (void)
+{
+    g_assert (das_global_world);
+/*
+    if (world == NULL) 
+        world = rc_world_new ();
+*/
+
+    return das_global_world;
+}
+
+/**
+ * rc_world_new:
+ * 
+ * Creates a new #RCWorld.
+ * 
+ * Return value: a new #RCWorld
+ **/
+RCWorld *
+rc_world_new (RCPackman *packman)
+{
+    RCWorld *world = g_new0 (RCWorld, 1);
+
+    world->changed = FALSE;
+    world->seq_no  = 1;
+
+	world->packages_by_name = hashed_slist_new ();
+    world->provides_by_name = hashed_slist_new ();
+    world->requires_by_name = hashed_slist_new ();
+    world->conflicts_by_name = hashed_slist_new ();
+
+    world->packman = packman;
+
+    g_signal_connect (packman,
+                      "database_changed",
+                      G_CALLBACK (database_changed_cb),
+                      world);
+	
+	return world;
+}
+
+/**
+ * rc_world_free:
+ * @world: an #RCWorld
+ * 
+ * Destroys the #RCWorld, freeing all associated memory.
+ * This function is a no-op if @world is %NULL.
+ **/
+void
+rc_world_free (RCWorld *world)
+{
+	if (world) {
+        GSList *iter;
+
+        rc_world_remove_packages (world, RC_WORLD_ANY_CHANNEL);
+
+        hashed_slist_destroy (world->packages_by_name);
+        hashed_slist_destroy (world->provides_by_name);
+        hashed_slist_destroy (world->requires_by_name);
+        hashed_slist_destroy (world->conflicts_by_name);
+
+        /* Free our channels */
+        for (iter = world->channels; iter != NULL; iter = iter->next) {
+            RCChannel *channel = iter->data;
+
+            /* Set the channel's world to NULL, so that there won't
+               be a dangling pointer if someone else is holding a reference
+               to this channel. */
+            channel->world = NULL;
+
+            rc_channel_unref (channel);
+        }
+        g_slist_free (world->channels);
+
+		g_free (world);
+
+	}
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
@@ -1035,7 +1038,8 @@ rc_world_get_package_with_constraint (RCWorld *world,
         RCPackageDep *dep;
         dep = rc_package_dep_new_from_spec (&(pkg->spec), RC_RELATION_EQUAL,
                                             FALSE, FALSE);
-        if (! rc_package_dep_verify_relation (constraint, dep))
+        if (! rc_package_dep_verify_relation (
+                rc_world_get_packman (world), constraint, dep))
             pkg = NULL;
         rc_package_dep_unref (dep);
     }
@@ -1228,6 +1232,7 @@ struct ForeachUpgradeInfo {
     RCPackageFn fn;
     gpointer user_data;
     int count;
+    RCWorld *world;
 };
 
 static void
@@ -1235,7 +1240,10 @@ foreach_upgrade_cb (RCPackage *package, gpointer user_data)
 {
     struct ForeachUpgradeInfo *info = user_data;
 
-    if (rc_package_spec_compare (info->original_package, package) < 0) {
+    if (rc_packman_version_compare (
+            info->world->packman, RC_PACKAGE_SPEC (info->original_package),
+            RC_PACKAGE_SPEC (package)) < 0)
+    {
         if (info->fn)
             info->fn (package, info->user_data);
         ++info->count;
@@ -1277,6 +1285,7 @@ rc_world_foreach_upgrade (RCWorld *world,
     info.fn = fn;
     info.user_data = user_data;
     info.count = 0;
+    info.world = world;
 
     rc_world_foreach_package_by_name (world,
                                       g_quark_to_string (package->spec.nameq),
@@ -1290,6 +1299,7 @@ rc_world_foreach_upgrade (RCWorld *world,
 struct BestUpgradeInfo {
     RCPackage *best_upgrade;
     gboolean subscribed_only;
+    RCWorld *world;
 };
 
 static void
@@ -1301,7 +1311,10 @@ get_best_upgrade_cb (RCPackage *package, gpointer user_data)
         if (!(package->channel && rc_channel_subscribed (package->channel)))
             return;
 
-    if (rc_package_spec_compare (info->best_upgrade, package) < 0) {
+    if (rc_packman_version_compare (
+            info->world->packman, RC_PACKAGE_SPEC (info->best_upgrade),
+            RC_PACKAGE_SPEC (package)) < 0)
+    {
         info->best_upgrade = package;
     }
 }
@@ -1338,6 +1351,7 @@ rc_world_get_best_upgrade (RCWorld *world, RCPackage *package,
 
     info.best_upgrade = package;
     info.subscribed_only = subscribed_only;
+    info.world = world;
 
     rc_world_foreach_upgrade (world, package, RC_WORLD_ANY_NON_SYSTEM, get_best_upgrade_cb, &info);
 
@@ -1478,7 +1492,8 @@ rc_world_foreach_providing_package (RCWorld *world, RCPackageDep *dep,
 
         if (pad
             && channel_match (channel, pad->package->channel)
-            && rc_package_dep_verify_relation (dep, pad->dep)) {
+            && rc_package_dep_verify_relation (
+                rc_world_get_packman (world), dep, pad->dep)) {
 
             /* If we have multiple identical packages in RCWorld, we want to only
                include the package that is installed and skip the rest. */
@@ -1566,7 +1581,8 @@ rc_world_check_providing_package (RCWorld *world, RCPackageDep *dep,
 
         if (pad
             && channel_match (channel, pad->package->channel)
-            && rc_package_dep_verify_relation (dep, pad->dep)) {
+            && rc_package_dep_verify_relation (
+                rc_world_get_packman (world), dep, pad->dep)) {
 
             /* Skip uninstalled dups */
             if ((! filter_dups_of_installed) 
@@ -1642,7 +1658,8 @@ rc_world_foreach_requiring_package (RCWorld *world, RCPackageDep *dep,
 
         if (pad
             && channel_match (channel, pad->package->channel)
-            && rc_package_dep_verify_relation (pad->dep, dep)) {
+            && rc_package_dep_verify_relation (
+                rc_world_get_packman (world), pad->dep, dep)) {
 
             /* Skip dups if one of them in installed. */
             if (rc_package_is_installed (pad->package)
@@ -1691,7 +1708,8 @@ rc_world_foreach_conflicting_package (RCWorld *world, RCPackageDep *dep,
 
         if (pad
             && channel_match (channel, pad->package->channel)
-            && rc_package_dep_verify_relation (pad->dep, dep)) {
+            && rc_package_dep_verify_relation (
+                rc_world_get_packman (world), pad->dep, dep)) {
 
             /* Skip dups if one of them in installed. */
             if (rc_package_is_installed (pad->package)

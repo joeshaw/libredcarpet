@@ -27,8 +27,6 @@
 #include "rc-package-spec.h"
 #include "rc-packman.h"
 
-extern RCPackman *das_global_packman;
-
 void
 rc_package_spec_init (RCPackageSpec *rcps,
                       const gchar *name,
@@ -150,7 +148,6 @@ guint rc_package_spec_hash (gconstpointer ptr)
     return ret;
 }
 
-#ifndef __GNUC__
 gint rc_package_spec_equal (gconstpointer a, gconstpointer b)
 {
     RCPackageSpec *one = RC_PACKAGE_SPEC (a);
@@ -191,25 +188,11 @@ gint rc_package_spec_equal (gconstpointer a, gconstpointer b)
 
     return (TRUE);
 }
-#endif
 
 gint rc_package_spec_not_equal (gconstpointer a, gconstpointer b)
 {
     return ! rc_package_spec_equal (a, b);
 }
-
-gint
-rc_package_spec_compare (void *a, void *b)
-{
-    RCPackage *apkg = a;
-    RCPackage *bpkg = b;
-
-    g_assert (das_global_packman);
-
-    return rc_packman_version_compare (das_global_packman, &apkg->spec,
-                                       &bpkg->spec);
-}
-
 
 static gint
 spec_find_by_name (gconstpointer a, gconstpointer b)

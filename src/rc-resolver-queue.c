@@ -407,10 +407,16 @@ rc_resolver_queue_split_first_branch (RCResolverQueue *queue,
                                                      FALSE /* ditto */);
 
                 if (priority != priority2 && spec->nameq == spec2->nameq) {
+                    RCPackman *packman;
+
+                    packman = rc_world_get_packman (
+                        rc_resolver_context_get_world (queue->context));
 
                     if (strcmp (spec->version, spec2->version) == 0
-                        || (priority < priority2 && rc_package_spec_compare (spec, spec2) == -1)
-                        || (priority > priority2 && rc_package_spec_compare (spec, spec2) == +1)) {
+                        || (priority < priority2 &&
+                            rc_packman_version_compare (packman, spec, spec2) < 0)
+                        || (priority > priority2 &&
+                            rc_packman_version_compare (packman, spec, spec2) > 0)) {
 
                         if (to_defer == NULL)
                             to_defer = g_hash_table_new (NULL, NULL);

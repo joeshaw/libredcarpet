@@ -751,7 +751,8 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
                             remove_package->spec.release,
                             RC_RELATION_EQUAL, FALSE, FALSE);
 
-                        if (rc_package_dep_verify_relation (obsolete, prov)) {
+                        if (rc_package_dep_verify_relation (
+                                packman, obsolete, prov)) {
                             obsoleted =
                                 g_slist_prepend (obsoleted, remove_package);
                         }

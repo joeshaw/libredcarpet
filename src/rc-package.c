@@ -277,24 +277,6 @@ rc_package_slist_sort_by_pretty_name (RCPackageSList *packages)
     return (g_slist_sort (packages, (GCompareFunc) pretty_name_package_strcmp));
 } /* rc_package_slist_sort_by_pretty_name */
 
-RCPackageSList *
-rc_package_slist_sort_by_spec (RCPackageSList *packages)
-{
-    return (g_slist_sort (packages, (GCompareFunc) rc_package_spec_compare));
-} /* rc_package_slist_sort_by_spec */
-
-static gboolean
-c_sucks_rc_package_spec_compare_reverse (gpointer a, gpointer b)
-{
-    return rc_package_spec_compare (b, a);
-}
-
-RCPackageSList *
-rc_package_slist_sort_by_spec_reverse (RCPackageSList *packages)
-{
-    return (g_slist_sort (packages, (GCompareFunc) c_sucks_rc_package_spec_compare_reverse));
-} /* rc_package_slist_sort_by_spec_reverse */
-
 static void
 util_hash_to_list (gpointer a, gpointer b, gpointer c)
 {
@@ -344,74 +326,3 @@ rc_package_get_latest_update(RCPackage *package)
 
     return (RCPackageUpdate *) package->history->data;
 } /* rc_package_get_latest_update */
-
-GSList *
-rc_package_slist_find_duplicates (RCPackageSList *pkgs)
-{
-    RCPackageSList *sorted_slist, *iter;
-    RCPackage *prev_pkg = NULL;
-    GSList *out_list = NULL;
-    RCPackageSList *cur_dupes = NULL;
-
-    sorted_slist = rc_package_slist_sort_by_name (g_slist_copy (pkgs));
-
-    iter = sorted_slist;
-    while (iter) {
-        RCPackage *cur_pkg = (RCPackage *) iter->data;
-
-        if (prev_pkg) {
-            if (prev_pkg->spec.nameq == cur_pkg->spec.nameq) {
-                if (!cur_dupes) {
-                    cur_dupes = g_slist_append (cur_dupes, prev_pkg);
-                }
-
-                cur_dupes = g_slist_append (cur_dupes, cur_pkg);
-            } else if (cur_dupes) {
-                out_list = g_slist_append (out_list, cur_dupes);
-                cur_dupes = NULL;
-            }
-        }
-
-        prev_pkg = cur_pkg;
-        iter = iter->next;
-    }
-
-    if (cur_dupes) {
-        /* This means that the last set of packages in the list was a duplicate */
-        out_list = g_slist_append (out_list, cur_dupes);
-    }
-
-    g_slist_free (sorted_slist);
-
-    return out_list;
-}
-
-RCPackageSList *
-rc_package_slist_remove_older_duplicates (RCPackageSList *packages, RCPackageSList **removed_packages)
-{
-    GSList *dupes;
-
-    packages = rc_package_slist_sort_by_spec (packages);
-    dupes = rc_package_slist_find_duplicates (packages);
-
-    while (dupes) {
-        RCPackageSList *cur_dupe = (RCPackageSList *) dupes->data;
-
-        cur_dupe = g_slist_reverse (cur_dupe);
-
-        while (cur_dupe) {
-            RCPackage *dup_pkg = (RCPackage *) cur_dupe->data;
-            if (cur_dupe->next) {
-                packages = g_slist_remove (packages, dup_pkg);
-                if (removed_packages) {
-                    *removed_packages = g_slist_prepend (*removed_packages, dup_pkg);
-                }
-            }
-            cur_dupe = cur_dupe->next;
-        }
-
-        dupes = dupes->next;
-    }
-
-    return packages;
-}

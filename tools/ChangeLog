@@ -1,3 +1,8 @@
+2002-08-28  Ian Peters  <itp@ximian.com>
+
+	* pkg-vercmp.c (main): rc_packman_version_compare instead of
+	rc_package_spec_compare
+
 2002-08-23  Joe Shaw  <joe@ximian.com>
 
 	* Makefile.am: Add (and install) pkg-vercmp.

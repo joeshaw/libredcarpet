@@ -163,16 +163,16 @@ rpm-stubs.h: $(RPM_STUBS) packer.pl
 CLEANFILES += rpm-stubs.h $(RPM_STUBS)
 
 rc-{rpm}.so.0:
-	./make_stub.sh rc-{rpm}.so.0 librpm.so.0
+	./make_stub.sh rc-{rpm}.so.0 librpm.so.0 libpopt.so.0
 
 rc-{rpm_rpmio}.so.0:
-	./make_stub.sh rc-{rpm_rpmio}.so.0 librpm.so.0 librpmio.so.0
+	./make_stub.sh rc-{rpm_rpmio}.so.0 librpm.so.0 librpmio.so.0 libpopt.so.0
 
 rc-{rpm_rpmio_rpmdb}-4.0.3.so:
-	./make_stub.sh rc-{rpm_rpmio_rpmdb}-4.0.3.so librpm-4.0.3.so librpmio-4.0.3.so librpmdb-4.0.3.so
+	./make_stub.sh rc-{rpm_rpmio_rpmdb}-4.0.3.so librpm-4.0.3.so librpmio-4.0.3.so librpmdb-4.0.3.so libpopt.so.0
 
 rc-{rpm_rpmio_rpmdb}-4.0.4.so:
-	./make_stub.sh rc-{rpm_rpmio_rpmdb}-4.0.4.so librpm-4.0.4.so librpmio-4.0.4.so librpmdb-4.0.4.so
+	./make_stub.sh rc-{rpm_rpmio_rpmdb}-4.0.4.so librpm-4.0.4.so librpmio-4.0.4.so librpmdb-4.0.4.so libpopt.so.0
 
 all-local: libredcarpet.a
 

@@ -651,9 +651,9 @@ main (int argc, char *argv[])
     rc_distro_parse_xml (NULL, 0);
 
     packman = rc_distman_new ();
-    rc_packman_set_packman (packman);
 
-    world = rc_world_new ();
+    world = rc_world_new (packman);
+    rc_set_world (world);
 
     if (argc != 2) {
         g_print ("Usage: deptestomatic testfile.xml\n");

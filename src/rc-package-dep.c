@@ -31,9 +31,6 @@
 #include "rc-packman.h"
 #include "xml-util.h"
 
-/* FIXME: This really needs to not happen */
-extern RCPackman *das_global_packman;
-
 /* Our pool of RCPackageDep structures.  We try to return a match from
  * here rather than allocating new ones, when possible */
 static GHashTable *global_deps = NULL;
@@ -425,7 +422,8 @@ rc_package_dep_array_free (RCPackageDepArray *array)
 }
 
 gboolean
-rc_package_dep_verify_relation (RCPackageDep *dep,
+rc_package_dep_verify_relation (RCPackman    *packman,
+                                RCPackageDep *dep,
                                 RCPackageDep *prov)
 {
     RCPackageSpec newdepspec;
@@ -453,7 +451,7 @@ rc_package_dep_verify_relation (RCPackageDep *dep,
     /* No specific version in the prov.  In RPM this means it will satisfy
      * any version, but debian it will not satisfy a versioned dep */
     if (unweak_provrel == RC_RELATION_ANY) {
-        if (rc_packman_get_capabilities(das_global_packman) &
+        if (rc_packman_get_capabilities(packman) &
             RC_PACKMAN_CAP_PROVIDE_ALL_VERSIONS)
         {
             return TRUE;
@@ -472,10 +470,10 @@ rc_package_dep_verify_relation (RCPackageDep *dep,
         newdepspec.version = newprovspec.version = NULL;
         newdepspec.release = newprovspec.release = NULL;
         newdepspec.nameq = newprovspec.nameq = 0;
-        compare_ret = rc_packman_version_compare (das_global_packman, 
+        compare_ret = rc_packman_version_compare (packman, 
                                                   &newprovspec, &newdepspec);
     } else if (prov->spec.has_epoch && prov->spec.epoch > 0 ) {
-        if (rc_packman_get_capabilities(das_global_packman) &
+        if (rc_packman_get_capabilities(packman) &
             RC_PACKMAN_CAP_LEGACY_EPOCH_HANDLING)
         {
             compare_ret = 0;
@@ -498,7 +496,7 @@ rc_package_dep_verify_relation (RCPackageDep *dep,
             newdepspec.release = newprovspec.release = NULL;
         }
         newdepspec.nameq = newprovspec.nameq = 0;
-        compare_ret = rc_packman_version_compare (das_global_packman,
+        compare_ret = rc_packman_version_compare (packman,
                                                   &newprovspec, &newdepspec);
     }
 

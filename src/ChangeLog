@@ -1,5 +1,62 @@
 2002-08-28  Ian Peters  <itp@ximian.com>
 
+	* Makefile.am: add libpopt.so to the shared stubs, as there are
+	undefined popt symbols in librpm.so.
+
+	* rc-package-spec.h: no more inline rc_package_spec_equal, no more
+	rc_package_spec_compare
+
+	* rc-package-spec.c: always define rc_package_spec_equal here.  No
+	more das_global_packman, yay!  No more rc_package_spec_compare,
+	either.
+
+	* rc-package.h, rc-package.c: removed unused functions
+	rc_package_slist_sort_by_spec,
+	rc_package_slist_sort_by_spec_reverse,
+	rc_pakcage_slist_find_duplicates, and
+	rc_packages_slist_remove_older_duplicates
+
+	* rc-package-dep.h, rc-package-dep.c
+	(rc_package_dep_verify_relation): there's no more
+	das_global_packman, pass a packman in instead
+
+	* rc-packman.h, rc-packman.c: no more rc_packman_set_packman or
+	rc_packman_set_packman
+
+	* rc-queue-item.c (install_item_cmp): use
+	rc_packman_version_compare instead of rc_package_spec_compare here
+	(uninstall_item_cmp): and here
+
+	* rc-resolver-queue.c (rc_resolver_queue_split_first_branch): and
+	here
+
+	* rc-world.c: add a global world for rc_get_world
+	(rc_world_register_packman): removed
+	(rc_set_world): added, set the world you get with rc_get_world
+	(rc_world_new): take and setup the packman here, because we don't
+	work very well without one
+	(struct ForeachUpgradeInfo): add a pointer to the world here
+	(foreach_upgrade_cb): use rc_packman_version_compare rather than
+	rc_package_spec_compare
+	(rc_world_foreach_upgrade): set the world
+	(struct BestUpgradeInfo): add a pointer to the world here
+	(get_best_upgrade_cb): use rc_packman_version_compare rather than
+	rc_package_spec_compare
+	(rc_world_get_best_upgrade): set the world
+	(rc_world_get_package_with_constraint):
+	rc_package_dep_verify_relation needs a packman
+	(rc_world_check_providing_package): here too
+	(rc_world_foreach_requiring_package): and here
+	(rc_world_foreach_conflicting_package): and here
+
+	* rc-world.h: remove rc_world_register_packman, add rc_set_world,
+	modify rc_world_new declaration
+
+	* rc-rpmman.c (rc_rpmman_transact): rc_package_dep_verify_relation
+	needs a packman
+	
+2002-08-28  Ian Peters  <itp@ximian.com>
+
 	* rc-debman.c: reinstate the hack in lesser form -- interactive
 	debian packages cause the process to be killed, and an error set.
 
