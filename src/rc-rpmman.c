@@ -29,7 +29,7 @@
 #include <rpm/misc.h>
 #include <rpm/header.h>
 
-#if 1
+#if 0
 #    define RPM_ROOTDIR "/home/itp/rpm"
 #else
 #    define RPM_ROOTDIR "/"
