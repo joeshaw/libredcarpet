@@ -1692,8 +1692,8 @@ rc_rpmman_read_header (RCRpmman *rpmman, Header header, RCPackage *package)
                             &count);
     if (count && (type == RPM_STRING_TYPE) && tmpc && tmpc[0]) {
 #ifdef REDHAT_OPTERON
-        if (package->arch != RC_ARCH_X86_64 ||
-            package->arch != RC_ARCH_IA32E ||
+        if (package->arch != RC_ARCH_X86_64 &&
+            package->arch != RC_ARCH_IA32E &&
             package->arch != RC_ARCH_NOARCH) {
             char *new_name = g_strdup_printf ("%s-32bit", tmpc);
             package->spec.nameq = g_quark_from_string (new_name);
