@@ -1196,7 +1196,7 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
             NULL
         };
 
-#ifdef RPMTAG_BASENAMES
+#ifdef RPMTAG_DIRNAMES
         gchar **basenames, **dirnames;
         guint32 *dirindexes;
 
