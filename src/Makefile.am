@@ -89,14 +89,12 @@ CLEANFILES += rc-dpkg-helper.so
 endif
 
 rc-dpkg-helper.so: $(srcdir)/rc-dpkg-helper.c
-if ENABLE_DPKG
 	gcc -fPIC -c -o rc-dpkg-helper.o $(srcdir)/rc-dpkg-helper.c
 	ld -soname rc-dpkg-helper -shared -o rc-dpkg-helper.so rc-dpkg-helper.o
-else
-	touch rc-dpkg-helper.so
-endif
 
 if ENABLE_RPM
+if STATIC_RPM
+else
 rpmhelperdir = $(libdir)/redcarpet
 rpmhelper_DATA = \
 	rc-{rpm}.so.0 \
@@ -104,6 +102,7 @@ rpmhelper_DATA = \
 	rc-{rpm_rpmio_rpmdb}-4.0.3.so \
 	rc-{rpm_rpmio_rpmdb}.so
 CLEANFILES += rc-{rpm}.so.0 rc-{rpm_rpmio}.so.0 rc-{rpm_rpmio_rpmdb}-4.0.3.so rc-{rpm_rpmio_rpmdb}.so
+endif
 endif
 
 rc-{rpm}.so.0:

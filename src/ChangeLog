@@ -1,5 +1,11 @@
 2001-10-04  Ian Peters  <itp@ximian.com>
 
+	* Makefile.am: only build rc-dpkg-helper.so when dpkg support
+	enabled, only build the rpm helpers when non-static rpm support
+	enabled
+
+2001-10-04  Ian Peters  <itp@ximian.com>
+
 	* rc-rpmman.c, Makefile.am: change it one more time
 
 2001-10-04  Ian Peters  <itp@ximian.com>
