@@ -1,3 +1,8 @@
+2002-07-10  Joe Shaw  <joe@ximian.com>
+
+	* rc-util.c (rc_compress_memory): Added.  Returns a zlib
+	compressed byte array, like rc_uncompress_memory().
+
 2002-07-09  Joe Shaw  <joe@ximian.com>
 
 	* rc-world.c (add_channel_xml_cb): Include the channel name and ID

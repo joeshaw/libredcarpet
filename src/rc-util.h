@@ -66,6 +66,10 @@ gint rc_uncompress_memory (guint8 *input_buffer,
                            guint32 input_length,
                            GByteArray **out_ba);
 
+gint rc_compress_memory (guint8 *input_buffer,
+                         guint32 input_length,
+                         GByteArray **out_ba);
+
 xmlDoc *rc_uncompress_xml (guint8 *input_buffer,
                            guint32 input_length);
 

@@ -351,6 +351,7 @@ rc_uncompress_memory (guint8 *input_buffer, guint32 input_length,
 
     g_return_val_if_fail (input_buffer, -1);
     g_return_val_if_fail (input_length, -2);
+    g_return_val_if_fail (out_ba, -3);
 
     ba = g_byte_array_new ();
 
@@ -401,6 +402,67 @@ rc_uncompress_memory (guint8 *input_buffer, guint32 input_length,
     *out_ba = ba;
     return zret;
 }
+
+gint
+rc_compress_memory (guint8 *input_buffer, guint input_length,
+                    GByteArray **out_ba)
+{
+    z_stream zs;
+    gchar *outbuf = NULL;
+    GByteArray *ba = NULL;
+    guint32 data_len = 0;
+    int zret;
+
+    g_return_val_if_fail (input_buffer, -1);
+    g_return_val_if_fail (input_length, -2);
+    g_return_val_if_fail (out_ba, -3);
+
+    ba = g_byte_array_new ();
+
+    zs.next_in = input_buffer;
+    zs.avail_in = input_length;
+    zs.zalloc = NULL;
+    zs.zfree = NULL;
+    zs.opaque = NULL;
+
+    outbuf = g_malloc (10000);
+    zs.next_out = outbuf;
+    zs.avail_out = 10000;
+
+    deflateInit (&zs, Z_DEFAULT_COMPRESSION);
+
+    while (1) {
+        if (zs.avail_in)
+            zret = deflate (&zs, Z_SYNC_FLUSH);
+        else
+            zret = deflate (&zs, Z_FINISH);
+            
+        if (zret != Z_OK && zret != Z_STREAM_END)
+            break;
+
+        g_byte_array_append (ba, outbuf, 10000 - zs.avail_out);
+        data_len += 10000 - zs.avail_out;
+        zs.next_out = outbuf;
+        zs.avail_out = 10000;
+
+        if (zret == Z_STREAM_END)
+            break;
+    }
+
+    deflateEnd (&zs);
+    g_free (outbuf);
+
+    if (zret != Z_STREAM_END) {
+        g_warning ("libz deflate failed! (%d)", zret);
+        g_byte_array_free (ba, TRUE);
+        ba = NULL;
+    } else {
+        zret = 0;
+    }
+
+    *out_ba = ba;
+    return zret;
+} /* rc_compress_memory */
 
 xmlDoc *
 rc_uncompress_xml (guint8 *input_buffer,
