@@ -1,5 +1,11 @@
 2002-07-26  Ian Peters  <itp@ximian.com>
 
+	* rc-rpmman.c, rc-debman.c (check_database): pass a bool to
+	determine whether to emit the database_changed signal at all.
+	This is always set to FALSE except in the timeout function
+
+2002-07-26  Ian Peters  <itp@ximian.com>
+
 	* rc-rpmman.c (open_database): rescan the db mtime before
 	reenabling the db watch timeout
 

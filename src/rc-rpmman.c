@@ -124,7 +124,7 @@ rc_rpm_read (RCRpmman *rpmman, void *buf, size_t size, size_t nmemb, FD_t fd)
 }
 
 static void
-check_database (RCRpmman *rpmman)
+check_database (RCRpmman *rpmman, gboolean signal)
 {
     struct stat buf;
 
@@ -134,7 +134,8 @@ check_database (RCRpmman *rpmman)
         stat ("/var/lib/rpm/Packages", &buf);
 
     if (buf.st_mtime != rpmman->db_mtime) {
-        g_signal_emit_by_name (RC_PACKMAN (rpmman), "database_changed");
+        if (signal)
+            g_signal_emit_by_name (RC_PACKMAN (rpmman), "database_changed");
         rpmman->db_mtime = buf.st_mtime;
     }
 }
@@ -142,7 +143,7 @@ check_database (RCRpmman *rpmman)
 static gboolean
 database_check_func (RCRpmman *rpmman)
 {
-    check_database (rpmman);
+    check_database (rpmman, TRUE);
 
     return TRUE;
 }
@@ -153,7 +154,7 @@ close_database (RCRpmman *rpmman)
     if (getenv ("RC_RPM_NO_DB"))
         return;
 
-    check_database (rpmman);
+    check_database (rpmman, FALSE);
     rpmman->db_watcher_cb =
         g_timeout_add (5000, (GSourceFunc) database_check_func,
                        (gpointer) rpmman);
@@ -2737,7 +2738,7 @@ rc_rpmman_init (RCRpmman *obj)
 
     /* initialize the mtime */
     obj->db_mtime = 0;
-    check_database (obj);
+    check_database (obj, FALSE);
 
     /* Watch for changes */
     obj->db_watcher_cb =
