@@ -1,3 +1,10 @@
+2001-04-18  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c (split_rpm): close the payload file when we're done
+	writing to it.  This will fix a fd leak, as well as allowing the
+	unlink to actually succeed, meaning that the disk space will be
+	returned to the user.  Reported to me from tigert via joe.
+
 2001-04-18  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c: oops, get rid of some fprintfs

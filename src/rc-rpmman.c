@@ -1740,6 +1740,8 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
                 return (FALSE);
             }
         }
+
+        close (payload_fd);
     }
 
     rc_rpm_close (rpmman, rpm_fd);
