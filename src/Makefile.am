@@ -88,17 +88,17 @@ libredcarpet_a_SOURCES =		\
 gpgdir = $(datadir)/redcarpet
 gpg_DATA = red-carpet.gpg
 
-EXTRA_DIST = $(rpm_sources) $(dpkg_sources) dpkg-helper.c $(gpg_DATA)
+EXTRA_DIST = $(rpm_sources) $(dpkg_sources) rc-dpkg-helper.c $(gpg_DATA)
 
 helperdir = $(datadir)/redcarpet
 helper_DATA = \
-	dpkg-helper.so
+	rc-dpkg-helper.so
 
-all-local: dpkg-helper.so
+all-local: rc-dpkg-helper.so
 
-dpkg-helper.so: dpkg-helper.c
-	gcc -fPIC -c -o dpkg-helper.o dpkg-helper.c
-	ld -soname dpkg-helper -shared -o dpkg-helper.so dpkg-helper.o
+rc-dpkg-helper.so: rc-dpkg-helper.c
+	gcc -fPIC -c -o rc-dpkg-helper.o rc-dpkg-helper.c
+	ld -soname rc-dpkg-helper -shared -o rc-dpkg-helper.so rc-dpkg-helper.o
 
 clean-local:
-	rm -f dpkg-helper.so
+	rm -f rc-dpkg-helper.so
