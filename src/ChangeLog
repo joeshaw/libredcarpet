@@ -1,3 +1,8 @@
+2001-09-30  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c: don't try to add packages if all we're doing is
+	removing them.
+
 2001-09-28  Joe Shaw  <joe@ximian.com>
 
 	* rc-debman.c (do_unpack): Don't change the "--no-act" parameter
@@ -868,7 +873,6 @@
 	mad at me.  It's not like rpmlib is ever going to free this shit
 	anyway.
 
->>>>>>> 1.161
 2001-04-02  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c: Fixed an unreported conflict case. Oops.
