@@ -2452,11 +2452,11 @@ rc_rpmman_init (RCRpmman *obj)
     gchar **rpm_version;
     gchar *so_file;
     const char *objects[] = {
-    "(rpm).so.0",
-    "(rpm_rpmio).so.0",
-    "(rpm_rpmio_rpmdb)-4.0.3.so",
-    "(rpm_rpmio_rpmdb).so",
-    NULL };
+        "(rpm).so.0",
+        "(rpm_rpmio).so.0",
+        "(rpm_rpmio_rpmdb)-4.0.3.so",
+        "(rpm_rpmio_rpmdb).so",
+        NULL };
     const char **iter;
 
 #ifdef STATIC_RPM
