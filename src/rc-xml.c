@@ -731,7 +731,7 @@ rc_package_sax_context_done(RCPackageSAXContext *ctx)
     RCPackageSList *all_packages = NULL;
 
     if (ctx->processing)
-        xmlParseChunk(ctx->xml_context, "\0", 1, 1);
+        xmlParseChunk(ctx->xml_context, NULL, 0, 1);
 
     if (ctx->xml_context)
         xmlFreeParserCtxt(ctx->xml_context);

@@ -482,7 +482,6 @@ rc_gunzip_memory (const guint8 *input_buffer, guint32 input_length,
         g_byte_array_free (ba, TRUE);
         ba = NULL;
     } else {
-        g_byte_array_append (ba, "", 1);
         zret = 0;
     }
 
@@ -621,7 +620,6 @@ rc_bunzip2_memory (const guint8 *input_buffer, guint32 input_length,
         g_byte_array_free (ba, TRUE);
         ba = NULL;
     } else {
-        g_byte_array_append (ba, "", 1);
         bzret = 0;
     }
 
@@ -825,7 +823,7 @@ rc_parse_xml_from_buffer (const guint8 *input_buffer,
         if (rc_uncompress_memory (input_buffer, input_length, &buf)) {
             return NULL;
         }
-        doc = xmlParseMemory (buf->data, buf->len - 1);
+        doc = xmlParseMemory (buf->data, buf->len);
         g_byte_array_free (buf, TRUE);
     } else {
         doc = xmlParseMemory (input_buffer, input_length);

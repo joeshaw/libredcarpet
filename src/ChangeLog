@@ -1,3 +1,17 @@
+2003-09-09  Joe Shaw  <joe@ximian.com>
+
+	* rc-package-set.[ch]: Kill off this very, very old and
+	confusingly irrelevant code.
+
+	* rc-util.c (rc_gunzip_memory, rc_bunzip2_memory): Don't append a
+	nul byte to the end of decompressed data.
+	(rc_parse_xml_from_buffer): Call xmlParseMemory() on the whole
+	block of data, not len - 1.
+
+	* rc-xml.c (rc_package_sax_context_done): Don't tack on a nul byte
+	at the end of the block of data, just call xmlParseChunk() with
+	NULL data and a length of 0 to end the parsing.  Fixes #48299.
+
 2003-09-09  Frank Belew <frb@ximian.com>
 
 	* rc-util.c: include stdio.h for older bz2 headers
