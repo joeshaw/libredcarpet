@@ -1,3 +1,11 @@
+2003-09-19  Joe Shaw  <joe@ximian.com>
+
+	* rc-world-multi.c (touch_all_sequence_numbers): Touches all four
+	world sequence numbers.
+	(rc_world_multi_add_subworld): After adding a subworld, touch all
+	the sequence numbers.
+	(rc_world_multi_remove_subworld): Ditto.
+
 2003-09-18  Joe Shaw  <joe@ximian.com>
 
 	* rc-subscription.c (rc_subscription_match): A NULL legacy ID is

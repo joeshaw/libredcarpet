@@ -777,6 +777,15 @@ rc_world_multi_new (void)
     return g_object_new (RC_TYPE_WORLD_MULTI, NULL);
 }
 
+static void
+touch_all_sequence_numbers (RCWorldMulti *multi)
+{
+    rc_world_touch_package_sequence_number (RC_WORLD (multi));
+    rc_world_touch_channel_sequence_number (RC_WORLD (multi));
+    rc_world_touch_subscription_sequence_number (RC_WORLD (multi));
+    rc_world_touch_lock_sequence_number (RC_WORLD (multi));
+}
+
 void
 rc_world_multi_add_subworld (RCWorldMulti *multi,
                              RCWorld      *subworld)
@@ -788,6 +797,8 @@ rc_world_multi_add_subworld (RCWorldMulti *multi,
 
     info = subworld_info_new (subworld, multi);
     multi->subworlds = g_slist_prepend (multi->subworlds, info);
+
+    touch_all_sequence_numbers (multi);
 }
 
 void
@@ -805,6 +816,7 @@ rc_world_multi_remove_subworld (RCWorldMulti *multi,
         if (info->subworld == subworld) {
             subworld_info_free (info);
             multi->subworlds = g_slist_remove_link (multi->subworlds, iter);
+            touch_all_sequence_numbers (multi);
             return;
         }
     }
