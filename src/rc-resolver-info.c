@@ -134,6 +134,12 @@ rc_resolver_info_to_str (RCResolverInfo *info)
         g_free (pkgs);
         break;
 
+    case RC_RESOLVER_INFO_TYPE_OBSOLETES:
+        pkgs = rc_resolver_info_packages_to_str (info, FALSE);
+        msg = g_strdup_printf ("replaces %s", pkgs);
+        g_free (pkgs);
+        break;
+
     case RC_RESOLVER_INFO_TYPE_DEPENDS_ON:
         pkgs = rc_resolver_info_packages_to_str (info, FALSE);
         msg = g_strdup_printf ("depended on %s", pkgs);
@@ -380,6 +386,27 @@ rc_resolver_info_conflicts_with_new (RCPackage *package,
 
     info->package_list = g_slist_prepend (info->package_list,
                                           conflicts_with);
+
+    return info;
+}
+
+RCResolverInfo *
+rc_resolver_info_obsoletes_new (RCPackage *package,
+                                RCPackage *obsoletes)
+{
+    RCResolverInfo *info;
+
+    g_return_val_if_fail (package != NULL, NULL);
+    g_return_val_if_fail (obsoletes != NULL, NULL);
+
+    info = g_new0 (RCResolverInfo, 1);
+    
+    info->type     = RC_RESOLVER_INFO_TYPE_OBSOLETES;
+    info->package  = package;
+    info->priority = RC_RESOLVER_INFO_PRIORITY_USER;
+
+    info->package_list = g_slist_prepend (info->package_list,
+                                          obsoletes);
 
     return info;
 }

@@ -1,3 +1,15 @@
+2002-07-25  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-queue-item.c (conflict_process_cb): If this is actually an
+	obsolete, log an obsoletes info item instead of a conflicts-with
+	info item.
+
+	* rc-resolver-info.c (rc_resolver_info_obsoletes_new): Added.
+	(rc_resolver_info_to_str): Added handling of _TYPE_OBSOLETES.
+
+	* rc-resolver-info.h: Added RC_RESOLVER_INFO_TYPE_OBSOLETES to
+	RCResolverInfoType enum.
+
 2002-07-25  Ian Peters  <itp@ximian.com>
 
 	* rc-package.h, rc-package.c (rc_package_slist_copy): added

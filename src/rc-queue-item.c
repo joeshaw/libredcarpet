@@ -1168,7 +1168,11 @@ conflict_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data
 
         ((RCQueueItem_Uninstall *)uninstall)->due_to_obsolete = info->actually_an_obsolete;
         
-        log_info = rc_resolver_info_conflicts_with_new (package, info->conflicting_package);
+        if (info->actually_an_obsolete)
+            log_info = rc_resolver_info_obsoletes_new (package, info->conflicting_package);
+        else
+            log_info = rc_resolver_info_conflicts_with_new (package, info->conflicting_package);
+
         rc_queue_item_add_info (uninstall, log_info);
         
         *info->new_items = g_slist_prepend (*info->new_items, uninstall);
