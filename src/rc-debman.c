@@ -21,7 +21,7 @@
 #include "rc-packman-private.h"
 #include "rc-debman.h"
 #include "rc-debman-private.h"
-#include "rc-common.h"
+#include "rc-debug.h"
 #include "rc-util.h"
 #include "rc-line-buf.h"
 #include "rc-deps.h"

@@ -32,6 +32,8 @@ endif
 
 libredcarpet_a_SOURCES =		\
 	libredcarpet.h			\
+	rc-debug.c			\
+	rc-debug.h			\
 	rc-package-spec.c		\
 	rc-package-spec.h		\
 	rc-package-dep.c		\
@@ -55,7 +57,6 @@ libredcarpet_a_SOURCES =		\
 	rc-distro.h			\
         rc-deps.c                       \
         rc-deps.h                       \
-	rc-common.h			\
         rc-distman.c                    \
         rc-distman.h                    \
         rc-packman.c                    \

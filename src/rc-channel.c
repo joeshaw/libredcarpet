@@ -25,11 +25,11 @@
 
 #include <gnome-xml/tree.h>
 
-#include <libredcarpet/xml-util.h>
-#include <libredcarpet/rc-channel.h>
-#include <libredcarpet/rc-common.h>
-#include <libredcarpet/rc-util.h>
-#include <libredcarpet/rc-package-info.h>
+#include "xml-util.h"
+#include "rc-channel.h"
+#include "rc-util.h"
+#include "rc-package-info.h"
+#include "rc-debug.h"
 
 RCSubchannel *
 rc_subchannel_new (void)
