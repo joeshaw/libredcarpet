@@ -1,5 +1,9 @@
 2003-04-23  Jon Trowbridge  <trow@ximian.com>
 
+	* rc-resolver-queue.c (rc_resolver_queue_add_package_to_verify):
+	Create require items for each package set's children.  This
+	allows verify to re-assemble broken package sets.
+
 	* rc-package-dep.c (rc_package_dep_spew_cache): Added; this is a
 	debugging function meant to help find memory leaks.
 
