@@ -1039,7 +1039,7 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
     g_return_val_if_fail (g_slist_length (packages) > 0, TRUE);
 
     args = g_slist_append (args, g_strdup ("dpkg"));
-    args = g_slist_append (args, g_strdup ("--auto-deconfigure");
+    args = g_slist_append (args, g_strdup ("--auto-deconfigure"));
     args = g_slist_append (args, g_strdup ("--unpack"));
 
     argvl = make_unpack_commands (args, packages);
