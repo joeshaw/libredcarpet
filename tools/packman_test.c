@@ -93,12 +93,27 @@ transact_start_cb (RCPackman *packman, gint total)
 }
 
 static void
-transact_step_cb (RCPackman *packman, gboolean install, gchar *name,
-                     gint seqno)
+transact_step_cb (RCPackman *packman, gint seqno, RCPackmanStep step,
+                  gchar *name)
 {
-    printf ("%s %s (package %d)\n",
-            install ? "Installing" : "Removing",
-            name ? name : "something", seqno);
+    const char *oper;
+
+    switch (step) {
+    case RC_PACKMAN_STEP_CONFIGURE:
+        oper = "Configuring";
+        break;
+    case RC_PACKMAN_STEP_INSTALL:
+        oper = "Installing";
+        break;
+    case RC_PACKMAN_STEP_REMOVE:
+        oper = "Removing";
+        break;
+    default:
+        oper = "Frobbing";
+        break;
+    }
+
+    printf ("%s %s (step %d)\n", oper, name ? name : "something", seqno);
 }
 
 static void
@@ -111,31 +126,6 @@ static void
 transact_done_cb (RCPackman *packman)
 {
     printf ("Transaction done.\n");
-}
-
-static void
-configure_start_cb (RCPackman *packman, gint total)
-{
-    printf ("About to configure %d packages\n", total);
-}
-
-static void
-configure_step_cb (RCPackman *packman, gchar *name, gint seqno)
-{
-    printf ("Configuring %s (package %d)\n",
-            name ? name : "something", seqno);
-}
-
-static void
-configure_progress_cb (RCPackman *packman, gint amount, gint total)
-{
-    printf ("  (%d of %d complete)\n", amount, total);
-}
-
-static void
-configure_done_cb (RCPackman *p)
-{
-    printf ("Configure done.\n");
 }
 
 static gchar **
@@ -209,22 +199,22 @@ pretty_print_pkg (RCPackage *pkg)
     printf ("Description:\n%s\n\n", pkg->description);
 
     for (iter = pkg->requires; iter; iter = iter->next) {
-        RCPackageDepItem *di = ((RCPackageDep *)iter->data)->data;
-        printf ("Requires: %s %s %d %s %s\n", di->spec.name,
-                rc_package_relation_to_string (di->relation, FALSE),
-                di->spec.epoch, di->spec.version, di->spec.release);
+        RCPackageDep *dep = (RCPackageDep *)(iter->data);
+        printf ("Requires: %s %s %d %s %s\n", dep->spec.name,
+                rc_package_relation_to_string (dep->relation, FALSE),
+                dep->spec.epoch, dep->spec.version, dep->spec.release);
     }
     for (iter = pkg->provides; iter; iter = iter->next) {
-        RCPackageDepItem *di = ((RCPackageDep *)iter->data)->data;
-        printf ("Provides: %s %s %d %s %s\n", di->spec.name,
-                rc_package_relation_to_string (di->relation, FALSE),
-                di->spec.epoch, di->spec.version, di->spec.release);
+        RCPackageDep *dep = (RCPackageDep *)(iter->data);
+        printf ("Provides: %s %s %d %s %s\n", dep->spec.name,
+                rc_package_relation_to_string (dep->relation, FALSE),
+                dep->spec.epoch, dep->spec.version, dep->spec.release);
     }
     for (iter = pkg->conflicts; iter; iter = iter->next) {
-        RCPackageDepItem *di = ((RCPackageDep *)iter->data)->data;
-        printf ("Conflicts: %s %s %d %s %s\n", di->spec.name,
-                rc_package_relation_to_string (di->relation, FALSE),
-                di->spec.epoch, di->spec.version, di->spec.release);
+        RCPackageDep *dep = (RCPackageDep *)(iter->data);
+        printf ("Conflicts: %s %s %d %s %s\n", dep->spec.name,
+                rc_package_relation_to_string (dep->relation, FALSE),
+                dep->spec.epoch, dep->spec.version, dep->spec.release);
     }
 }
 
@@ -610,14 +600,6 @@ int main (int argc, char **argv)
                         GTK_SIGNAL_FUNC (transact_progress_cb), NULL);
     gtk_signal_connect (GTK_OBJECT (p), "transact_done",
                         GTK_SIGNAL_FUNC (transact_done_cb), NULL);
-    gtk_signal_connect (GTK_OBJECT (p), "configure_start",
-                        GTK_SIGNAL_FUNC (configure_start_cb), NULL);
-    gtk_signal_connect (GTK_OBJECT (p), "configure_step",
-                        GTK_SIGNAL_FUNC (configure_step_cb), NULL);
-    gtk_signal_connect (GTK_OBJECT (p), "configure_progress",
-                        GTK_SIGNAL_FUNC (configure_progress_cb), NULL);
-    gtk_signal_connect (GTK_OBJECT (p), "configure_done",
-                        GTK_SIGNAL_FUNC (configure_done_cb), NULL);
 
     rl_readline_name = "packman_test";
     rl_attempted_completion_function = (CPPFunction *)packman_completion;
