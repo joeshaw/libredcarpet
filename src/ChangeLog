@@ -1,3 +1,13 @@
+2001-01-30  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* Makefile.am: use $srcdir for dpkg-helper to make distcheck
+	correctly.
+
+	* rc-deps.c: EEEEK. What was I thinking? Unbreak deps on redhat
+	(and possibly lots on debian too).
+
+	* rc-package-info.c: minor align fix
+
 2001-01-30  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c (vercmp): try again

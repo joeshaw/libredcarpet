@@ -84,8 +84,8 @@ helper_DATA = \
 
 all-local: rc-dpkg-helper.so
 
-rc-dpkg-helper.so: rc-dpkg-helper.c
-	gcc -fPIC -c -o rc-dpkg-helper.o rc-dpkg-helper.c
+rc-dpkg-helper.so: $(srcdir)/rc-dpkg-helper.c
+	gcc -fPIC -c -o rc-dpkg-helper.o $(srcdir)/rc-dpkg-helper.c
 	ld -soname rc-dpkg-helper -shared -o rc-dpkg-helper.so rc-dpkg-helper.o
 
 clean-local:
