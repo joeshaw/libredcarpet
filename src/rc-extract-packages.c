@@ -865,6 +865,8 @@ rc_extract_packages_from_directory (const char *path,
 
         g_free (file_path);
     }
+
+    g_dir_close (dir);
    
     info.callback = callback;
     info.user_data = user_data;

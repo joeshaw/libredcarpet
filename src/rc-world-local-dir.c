@@ -36,6 +36,22 @@
 
 static RCWorldServiceClass *parent_class;
 
+static void
+rc_world_local_dir_freeze (RCWorldLocalDir *ldir)
+{
+    g_return_if_fail (ldir->frozen == FALSE);
+
+    ldir->frozen = TRUE;
+}
+
+static void
+rc_world_local_dir_thaw (RCWorldLocalDir *ldir)
+{
+    g_return_if_fail (ldir->frozen == TRUE);
+
+    ldir->frozen = FALSE;
+}
+
 static gboolean
 add_pkg_cb (RCPackage *pkg, gpointer user_data)
 {
@@ -52,14 +68,18 @@ rc_world_local_dir_populate (RCWorldLocalDir *ldir,
 
     g_assert (RC_IS_WORLD_LOCAL_DIR (ldir));
 
+    rc_world_local_dir_freeze (ldir);
+
     if (stat (ldir->path, &statbuf)) {
         rc_debug (RC_DEBUG_LEVEL_WARNING, "Can't stat %s", ldir->path);
         return FALSE;
     }
 
     if (populate_only_if_mtime_has_changed) {
-        if (difftime (ldir->mtime, statbuf.st_mtime) == 0)
+        if (difftime (ldir->mtime, statbuf.st_mtime) == 0) {
+            rc_world_local_dir_thaw (ldir);
             return TRUE;
+        }
 
         rc_debug (RC_DEBUG_LEVEL_INFO,
                   "%s appears to have changed; re-scanning", ldir->path);
@@ -85,6 +105,8 @@ rc_world_local_dir_populate (RCWorldLocalDir *ldir,
                                         add_pkg_cb, ldir);
 
     ldir->mtime = statbuf.st_mtime;
+
+    rc_world_local_dir_thaw (ldir);
 
     /* FIXME: actually return whether or not the operation succeeded */
     return TRUE;
@@ -127,27 +149,80 @@ rc_world_local_dir_sync_fn (RCWorld *world, RCChannel *channel)
        you need to either do a full refresh.  Or just touch any
        file in the directory top-level... RC_RECURSIVE leaps to
        mind as a good candidate.
+
+       We have to check to make sure we're not frozen; populating
+       the local store causes the world to sync and this function
+       to be called.  Otherwise, we get into a nasty infinite
+       recursion.
     */
-      
-    return rc_world_local_dir_populate (ldir, TRUE);
+
+    if (ldir->frozen)
+        return TRUE;
+    else
+        return rc_world_local_dir_populate (ldir, TRUE);
+}
+
+static char *
+extract_value (char *token)
+{
+    char *eq, *value;
+
+    eq = strchr (token, '=');
+
+    if (!eq)
+        return NULL;
+
+    /* Move past the equals sign and strip leading whitespace */
+    value = g_strchug (eq + 1);
+
+    return g_strdup (value);
 }
 
 static gboolean
 rc_world_local_dir_assemble_fn (RCWorldService *service)
 {
     RCWorldLocalDir *ldir = RC_WORLD_LOCAL_DIR (service);
-    char *path;
+    char *query_part, *path;
+    char *name = NULL, *alias = NULL;
 
-    /* Move past "file://" */
-    path = service->url + 7;
+    /* Find the path.  The "+ 7" part moves past "file://" */
+    query_part = strchr (service->url + 7, '?');
 
-    if (!g_file_test (path, G_FILE_TEST_IS_DIR))
+    if (query_part)
+        path = g_strndup (service->url + 7, query_part - service->url - 7);
+    else
+        path = g_strdup (service->url + 7);
+
+    if (!g_file_test (path, G_FILE_TEST_IS_DIR)) {
+        g_free (path);
         return FALSE;
+    }
 
-    service->name = g_path_get_basename (path);
-    service->unique_id = g_path_get_basename (path);
+    if (query_part) {
+        char **tokens, **t;
 
-    ldir->path = g_strdup (path);
+        /* + 1 to move past the "?" */
+        tokens = g_strsplit (query_part + 1, ";", 0);
+
+        for (t = tokens; t && *t; t++) {
+            if (g_strncasecmp (*t, "name", 4) == 0) {
+                name = extract_value (*t);
+            } else if (g_strncasecmp (*t, "alias", 5) == 0) {
+                alias = extract_value (*t);
+            }
+        }
+    }
+
+    if (!name)
+        name = g_path_get_basename (path);
+
+    if (!alias)
+        alias = g_path_get_basename (path);
+
+    service->name = name;
+    service->unique_id = alias;
+
+    ldir->path = path;
     ldir->alias = g_path_get_basename (path);
     ldir->description = g_strdup_printf ("Files from %s", path);
     ldir->mtime = 0;

@@ -50,6 +50,8 @@ struct _RCWorldLocalDir {
     char *description;
     time_t mtime;
     RCChannel *channel;
+
+    gboolean frozen;
 };
 
 struct _RCWorldLocalDirClass {
