@@ -636,7 +636,6 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         GString *report = g_string_new ("");
 
         for (count = 0; count < probs->numProblems; count++) {
-#if RPM_VERSION >= 40002
             if (rpmman->version >= 40002) {
                 g_string_sprintfa (
                     report, "\n%s",
@@ -644,19 +643,8 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
             } else {
                 g_string_sprintfa (
                     report, "\n%s",
-                    rpmman->rpmProblemString (*((rpmProblem *)problem)));
+                    rpmman->rpmProblemStringOld (*problem));
             }
-#else
-            if (rpmman->version >= 40002) {
-                g_string_sprintfa (
-                    report, "\n%s",
-                    rpmman->rpmProblemString ((rpmProblem *)&problem));
-            } else {
-                g_string_sprintfa (
-                    report, "\n%s",
-                    rpmman->rpmProblemString (problem));
-            }
-#endif
             problem++;
         }
 
@@ -2168,6 +2156,7 @@ load_fake_syms (RCRpmman *rpmman)
     rpmman->rpmdbOpen = &rpmdbOpen;
     rpmman->rpmdbClose = &rpmdbClose;
     rpmman->rpmProblemString = &rpmProblemString;
+    rpmman->rpmProblemStringOld = &rpmProblemString;
 #if 0
     rpmman->rpmGetRpmlibProvides = &rpmGetRpmlibProvides;
 #endif
@@ -2311,6 +2300,10 @@ load_rpm_syms (RCRpmman *rpmman)
                           ((gpointer)&rpmman->rpmProblemString))) {
         return (FALSE);
     }
+    if (!g_module_symbol (rpmman->rpm_lib, "rpmProblemString",
+                          ((gpointer)&rpmman->rpmProblemStringOld))) {
+        return (FALSE);
+    }
 #if 0
     if (!g_module_symbol (rpmman->rpm_lib, "rpmGetRpmlibProvides",
                           ((gpointer)&rpmman->rpmGetRpmlibProvides))) {
@@ -2428,6 +2421,12 @@ rc_rpmman_init (RCRpmman *obj)
     int flags;
     gchar **rpm_version;
     gchar *so_file;
+    const char *objects[] = {
+        "rc-rpm-helper-1.so",
+        "rc-rpm-helper-2.so",
+        "rc-rpm-helper-3.so",
+        NULL };
+    const char **iter;
 
 #ifdef STATIC_RPM
 
@@ -2445,28 +2444,13 @@ rc_rpmman_init (RCRpmman *obj)
         return;
     }
 
-    so_file = g_strdup_printf ("%s/rc-rpm-helper.so", rc_libdir);
+    iter = objects;
 
-    obj->rpm_lib = g_module_open (so_file, 0);
-
-    g_free (so_file);
-
-    if (!obj->rpm_lib) {
-        so_file = g_strdup_printf ("%s/rc-rpm-helper-with-rpmio.so",
-                                   rc_libdir);
-
-        obj->rpm_lib = g_module_open (so_file, 0);
-
+    while (*iter && !obj->rpm_lib) {
+        so_file = g_strdup_printf ("%s/%s", rc_libdir, *iter);
+        obj->rpm_lib = g_module_open (so_file, G_MODULE_BIND_LAZY);
         g_free (so_file);
-    }
-
-    if (!obj->rpm_lib) {
-        so_file = g_strdup_printf ("%s/rc-rpm-helper-with-rpmio-and-rpmdb.so",
-                                   rc_libdir);
-
-        obj->rpm_lib = g_module_open (so_file, 0);
-
-        g_free (so_file);
+        iter++;
     }
 
     if (!obj->rpm_lib) {

@@ -1,23 +1,30 @@
 2001-09-14  Ian Peters  <itp@ximian.com>
 
-	* src/rc-rpmman.h: forgot the 04000* comparisons here
+	* Makefile.am: new rpm-helper .so files
+
+	* rc-rpmman.c, rc-rpmman.h: some rpmProblemString fixes, new .so
+	files
 
 2001-09-14  Ian Peters  <itp@ximian.com>
 
-	* src/rc-distro.c: add RH 7.2 support
+	* rc-rpmman.h: forgot the 04000* comparisons here
 
-	* src/rc-rpmman.c: sigh, forgot all about that octal shit... get
+2001-09-14  Ian Peters  <itp@ximian.com>
+
+	* rc-distro.c: add RH 7.2 support
+
+	* rc-rpmman.c: sigh, forgot all about that octal shit... get
 	rid of the leading 0 in the rpm version
 
 2001-09-13  Ian Peters  <itp@ximian.com>
 
-	* src/rc-rpm-helper-with-rpmio-and-rpmdb.so: another shared
+	* rc-rpm-helper-with-rpmio-and-rpmdb.so: another shared
 	object, works with RPM 4.0.3
 
-	* src/Makefile.am: dist and install
+	* Makefile.am: dist and install
 	rc-rpm-helper-with-rpmio-and-rpmdb.so
 
-	* src/rc-rpmman.c, src/rc-rpmman.h: conditionalize a lot of stuff
+	* rc-rpmman.c, rc-rpmman.h: conditionalize a lot of stuff
 	on both the API and ABI version using both the preprocessor and
 	runtime checks.  Add the third shared object to the list of things
 	we attempt to dlopen.

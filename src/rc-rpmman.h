@@ -107,8 +107,10 @@ struct _RCRpmman {
     void (*rpmdbClose)(rpmdb);
 #if RPM_VERSION >= 40002
     const char * (*rpmProblemString)(rpmProblem);
+    const char * (*rpmProblemStringOld)(struct rpmProblem_s);
 #else
     const char * (*rpmProblemString)(rpmProblem *);
+    const char * (*rpmProblemStringOld)(rpmProblem);
 #endif
     int (*rpmGetRpmlibProvides)(char ***, int **, char ***);
 
