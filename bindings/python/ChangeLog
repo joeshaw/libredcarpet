@@ -1,3 +1,8 @@
+2003-10-06  Joe Shaw  <joe@ximian.com>
+
+	* Makefile.am: Use $(top_srcdir) instead of ../.. for when
+	builddir != srcdir.
+
 2003-09-17  Joe Shaw  <joe@ximian.com>
 
 	* packman.c (PyPackman_transact, PyPackman_query,
