@@ -339,7 +339,7 @@ rc_packman_version_compare (RCPackman *p,
                             RCPackageSpec *s1,
                             RCPackageSpec *s2)
 {
-    g_return_if_fail(p);
+    g_return_val_if_fail(p, 0);
 
     g_assert (_CLASS (p)->rc_packman_real_version_compare);
 
