@@ -33,6 +33,16 @@
 #include "rc-xml.h"
 
 static void
+add_lock_xml_cb (RCPackageMatch *lock,
+                 gpointer        user_data)
+{
+    xmlNode *parent = user_data;
+    xmlNode *node = rc_package_match_to_xml_node (lock);
+    if (node)
+        xmlAddChild (parent, node);
+}
+
+static void
 add_package_xml_cb (RCPackage *package,
                     gpointer   user_data)
 {
@@ -70,7 +80,8 @@ rc_world_dump_to_xml (RCWorld *world,
 {
     xmlNode *parent;
     xmlNode *system_packages;
-    AddChannelClosure closure;
+    xmlNode *locks;
+    AddChannelClosure channel_closure;
    
     g_return_val_if_fail (world != NULL, NULL);
 
@@ -78,7 +89,11 @@ rc_world_dump_to_xml (RCWorld *world,
     
     if (extra_xml != NULL)
         xmlAddChild (parent, extra_xml);
-    
+
+    locks = xmlNewNode (NULL, "locks");
+    rc_world_foreach_lock (world, add_lock_xml_cb, locks);
+    xmlAddChild (parent, locks);
+
     system_packages = xmlNewNode (NULL, "system_packages");
     xmlAddChild (parent, system_packages);
 
@@ -87,12 +102,12 @@ rc_world_dump_to_xml (RCWorld *world,
                               add_package_xml_cb,
                               system_packages);
 
-    closure.world = world;
-    closure.parent = parent;
+    channel_closure.world = world;
+    channel_closure.parent = parent;
 
     rc_world_foreach_channel (world,
                               add_channel_packages_cb,
-                              &closure);
+                              &channel_closure);
 
     return parent;
 }
@@ -139,10 +154,21 @@ rc_world_undump_from_xml (RCWorld *world,
 
     while (channel_node != NULL) {
 
-        if (! g_strcasecmp (channel_node->name, "system_packages")) {
+        if (! g_strcasecmp (channel_node->name, "locks")) {
+
+            xmlNode *lock_node = channel_node->xmlChildrenNode;
+            while (lock_node) {
+                RCPackageMatch *lock;
+                lock = rc_package_match_from_xml_node (lock_node, world);
+                if (lock)
+                    rc_world_add_lock (world, lock);
+                lock_node = lock_node->next;
+            }
+
+        } else if (! g_strcasecmp (channel_node->name, "system_packages")) {
 
             rc_world_add_packages_from_xml (world, NULL, channel_node);
-        
+
         } else if (! g_strcasecmp (channel_node->name, "channel")) {
 
             char *name;

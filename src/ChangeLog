@@ -1,3 +1,13 @@
+2002-10-24  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-world-dump.c (rc_world_dump_to_xml): Write the world's locks
+	out in the dump XML.
+	(rc_world_undump_from_xml): Read the locks from the dump XML.
+
+	* rc-package-match.c (rc_package_match_from_xml_node): We need to
+	extract the RCPackageDep from the xml node, not from the node's
+	child.
+
 2002-10-23  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-world-import.c (rc_world_add_packages_from_xml): When pulling

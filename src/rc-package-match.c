@@ -303,7 +303,7 @@ rc_package_match_from_xml_node (xmlNode *node,
     } else if (! g_strcasecmp (node->name, "dep")) {
 
       RCPackageDep *dep;
-      dep = rc_xml_node_to_package_dep (node->xmlChildrenNode);
+      dep = rc_xml_node_to_package_dep (node);
       rc_package_match_set_dep (match, dep);
 
     } else if (! g_strcasecmp (node->name, "glob")) {
