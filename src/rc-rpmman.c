@@ -1053,6 +1053,19 @@ parse_versions (gchar **inputs, guint32 **epochs, gchar ***versions,
     }
 }
 
+static gboolean
+in_set (gchar *item, const gchar **set) {
+    const gchar **iter;
+
+    for (iter = set; *iter; *iter++) {
+        if (strncmp (*iter, item, strlen (*iter)) == 0) {
+            return (TRUE);
+        }
+    }
+
+    return (FALSE);
+}
+
 static void
 rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
 {
@@ -1124,13 +1137,15 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
             releases[i] = NULL;
         }
 
-        if (names[i][0] == '/') {
+        if (strncmp (names[i], "rpmlib(", strlen ("rpmlib(")) == 0) {
+            /* This is a "seekret" message for rpmlib only */
+#if 0
+        } else if (names[i][0] == '/') {
             /* This is a broken RPM file dependency.  I hate it, I don't know
                how I want to support it, but I don't intend to drop to the
                filesystem and verify it, or ask vlad to do so.  For now I'm
                just going to ignore it. */
-        } else if (!strncmp (names[i], "rpmlib(", strlen ("rpmlib("))) {
-            /* This is a "seekret" message for rpmlib only */
+#endif
         } else {
             /* Add the dependency to the list of dependencies */
             dep = rc_package_dep_item_new (names[i], epochs[i], versions[i],
@@ -1164,6 +1179,54 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
     depl = g_slist_append (NULL, dep);
 
     package->provides = g_slist_append (package->provides, depl);
+
+    {
+        /* First stab at handling the pesky file dependencies */
+
+        const gchar *file_dep_set[] = {
+            "/bin/",
+            "/usr/bin/",
+            "/usr/X11R6/bin/",
+            "/sbin/",
+            "/usr/sbin/",
+            "/lib/",
+            "/usr/games/",
+            "/usr/share/dict/words",
+            "/etc/",
+            NULL
+        };
+
+        gchar **basenames, **dirnames;
+        guint32 *dirindexes;
+
+        rpmman->headerGetEntry (header, RPMTAG_BASENAMES, NULL,
+                                (void **)&basenames, &count);
+        rpmman->headerGetEntry (header, RPMTAG_DIRNAMES, NULL,
+                                (void **)&dirnames, &count);
+        rpmman->headerGetEntry (header, RPMTAG_DIRINDEXES, NULL,
+                                (void **)&dirindexes, &count);
+
+        for (i = 0; i < count; i++) {
+            gchar *tmp = g_strconcat (dirnames[dirindexes[i]], basenames[i],
+                                      NULL);
+
+            if (in_set (tmp, file_dep_set)) {
+                dep = rc_package_dep_item_new (tmp, 0, NULL, NULL,
+                                               RC_RELATION_ANY);
+
+                g_free (tmp);
+
+                depl = g_slist_append (NULL, dep);
+
+                package->provides = g_slist_append (package->provides, depl);
+            }
+        }
+
+        free (basenames);
+        names = NULL;
+        free (dirnames);
+        versions = NULL;
+    }
 
     /* RPM doesn't do versioned provides (as of 3.0.4), so we only need to find
        out the name of things that this package provides */

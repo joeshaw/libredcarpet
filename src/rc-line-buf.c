@@ -213,7 +213,97 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
 
     RC_ENTRY;
 
-    if (condition & (G_IO_HUP | G_IO_ERR)) {
+    if (condition & (G_IO_IN | G_IO_PRI)) {
+        switch (g_io_channel_read (source, buf, BUF_SIZE, &bytes_read)) {
+
+        case G_IO_ERROR_AGAIN:
+            /* This really shouldn't happen; why on earth would we get
+               called if there's no data waiting? */
+            rc_debug (RC_DEBUG_LEVEL_WARNING,
+                      "%s: got G_IO_ERROR_AGAIN, bork bork?\n", __FUNCTION__);
+
+            RC_EXIT;
+
+            return (TRUE);
+
+        case G_IO_ERROR_INVAL:
+        case G_IO_ERROR_UNKNOWN:
+            /* Whoops, this is bad */
+            rc_debug (RC_DEBUG_LEVEL_ERROR,
+                      "%s: got G_IO_ERROR_[INVAL|UNKNOWN], ending read\n",
+                      __FUNCTION__);
+
+            gtk_signal_emit (GTK_OBJECT (line_buf), signals[READ_DONE],
+                             RC_LINE_BUF_ERROR);
+
+            /* I don't think I should have to do this, but this is the
+               solution to the infamous big bad oh-what-the-fuck bug,
+               so... */
+            g_source_remove (line_buf->priv->cb_id);
+            line_buf->priv->cb_id = 0;
+
+            RC_EXIT;
+
+            return (FALSE);
+
+        case G_IO_ERROR_NONE:
+            if (bytes_read == 0) {
+                /* A read of 0 bytes with no error means we're done
+                 * here */
+                rc_debug (RC_DEBUG_LEVEL_DEBUG,
+                          "%s: read 0 bytes, we're done here\n", __FUNCTION__);
+
+                gtk_signal_emit (GTK_OBJECT (line_buf), signals[READ_DONE],
+                                 RC_LINE_BUF_OK);
+
+                /* I don't think I should have to do this, but this is
+                   the solution to the infamous big bad
+                   oh-what-the-fuck bug, so */
+                g_source_remove (line_buf->priv->cb_id);
+                line_buf->priv->cb_id = 0;
+
+                RC_EXIT;
+
+                return (FALSE);
+            }
+
+            rc_debug (RC_DEBUG_LEVEL_DEBUG, "%s: read %d bytes\n",
+                      __FUNCTION__, bytes_read);
+
+            buf[bytes_read] = '\0';
+
+            for (count = 0; count < bytes_read; count++) {
+                if (buf[count] == '\n') {
+                    buf[count] = '\0';
+
+                    if (buf[count - 1] == '\r') {
+                        buf[count - 1] = '\0';
+                    }
+
+                    line_buf->priv->buf =
+                        g_string_append (line_buf->priv->buf, buf + base);
+
+                    rc_debug (RC_DEBUG_LEVEL_DEBUG,
+                              __FUNCTION__ ": line is \"%s\"\n",
+                              line_buf->priv->buf->str);
+
+                    gtk_signal_emit (GTK_OBJECT (line_buf), signals[READ_LINE],
+                                     line_buf->priv->buf->str);
+
+                    g_string_truncate (line_buf->priv->buf, 0);
+
+                    base = count + 1;
+                }
+            }
+
+            line_buf->priv->buf = g_string_append (line_buf->priv->buf,
+                                                   buf + base);
+
+            RC_EXIT;
+
+            return (TRUE);
+        }
+    } else {
         gtk_signal_emit (GTK_OBJECT (line_buf), signals[READ_DONE],
                          RC_LINE_BUF_OK);
 
@@ -226,93 +316,6 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
         RC_EXIT;
 
         return (FALSE);
-    }
-
-    switch (g_io_channel_read (source, buf, BUF_SIZE, &bytes_read)) {
-
-    case G_IO_ERROR_AGAIN:
-        /* This really shouldn't happen; why on earth would we get called if
-           there's no data waiting? */
-        rc_debug (RC_DEBUG_LEVEL_WARNING,
-                  "%s: got G_IO_ERROR_AGAIN, bork bork?\n", __FUNCTION__);
-
-        RC_EXIT;
-
-        return (TRUE);
-
-    case G_IO_ERROR_INVAL:
-    case G_IO_ERROR_UNKNOWN:
-        /* Whoops, this is bad */
-        rc_debug (RC_DEBUG_LEVEL_ERROR,
-                  "%s: got G_IO_ERROR_[INVAL|UNKNOWN], ending read\n",
-                  __FUNCTION__);
-
-        gtk_signal_emit (GTK_OBJECT (line_buf), signals[READ_DONE],
-                         RC_LINE_BUF_ERROR);
-
-        /* I don't think I should have to do this, but this is the solution to
-           the infamous big bad oh-what-the-fuck bug, so... */
-        g_source_remove (line_buf->priv->cb_id);
-        line_buf->priv->cb_id = 0;
-
-        RC_EXIT;
-
-        return (FALSE);
-
-    case G_IO_ERROR_NONE:
-        if (bytes_read == 0) {
-            /* A read of 0 bytes with no error means we're done here */
-            rc_debug (RC_DEBUG_LEVEL_DEBUG,
-                      "%s: read 0 bytes, we're done here\n", __FUNCTION__);
-
-            gtk_signal_emit (GTK_OBJECT (line_buf), signals[READ_DONE],
-                             RC_LINE_BUF_OK);
-
-            /* I don't think I should have to do this, but this is the
-                   solution to the infamous big bad oh-what-the-fuck bug, so */
-            g_source_remove (line_buf->priv->cb_id);
-            line_buf->priv->cb_id = 0;
-
-            RC_EXIT;
-
-            return (FALSE);
-        }
-
-        rc_debug (RC_DEBUG_LEVEL_DEBUG, "%s: read %d bytes\n", __FUNCTION__,
-                  bytes_read);
-
-        buf[bytes_read] = '\0';
-
-        for (count = 0; count < bytes_read; count++) {
-            if (buf[count] == '\n') {
-                buf[count] = '\0';
-
-                if (buf[count - 1] == '\r') {
-                    buf[count - 1] = '\0';
-                }
-
-                line_buf->priv->buf =
-                    g_string_append (line_buf->priv->buf, buf + base);
-
-                rc_debug (RC_DEBUG_LEVEL_DEBUG,
-                          __FUNCTION__ ": line is \"%s\"\n",
-                          line_buf->priv->buf->str);
-
-                gtk_signal_emit (GTK_OBJECT (line_buf), signals[READ_LINE],
-                                 line_buf->priv->buf->str);
-
-                g_string_truncate (line_buf->priv->buf, 0);
-
-                base = count + 1;
-            }
-        }
-
-        line_buf->priv->buf = g_string_append (line_buf->priv->buf,
-                                               buf + base);
-
-        RC_EXIT;
-
-        return (TRUE);
     }
 
     g_assert_not_reached ();

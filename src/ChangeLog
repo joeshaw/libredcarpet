@@ -1,3 +1,10 @@
+2001-04-16  Ian Peters  <itp@ximian.com>
+
+	* rc-line-buf.c: corrected bizarre ben-bug behaviour
+
+	* rc-rpmman.c: add my file-deps hack, we can remove this later if
+	people object too much
+
 2001-04-13  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c: when rpmRunTransactions returns < 0, don't treat
