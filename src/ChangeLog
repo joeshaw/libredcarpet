@@ -1,3 +1,12 @@
+2001-10-25  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c: don't assume that only things which are an ANY
+	relation are a virtual provide; instead use the provide's virtual
+	setting.
+
+	* rc-package-dep.c: When verifying a spec, take into account rpm
+	conflicts and virtual provides.
+	
 2001-10-24  Joe Shaw  <joe@ximian.com>
 
 	* rc-package-update.c (rc_xml_node_to_package_update): Get the

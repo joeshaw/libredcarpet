@@ -147,6 +147,14 @@ rc_package_dep_slist_verify_relation (RCPackageDepSList *depl,
             }
         }
 
+        /* HACK-3: rpm conflicts don't apply to virtual provides */
+        if (rpmish) {
+            if (is_virtual && d->relation & RC_RELATION_WEAK) {
+                depl = depl->next;
+                continue;
+            }
+        }
+
         if (!rc_package_dep_verify_relation (d, spec)) {
             if (fail_out && !g_slist_find (*fail_out, d))
                 *fail_out = g_slist_prepend (*fail_out, d);
