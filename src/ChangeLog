@@ -1,3 +1,12 @@
+2002-06-03  Joe Shaw  <joe@ximian.com>
+
+	* rc-package.c (rc_package_slist_ref): Added.
+	(rc_package_slist_unref): Don't free the list after unreffing it.
+
+	* rc-rpmman.c (rc_rpmman_query_all_v3):
+	* rc-world-import.c (rc_world_parse_helix): Free the list after
+	unreffing it here.
+
 2002-06-03  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-queue-item.c (install_item_process): Fix the relation tag on

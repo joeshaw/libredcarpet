@@ -405,6 +405,7 @@ rc_world_parse_helix (RCWorld *world, RCChannel *channel, gchar *buf)
         rc_world_thaw(world);
 
         rc_package_slist_unref (packages);
+        g_slist_free (packages);
     }
 
     return count;

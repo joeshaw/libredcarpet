@@ -1669,6 +1669,7 @@ rc_rpmman_query_all_v3 (RCPackman *packman)
                                   "Unable to read RPM database entry");
 
             rc_package_slist_unref (list);
+            g_slist_free (list);
 
             goto ERROR;
         }

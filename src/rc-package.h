@@ -98,7 +98,8 @@ const char *rc_package_to_str_static (RCPackage *package);
 gboolean   rc_package_is_installed     (RCPackage *package);
 RCPackage *rc_package_get_best_upgrade (RCPackage *package);
 
-void rc_package_slist_unref (RCPackageSList *packages);
+RCPackageSList *rc_package_slist_ref   (RCPackageSList *packages);
+void            rc_package_slist_unref (RCPackageSList *packages);
 
 RCPackageSList *rc_package_slist_sort_by_name (RCPackageSList *packages);
 RCPackageSList *rc_package_slist_sort_by_spec (RCPackageSList *packages);

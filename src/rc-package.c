@@ -214,13 +214,19 @@ rc_package_get_best_upgrade (RCPackage *package)
     return rc_world_get_best_upgrade (package->channel->world, package);
 }
 
+RCPackageSList *
+rc_package_slist_ref (RCPackageSList *packages)
+{
+    g_slist_foreach (packages, (GFunc) rc_package_ref, NULL);
+
+    return packages;
+} /* rc_package_slist_ref */
+
 void
 rc_package_slist_unref (RCPackageSList *packages)
 {
     g_slist_foreach (packages, (GFunc) rc_package_unref, NULL);
-
-    g_slist_free (packages);
-} /* rc_package_slist_free */
+} /* rc_package_slist_unref */
 
 RCPackageUpdateSList *
 rc_package_slist_sort_by_name (RCPackageSList *packages)
