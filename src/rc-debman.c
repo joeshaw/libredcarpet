@@ -616,6 +616,7 @@ mark_status_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
         return;
     }
 
+#if 0
     /* If rewrite_version is set (we encountered a package we're
      * upgrading) and this is a version line, write out our new
      * version */
@@ -646,6 +647,7 @@ mark_status_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
 
         return;
     }
+#endif
 
     /* If the rewrite flag is still set, and we've gone through all
      * the fields and didn't encounter a status line (we got to a
@@ -688,6 +690,7 @@ mark_status_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
         mark_status_info->rewrite_status = TRUE;
     }
 
+#if 0
     if ((package = package_accept (line, mark_status_info->install_packages))) {
         char *version;
 
@@ -697,6 +700,7 @@ mark_status_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
         mark_status_info->rewrite_version = TRUE;
         mark_status_info->new_version = version;
     }
+#endif
 
     return;
 
