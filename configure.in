@@ -1,6 +1,7 @@
 dnl -*- tab-width: 2; indent-tabs-mode: nil -*-
 
 AC_INIT(src/libredcarpet.h)
+AC_PREREQ(2.52)
 
 AM_CONFIG_HEADER(config.h)
 

@@ -1,3 +1,7 @@
+2003-04-08  Frank Belew  <frb@ximian.com>
+
+	* configure.in: added requirement for autoconf 2.52 or greater
+
 2003-04-08  Joe Shaw  <joe@ximian.com>
 
 	* configure.in: 1.4.2
