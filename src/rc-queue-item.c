@@ -861,18 +861,25 @@ require_item_process (RCQueueItem *item,
 
                     explore_uninstall_branch = TRUE;
                 }
+
+                /*
+                  The exception: we always want to consider uninstalling
+                  when the requirement has resulted from a package losing
+                  one of it's provides.
+                */
                 
             } else if (upgrade_list != NULL
-                && explore_uninstall_branch
-                && codependent_packages (require->requiring_package,
-                                         require->upgraded_package)) {
+                       && explore_uninstall_branch
+                       && codependent_packages (require->requiring_package,
+                                                require->upgraded_package)
+                       && require->lost_package == NULL) {
                 explore_uninstall_branch = FALSE;
             }
             
             g_slist_free (upgrade_list);
 
         } /* if (require->upgrade_package && require->requiring_package) ... */
-            
+
         if (explore_uninstall_branch && require->requiring_package) {
             RCResolverInfo *log_info;
             uninstall_item = rc_queue_item_new_uninstall (world,
