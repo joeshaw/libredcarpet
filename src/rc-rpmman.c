@@ -138,6 +138,8 @@ transact_cb (const Header h, const rpmCallbackType what,
     const char * filename = pkgKey;
     static FD_t fd;
     InstallState *state = (InstallState *) data;
+    char *filename_copy;
+    const char *base;
 
     /* heh heh heh */
     GTKFLUSH;
@@ -176,9 +178,12 @@ transact_cb (const Header h, const rpmCallbackType what,
         break;
 
     case RPMCALLBACK_INST_START:
+        filename_copy = g_strdup (pkgKey);
+        base = basename (filename_copy);
         gtk_signal_emit_by_name (GTK_OBJECT (state->packman),
                                  "transact_step", ++state->seqno,
-                                 RC_PACKMAN_STEP_INSTALL, pkgKey);
+                                 RC_PACKMAN_STEP_INSTALL, base);
+        g_free (filename_copy);
         break;
 
     case RPMCALLBACK_TRANS_START:
@@ -594,7 +599,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     }
 
     gtk_signal_emit_by_name (GTK_OBJECT (packman), "transact_start",
-                             state.install_total + state.install_total +
+                             state.install_total * 2 + state.install_extra +
                              state.remove_total);
     GTKFLUSH;
 

@@ -1,3 +1,12 @@
+2001-07-19  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c (transact_cb): send the basename of the package
+	we're installing, not the full path
+	(transact_cb): double the install_total and add the install_extra
+	to account for a) packages we're installing being both configured
+	and installed, and b) packages we're installing that are really
+	upgrades being removed, configured, and installed.
+
 2001-07-12  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps-private.h, rc-deps.c: Add an extra parameter to
