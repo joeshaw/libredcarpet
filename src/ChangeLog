@@ -1,3 +1,7 @@
+2001-12-07  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c: fix the /usr/share/magic.mime problem, don't ask
+
 2001-11-20  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c: readd RPMPROB_FILTER_REPLACE[NEW|OLD]FILES for a

@@ -1245,6 +1245,7 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
             "/lib/",
             "/usr/games/",
             "/usr/share/dict/words",
+            "/usr/share/magic.mime",
             "/etc/",
             "/opt/gnome/bin",
             "/opt/gnome/sbin",
