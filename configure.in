@@ -29,7 +29,7 @@ AM_PROG_LIBTOOL
 dnl endianness check, just for dobey ;-)
 AC_C_BIGENDIAN
 
-PKG_CHECK_MODULES(LIBREDCARPET, glib-2.0 gobject-2.0 gmodule-2.0 libxml-2.0)
+PKG_CHECK_MODULES(LIBREDCARPET, glib-2.0 gthread-2.0 gobject-2.0 gmodule-2.0 libxml-2.0)
 
 AC_SUBST(LIBREDCARPET_CFLAGS)
 AC_SUBST(LIBREDCARPET_LIBS)
