@@ -75,21 +75,21 @@ typedef enum {
  * system.  Files are written out into the repackaging directory, which
  * can be get/set using rc_packman_{get|set}_repackage_dir(). (RPM)
  *
- * VERSION_AND_RELEASE - When verifying relations, the version and release
- * fields are normally evaluated seperately.  For example, if we have a
- * requirement for "foo == 2.0", then a package providing "foo 2.0-10"
- * would meet it.  Similarly, if we have a requirement of "bar > 3.0", a
- * package providing "bar 3.0-9" would not meet it.  With this capability
- * set, the version and release fields are merged and evaluated at once.
- * In the above examples, then, the former would not be sufficient
- * (because "2.0" != "2.0-10") and the latter would (since "3.0-9" > "3.0")
+ * ALWAYS_VERIFY_RELEASE - When verifying relations, the release field is
+ * usually only compared when both the requirement specifies it.  For
+ * example, a requirement of "foo > 2.0" would not be met by a package
+ * providing "foo 2.0-10", because the release field ("10") would be
+ * ignored and "2.0" is not greater than "2.0".  When this capability is
+ * set, however, the release field will always be compared, and the
+ * requirement in the previous example would be met, because "2.0-10" is
+ * greater than "2.0". (Debian)
  */
 
 #define RC_PACKMAN_CAP_NONE                  (0)
 #define RC_PACKMAN_CAP_PROVIDE_ALL_VERSIONS  (1 << 0)
 #define RC_PACKMAN_CAP_IGNORE_ABSENT_EPOCHS  (1 << 2)
 #define RC_PACKMAN_CAP_REPACKAGING           (1 << 3)
-#define RC_PACKMAN_CAP_VERSION_AND_RELEASE   (1 << 4)
+#define RC_PACKMAN_CAP_ALWAYS_VERIFY_RELEASE (1 << 4)
 
 #define RC_TRANSACT_FLAG_NONE      (0)
 #define RC_TRANSACT_FLAG_NO_ACT    (1 << 0)

@@ -1,5 +1,17 @@
 2002-11-14  Joe Shaw  <joe@ximian.com>
 
+	* rc-package-dep.c (rc_package_dep_verify_relation): Go back to
+	evaluating the version and release separately as that wasn't quite
+	right, instead use the capability as to whether we should always
+	evaluate the release or not.
+
+	* rc-packman.h: Rename RC_PACKMAN_CAP_VERSION_AND_RELEASE to
+	RC_PACKMAN_CAP_ALWAYS_VERIFY_RELEASE.
+
+	* rc-debman.c (rc_debman_init): Ditto.
+
+2002-11-14  Joe Shaw  <joe@ximian.com>
+
 	* rc-packman.h: Add a huge comment block describing what each of
 	the capabilities does.  Remove the SELF_CONFLICT capability since
 	it wasn't being used and it's handled for all backends by the

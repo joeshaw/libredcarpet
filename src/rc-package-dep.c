@@ -496,51 +496,22 @@ rc_package_dep_verify_relation (RCPackman    *packman,
         newdepspec.epoch = newprovspec.epoch = 0;
         newdepspec.has_epoch = newprovspec.has_epoch = 0;
 
-        /*
-         * Debian does not differentiate between the version field and
-         * release field when determining if a relationship is met.
-         */
+        newdepspec.version = dep->spec.version;
+        newprovspec.version = prov->spec.version;
+
         if (rc_packman_get_capabilities (packman) &
-            RC_PACKMAN_CAP_VERSION_AND_RELEASE)
+            RC_PACKMAN_CAP_ALWAYS_VERIFY_RELEASE ||
+            (dep->spec.release && prov->spec.release))
         {
-            if (dep->spec.release) {
-                newdepspec.version = g_strdup_printf ("%s-%s",
-                                                      dep->spec.version,
-                                                      dep->spec.release);
-            }
-            else
-                newdepspec.version = g_strdup (dep->spec.version);
-
-            if (prov->spec.release) {
-                newprovspec.version = g_strdup_printf ("%s-%s",
-                                                       prov->spec.version,
-                                                       prov->spec.release);
-            }
-            else
-                newprovspec.version = g_strdup (prov->spec.version);
-
-            newdepspec.release = NULL;
-            newprovspec.release = NULL;
+            newdepspec.release = dep->spec.release;
+            newprovspec.release = prov->spec.release;
+        } else {
+            newdepspec.release = newprovspec.release = NULL;
         }
-        else {
-            newdepspec.version = dep->spec.version;
-            newprovspec.version = prov->spec.version;
-            if (dep->spec.release && prov->spec.release) {
-                newdepspec.release = dep->spec.release;
-                newprovspec.release = prov->spec.release;
-            } else {
-                newdepspec.release = newprovspec.release = NULL;
-            }
-        }
+
         newdepspec.nameq = newprovspec.nameq = 0;
         compare_ret = rc_packman_version_compare (packman,
                                                   &newprovspec, &newdepspec);
-
-        if (rc_packman_get_capabilities (packman) &
-            RC_PACKMAN_CAP_VERSION_AND_RELEASE) {
-            g_free (newdepspec.version);
-            g_free (newprovspec.version);
-        }
 
     }
 

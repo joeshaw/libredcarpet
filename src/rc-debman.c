@@ -3353,7 +3353,8 @@ rc_debman_init (RCDebman *debman)
 
     rc_packman_set_file_extension(packman, "deb");
 
-    rc_packman_set_capabilities (packman, RC_PACKMAN_CAP_VERSION_AND_RELEASE);
+    rc_packman_set_capabilities (packman,
+                                 RC_PACKMAN_CAP_ALWAYS_VERIFY_RELEASE);
 
     debman->priv->db_mtime = 0;
     rc_debman_is_database_changed (packman);
