@@ -117,9 +117,9 @@ transact_step_cb (RCPackman *packman, gint seqno, RCPackmanStep step,
 }
 
 static void
-transact_progress_cb (RCPackman *packman, gint amount, gint total)
+transact_progress_cb (RCPackman *packman, gulong amount, gulong total)
 {
-    printf ("  (%d of %d complete)\n");
+    printf ("  (%ld of %ld complete)\n", amount, total);
 }
 
 static void
