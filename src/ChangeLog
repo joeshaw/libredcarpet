@@ -1,3 +1,9 @@
+2001-03-20  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-package-info.c: When parsing debian packages.gz files, set
+	the installed_size on the update, not on the package -- this fixes
+	the debian package size calculation bug.
+
 2001-03-19  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps-util.c: Oopsie!  Data allocated outside
