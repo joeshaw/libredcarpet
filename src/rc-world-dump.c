@@ -171,6 +171,11 @@ rc_world_undump_from_xml (RCWorld *world,
                 rc_world_add_packages_from_xml (world, current_channel,
                                                 channel_node);
             }
+
+            g_free (name);
+            g_free (alias);
+            g_free (id_str);
+            g_free (subd_str);
         }
 
         channel_node = channel_node->next;

@@ -58,6 +58,7 @@ rc_resolver_queue_free (RCResolverQueue *queue)
         g_slist_foreach (queue->items,
                          (GFunc) rc_queue_item_free,
                          NULL);
+
         g_free (queue);
     }
 }
@@ -227,6 +228,15 @@ rc_resolver_queue_process_once (RCResolverQueue *queue)
         if (did_something_recently)
             did_something = TRUE;
     }
+
+    /* If there are any stray items left in the queue, free them.
+       (This can happen if we bale out of processing due to an invalid
+       resolution.)  If there isn't anything left in the queue, that
+       is OK too...  rc_queue_item_free just returns if it is passed
+       NULL. */
+    g_slist_foreach (queue->items,
+                     (GFunc) rc_queue_item_free,
+                     NULL);
 
     g_slist_free (queue->items);
     queue->items = new_items;

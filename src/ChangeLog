@@ -1,3 +1,10 @@
+2002-08-02  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-resolver-queue.c (rc_resolver_queue_process_once): Fixed
+	memory leak.
+
+	* rc-world-dump.c (rc_world_undump_from_xml): Fixed memory leak.
+
 2002-08-01  Joe Shaw  <joe@ximian.com>
 
 	* rc-rpmman.c (close_database): Reset the lock_fd to 0 after
