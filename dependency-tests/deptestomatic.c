@@ -31,8 +31,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <glib-object.h>
-#include <gnome-xml/parser.h>
-#include <gnome-xml/xmlmemory.h>
+#include <libxml/parser.h>
+#include <libxml/xmlmemory.h>
 #include "libredcarpet.h"
 
 #include "xml-util.h"
@@ -538,6 +538,7 @@ static void
 process_xml_test_file (const char *filename)
 {
     xmlDocPtr xml_doc;
+    xmlNode *root;
 
     xml_doc = xmlParseFile (filename);
     if (xml_doc == NULL) {
@@ -545,7 +546,9 @@ process_xml_test_file (const char *filename)
         exit (-1);
     }
 
-    parse_xml_test (xml_doc->root);
+    root = xmlDocGetRootElement (xml_doc);
+    
+    parse_xml_test (root);
     
     xmlFreeDoc (xml_doc);
 }
