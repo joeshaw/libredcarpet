@@ -1,3 +1,32 @@
+2002-03-10  Peter Bowen  <pzb@ximian.com>
+
+	* rc-debman.c: (rc_debman_init): set capabilities instead of rpmish
+	* rc-package-dep.c: remove rpmish
+			    (rc_package_dep_verify_relation): rewrite to 
+				support paking two RCPackageDeps
+			    (rc_package_dep_verify_package_relation): removed
+			    (rc_package_dep_equal): removed
+			    (rc_package_dep_slist_is_item_subset): removed
+			    (rc_package_dep_is_subset): removed
+			    (rc_package_dep_is_subset_real): removed
+			    (rc_package_dep_invert): removed
+			    (rc_package_dep_slist_invert): removed
+			    (rc_package_dep_weaken): removed
+			    (rc_package_dep_slist_weaken): removed
+			    (rc_package_dep_is_fully_weak): removed
+			    (rc_package_dep_slist_is_fully_weak): removed
+			    (rc_package_dep_slist_has_dep): removed
+			    (rc_package_dep_system_is_rpmish): removed
+	* rc-package-dep.h: removed prototypes for removed functions
+	* rc-package-update.h: include rc-util.h
+	* rc-packman-private.h: add RC_PACKMAN_CAP_* defines and add
+				capabilities to _RCPackmanPrivate struct
+	* rc-packman.c: (rc_packman_init): initial capabilities field
+			(rc_packman_set_capabilities): new
+			(rc_packman_get_capabilities): new
+	* rc-packman.h: add rc_packman_{get,set}_capabilities prototypes
+	* rc-rpmman.c: (rc_rpmman_init): set capabilities instead of rpmish
+
 2002-03-09  Ian Peters  <itp@ximian.com>
 
 	* rc-deps.c, rc-deps.h, rc-deps-util.c, rc-deps-util.h,

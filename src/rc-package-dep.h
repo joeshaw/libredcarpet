@@ -96,8 +96,6 @@ RCPackageDep *rc_package_dep_copy (RCPackageDep *rcpdi);
 
 void rc_package_dep_free (RCPackageDep *rcpdi);
 
-gboolean rc_package_dep_equal (RCPackageDep *a, RCPackageDep *b);
-
 RCPackageDepSList *rc_package_dep_slist_copy (RCPackageDepSList *old);
 
 void rc_package_dep_slist_free (RCPackageDepSList *rcpdsl);
@@ -108,31 +106,11 @@ const char *rc_package_dep_to_str_static (RCPackageDep *dep);
 /* Dep verification */
 gboolean rc_package_dep_verify_relation (RCPackageDep *dep,
                                          RCPackageDep *prov);
-gboolean rc_package_dep_verify_package_relation (RCPackageDep *dep,
-                                                 RCPackage *pkg);
-
-gboolean rc_package_dep_slist_verify_relation (RCPackageDepSList *depl,
-                                               RCPackageSpec *spec,
-                                               RCPackageDepSList **fail_out,
-                                               gboolean is_virtual);
-
-gint rc_package_dep_is_subset (RCPackageDep *a, RCPackageDep *b);
-gint rc_package_dep_slist_is_item_subset (RCPackageDepSList *a, RCPackageDep *b);
-
-RCPackageDep *rc_package_dep_invert (RCPackageDep *dep);
-RCPackageDepSList *rc_package_dep_slist_invert (RCPackageDepSList *depl);
-void rc_package_dep_weaken (RCPackageDep *dep);
-void rc_package_dep_slist_weaken (RCPackageDepSList *dep);
-gboolean rc_package_dep_is_fully_weak (RCPackageDep *dep);
-gboolean rc_package_dep_slist_is_fully_weak (RCPackageDepSList *deps);
-
-void rc_package_dep_system_is_rpmish (gboolean is_rpm);
 
 RCPackageRelation rc_string_to_package_relation (const gchar *relation);
 const gchar *rc_package_relation_to_string (RCPackageRelation relation,
                                             gint words);
 RCPackageDepSList *rc_package_dep_slist_remove_duplicates (RCPackageDepSList *deps);
-gboolean rc_package_dep_slist_has_dep (RCPackageDepSList *deps, RCPackageDep *pd);
 
 /* XML */
 RCPackageDep *rc_xml_node_to_package_dep (const xmlNode *);

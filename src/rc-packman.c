@@ -1,4 +1,5 @@
 /* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* vim: set sw=4 ts=4 et: */
 /* rc-packman.c
  * Copyright (C) 2000, 2001 Ximian, Inc.
  *
@@ -172,6 +173,8 @@ rc_packman_init (RCPackman *packman)
     packman->priv->extension = NULL;
 
     packman->priv->busy = FALSE;
+
+    packman->priv->capabilities = RC_PACKMAN_CAP_NONE;    
 }
 
 RCPackman *
@@ -431,6 +434,21 @@ rc_packman_get_file_extension(RCPackman *packman)
     g_return_val_if_fail (packman, NULL);
 
     return packman->priv->extension;
+}
+
+void
+rc_packman_set_capabilities(RCPackman *packman, const guint32 caps)
+{
+    g_return_if_fail(packman);
+    packman->priv->capabilities = caps;
+}
+
+guint32
+rc_packman_get_capabilities(RCPackman *packman)
+{
+    g_return_val_if_fail (packman, 0);
+
+    return packman->priv->capabilities;
 }
 
 /* Methods to access the error stuff */

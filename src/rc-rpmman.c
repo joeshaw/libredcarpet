@@ -2718,8 +2718,8 @@ rc_rpmman_init (RCRpmman *obj)
     }
 
     rc_packman_set_file_extension(packman, "rpm");
+    rc_packman_set_capabilities(packman, RC_PACKMAN_CAP_PROVIDE_ALL_VERSIONS|RC_PACKMAN_CAP_LEGACY_EPOCH_HANDLING);
 
-    rc_package_dep_system_is_rpmish (TRUE);
 } /* rc_rpmman_init */
 
 RCRpmman *

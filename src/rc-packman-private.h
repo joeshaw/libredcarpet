@@ -1,4 +1,5 @@
 /* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* vim: set sw=4 ts=4 et: */
 /* rc-packman-private.h
  * Copyright (C) 2000, 2001 Ximian, Inc.
  *
@@ -28,6 +29,12 @@ typedef struct _RCPackmanPrivate RCPackmanPrivate;
 #include "rc-package-spec.h"
 #include "rc-packman.h"
 
+#define RC_PACKMAN_CAP_NONE 				(0)
+#define RC_PACKMAN_CAP_VIRTUAL_CONFLICTS	(1 << 0)
+#define RC_PACKMAN_CAP_PROVIDE_ALL_VERSIONS	(1 << 1)
+#define RC_PACKMAN_CAP_SELF_CONFLICT        (1 << 2)
+#define RC_PACKMAN_CAP_LEGACY_EPOCH_HANDLING (1 << 3)
+
 struct _RCPackmanPrivate {
     guint error;
     gchar *reason;
@@ -36,6 +43,8 @@ struct _RCPackmanPrivate {
     gchar *extension;
 
     gboolean busy;
+
+    guint32 capabilities;
 };
 
 void rc_packman_set_file_extension (RCPackman *packman,

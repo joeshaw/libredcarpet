@@ -33,6 +33,7 @@ typedef GSList RCPackageUpdateSList;
 #include "rc-package.h"
 #include "rc-package-spec.h"
 #include "rc-package-importance.h"
+#include "rc-util.h"
 
 struct _RCPackageUpdate {
     RCPackageSpec spec;

@@ -3123,7 +3123,7 @@ rc_debman_init (RCDebman *debman)
 
     rc_packman_set_file_extension(packman, "deb");
 
-    rc_package_dep_system_is_rpmish (FALSE);
+    rc_packman_set_capabilities(packman, RC_PACKMAN_CAP_VIRTUAL_CONFLICTS|RC_PACKMAN_CAP_SELF_CONFLICT);
 
     if (geteuid ()) {
         /* We can't really verify the status file or lock the database */
