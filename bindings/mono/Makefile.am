@@ -19,8 +19,7 @@ generated-stamp: $(API) RC.metadata
 	--customdir=. --assembly-name=libredcarpet-sharp && touch generated-stamp
 
 $(ASSEMBLY): generated-stamp
-	$(MCS) --unsafe --target library -lib:@GTK_SHARP_LIBDIR@ \
-	-r glib-sharp.dll -o $(ASSEMBLY) --recurse '*.cs'
+	$(MCS) --unsafe -target:library -pkg:gtk-sharp -o $(ASSEMBLY) --recurse '*.cs'
 
 docs-stamp:
 	$(DOC_UPDATER) $(ASSEMBLY) -o en -f
@@ -41,7 +40,6 @@ clean:
 clean-all: clean clean-docs
 	rm -f generated-stamp
 	rm -rf generated
-	
 
 prefix=@prefix@
 apidir=$(prefix)/share/gapi
