@@ -180,6 +180,7 @@ RCPackage *rc_world_get_best_upgrade        (RCWorld *world,
                                              gboolean subscribed_only);
 
 int        rc_world_foreach_system_upgrade  (RCWorld *world, 
+                                             gboolean subscribed_only,
                                              RCPackagePairFn fn,
                                              gpointer user_data);
 

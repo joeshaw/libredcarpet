@@ -1,3 +1,9 @@
+2003-03-27  Joe Shaw  <joe@ximian.com>
+
+	* rc-world.c (rc_world_foreach_system_upgrade): Add a
+	subscribed_only flag so we can iterate across upgrades outside of
+	only subscribed channels.
+
 2003-03-25  Joe Shaw  <joe@ximian.com>
 
 	* distributions.xml: Change "Linux Mandrake" to "Mandrake Linux"

@@ -1770,6 +1770,7 @@ rc_world_get_best_upgrade (RCWorld *world, RCPackage *package,
 
 struct SystemUpgradeInfo {
     RCWorld *world;
+    gboolean subscribed_only;
     RCPackagePairFn fn;
     gpointer user_data;
     int count;
@@ -1786,7 +1787,7 @@ system_upgrade_cb (RCPackage *package, gpointer user_data)
         return;
 
     upgrade = rc_world_get_best_upgrade (info->world, package,
-                                         TRUE);
+                                         info->subscribed_only);
 
     if (upgrade) {
         if (info->fn)
@@ -1813,6 +1814,7 @@ system_upgrade_cb (RCPackage *package, gpointer user_data)
  **/
 int
 rc_world_foreach_system_upgrade (RCWorld *world,
+                                 gboolean subscribed_only,
                                  RCPackagePairFn fn,
                                  gpointer user_data)
 {
@@ -1823,6 +1825,7 @@ rc_world_foreach_system_upgrade (RCWorld *world,
     /* rc_world_foreach_package calls rc_world_sync */
     
     info.world = world;
+    info.subscribed_only = subscribed_only;
     info.fn = fn;
     info.user_data = user_data;
     info.count = 0;
