@@ -49,7 +49,7 @@ struct _RCDebmanClass {
     RCPackmanClass parent_class;
 };
 
-guint rc_debman_get_type (void);
+GType rc_debman_get_type (void);
 
 RCDebman *rc_debman_new (void);
 

@@ -1,3 +1,7 @@
+2002-06-04  Ian Peters  <itp@ximian.com>
+
+	* rc-debman.c, rc-debman.h: compiles again against glib 2.0
+
 2002-06-03  Joe Shaw  <joe@ximian.com>
 
 	* rc-package.c (rc_package_slist_ref): Added.
