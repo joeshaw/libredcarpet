@@ -1,3 +1,13 @@
+2003-10-03  Joe Shaw  <joe@ximian.com>
+
+	* rc-package.c (rc_package_unref): If the RC_DEBUG_PACKAGE_UNREF
+	environment variable is set, don't free the package elements, but
+	do decrement (and assert) on the refcount.  Helps debugging
+	ref-count related bugs.
+
+	* rc-queue-item.c (uninstall_item_copy): rc_package_ref the
+	package when we copy an uninstall queue item.
+
 2003-09-30  Joe Shaw  <joe@ximian.com>
 
 	* rc-world-system.c (rc_world_system_finalize): Fix a

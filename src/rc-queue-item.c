@@ -2089,7 +2089,7 @@ uninstall_item_copy (const RCQueueItem *src, RCQueueItem *dest)
     const RCQueueItem_Uninstall *src_uninstall = (const RCQueueItem_Uninstall *) src;
     RCQueueItem_Uninstall *dest_uninstall = (RCQueueItem_Uninstall *) dest;
 
-    dest_uninstall->package                   = src_uninstall->package;
+    dest_uninstall->package                   = rc_package_ref (src_uninstall->package);
     dest_uninstall->reason                    = g_strdup (src_uninstall->reason);
     dest_uninstall->dep_leading_to_uninstall  = rc_package_dep_ref (src_uninstall->dep_leading_to_uninstall);
     dest_uninstall->remove_only               = src_uninstall->remove_only;

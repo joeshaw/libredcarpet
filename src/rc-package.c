@@ -71,27 +71,29 @@ rc_package_unref (RCPackage *package)
 
         if (package->refs == 0) {
 
-            rc_channel_unref ((RCChannel *) package->channel);
+            if (!getenv ("RC_DEBUG_PACKAGE_UNREF")) {
+                rc_channel_unref ((RCChannel *) package->channel);
 
-            rc_package_update_slist_free (package->history);
+                rc_package_update_slist_free (package->history);
 
-            rc_package_spec_free_members (RC_PACKAGE_SPEC (package));
+                rc_package_spec_free_members (RC_PACKAGE_SPEC (package));
 
-            rc_package_dep_array_free (package->requires_a);
-            rc_package_dep_array_free (package->provides_a);
-            rc_package_dep_array_free (package->conflicts_a);
-            rc_package_dep_array_free (package->obsoletes_a);
+                rc_package_dep_array_free (package->requires_a);
+                rc_package_dep_array_free (package->provides_a);
+                rc_package_dep_array_free (package->conflicts_a);
+                rc_package_dep_array_free (package->obsoletes_a);
+                
+                rc_package_dep_array_free (package->children_a);
 
-            rc_package_dep_array_free (package->children_a);
+                rc_package_dep_array_free (package->suggests_a);
+                rc_package_dep_array_free (package->recommends_a);
 
-            rc_package_dep_array_free (package->suggests_a);
-            rc_package_dep_array_free (package->recommends_a);
-
-            g_free (package->summary);
-            g_free (package->description);
+                g_free (package->summary);
+                g_free (package->description);
             
-            g_free (package->package_filename);
-            g_free (package->signature_filename);
+                g_free (package->package_filename);
+                g_free (package->signature_filename);
+            }
 
 #ifdef RC_PACKAGE_FIND_LEAKS
             g_assert (leaked_packages);
