@@ -30,6 +30,8 @@
 
 #include "rc-debug.h"
 
+static GSList *old_subs = NULL;
+
 static void
 clear_sub_cb (RCChannel *channel,
               gpointer   user_data)
@@ -69,6 +71,11 @@ rc_world_import_subscriptions_from_xml (RCWorld *world,
                     rc_debug (RC_DEBUG_LEVEL_WARNING,
                               "Unknown channel id '%s'",
                               id_str);
+
+                    if (!g_slist_find (old_subs, GINT_TO_POINTER (id))) {
+                        old_subs = g_slist_append (old_subs,
+                                                   GINT_TO_POINTER (id));
+                    }
                 } else {
                     rc_channel_set_subscription (channel, TRUE);
                 }
@@ -112,11 +119,26 @@ xmlNode *
 rc_world_export_subcriptions_to_xml (RCWorld *world)
 {
     xmlNode *root;
+    GSList *iter;
 
     root = xmlNewNode (NULL, "subscriptions");
     rc_world_foreach_channel (world,
                               to_xml_cb,
                               root);
+
+    /* Write out old subscriptions */
+    for (iter = old_subs; iter; iter = iter->next) {
+        xmlNode *node;
+        char buf[16];
+
+        node = xmlNewChild (root, NULL, "channel", NULL);
+
+        g_snprintf (buf, 16, "%d", GPOINTER_TO_INT (iter->data));
+        xmlNewProp (node, "channel_id", buf);
+
+        /* For backwards compatibility */
+        xmlNewProp (node, "last_updated", "0");
+    }
 
     return root;
 }

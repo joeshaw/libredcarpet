@@ -1,3 +1,12 @@
+2002-08-01  Joe Shaw  <joe@ximian.com>
+
+	* rc-world-subscriptions.c
+	(rc_world_import_subscriptions_from_xml): Keep around a list of
+	subscriptions which do not match any valid channel for this
+	session.
+	(rc_world_export_subscriptions_to_xml): Write out the unmatched
+	subscriptions, so we don't lose them anymore.
+
 2002-08-01  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c (rc_rpmman_query_file): open the database read-only
