@@ -306,17 +306,30 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
 
         } else if (!g_strcasecmp (iter->name, "conflicts")) {
             xmlNode *iter2;
+            gboolean all_are_obs = FALSE, this_is_obs = FALSE;
+            xmlChar *obs;
 
             iter2 = iter->xmlChildrenNode;
 
+            obs = xmlGetProp ((xmlNode *) iter, "obsoletes"); /* cast out const */
+            if (obs)
+                all_are_obs = TRUE;
+            xmlFree (obs);
+
             while (iter2) {
                 RCPackageDep *dep = rc_xml_node_to_package_dep (iter2);
-                xmlChar *obs = xmlGetProp (iter2, "obsoletes");
-                                
-                if (obs) {
+
+                if (! all_are_obs) {
+                    this_is_obs = FALSE;
+                    obs = xmlGetProp (iter2, "obsoletes");
+                    if (obs) 
+                        this_is_obs = TRUE;
+                    xmlFree (obs);
+                }
+                
+                if (all_are_obs || this_is_obs) {
                     package->obsoletes =
                         g_slist_prepend (package->obsoletes, dep);
-                    xmlFree (obs);
                 } else {
                     package->conflicts =
                         g_slist_prepend (package->conflicts, dep);

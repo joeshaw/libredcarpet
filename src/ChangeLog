@@ -1,3 +1,8 @@
+2002-04-16  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-package.c (rc_xml_node_to_package): Treat a conflicts section
+	in the XML as obsoletes if the 'obsoletes' property is set.
+
 2002-04-12  Peter Bowen  <pzb@ximian.com>
 
 	* rc-distro.c: YDL2.2, MDK8.2, SuSE 8.0, RHL7.3, and Debian 3.0 support
