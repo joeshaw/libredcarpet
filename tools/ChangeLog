@@ -1,3 +1,8 @@
+2003-04-25  Joe Shaw  <joe@ximian.com>
+
+	* packman_test.c: Add a "file_list" command which lists the files
+	within a certain package.
+
 2003-04-17  Jon Trowbridge  <trow@ximian.com>
 
 	* dep_lint.c (try_to_install_everything): Use our new-style

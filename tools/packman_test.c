@@ -66,6 +66,7 @@ static void packman_test_list (RCPackman *p, gchar *buf);
 static void packman_test_query (RCPackman *p, gchar *buf);
 static void packman_test_query_all (RCPackman *p, gchar *buf);
 static void packman_test_query_file (RCPackman *p, gchar *buf);
+static void packman_test_file_list (RCPackman *p, gchar *buf);
 static void packman_test_quit (RCPackman *p, gchar *buf);
 static void packman_test_run (RCPackman *p, gchar *buf);
 
@@ -97,6 +98,8 @@ Command commands[] = {
       "Query all of the packages on the system.", "query_all" },
     { "query_file", (command_func) packman_test_query_file,
       "Query a local package file.", "query_file <filename>" },
+    { "file_list", (command_func) packman_test_file_list,
+      "List the files in a package", "file_list <name>" },
     { "quit", (command_func) packman_test_quit,
       "Quit packman_test.", "quit" },
     { "remove", (command_func) packman_test_remove,
@@ -405,6 +408,45 @@ packman_test_query_file (RCPackman *p, char *line)
 
     rc_package_unref (pkg);
 }
+
+static void
+packman_test_file_list (RCPackman *p, char *line)
+{
+    RCPackageSList *packages;
+    RCPackage *package;
+    RCPackageFileSList *files;
+    GSList *iter;
+    char *name;
+
+    CHECK_PARAMS (line, "file_list");
+
+    line = pop_token (line, &name);
+
+    packages = rc_packman_query (p, name);
+
+    if (!packages) {
+        printf ("No package matching name \"%s\" found\n", name);
+        return;
+    }
+
+    package = packages->data;
+
+    files = rc_packman_file_list (p, package);
+
+    if (!files) {
+        printf ("No files contained within \"%s\"\n", name);
+        return;
+    }
+
+    for (iter = files; iter; iter = iter->next) {
+        RCPackageFile *file = (RCPackageFile *) iter->data;
+
+        printf ("%s\n", file->filename);
+    }
+
+    // rc_package_slist_unref (packages);
+}
+
 
 static void
 packman_test_help (RCPackman *p, char *line)
