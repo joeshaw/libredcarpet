@@ -1104,6 +1104,7 @@ rc_package_to_xml_node (RCPackage *package)
 {
     xmlNode *package_node;
     xmlNode *tmp_node;
+    xmlNode *deps_node;
     RCPackageUpdateSList *history_iter;
     RCPackageDepSList *dep_iter;
     char buffer[128];
@@ -1151,8 +1152,10 @@ rc_package_to_xml_node (RCPackage *package)
         }
     }
 
+    deps_node = xmlNewChild (package_node, NULL, "deps", NULL);
+    
     if (package->requires) {
-        tmp_node = xmlNewChild (package_node, NULL, "requires", NULL);
+        tmp_node = xmlNewChild (deps_node, NULL, "requires", NULL);
         for (dep_iter = package->requires; dep_iter;
              dep_iter = dep_iter->next)
         {
@@ -1163,7 +1166,7 @@ rc_package_to_xml_node (RCPackage *package)
     }
 
     if (package->recommends) {
-        tmp_node = xmlNewChild (package_node, NULL, "recommends", NULL);
+        tmp_node = xmlNewChild (deps_node, NULL, "recommends", NULL);
         for (dep_iter = package->recommends; dep_iter;
              dep_iter = dep_iter->next)
         {
@@ -1174,7 +1177,7 @@ rc_package_to_xml_node (RCPackage *package)
     }
 
     if (package->suggests) {
-        tmp_node = xmlNewChild (package_node, NULL, "suggests", NULL);
+        tmp_node = xmlNewChild (deps_node, NULL, "suggests", NULL);
         for (dep_iter = package->suggests; dep_iter;
              dep_iter = dep_iter->next)
         {
@@ -1185,7 +1188,7 @@ rc_package_to_xml_node (RCPackage *package)
     }
 
     if (package->conflicts) {
-        tmp_node = xmlNewChild (package_node, NULL, "conflicts", NULL);
+        tmp_node = xmlNewChild (deps_node, NULL, "conflicts", NULL);
         for (dep_iter = package->conflicts; dep_iter;
              dep_iter = dep_iter->next)
         {
@@ -1196,7 +1199,7 @@ rc_package_to_xml_node (RCPackage *package)
     }
 
     if (package->obsoletes) {
-        tmp_node = xmlNewChild (package_node, NULL, "obsoletes", NULL);
+        tmp_node = xmlNewChild (deps_node, NULL, "obsoletes", NULL);
         for (dep_iter = package->obsoletes; dep_iter;
              dep_iter = dep_iter->next)
         {
@@ -1207,7 +1210,7 @@ rc_package_to_xml_node (RCPackage *package)
     }
 
     if (package->provides) {
-        tmp_node = xmlNewChild (package_node, NULL, "provides", NULL);
+        tmp_node = xmlNewChild (deps_node, NULL, "provides", NULL);
         for (dep_iter = package->provides; dep_iter;
              dep_iter = dep_iter->next)
         {
