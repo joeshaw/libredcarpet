@@ -201,7 +201,7 @@ mark_purge_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
 
         dmpi->rewrite = FALSE;
 
-        goto END;
+        return;
     }
 
     if (dmpi->rewrite &&
@@ -211,7 +211,7 @@ mark_purge_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
         /* FIXME: somehow this is malformed */
         dmpi->rewrite = FALSE;
 
-        goto END;
+        return;
     }
 
     write (dmpi->out_fd, line, strlen (line));
@@ -220,10 +220,6 @@ mark_purge_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
     if (package_accept (line, dmpi->remove_pkgs)) {
         dmpi->rewrite = TRUE;
     }
-
-  END:
-    g_free (line);
-    return;
 }
 
 static void
@@ -338,8 +334,6 @@ do_purge_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
         rc_packman_transaction_step (ddpi->pman, ++ddpi->dis->seqno,
                                      ddpi->dis->total);
     }
-
-    g_free (line);
 }
 
 static void
@@ -522,8 +516,6 @@ do_unpack_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
         rc_packman_transaction_step (ddui->pman, ++ddui->dis->seqno,
                                      ddui->dis->total);
     }
-
-    g_free (line);
 }
 
 static void
@@ -688,8 +680,6 @@ do_configure_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
         rc_packman_configure_step (ddci->pman, ++ddci->dis->seqno,
                                    ddci->dis->total);
     }
-
-    g_free (line);
 }
 
 static void
@@ -1067,11 +1057,9 @@ query_all_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
             dqi->buf_pkg->description = get_description (dqi->desc_buf);
             dqi->desc_buf = NULL;
         }
-
         dqi->pkgs = g_slist_append (dqi->pkgs, dqi->buf_pkg);
-
         dqi->buf_pkg = NULL;
-        goto END;
+        return;
     }
 
     /* This is the beginning of a package section, so start up a new buffer
@@ -1082,15 +1070,12 @@ query_all_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
         if (dqi->buf_pkg) {
             dqi->error = TRUE;
             /* FIXME: must do something smart here */
-            goto END;
+            return;
         }
-
         dqi->buf_pkg = rc_package_new ();
         dqi->buf_pkg->spec.name = g_strdup (line + strlen ("Package:"));
         dqi->buf_pkg->spec.name = g_strchug (dqi->buf_pkg->spec.name);
-
-//        dqi->desc_buf = g_string_new (NULL);
-        goto END;
+        return;
     }
 
     /* Check if this is a Status: line -- the only status we recognize is
@@ -1099,13 +1084,13 @@ query_all_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
        "purge ok installed". */
     if (!strcmp (line, "Status: install ok installed")) {
         dqi->buf_pkg->spec.installed = TRUE;
-        goto END;
+        return;
     }
 
     if (!strncmp (line, "Installed-Size:", strlen ("Installed-Size:"))) {
         dqi->buf_pkg->spec.installed_size =
             strtoul (line + strlen ("Installed-Size:"), NULL, 10) * 1024;
-        goto END;
+        return;
     }
 
     if (!strncmp (line, "Description:", strlen ("Description:"))) {
@@ -1113,7 +1098,7 @@ query_all_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
         dqi->buf_pkg->summary = g_strchug (dqi->buf_pkg->summary);
         /* After Description: comes the long description */
         dqi->desc_buf = g_string_new (NULL);
-        goto END;
+        return;
     }
 
     if ((line[0] == ' ') && dqi->desc_buf) {
@@ -1121,7 +1106,7 @@ query_all_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
             dqi->desc_buf = g_string_append (dqi->desc_buf, line + 1);
         }
         dqi->desc_buf = g_string_append (dqi->desc_buf, "\n");
-        goto END;
+        return;
     }
 
     if (!strncmp (line, "Version:", strlen ("Version:"))) {
@@ -1130,7 +1115,7 @@ query_all_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
                                  &dqi->buf_pkg->spec.version,
                                  &dqi->buf_pkg->spec.release);
         g_free (tmp);
-        goto END;
+        return;
     }
 
     if (!strncmp (line, "Section:", strlen ("Section:"))) {
@@ -1202,7 +1187,7 @@ query_all_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
         }
 
         g_free (tmp);
-        goto END;
+        return;
     }
 
     if (!strncmp (line, "Depends:", strlen ("Depends:"))) {
@@ -1210,7 +1195,7 @@ query_all_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
         dqi->buf_pkg->requires =
             rc_debman_fill_depends (tmp, dqi->buf_pkg->requires);
         g_free (tmp);
-        goto END;
+        return;
     }
 
     if (!strncmp (line, "Recommends:", strlen ("Recommends:"))) {
@@ -1218,7 +1203,7 @@ query_all_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
         dqi->buf_pkg->recommends =
             rc_debman_fill_depends (tmp, dqi->buf_pkg->recommends);
         g_free (tmp);
-        goto END;
+        return;
     }
 
     if (!strncmp (line, "Suggests:", strlen ("Suggests:"))) {
@@ -1226,7 +1211,7 @@ query_all_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
         dqi->buf_pkg->suggests =
             rc_debman_fill_depends (tmp, dqi->buf_pkg->suggests);
         g_free (tmp);
-        goto END;
+        return;
     }
 
     if (!strncmp (line, "Pre-Depends:", strlen ("Pre-Depends:"))) {
@@ -1234,7 +1219,7 @@ query_all_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
         dqi->buf_pkg->requires =
             rc_debman_fill_depends (tmp, dqi->buf_pkg->requires);
         g_free (tmp);
-        goto END;
+        return;
     }
 
     if (!strncmp (line, "Conflicts:", strlen ("Conflicts:"))) {
@@ -1242,7 +1227,7 @@ query_all_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
         dqi->buf_pkg->conflicts =
             rc_debman_fill_depends (tmp, dqi->buf_pkg->conflicts);
         g_free (tmp);
-        goto END;
+        return;
     }
 
     if (!strncmp (line, "Provides:", strlen ("Provides:"))) {
@@ -1250,12 +1235,8 @@ query_all_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
         dqi->buf_pkg->provides =
             rc_debman_fill_depends (tmp, dqi->buf_pkg->provides);
         g_free (tmp);
-        goto END;
+        return;
     }
-
-  END:
-    g_free (line);
-    return;
 }
 
 static void
@@ -1319,6 +1300,12 @@ rc_debman_query_all_real (RCPackman *p)
         RCPackage *pkg = (RCPackage *)(iter->data);
 
         if (pkg->spec.installed) {
+            pkg->provides =
+                g_slist_append (pkg->provides,
+                                rc_package_dep_new_with_item (
+                                    rc_package_dep_item_new_from_spec (
+                                        &pkg->spec,
+                                        RC_RELATION_EQUAL)));
             g_hash_table_insert (d->pkg_hash, (gpointer) pkg->spec.name,
                                  (gpointer) pkg);
         } else {
