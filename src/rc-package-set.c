@@ -47,7 +47,7 @@ rc_package_set_parse (char *buf,
             return NULL;
         }
 
-        doc = xmlParseMemory(ba->data, ba->len);
+        doc = xmlParseMemory(ba->data, ba->len - 1);
         g_byte_array_free (ba, TRUE);
     }
     else {

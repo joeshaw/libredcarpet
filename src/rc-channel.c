@@ -103,7 +103,7 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
             return NULL;
         }
 
-        doc = xmlParseMemory(ba->data, ba->len);
+        doc = xmlParseMemory(ba->data, ba->len - 1);
         g_byte_array_free (ba, TRUE);
     } else {
 	doc = xmlParseMemory(xmlbuf, strlen(xmlbuf));
