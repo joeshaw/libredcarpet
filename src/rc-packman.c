@@ -86,7 +86,7 @@ typedef void (*GtkSignal_NONE__BOOL_STRING_INT) (GtkObject *object,
                                                  gpointer arg2,
                                                  gint arg3,
                                                  gpointer user_data);
-void
+static void
 gtk_marshal_NONE__BOOL_STRING_INT (GtkObject *object,
                                    GtkSignalFunc func,
                                    gpointer func_data,
