@@ -946,6 +946,8 @@ do_configure (RCPackman *p, DebmanInstallState *dis)
 
         g_main_run (loop);
 
+        gtk_timeout_remove (ddci.poll_write_id);
+
 //        gtk_object_destroy (GTK_OBJECT (lb));
         gtk_object_unref (GTK_OBJECT (lb));
 
