@@ -1,0 +1,25 @@
+Loaded 3 packages from exercise-10-packages.xml
+>!> Locking A from channel test
+
+------------------------------------------------
+
+>!> Installing B from channel test
+
+Best Solution:
+
+>!> Solution #1:
+Checksum = ee228d5a
+>!> install AA-0:1.0-1[test]
+>!> install B-0:1.0-1[test]
+>!> installs=2, upgrades=0, uninstalls=0
+download size=0.2k, install size=0.5k
+total priority=0, min priority=800, max priority=800
+other penalties=0
+- - - - - - - - - -
+Installing B-0:1.0-1[test]
+AA-0:1.0-1: needed by B-0:1.0-1
+Installing AA-0:1.0-1[test]
+
+
+Other Valid Solutions:
+

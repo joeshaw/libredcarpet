@@ -53,7 +53,6 @@ add_to_world_cb (RCPackage *package, gpointer user_data)
     RCWorldStore *store = RC_WORLD_STORE (user_data);
 
     rc_world_store_add_package (store, package);
-    rc_package_unref (package);
 
     return TRUE;
 }
@@ -64,9 +63,14 @@ load_channel (const char *name,
               const char *type,
               gboolean system_packages)
 {
+    RCWorld *store;
     RCChannelType chan_type = RC_CHANNEL_TYPE_UNKNOWN;
     RCChannel *channel;
     guint count;
+
+    store = rc_world_store_new ();
+    rc_world_multi_add_subworld (RC_WORLD_MULTI (rc_get_world ()), store);
+    g_object_unref (store);
 
     if (type) {
         if (g_strcasecmp(type, "helix") == 0)
@@ -83,17 +87,17 @@ load_channel (const char *name,
     }
 
     channel = rc_channel_new (name, name, name, name);
-    rc_world_store_add_channel (RC_WORLD_STORE (rc_get_world ()), channel);
+    rc_world_store_add_channel (RC_WORLD_STORE (store), channel);
     rc_channel_unref (channel);
 
     if (chan_type == RC_CHANNEL_TYPE_HELIX) {
         count = rc_extract_packages_from_helix_file (filename, channel,
                                                      add_to_world_cb,
-                                                     world);
+                                                     store);
     } else if (chan_type == RC_CHANNEL_TYPE_DEBIAN) {
         count = rc_extract_packages_from_debian_file (filename, channel,
                                                       add_to_world_cb,
-                                                      world);
+                                                      store);
     } else {
         g_assert_not_reached ();
         return;
@@ -149,6 +153,24 @@ get_package (const char *channel_name, const char *package_name)
     }
 
     return package;
+}
+
+static void
+lock_package (RCPackage *package)
+{
+    RCPackageDep *dep;
+    RCPackageMatch *match;
+
+    dep = rc_package_dep_new_from_spec (RC_PACKAGE_SPEC (package),
+                                        RC_RELATION_EQUAL,
+                                        RC_CHANNEL_ANY, FALSE, FALSE);
+
+    match = rc_package_match_new ();
+    rc_package_match_set_dep (match, dep);
+
+    rc_package_dep_unref (dep);
+
+    rc_world_add_lock (rc_get_world (), match);
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
@@ -250,7 +272,7 @@ parse_xml_setup (xmlNode *node)
             if (package) {
                 g_print (">!> Locking %s from channel %s\n",
                          package_name, channel_name);
-                package->hold = TRUE;
+                lock_package (package);
             } else {
                 g_warning ("Unknown package %s::%s",
                            channel_name, package_name);
@@ -662,12 +684,11 @@ main (int argc, char *argv[])
 {
     g_type_init ();
 
-    rc_distro_parse_xml (NULL, 0);
-
     packman = rc_distman_new ();
     rc_packman_set_global (packman);
+    g_object_unref (packman);
 
-    world = rc_world_store_new ();
+    world = rc_world_multi_new ();
     rc_set_world (world);
     g_object_unref (world);
 
@@ -677,6 +698,10 @@ main (int argc, char *argv[])
     }
 
     process_xml_test_file (argv[1]);
+
+    /* Unref our global objects so we don't get leak warnings */
+    g_object_unref (rc_get_world ());
+    rc_packman_set_global (NULL);
 
     rc_package_spew_leaks ();
 
