@@ -554,7 +554,7 @@ parse_xml_trial (xmlNode *node)
 
             g_print (">!> Checking for upgrades...\n");
 
-            count = rc_world_foreach_system_upgrade (world,
+            count = rc_world_foreach_system_upgrade (world, TRUE,
                                                      trial_upgrade_cb,
                                                      resolver);
             
