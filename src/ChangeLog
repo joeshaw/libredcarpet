@@ -1,3 +1,7 @@
+2001-07-10  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-debman.c: get rid of warning
+
 2001-06-25  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c: Don't be fascist about removing packages;

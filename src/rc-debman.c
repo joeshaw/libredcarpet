@@ -2851,7 +2851,7 @@ rc_debman_class_init (RCDebmanClass *klass)
     putenv ("DEBIAN_FRONTEND=noninteractive");
 
 //    deps_conflicts_use_virtual_packages (FALSE);
-    g_warning ("vlad, fix deps_conflict_use_virtual_pakages");
+//    g_warning ("vlad, fix deps_conflict_use_virtual_pakages");
 
     RC_EXIT;
 }
