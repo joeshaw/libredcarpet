@@ -1,0 +1,5 @@
+2001-01-28  Ian Peters  <itp@ximian.com>
+
+	* configure.in: removed bz2 check from the rpm3 section, this
+	wasn't correct
+
