@@ -1,3 +1,8 @@
+2003-04-08  Joe Shaw  <joe@ximian.com>
+
+	* pkg_to_xml.c: Nuke the RC_DISTRIBUTIONS_FILE stuff, it's in
+	libredcarpet's internal distro info parser.
+
 2003-03-17  Joe Shaw  <joe@ximian.com>
 
 	* pkg_to_xml.c: Allow the user to specify a distributions.xml file

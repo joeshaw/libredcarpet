@@ -36,43 +36,10 @@ int main (int argc, char *argv[])
     
     g_type_init ();
 
-    distro_xml = getenv ("RC_DISTRIBUTIONS_FILE");
-
-    if (distro_xml) {
-        RCBuffer *buf;
-
-        if (!g_file_test (distro_xml, G_FILE_TEST_EXISTS)) {
-            g_printerr ("Distributions file '%s' not found.\n", distro_xml);
-            failed = TRUE;
-            goto out;
-        }
-
-        buf = rc_buffer_map_file (distro_xml);
-        if (!buf) {
-            g_printerr ("Unable to open distributions file '%s'.\n",
-                        distro_xml);
-            failed = TRUE;
-            goto out;
-        }
-
-        /* Try once compressed, once uncompressed */
-        if (!rc_distro_parse_xml (buf->data, buf->size) &&
-            !rc_distro_parse_xml (buf->data, 0)) {
-            g_printerr ("Unable to parse distributions file '%s'.\n",
-                        distro_xml);
-            rc_buffer_unmap_file (buf);
-            failed = TRUE;
-            goto out;
-        }
-
-        rc_buffer_unmap_file (buf);
-    }
-    else {
-        if (!rc_distro_parse_xml (NULL, 0)) {
-            g_printerr ("Unable to parse internal distribution info\n");
-            failed = TRUE;
-            goto out;
-        }
+    if (!rc_distro_parse_xml (NULL, 0)) {
+        g_printerr ("Unable to parse internal distribution info\n");
+        failed = TRUE;
+        goto out;
     }
 
     packman = rc_distman_new ();
