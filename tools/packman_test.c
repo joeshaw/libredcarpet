@@ -174,6 +174,11 @@ int main (int argc, char **argv)
 
         dlist = helix_packman_depends (hp, dlist);
 
+        if (!dlist) {
+            printf ("Package %s doesn't exist\n", argv[2]);
+            return (0);
+        }
+
         d = (HelixPackmanPackage *)(dlist->data);
 
         printf ("Package: %s-%s-%s\n", d->spec.name, d->spec.version,
