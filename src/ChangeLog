@@ -1,3 +1,8 @@
+2004-07-29  Tambet Ingo  <tambet@ximian.com>
+
+        * rc-rpmman.c (rc_rpmman_section_to_package_section): Suse uses fancy
+        package sections, map those correctly to RCPackageSection.
+
 2004-07-21  James Willcox  <james@ximian.com>
 
 	* Makefile.am:

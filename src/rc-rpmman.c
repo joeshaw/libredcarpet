@@ -1398,27 +1398,16 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
 static RCPackageSection
 rc_rpmman_section_to_package_section (const gchar *rpmsection)
 {
-    char *major_section, *minor_section, *ptr;
+    char *major_section, *minor_section, *low;
+    gchar **pieces;
     RCPackageSection ret = RC_SECTION_MISC;
 
-    if ((ptr = strchr (rpmsection, '/'))) {
-        major_section = g_strndup (rpmsection, ptr - rpmsection);
-        minor_section = g_strdup (ptr + 1);
-    } else {
-        major_section = g_strdup (rpmsection);
-        minor_section = NULL;
-    }
+    low = g_ascii_strdown (rpmsection, -1);
+    pieces = g_strsplit (low, "/", 3);
+    g_free (low);
 
-    ptr = major_section;
-    while (*ptr) {
-        *ptr = tolower (*ptr);
-        ptr++;
-    }
-    ptr = minor_section;
-    while (ptr && *ptr) {
-        *ptr = tolower (*ptr);
-        ptr++;
-    }
+    major_section = pieces[0];
+    minor_section = major_section == NULL ? NULL : pieces[1];
 
     if (!major_section || !major_section[0]) {
         goto DONE;
@@ -1582,9 +1571,17 @@ rc_rpmman_section_to_package_section (const gchar *rpmsection)
                 goto DONE;
 
             default:
+                ret = RC_SECTION_DEVEL;
                 goto DONE;
             }
         }
+
+    case 'h':
+        if (!strcmp (major_section, "hardware")) {
+            ret = RC_SECTION_SYSTEM;
+            goto DONE;
+        }
+        goto DONE;
 
     case 'l':
         if (!strcmp (major_section, "libraries")) {
@@ -1593,7 +1590,71 @@ rc_rpmman_section_to_package_section (const gchar *rpmsection)
         }
         goto DONE;
 
+    case 'p':
+        if (!strcmp (major_section, "productivity")) {
+            if (minor_section == NULL)
+                goto DONE;
+
+            if (!strcmp (minor_section, "archiving")) {
+                ret = RC_SECTION_UTIL;
+                goto DONE;
+            }
+            if (!strcmp (minor_section, "clustering")) {
+                ret = RC_SECTION_SYSTEM;
+                goto DONE;
+            }
+            if (!strcmp (minor_section, "databases")) {
+                ret = RC_SECTION_DEVEL;
+                goto DONE;
+            }
+            if (!strcmp (minor_section, "editors")) {
+                ret = RC_SECTION_OFFICE;
+                goto DONE;
+            }
+            if (!strcmp (minor_section, "file utilities")) {
+                ret = RC_SECTION_UTIL;
+                goto DONE;
+            }
+            if (!strcmp (minor_section, "graphics")) {
+                ret = RC_SECTION_IMAGING;
+                goto DONE;
+            }
+            if (!strcmp (minor_section, "multimedia")) {
+                ret = RC_SECTION_MULTIMEDIA;
+                goto DONE;
+            }
+            if (!strcmp (minor_section, "networking")) {
+                ret = RC_SECTION_INTERNET;
+                goto DONE;
+            }
+            if (!strcmp (minor_section, "office")) {
+                ret = RC_SECTION_OFFICE;
+                goto DONE;
+            }
+            if (!strcmp (minor_section, "publishing")) {
+                ret = RC_SECTION_OFFICE;
+                goto DONE;
+            }
+            if (!strcmp (minor_section, "scientific")) {
+                ret = RC_SECTION_OFFICE;
+                goto DONE;
+            }
+            if (!strcmp (minor_section, "security")) {
+                ret = RC_SECTION_SYSTEM;
+                goto DONE;
+            }
+            if (!strcmp (minor_section, "text")) {
+                ret = RC_SECTION_UTIL;
+                goto DONE;
+            }
+        }
+        goto DONE;
+
     case 's':
+        if (!strcmp (major_section, "system")) {
+            ret = RC_SECTION_SYSTEM;
+            goto DONE;
+        }
         if (!strcmp (major_section, "system environment")) {
             ret = RC_SECTION_SYSTEM;
             goto DONE;
@@ -1639,8 +1700,8 @@ rc_rpmman_section_to_package_section (const gchar *rpmsection)
     }
 
   DONE:
-    g_free (major_section);
-    g_free (minor_section);
+    g_strfreev (pieces);
+
     return (ret);
 }
 
