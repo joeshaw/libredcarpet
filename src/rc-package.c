@@ -53,55 +53,6 @@ rc_package_new (void)
 } /* rc_package_new */
 
 RCPackage *
-rc_package_copy (RCPackage *old_package)
-{
-    RCPackage *package;
-
-    g_return_val_if_fail (old_package, NULL);
-
-    package = rc_package_new ();
-
-    rc_package_spec_copy (RC_PACKAGE_SPEC (package),
-                          RC_PACKAGE_SPEC (old_package));
-
-    package->arch = old_package->arch;
-
-    package->section = old_package->section;
-
-    package->installed = old_package->installed;
-
-    package->installed_size = old_package->installed_size;
-
-    package->channel = rc_channel_ref (old_package->channel);
-
-    package->requires_a =
-        rc_package_dep_array_copy (old_package->requires_a);
-    package->provides_a =
-        rc_package_dep_array_copy (old_package->provides_a);
-    package->conflicts_a =
-        rc_package_dep_array_copy (old_package->conflicts_a);
-    package->obsoletes_a =
-        rc_package_dep_array_copy (old_package->obsoletes_a);
-
-    package->suggests_a =
-        rc_package_dep_array_copy (old_package->suggests_a);
-    package->recommends_a =
-        rc_package_dep_array_copy (old_package->recommends_a);
-
-    package->summary = g_strdup (old_package->summary);
-    package->description = g_strdup (old_package->description);
-
-    package->history = rc_package_update_slist_copy (old_package->history);
-
-    package->hold = old_package->hold;
-
-    package->package_filename = g_strdup (old_package->package_filename);
-    package->signature_filename = g_strdup (old_package->signature_filename);
-
-    return (package);
-} /* rc_package_copy */
-
-RCPackage *
 rc_package_ref (RCPackage *package)
 {
     if (package) {
@@ -241,21 +192,6 @@ rc_package_slist_unref (RCPackageSList *packages)
 {
     g_slist_foreach (packages, (GFunc) rc_package_unref, NULL);
 } /* rc_package_slist_unref */
-
-RCPackageSList *
-rc_package_slist_copy (RCPackageSList *packages)
-{
-    RCPackageSList *iter, *ret = NULL;
-
-    for (iter = packages; iter; iter = iter->next) {
-        ret = g_slist_prepend (ret,
-                               rc_package_copy ((RCPackage *)(iter->data)));
-    }
-
-    ret = g_slist_reverse (ret);
-
-    return ret;
-}
 
 RCPackageUpdateSList *
 rc_package_slist_sort_by_name (RCPackageSList *packages)

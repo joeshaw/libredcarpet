@@ -2794,7 +2794,7 @@ static void
 package_list_append (GQuark name, RCPackage *package,
                      RCPackageSList **package_list)
 {
-    *package_list = g_slist_prepend (*package_list, rc_package_copy (package));
+    *package_list = g_slist_prepend (*package_list, rc_package_ref (package));
 }
 
 static RCPackageSList *

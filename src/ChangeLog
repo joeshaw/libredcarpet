@@ -1,5 +1,13 @@
 2002-11-21  Joe Shaw  <joe@ximian.com>
 
+	* rc-package.c (rc_package_copy, rc_package_slist_copy): Removed.
+	Everything should just use rc_package_ref().
+
+	* rc-debman.c (package_list_append): Change the one instance of
+	rc_package_copy() in libredcarpet to rc_package_ref().
+
+2002-11-21  Joe Shaw  <joe@ximian.com>
+
 	* packer.pl: Use binmode so perl 5.8.0 doesn't read in the data
 	as UTF-8.  Patch from Michael Doppler.
 
