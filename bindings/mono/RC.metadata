@@ -17,6 +17,8 @@
   <attr path="/api/namespace/struct[@cname='RCPackageSpec']/method[@name='ToStrStatic']" name="hidden">1</attr>
   <attr path="/api/namespace/struct[@cname='RCPackageSpec']/method[@name='VersionToStr']" name="name">VersionToString</attr>
   <attr path="/api/namespace/struct[@cname='RCPackageSpec']/method[@name='VersionToStrStatic']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='RCPackageSpec']/method[@name='NotEqual']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='RCPackageSpec']/method[@name='Equal']" name="hidden">1</attr>
 <!--
   <attr path="/api/namespace/struct[@cname='RCPackageSpec']" name="opaque">1</attr>
 -->

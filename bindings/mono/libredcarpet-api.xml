@@ -2640,7 +2640,7 @@
           <parameter type="RCPackageSpec*" name="old" />
         </parameters>
       </method>
-      <method name="Equal" cname="rc_package_spec_equal" shared="true">
+      <method name="Equal" cname="rc_package_spec_equal" shared="true" hidden="1">
         <return-type type="gint" />
         <parameters>
           <parameter type="gconstpointer" name="ptra" />
@@ -2669,7 +2669,7 @@
           <parameter type="const-gchar*" name="release" />
         </parameters>
       </method>
-      <method name="NotEqual" cname="rc_package_spec_not_equal" shared="true">
+      <method name="NotEqual" cname="rc_package_spec_not_equal" shared="true" hidden="1">
         <return-type type="gint" />
         <parameters>
           <parameter type="gconstpointer" name="a" />

@@ -1,0 +1,10 @@
+Makefile
+Makefile.in
+docs-stamp
+en
+generated
+generated-stamp
+libredcarpet-sharp-docs.tree
+libredcarpet-sharp-docs.zip
+libredcarpet-sharp.dll
+libredcarpet-sharp.pc

@@ -1,3 +1,11 @@
+2004-08-17  Tambet Ingo  <tambet@ximian.com>
+
+	* .cvsignore: Add.
+
+	* RC.metadata: Hide PackageSpec.Equal|NotEqual.
+
+	* PackageSpec.custom: Add.
+
 2004-08-16  James Willcox  <james@ximian.com>
 
 	* Makefile.am: get rid of the icky install rule

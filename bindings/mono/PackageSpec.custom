@@ -1,0 +1,9 @@
+	  [DllImport("libredcarpet")]
+	  static extern int rc_package_spec_equal(ref RC.PackageSpec a, ref RC.PackageSpec b);
+
+	  public bool Equals (RC.PackageSpec other) {
+	    int ret = rc_package_spec_equal (ref this, ref other);
+	    if (ret == 0)
+		 return false;
+	    return true;
+	  }
