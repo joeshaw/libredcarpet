@@ -278,17 +278,15 @@ transaction_add_remove_packages (RCPackman *packman,
         rpmdbMatchIterator mi;
         Header header;
         unsigned int offset;
-        int count;
 
         mi = rpmdbInitIterator (RC_RPMMAN (packman)->db, RPMDBI_LABEL,
                                 package_name, 0);
-        count = rpmdbGetIteratorCount (mi);
 
-        if (count <= 0) {
+        if (rpmdbGetIteratorCount (mi) <= 0) {
             rc_packman_set_error
                 (packman, RC_PACKMAN_ERROR_ABORT,
                  "package %s does not appear to be installed (%d)",
-                 package_name, count);
+                 package_name, rpmdbGetIteratorCount (mi));
 
             rpmdbFreeIterator (mi);
 

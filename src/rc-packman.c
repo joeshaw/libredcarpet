@@ -82,9 +82,9 @@ rc_packman_destroy (GtkObject *obj)
 #define gtk_marshal_NONE__STRING_INT gtk_marshal_NONE__POINTER_INT
 
 typedef void (*GtkSignal_NONE__BOOL_STRING_INT) (GtkObject *object,
-                                                 gpointer arg1,
+                                                 gboolean arg1,
                                                  gpointer arg2,
-                                                 gpointer arg3,
+                                                 gint arg3,
                                                  gpointer user_data);
 void
 gtk_marshal_NONE__BOOL_STRING_INT (GtkObject *object,
