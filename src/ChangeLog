@@ -1,3 +1,9 @@
+2001-07-26  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c: Try to find another package that can
+	provide a missing dependency before removing packages
+	that depend on it.
+
 2001-07-25  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-package-spec.c, rc-package-spec.h: New
