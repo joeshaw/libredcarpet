@@ -279,7 +279,7 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
                 if (buf[count] == '\n') {
                     buf[count] = '\0';
 
-                    if (buf[count - 1] == '\r') {
+                    if (count && buf[count - 1] == '\r') {
                         buf[count - 1] = '\0';
                     }
 

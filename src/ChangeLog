@@ -1,3 +1,9 @@
+2001-07-25  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c: Fix a good chunk of memory leaks, thanks Purify!
+
+	* rc-line-buf.c: Minor array bounds read fix.
+
 2001-07-24  Ian Peters  <itp@ximian.com>
 
 	* Makefile.am: look for *, not *.o, in the static libraries we
