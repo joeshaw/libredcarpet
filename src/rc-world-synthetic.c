@@ -27,8 +27,8 @@
 #include "rc-world-synthetic.h"
 
 #include "rc-debug.h"
-#include "rc-xml.h"
 #include "rc-extract-packages.h"
+#include "rc-xml.h"
 
 static RCWorldServiceClass *parent_class;
 

@@ -217,7 +217,9 @@ guint rc_packman_get_error (RCPackman *packman);
 
 const gchar *rc_packman_get_reason (RCPackman *packman);
 
-void rc_packman_set_rollback_enabled (RCPackman *packman, gboolean enabled);
+gboolean rc_packman_get_rollback_enabled (RCPackman *packman);
+void     rc_packman_set_rollback_enabled (RCPackman *packman,
+                                          gboolean   enabled);
 
 RCPackman *rc_packman_get_global (void);
 void       rc_packman_set_global (RCPackman *packman);

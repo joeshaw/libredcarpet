@@ -28,7 +28,8 @@
 
 #include "rc-debug.h"
 #include "rc-md5.h"
-#include "rc-packman-private.h"
+#include "rc-packman.h"
+#include "rc-util.h"
 #include "rc-world.h"
 #include "xml-util.h"
 
@@ -38,7 +39,6 @@
 #define RC_ROLLBACK_CURRENT_DIR  RC_ROLLBACK_DIR"/current-transaction"
 
 struct _RCRollbackInfo {
-    RCPackman *packman;
     time_t timestamp;
     gboolean changes;
     xmlDoc *doc;
@@ -49,9 +49,6 @@ rc_rollback_info_free (RCRollbackInfo *rollback_info)
 {
     if (!rollback_info)
         return;
-
-    if (rollback_info->packman)
-        g_object_unref (rollback_info->packman);
 
     if (rollback_info->doc)
         xmlFreeDoc (rollback_info->doc);
@@ -73,13 +70,23 @@ escape_pathname (const char *in_path)
 }
 
 static xmlNode *
-file_changes_to_xml (RCRollbackInfo *rollback_info, RCPackage *package)
+file_changes_to_xml (RCRollbackInfo *rollback_info,
+                     RCPackage *package,
+                     GError **err)
 {
+    RCPackman *packman = rc_packman_get_global ();
     xmlNode *changes_node = NULL;
     RCPackageFileSList *files, *iter;
     char *tmp;
     
-    files = rc_packman_file_list (rollback_info->packman, package);
+    files = rc_packman_file_list (packman, package);
+
+    if (rc_packman_get_error (packman)) {
+        g_set_error (err, RC_ERROR, RC_ERROR,
+                     "Can't get file changes for rollback: %s",
+                     rc_packman_get_reason (packman));
+        goto ERROR;
+    }
 
     for (iter = files; iter; iter = iter->next) {
         RCPackageFile *file = iter->data;
@@ -96,12 +103,11 @@ file_changes_to_xml (RCRollbackInfo *rollback_info, RCPackage *package)
                 xmlNewTextChild (file_node, NULL, "was_removed", "1");
                 was_removed = TRUE;
             } else {
-                rc_packman_set_error (rollback_info->packman,
-                                      RC_PACKMAN_ERROR_ABORT,
-                                      "Unable to stat '%s' in package '%s' "
-                                      "for transaction tracking",
-                                      file->filename,
-                                      g_quark_to_string (package->spec.nameq));
+                g_set_error (err, RC_ERROR, RC_ERROR,
+                             "Unable to stat '%s' in package '%s' "
+                             "for transaction tracking",
+                             file->filename,
+                             g_quark_to_string (package->spec.nameq));
                 goto ERROR;
             }
         } else {
@@ -157,11 +163,10 @@ file_changes_to_xml (RCRollbackInfo *rollback_info, RCPackage *package)
                 g_free (escapename);
 
                 if (rc_cp (file->filename, newfile) < 0) {
-                    rc_packman_set_error (rollback_info->packman,
-                                          RC_PACKMAN_ERROR_ABORT,
-                                          "Unable to copy '%s' to '%s' for "
-                                          "transaction tracking", 
-                                          file->filename, newfile);
+                    g_set_error (err, RC_ERROR, RC_ERROR,
+                                 "Unable to copy '%s' to '%s' for "
+                                 "transaction tracking", 
+                                 file->filename, newfile);
                     g_free (newfile);
                     goto ERROR;
                 }
@@ -196,7 +201,8 @@ ERROR:
 static void
 add_tracked_package (RCRollbackInfo *rollback_info,
                      RCPackage  *old_package,
-                     RCPackage  *new_package)
+                     RCPackage  *new_package,
+                     GError **err)
 {
     xmlNode *root, *package_node;
     char *tmp;
@@ -238,22 +244,50 @@ add_tracked_package (RCRollbackInfo *rollback_info,
         xmlNewProp (package_node, "new_release", new_package->spec.release);
     }
 
-    if (old_package) {
+    if (old_package && !rc_package_is_synthetic (old_package)) {
         xmlNode *changes_node;
+        GError *tmp_error = NULL;
 
-        changes_node = file_changes_to_xml (rollback_info, old_package);
+        changes_node = file_changes_to_xml (rollback_info, old_package,
+                                            &tmp_error);
 
         if (changes_node)
             xmlAddChild (package_node, changes_node);
+
+        if (tmp_error)
+            g_propagate_error (err, tmp_error);
     }
 
     return;
 }        
+
+/*
+ * FIXME: What do we do in the case when multiple packages by the
+ * same name are installed?  Right now we just pick the first one,
+ * which is probably not the right thing to do.
+ *
+ * I think that we'd probably want to track all versions and then
+ * install all the versions when we rollback and apply the changes,
+ * but we currently don't have a way of doing an install (as
+ * opposed to an upgrade) to allow this.  (Obviously this is only
+ * a problem for RPM systems; dpkg doesn't allow it)
+ */
+static gboolean
+foreach_package_cb (RCPackage *package, gpointer user_data)
+{
+    RCPackage **system_package = user_data;
+
+    *system_package = package;
+
+    /* Short-circuit the foreach; see the FIXME above. */
+    return FALSE;
+}
     
 RCRollbackInfo *
-rc_rollback_info_new (RCPackman      *packman,
-                      RCPackageSList *install_packages,
-                      RCPackageSList *remove_packages)
+rc_rollback_info_new (RCWorld         *world,
+                      RCPackageSList  *install_packages,
+                      RCPackageSList  *remove_packages,
+                      GError         **err)
 {
     RCRollbackInfo *rollback_info = NULL;
     RCPackageSList *iter;
@@ -264,16 +298,14 @@ rc_rollback_info_new (RCPackman      *packman,
          * will go in there.
          */
         if (rc_mkdir (RC_ROLLBACK_DIR, 0700) < 0) {
-            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                  "Unable to create directory for "
-                                  "transaction tracking "
-                                  "'"RC_ROLLBACK_DIR"'");
+            g_set_error (err, RC_ERROR, RC_ERROR,
+                         "Unable to create directory for transaction "
+                         "tracking: '"RC_ROLLBACK_DIR"'");
             goto ERROR;
         }
     }
 
     rollback_info = g_new0 (RCRollbackInfo, 1);
-    rollback_info->packman = g_object_ref (packman);
     rollback_info->timestamp = time (NULL);
 
     if (!rc_file_exists (RC_ROLLBACK_XML) ||
@@ -290,9 +322,9 @@ rc_rollback_info_new (RCPackman      *packman,
         rc_rmdir (RC_ROLLBACK_CURRENT_DIR);
 
     if (!rc_mkdir (RC_ROLLBACK_CURRENT_DIR, 0700) < 0) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              "Unable to create tracking directory "
-                              RC_ROLLBACK_CURRENT_DIR);
+        g_set_error (err, RC_ERROR, RC_ERROR,
+                     "Unable to create tracking directory "
+                     "'"RC_ROLLBACK_CURRENT_DIR"'");
         goto ERROR;
     }
 
@@ -303,46 +335,36 @@ rc_rollback_info_new (RCPackman      *packman,
      */
     for (iter = install_packages; iter; iter = iter->next) {
         RCPackage *package_to_install = iter->data;
-        RCPackageSList *system_packages;
         RCPackage *system_package = NULL;
+        GError *tmp_error = NULL;
 
-        system_packages = rc_packman_query (
-            packman,
-            g_quark_to_string (package_to_install->spec.nameq));
+        rc_world_foreach_package_by_name (world,
+                                          g_quark_to_string (package_to_install->spec.nameq),
+                                          RC_CHANNEL_SYSTEM,
+                                          foreach_package_cb,
+                                          &system_package);
 
-
-        if (system_packages) {
-            /*
-             * FIXME: What do we do in the case when multiple packages by the
-             * same name are installed?  Right now we just pick the first one,
-             * which is probably not the right thing to do.
-             *
-             * I think that we'd probably want to track all versions and then
-             * install all the versions when we rollback and apply the changes,
-             * but we currently don't have a way of doing an install (as
-             * opposed to an upgrade) to allow this.  (Obviously this is only
-             * a problem for RPM systems; dpkg doesn't allow it)
-             */
-            system_package = system_packages->data;
-        }
 
         add_tracked_package (rollback_info, system_package,
-                             package_to_install);
+                             package_to_install, &tmp_error);
 
-        rc_package_slist_unref (system_packages);
-        g_slist_free (system_packages);
-
-        if (rc_packman_get_error (packman))
+        if (tmp_error) {
+            g_propagate_error (err, tmp_error);
             goto ERROR;
+        }
     }
 
     for (iter = remove_packages; iter; iter = iter->next) {
         RCPackage *package_to_remove = iter->data;
+        GError *tmp_error = NULL;
 
-        add_tracked_package (rollback_info, package_to_remove, NULL);
+        add_tracked_package (rollback_info, package_to_remove,
+                             NULL, &tmp_error);
 
-        if (rc_packman_get_error (packman))
+        if (tmp_error) {
+            g_propagate_error (err, tmp_error);
             goto ERROR;
+        }
     }
 
     return rollback_info;
@@ -387,9 +409,9 @@ rc_rollback_info_save (RCRollbackInfo *rollback_info)
 
     if (xmlSaveFormatFile (RC_ROLLBACK_XML,
                            rollback_info->doc, 1) < 0) {
-        rc_packman_set_error (rollback_info->packman, RC_PACKMAN_ERROR_ABORT,
-                              "Unable to open '%s' for writing; transaction "
-                              "cannot be tracked");
+        rc_debug (RC_DEBUG_LEVEL_CRITICAL,
+                  "Unable to open '"RC_ROLLBACK_XML"' for writing; "
+                  "transaction cannot be tracked");
         return;
     }
 
@@ -398,12 +420,10 @@ rc_rollback_info_save (RCRollbackInfo *rollback_info)
                                               rollback_info->timestamp);
 
         if (rename (RC_ROLLBACK_CURRENT_DIR, tracking_dir) < 0) {
-            rc_packman_set_error (rollback_info->packman,
-                                  RC_PACKMAN_ERROR_ABORT,
-                                  "Unable to move %s to %s for transaction "
-                                  "tracking",
-                                  RC_ROLLBACK_CURRENT_DIR,
-                                  tracking_dir);
+            rc_debug (RC_DEBUG_LEVEL_CRITICAL,
+                      "Unable to move %s to %s for transaction tracking",
+                      RC_ROLLBACK_CURRENT_DIR,
+                      tracking_dir);
         }
 
         g_free (tracking_dir);

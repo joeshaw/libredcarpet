@@ -473,6 +473,8 @@ rc_world_multi_transact_fn (RCWorld        *world,
                             int             flags)
 {
     RCWorldMulti *multi = (RCWorldMulti *) world;
+    RCPackman *packman = rc_packman_get_global ();
+    gboolean rollback_enabled;
     GSList *iter, *pkg_iter;
     gboolean success = TRUE;
 
@@ -484,6 +486,16 @@ rc_world_multi_transact_fn (RCWorld        *world,
        Yeah, this isn't maximally efficient, but it is the simplest
        approach.
     */
+
+    /*
+     * Ugh.  This is such a hack... it prevents recursion while getting
+     * rollback info.
+     */
+    if (packman) {
+        rollback_enabled = rc_packman_get_rollback_enabled (packman);
+
+        rc_packman_set_rollback_enabled (packman, FALSE);
+    }
 
     for (iter = multi->subworlds; iter != NULL; iter = iter->next) {
         SubworldInfo *info = iter->data;
@@ -524,6 +536,9 @@ rc_world_multi_transact_fn (RCWorld        *world,
             }
         }
     }
+
+    if (packman)
+        rc_packman_set_rollback_enabled (packman, rollback_enabled);
 
     return success;
 }

@@ -22,6 +22,7 @@
 #define __RC_ROLLBACK_H__
 
 #include "rc-packman.h"
+#include "rc-world.h"
 
 typedef struct _RCRollbackInfo       RCRollbackInfo;
 
@@ -34,9 +35,10 @@ typedef GSList                       RCRollbackActionSList;
  * freed.
  */
 
-RCRollbackInfo *rc_rollback_info_new  (RCPackman      *packman,
-                                       RCPackageSList *install_packages,
-                                       RCPackageSList *remove_packages);
+RCRollbackInfo *rc_rollback_info_new  (RCWorld         *world,
+                                       RCPackageSList  *install_packages,
+                                       RCPackageSList  *remove_packages,
+                                       GError         **err);
 
 void rc_rollback_info_free (RCRollbackInfo *rollback_info);
 

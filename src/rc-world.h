@@ -181,7 +181,6 @@ GType      rc_world_get_type (void);
 
 void       rc_set_world (RCWorld *world);
 RCWorld   *rc_get_world (void);
-void       rc_sync_world (void);
 
 gboolean   rc_world_sync             (RCWorld *);
 gboolean   rc_world_sync_conditional (RCWorld *, RCChannel *);

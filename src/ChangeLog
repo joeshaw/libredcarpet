@@ -1,5 +1,27 @@
 2003-10-07  Joe Shaw  <joe@ximian.com>
 
+	* rc-packman.c (rc_packman_transact): Remove rollback from here.
+	(rc_packman_get_rollback_enabled): Added.
+
+	* rc-rollback.c (RCRollbackInfo): Drop the packman element.
+	(file_changes_to_xml): Take a GError.  Get the packman with
+	rc_packman_get_global().
+	(add_tracked_package): Take a GError.  Don't call
+	file_changes_to_xml() if the package is synthetic.
+	(rc_rollback_info_new): Take an RCWorld instead of an RCPackman.
+	Also take a GError.  Use RCWorld functions to find installed
+	packages instead of RCPackman.
+
+	* rc-world-multi.c (rc_world_multi_transact_fn): Disable rollback
+	on the packman before calling rc_world_transact() on the subworlds
+	to prevent rollback recursion.
+
+	* rc-world.c (rc_sync_world): Nuke this and some other dead code.
+	(rc_world_transact): Set up rollback structures before running the
+	transaction, and save them as necessary afterward.
+
+2003-10-07  Joe Shaw  <joe@ximian.com>
+
 	* rc-queue-item.c (uninstall_item_process): If the system can't
 	provide a package set's child when we're trying to remove it,
 	don't assert.  It's entirely possible that the child was removed

@@ -26,16 +26,16 @@
 #include <config.h>
 #include "rc-world.h"
 
-#include "rc-marshal.h"
 #include "rc-debug.h"
-#include "rc-util.h"
 #include "rc-dep-or.h"
-#include "rc-xml.h"
+#include "rc-marshal.h"
+#include "rc-rollback.h"
 #include "rc-subscription.h"
+#include "rc-util.h"
+#include "rc-xml.h"
 
 /* Gross hack */
 static RCWorld *das_global_world = NULL;
-static RCWorld *das_refreshed_global_world = NULL;
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
@@ -308,17 +308,6 @@ RCWorld *
 rc_get_world (void)
 {
     return das_global_world;
-}
-
-void
-rc_sync_world (void)
-{
-    if (das_refreshed_global_world != NULL) {
-        g_object_unref (das_global_world);
-        das_global_world = das_refreshed_global_world;
-        das_refreshed_global_world = NULL;
-        
-    }
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
@@ -1474,6 +1463,10 @@ rc_world_transact (RCWorld *world,
     RCWorldClass *klass;
     GSList *iter;
     gboolean had_problem = FALSE;
+    RCPackman *packman = rc_packman_get_global ();
+    gboolean rollback_enabled;
+    RCRollbackInfo *rollback_info = NULL;
+    gboolean success;
 
     g_return_val_if_fail (world != NULL && RC_IS_WORLD (world), FALSE);
 
@@ -1509,8 +1502,40 @@ rc_world_transact (RCWorld *world,
     klass = RC_WORLD_GET_CLASS (world);
 
     g_assert (klass->transact_fn);
-    return klass->transact_fn (world, install_packages, 
-                               remove_packages, flags);
+
+    rollback_enabled =
+        rc_packman_get_capabilities (packman) & RC_PACKMAN_CAP_ROLLBACK &&
+        rc_packman_get_rollback_enabled (packman) &&
+        !(flags & RC_TRANSACT_FLAG_NO_ACT);
+
+    if (rollback_enabled) {
+        GError *err = NULL;
+
+        rollback_info = rc_rollback_info_new (world, install_packages,
+                                              remove_packages, &err);
+
+        if (!rollback_info) {
+            /* Lame error reporting */
+            rc_debug (RC_DEBUG_LEVEL_ERROR, "Rollback preparation failed: %s",
+                      err->message);
+            g_error_free (err);
+            return FALSE;
+        }
+    }
+
+    success = klass->transact_fn (world, install_packages, 
+                                  remove_packages, flags);
+
+    if (rollback_enabled) {
+        if (success)
+            rc_rollback_info_save (rollback_info);
+        else
+            rc_rollback_info_discard (rollback_info);
+
+        rc_rollback_info_free (rollback_info);
+    }
+
+    return success;
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */

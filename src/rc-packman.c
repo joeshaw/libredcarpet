@@ -28,7 +28,6 @@
 
 #include "rc-marshal.h"
 #include "rc-packman-private.h"
-#include "rc-rollback.h"
 
 static void rc_packman_class_init (RCPackmanClass *klass);
 static void rc_packman_init       (RCPackman *obj);
@@ -214,8 +213,6 @@ rc_packman_transact (RCPackman       *packman,
 {
     RCPackmanClass *klass;
     RCPackageSList *iter;
-    gboolean rollback_enabled;
-    RCRollbackInfo *rollback_info = NULL;
 
     g_return_if_fail (packman);
 
@@ -278,30 +275,8 @@ rc_packman_transact (RCPackman       *packman,
 
     g_assert (klass->rc_packman_real_transact);
 
-    rollback_enabled =
-        rc_packman_get_capabilities (packman) & RC_PACKMAN_CAP_ROLLBACK &&
-        packman->priv->rollback_enabled &&
-        !(flags & RC_TRANSACT_FLAG_NO_ACT);
-
-    if (rollback_enabled) {
-        rollback_info = rc_rollback_info_new (packman,
-                                              install_packages,
-                                              remove_packages);
-    }
-
-    if (!rc_packman_get_error (packman)) {
-        klass->rc_packman_real_transact (packman, install_packages,
-                                         remove_packages, flags);
-    }
-
-    if (rollback_enabled) {
-        if (!rc_packman_get_error (packman))
-            rc_rollback_info_save (rollback_info);
-        else
-            rc_rollback_info_discard (rollback_info);
-
-        rc_rollback_info_free (rollback_info);
-    }
+    klass->rc_packman_real_transact (packman, install_packages,
+                                     remove_packages, flags);
 }
 
 RCPackageSList *
@@ -716,6 +691,14 @@ rc_packman_generic_version_compare (RCPackageSpec *spec1,
     }
 
     return (0);
+}
+
+gboolean
+rc_packman_get_rollback_enabled (RCPackman *packman)
+{
+    g_return_val_if_fail (packman, FALSE);
+
+    return packman->priv->rollback_enabled;
 }
 
 void
