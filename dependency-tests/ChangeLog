@@ -1,3 +1,8 @@
+2002-08-04  Ian Peters  <itp@ximian.com>
+
+	* deptestomatic.c (main): call rc_distro_parse_xml before
+	rc_distman_new
+
 2002-07-23  Jon Trowbridge  <trow@ximian.com>
 
 	* deptestomatic.c (load_channel): Added a dummy alias arg when

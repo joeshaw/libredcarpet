@@ -582,6 +582,8 @@ main (int argc, char *argv[])
 {
     g_type_init ();
 
+    rc_distro_parse_xml (NULL, 0);
+
     packman = rc_distman_new ();
     rc_packman_set_packman (packman);
 
