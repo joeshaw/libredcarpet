@@ -125,3 +125,6 @@
 >!> upgrade sawfish2-1:2.0.pre1.0.200202140152-snap.ximian.1 => sawfish2-1:2.0.pre1.0.200202240433-snap.ximian.1[gnome2]
 >!> upgrade yelp-0.2.99.0.200202140152-snap.ximian.1 => yelp-0:0.2.99.0.200202240433-snap.ximian.1[gnome2]
 >!> installs=0, upgrades=80, uninstalls=0
+>!> Solution #2:
+>!> This solution is a duplicate.
+>!> installs=0, upgrades=80, uninstalls=0
