@@ -1,5 +1,27 @@
 2002-08-29  Jon Trowbridge  <trow@ximian.com>
 
+	* rc-resolver.c (rc_resolver_free): Clean up our list of extra
+	initial queue items.
+	(verify_system_cb): Insertion-sort our list of packages.
+	(rc_resolver_verify_system): Walk across our list of installed
+	packages and look for cases where we have installed multiple
+	packages with the same name.  For each such case, construct a set
+	of group item for removing each of the packages but one.  Then
+	bundle all of the group items into a branch item and add it to our
+	list of extras.
+	(rc_resolver_resolve_dependencies): Add the contents of
+	initial_items to our newly-constructed queue.
+
+	* rc-resolver-queue.c (rc_resolver_queue_add_item): Added.  This
+	is the sort of thing we should have an accessor for, even if it is
+	trivial.
+	(rc_resolver_queue_add_package_to_install): Use
+	rc_resolver_queue_add_item.
+	(rc_resolver_queue_add_package_to_remove): Ditto.
+	(rc_resolver_queue_add_package_to_verify): Ditto.
+	(rc_resolver_queue_add_extra_dependency): Ditto.
+	(rc_resolver_queue_add_extra_conflict): Ditto.
+
 	* rc-queue-item.h: Added RC_QUEUE_ITEM_TYPE_GROUP to
 	RCQueueItemType enum.  Added definition of RCQueueItem_Group
 	struct and prototypes for group functions.

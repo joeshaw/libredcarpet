@@ -79,7 +79,7 @@ rc_resolver_queue_add_package_to_install (RCResolverQueue *queue,
     item = rc_queue_item_new_install (rc_resolver_context_get_world (queue->context),
                                       package);
 
-    queue->items = g_slist_prepend (queue->items, item);
+    rc_resolver_queue_add_item (queue, item);
 }
 
 void
@@ -99,7 +99,8 @@ rc_resolver_queue_add_package_to_remove (RCResolverQueue *queue,
                                         package, "user request");
     if (remove_only_mode)
         rc_queue_item_uninstall_set_remove_only (item);
-    queue->items = g_slist_prepend (queue->items, item);
+
+    rc_resolver_queue_add_item (queue, item);
 }
 
 void
@@ -120,7 +121,7 @@ rc_resolver_queue_add_package_to_verify (RCResolverQueue *queue,
             RCQueueItem *item;
             item = rc_queue_item_new_require (world, dep);
             rc_queue_item_require_add_package (item, package);
-            queue->items = g_slist_prepend (queue->items, item);
+            rc_resolver_queue_add_item (queue, item);
         }
 
     if (package->conflicts_a)
@@ -128,7 +129,7 @@ rc_resolver_queue_add_package_to_verify (RCResolverQueue *queue,
             RCPackageDep *dep = package->conflicts_a->data[i];
             RCQueueItem *item;
             item = rc_queue_item_new_conflict (world, dep, package);
-            queue->items = g_slist_prepend (queue->items, item);
+            rc_resolver_queue_add_item (queue, item);
         }
 }
 
@@ -146,7 +147,7 @@ rc_resolver_queue_add_extra_dependency (RCResolverQueue *queue,
 
     item = rc_queue_item_new_require (world, dep);
 
-    queue->items = g_slist_prepend (queue->items, item);
+    rc_resolver_queue_add_item (queue, item);
 }
 
 void
@@ -162,6 +163,16 @@ rc_resolver_queue_add_extra_conflict (RCResolverQueue *queue,
     world = rc_resolver_context_get_world (queue->context);
 
     item = rc_queue_item_new_conflict (world, dep, NULL);
+
+    rc_resolver_queue_add_item (queue, item);
+}
+
+void
+rc_resolver_queue_add_item (RCResolverQueue *queue,
+                            RCQueueItem *item)
+{
+    g_return_if_fail (queue != NULL);
+    g_return_if_fail (item != NULL);
 
     queue->items = g_slist_prepend (queue->items, item);
 }

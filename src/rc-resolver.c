@@ -46,6 +46,10 @@ rc_resolver_free (RCResolver *resolver)
 {
     if (resolver) {
 
+        g_slist_foreach (resolver->initial_items,
+                         (GFunc) rc_queue_item_free,
+                         NULL);
+
         g_slist_foreach (resolver->pending_queues,
                          (GFunc) rc_resolver_queue_free,
                          NULL);
@@ -72,6 +76,7 @@ rc_resolver_free (RCResolver *resolver)
         if (resolver->extra_conflicts)
             rc_package_dep_slist_free (resolver->extra_conflicts);
 
+        g_slist_free (resolver->initial_items);
         g_slist_free (resolver->packages_to_install);
         g_slist_free (resolver->packages_to_remove);
         g_slist_free (resolver->packages_to_verify);
@@ -191,14 +196,18 @@ verify_system_cb (RCPackage *package, gpointer user_data)
 {
     RCResolver *resolver  = user_data;
 
-    resolver->packages_to_verify = g_slist_prepend (resolver->packages_to_verify,
-                                                    package);
+    resolver->packages_to_verify =
+        g_slist_insert_sorted (resolver->packages_to_verify,
+                               package,
+                               (GCompareFunc) rc_package_spec_compare_name);
 }
 
 
 void
 rc_resolver_verify_system (RCResolver *resolver)
 {
+    GSList *i0, *i1, *i, *j;
+
     g_return_if_fail (resolver != NULL);
 
     rc_world_foreach_package (rc_resolver_get_world (resolver),
@@ -208,13 +217,53 @@ rc_resolver_verify_system (RCResolver *resolver)
 
     resolver->verifying = TRUE;
 
-    /* FIXME: Should walk across world looking for installs of multiple
-       packages with the same name.  If this happens, add branches to the
-       resolver to test removing each of the multiples. */
+    /*
+      Walk across the (sorted-by-name) list of installed packages and look for
+      packages with the same name.  If they exist, construct a branch item
+      containing multiple group items.  Each group item corresponds to removing
+      all but one of the duplicates.
+    */
 
+    for (i0 = resolver->packages_to_verify; i0 != NULL;) {
+
+        for (i1 = i0->next;
+             i1 != NULL && ! rc_package_spec_compare_name (i0->data, i1->data);
+             i1 = i1->next);
+
+        if (i1 != i0->next) {
+            RCQueueItem *branch_item;
+
+            branch_item = rc_queue_item_new_branch (resolver->world);
+
+            for (i = i0; i != i1; i = i->next) {
+                
+                RCQueueItem *grp_item = rc_queue_item_new_group (resolver->world);
+
+                for (j = i0; j != i1; j = j->next) {
+                    RCPackage *dup_pkg = j->data;
+                    RCQueueItem *uninstall_item;
+
+                    if (i != j) {
+                        uninstall_item = rc_queue_item_new_uninstall(resolver->world,
+                                                                     dup_pkg,
+                                                                     "duplicate install");
+                        rc_queue_item_group_add_item (grp_item, uninstall_item);
+                    }
+
+                }
+
+                rc_queue_item_branch_add_item (branch_item, grp_item);
+            }
+            
+            resolver->initial_items = g_slist_prepend (resolver->initial_items,
+                                                       branch_item);
+        }
+
+        i0 = i1;
+    }
+
+    /* OK, that was fun.  Now just resolve the dependencies. */
     rc_resolver_resolve_dependencies (resolver);
-
-
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
@@ -262,6 +311,13 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
 
     /* If this is a verify, we do a "soft resolution" */
     initial_queue->context->verifying = resolver->verifying;
+
+    /* Add extra items. */
+    for (iter = resolver->initial_items; iter != NULL; iter = iter->next) {
+        RCQueueItem *item = iter->data;
+        rc_resolver_queue_add_item (initial_queue, item);
+        iter->data = NULL;
+    }
     
     for (iter = resolver->packages_to_install; iter != NULL; iter = iter->next) {
         RCPackage *pkg = iter->data;

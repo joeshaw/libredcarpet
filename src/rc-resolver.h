@@ -37,6 +37,7 @@ struct _RCResolver {
 
     gboolean verifying;
 
+    GSList *initial_items;
     GSList *packages_to_install;
     GSList *packages_to_remove;
     GSList *packages_to_verify;
