@@ -3,6 +3,7 @@
 	* deptestomatic.c (undump): Added support for undumping compressed
 	files.
 	(parse_xml_trial): Added "solvedeps" testing.
+	(parse_xml_trial): Allow notes to be added to trials.
 
 2002-08-15  Jon Trowbridge  <trow@ximian.com>
 

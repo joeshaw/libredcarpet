@@ -438,8 +438,14 @@ parse_xml_trial (xmlNode *node)
             node = node->next;
             continue;
         }
+        
+        if (! g_strcasecmp (node->name, "note")) {
 
-        if (! g_strcasecmp (node->name, "verify")) {
+            char *note = xml_get_content (node);
+            g_print ("NOTE: %s\n", note);
+            g_free (note);
+
+        } else if (! g_strcasecmp (node->name, "verify")) {
 
             verify = TRUE;
 
@@ -534,8 +540,11 @@ parse_xml_trial (xmlNode *node)
                 RCPackageDep *dep = rc_xml_node_to_package_dep (iter);
                 /* We just skip over anything that doesn't look like a
                    dep. */
-                if (dep)
+                if (dep) {
+                    g_print (">!> Solvedeps %s\n",
+                             rc_package_dep_to_string_static (dep));
                     rc_resolver_add_extra_dependency (resolver, dep);
+                }
                 iter = iter->next;
             }
 
