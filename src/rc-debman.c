@@ -196,7 +196,7 @@ lock_database (RCDebman *debman)
     /* Developer hack */
     if (getenv ("RC_ME_EVEN_HARDER") || getenv ("RC_DEBMAN_STATUS_FILE")) {
         rc_debug (RC_DEBUG_LEVEL_WARNING,
-                  __FUNCTION__ ": not checking lock file\n");
+                  G_GNUC_PRETTY_FUNCTION ": not checking lock file\n");
 
         return (TRUE);
     }
@@ -204,7 +204,7 @@ lock_database (RCDebman *debman)
     /* Check for recursive lock */
     if (debman->priv->lock_fd != -1) {
         rc_debug (RC_DEBUG_LEVEL_ERROR,
-                  __FUNCTION__ ": lock_fd is already %d, recursive lock?\n",
+                  G_GNUC_PRETTY_FUNCTION ": lock_fd is already %d, recursive lock?\n",
                   debman->priv->lock_fd);
 
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
@@ -217,7 +217,7 @@ lock_database (RCDebman *debman)
 
     if (fd == -1) {
         rc_debug (RC_DEBUG_LEVEL_ERROR,
-                  __FUNCTION__ ": couldn't open lock file\n");
+                  G_GNUC_PRETTY_FUNCTION ": couldn't open lock file\n");
 
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "couldn't open lock file");
@@ -244,7 +244,7 @@ lock_database (RCDebman *debman)
                                   "couldn't acquire lock");
 
             rc_debug (RC_DEBUG_LEVEL_ERROR,
-                      __FUNCTION__ ": failed to acquire lock file\n");
+                      G_GNUC_PRETTY_FUNCTION ": failed to acquire lock file\n");
 
             return (FALSE);
         }
@@ -252,7 +252,7 @@ lock_database (RCDebman *debman)
 
     debman->priv->lock_fd = fd;
 
-    rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ": acquired lock file\n");
+    rc_debug (RC_DEBUG_LEVEL_INFO, G_GNUC_PRETTY_FUNCTION ": acquired lock file\n");
 
     g_source_remove (debman->priv->db_watcher_cb);
 
@@ -273,12 +273,12 @@ unlock_database (RCDebman *debman)
 
     if (!rc_close (debman->priv->lock_fd)) {
         rc_debug (RC_DEBUG_LEVEL_WARNING,
-                  __FUNCTION__ ": close of lock_fd failed\n");
+                  G_GNUC_PRETTY_FUNCTION ": close of lock_fd failed\n");
     }
 
     debman->priv->lock_fd = -1;
 
-    rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ": released lock file\n");
+    rc_debug (RC_DEBUG_LEVEL_INFO, G_GNUC_PRETTY_FUNCTION ": released lock file\n");
 }
 
 typedef struct _DebmanVerifyStatusInfo DebmanVerifyStatusInfo;
@@ -492,7 +492,7 @@ verify_status (RCPackman *packman)
                               "couldn't open %s for reading",
                               debman->priv->status_file);
 
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+        rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION \
                   ": failed to open %s for reading\n",
                   debman->priv->status_file);
 
@@ -504,7 +504,7 @@ verify_status (RCPackman *packman)
                               "couldn't open %s for writing",
                               debman->priv->rc_status_file);
 
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+        rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION \
                   ": failed to open %s for writing\n",
                   debman->priv->rc_status_file);
 
@@ -550,7 +550,7 @@ verify_status (RCPackman *packman)
                               "The %s file is malformed or contains errors",
                               debman->priv->status_file);
 
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+        rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION \
                   ": couldn't parse %s\n",
                   debman->priv->status_file);
 
@@ -565,7 +565,7 @@ verify_status (RCPackman *packman)
                               debman->priv->rc_status_file,
                               debman->priv->status_file);
 
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+        rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION \
                   ": couldn't rename %s\n",
                   debman->priv->rc_status_file);
 
@@ -619,7 +619,7 @@ package_accept (gchar *line, RCPackageSList *packages)
 
         if (package->spec.nameq == nameq) {
             rc_debug (RC_DEBUG_LEVEL_DEBUG,
-                      __FUNCTION__ ": found package %s\n", name);
+                      G_GNUC_PRETTY_FUNCTION ": found package %s\n", name);
 
             return (package);
         }
@@ -663,7 +663,7 @@ mark_status_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
         if (!rc_write (mark_status_info->out_fd, "Status: purge ok installed\n",
                        strlen ("Status: purge ok installed\n")))
         {
-            rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+            rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION \
                       ": failed to write new status line, aborting\n");
 
             rc_packman_set_error
@@ -695,7 +695,7 @@ mark_status_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
         if (!rc_write (mark_status_info->out_fd, version_line,
                        strlen (version_line)))
         {
-            rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+            rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION \
                       ": failed to write new version line, aborting\n");
 
             rc_packman_set_error (
@@ -720,7 +720,7 @@ mark_status_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
         ((line && !line[0]) || (!strncasecmp (
                                     line, "Package:", strlen ("Package:")))))
     {
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+        rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION \
                   ": package section had no Status/Version line, aborting\n");
 
         rc_packman_set_error (RC_PACKMAN (mark_status_info->debman),
@@ -736,7 +736,7 @@ mark_status_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
     if (!rc_write (mark_status_info->out_fd, line, strlen (line)) ||
         !rc_write (mark_status_info->out_fd, "\n", 1))
     {
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+        rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION \
                   ": failed to write old line, aborting\n");
 
         rc_packman_set_error (RC_PACKMAN (mark_status_info->debman),
@@ -809,7 +809,7 @@ mark_status (RCPackman *packman, RCPackageSList *install_packages,
                               "couldn't open %s for reading",
                               debman->priv->status_file);
 
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+        rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION \
                   ": failed to open %s for reading\n",
                   debman->priv->status_file);
 
@@ -821,7 +821,7 @@ mark_status (RCPackman *packman, RCPackageSList *install_packages,
                               "couldn't open %s for writing",
                               debman->priv->rc_status_file);
 
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+        rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION \
                   ": failed to open %s for writing\n",
                   debman->priv->rc_status_file);
 
@@ -1083,7 +1083,7 @@ do_purge_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
 {
     DebmanDoPurgeInfo *do_purge_info = (DebmanDoPurgeInfo *)data;
 
-    rc_debug (RC_DEBUG_LEVEL_DEBUG, __FUNCTION__ ": got \"%s\"\n", line);
+    rc_debug (RC_DEBUG_LEVEL_DEBUG, G_GNUC_PRETTY_FUNCTION ": got \"%s\"\n", line);
 
 #if FIX_THE_HACK
     do_purge_info->hack_info.buf =
@@ -1145,7 +1145,7 @@ do_purge (RCPackman *packman, DebmanInstallState *install_state)
     GMainLoop *loop;
 
     if (!rc_file_exists ("/usr/bin/dpkg")) {
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ ": /usr/bin/dpkg does "
+        rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION ": /usr/bin/dpkg does "
                   "not exist\n");
 
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
@@ -1174,7 +1174,7 @@ do_purge (RCPackman *packman, DebmanInstallState *install_state)
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
                               "fork failed");
 
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ ": fork failed\n");
+        rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION ": fork failed\n");
 
         close (master);
         close (slave);
@@ -1202,7 +1202,7 @@ do_purge (RCPackman *packman, DebmanInstallState *install_state)
 
         i18n_fixer ();
 
-        rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ \
+        rc_debug (RC_DEBUG_LEVEL_INFO, G_GNUC_PRETTY_FUNCTION \
                   ": /usr/bin/dpkg --purge --pending\n");
 
         execl ("/usr/bin/dpkg", "/usr/bin/dpkg", "--purge", "--pending",
@@ -1277,7 +1277,7 @@ do_purge (RCPackman *packman, DebmanInstallState *install_state)
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
                               "couldn't reacquire lock file");
 
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+        rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION \
                   ": lost database lock!\n");
 
         return (FALSE);
@@ -1287,7 +1287,7 @@ do_purge (RCPackman *packman, DebmanInstallState *install_state)
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
                               "dpkg exited abnormally");
 
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+        rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION \
                   ": dpkg exited abnormally\n");
 
         return (FALSE);
@@ -1390,7 +1390,7 @@ do_unpack_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
 {
     DebmanDoUnpackInfo *do_unpack_info = (DebmanDoUnpackInfo *)data;
 
-    rc_debug (RC_DEBUG_LEVEL_DEBUG, __FUNCTION__ ": got \"%s\"\n", line);
+    rc_debug (RC_DEBUG_LEVEL_DEBUG, G_GNUC_PRETTY_FUNCTION ": got \"%s\"\n", line);
 
 #if FIX_THE_HACK
     do_unpack_info->hack_info.buf =
@@ -1513,7 +1513,7 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "fork failed");
 
-            rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__, ": fork failed\n");
+            rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION, ": fork failed\n");
 
             g_slist_foreach (argvl, (GFunc) g_free, NULL);
             g_slist_free (argvl);
@@ -1526,7 +1526,7 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
         case 0:
             close (fds[0]);
 
-            rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ":");
+            rc_debug (RC_DEBUG_LEVEL_INFO, G_GNUC_PRETTY_FUNCTION ":");
             dump_argv (RC_DEBUG_LEVEL_INFO, argv);
 
             fflush (stdout);
@@ -1598,7 +1598,7 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
         }
 
         if (!rc_file_exists ("/usr/bin/dpkg")) {
-            rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ ": /usr/bin/dpkg "
+            rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION ": /usr/bin/dpkg "
                       "does not exist\n");
 
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
@@ -1624,7 +1624,7 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
                                   "fork failed");
 
-            rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ ": fork failed\n");
+            rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION ": fork failed\n");
 
             close (master);
             close (slave);
@@ -1656,7 +1656,7 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
 
             i18n_fixer ();
 
-            rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ":");
+            rc_debug (RC_DEBUG_LEVEL_INFO, G_GNUC_PRETTY_FUNCTION ":");
             dump_argv (RC_DEBUG_LEVEL_INFO, argv);
 
             execv ("/usr/bin/dpkg", argv);
@@ -1726,7 +1726,7 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
                                   "couldn't reacquire lock file");
 
-            rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+            rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION \
                       ": lost database lock!\n");
 
             g_slist_foreach (argvl, (GFunc) g_free, NULL);
@@ -1739,7 +1739,7 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
                                   "dpkg exited abnormally");
 
-            rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+            rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION \
                       ": dpkg exited abnormally\n");
 
             g_slist_foreach (argvl, (GFunc) g_free, NULL);
@@ -1780,7 +1780,7 @@ do_configure_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
 {
     DebmanDoConfigureInfo *do_configure_info = (DebmanDoConfigureInfo *)data;
 
-    rc_debug (RC_DEBUG_LEVEL_DEBUG, __FUNCTION__ ": got \"%s\"\n", line);
+    rc_debug (RC_DEBUG_LEVEL_DEBUG, G_GNUC_PRETTY_FUNCTION ": got \"%s\"\n", line);
 
 #if FIX_THE_HACK
     do_configure_info->hack_info.buf =
@@ -1837,7 +1837,7 @@ do_configure (RCPackman *packman, DebmanInstallState *install_state)
     GMainLoop *loop;
 
     if (!rc_file_exists ("/usr/bin/dpkg")) {
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ ": /usr/bin/dpkg "
+        rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION ": /usr/bin/dpkg "
                   "does not exist\n");
 
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
@@ -1867,7 +1867,7 @@ do_configure (RCPackman *packman, DebmanInstallState *install_state)
         close (master);
         close (slave);
 
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ ": fork failed\n");
+        rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION ": fork failed\n");
 
         return (FALSE);
 
@@ -1892,7 +1892,7 @@ do_configure (RCPackman *packman, DebmanInstallState *install_state)
 
         i18n_fixer ();
 
-        rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ \
+        rc_debug (RC_DEBUG_LEVEL_INFO, G_GNUC_PRETTY_FUNCTION \
                   ": /usr/bin/dpkg --configure --pending\n");
 
         execl ("/usr/bin/dpkg", "/usr/bin/dpkg", "--configure", "--pending",
@@ -1968,7 +1968,7 @@ do_configure (RCPackman *packman, DebmanInstallState *install_state)
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
                               "couldn't reacquire lock file");
 
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+        rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION \
                   ": lost database lock!\n");
 
         return (FALSE);
@@ -1978,7 +1978,7 @@ do_configure (RCPackman *packman, DebmanInstallState *install_state)
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
                               "dpkg exited abnormally");
 
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+        rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION \
                   ": dpkg exited abnormally\n");
 
         return (FALSE);
@@ -2286,11 +2286,11 @@ rc_debman_transact (RCPackman *packman, RCPackageSList *install_packages,
     g_signal_emit_by_name (packman, "transact_start",
                            install_state->total);
 
-    rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ \
+    rc_debug (RC_DEBUG_LEVEL_INFO, G_GNUC_PRETTY_FUNCTION \
               ": about to update status file\n");
 
     if (!(mark_status (packman, install_packages, remove_packages))) {
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+        rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION \
                   ": update of status database failed\n");
 
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
@@ -2300,10 +2300,10 @@ rc_debman_transact (RCPackman *packman, RCPackageSList *install_packages,
     }
 
     if (install_packages) {
-        rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ": about to unpack\n");
+        rc_debug (RC_DEBUG_LEVEL_INFO, G_GNUC_PRETTY_FUNCTION ": about to unpack\n");
 
         if (!(do_unpack (packman, install_packages, install_state, flags))) {
-            rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ ": unpack failed\n");
+            rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION ": unpack failed\n");
 
             if (rc_packman_get_error (packman) == RC_PACKMAN_ERROR_FATAL) {
                 rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
@@ -2319,10 +2319,10 @@ rc_debman_transact (RCPackman *packman, RCPackageSList *install_packages,
     }
 
     if (remove_packages && (install_state->seqno < install_state->total)) {
-        rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ": about to purge\n");
+        rc_debug (RC_DEBUG_LEVEL_INFO, G_GNUC_PRETTY_FUNCTION ": about to purge\n");
 
         if (!(do_purge (packman, install_state))) {
-            rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ ": purge failed\n");
+            rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION ": purge failed\n");
 
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
                                   "Unable to remove selected packages " \
@@ -2333,10 +2333,10 @@ rc_debman_transact (RCPackman *packman, RCPackageSList *install_packages,
     }
 
     if (install_packages) {
-        rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ": about to configure\n");
+        rc_debug (RC_DEBUG_LEVEL_INFO, G_GNUC_PRETTY_FUNCTION ": about to configure\n");
 
         if (!(do_configure (packman, install_state))) {
-            rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+            rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION \
                       ": configure failed\n");
 
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
@@ -2747,7 +2747,7 @@ rc_debman_query_all_real (RCPackman *packman)
                               "couldn't open %s for reading",
                               debman->priv->status_file);
 
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+        rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION \
                   ": failed to open /var/lib/dpkg/status\n");
 
         return;
@@ -2862,7 +2862,7 @@ rc_debman_query_file (RCPackman *packman, const gchar *filename)
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "couldn't create pipe");
 
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ ": pipe failed\n");
+        rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION ": pipe failed\n");
 
         return (FALSE);
     }
@@ -2880,7 +2880,7 @@ rc_debman_query_file (RCPackman *packman, const gchar *filename)
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "fork failed");
 
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ ": fork failed\n");
+        rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION ": fork failed\n");
 
         close (fds[0]);
         close (fds[1]);
@@ -2896,7 +2896,7 @@ rc_debman_query_file (RCPackman *packman, const gchar *filename)
 
         i18n_fixer ();
 
-        rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ \
+        rc_debug (RC_DEBUG_LEVEL_INFO, G_GNUC_PRETTY_FUNCTION \
                   ": /usr/bin/dpkg-deb -f %s\n", filename);
 
         execl ("/usr/bin/dpkg-deb", "/usr/bin/dpkg-deb", "-f", filename, NULL);
@@ -2946,7 +2946,7 @@ rc_debman_query_file (RCPackman *packman, const gchar *filename)
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
                               "dpkg-deb exited abnormally");
 
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+        rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION \
                   ": dpkg exited abnormally\n");
 
         return (NULL);
@@ -3144,7 +3144,7 @@ rc_debman_find_file (RCPackman *packman, const gchar *filename)
     gchar realname[PATH_MAX];
 
     if (!g_path_is_absolute (filename)) {
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+        rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION \
                   ": pathname is not absolute\n");
 
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
@@ -3154,7 +3154,7 @@ rc_debman_find_file (RCPackman *packman, const gchar *filename)
     }
 
     if (!realpath (filename, realname)) {
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+        rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION \
                   ": realpath returned NULL\n");
 
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
@@ -3164,7 +3164,7 @@ rc_debman_find_file (RCPackman *packman, const gchar *filename)
     }
 
     if (!(info_dir = opendir ("/var/lib/dpkg/info"))) {
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+        rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION \
                   ": opendir /var/lib/dpkg/info failed\n");
 
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,

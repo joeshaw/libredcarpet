@@ -26,6 +26,11 @@
 #include <rpmlib.h>
 #include <rpmmacro.h>
 
+#if RPM_VERSION >= 40100
+#  include <rpmts.h>
+#  include <rpmps.h>
+#endif
+
 #include "rc-packman.h"
 #include "rc-rpmman-types.h"
 
@@ -51,6 +56,9 @@ typedef enum {
 
 struct _RCRpmman {
     RCPackman parent;
+
+    /* The RPM transaction set (>= 4.1 only) */
+    rpmts rpmts;
 
     rpmdb db;
     int db_status;
@@ -91,6 +99,54 @@ struct _RCRpmman {
     int (*headerGetEntry)(Header, int_32, int_32 *, void **, int_32 *);
     void (*headerFree)(Header);
 
+    int (*readLead)(FD_t, struct rpmlead *);
+    int (*rpmReadConfigFiles)(const char *, const char *);
+    int (*rpmdbOpen)(const char *, rpmdb *, int, int);
+    void (*rpmdbClose)(rpmdb);
+#if RPM_VERSION >= 40002
+    const char * (*rpmProblemString)(rpmProblem);
+    const char * (*rpmProblemStringOld)(struct rpmProblem_s);
+#else
+    const char * (*rpmProblemString)(rpmProblem *);
+    const char * (*rpmProblemStringOld)(rpmProblem);
+#endif
+    int (*rpmGetRpmlibProvides)(char ***, int **, char ***);
+    int (*rpmExpandNumeric)(const char *);
+    int (*rpmDefineMacro)(MacroContext *, const char *, int);
+    const char * (*rpmGetPath)(const char *, ...);
+
+    /*
+     * RPM 3.0.x only functions
+     */
+
+    int (*rpmdbFirstRecNum)(rpmdb);
+    int (*rpmdbNextRecNum)(rpmdb, unsigned int);
+    int (*rpmdbFindByLabel)(rpmdb, const char *, rc_dbiIndexSet *);
+    int (*rpmdbFindPackage)(rpmdb, const char *, rc_dbiIndexSet *);
+    int (*rpmdbFindByFile)(rpmdb, const char *, rc_dbiIndexSet *);
+    Header (*rpmdbGetRecord)(rpmdb, unsigned int);
+    unsigned int (*dbiIndexSetCount)(rc_dbiIndexSet);
+    unsigned int (*dbiIndexRecordOffset)(rc_dbiIndexSet, int);
+    void (*dbiFreeIndexRecord)(rc_dbiIndexSet);
+
+    /*
+     * RPM 4.x functions
+     */
+
+    int (*rpmdbGetIteratorCount)(rc_rpmdbMatchIterator);
+    void (*rpmdbFreeIterator)(rc_rpmdbMatchIterator);
+    Header (*rpmdbNextIterator)(rc_rpmdbMatchIterator);
+    unsigned int (*rpmdbGetIteratorOffset)(rc_rpmdbMatchIterator);
+
+    /*
+     * RPM 4.0.x only functions
+     */
+    rc_rpmdbMatchIterator (*rpmdbInitIterator)(rpmdb, int, const void *,
+                                               size_t);
+
+    /* 
+     * Pre-RPM 4.1 functions
+     */
     int (*rpmReadPackageHeader)(FD_t, Header *, int *, int *, int *);
     int (*rpmtransAddPackage)(rpmTransactionSet, Header, FD_t, const void *,
                               int, rpmRelocation *);
@@ -111,47 +167,31 @@ struct _RCRpmman {
                               void *, rpmProblemSet, rpmProblemSet *,
                               int, int);
     void (*rpmProblemSetFree)(rpmProblemSet);
-    int (*readLead)(FD_t, struct rpmlead *);
-    int (*rpmReadSignature)(FD_t, Header *, short);
-    int (*rpmReadConfigFiles)(const char *, const char *);
-    int (*rpmdbOpen)(const char *, rpmdb *, int, int);
-    void (*rpmdbClose)(rpmdb);
-#if RPM_VERSION >= 40002
-    const char * (*rpmProblemString)(rpmProblem);
-    const char * (*rpmProblemStringOld)(struct rpmProblem_s);
-#else
-    const char * (*rpmProblemString)(rpmProblem *);
-    const char * (*rpmProblemStringOld)(rpmProblem);
-#endif
-    int (*rpmGetRpmlibProvides)(char ***, int **, char ***);
-    int (*rpmExpandNumeric)(const char *);
-    int (*rpmDefineMacro)(MacroContext *, const char *, int);
-    const char * (*rpmGetPath)(const char *, ...);
+    int (*rpmReadSignatureOld)(FD_t, Header *, short);
 
     /*
-     * RPMv3 only functions
+     * RPM 4.1.x and 4.2 only functions
      */
-
-    int (*rpmdbFirstRecNum)(rpmdb);
-    int (*rpmdbNextRecNum)(rpmdb, unsigned int);
-    int (*rpmdbFindByLabel)(rpmdb, const char *, rc_dbiIndexSet *);
-    int (*rpmdbFindPackage)(rpmdb, const char *, rc_dbiIndexSet *);
-    int (*rpmdbFindByFile)(rpmdb, const char *, rc_dbiIndexSet *);
-    Header (*rpmdbGetRecord)(rpmdb, unsigned int);
-    unsigned int (*dbiIndexSetCount)(rc_dbiIndexSet);
-    unsigned int (*dbiIndexRecordOffset)(rc_dbiIndexSet, int);
-    void (*dbiFreeIndexRecord)(rc_dbiIndexSet);
-
-    /*
-     * RPMv4 only functions
-     */
-
-    rc_rpmdbMatchIterator (*rpmdbInitIterator)(rpmdb, int, const void *,
-                                               size_t);
-    int (*rpmdbGetIteratorCount)(rc_rpmdbMatchIterator);
-    void (*rpmdbFreeIterator)(rc_rpmdbMatchIterator);
-    Header (*rpmdbNextIterator)(rc_rpmdbMatchIterator);
-    unsigned int (*rpmdbGetIteratorOffset)(rc_rpmdbMatchIterator);
+    int (*rpmReadPackageFile) (rpmts, FD_t, const char *, Header *);
+    int (*rpmReadSignature)(FD_t, Header *, short, const char **);
+    rpmdbMatchIterator (*rpmtsInitIterator) (const rpmts, int, const void *,
+                                             size_t);
+    rpmts (*rpmtsCreate) (void);
+    void (*rpmtsSetRootDir) (rpmts, const char *);
+    int (*rpmtsAddInstallElement) (rpmts, Header, const void *,
+                                   int, rpmRelocation *);
+    int (*rpmtsAddEraseElement) (rpmts, Header, int);
+    int (*rpmtsCheck) (rpmts);
+    int (*rpmtsOrder) (rpmts);
+    int (*rpmtsClean) (rpmts);
+    int (*rpmtsRun) (rpmts, rpmps, int);
+    int (*rpmtsSetNotifyCallback) (rpmts, rpmCallbackFunction, void *);
+    int (*rpmtsSetFlags) (rpmts, int);
+    rpmts (*rpmtsFree) (rpmts);
+    rpmps (*rpmtsProblems) (rpmts);
+    rpmps (*rpmpsFree) (rpmps);
+    int (*rpmtsVSFlags) (rpmts);
+    int (*rpmtsSetVSFlags) (rpmts, int);
 };
 
 struct _RCRpmmanClass {

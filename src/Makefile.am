@@ -149,7 +149,7 @@ rc-dpkg-helper.so: $(srcdir)/rc-dpkg-helper.c
 
 CLEANFILES = dpkg-helper.h rc-dpkg-helper.so
 
-RPM_STUBS = rc-{rpm}.so.0 rc-{rpm_rpmio}.so.0 rc-{rpm_rpmio_rpmdb}-4.0.3.so rc-{rpm_rpmio_rpmdb}-4.0.4.so
+RPM_STUBS = rc-{rpm}.so.0 rc-{rpm_rpmio}.so.0 rc-{rpm_rpmio_rpmdb}-4.0.3.so rc-{rpm_rpmio_rpmdb}-4.0.4.so rc-{rpm_rpmio_rpmdb}-4.1.so rc-{rpm_rpmio_rpmdb}-4.2.so
 
 rpm-stubs.h: $(RPM_STUBS) packer.pl 
 	cd $(srcdir) && \
@@ -173,6 +173,12 @@ rc-{rpm_rpmio_rpmdb}-4.0.3.so:
 
 rc-{rpm_rpmio_rpmdb}-4.0.4.so:
 	./make_stub.sh rc-{rpm_rpmio_rpmdb}-4.0.4.so librpm-4.0.4.so librpmio-4.0.4.so librpmdb-4.0.4.so libpopt.so.0
+
+rc-{rpm_rpmio_rpmdb}-4.1.so:
+	./make_stub.sh rc-{rpm_rpmio_rpmdb}-4.1.so librpm-4.1.so librpmio-4.1.so librpmdb-4.1.so libpopt.so.0
+
+rc-{rpm_rpmio_rpmdb}-4.2.so:
+	./make_stub.sh rc-{rpm_rpmio_rpmdb}-4.2.so librpm-4.2.so librpmio-4.2.so librpmdb-4.2.so libpopt.so.0
 
 all-local: libredcarpet.a
 

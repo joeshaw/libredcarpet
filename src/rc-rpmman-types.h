@@ -28,6 +28,77 @@
 
 #include <rpmlib.h>
 
+#if RPM_VERSION < 40100
+/* Definitions for RPM 4.1 and 4.2 */
+
+typedef struct rpmts_s *rpmts;
+typedef struct rpmps_s *rpmps;
+
+/* We poke at the internals of rpmps */
+struct rpmps_s {
+    int numProblems;
+    int numProblemsAlloced;
+    rpmProblem probs;
+    int nrefs;
+};
+
+typedef enum rpmVSFlags_e {
+    RPMVSF_DEFAULT      = 0,
+    RPMVSF_NOHDRCHK     = (1 <<  0),
+    RPMVSF_NEEDPAYLOAD  = (1 <<  1),
+    /* bit(s) 2-7 unused */
+    RPMVSF_NOSHA1HEADER = (1 <<  8),
+    RPMVSF_NOMD5HEADER  = (1 <<  9),    /* unimplemented */
+    RPMVSF_NODSAHEADER  = (1 << 10),
+    RPMVSF_NORSAHEADER  = (1 << 11),    /* unimplemented */
+    /* bit(s) 12-15 unused */
+    RPMVSF_NOSHA1       = (1 << 16),    /* unimplemented */
+    RPMVSF_NOMD5        = (1 << 17),
+    RPMVSF_NODSA        = (1 << 18),
+    RPMVSF_NORSA        = (1 << 19)
+    /* bit(s) 16-31 unused */
+} rpmVSFlags;
+
+#define _RPMVSF_NODIGESTS       \
+  ( RPMVSF_NOSHA1HEADER |       \
+    RPMVSF_NOMD5HEADER |        \
+    RPMVSF_NOSHA1 |             \
+    RPMVSF_NOMD5 )
+
+#define _RPMVSF_NOSIGNATURES    \
+  ( RPMVSF_NODSAHEADER |        \
+    RPMVSF_NORSAHEADER |        \
+    RPMVSF_NODSA |              \
+    RPMVSF_NORSA )
+
+#else
+/* Definitions for RPM 4.0.4 */
+
+typedef struct rpmTransactionSet_s *rpmTransactionSet;
+typedef struct rpmProblemSet_s *rpmProblemSet;
+
+/* We poke at the internals of rpmDependencyConflict */
+typedef struct rpmDependencyConflict_s {
+    const char * byName;
+    const char * byVersion;
+    const char * byRelease;
+    Header byHeader;
+    /*
+     * These needs fields are misnamed -- they are used for the package
+     * which isn't needed as well.
+     */
+    const char * needsName;
+    const char * needsVersion;
+    int needsFlags;
+    const void ** suggestedPackages;
+    enum {
+        RPMDEP_SENSE_REQUIRES,
+        RPMDEP_SENSE_CONFLICTS
+    } sense;
+} * rpmDependencyConflict;
+
+#endif
+
 /* rpmlib.h version 4.0 */
 
 typedef struct _rpmdbMatchIterator * rc_rpmdbMatchIterator;

@@ -74,19 +74,21 @@ gpg_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
     RCVerification *verification = data;
     const gchar *ptr;
 
-    rc_debug (RC_DEBUG_LEVEL_DEBUG, __FUNCTION__ ": got \"%s\"\n", line);
+    rc_debug (RC_DEBUG_LEVEL_DEBUG,
+              G_GNUC_PRETTY_FUNCTION ": got \"%s\"\n", line);
 
     ptr = line + strlen ("[GNUPG:] ");
 
     if (!strncmp (ptr, "GOODSIG ", strlen ("GOODSIG "))) {
-        rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ": good GPG signature\n");
+        rc_debug (RC_DEBUG_LEVEL_INFO,
+                  G_GNUC_PRETTY_FUNCTION ": good GPG signature\n");
 
         verification->status = RC_VERIFICATION_STATUS_PASS;
 
         ptr = strstr (ptr + strlen ("GOODSIG "), " ");
 
         if (ptr) {
-            rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ \
+            rc_debug (RC_DEBUG_LEVEL_INFO, G_GNUC_PRETTY_FUNCTION \
                       ": signer is \"%s\"\n", ptr + 1);
             verification->info = g_strdup (ptr + 1);
         }
@@ -95,14 +97,15 @@ gpg_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
     }
 
     if (!strncmp (ptr, "BADSIG ", strlen ("BADSIG "))) {
-        rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ": bad GPG signature\n");
+        rc_debug (RC_DEBUG_LEVEL_INFO,
+                  G_GNUC_PRETTY_FUNCTION ": bad GPG signature\n");
 
         verification->status = RC_VERIFICATION_STATUS_FAIL;
 
         ptr = strstr (ptr + strlen ("BADSIG "), " ");
 
         if (ptr) {
-            rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ \
+            rc_debug (RC_DEBUG_LEVEL_INFO, G_GNUC_PRETTY_FUNCTION \
                       ": signer is \"%s\"\n", ptr + 1);
             verification->info = g_strdup (ptr + 1);
         }
@@ -111,7 +114,7 @@ gpg_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
     }
 
     if (!strncmp (ptr, "ERRSIG ", strlen ("ERRSIG "))) {
-        rc_debug (RC_DEBUG_LEVEL_WARNING, __FUNCTION__ \
+        rc_debug (RC_DEBUG_LEVEL_WARNING, G_GNUC_PRETTY_FUNCTION \
                   ": error checking GPG signature\n");
 
         verification->status = RC_VERIFICATION_STATUS_UNDEF;
@@ -291,11 +294,11 @@ rc_verify_md5 (gchar *filename, guint8 *md5)
     verification->type = RC_VERIFICATION_TYPE_MD5;
 
     if (!memcmp (md5, cmd5, 16)) {
-        rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ": good md5\n");
+        rc_debug (RC_DEBUG_LEVEL_INFO, G_GNUC_PRETTY_FUNCTION ": good md5\n");
 
         verification->status = RC_VERIFICATION_STATUS_PASS;
     } else {
-        rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ": bad md5\n");
+        rc_debug (RC_DEBUG_LEVEL_INFO, G_GNUC_PRETTY_FUNCTION ": bad md5\n");
 
         verification->status = RC_VERIFICATION_STATUS_FAIL;
     }
@@ -318,11 +321,11 @@ rc_verify_md5_string (gchar *filename, gchar *md5)
     verification->type = RC_VERIFICATION_TYPE_MD5;
 
     if (!strcmp (md5, cmd5)) {
-        rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ": good md5\n");
+        rc_debug (RC_DEBUG_LEVEL_INFO, G_GNUC_PRETTY_FUNCTION ": good md5\n");
 
         verification->status = RC_VERIFICATION_STATUS_PASS;
     } else {
-        rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ": bad md5\n");
+        rc_debug (RC_DEBUG_LEVEL_INFO, G_GNUC_PRETTY_FUNCTION ": bad md5\n");
 
         verification->status = RC_VERIFICATION_STATUS_FAIL;
     }
@@ -343,7 +346,7 @@ rc_verify_size (gchar *filename, guint32 size)
     verification->type = RC_VERIFICATION_TYPE_SIZE;
 
     if (stat (filename, &buf) == -1) {
-        rc_debug (RC_DEBUG_LEVEL_WARNING, __FUNCTION__ \
+        rc_debug (RC_DEBUG_LEVEL_WARNING, G_GNUC_PRETTY_FUNCTION \
                   ": couldn't stat file\n");
 
         verification->status = RC_VERIFICATION_STATUS_UNDEF;
@@ -352,11 +355,13 @@ rc_verify_size (gchar *filename, guint32 size)
     }
 
     if (buf.st_size == size) {
-        rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ": good size check\n");
+        rc_debug (RC_DEBUG_LEVEL_INFO,
+                  G_GNUC_PRETTY_FUNCTION ": good size check\n");
 
         verification->status = RC_VERIFICATION_STATUS_PASS;
     } else {
-        rc_debug (RC_DEBUG_LEVEL_WARNING, __FUNCTION__ ": bad size check\n");
+        rc_debug (RC_DEBUG_LEVEL_WARNING,
+                  G_GNUC_PRETTY_FUNCTION ": bad size check\n");
 
         verification->status = RC_VERIFICATION_STATUS_FAIL;
     }

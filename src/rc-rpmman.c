@@ -45,6 +45,15 @@
 #include "rpm-rpmlead.h"
 #include "rpm-signature.h"
 
+/*
+ * We define this so people can't build or use libredcarpet against a
+ * newer version than we support.  Unfortunately we have to do this
+ * because we do some very evil poking of private vtables which can
+ * and have changed cordering from version to version.  It could be
+ * very dangerous to call the wrong function.
+ */
+#define LATEST_SUPPORTED_RPM_VERSION 40200
+
 #define GTKFLUSH {while (g_main_pending ()) g_main_iteration (TRUE);}
 
 #undef rpmdbNextIterator
@@ -70,8 +79,40 @@
 /* Repackaging was added in RPM 4.0.3, but broken until 4.0.4. */
 #define RPMTRANS_FLAG_REPACKAGE (1 << 10)
 
-/* RPMRC_* was added in RPM 4.0.3 */
-#define RPMRC_BADSIZE 3
+/* rpmRC for RPM 4.0.3 and 4.0.4 */
+#define RPMRC_OK        0
+#define RPMRC_BADMAGIC  1
+#define RPMRC_FAIL      2
+#define RPMRC_BADSIZE   3
+#define RPMRC_SHORTREAD 4
+
+/* rpmRC for RPM 4.1 and 4.2, where different from above */
+#define RPMRC_NOTFOUND   1
+#define RPMRC_NOTTRUSTED 3
+#define RPMRC_NOKEY      4
+
+/*
+ * Define a compatibility enum for rpmCallbackType, since it changed to
+ * a bitfield in 4.1
+ */
+typedef enum {
+    RC_RPMCALLBACK_UNKNOWN            = 0,
+    RC_RPMCALLBACK_INST_PROGRESS      = (1 << 0),
+    RC_RPMCALLBACK_INST_START         = (1 << 1),
+    RC_RPMCALLBACK_INST_OPEN_FILE     = (1 << 2),
+    RC_RPMCALLBACK_INST_CLOSE_FILE    = (1 << 3),
+    RC_RPMCALLBACK_TRANS_PROGRESS     = (1 << 4),
+    RC_RPMCALLBACK_TRANS_START        = (1 << 5),
+    RC_RPMCALLBACK_TRANS_STOP         = (1 << 6),
+    RC_RPMCALLBACK_UNINST_PROGRESS    = (1 << 7),
+    RC_RPMCALLBACK_UNINST_START       = (1 << 8),
+    RC_RPMCALLBACK_UNINST_STOP        = (1 << 9),
+    RC_RPMCALLBACK_REPACKAGE_PROGRESS = (1 << 10),
+    RC_RPMCALLBACK_REPACKAGE_START    = (1 << 11),
+    RC_RPMCALLBACK_REPACKAGE_STOP     = (1 << 12),
+    RC_RPMCALLBACK_UNPACK_ERROR       = (1 << 13),
+    RC_RPMCALLBACK_CPIO_ERROR         = (1 << 14)
+} RCrpmCallbackType;
 
 static void rc_rpmman_class_init (RCRpmmanClass *klass);
 static void rc_rpmman_init       (RCRpmman *obj);
@@ -205,15 +246,23 @@ close_database (RCRpmman *rpmman)
         g_timeout_add (5000, (GSourceFunc) database_check_func,
                        (gpointer) rpmman);
 
-    if (rpmman->db) {
-        rpmman->rpmdbClose (rpmman->db);
-        rpmman->db = NULL;
+    if (rpmman->db || rpmman->rpmts) {
         rpmman->db_status = RC_RPMMAN_DB_NONE;
 
         if (rpmman->lock_fd) {
             rc_close (rpmman->lock_fd);
             rpmman->lock_fd = 0;
         }
+    }
+
+    if (rpmman->db) {
+        rpmman->rpmdbClose (rpmman->db);
+        rpmman->db = NULL;
+    }
+
+    if (rpmman->rpmts) {
+        rpmman->rpmtsFree (rpmman->rpmts);
+        rpmman->rpmts = NULL;
     }
 }
 
@@ -231,7 +280,7 @@ open_database (RCRpmman *rpmman, gboolean write)
         return FALSE;
 #endif
 
-    if (rpmman->db)
+    if (rpmman->db || rpmman->rpmts)
         close_database (rpmman);
 
     root = !geteuid ();
@@ -242,9 +291,14 @@ open_database (RCRpmman *rpmman, gboolean write)
         goto ERROR;
     }
 
-    write ?
-        ((flags = O_RDWR) && (rpmman->db_status = RC_RPMMAN_DB_RDWR)) :
-        ((flags = O_RDONLY) && (rpmman->db_status = RC_RPMMAN_DB_RDONLY));
+    if (write) {
+        flags = O_RDWR;
+        rpmman->db_status = RC_RPMMAN_DB_RDWR;
+    }
+    else {
+        flags = O_RDONLY;
+        rpmman->db_status = RC_RPMMAN_DB_RDONLY;
+    }
 
     db_filename = rc_rpmman_database_filename (rpmman);
 
@@ -265,10 +319,32 @@ open_database (RCRpmman *rpmman, gboolean write)
         goto ERROR;
     }
 
-    if (rpmman->rpmdbOpen (rpmman->rpmroot, &rpmman->db, flags, 0644)) {
-        rc_packman_set_error (RC_PACKMAN (rpmman), RC_PACKMAN_ERROR_ABORT,
-                              "rpmdbOpen failed");
-        goto ERROR;
+    if (rpmman->version >= 40100) {
+        rpmman->rpmts = rpmman->rpmtsCreate ();
+
+        if (!rpmman->rpmts) {
+            rc_packman_set_error (RC_PACKMAN (rpmman), RC_PACKMAN_ERROR_ABORT,
+                                  "rpmtsCreate failed");
+            goto ERROR;
+        }
+
+        rpmman->rpmtsSetRootDir (rpmman->rpmts, rpmman->rpmroot);
+
+        /*
+         * We don't want to use RPM >= 4.1's built-in digest/signature
+         * checking because repackaged RPMs have invalid signatures and
+         * we do the checking ourselves.
+         */
+        rpmman->rpmtsSetVSFlags (rpmman->rpmts,
+                                 rpmman->rpmtsVSFlags (rpmman->rpmts) |
+                                 _RPMVSF_NODIGESTS | _RPMVSF_NOSIGNATURES);
+    }
+    else {
+        if (rpmman->rpmdbOpen (rpmman->rpmroot, &rpmman->db, flags, 0644)) {
+            rc_packman_set_error (RC_PACKMAN (rpmman), RC_PACKMAN_ERROR_ABORT,
+                                  "rpmdbOpen failed");
+            goto ERROR;
+        }
     }
 
     rc_close (db_fd);
@@ -280,7 +356,6 @@ open_database (RCRpmman *rpmman, gboolean write)
         if (rpmman->lock_fd == -1) {
             rc_packman_set_error (RC_PACKMAN (rpmman), RC_PACKMAN_ERROR_ABORT,
                                   "open(2) failed");
-            rpmman->rpmdbClose (rpmman->db);
             goto ERROR;
         }
 
@@ -292,7 +367,6 @@ open_database (RCRpmman *rpmman, gboolean write)
         if (fcntl (rpmman->lock_fd, F_SETLK, &fl) == -1) {
             rc_packman_set_error (RC_PACKMAN (rpmman), RC_PACKMAN_ERROR_ABORT,
                                   "fcntl failed");
-            rpmman->rpmdbClose (rpmman->db);
             goto ERROR;
         }
     }
@@ -325,10 +399,22 @@ open_database (RCRpmman *rpmman, gboolean write)
     rc_packman_set_error (RC_PACKMAN (rpmman), RC_PACKMAN_ERROR_ABORT,
                           "unable to open RPM database");
     rpmman->db_status = RC_RPMMAN_DB_NONE;
+
+    if (rpmman->db) {
+        rpmman->rpmdbClose (rpmman->db);
+        rpmman->db = NULL;
+    }
+
+    if (rpmman->rpmts) {
+        rpmman->rpmtsFree (rpmman->rpmts);
+        rpmman->rpmts = NULL;
+    }
+
     if (db_filename)
         g_free (db_filename);
     if (db_fd != -1)
         rc_close (db_fd);
+
     return FALSE;
 }
 
@@ -344,8 +430,46 @@ struct _InstallState {
     gboolean installing;
 };
 
+static RCrpmCallbackType
+convert_callback_type (RCRpmman *rpmman, int what)
+{
+    if (rpmman->version >= 40100)
+        return (RCrpmCallbackType) what;
+    else {
+        /*
+         * Sigh.  Symbolically these are worthless, because we could have
+         * been built against RPM 4.1 -- which means the symbols would have
+         * different values -- so we need to refer to these by integer value.
+         */
+        switch (what) {
+        case 0:
+            return RC_RPMCALLBACK_INST_PROGRESS;
+        case 1:
+            return RC_RPMCALLBACK_INST_START;
+        case 2:
+            return RC_RPMCALLBACK_INST_OPEN_FILE;
+        case 3:
+            return RC_RPMCALLBACK_INST_CLOSE_FILE;
+        case 4:
+            return RC_RPMCALLBACK_TRANS_PROGRESS;
+        case 5:
+            return RC_RPMCALLBACK_TRANS_START;
+        case 6:
+            return RC_RPMCALLBACK_TRANS_STOP;
+        case 7:
+            return RC_RPMCALLBACK_UNINST_PROGRESS;
+        case 8:
+            return RC_RPMCALLBACK_UNINST_START;
+        case 9:
+            return RC_RPMCALLBACK_UNINST_STOP;
+        default:
+            return RC_RPMCALLBACK_UNKNOWN;
+        }
+    }
+}
+
 static void *
-transact_cb (const Header h, const rpmCallbackType what,
+transact_cb (const Header h, const int rpm_what,
              const unsigned long amount,
              const unsigned long total,
              const void * pkgKey, void * data)
@@ -355,29 +479,27 @@ transact_cb (const Header h, const rpmCallbackType what,
     InstallState *state = (InstallState *) data;
     char *filename_copy;
     const char *base;
+    RCrpmCallbackType what;
 
-#if 0
-    /* heh heh heh */
-    GTKFLUSH;
-#endif
+    what = convert_callback_type (RC_RPMMAN (state->packman), rpm_what);
 
     switch (what) {
-    case RPMCALLBACK_INST_OPEN_FILE:
+    case RC_RPMCALLBACK_INST_OPEN_FILE:
         fd = rc_rpm_open (RC_RPMMAN (state->packman), filename, "r.fdio",
                           O_RDONLY, 0);
         return fd;
 
-    case RPMCALLBACK_INST_CLOSE_FILE:
+    case RC_RPMCALLBACK_INST_CLOSE_FILE:
         rc_rpm_close (RC_RPMMAN (state->packman), fd);
         break;
 
-    case RPMCALLBACK_INST_PROGRESS:
+    case RC_RPMCALLBACK_INST_PROGRESS:
         g_signal_emit_by_name (state->packman, "transact_progress",
                                amount, total);
         GTKFLUSH;
         break;
 
-    case RPMCALLBACK_TRANS_PROGRESS:
+    case RC_RPMCALLBACK_TRANS_PROGRESS:
         if (state->seqno < state->true_total) {
             RCPackmanStep step;
             if (!state->installing || (state->seqno >= state->install_total)) {
@@ -391,7 +513,7 @@ transact_cb (const Header h, const rpmCallbackType what,
         }
         break;
 
-    case RPMCALLBACK_INST_START:
+    case RC_RPMCALLBACK_INST_START:
         if (state->seqno < state->true_total) {
             filename_copy = g_strdup (pkgKey);
             base = basename (filename_copy);
@@ -401,17 +523,17 @@ transact_cb (const Header h, const rpmCallbackType what,
         }
         break;
 
-    case RPMCALLBACK_TRANS_START:
-    case RPMCALLBACK_UNINST_START:
-    case RPMCALLBACK_UNINST_STOP:
-    case RPMCALLBACK_UNINST_PROGRESS:
-    case RPMCALLBACK_TRANS_STOP:
-#if 0
-    case RPMCALLBACK_UNPACK_ERROR:
-    case RPMCALLBACK_CPIO_ERROR:
-#else
-    default:
-#endif
+    case RC_RPMCALLBACK_UNKNOWN:
+    case RC_RPMCALLBACK_TRANS_START:
+    case RC_RPMCALLBACK_TRANS_STOP:
+    case RC_RPMCALLBACK_UNINST_PROGRESS:
+    case RC_RPMCALLBACK_UNINST_START:
+    case RC_RPMCALLBACK_UNINST_STOP:
+    case RC_RPMCALLBACK_REPACKAGE_PROGRESS:
+    case RC_RPMCALLBACK_REPACKAGE_START:
+    case RC_RPMCALLBACK_REPACKAGE_STOP:
+    case RC_RPMCALLBACK_UNPACK_ERROR:
+    case RC_RPMCALLBACK_CPIO_ERROR:
         /* ignore */
         break;
     }
@@ -437,7 +559,6 @@ transaction_add_install_packages (RCPackman *packman,
 
         fd = rc_rpm_open (rpmman, filename, "r.fdio", O_RDONLY, 0);
 
-        /* if (fd == NULL || rpmman->Ferror (fd)) { */
         if (fd == NULL) {
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "unable to open %s", filename);
@@ -445,66 +566,90 @@ transaction_add_install_packages (RCPackman *packman,
             return (0);
         }
 
-        rc = rpmman->rpmReadPackageHeader (fd, &header, &is_source,
-                                           NULL, NULL);
+        /* FIXME: Return values */
+        if (rpmman->version >= 40100) {
+            char *tmp = NULL;
+            guint32 count = 0;
 
-        switch (rc) {
-        case 1:
+            rc = rpmman->rpmReadPackageFile (rpmman->rpmts, fd, NULL, &header);
+
+            if (rc) {
+                rc_rpm_close (rpmman, fd);
+            
+                rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                      "can't read RPM header in %s", filename);
+                
+                return 0;
+            }
+
+            rpmman->headerGetEntry (header, RPMTAG_SOURCEPACKAGE, NULL,
+                                (void **) &tmp, &count);
+
+            if (count)
+                is_source = TRUE;
+            else
+                is_source = FALSE;
+        }
+        else {
+            rc = rpmman->rpmReadPackageHeader (fd, &header, &is_source,
+                                               NULL, NULL);
+
+            if (rc) {
+                rc_rpm_close (rpmman, fd);
+            
+                rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                      "can't read RPM header in %s", filename);
+
+                return 0;
+            }
+        }
+
+        if (is_source) {
             rc_rpm_close (rpmman, fd);
 
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                  "can't read RPM header in %s", filename);
+                                  "%s is a source package; installing "
+                                  "source packages is not supported",
+                                  filename);
+            
+            return 0;
+        }
+
+        if (rpmman->version >= 40100) {
+            rc = rpmman->rpmtsAddInstallElement (rpmman->rpmts, header,
+                                                 filename, 1, NULL);
+        }
+        else {
+            rc = rpmman->rpmtransAddPackage (transaction, header,
+                                             NULL, filename,
+                                             INSTALL_UPGRADE, NULL);
+        }
+
+        count++;
+        rpmman->headerFree (header);
+        rc_rpm_close (rpmman, fd);
+
+        switch (rc) {
+        case 0:
+            break;
+
+        case 1:
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "error reading from %s", filename);
+
+            return (0);
+
+        case 2:
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "%s requires newer rpmlib", filename);
 
             return (0);
 
         default:
-            rc_rpm_close (rpmman, fd);
-
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "%s is not installable", filename);
-
+            
             return (0);
-
-        case 0:
-            if (is_source) {
-                rc_rpm_close (rpmman, fd);
-
-                rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                      "%s is a source package; installing "
-                                      "source packages is not supported",
-                                      filename);
-
-                return 0;
-            }
-
-            rc = rpmman->rpmtransAddPackage (
-                transaction, header, NULL, filename, INSTALL_UPGRADE, NULL);
-            count++;
-            rpmman->headerFree (header);
-            rc_rpm_close (rpmman, fd);
-
-            switch (rc) {
-            case 0:
-                break;
-
-            case 1:
-                rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                      "error reading from %s", filename);
-
-                return (0);
-
-            case 2:
-                rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                      "%s requires newer rpmlib", filename);
-
-                return (0);
-
-            default:
-                rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                      "%s is not installable", filename);
-
-                return (0);
-            }
         }
     }
 
@@ -552,8 +697,14 @@ transaction_add_remove_packages_v4 (RCPackman *packman,
         Header header;
         unsigned int offset;
 
-        mi = rpmman->rpmdbInitIterator (
-            rpmman->db, RPMDBI_LABEL, package_name, 0);
+        if (rpmman->version >= 40100) {
+            mi = rpmman->rpmtsInitIterator (rpmman->rpmts, RPMDBI_LABEL,
+                                            package_name, 0);
+        }
+        else {
+            mi = rpmman->rpmdbInitIterator (rpmman->db, RPMDBI_LABEL,
+                                            package_name, 0);
+        }
 
         if (rpmman->rpmdbGetIteratorCount (mi) <= 0) {
             rc_packman_set_error
@@ -572,7 +723,10 @@ transaction_add_remove_packages_v4 (RCPackman *packman,
         while ((header = rpmman->rpmdbNextIterator (mi))) {
             offset = rpmman->rpmdbGetIteratorOffset (mi);
 
-            rpmman->rpmtransRemovePackage (transaction, offset);
+            if (rpmman->version >= 40100)
+                rpmman->rpmtsAddEraseElement (rpmman->rpmts, header, offset);
+            else
+                rpmman->rpmtransRemovePackage (transaction, offset);
 
             count++;
         }
@@ -671,9 +825,14 @@ transaction_add_remove_packages (RCPackman *packman,
 }
 
 static void
-render_problems (RCPackman *packman, rpmProblemSet probs)
+render_problems (RCPackman *packman, gpointer prob_ptr)
 {
     guint count;
+#if RPM_VERSION >= 40100
+    rpmps probs = prob_ptr;
+#else
+    rpmProblemSet probs = prob_ptr;
+#endif
 #if RPM_VERSION >= 40002
     rpmProblem problem = probs->probs;
 #else
@@ -684,13 +843,11 @@ render_problems (RCPackman *packman, rpmProblemSet probs)
 
     for (count = 0; count < probs->numProblems; count++) {
         if (rpmman->version >= 40002) {
-            g_string_sprintfa (
-                report, "\n%s",
-                rpmman->rpmProblemString (problem));
+            g_string_append_printf (report, "\n%s",
+                                    rpmman->rpmProblemString (problem));
         } else {
-            g_string_sprintfa (
-                report, "\n%s",
-                rpmman->rpmProblemStringOld (*problem));
+            g_string_append_printf (report, "\n%s",
+                                    rpmman->rpmProblemStringOld (*problem));
         }
         problem++;
     }
@@ -704,16 +861,12 @@ static void
 rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
                     RCPackageSList *remove_packages, int flags)
 {
-    rpmTransactionSet transaction;
-    int rc;
+    rpmTransactionSet transaction = NULL;
+    rpmps ps = NULL;
     rpmProblemSet probs = NULL;
+    int rc;
     InstallState state;
     RCPackageSList *iter;
-#if RPM_VERSION >= 40003
-    rpmDependencyConflict conflicts;
-#else
-    struct rpmDependencyConflict *conflicts;
-#endif
     int transaction_flags = 0, problem_filter;
     RCRpmman *rpmman = RC_RPMMAN (packman);
     RCPackageSList *real_remove_packages = NULL;
@@ -754,15 +907,6 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     }
 
     problem_filter =
-        /* These need to go away as soon as possible, except many of
-           our packages are still broken so we can't get rid of them.
-           :-( */
-        /* dobey tells me these will be fixed soon, by the 1.3
-         * release, so i'm turning these off now [3/5/2002] */
-#if 0
-        RPMPROB_FILTER_REPLACENEWFILES |
-        RPMPROB_FILTER_REPLACEOLDFILES |
-#endif
         /* This isn't really a problem, and we'll trust RC to do the
            right thing here */
         RPMPROB_FILTER_OLDPACKAGE;
@@ -774,7 +918,8 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     state.remove_total = 0;
     state.installing = FALSE;
 
-    transaction = rpmman->rpmtransCreateSet (rpmman->db, rpmman->rpmroot);
+    if (rpmman->version < 40100)
+        transaction = rpmman->rpmtransCreateSet (rpmman->db, rpmman->rpmroot);
 
     if (install_packages &&
         !(state.install_total = transaction_add_install_packages (
@@ -784,8 +929,8 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
             packman, RC_PACKMAN_ERROR_ABORT,
             "error processing to-be-installed packages for test transaction");
 
-
-        rpmman->rpmtransFree (transaction);
+        if (transaction)
+            rpmman->rpmtransFree (transaction);
 
         goto ERROR;
     }
@@ -803,7 +948,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
             RCPackage *install_package = (RCPackage *)(install_iter->data);
             int i;
 
-            if (install_package->obsoletes_a)
+            if (install_package->obsoletes_a) {
                 for (i = 0; i < install_package->obsoletes_a->len; i++) {
                     RCPackageDep *obsolete = install_package->obsoletes_a->data[i];
                     GSList *remove_iter;
@@ -832,6 +977,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
                         rc_package_dep_unref (prov);
                     }
                 }
+            }
         }
     }
 
@@ -851,7 +997,8 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
             packman, RC_PACKMAN_ERROR_ABORT,
             "error processing to-be-removed packages for test transaction");
 
-        rpmman->rpmtransFree (transaction);
+        if (transaction)
+            rpmman->rpmtransFree (transaction);
 
         goto ERROR;
     }
@@ -901,101 +1048,180 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     if (!real_remove_packages)
         state.installing = TRUE;
 
-    if (rpmman->rpmdepCheck (transaction, &conflicts, &rc) || rc) {
-#if RPM_VERSION >= 40003
-        rpmDependencyConflict conflict = conflicts;
-#else
-        struct rpmDependencyConflict *conflict = conflicts;
-#endif
-        guint count;
-        GString *dep_info = g_string_new ("");
+    if (rpmman->version >= 40100) {
+        if (rpmman->rpmtsCheck (rpmman->rpmts)) {
+            GString *dep_info = g_string_new ("");
+            int i;
 
-        for (count = 0; count < rc; count++) {
-            g_string_sprintfa (dep_info, "\n%s", conflict->byName);
-            if (conflict->byVersion && conflict->byVersion[0]) {
-                g_string_sprintfa (dep_info, "-%s", conflict->byVersion);
-                if (conflict->byRelease && conflict->byRelease[0]) {
-                    g_string_sprintfa (dep_info, "-%s", conflict->byRelease);
+            ps = rpmman->rpmtsProblems (rpmman->rpmts);
+            for (i = 0; i < ps->numProblems; i++) {
+                rpmProblem p;
+                const char *msg;
+
+                p = ps->probs + i;
+
+                if (p->ignoreProblem) {
+                    /* Should we do something with the problem? */
+                    continue;
                 }
+
+                msg = rpmman->rpmProblemString (p);
+                g_string_append_printf (dep_info, "\n%s", msg);
             }
 
-            if (conflict->sense == RPMDEP_SENSE_CONFLICTS) {
-                g_string_sprintfa (dep_info, " conflicts with ");
-            } else { /* RPMDEP_SENSE_REQUIRES */
-                if (conflict->needsFlags & RPMSENSE_PREREQ) {
-                    g_string_sprintfa (dep_info, " pre-requires ");
-                } else {
-                    g_string_sprintfa (dep_info, " requires ");
-                }
-            }
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  dep_info->str);
 
-            g_string_sprintfa (dep_info, "%s", conflict->needsName);
+            g_string_free (dep_info, TRUE);
 
-            if (conflict->needsVersion && conflict->needsVersion[0]) {
-                g_string_sprintfa (dep_info, " ");
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "transaction has unmet dependencies");
 
-                if (conflict->needsFlags & RPMSENSE_LESS) {
-                    g_string_sprintfa (dep_info, "<");
-                }
+            rpmman->rpmpsFree (ps);
 
-                if (conflict->needsFlags & RPMSENSE_GREATER) {
-                    g_string_sprintfa (dep_info, ">");
-                }
-
-                if (conflict->needsFlags & RPMSENSE_EQUAL) {
-                    g_string_sprintfa (dep_info, "=");
-                }
-
-                g_string_sprintfa (dep_info, " %s", conflict->needsVersion);
-            }
-
-            conflict++;
+            goto ERROR;
         }
 
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              dep_info->str);
+        if (rpmman->rpmtsOrder (rpmman->rpmts)) {
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "circular dependencies were detected "
+                                  "in the selected packages");
 
-        g_string_free (dep_info, TRUE);
 
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              "transaction has unmet dependencies");
-
-        rpmman->rpmdepFreeConflicts (conflicts, rc);
-
-        rpmman->rpmtransFree (transaction);
-
-        goto ERROR;
+            goto ERROR;
+        }
     }
+    else {
+#if RPM_VERSION >= 40003
+        rpmDependencyConflict conflicts;
+#else
+        struct rpmDependencyConflict *conflicts;
+#endif
 
-    if (rpmman->rpmdepOrder (transaction)) {
-        rc_packman_set_error (
-            packman, RC_PACKMAN_ERROR_ABORT,
-            "circular dependencies were detected in the selected packages");
+        if (rpmman->rpmdepCheck (transaction, &conflicts, &rc) || rc) {
+#if RPM_VERSION >= 40003
+            rpmDependencyConflict conflict = conflicts;
+#else
+            struct rpmDependencyConflict *conflict = conflicts;
+#endif
+            guint count;
+            GString *dep_info = g_string_new ("");
 
-        rpmman->rpmtransFree (transaction);
+            for (count = 0; count < rc; count++) {
+                g_string_append_printf (dep_info, "\n%s", conflict->byName);
+                if (conflict->byVersion && conflict->byVersion[0]) {
+                    g_string_append_printf (dep_info, "-%s",
+                                            conflict->byVersion);
+                    if (conflict->byRelease && conflict->byRelease[0]) {
+                        g_string_append_printf (dep_info, "-%s",
+                                                conflict->byRelease);
+                    }
+                }
 
-        goto ERROR;
+                if (conflict->sense == RPMDEP_SENSE_CONFLICTS) {
+                    g_string_append_printf (dep_info, " conflicts with ");
+                } else { /* RPMDEP_SENSE_REQUIRES */
+                    if (conflict->needsFlags & RPMSENSE_PREREQ) {
+                        g_string_append_printf (dep_info, " pre-requires ");
+                    } else {
+                        g_string_append_printf (dep_info, " requires ");
+                    }
+                }
+
+                g_string_append_printf (dep_info, "%s", conflict->needsName);
+
+                if (conflict->needsVersion && conflict->needsVersion[0]) {
+                    g_string_append_printf (dep_info, " ");
+                    
+                    if (conflict->needsFlags & RPMSENSE_LESS) {
+                        g_string_append_printf (dep_info, "<");
+                    }
+                    
+                    if (conflict->needsFlags & RPMSENSE_GREATER) {
+                        g_string_append_printf (dep_info, ">");
+                    }
+                    
+                    if (conflict->needsFlags & RPMSENSE_EQUAL) {
+                        g_string_append_printf (dep_info, "=");
+                    }
+                    
+                    g_string_append_printf (dep_info, " %s",
+                                            conflict->needsVersion);
+                }
+                
+                conflict++;
+            }
+
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  dep_info->str);
+
+            g_string_free (dep_info, TRUE);
+
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "transaction has unmet dependencies");
+            
+            rpmman->rpmdepFreeConflicts (conflicts, rc);
+            
+            rpmman->rpmtransFree (transaction);
+            
+            goto ERROR;
+        }
+        
+        if (rpmman->rpmdepOrder (transaction)) {
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "circular dependencies were detected "
+                                  "in the selected packages");
+
+            rpmman->rpmtransFree (transaction);
+
+            goto ERROR;
+        }
     }
 
     g_signal_emit_by_name (packman, "transact_start", state.true_total);
     GTKFLUSH;
 
-    rc = rpmman->rpmRunTransactions (transaction,
-                                     (rpmCallbackFunction) transact_cb,
-                                     (void *) &state, NULL, &probs,
-                                     transaction_flags, problem_filter);
+    if (rpmman->version >= 40100) {
+        rpmman->rpmtsSetNotifyCallback (rpmman->rpmts,
+                                        (rpmCallbackFunction) transact_cb,
+                                        &state);
+        rpmman->rpmtsSetFlags (rpmman->rpmts, transaction_flags);
+        rpmman->rpmtsClean (rpmman->rpmts);
+        rc = rpmman->rpmtsRun (rpmman->rpmts, NULL, problem_filter);
 
-    if (rc > 0) {
-        render_problems (packman, probs);
+        switch (rc) {
+        case 0:
+            /* Success */
+            break;
+        case -1:
+            /* Error, but no idea why. */
+            goto ERROR;
+        default:
+            /* New problem set */
+            ps = rpmman->rpmtsProblems (rpmman->rpmts);
+            render_problems (packman, ps);
+            rpmman->rpmpsFree (ps);
+            goto ERROR;
+        }
+    }
+    else {
+        rc = rpmman->rpmRunTransactions (transaction,
+                                         (rpmCallbackFunction) transact_cb,
+                                         (void *) &state, NULL, &probs,
+                                         transaction_flags, problem_filter);
+        if (rc > 0) {
+            render_problems (packman, probs);
+        
+            rpmman->rpmProblemSetFree (probs);
+
+            goto ERROR;
+        }
 
         rpmman->rpmProblemSetFree (probs);
-
-        goto ERROR;
     }
-
-    rpmman->rpmProblemSetFree (probs);
-
-    rpmman->rpmtransFree (transaction);
+        
+    if (transaction)
+        rpmman->rpmtransFree (transaction);
 
     while (state.seqno < state.true_total) {
         g_signal_emit_by_name (packman, "transact_step",
@@ -1667,7 +1893,10 @@ rc_rpmman_query_v4 (RCPackman *packman, const char *name)
     RCPackageSList *ret = NULL;
     RCRpmman *rpmman = RC_RPMMAN (packman);
 
-    mi = rpmman->rpmdbInitIterator (rpmman->db, RPMDBI_LABEL, name, 0);
+    if (rpmman->version >= 40100)
+        mi = rpmman->rpmtsInitIterator (rpmman->rpmts, RPMDBI_LABEL, name, 0);
+    else
+        mi = rpmman->rpmdbInitIterator (rpmman->db, RPMDBI_LABEL, name, 0);
 
     if (!mi) {
         return NULL;
@@ -1797,13 +2026,60 @@ rc_rpmman_query_file (RCPackman *packman, const gchar *filename)
         return NULL;
     }
 
-    if (rpmman->rpmReadPackageHeader (fd, &header, &is_source, NULL, NULL)) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              "unable to read package header");
+    if (rpmman->version >= 40100) {
+        rpmts ts;
+        int rc;
+        char *tmp = NULL;
+        guint32 count = 0;
 
-        rc_rpm_close (rpmman, fd);
+        ts = rpmman->rpmtsCreate ();
 
-        return NULL;
+        if (!ts) {
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "rpmtsCreate() failed");
+            rc_rpm_close (rpmman, fd);
+            return NULL;
+        }
+
+        rpmman->rpmtsSetRootDir (ts, rpmman->rpmroot);
+
+        /*
+         * We don't want to use RPM >= 4.1's built-in digest/signature
+         * checking because repackaged RPMs have invalid signatures and
+         * we do the checking ourselves.
+         */
+        rpmman->rpmtsSetVSFlags (ts, rpmman->rpmtsVSFlags (ts) |
+                                 _RPMVSF_NODIGESTS | _RPMVSF_NOSIGNATURES);
+
+        rc = rpmman->rpmReadPackageFile (ts, fd, NULL, &header);
+
+        rpmman->rpmtsFree (ts);
+
+        if (rc != 0) {
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "unable to read package header");
+            rc_rpm_close (rpmman, fd);
+            return NULL;
+        }
+
+        rpmman->headerGetEntry (header, RPMTAG_SOURCEPACKAGE, NULL,
+                                (void **) &tmp, &count);
+
+        if (count)
+            is_source = TRUE;
+        else
+            is_source = FALSE;
+    }
+    else {
+        if (rpmman->rpmReadPackageHeader (fd, &header,
+                                          &is_source, NULL, NULL)) {
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "unable to read package header");
+
+            rc_rpm_close (rpmman, fd);
+            
+            return NULL;
+        }
     }
 
     if (is_source) {
@@ -1825,15 +2101,6 @@ rc_rpmman_query_file (RCPackman *packman, const gchar *filename)
     rc_rpm_close (rpmman, fd);
 
     return (package);
-
-#if 0
-    /* This error condition is never called! */
-  ERROR:
-    rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                          "File query failed");
-#endif
-
-    return (NULL);
 } /* rc_packman_query_file */
 
 /* Query all of the packages on the system */
@@ -1846,7 +2113,12 @@ rc_rpmman_query_all_v4 (RCPackman *packman)
     Header header;
     RCRpmman *rpmman = RC_RPMMAN (packman);
 
-    mi = rpmman->rpmdbInitIterator (rpmman->db, RPMDBI_PACKAGES, NULL, 0);
+    if (rpmman->version >= 40100) {
+        mi = rpmman->rpmtsInitIterator (rpmman->rpmts, RPMDBI_PACKAGES,
+                                        NULL, 0);
+    }
+    else
+        mi = rpmman->rpmdbInitIterator (rpmman->db, RPMDBI_PACKAGES, NULL, 0);
 
     if (!mi) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
@@ -2030,13 +2302,56 @@ rc_rpmman_package_is_repackaged (RCPackman *packman, RCPackage *package)
         goto cleanup;
     }
 
-    rc = rpmman->rpmReadPackageHeader (rpm_fd, &header, &is_source,
-                                       NULL, NULL);
+    if (rpmman->version >= 40100) {
+        rpmts ts;
+        char *buf = NULL;
+        guint32 count = 0;
 
-    if (rc) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              "unable to read package header");
-        goto cleanup;
+        ts = rpmman->rpmtsCreate ();
+
+        if (!ts) {
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "rpmtsCreate() failed");
+            goto cleanup;
+        }
+
+        rpmman->rpmtsSetRootDir (ts, rpmman->rpmroot);
+
+        /*
+         * We don't want to use RPM >= 4.1's built-in digest/signature
+         * checking because repackaged RPMs have invalid signatures and
+         * we do the checking ourselves.
+         */
+        rpmman->rpmtsSetVSFlags (ts, rpmman->rpmtsVSFlags (ts) |
+                                 _RPMVSF_NODIGESTS | _RPMVSF_NOSIGNATURES);
+
+        rc = rpmman->rpmReadPackageFile (ts, rpm_fd, NULL, &header);
+
+        rpmman->rpmtsFree (ts);
+
+        if (rc) {
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "unable to read package header");
+            goto cleanup;
+        }
+
+        rpmman->headerGetEntry (header, RPMTAG_SOURCEPACKAGE, NULL,
+                                (void **) &buf, &count);
+
+        if (count)
+            is_source = TRUE;
+        else
+            is_source = FALSE;
+    }
+    else {
+        rc = rpmman->rpmReadPackageHeader (rpm_fd, &header, &is_source,
+                                           NULL, NULL);
+
+        if (rc) {
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "unable to read package header");
+            goto cleanup;
+        }
     }
 
     if (is_source) {
@@ -2077,6 +2392,7 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
     ssize_t num_bytes;
     RCRpmman *rpmman = RC_RPMMAN (packman);
     int rc;
+    const char *msg = NULL;
 
     if (!package->package_filename) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
@@ -2105,8 +2421,15 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
     *md5sum = NULL;
     *size = 0;
 
-    rc = rpmman->rpmReadSignature (rpm_fd, &signature_header,
-                                   lead.signature_type);
+    if (rpmman->version >= 40100) {
+        rc = rpmman->rpmReadSignature (rpm_fd, &signature_header,
+                                       lead.signature_type, &msg);
+    }
+    else {
+        rc = rpmman->rpmReadSignatureOld (rpm_fd, &signature_header,
+                                          lead.signature_type);
+    }
+
     if (!rc && signature_header != NULL) {
         rpmman->headerGetEntry (signature_header, RPMSIGTAG_GPG, NULL,
                                 (void **)&buf, &count);
@@ -2155,6 +2478,10 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
         signature_header = NULL;
     }
     else {
+        /* msg is an empty string on success */
+        if (msg && *msg)
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_NONE, msg);
+
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "failed to read RPM signature section");
         goto ERROR;
@@ -2474,7 +2801,14 @@ rc_rpmman_find_file_v4 (RCPackman *packman, const gchar *filename)
     RCPackage *package;
     RCRpmman *rpmman = RC_RPMMAN (packman);
 
-    mi = rpmman->rpmdbInitIterator (rpmman->db, RPMTAG_BASENAMES, filename, 0);
+    if (rpmman->version >= 40100) {
+        mi = rpmman->rpmtsInitIterator (rpmman->rpmts, RPMTAG_BASENAMES,
+                                        filename, 0);
+    }
+    else {
+        mi = rpmman->rpmdbInitIterator (rpmman->db, RPMTAG_BASENAMES,
+                                        filename, 0);
+    }
 
     if (!mi) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
@@ -2650,10 +2984,13 @@ load_fake_syms (RCRpmman *rpmman)
     rpmman->rc_fdOpen = &fdOpen;
     rpmman->rc_fdRead = &fdRead;
     rpmman->rc_fdClose = &fdClose;
-    /* rpmman->Ferror = &Ferror; */
     /* Look for hdrVec in load_rpm_syms for an explanation of what's
      * going on */
-#if RPM_VERSION >= 40004
+#if RPM_VERSION >= 40100 && RPM_VERSION <= 40200 /* RPM 4.1 to 4.2 inclusive */
+    /* FIXME: untested */
+    rpmman->headerGetEntry = ((void **)hdrVec)[16];
+    rpmman->headerFree = ((void **)hdrVec)[2];
+#elif RPM_VERSION >= 40004 /* RPM 4.0.4 only */
     /* FIXME: untested */
     rpmman->headerGetEntry = ((void **)hdrVec)[15];
     rpmman->headerFree = ((void **)hdrVec)[1];
@@ -2661,6 +2998,39 @@ load_fake_syms (RCRpmman *rpmman)
     rpmman->headerGetEntry = &headerGetEntry;
     rpmman->headerFree = &headerFree;
 #endif
+    rpmman->readLead = &readLead;
+    rpmman->rpmReadConfigFiles = &rpmReadConfigFiles;
+    rpmman->rpmdbOpen = &rpmdbOpen;
+    rpmman->rpmdbClose = &rpmdbClose;
+    rpmman->rpmProblemString = &rpmProblemString;
+    rpmman->rpmProblemStringOld = &rpmProblemString;
+    rpmman->rpmExpandNumeric = &rpmExpandNumeric;
+    rpmman->rpmDefineMacro = &rpmDefineMacro;
+    rpmman->rpmGetPath = &rpmGetPath;
+
+#if RPM_VERSION >= 40100
+    rpmman->rpmReadPackageFile = &rpmReadPackageFile;
+    rpmman->rpmReadSignature = &rpmReadSignature;
+    rpmman->rpmtsInitIterator = &rpmtsInitIterator;
+    rpmman->rpmtsCreate = &rpmtsCreate;
+    rpmman->rpmtsSetRootDir = &rpmtsSetRootDir;
+    rpmman->rpmtsAddInstallElement = &rpmtsAddInstallElement;
+    rpmman->rpmtsAddEraseElement = &rpmtsAddEraseElement;
+    rpmman->rpmtsCheck = &rpmtsCheck;
+    rpmman->rpmtsOrder = &rpmtsOrder;
+    rpmman->rpmtsRun = &rpmtsRun;
+    rpmman->rpmtsClean = &rpmtsClean;
+    rpmman->rpmtsSetNotifyCallback = &rpmtsSetNotifyCallback;
+    rpmman->rpmtsSetFlags = &rpmtsSetFlags;
+    rpmman->rpmtsFree = &rpmtsFree;
+    rpmman->rpmtsProblems = &rpmtsProblems;
+    rpmman->rpmtsVSFlags = &rpmtsVSFlags;
+    rpmman->rpmtsSetVSFlags = &rpmtsSetVSFlags;
+    rpmman->rpmpsFree = &rpmpsFree;
+#else
+#  if RPM_VERSION >= 40000
+    rpmman->rpmdbInitIterator = &rpmdbInitIterator;
+#  endif
     rpmman->rpmReadPackageHeader = &rpmReadPackageHeader;
     rpmman->rpmtransAddPackage = &rpmtransAddPackage;
     rpmman->rpmtransRemovePackage = &rpmtransRemovePackage;
@@ -2671,22 +3041,10 @@ load_fake_syms (RCRpmman *rpmman)
     rpmman->rpmdepOrder = &rpmdepOrder;
     rpmman->rpmRunTransactions = &rpmRunTransactions;
     rpmman->rpmProblemSetFree = &rpmProblemSetFree;
-    rpmman->readLead = &readLead;
-    rpmman->rpmReadSignature = &rpmReadSignature;
-    rpmman->rpmReadConfigFiles = &rpmReadConfigFiles;
-    rpmman->rpmdbOpen = &rpmdbOpen;
-    rpmman->rpmdbClose = &rpmdbClose;
-    rpmman->rpmProblemString = &rpmProblemString;
-    rpmman->rpmProblemStringOld = &rpmProblemString;
-#if 0
-    rpmman->rpmGetRpmlibProvides = &rpmGetRpmlibProvides;
+    rpmman->rpmReadSignatureOld = &rpmReadSignature;
 #endif
-    rpmman->rpmExpandNumeric = &rpmExpandNumeric;
-    rpmman->rpmDefineMacro = &rpmDefineMacro;
-    rpmman->rpmGetPath = &rpmGetPath;
 
 #if RPM_VERSION >= 40000
-
     rpmman->rpmdbInitIterator = &rpmdbInitIterator;
     rpmman->rpmdbGetIteratorCount = &rpmdbGetIteratorCount;
     rpmman->rpmdbFreeIterator = &rpmdbFreeIterator;
@@ -2694,7 +3052,6 @@ load_fake_syms (RCRpmman *rpmman)
     rpmman->rpmdbGetIteratorOffset = &rpmdbGetIteratorOffset;
 
 #else
-
     rpmman->rpmdbFirstRecNum = &rpmdbFirstRecNum;
     rpmman->rpmdbNextRecNum = &rpmdbNextRecNum;
     rpmman->rpmdbFindByLabel = &rpmdbFindByLabel;
@@ -2704,7 +3061,6 @@ load_fake_syms (RCRpmman *rpmman)
     rpmman->dbiIndexSetCount = &dbiIndexSetCount;
     rpmman->dbiIndexRecordOffset = &dbiIndexRecordOffset;
     rpmman->dbiFreeIndexRecord = &dbiFreeIndexRecord;
-
 #endif
 }
 
@@ -2743,13 +3099,6 @@ load_rpm_syms (RCRpmman *rpmman)
         rpmman->rc_fdRead = NULL;
         rpmman->rc_fdClose = NULL;
     }
-    /*
-    if (!g_module_symbol (rpmman->rpm_lib, "Ferror",
-                          ((gpointer)&rpmman->Ferror)))
-    {
-        return (FALSE);
-    }
-    */
 
     /* RPM 4.0.4 marked our two header manipulation functions as
      * static, which is a bit of a pain.  The workaround is to look
@@ -2757,16 +3106,30 @@ load_rpm_syms (RCRpmman *rpmman)
      * find the functions we need by absolute offset.  It's not very
      * pretty, and could quite possibly break with successive releases
      * of RPM, which is why I check for 4.0.4 exactly, rather than
-     * 4.0.4 and all later versions.  Blah. */
-    if (rpmman->version == 40004) {
+     * 4.0.4 and all later versions.  Blah.
+     *
+     * This is still a problem in RPM 4.1 and 4.2, except that the
+     * vtable is locaed in librpmdb now.
+     */
+    if (rpmman->version >= 40004) {
         void **(*hdrfuncs);
 
         if (!g_module_symbol (rpmman->rpm_lib, "hdrVec",
                               ((gpointer)&hdrfuncs))) {
             return (FALSE);
         }
-        rpmman->headerFree = *(*hdrfuncs + 1);
-        rpmman->headerGetEntry = *(*hdrfuncs + 15);
+
+        if (rpmman->version == 40004) { /* RPM 4.0.4 only */
+            rpmman->headerFree = *(*hdrfuncs + 1);
+            rpmman->headerGetEntry = *(*hdrfuncs + 15);
+        }
+        else if (rpmman->version >= 40100 &&
+                 rpmman->version <= 40200) { /* RPM 4.1-4.2 inclusive */
+            rpmman->headerFree = *(*hdrfuncs + 2);
+            rpmman->headerGetEntry = *(*hdrfuncs + 16);
+        }
+        else
+            g_assert_not_reached ();
     } else {
         if (!g_module_symbol (rpmman->rpm_lib, "headerGetEntry",
                               ((gpointer)&rpmman->headerGetEntry))) {
@@ -2778,52 +3141,8 @@ load_rpm_syms (RCRpmman *rpmman)
         }
     }
 
-    if (!g_module_symbol (rpmman->rpm_lib, "rpmReadPackageHeader",
-                          ((gpointer)&rpmman->rpmReadPackageHeader))) {
-        return (FALSE);
-    }
-    if (!g_module_symbol (rpmman->rpm_lib, "rpmtransAddPackage",
-                          ((gpointer)&rpmman->rpmtransAddPackage))) {
-        return (FALSE);
-    }
-    if (!g_module_symbol (rpmman->rpm_lib, "rpmtransRemovePackage",
-                          ((gpointer)&rpmman->rpmtransRemovePackage))) {
-        return (FALSE);
-    }
-    if (!g_module_symbol (rpmman->rpm_lib, "rpmtransCreateSet",
-                          ((gpointer)&rpmman->rpmtransCreateSet))) {
-        return (FALSE);
-    }
-    if (!g_module_symbol (rpmman->rpm_lib, "rpmtransFree",
-                          ((gpointer)&rpmman->rpmtransFree))) {
-        return (FALSE);
-    }
-    if (!g_module_symbol (rpmman->rpm_lib, "rpmdepCheck",
-                          ((gpointer)&rpmman->rpmdepCheck))) {
-        return (FALSE);
-    }
-    if (!g_module_symbol (rpmman->rpm_lib, "rpmdepFreeConflicts",
-                          ((gpointer)&rpmman->rpmdepFreeConflicts))) {
-        return (FALSE);
-    }
-    if (!g_module_symbol (rpmman->rpm_lib, "rpmdepOrder",
-                          ((gpointer)&rpmman->rpmdepOrder))) {
-        return (FALSE);
-    }
-    if (!g_module_symbol (rpmman->rpm_lib, "rpmRunTransactions",
-                          ((gpointer)&rpmman->rpmRunTransactions))) {
-        return (FALSE);
-    }
-    if (!g_module_symbol (rpmman->rpm_lib, "rpmProblemSetFree",
-                          ((gpointer)&rpmman->rpmProblemSetFree))) {
-        return (FALSE);
-    }
     if (!g_module_symbol (rpmman->rpm_lib, "readLead",
                           ((gpointer)&rpmman->readLead))) {
-        return (FALSE);
-    }
-    if (!g_module_symbol (rpmman->rpm_lib, "rpmReadSignature",
-                          ((gpointer)&rpmman->rpmReadSignature))) {
         return (FALSE);
     }
     if (!g_module_symbol (rpmman->rpm_lib, "rpmReadConfigFiles",
@@ -2856,22 +3175,152 @@ load_rpm_syms (RCRpmman *rpmman)
                           ((gpointer)&rpmman->rpmExpandNumeric))) {
         return (FALSE);
     }
-
     if (!g_module_symbol (rpmman->rpm_lib, "rpmDefineMacro",
                           ((gpointer) &rpmman->rpmDefineMacro))) {
         return (FALSE);
     }
-
     if (!g_module_symbol (rpmman->rpm_lib, "rpmGetPath",
                           ((gpointer) &rpmman->rpmGetPath))) {
         return (FALSE);
     }
 
-    if (rpmman->major_version == 4) {
-        if (!g_module_symbol (rpmman->rpm_lib, "rpmdbInitIterator",
-                              ((gpointer)&rpmman->rpmdbInitIterator))) {
+    if (rpmman->version >= 40100) {
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmReadPackageFile",
+                              ((gpointer)&rpmman->rpmReadPackageFile))) {
             return (FALSE);
         }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmReadSignature",
+                              ((gpointer)&rpmman->rpmReadSignature))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmtsInitIterator",
+                              ((gpointer)&rpmman->rpmtsInitIterator))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmdbNextIterator",
+                              ((gpointer)&rpmman->rpmdbNextIterator))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmtsCreate",
+                              ((gpointer)&rpmman->rpmtsCreate))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmtsSetRootDir",
+                              ((gpointer)&rpmman->rpmtsSetRootDir))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmtsAddInstallElement",
+                              ((gpointer)&rpmman->rpmtsAddInstallElement))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmtsAddEraseElement",
+                              ((gpointer)&rpmman->rpmtsAddEraseElement))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmtsCheck",
+                              ((gpointer)&rpmman->rpmtsCheck))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmtsOrder",
+                              ((gpointer)&rpmman->rpmtsOrder))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmtsRun",
+                              ((gpointer)&rpmman->rpmtsRun))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmtsClean",
+                              ((gpointer)&rpmman->rpmtsClean))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmtsSetNotifyCallback",
+                              ((gpointer)&rpmman->rpmtsSetNotifyCallback))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmtsSetFlags",
+                              ((gpointer)&rpmman->rpmtsSetFlags))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmtsFree",
+                              ((gpointer)&rpmman->rpmtsFree))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmtsProblems",
+                              ((gpointer)&rpmman->rpmtsProblems))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmpsFree",
+                              ((gpointer)&rpmman->rpmpsFree))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmtsVSFlags",
+                              ((gpointer)&rpmman->rpmtsVSFlags))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmtsSetVSFlags",
+                              ((gpointer)&rpmman->rpmtsSetVSFlags))) {
+            return (FALSE);
+        }
+    } else {
+        if (rpmman->version >= 40000) {
+            if (!g_module_symbol (rpmman->rpm_lib, "rpmdbInitIterator",
+                                  ((gpointer)&rpmman->rpmdbInitIterator))) {
+                return (FALSE);
+            }
+            if (!g_module_symbol (rpmman->rpm_lib, "XrpmdbNextIterator",
+                                  ((gpointer)&rpmman->rpmdbNextIterator))) {
+                return (FALSE);
+            }
+        }
+
+
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmReadPackageHeader",
+                              ((gpointer)&rpmman->rpmReadPackageHeader))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmtransAddPackage",
+                              ((gpointer)&rpmman->rpmtransAddPackage))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmtransRemovePackage",
+                              ((gpointer)&rpmman->rpmtransRemovePackage))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmtransCreateSet",
+                              ((gpointer)&rpmman->rpmtransCreateSet))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmtransFree",
+                              ((gpointer)&rpmman->rpmtransFree))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmdepCheck",
+                              ((gpointer)&rpmman->rpmdepCheck))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmdepFreeConflicts",
+                              ((gpointer)&rpmman->rpmdepFreeConflicts))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmdepOrder",
+                              ((gpointer)&rpmman->rpmdepOrder))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmRunTransactions",
+                              ((gpointer)&rpmman->rpmRunTransactions))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmProblemSetFree",
+                              ((gpointer)&rpmman->rpmProblemSetFree))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmReadSignature",
+                              ((gpointer)&rpmman->rpmReadSignatureOld))) {
+            return (FALSE);
+        }
+    }
+
+    if (rpmman->version >= 40000) {
         if (!g_module_symbol (rpmman->rpm_lib, "rpmdbGetIteratorCount",
                               ((gpointer)&rpmman->rpmdbGetIteratorCount))) {
             return (FALSE);
@@ -2880,17 +3329,12 @@ load_rpm_syms (RCRpmman *rpmman)
                               ((gpointer)&rpmman->rpmdbFreeIterator))) {
             return (FALSE);
         }
-        if (!g_module_symbol (rpmman->rpm_lib, "XrpmdbNextIterator",
-                              ((gpointer)&rpmman->rpmdbNextIterator))) {
-            return (FALSE);
-        }
         if (!g_module_symbol (rpmman->rpm_lib, "rpmdbGetIteratorOffset",
                               ((gpointer)&rpmman->rpmdbGetIteratorOffset))) {
             return (FALSE);
         }
     }
-
-    if (rpmman->major_version == 3) {
+    else if (rpmman->major_version == 3) {
         if (!g_module_symbol (rpmman->rpm_lib, "rpmdbFirstRecNum",
                               ((gpointer)&rpmman->rpmdbFirstRecNum))) {
             return (FALSE);
@@ -2984,7 +3428,6 @@ write_objects (void)
     /* First we need to create a secure directory */
 
     mask = umask (0077);
-
     object_dir = g_strdup (OBJECTDIR "/rc-rpm-XXXXXX");
     if (!rc_mkdtemp (object_dir)) {
         g_free (object_dir);
@@ -2995,80 +3438,61 @@ write_objects (void)
     umask (mask);
 
     /* Now, write out each of the objects */
-
-    file = g_strconcat (object_dir, "/rc-{rpm}.so.0", NULL);
-    if ((fd = open (file, O_RDWR | O_CREAT | O_EXCL, S_IRWXU)) == -1) {
-        goto ERROR;
-    }
-    g_free (file);
-    file = NULL;
-    if (rc_uncompress_memory ((char *)rc_rpm_so_0, rc_rpm_so_0_len, &buf)) {
-        goto ERROR;
-    }
-    if (!rc_write (fd, buf->data, buf->len)) {
-        goto ERROR;
-    }
-    rc_close (fd);
-    fd = -1;
-    g_byte_array_free (buf, TRUE);
-    buf = NULL;
-
-    file = g_strconcat (object_dir, "/rc-{rpm_rpmio}.so.0", NULL);
-    if ((fd = open (file, O_RDWR | O_CREAT | O_EXCL, S_IRWXU)) == -1) {
-        goto ERROR;
-    }
-    g_free (file);
-    file = NULL;
-    if (rc_uncompress_memory ((char *)rc_rpm_rpmio_so_0, rc_rpm_rpmio_so_0_len,
-                              &buf))
     {
-        goto ERROR;
-    }
-    if (!rc_write (fd, buf->data, buf->len)) {
-        goto ERROR;
-    }
-    rc_close (fd);
-    fd = -1;
-    g_byte_array_free (buf, TRUE);
-    buf = NULL;
+        typedef struct {
+            const char   *obj_name;
+            const char   *obj_data;
+            unsigned int  obj_len;
+        } ObjectInfo;
 
-    file = g_strconcat (object_dir, "/rc-{rpm_rpmio_rpmdb}-4.0.3.so", NULL);
-    if ((fd = open (file, O_RDWR | O_CREAT | O_EXCL, S_IRWXU)) == -1) {
-        goto ERROR;
-    }
-    g_free (file);
-    file = NULL;
-    if (rc_uncompress_memory ((char *)rc_rpm_rpmio_rpmdb_4_0_3_so,
-                              rc_rpm_rpmio_rpmdb_4_0_3_so_len, &buf))
-    {
-        goto ERROR;
-    }
-    if (!rc_write (fd, buf->data, buf->len)) {
-        goto ERROR;
-    }
-    rc_close (fd);
-    fd = -1;
-    g_byte_array_free (buf, TRUE);
-    buf = NULL;
+        ObjectInfo objects[] = {
+            { "rc-{rpm_rpmio_rpmdb}-4.2.so",
+              rc_rpm_rpmio_rpmdb_4_2_so,
+              rc_rpm_rpmio_rpmdb_4_2_so_len },
+            { "rc-{rpm_rpmio_rpmdb}-4.1.so",
+              rc_rpm_rpmio_rpmdb_4_1_so,
+              rc_rpm_rpmio_rpmdb_4_1_so_len },
+            { "rc-{rpm}.so.0",
+              rc_rpm_so_0,
+              rc_rpm_so_0_len },
+            { "rc-{rpm_rpmio}.so.0",
+              rc_rpm_rpmio_so_0,
+              rc_rpm_rpmio_so_0_len },
+            { "rc-{rpm_rpmio_rpmdb}-4.0.3.so",
+              rc_rpm_rpmio_rpmdb_4_0_3_so,
+              rc_rpm_rpmio_rpmdb_4_0_3_so_len },
+            { "rc-{rpm_rpmio_rpmdb}-4.0.4.so",
+              rc_rpm_rpmio_rpmdb_4_0_4_so,
+              rc_rpm_rpmio_rpmdb_4_0_4_so_len },
+            { 0 }
+        };
 
-    file = g_strconcat (object_dir, "/rc-{rpm_rpmio_rpmdb}-4.0.4.so", NULL);
-    if ((fd = open (file, O_RDWR | O_CREAT | O_EXCL, S_IRWXU)) == -1) {
-        goto ERROR;
-    }
-    g_free (file);
-    file = NULL;
-    if (rc_uncompress_memory ((char *)rc_rpm_rpmio_rpmdb_4_0_4_so,
-                              rc_rpm_rpmio_rpmdb_4_0_4_so_len, &buf))
-    {
-        goto ERROR;
-    }
-    if (!rc_write (fd, buf->data, buf->len)) {
-        goto ERROR;
-    }
-    rc_close (fd);
-    fd = -1;
-    g_byte_array_free (buf, TRUE);
-    buf = NULL;
+        ObjectInfo *cur_obj;
+        
+        for (cur_obj = objects; cur_obj->obj_name; cur_obj++) {
+            file = g_strconcat (object_dir, "/", cur_obj->obj_name, NULL);
+            fd = open (file, O_RDWR | O_CREAT | O_EXCL, S_IRWXU);
+
+            if (fd < 0)
+                goto ERROR;
+
+            g_free (file);
+            file = NULL;
+
+            if (rc_uncompress_memory (cur_obj->obj_data,
+                                      cur_obj->obj_len,
+                                      &buf))
+                goto ERROR;
+
+            if (!rc_write (fd, buf->data, buf->len))
+                goto ERROR;
+
+            rc_close (fd);
+            fd = -1;
+            g_byte_array_free (buf, TRUE);
+            buf = NULL;
+        }
+    }                                      
 
     return object_dir;
 
@@ -3101,6 +3525,8 @@ rc_rpmman_init (RCRpmman *obj)
         "rc-{rpm_rpmio}.so.0",
         "rc-{rpm_rpmio_rpmdb}-4.0.3.so",
         "rc-{rpm_rpmio_rpmdb}-4.0.4.so",
+        "rc-{rpm_rpmio_rpmdb}-4.1.so",
+        "rc-{rpm_rpmio_rpmdb}-4.2.so",
         NULL };
     const char **iter;
 #endif
@@ -3158,6 +3584,16 @@ rc_rpmman_init (RCRpmman *obj)
     }
 
     parse_rpm_version (obj, *rpm_version);
+
+#if RPM_VERSION > LATEST_SUPPORTED_RPM_VERSION
+#  error This version of RPM is not yet supported by libredcarpet
+#endif
+
+    if (obj->version > LATEST_SUPPORTED_RPM_VERSION) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
+                              "this version of RPM is not yet supported");
+        return;
+    }
 
     if (!load_rpm_syms (obj)) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,

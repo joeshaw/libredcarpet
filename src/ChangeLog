@@ -1,3 +1,30 @@
+2003-03-13  Joe Shaw  <joe@ximian.com>
+
+	* RPM 4.1/4.2 support.
+
+	* Makefile.am: Generate stubs for RPM 4.1 and 4.2's dynamic
+	libraries.
+
+	* rc-rpmman-types.h: Add a bunch of compatibility types so we can
+	build on any version of RPM.
+
+	* rc-rpmman.c: Define LATEST_SUPPORTED_RPM_VERSION and have
+	libredcarpet neither build nor run against a version newer than
+	this, both for safety and so people don't complain when it doesn't
+	build/run.  Add some compatibility defines and types for various
+	API and type changes.  ABI for rpmReadSignature() changed, so read
+	it into one of two function pointers of different signatures
+	depending on version.  Create an rpmts when opening the database,
+	since most things operate on that instead of a db now.  Add a ton
+	of #ifdefs and in-code version checks for the various API changes,
+	and so forth.  Boring stuff, really, read the patch to get the
+	gist of it.
+
+2003-03-13  Joe Shaw  <joe@ximian.com>
+	
+	* rc-debman.c, rc-verification.c: Change deprecated use of
+	__FUNCTION__ to G_GNUC_PRETTY_FUNCTION.
+
 2003-03-13  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-resolver.c (rc_resolver_set_timeout): Added.  Sets the
