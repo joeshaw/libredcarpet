@@ -73,7 +73,7 @@ libredcarpet_a_SOURCES =		\
 	rc-line-buf-private.h		\
 	rc-debman-general.c		\
 	rc-debman.general.h		\
-	$(dpkg_sources2			\
+	$(dpkg_sources2)		\
         $(rpm_sources2)
 
 #	rc-crypto.c			\

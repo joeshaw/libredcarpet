@@ -28,6 +28,8 @@
 #include "rc-verification.h"
 #include "rc-verification-private.h"
 
+#include <libredcarpet/rc-debman-general.h>
+
 #include <sys/wait.h>
 #include <sys/time.h>
 #include <sys/types.h>
