@@ -6,6 +6,8 @@
   <channel name="ximian" file="exercise-43-packages-2.xml"/>
 </setup>
 <trial>
+  <subscribe channel="redhat"/>
+  <subscribe channel="ximian"/>
   <upgrade/>
 </trial>
 </test>
