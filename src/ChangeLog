@@ -1,3 +1,8 @@
+2002-07-12  Joe Shaw  <joe@ximian.com>
+
+	* rc-packman.c (rc_packman_query_file): Make sure we're returned a
+	valid package (and not NULL) before we try to set things in it.
+
 2002-07-12  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-resolver.c (rc_resolver_resolve_dependencies): Fix a cast
