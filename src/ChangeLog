@@ -1,3 +1,10 @@
+2004-12-01  Peter Teichman <peter@ximian.com>
+
+	* rc-package-dep.c: (rc_package_relation_from_string),
+	(rc_package_relation_to_string): change dependency
+	serialization to use letters (gt, gte, eq, etc) rather
+	than symbols (>, >=, =, etc)
+
 2004-12-01  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-rpmman.c (rc_rpmman_get_file_deps): If we're not asked to filter

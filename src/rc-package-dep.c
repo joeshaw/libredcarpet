@@ -40,19 +40,19 @@ rc_package_relation_from_string (const gchar *relation)
 {
     if (!strcmp (relation, "(any)"))
         return RC_RELATION_ANY;
-    else if (!strcmp (relation, "="))
+    else if (!strcmp (relation, "=") || !strcmp (relation, "eq"))
         return RC_RELATION_EQUAL;
-    else if (!strcmp (relation, "<"))
+    else if (!strcmp (relation, "<") || !strcmp(relation, "lt"))
         return RC_RELATION_LESS;
-    else if (!strcmp (relation, "<="))
+    else if (!strcmp (relation, "<=") || !strcmp(relation, "lte"))
         return RC_RELATION_LESS_EQUAL;
-    else if (!strcmp (relation, ">"))
+    else if (!strcmp (relation, ">") || !strcmp(relation, "gt"))
         return RC_RELATION_GREATER;
-    else if (!strcmp (relation, ">="))
+    else if (!strcmp (relation, ">=") || !strcmp(relation, "gte"))
         return RC_RELATION_GREATER_EQUAL;
-    else if (!strcmp (relation, "!="))
+    else if (!strcmp (relation, "!=") || !strcmp(relation, "ne"))
         return RC_RELATION_NOT_EQUAL;
-    else if (!strcmp (relation, "!!"))
+    else if (!strcmp (relation, "!!") || !strcmp(relation, "none"))
         return RC_RELATION_NONE;
     else
         return RC_RELATION_INVALID;
@@ -65,21 +65,19 @@ rc_package_relation_to_string (RCPackageRelation relation, gint words)
     case RC_RELATION_ANY:
         return "(any)";
     case RC_RELATION_EQUAL:
-        return words == 1 ? "equal to" : "=";
+        return words == 1 ? "equal to" : "eq";
     case RC_RELATION_LESS:
-        return words == 1 ? "less than" : words == 2 ? "&lt" : "<";
+        return words == 1 ? "less than" : "lt";
     case RC_RELATION_LESS_EQUAL:
-        return words == 1 ? "less than or equal to" :
-            words == 2 ? "&lt;=" : "<=";
+        return words == 1 ? "less than or equal to" : "lte";
     case RC_RELATION_GREATER:
-        return words == 1 ? "greater than" : words == 2 ? "&gt;" : ">";
+        return words == 1 ? "greater than" : "gt";
     case RC_RELATION_GREATER_EQUAL:
-        return words == 1 ? "greater than or equal to" :
-            words == 2 ? "&gt;=" : ">=";
+        return words == 1 ? "greater than or equal to" : "gte";
     case RC_RELATION_NOT_EQUAL:
-        return words == 1 ? "not equal to" : "!=";
+        return words == 1 ? "not equal to" : "ne";
     case RC_RELATION_NONE:
-        return words == 1 ? "not installed" : "!!";
+        return words == 1 ? "not installed" : "none";
     default:
         return "(invalid)";
     }
