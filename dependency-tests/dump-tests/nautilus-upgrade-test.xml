@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+
+<test>
+
+<setup>
+  <undump file="gnome2-upgrade-dump.xml.gz"/>
+</setup>
+
+<trial>
+  <note>Trying to upgrade nautilus from RH 7.3's gnome 1.4 to Ximian's gnome 2.0.</note>
+  <install channel="Ximian Desktop 2.0 Snapshots" package="nautilus"/>
+</trial>
+
+</test>
