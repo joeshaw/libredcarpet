@@ -117,6 +117,119 @@ int main (int argc, char **argv)
 
         printf ("Package is %s-%s-%s\n", pkg->spec.name, pkg->spec.version,
                 pkg->spec.release);
+    } else if (!strcmp (argv[1], "-d")) {
+        RCPackage *pkg = rc_package_new ();
+        RCPackageSList *list = NULL, *iter;
+
+        if (argc < 3) {
+            printf ("Usage: %s -d <name> [<version> <release>]\n", argv[0]);
+            exit (-1);
+        }
+
+        pkg->spec.name = g_strdup (argv[2]);
+
+        if (argc >= 4) {
+            pkg->spec.version = g_strdup (argv[3]);
+        }
+
+        if (argc >= 5) {
+            pkg->spec.release = g_strdup (argv[4]);
+        }
+
+        list = g_slist_append (list, pkg);
+
+        list = rc_packman_depends (p, list);
+
+        for (iter = list; iter; iter = iter->next) {
+            RCPackage *d = (RCPackage *)(iter->data);
+            RCPackageDepSList *iter;
+
+            if (!d->spec.installed) {
+                printf ("%s-%s-%s is not installed\n", d->spec.name,
+                        d->spec.version, d->spec.release);
+                break;
+            }
+
+            printf ("Package: %s\n", d->spec.name);
+            printf ("Version: %s\n", d->spec.version);
+            printf ("Release: %s\n", d->spec.release);
+
+            for (iter = d->requires; iter; iter = iter->next) {
+                RCPackageDepItem *item;
+
+                item = (RCPackageDepItem *)(((GSList *)(iter->data))->data);
+
+                printf ("Requires: %d %s-%s-%s\n", item->relation,
+                        item->spec.name, item->spec.version,
+                        item->spec.release);
+            }
+            for (iter = d->provides; iter; iter = iter->next) {
+                RCPackageDepItem *item;
+
+                item = (RCPackageDepItem *)(((GSList *)(iter->data))->data);
+
+                printf ("Provides: %d %s-%s-%s\n", item->relation,
+                        item->spec.name, item->spec.version,
+                        item->spec.release);
+            }
+            for (iter = d->conflicts; iter; iter = iter->next) {
+                RCPackageDepItem *item;
+
+                item = (RCPackageDepItem *)(((GSList *)(iter->data))->data);
+
+                printf ("Conflicts: %d %s-%s-%s\n", item->relation,
+                        item->spec.name, item->spec.version,
+                        item->spec.release);
+            }
+        }
+    } else if (!strcmp (argv[1], "-df")) {
+        GSList *filenames = NULL;
+        RCPackageSList *list = NULL, *iter;
+        gchar *filename;
+
+        filename = g_strdup (argv[2]);
+        printf ("%s\n", filename);
+
+        filenames = g_slist_append (filenames, filename);
+
+        list = rc_packman_depends_files (p, filenames);
+
+        for (iter = list; iter; iter = iter->next) {
+            RCPackage *d = (RCPackage *)(iter->data);
+            RCPackageDepSList *iter;
+
+            printf ("Package: %s\n", d->spec.name);
+            printf ("Version: %s\n", d->spec.version);
+            printf ("Release: %s\n", d->spec.release);
+
+            for (iter = d->requires; iter; iter = iter->next) {
+                RCPackageDepItem *item;
+
+                item = (RCPackageDepItem *)(((GSList *)(iter->data))->data);
+
+                printf ("Requires: %d %s-%s-%s\n", item->relation,
+                        item->spec.name, item->spec.version,
+                        item->spec.release);
+            }
+            for (iter = d->provides; iter; iter = iter->next) {
+                RCPackageDepItem *item;
+
+                item = (RCPackageDepItem *)(((GSList *)(iter->data))->data);
+
+                printf ("Provides: %d %s-%s-%s\n", item->relation,
+                        item->spec.name, item->spec.version,
+                        item->spec.release);
+            }
+            for (iter = d->conflicts; iter; iter = iter->next) {
+                RCPackageDepItem *item;
+
+                item = (RCPackageDepItem *)(((GSList *)(iter->data))->data);
+
+                printf ("Conflicts: %d %s-%s-%s\n", item->relation,
+                        item->spec.name, item->spec.version,
+                        item->spec.release);
+            }
+        }
     }
 
 #if 0

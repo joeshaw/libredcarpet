@@ -875,7 +875,7 @@ rc_rpmman_depends_fill (RCPackage *pkg, Header hdr)
             versions[i] = NULL;
         }
 
-        if (!releases[i][0]) {
+        if (releases[i] && !releases[i][0]) {
             g_free (releases[i]);
             releases[i] = NULL;
         }
@@ -1006,9 +1006,9 @@ rc_rpmman_depends (RCPackman *p, RCPackageSList *pkgs)
         /* Is this really what I want? */
         g_assert (matches.count > 0);
 
-        if (d->spec.version && d->spec.release) {
-            /* Query a specific version and release of an installed package */
+        rc_packman_query (p, d);
 
+        if (d->spec.installed) {
             char *version = NULL, *release = NULL;
             guint i = 0;
             int type, count;
@@ -1042,80 +1042,6 @@ rc_rpmman_depends (RCPackman *p, RCPackageSList *pkgs)
             }
 
             headerFree(hdr);
-        } else if (d->spec.version) {
-#if 0
-            /* Query a specific version only (find the latest revision) */
-
-            char *version = NULL, *release = NULL;
-            guint i = 0;
-            int type, count;
-
-            for (i = 0; i < matches.count; i++) {
-                if (!(hdr = rpmdbGetRecord (db, matches.recs[i].recOffset))) {
-                    rpmdbClose (db);
-                    g_free (p->reason);
-                    p->reason = g_strdup ("Unable to read RPM database entry");
-                    return (NULL);
-                }
-
-                headerGetEntry (hdr, RPMTAG_VERSION, &type,
-                                (void **)&version, &count);
-                headerGetEntry (hdr, RPMTAG_RELEASE, &type,
-                                (void **)&release, &count);
-
-                if (!strcmp (version, d->spec.version)) {
-                    if (rc_rpmman_version_compare (p, version, release,
-                                                   d->spec.version,
-                                                   d->spec.release)) {
-                        g_free (d->spec.release);
-                        d->spec.release = g_strdup (release);
-
-                        rc_rpmman_depends_fill (d, hdr);
-                    }
-                }
-
-                headerFree(hdr);
-            }
-#endif
-        } else {
-#if 0
-            /* Query the latest version of the installed packages */
-
-            char *version = NULL, *release = NULL;
-            guint i;
-            int type, count;
-
-            /* I can't imagine why this would happen, but... */
-            g_assert (d->spec.release == NULL);
-
-            for (i = 0; i < matches.count; i++) {
-                if (!(hdr = rpmdbGetRecord (db, matches.recs[i].recOffset))) {
-                    /* FIXME: handle this right */
-                    rpmdbClose (db);
-                    g_free (p->reason);
-                    p->reason = g_strdup ("Unable to read RPM database entry");
-                    return (NULL);
-                }
-
-                headerGetEntry (hdr, RPMTAG_VERSION, &type,
-                                (void **)&version, &count);
-                headerGetEntry (hdr, RPMTAG_RELEASE, &type,
-                                (void **)&release, &count);
-
-                if (rc_rpmman_version_compare (p, version, release,
-                                               d->spec.version,
-                                               d->spec.release)) {
-                    g_free (d->spec.version);
-                    g_free (d->spec.release);
-                    d->spec.version = g_strdup (version);
-                    d->spec.release = g_strdup (release);
-
-                    rc_rpmman_depends_fill (d, hdr);
-                }
-
-                headerFree(hdr);
-            }
-#endif
         }
 
         dbiFreeIndexRecord (matches);
