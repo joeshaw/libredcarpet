@@ -342,7 +342,8 @@ rc_figure_distro (void)
             /* Go through each chunk and figure out if it matches */
             arch = determine_arch ();
             if (arch == RC_ARCH_UNKNOWN) {
-                g_error ("Can't figure out what architecture you're on!!");
+                g_warning("Unable to figure out what architecture you're on");
+                return NULL;
             }
             
             while (distro_figurers[i].unique_name) {

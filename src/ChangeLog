@@ -1,3 +1,12 @@
+2001-02-24  Joe Shaw  <joe@ximian.com>
+
+	* rc-distro.c (rc_figure_distro): Don't error out if we can't
+	determine what architecture the user is on. Instead return NULL and
+	let the front-end deal with it.
+	
+	* rc-distman.c (rc_distman_new): Ditto, except with the distro instead
+	of the arch. (BUG:1425)
+
 2001-02-20  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps-util.c, rc-deps-util.h: GPL message

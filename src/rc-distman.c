@@ -43,7 +43,8 @@ rc_distman_new (void)
     dtype = rc_figure_distro ();
 
     if (!dtype) {
-        g_error ("I can't figure out what distribution you're on!\n");
+        g_warning("Cannot determine what distribution you're on");
+        return NULL;
     }
 
     env = getenv("RC_PACKMAN_TYPE");
