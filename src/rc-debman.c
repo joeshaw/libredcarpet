@@ -91,11 +91,18 @@ static gchar *
 package_accept (gchar *line, RCPackageSList *pkgs)
 {
     RCPackageSList *iter;
+    gchar *pn;
+
+    if (strncmp (line, "Package:", strlen ("Package:")) != 0) {
+        return NULL;
+    }
+
+    pn = line + strlen ("Package: ");
 
     for (iter = pkgs; iter; iter = iter->next) {
         RCPackage *pkg = (RCPackage *)(iter->data);
 
-        if (!(strcmp (line + strlen ("Package: "), pkg->spec.name))) {
+        if (!(strcmp (pn, pkg->spec.name))) {
             return (pkg->spec.name);
         }
     }
@@ -256,6 +263,10 @@ do_purge (RCPackman *p, InstallState *state)
 
     unlock_database (RC_DEBMAN (p));
 
+#ifdef DEBUG
+        fprintf (stderr, "rc-debman: /usr/bin/dpkg --purge --pending\n--- log ---\n");
+#endif
+
     child = fork ();
 
     switch (child) {
@@ -278,10 +289,6 @@ do_purge (RCPackman *p, InstallState *state)
         dup2 (fds[1], 1);
 
         fclose (stderr);
-
-#ifdef DEBUG
-        fprintf (stderr, "rc-debman: /usr/bin/dpkg --purge --pending\n--- log ---\n");
-#endif
 
         execl ("/usr/bin/dpkg", "/usr/bin/dpkg", "--purge", "--pending", NULL);
         break;
