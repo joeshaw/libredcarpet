@@ -3072,7 +3072,7 @@ rc_rpmman_init (RCRpmman *obj)
     rc_packman_set_file_extension(packman, "rpm");
 
     capabilities = RC_PACKMAN_CAP_PROVIDE_ALL_VERSIONS |
-        RC_PACKMAN_CAP_LEGACY_EPOCH_HANDLING;
+        RC_PACKMAN_CAP_IGNORE_ABSENT_EPOCHS;
 
     /* Repackaging was added in RPM 4.0.3, but broken until 4.0.4 */
     if (obj->version >= 40004)

@@ -1546,10 +1546,14 @@ conflict_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data
     char *pkg_str, *spec_str, *msg;
     RCResolverInfo *log_info;
 
+    /* We conflict with ourself.  For the purpose of installing ourself, we
+     * just ignore it, but it's Debian's way of saying that one and only one
+     * package with this provide may exist on the system at a time. */
     if (info->conflicting_package
         && rc_package_spec_equal (& package->spec, & info->conflicting_package->spec))
         return;
 
+    /* FIXME: This should probably be a capability. */
     /* Obsoletes don't apply to virtual provides, only the packages
      * themselves.  A provide is "virtual" if it's not the same spec
      * as the package that's providing it.  This, of course, only
@@ -1569,7 +1573,7 @@ conflict_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data
     switch (status) {
         
     case RC_PACKAGE_STATUS_INSTALLED:
-    case RC_PACKAGE_STATUS_TO_BE_INSTALLED_SOFT :{
+    case RC_PACKAGE_STATUS_TO_BE_INSTALLED_SOFT: {
         RCQueueItem *uninstall;
         RCResolverInfo *log_info;
 

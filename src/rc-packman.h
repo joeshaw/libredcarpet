@@ -55,11 +55,41 @@ typedef enum {
     RC_PACKMAN_STEP_CONFIGURE,
 } RCPackmanStep;
 
+/*
+ * Packman capabilities: These exist to signal various parts of the
+ * world, packman, and dependency code of certain (mis)features of a
+ * packaging system.
+ *
+ * PROVIDE_ALL_VERSIONS - An unversioned provide matches all versions.  An
+ * unversioned provide translates into an RC_RELATION_ANY relation, which
+ * will meet any requirement for any version. (RPM)
+ *
+ * IGNORE_ABSENT_EPOCHS - If an epoch isn't specified in a requirement,
+ * it's ignored when verifying the provide.  For example, if package "foo"
+ * requires "bar >= 2.0" then both "bar 21" and "bar 1:2.0" meet the
+ * requirement. (RPM)
+ *
+ * REPACKAGING - RPM version 4.0.4 and higher have a (mostly) working
+ * repackaging feature which writes the currently installed files of a
+ * package back into a package before upgrading or removing it from the
+ * system.  Files are written out into the repackaging directory, which
+ * can be get/set using rc_packman_{get|set}_repackage_dir(). (RPM)
+ *
+ * VERSION_AND_RELEASE - When verifying relations, the version and release
+ * fields are normally evaluated seperately.  For example, if we have a
+ * requirement for "foo == 2.0", then a package providing "foo 2.0-10"
+ * would meet it.  Similarly, if we have a requirement of "bar > 3.0", a
+ * package providing "bar 3.0-9" would not meet it.  With this capability
+ * set, the version and release fields are merged and evaluated at once.
+ * In the above examples, then, the former would not be sufficient
+ * (because "2.0" != "2.0-10") and the latter would (since "3.0-9" > "3.0")
+ */
+
 #define RC_PACKMAN_CAP_NONE                  (0)
 #define RC_PACKMAN_CAP_PROVIDE_ALL_VERSIONS  (1 << 0)
-#define RC_PACKMAN_CAP_SELF_CONFLICT         (1 << 1)
-#define RC_PACKMAN_CAP_LEGACY_EPOCH_HANDLING (1 << 2)
+#define RC_PACKMAN_CAP_IGNORE_ABSENT_EPOCHS  (1 << 2)
 #define RC_PACKMAN_CAP_REPACKAGING           (1 << 3)
+#define RC_PACKMAN_CAP_VERSION_AND_RELEASE   (1 << 4)
 
 #define RC_TRANSACT_FLAG_NONE      (0)
 #define RC_TRANSACT_FLAG_NO_ACT    (1 << 0)

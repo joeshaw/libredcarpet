@@ -1,5 +1,30 @@
 2002-11-14  Joe Shaw  <joe@ximian.com>
 
+	* rc-packman.h: Add a huge comment block describing what each of
+	the capabilities does.  Remove the SELF_CONFLICT capability since
+	it wasn't being used and it's handled for all backends by the
+	resolver.  Renamed LEGACY_EPOCH_HANDLING to IGNORE_ABSENT_EPOCHS
+	because it makes more sense to me.  Add a new VERSION_AND_RELEASE
+	capability which does Debian's relation logic on version+release
+	as one.
+
+	* rc-debman.c (rc_debman_init): Set capabilities to
+	VERSION_AND_RELEASE.
+
+	* rc-rpmman.c (rc_rpmman_init):
+	s/LEGACY_EPOCH_HANDLING/IGNORE_ABSENT_EPOCHS.
+
+	* rc-package-dep.c (rc_package_dep_verify_relation): If the
+	VERSION_AND_RELEASE capability is set, compare version and release
+	at once instead of separately.  Also
+	s/LEGACY_EPOCH_HANDLING/IGNORE_ABSENT_EPOCHS.
+
+	* rc-queue-item.c (conflict_process_cb): Add a comment about how
+	we ignore when we conflict with ourself.  Mention that some of the
+	obsolete handling should probably be a packman capability
+	
+2002-11-14  Joe Shaw  <joe@ximian.com>
+
 	* rc-debman-general.c (rc_debman_fill_depends): Don't muck around
 	with the dep if it's NULL.
 
