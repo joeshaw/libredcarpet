@@ -62,7 +62,7 @@ void
 rc_package_spec_copy (RCPackageSpec *new, RCPackageSpec *old)
 {
     rc_package_spec_init (new, g_quark_to_string (old->nameq), old->has_epoch,
-                          old->epoch, old->version, old->release, old->epoch);
+                          old->epoch, old->version, old->release, old->arch);
 }
 
 void

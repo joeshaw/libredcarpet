@@ -1,3 +1,7 @@
+2005-01-26  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-package-spec.c (rc_package_spec_copy): Fix a typo.
+
 2005-01-21  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-rollback.c (rc_rollback_action_get_synth_package): Implement.
