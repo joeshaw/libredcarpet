@@ -45,7 +45,6 @@ static RCArchAndName arch_table[] = {
     { "i686",    RC_ARCH_I686 },
     { "athlon",  RC_ARCH_ATHLON },
     { "ppc",     RC_ARCH_PPC },
-    { "Power Macintosh", RC_ARCH_PPC },
     { "sparc",   RC_ARCH_SPARC },
     { "sun4c",   RC_ARCH_SPARC },
     { "sun4d",   RC_ARCH_SPARC },
