@@ -1,5 +1,17 @@
 2003-09-10  Joe Shaw  <joe@ximian.com>
 
+	* rc-world-multi.c (rc_world_multi_cut_over_to_new_subworlds):
+	Return a gboolean indicating whether we've cut over or not.
+	(refresh_info_free): Disconnect the refreshed and update signals.
+	(refreshed_cb): Call rc_pending_finished() if we've cut over to
+	new subworlds and then just free the refresh info.  Simplifies
+	things a *lot* and makes refreshes block correctly.
+	(pending_complete_cb): Nuke this.  It added too much complexity
+	and didn't work right.
+	(rc_world_multi_refresh_fn): Don't initialize signal IDs to
+	-1... they're unsigned and 0 is an invalid ID.  Don't connect to
+	the "complete" signal anymore.
+
 	* rc-extract-packages.c (add_fake_history): Added.  Creates an
 	RCPackageUpdate entry for this package and adds it to the history.
 	(rc_extract_packages_from_directory): Call add_fake_history()

@@ -197,22 +197,21 @@ typedef struct {
 
     guint refreshed_id;
     guint update_id;
-    guint complete_id;
 } RefreshInfo;
 
-static void
+static gboolean
 rc_world_multi_cut_over_to_new_subworlds (RCWorldMulti *multi)
 {
     GSList *old_subworlds, *iter;
 
     if (!rc_world_is_refreshing (RC_WORLD (multi)))
-        return;
+        return FALSE;
 
     /* If any of the subworlds aren't finished refreshing, do nothing. */
     for (iter = multi->subworlds; iter != NULL; iter = iter->next) {
         SubworldInfo *info = iter->data;
         if (!info->refreshed_ready)
-            return;
+            return FALSE;
     }
 
     /* Copy the subworlds list, because rc_world_multi_{add|remove}_subworld()
@@ -245,11 +244,23 @@ rc_world_multi_cut_over_to_new_subworlds (RCWorldMulti *multi)
     multi->subworld_pendings = NULL;
 
     rc_world_refresh_complete (RC_WORLD (multi));
+
+    return TRUE;
 }
 
 static void
 refresh_info_free (RefreshInfo *refresh_info)
 {
+    if (refresh_info->refreshed_id) {
+        g_signal_handler_disconnect (refresh_info->refreshed_subworld,
+                                     refresh_info->refreshed_id);
+    }
+
+    if (refresh_info->update_id) {
+        g_signal_handler_disconnect (refresh_info->subworld_pending,
+                                     refresh_info->update_id);
+    }
+
     g_object_unref (refresh_info->subworld);
     g_object_unref (refresh_info->refreshed_subworld);
     g_object_unref (refresh_info->multi);
@@ -264,7 +275,7 @@ refresh_info_free (RefreshInfo *refresh_info)
 }
 
 static void
-refreshed_cb (RCWorld *subworld, gpointer user_data)
+refreshed_cb (RCWorld *refreshed_subworld, gpointer user_data)
 {
     RefreshInfo *refresh_info = user_data;
     SubworldInfo *info;
@@ -272,19 +283,19 @@ refreshed_cb (RCWorld *subworld, gpointer user_data)
     info =
         rc_world_multi_find_subworld_info_by_subworld (refresh_info->multi,
                                                        refresh_info->subworld);
+
     g_assert (info != NULL);
 
     /* This subworld is ready to be switched over */
     info->refreshed_ready = TRUE;
 
-    rc_world_multi_cut_over_to_new_subworlds (refresh_info->multi);
+    if (rc_world_multi_cut_over_to_new_subworlds (refresh_info->multi) &&
+        refresh_info->multi_pending != NULL)
+    {
+        rc_pending_finished (refresh_info->multi_pending, 0);
+    }
 
-    g_signal_handler_disconnect (refresh_info->refreshed_subworld,
-                                 refresh_info->refreshed_id);
-    refresh_info->refreshed_id = -1;
-
-    if (refresh_info->update_id == -1 && refresh_info->complete_id == -1)
-        refresh_info_free (refresh_info);
+    refresh_info_free (refresh_info);
 }
 
 static void
@@ -319,39 +330,6 @@ pending_update_cb (RCPending *pending, gpointer user_data)
     }
 }
 
-static void
-pending_complete_cb (RCPending *pending, gpointer user_data)
-{
-    RefreshInfo *refresh_info = user_data;
-    gboolean all_complete = TRUE;
-    GSList *iter;
-
-    for (iter = refresh_info->multi->subworld_pendings;
-         iter; iter = iter->next)
-    {
-        RCPending *pending = RC_PENDING (iter->data);
-
-        if (rc_pending_is_active (pending)) {
-            all_complete = FALSE;
-            break;
-        }
-    }
-
-    if (all_complete && rc_pending_is_active (refresh_info->multi_pending)) {
-        rc_pending_finished (refresh_info->multi_pending, 0);
-    }
-
-    g_signal_handler_disconnect (refresh_info->subworld_pending,
-                                 refresh_info->update_id);
-    g_signal_handler_disconnect (refresh_info->subworld_pending,
-                                 refresh_info->complete_id);
-    refresh_info->update_id = -1;
-    refresh_info->complete_id = -1;
-
-    if (refresh_info->refreshed_id == -1)
-        refresh_info_free (refresh_info);
-}        
-
 static RCPending *
 rc_world_multi_refresh_fn (RCWorld *world)
 {
@@ -376,9 +354,6 @@ rc_world_multi_refresh_fn (RCWorld *world)
         refresh_info->refreshed_subworld =
             g_object_ref (info->refreshed_subworld);
         refresh_info->multi = g_object_ref (multi);
-        refresh_info->refreshed_id = -1;
-        refresh_info->update_id = -1;
-        refresh_info->complete_id = -1;
         refresh_info->refreshed_id =
             g_signal_connect (refresh_info->refreshed_subworld,
                               "refreshed",
@@ -406,12 +381,6 @@ rc_world_multi_refresh_fn (RCWorld *world)
                 g_signal_connect (refresh_info->subworld_pending,
                                   "update",
                                   (GCallback) pending_update_cb,
-                                  refresh_info);
-
-            refresh_info->complete_id =
-                g_signal_connect (refresh_info->subworld_pending,
-                                  "complete",
-                                  (GCallback) pending_complete_cb,
                                   refresh_info);
         }
     }
