@@ -34,6 +34,8 @@ rc_channel_new (void)
     RCChannel *channel;
 
     channel = g_new0 (RCChannel, 1);
+
+    channel->refs = 1;
     
     channel->type = RC_CHANNEL_TYPE_HELIX; /* default */
 
@@ -43,32 +45,3 @@ rc_channel_new (void)
 
     return (channel);
 } /* rc_channel_new */
-
-
-void
-rc_channel_free (RCChannel *channel)
-{
-    if (channel) {
-
-        g_free (channel->name);
-        g_free (channel->description);
-
-        g_slist_foreach (channel->distro_target, (GFunc)g_free, NULL);
-        g_slist_free (channel->distro_target);
-
-        g_free (channel->path);
-        g_free (channel->file_path);
-
-        g_free (channel->pkginfo_file);
-        g_free (channel->pkgset_file);
-
-        g_free (channel->subs_file);
-        g_free (channel->unsubs_file);
-
-        g_free (channel->icon_file);
-            
-        rc_package_set_slist_free (channel->package_sets);
-            
-        g_free (channel);
-    }
-} /* rc_channel_free */

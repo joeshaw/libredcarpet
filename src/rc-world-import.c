@@ -112,22 +112,32 @@ rc_world_add_packages_from_xml (RCWorld *world, RCChannel *channel, xmlNode *nod
     return count;
 }
 
-guint
-rc_world_parse_channel (RCWorld *world,
-                        RCChannel *channel, 
-                        gchar *tbuf, 
-                        int compressed_length)
+RCChannel *
+rc_world_add_channel_from_buffer (RCWorld *world,
+                                  const char *channel_name,
+                                  guint32 channel_id,
+                                  RCChannelType type,
+                                  gchar *tbuf, 
+                                  int compressed_length)
 {
+    RCChannel *channel;
     gchar *buf;
     GByteArray *byte_array = NULL;
     guint count = 0;
 
-    g_assert (tbuf);
+    g_return_val_if_fail (world != NULL, NULL);
+    g_return_val_if_fail (channel_name && *channel_name, NULL);
+    g_return_val_if_fail (tbuf != NULL, NULL);
+
+    channel = rc_world_add_channel (world,
+                                    channel_name,
+                                    channel_id,
+                                    type);
 
     if (compressed_length) {
         if (rc_uncompress_memory (tbuf, compressed_length, &byte_array)) {
             g_warning ("Uncompression failed");
-            return -1;
+            return NULL;
         }
 
         buf = byte_array->data;
@@ -154,7 +164,7 @@ rc_world_parse_channel (RCWorld *world,
         g_byte_array_free (byte_array, TRUE);
     }
 
-    return count;
+    return channel;
 }
 
 static guint
@@ -224,7 +234,7 @@ rc_world_parse_debian (RCWorld *world, RCChannel *rcc, char *buf)
         ((RCPackageUpdate *)(p->history->data))->package = p;
         ob = b+1;
 
-        p->channel = rcc;
+        p->channel = rc_channel_ref (rcc);
 
         rc_world_add_package (world, p);
         rc_package_unref (p);

@@ -28,6 +28,7 @@
 #define RC_PACKAGE_FIND_LEAKS
 
 typedef struct _RCPackage RCPackage;
+typedef void (*RCPackageFn) (struct _RCPackage *, gpointer);
 
 typedef GSList RCPackageSList;
 
@@ -43,7 +44,6 @@ typedef GHashTable RCPackageHashTableBySpec;
 #include "rc-package-update.h"
 #include "rc-channel.h"
 
-typedef void     (*RCPackageFn) (RCPackage *, gpointer);
 typedef void     (*RCPackagePairFn) (RCPackage *, RCPackage *, gpointer);
 typedef void     (*RCPackageAndSpecFn) (RCPackage *, RCPackageSpec *, gpointer);
 typedef gboolean (*RCPackageAndSpecCheckFn) (RCPackage *, RCPackageSpec *, gpointer);
@@ -58,7 +58,7 @@ struct _RCPackage {
     guint32 file_size;
     guint32 installed_size;
 
-    const RCChannel *channel;
+    RCChannel *channel;
 
     /* Filled in by the package manager or dependency XML */
     RCPackageDepSList *requires;

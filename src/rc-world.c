@@ -295,7 +295,13 @@ rc_world_free (RCWorld *world)
         /* Free our channels */
         for (iter = world->channels; iter != NULL; iter = iter->next) {
             RCChannel *channel = iter->data;
-            rc_channel_free (channel);
+
+            /* Set the channel's world to NULL, so that there won't
+               be a dangling pointer if someone else is holding a reference
+               to this channel. */
+            channel->world = NULL;
+
+            rc_channel_unref (channel);
         }
         g_slist_free (world->channels);
 
@@ -316,9 +322,11 @@ rc_world_add_channel (RCWorld *world,
     g_return_val_if_fail (channel_name && *channel_name, NULL);
 
     channel = rc_channel_new ();
-    channel->id = channel_id;
-    channel->name = g_strdup (channel_name);
-    channel->type = type;
+
+    channel->world = world;
+    channel->id    = channel_id;
+    channel->name  = g_strdup (channel_name);
+    channel->type  = type;
     
     world->channels = g_slist_prepend (world->channels,
                                        channel);
@@ -337,7 +345,17 @@ rc_world_remove_channel (RCWorld *world,
 
     for (iter = world->channels; iter != NULL; iter = iter->next) {
         if (iter->data == channel) {
-            rc_channel_free (channel);
+
+            /* We we remove a channel, we also remove all of its
+               packages. */
+            rc_world_remove_packages (world, channel);
+
+            /* Set the channel's world to NULL, so that there won't
+               be a dangling pointer if someone else is holding a reference
+               to this channel. */
+            channel->world = NULL;
+            
+            rc_channel_unref (channel);
             world->channels = g_slist_delete_link (world->channels,
                                                    iter);
             return;

@@ -93,7 +93,9 @@ parser_toplevel_start(RCPackageSAXContext *ctx,
         ctx->state = PARSER_PACKAGE;
 
         ctx->current_package = rc_package_new();
+
         ctx->current_package->channel = ctx->channel;
+        rc_channel_ref (ctx->channel);
     }
     else
         rc_debug(RC_DEBUG_LEVEL_DEBUG, "! Not handling %s\n", name);
@@ -606,7 +608,8 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
 
     package = rc_package_new ();
 
-    package->channel = channel;
+    package->channel = (RCChannel *) channel;
+    rc_channel_ref ((RCChannel *) channel);
 
     iter = node->xmlChildrenNode;
 

@@ -101,16 +101,19 @@ load_channel (const char *name,
             channel_type = RC_CHANNEL_TYPE_DEBIAN;
     }
 
-    channel = rc_world_add_channel (world, name, 17, channel_type);
-    
-    count = rc_world_parse_channel (world, channel, buffer, is_compressed ? file_size : 0);
+    channel = rc_world_add_channel_from_buffer (world,
+                                                name, 666,
+                                                channel_type, buffer,
+                                                is_compressed ? file_size : 0);
 
     g_free (buffer);
 
-    if (count < 0) {
+    if (channel == NULL) {
         g_print ("Couldn't load packages from %s\n", filename);
         return;
     }
+    
+    count = rc_channel_package_count (channel);
 
     if (system_packages) {
         rc_world_foreach_package (world,

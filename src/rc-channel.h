@@ -49,6 +49,9 @@ typedef enum {
 
 int rc_channel_priority_parse (const char *);
 
+RCChannel *rc_channel_ref   (RCChannel *channel);
+void       rc_channel_unref (RCChannel *channel);
+
 /* Accessors */
  
 guint32       rc_channel_get_id          (const RCChannel *channel);
@@ -64,6 +67,15 @@ int           rc_channel_get_priority    (const RCChannel *channel,
 RCChannelType rc_channel_get_type        (const RCChannel *channel);
 
 
+/* Iterators/Accessors for channel packages */
+
+int rc_channel_foreach_package (const RCChannel *channel,
+                                RCPackageFn fn,
+                                gpointer user_data);
+
+int rc_channel_package_count (const RCChannel *channel);
+
+/* Other */
 
 RCChannelSList *rc_channel_parse_xml (char *xmlbuf, int compressed_length);
 

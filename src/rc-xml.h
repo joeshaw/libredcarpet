@@ -31,13 +31,13 @@ typedef struct _RCPackageSAXContext      RCPackageSAXContext;
 
 RCPackageSAXContext *rc_package_sax_context_new (RCChannel *channel);
 void rc_package_sax_context_parse_chunk (RCPackageSAXContext *ctx,
-					 char *xmlbuf,
-					 int size);
+                                         char *xmlbuf,
+                                         int size);
 RCPackageSList *rc_package_sax_context_done (RCPackageSAXContext *ctx);
 
 /* Old stuff */
 RCPackage *rc_xml_node_to_package (const xmlNode *node,
-				   const RCChannel *channel);
+                                   const RCChannel *channel);
 RCPackageDep *rc_xml_node_to_package_dep (const xmlNode *node);
 RCPackageUpdate *rc_xml_node_to_package_update (const xmlNode *node, 
 						const RCPackage *package);

@@ -1,3 +1,8 @@
+2002-05-09  Jon Trowbridge  <trow@ximian.com>
+
+	* deptestomatic.c (load_channel): Use our new functions,
+	rc_world_add_channel_from_buffer and rc_channel_package_count.
+
 2002-05-07  Jon Trowbridge  <trow@ximian.com>
 
 	* deptestomatic.c (load_channel): Create channels using

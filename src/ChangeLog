@@ -1,3 +1,35 @@
+2002-05-09  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-package.c (rc_package_unref): Unref our channel.
+
+	* rc-xml.c (parser_toplevel_start): Ref our channel.
+	(rc_xml_node_to_package): Ref our channel.
+
+	* rc-world-import.c (rc_world_add_channel_from_buffer): Renamed
+	from rc_world_parse_channel, and better integrated with the new
+	"the world constructs and contains all channels".
+	(rc_world_parse_debian): Ref our channel.
+
+	* rc-world.c (rc_world_free): Set the channel's world pointer to
+	NULL before we unref it.
+	(rc_world_add_channel): Store the world pointer inside the
+	channel.
+	(rc_world_remove_channel): Set the channel's world pointer to
+	NULL before we unref it.
+
+	* rc-channel.c (rc_channel_ref): Added.
+	(rc_channel_unref): Added.
+	(rc_channel_foreach_package): Added.  Use the channel's
+	RCWorld (which we now carry around inside of the struct)
+	to iterate over the channel's packages.
+	(rc_channel_package_count): Added.
+
+	* rc-channel-private.h: Store the associated
+	RCWorld * in the channel's struct.
+
+	* rc-channel-private.c (rc_channel_new): Set refs to 1 initially.
+	(rc_channel_free): Removed.
+
 2002-05-08  Joe Shaw  <joe@ximian.com>
 
 	* rc-package-dep.c, rc-package-dep.h (rc_package_dep_new): The

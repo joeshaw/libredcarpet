@@ -28,7 +28,13 @@
 #ifndef __RC_CHANNEL_PRIVATE_H__
 #define __RC_CHANNEL_PRIVATE_H__
 
+struct _RCWorld;
+
 struct _RCChannel {
+    gint refs;
+
+    struct _RCWorld *world;
+
     guint32 id;
     gchar *name;
     gchar *description;

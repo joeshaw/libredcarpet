@@ -64,7 +64,7 @@ rc_package_copy (RCPackage *old_package)
 
     package->installed_size = old_package->installed_size;
 
-    package->channel = old_package->channel;
+    package->channel = rc_channel_ref (old_package->channel);
 
     package->requires = rc_package_dep_slist_copy (old_package->requires);
     package->provides = rc_package_dep_slist_copy (old_package->provides);
@@ -108,6 +108,8 @@ rc_package_unref (RCPackage *package)
 
         if (package->refs == 0) {
 
+            rc_channel_unref ((RCChannel *) package->channel);
+
             rc_package_update_slist_free (package->history);
 
             rc_package_spec_free_members (RC_PACKAGE_SPEC (package));
@@ -122,8 +124,6 @@ rc_package_unref (RCPackage *package)
 
             g_free (package->summary);
             g_free (package->description);
-
-
             
             g_free (package->package_filename);
             g_free (package->signature_filename);

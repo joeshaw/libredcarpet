@@ -81,6 +81,51 @@ rc_channel_priority_parse (const char *priority_str)
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
+RCChannel *
+rc_channel_ref (RCChannel *channel)
+{
+    if (channel != NULL) {
+        g_assert (channel->refs > 0);
+        ++channel->refs;
+    }
+    
+    return channel;
+} /* rc_channel_ref */
+
+void
+rc_channel_unref (RCChannel *channel)
+{
+    if (channel != NULL) {
+        g_assert (channel->refs > 0);
+        --channel->refs;
+
+        if (channel->refs == 0) {
+            g_free (channel->name);
+            g_free (channel->description);
+
+            g_slist_foreach (channel->distro_target, (GFunc)g_free, NULL);
+            g_slist_free (channel->distro_target);
+
+            g_free (channel->path);
+            g_free (channel->file_path);
+
+            g_free (channel->pkginfo_file);
+            g_free (channel->pkgset_file);
+
+            g_free (channel->subs_file);
+            g_free (channel->unsubs_file);
+
+            g_free (channel->icon_file);
+            
+            rc_package_set_slist_free (channel->package_sets);
+            
+            g_free (channel);
+        }
+    }
+} /* rc_channel_unref */
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
 guint32
 rc_channel_get_id (const RCChannel *channel)
 {
@@ -143,6 +188,39 @@ rc_channel_get_type (const RCChannel *channel)
 
     return channel->type;
 }
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+int
+rc_channel_foreach_package (const RCChannel *channel,
+                            RCPackageFn fn,
+                            gpointer user_data)
+{
+    g_return_val_if_fail (channel != NULL, -1);
+
+    if (channel->world == NULL) {
+        g_warning ("rc_channel_foreach_package called on an unattached channel!");
+        return -1;
+    }
+
+    return rc_world_foreach_package (channel->world, 
+                                     (RCChannel *) channel,
+                                     fn, user_data);
+}
+
+int
+rc_channel_package_count (const RCChannel *channel)
+{
+    g_return_val_if_fail (channel != NULL, -1);
+
+    if (channel->world == NULL) {
+        g_warning ("rc_channel_package_count called on an unattached channel!");
+        return -1;
+    }
+
+    return rc_channel_foreach_package (channel, NULL, NULL);
+}
+                          
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
