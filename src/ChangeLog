@@ -1,0 +1,1241 @@
+2001-01-06  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* rc-deps.c, rc-deps.h: Fix some more conflict handling
+	love.  Debian hates me.
+
+2001-01-05  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* rc-channel.c, rc-debman-general.c,
+	rc-debug-misc.c, rc-deps.c,
+	rc-package-dep.c, rc-package-info.c,
+	rc-package-spec.c: use rc_debug instead of
+	g_warning/g_print/fprintf/etc
+
+2001-01-04  Ian Peters  <itp@helixcode.com>
+
+	* rc-channel.h: remove the dep_table pointer in the
+	RCChannel struct
+
+	* rc-channel.c: assorted cleanups, reflect the above
+	change
+
+	* rc-package-info.c (rc_subchannel_parse_debian):
+	create the dep_table in the subchannel, not the channel
+
+2001-01-04  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* rc-distman.c: Bail if we can't figure out
+	what kind of distro this is (don't crash)
+
+	* rc-distro.c: Call debian testing/unstable
+	unstable.
+
+	* rc-deps.c: Look for the dep_table in the
+	correct subchannel, not the channel's main dep_table. Also
+	some more conflict loving.
+
+	* rc-deps.h: Conflict loving changes.
+
+2001-01-03  Ian Peters  <itp@helixcode.com>
+
+	* rc-debman-general.c: add some includes, fix some
+	other includes, contribute a faster version of
+	rc_debman_parse_version, and add some debugging code
+
+	* Makefile.am: add BUILD_CFLAGS to INCLUDES
+
+2001-01-03  Ian Peters  <itp@helixcode.com>
+
+	* rc-common.h: removed
+
+	* rc-debug.c, rc-debug.h: added.
+	contains RC_ENTRY, RC_EXIT, and some simple structure for
+	debugging levels, etc.  Not really used anywhere yet.
+
+	* Makefile.am: add rc-debug.[ch], remove rc-common.h
+
+	* libredcarpet.h: fix include paths, kill reference
+	to rc-common.h, add rc-debug.h
+
+	* rc-debman.c: s/rc-common/rc-debug/
+
+	* rc-channel.c: s/rc-common/rc-debug/ and fix the
+	include paths
+
+	* rc-package-info.c: ditto
+
+2000-12-28  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* rc-deps.c: Oops. don't crash if what is null
+	in a conflict when printing it.
+
+2000-12-27  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* rc-deps.c, rc-deps.h: Some intelligent
+	things about conflicts. They are mostly recognized now. The info
+	that comes out isn't perfect, but it's a start. gaim vs. gaim-gnome
+	works now ;-)
+
+2000-12-22  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* Makefile.am: typo
+
+	* rc-package-info.c, rc-debman.c:
+	include debman-general
+
+2000-12-22  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* Makefile.am: fixing for new config.in
+
+	* rc-debman-general.c: New file containing	useful things,
+	even if rc-debman isn't compiled in
+
+	* rc-distman.c: fixes for selecting the right packmans
+	to include
+
+	* rc-debman.c: removed stuff into rc-debman-general.c
+
+	* rc-distro.c: some new distros
+
+2000-12-22  Ian Peters  <itp@helixcode.com>
+
+	* rc-package-update.h, rc-package-update.c:
+	General sanity checking, throw some const's in, g_return(_val)_if_fail
+	in a few places, yada yada yada
+
+2000-12-19  Ian Peters  <itp@helixcode.com>
+
+	* rc-channel.c, rc-channel.h: added
+	rc_channel_get_subchannel to return a pointer to the subchannel by
+	id
+
+2000-12-18  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* rc-deps.c: Small fix to fix things
+	that need fixing. (Vague? Yes.)
+
+2000-12-18  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* Makefile.am: add rc-debman-private.h,
+	rc-verification-private.h, rc-line-buf-private.h to
+	sources line for dist
+
+2000-12-18  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* rc-deps.c: Small fix to avoid
+	bizzare unnecessary conflicts.
+
+2000-12-15  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* rc-debman.c: Change deps.h to rc-deps.h
+
+2000-12-15  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* Makefile.am: Added rc-debug-misc and rc-deps
+
+	* rc-deps.c: New dependency bits. Somewhat
+	less broken than the old code, right now somewhat more
+	in some ways. Conflicts, in particular, need help (and the
+	whole virtual conflict thing on redhat).
+
+	* deps.c: removed.
+
+	* libredcarpet.h: Changed deps -> rc-deps
+
+	* rc-channel.c: fixes to find_best_package
+	to use new pkginfo API
+
+	* rc-package-dep.c: Added lots of code
+	to verify AND relationships in deps
+	(rc_package_dep_verify_and_relation,
+	rc_package_dep_verify_and_slist_relation), also fixed
+	rc_package_dep_item_verify_relation. Also code to merge
+	dependencies (for deps code).
+
+	* rc-package-info.c: code to handle
+	AND dependencies for finding new packages.
+
+2000-12-07  Joe Shaw  <joe@helixcode.com>
+
+	* rc-channel.c (rc_subchannel_free): Don't destroy the 
+	dep_table if it is NULL.
+
+2000-12-01  Joe Shaw  <joe@helixcode.com>
+
+	* rc-package-update.c (rc_package_update_to_xml_node): 
+	Don't write out the epoch to XML if one isn't set (saves space).
+
+2000-11-29  Joe Shaw  <joe@helixcode.com>
+
+	* rc-channel.c (rc_xml_node_to_channel): Back out the
+	#if 0.
+
+2000-11-29  Joe Shaw  <joe@helixcode.com>
+
+	* rc-channel.c (rc_xml_node_to_channel): #if 0ed out some
+	code that was keeping channel lists from parsing. Ian, please fix this
+	up if it's not right.
+
+2000-11-21  Joe Shaw  <joe@helixcode.com>
+
+	* rc-channel.c (rc_channel_free): Removed reference to
+	RCChannel->title_file.
+	(rc_channel_parse_xml): Ditto.
+
+	* rc-channel.h (RCChannel): Removed title_file, added
+	featured, although it isn't handled at all yet.
+
+2000-11-09  Joe Shaw  <joe@helixcode.com>
+
+	* rc-verification.h: Change the order of the
+	RCVerificationStatus enum to be ordered by "severity".
+
+2000-11-09  Ian Peters  <itp@helixcode.com>
+
+	* rc-debman.h, rc-debman.c,
+	rc-debman-private.h: move all fields into RCDebmanPrivate,
+	make rc_debman_transact take an RCPackageSList*, and lots of other
+	cleanups.  Add rc_debman_find_file.
+
+	* rc-line-buf.h, rc-line-buf.c,
+	rc-line-buf-private.h: move all fields into
+	RCLineBufPrivate, lots of other cleanups
+
+	* rc-packman.h, rc-packman.c,
+	rc-packman-private.h: move all fields into
+	RCPackmanPrivate, lots of other cleanups.  _transact takes an
+	RCPackageSList.  Add rc_packman_find_file.
+	Add rc_packman_get_features.
+
+	* rc-rpmman.c: _transact takes ...
+
+	* rc-verification.c: fixicate to a little RCLineBuf
+	change
+
+2000-11-09  Ian Peters  <itp@helixcode.com>
+
+	* rc-package.c (rc_package_get_latest_update): change the
+	g_return_if_fail to g_return_val_if_fail.
+
+2000-11-08  Joe Shaw  <joe@helixcode.com>
+
+	* rc-package.c (rc_package_get_latest_update): Added a
+	convenience function for getting the latest update from a package.
+
+2000-11-02  Ian Peters  <itp@helixcode.com>
+
+	* rc-package-spec.h, rc-package-spec.c:
+	removed all of the RCPackageSection stuff, put it into rc-package.[ch].
+	(struct _RCPackageSpec): remove the section, installed, installed_size,
+	channel, and subchannel fields.  These belong in struct _RCPackage.
+	(rc_package_spec_init): this now takes a few less arguments
+
+	* rc-package-update.h, rc-package-update.c:
+	move the typedef's above the included libredcarpet files
+	(struct _RCPackageUpdate): add a const RCPackage * back to the package
+	that we are an update to, and an installed_size field
+
+	* rc-package.h, rc-package.c:
+	move the typedef's above the included libredcarpet files
+	Move all of the RCPackageSection stuff into here
+	(struct _RCPackage): add the section field, the installed_size and
+	installed fields, a const pointer back to our parent subchannel,
+	and handle all of these new fields in _copy and _free.
+
+	* rc-packman.c:
+	(rc_package_slist_add_package): fix the call to rc_package_spec_init
+
+	* rc-rpmman.c, rc-debman.c:
+	update all references to ->spec.installed, ->spec.installed_size,
+	and ->spec.section to ->installed, ->installed_size, and ->section
+
+	* rc-package-dep.c, rc-package-dep.h:
+	move the typedef's above the included libredcarpet files
+	Add a few const's in places
+
+	* rc-channel.h: move all of the typedef's above the
+	included libredcarpet files
+
+	* rc-channel.c:
+	(rc_xml_node_to_subchannel): pass the RCChannel* instead of the
+	url_prefix and channel_id separately.  Set the subchannel->channel to
+	the channel passed in.  Pass the channel into rc_xml_node_to_subchannel
+
+	* rc-package-info.c:
+	(rc_subchannel_parse_debian): fix some references to the channel
+	and subchannel fields in the RCPackageSpec, now gone, and point to
+	the installed and installed_size fields in the package, not the spec
+
+	* rc-package-set.h:
+	Move the typedef's above the included libredcarpet files
+
+	* xml-util.c, xml-util.h:
+	Add a lot of const's where appropriate
+
+2000-11-02  Ian Peters  <itp@helixcode.com>
+
+	* rc-package-update.h, rc-package-update.c:
+	(rc_xml_node_to_package_update): pass the url_prefix and name of the
+	package into this function, to avoid some annoying post processing
+
+	* rc-package.h, rc-package.c:
+	(rc_xml_node_to_package): pass the url_prefix, channel_id, and
+	subchannel_id into the function, to avoid some annoying post
+	processing; pass the url_prefix, along with my own name, into
+	rc_xml_node_to_package_update
+
+	* rc-channel.c:
+	(rc_xml_node_to_subchannel): take the url_prefix and channel_id,
+	passing them along to rc_xml_node_to_package [along with my own
+	subchannel preference], don't try to fix the url's in post
+	processing
+	(rc_xml_node_to_channel): pass the extra information needed into
+	rc_xml_node_to_subchannel
+
+2000-11-02  Ian Peters  <itp@helixcode.com>
+
+	* pkginfo.c, pkginfo.h: removed these in
+	favor of rc-package-info.c and rc-package-info.h.
+
+	* rc-package-info.c, rc-package-info.h:
+	Rewrote rc_subchannel_parse_helix in favour of making each structure
+	responsible for remembering how to parse itself
+	[rc_xml_node_to_package, for example].  If any structure changes, you
+	need to modify only functions in rc-<structure>.c to make sure
+	everything continues to parse.  Assorted other cleanups to other
+	functions inherited directly from pkginfo.c.  I pretty much left the
+	Debian stuff alone.
+
+	* Makefile.am: remove pkginfo, add rc-package-info
+
+	* deps.c: fix the include lines [<foo.h> in
+	favour of "foo.h", as the automake book suggests], and
+	s/pkginfo\.h/rc-package-info.h/
+
+	* libredcarpet.h: fix the include lines as per the
+	automake book, s/pkginfo\.h/rc-package-info.h/
+
+	* rc-channel.h: include <gnome-xml/tree.h> for the xml
+	stuff, fixicate the include lines
+	(struct _RCSubchannel): move the dep_table from the RCChannel into
+	here, as it would otherwise be /really/ broken
+	(rc_channel_to_xml_node): convert an RCChannel* to an xmlNode*
+	(rc_xml_node_to_channel): convert an xmlNode* to an RCChannel*
+
+	* rc-channel.c: fixicate the include lines, include some
+	xml loving
+	(remove_helper): static function, added.  Free the packages in the
+	package hash table
+	(rc_subchannel_free): after talking with vlad, there's no longer any
+	reason not to deep free the package hash table, using remove_helper.
+	Shallow free on the dep_table [which just has pointers into the
+	package hash]
+	(rc_channel_free): free a few elements that people added and forgot to
+	free, free the package set list, free the subchannels.  Whoops.
+	(my_little_helper): a static helper function to add children to an
+	xmlNode	from a hash table
+	(rc_subchannel_to_xml_node): static, given a subchannel, convert it to
+	an xmlNode*.  Used by rc_channel_to_xml_node.
+	(rc_channel_to_xml_node): convert an RCChannel to an xmlNode*,
+	basically by calling rc_subchannel_to_xml_node a lot on all of the
+	subchannels.
+	(rc_xml_node_to_subchannel): static, given an xmlNode*, recreate the
+	RCSubchannel.  Using the url_prefix given by the RCChannel, fix the
+	package_url and signature_url fields of the RCPackageUpdates deep in
+	the nested mess.  Also create the package and dep_table hashes.
+	(rc_xml_node_to_channel): given an xmlNode* and the RCChannel*, fill in
+	the missing parts of the structure [mostly using
+	rc_xml_node_to_subchannel]
+
+	* rc-debman.c, rc-debman.h: fixicate some
+	includes
+	(rc_debman_query_file): make any file we query provide itself, which
+	means we don't have to remember to keep adding this in so many places.
+	(rc_debman_verify): update to work with the structure changes.
+	Look for the package and signature local filenames in the RCPackage
+	struct, filled in after they are downloaded.  Correctly reference
+	the RCPackageUpdate where appropriate.
+
+	* rc-rpmman.c, rc-rpmman.h: fixicate some
+	includes
+	(rc_rpmman_verify): aim for the right elements of the RCPackage struct
+
+	* rc-package-dep.c, rc-package-dep.h:
+	fixicate some includes
+	(rc_string_to_package_relation): added.
+	(rc_package_relation_to_string): added.
+	(rc_package_dep_item_to_xml_node): static, added.  Used by
+	rc_package_dep_to_xml_node.
+	(rc_package_dep_to_xml_node): added.
+	(rc_xml_node_to_package_dep_item): static, added.  Used by
+	rc_xml_node_to_package_dep.
+	(rc_xml_node_to_package_dep): added.
+
+	* rc-package-set.c, rc-package-set.h:
+	fixicate some includes
+	(rc_package_set_new): added
+	(rc_package_set_free): added
+	(rc_package_set_slist_free): added
+	It's only slightly worrisome that these functions didn't exist before.
+
+	* rc-package-spec.h, rc-package-spec.c:
+	fixicate some includes
+	(struct SecTable): removed
+	(extern sectable[]): removed
+	use the rc_package_section_to_string and rc_string_to_package_section
+	functions now
+	(rc_package_section_to_string): added
+	(rc_string_to_package_section): added
+	They do the obvious things
+
+	* rc-package-update.h, rc-package-update.c:
+	fixicate an include
+	(enum _RCPackageImportance): add RC_IMPORTANCE_NEW
+	(struct _RCPackageUpdate): fiddle with some fields, renaming and moving
+	them around
+	(rc_string_to_package_importance): added
+	(rc_package_importance_to_string): added
+	(rc_package_update_to_xml_node): added
+	(rc_xml_node_to_package_update): added
+	There's a pattern here, pay close attention
+
+	* rc-package.h, rc-package.c: fixicate some includes,
+	fiddle with some field names
+	(rc_package_to_xml_node): added
+	(rc_xml_node_to_package): added
+
+	* rc-verification.c: fixicate some includes
+	(rc_verify_gpg): add the --no-auto-key-retrieve option to the gpg call
+
+	* xml-util.h, xml-util.c:
+	(xml_get_prop): added
+	(xml_get_content): added
+	(xml_get_guint32_content_default): added
+
+2000-10-30  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* rc-package-dep.c, libreadcarpet/rc-package-dep.h:
+	Changed the #define's to enums, to make for cleaner code and also
+	so that gdb can give us names insted of numbers. Added
+	rc_packge_dep_verify_and_relation, which verifies a
+	RCPackageDep as if it were AND'd instead of OR'd. Also added
+	rc_package_dep_item_is_subset, which will attempt to merge
+	two RCPackageDepItems.
+
+2000-10-29  Ian Peters  <itp@helixcode.com>
+
+	* rc-channel.c:
+	(rc_channel_parse_xml): I'm sorry, I just had to reindent this
+	function.  It was really bad.
+
+	* rc-debman.c: include pty.h, shut up gcc.
+	(rc_debman_verify): wrote it.  It checks a detached signature, if
+	one exists in the signature field in the RCPackage.  It checks the
+	md5sum, if there's one in the RCPackage.
+
+	* rc-package-update.h: tweaked some of the members of
+	the RCPackageUpdate struct, and added signature_url and
+	signature_size.  These are for detached signatures, if they exist.
+
+	* rc-package.h: added two new members to the
+	RCPackage struct, filename and signature.  These are NULL until
+	after the package (and maybe signature) are downloaded, then they
+	store the name of the downloaded files.
+	(rc_package_copy_spec): kill this
+
+	* rc-package.c:
+	(rc_package_copy): let's just use rc_package_spec_copy instead of
+	the stupid rc_package_copy_spec function.  Check if old_pkg is
+	NULL before we do stuff.  Also copy filename and signature.
+	(rc_package_copy_spec): kill this
+	(rc_package_free): check if rcp is NULL before we start freeing
+	things.  Also, free the filename and signature.
+	(rc_package_slist_sort): skip the intermediary step of putting the
+	result in a variable on the stack; let's just return the sort.
+
+	* rc-packman.h, rc-packman.c,
+	rc-rpmman.c: rc_packman[_real]_verify takes an
+	RCPackage, not a filename now.
+
+	* rc-verification.h, rc-verification.c:
+	add rc_verify_md5_string, you know what it does
+
+	* pkginfo.c:
+	(grab_packageupdateinfo_list): grab the signature and
+	signature_size from the xml, and btw who the hell named this
+	function? ;)
+
+2000-10-27  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* deps.c: Oops.. add check for null p before verifying
+	the relation.
+
+2000-10-26  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* rc-package-dep.c: New words for EQUAL
+	instead of just (??)
+
+	* deps.c: Some code to handle extra bizzare
+	conflict issues
+
+2000-10-26  Ian Peters  <itp@helixcode.com>
+
+	* rc-packman.c: add some gtk_main_iteration calls to key
+	spots to keep things happy
+
+	* rc-debman.c: print the command every time we exec dpkg, and
+	print out every line it sends us back, prefixed by "DEBMAN: ".
+
+2000-10-26  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* Makefile.am: add clean-local target
+
+2000-10-26  Ian Peters  <itp@helixcode.com>
+
+	* rc-debman.c: remove a definite race condition in the
+	new magic hack
+
+2000-10-26  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* dpkg-helper.c, Makefile.am: Added
+	the building of dpkg-helper.so, also makefile.am to build it
+	and copy it in the right place.
+
+2000-10-26  Ian Peters  <itp@helixcode.com>
+
+	* rc-line-buf.h, rc-line-buf.c:
+	Add rc_line_buf_get_buf which gets the current internal buffer even if
+	there's been no '\n' yet.  Needed for The Debian Hack.
+
+	* rc-debman.c: OH MY GOD IT WORKS!
+	I'm not going to try to give you a good changelog entry on this,
+	because I had to do so many crufty things it's not even funny.  But it
+	works.  This won't work until Vlad commits dpkg-helper.c and the
+	associated Makefile.am loving.
+
+2000-10-26  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* deps.c: I need to get my boring commit in.
+	We now have a RC_DEPS_DEBUG_LEVEL env var that sets
+	the amount of spewage. We should always compile with
+	#define DEBUG now, at least for betas.
+
+2000-10-25  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* rc-distro.c, rc-distro.h: Change
+	same_as into a pretend_name -- it's only to be used if we do not
+	support the other distro uniquely, as it will break things if
+	there is a channel for both the pretend name and the real name. In
+	fact, this should probably not be used at all.
+
+	* gui-init.c: Change some of the startup channel
+	parsing bits to reflect rc-distro changes.
+
+2000-10-25  Ian Peters  <itp@helixcode.com>
+
+	* rc-debman.c (query_all_read_line_cb): kill some stale
+	debugging code, add a helpful comment
+
+2000-10-25  Ian Peters  <itp@helixcode.com>
+
+	* rc-rpmman.c (rc_rpmman_depends_fill): ignore the top
+	seekret messages that rpmlib encodes in the dependency header
+	information.  rpmlib is a crufy broken pile of dung.
+
+2000-10-25  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* rc-package.c: copy the stupid damn idiotic
+	damn piece of crap stupid hold bit in the _copy func
+
+2000-10-25  Jacob "Ulysses" Berkman  <jacob@helixcode.com>
+
+	* libredcarpet.h: don't inlclude rc-rpmman.h or
+	rpm-debman.h
+
+	* rc-rpmman.h, rpmlead-4-0-x.h,
+	signature-4-0-x.h, Makefile.am: rpm4
+	fixes
+
+2000-10-25  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* rc-package-dep.h: Oops, update the header proto
+
+2000-10-25  Ian Peters  <itp@helixcode.com>
+
+	* rc-debman.c: change every call to write to instead use
+	rc_write, which is the pedantic checking version.  Add lots of error
+	handling where rc_write may have returned FALSE.
+
+2000-10-25  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* deps.c, deps.h: Beginning of cleanup,
+	some comments added/removed...
+
+	* rc-distro.c: Some lins to shut up warnings
+
+	* rc-debman.c: Added code to ignore locks if
+	any of the magic env vars are set
+
+	* rc-package-dep.c, rc-package-dep.h:
+	Some code to pretty-print a package dependency relation.
+
+2000-10-25  Ian Peters  <itp@helixcode.com>
+
+	* rc-string.c, rc-string.h: removed, as
+	nothing uses this anymore.
+
+	* Makefile.am, pkginfo.c,
+	rc-debman.c, rc-util.c: remove references
+	to rc-string.h and rc-string.c
+
+2000-10-25  Ian Peters  <itp@helixcode.com>
+
+	* rc-util.c (rc_write): kill a warning, add a const to buf
+
+	* pkginfo.c (debian_packages_helper): kill some unused
+	variables
+
+	* rc-rpmman.c (rc_rpmman_verify): initialize some
+	variables to shut gcc up
+
+2000-10-25  Ian Peters  <itp@helixcode.com>
+
+	* Makefile.am: set the G_LOG_DOMAIN to libredcarpet, and
+	set the SHAREDIR (this is something of a hack, but...).  Add the new
+	files rc-verification.c and rc-verification.h to the libredcarpet
+	sources.
+
+	* rc-line-buf.h: add the RCLineBufStatus enum, so that
+	read_done can just return a status, instead of having a separate
+	read_error signal.  Get rid of the hup_id, since we'll handle all of
+	the g_io signals in a single callback.  Get rid of the read_error
+	signal, and fix the prototype on the read_done signal.  Rename read_id
+	to cb_id.
+
+	* rc-line-buf.c: remove READ_ERROR from SIGNALS, purge all
+	mention of hup_id (rc_line_buf_destroy, rc_line_buf_class_init,
+	rc_line_buf_init).  Fix the marshaller on read_done.  Rename the
+	rc_line_buf_read_cb to rc_line_buf_cb.  Handle the condition ==
+	G_IO_HUP case.  Emit read_done on a read of 0 without EAGAIN.  Fix the
+	off-by-one array access that vlad caught in purify.  Remove
+	rc_line_buf_hup_cb.  Fix rc_line_buf_new.  Rename read_id to cb_id.
+
+	* rc-md5.h: change the rc_md5 function to return guint8 *
+	instead of as a string, so that we can memcmp this directly with the
+	md5 in an rpm header.  Add the rc_md5_string function to provide the
+	old functionality.
+
+	* rc-md5.c: (rc_md5): change this guy to return the md5
+	in a guint8 *.  Mostly involves removing, not adding, code.
+	(rc_md5_string): added.  Returns the md5 as a string of hex characters
+	instead.
+
+	* rc-verification.h: RCVerification struct, a lot of
+	enums, and some functions.
+
+	* rc-verification.c: implementation of the foundation for
+	RCVerification, along with three verification methods, rc_verify_gpg,
+	rc_verify_md5, and rc_verify_size.  Look in the header for the
+	appropriate details.
+
+	* rc-packman.h: include rc-verification.h.  Clean up the
+	RCPackmanError enum.
+	(rc_packman_real_verify): change the type, now returns an
+	RCVerificationSList * given an RCPackman * and a filename.
+	(rc_packman_verify): ditto
+
+	* rc-packman.c (rc_packman_verify): clean up to the new
+	api
+
+	* rc-util.h: added rc_write, a safe way to write a buffer
+	to a file descriptor (handles all of those EINTR and EAGAIN issues).
+	Returns TRUE if the write was a success, and FALSE if it was a failure.
+
+	* rc-util.c (rc_write): added, see above.
+
+	* rpmlead-3-0-x.h, signature-3-0-x.h: Borrow
+	some header files from rpm-3.0.6 for the signature extraction stuff.
+	Stupid stupid rpm.  This may or may not work for rpm-4.x, I'll test
+	that in a bit.
+
+	* rc-rpmman.c: include rc-verification.h, rc-util.h, and
+	the new rpm borrowed header files.
+	(rc_rpmman_verify): implemented.  Uses some internal rpm functions, a
+	lot of elbow grease, and some love to verify the supported signatures
+	in an rpm (gpg, md5, and size).
+	(rc_rpmman_destroy): added.  Free the rpmroot member.
+	(rc_rpmman_class_init): chain the destroy.
+
+	* rc-debman.c:
+	(rc_debman_verify): added.  Do nothing stub function until we work out
+	how the detached gpg signatures work.
+	(mark_purge_read_done_cb): new marshaller for read_done in RCLineBuf
+	(do_purge_read_done_cb): new marshaller for read_done in RCLineBuf
+	(do_unpack_read_done_cb): new marshaller for read_done in RCLineBuf
+	(do_configure_read_done_cb): new marshaller for read_done in RCLineBuf
+	(query_all_read_done_cb): new marshaller for read_done in RCLineBuf
+	(verify_status): added (along with some callbacks).  Makes sure that
+	the /var/lib/dpkg/status file is at least somewhat sane.  Resets any
+	pending selections (other than hold), because RC won't honor them.  Of
+	course, this only runs if you're root, because it needs to rewrite the
+	status file.
+
+2000-10-23  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* deps.c: Added code to handle held packages. (First
+	try, need to find way to test.)
+
+	* deps.h: Added HELD_PACKAGE conflict type
+
+	* rc-package.h: Added hold gboolean
+
+2000-10-20  Joe Shaw  <joe@helixcode.com>
+
+	* rc-rpmman.c (rc_rpmman_query_all): Set the
+	RCPackageSpec's installed bit to TRUE. Closes Mothra #70.
+
+2000-10-20  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* deps.c, deps.h: Added preliminary
+	type field to conflicts to aid in resolution.
+
+	* pkginfo.c: small change in how we provide ourselves
+
+	* rc-channel.c, rc-channel.h: Moved
+	find_best_package here, exported.
+
+	* rc-distro.c: Fixed warnings
+
+	* rc-package.c, rc-package.h: Added 
+	utility functions for converting hashesh (by spec, by name)
+	to lists
+
+	* rc-util.c, rc-util.h: Added
+	rc_hash_table_copy
+
+2000-10-19  Ian Peters  <itp@helixcode.com>
+
+	* rc-debman.c (do_configure): fix my last broken commit
+	(forgot to #if 0 out one part)
+
+2000-10-19  Ian Peters  <itp@helixcode.com>
+
+	* rc-debman.c (rc_debman_init): if we can't grab the lock,
+	set the error and reason as appropriate.  Some other in-development
+	code that I #if 0'd out.
+
+	* rc-packman.h: fix the name of
+	rc_packman_configure_progress (was config_progress) to kill a warning
+
+	* rc-packman.c: kill some gtk_events_pending bs
+
+	* rc-rpmman.c: #if 0 out some unfinished/unneeded stuff
+	to kill a few warnings.
+
+2000-10-18  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* pkginfo.c: Fixed stupid bug where a \0 wasn't being
+	put at the end of each segment of a debian description, causing
+	the weird descriptions in the info displays.
+
+	* deps.c: Copy the system packages list when passed in.
+	Leaks memory.
+
+	* rc-debman.c: Always use status_file instead of the
+	hardcoded path
+
+	* rc-package-dep.c, rc-package-spec.c:
+	Absolutely nothing important; no changes.
+
+2000-10-18  Ian Peters  <itp@helixcode.com>
+
+	* rc-line-buf.c (rc_line_buf_read_cb): change the FALSE to
+	TRUE when I call g_string_free, as it really is my job here
+
+2000-10-18  Ian Peters  <itp@helixcode.com>
+
+	* rc-debman.c: signal (SIGCHLD, SIG_DFL) before forking
+	everywhere because I am now paranoid.  I have no idea what is setting
+	SIGCHLD to SIG_IGN for me, but I wasted a lot of time on this one.
+	Life sucks.  Did I mention I spilled apple juice all over myself by
+	hitting the top of a bottle and blowing out the bottom?
+
+2000-10-18  Ian Peters  <itp@helixcode.com>
+
+	* rc-debman.c (rc_debman_query_all_real): again make every
+	package provide itself, so that vlad's lazy ass dependency code doesn't
+	have to do any work.  La la la.
+
+2000-10-18  Joe Shaw  <joe@helixcode.com>
+
+	* rc-util.c (rc_mktmpdir): Removed. rc-debman doesn't
+	use it anymore. Closes Mothra #30.
+
+2000-10-17  Ian Peters  <itp@helixcode.com>
+
+	* rc-line-buf.c, rc-line-buf.h: added.
+	This bad boy is a GtkObject that provides buffered read-a-line from a
+	fd (aka a file or a pipe) using g_io_add_watch stuff.  I totally like
+	my little object, it's pretty dope.
+
+	* Makefile.am: added rc-line-buf.[ch] to the sources for
+	libredcarpet
+
+	* rc-debman.c: so some fixicating and an attempt to add
+	the "watch for stupid needy-of-manual-configuring packages" feature
+	turned into a total rewrite (almost) of this guy to make that doable.
+	So now literally everything in rc-debman uses rc-line-buf, so that it
+	can operate from within a GMainLoop I run by hand, which lets me use
+	g_io_add_watch to watch for a dpkg-run script trying to read... which
+	is what I've got to do next.  But it's now doable.
+	Also, add the feature that joe requested -- it now emits
+	transaction_step and configure_step with a seqno of 0 before it does
+	any transactioning or configuring, so that the gui can be smarter
+
+	* rc-rpmman.c: add the same new feature as in debman (the
+	0 seqno signals)
+
+	* rc-util.c, rc-util.h: remove all traces of
+	the old RCLineBuf (sorry vlad!)
+
+	* packman_test.c: fix an odd crash or two, add command
+	completion ;)
+
+2000-10-16  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* rc-channel.c: oops. xmlParseMemory wants the
+	number of real characters, not counting the null (hence the
+	length of a bytearray - 1)
+
+	* rc-package-set.c: same as above.
+
+	* rc-package-set.c, rc-package-set.h:
+	Fixed minor parsing bugs.
+
+	* deps.c: fixed crash that occurs if debugging is
+	turned on. (Oops!)
+
+2000-10-13  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* Makefile.am: added new files
+
+	* rc-package-set.c, rc-package-set.h: New
+	files, beginning on package set support.
+
+	* rc-util.c, lilbredcarpet/rc-util.h: New function to
+	un-gzip in memory (Yay, no more nasty popen()'s!)
+
+	* rc-channel.c, pkginfo.c: Use new
+	gunzipping code
+
+	* rc-channel.h: Add package set slist in struct
+
+	* rc-package.c, rc-package.h: added GPL
+	headers
+
+	* rc-util.c, rc-util.h: New uncompress
+	functions that take a gzip'd buffer and uncompress it
+
+2000-10-13  Joe Shaw  <joe@helixcode.com>
+
+	* rc-channel.c, rc-channel.h: Added
+	copyright and license info to the top (and emacs rules)
+	(rc_channel_parse_xml): Add a new flag, "available_select" that,
+	when defined, makes the "Select All" and "Select None" buttons
+	appear in the available packages page. Closes Mothra #34.  *
+
+2000-10-13  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* Makefile.am: Change distro.[ch] with rc-distro.[ch]
+
+	* rc-distro.c, rc-distro.h: new files;
+	rewrite of distro code to support different architectures, provide
+	for different languages, etc. Also to keep distro tags in sync
+	with build system. (XML now should reference distro_target tag)
+
+	* rc-channel.c, rc-channel.h: Add
+	distro_target; got rid of distribution and major/minor.
+
+	* libredcarpet.h: Changed distro.h to rc-distro.h
+
+	* rc-distman.c, rc-distman.h: Use new
+	rc-distro code.
+
+2000-10-11  Joe Shaw  <joe@helixcode.com>
+
+	* rc-channel.c (rc_channel_parse_xml): Add a mirrored
+	flag to the channel. This is not yet used.
+
+2000-10-06  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* rc-debman.c: package_accept speedup, small
+	debug printing fix
+
+	* deps.c: Oops. Set the list back to the result
+	of the g_slist_remove, so that if all packages end up getting
+	removed, things don't die.
+
+2000-10-05  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* rc-debman.c: Print conversation with dpkg
+	to stderr.
+
+2000-10-04  Ian Peters  <itp@helixcode.com>
+
+	* rc-debman.c (hash_destroy): recreate the hash_table
+	(rc_debman_query_all): grab a valid reference to the pkg_hash
+
+2000-10-04  Ian Peters  <itp@helixcode.com>
+
+	* rc-rpmman.c: some minor fixes for rpm4 support
+
+2000-10-04  Ian Peters  <itp@helixcode.com>
+
+	* rc-rpmman.c (transaction_add_remove_pkgs): write an rpm4
+	specific version.
+
+2000-10-04  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* deps.c: Correctly fix up the list of packages
+	to be installed (no more g_slist_remove_link magic)
+
+2000-10-04  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* deps.c, deps.h: Oops. Use a hash table
+	instead of blindly searching through the list of passed-in
+	to-install packages, since sometimes something will be a virtual
+	package that's provided.
+
+2000-10-04  Ian Peters  <itp@helixcode.com>
+
+	* rc-debman.h: add a hash_table to the RCDebman struct.
+
+	* rc-debman.c: cache the results of a _query_all so that
+	successive calls to _query will be much faster.  If you _query without
+	a call to _query_all, it will populate the hash table first, and then
+	look up the packages requested.  This is because queries in debian
+	by reopening and scanning the /var/lib/dpkg/status file are ass slow.
+	The only way to invalidate the hash is to _transact, and the next
+	_query will have to rescan the status file.  This is a major change
+	in rc_debman, requiring a lot of functions to move around and/or
+	change drastically.  I've tested it pretty thoroughly, but if anything
+	breaks for you, check for sanity using packman_test first before
+	suspecting anything else for a while.  All of the _copy functions are
+	written because I need them in order to copy packages out of the hash
+	table.  Fun fun fun.  But not really.
+	(rc_debman_query_helper): fix vlad's memory leak
+
+	* rc-package-dep.h, rc-package-dep.c:
+	(rc_package_dep_item_copy): added
+	(rc_package_dep_copy): added
+	(rc_package_dep_slist_copy): added
+
+	* rc-package-update.h, rc-package-update.c:
+	(rc_package_update_copy): added
+	(rc_package_update_slist_copy): added
+
+	* rc-package.h, rc-package.c:
+	(rc_package_copy): added
+	(rc_package_free): fix another vlad memory leak ;)
+
+2000-10-03  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* deps.c: Do intelligent things with conflicts (only
+	look for a resolving package if you're not trying to install that
+	named package). I think we are smarter than apt at this point.
+
+	* rc-package-spec.c: Aiee. fixed the compares wrt
+	epoch.
+
+	* deps.c: Oops. Handle the case where a non-first
+	item of an OR dep was already installed in the system (don't
+	always go for the first!)
+
+2000-10-03  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* deps.h: Added packages_requested in output RR,
+	giving the real list of packages that were used (with duplicates
+	removed)
+
+	* deps.c: Added lots of code to handle some cases that
+	really, really, really need testing. If package A is installed and
+	it depends on B == 1.0, and you try to install package C which depends
+	on any version of A and upgrade	A and B in the same operation, this is
+	what used to happen: the A dep was processed from the system (because C
+	was seen first) and its hard dep on B was put in. When the new A was
+	processed, the hard dep on B would fail (notwithstanding the new B). There
+	are two solutions -- one was to remove all traces of the old package; this
+	is what untangle_package tries to do. Note that this is probably not a safe
+	thing to do, and now it's only called in cases where nothing else can be
+	done. The other thing, which is what's done, is to be a bit more intelligent
+	about it, by checking to see if something you're depending on is in the
+	installed list, and processing that (as long as it resolves other deps).
+	This needs testing; right now, the code seems to return a few more packages
+	than apt does.
+
+	* rc-package.c (rc_package_compare): Made it just call
+	rc_package_spec_compare -- it wasn't checking for null versions/revisions.
+
+2000-10-02  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* deps.c (resolution_uninstall_package_makelist): check
+	if the package was already removed before spewing a warning!
+
+2000-10-02  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* deps.c (pkg_conflicts_list_iterator): Fixed buglet
+	that caused weird conflict things to hapen. Bork bork.
+
+2000-10-02  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* deps.c (pkg_conflicts_list_iterator): make it work with
+	null channels again (oops)
+
+	* Makefile.am (libredcarpet_a_SOURCES): removed
+	helix-* cruft, added some missing .h's
+
+2000-10-01  Ian Peters  <itp@helixcode.com>
+
+	* rc-channel.c, rc-channel.h: added
+	rc_channel_compare_func for hashing and stuff
+
+	* rc-package.c, rc-package.h: added
+	rc_package_compare_func for hashing and stuff
+
+2000-10-01  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* rc-package-update.c, rc-package-update.h:
+	filename becomes url, and is now a full URL.
+
+	* pkginfo.c: Parse the url correctly, as stated in the
+	above.
+
+2000-10-01  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* rc-channel.c: strdup path into file_path if it isn't set.
+
+	* pkginfo.c: Oops. gtk_main_iteration iff gtk_events_pending,
+	not always. Lowercased header field names for debian. Slightly faster
+	debian parsing code. (Parse in-place instead of copying to tmpbuf.)
+
+	* deps.c: Added code to have conflicts try to resolve conflicts
+	if they are with a package less than some version by trying to find a newer
+	version of the conflicting package.
+
+2000-09-30  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* deps.c: oops. (hpp always == hpp, no?)
+
+	* pkginfo.c: Made gunzipping faster (rc_string, I love you!)
+
+	* rc-debman.c: Changed the read_line function to
+	use a line buffer for reading. Lots of speed improvements. This
+	required changes to other code, as there was a second data
+	structure, RCLineBuf *, that had to be used.
+
+	* rc-util.c, rc-util.h: Added the
+	RCLineBuf stuff
+
+	* rc-string.c, rc-string.h: Added string
+	append functions
+
+	* pkginfo.c: Went back to using strncmp's instead of
+	casecmps for comparing stuff. This might break if someone uploads
+	lowercase stuff to the debian packages file (as has happened)
+
+2000-09-29  Ian Peters  <itp@helixcode.com>
+
+	* pkginfo.c: correctly set the channel id for debian-type
+	channels
+
+	* rc-packman.c, rc-packman.h: pkgs to install
+	in a transaction are filenames not RCPackage's
+
+2000-09-29  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* pkginfo.c: Do something intelligent if gunzip
+	doesn't exist.
+
+	* deps.c: note to self
+
+2000-09-29  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* deps-private.h, deps.c, 
+	deps.h: Preliminary code to get nicely-displayable dep 
+	info (packages X, Y, Z will be brought in to satisfy package A that 
+	was requested, packages D and E for pkg B, etc).
+	Will require more hacking to get this info out.
+
+	* rc-package-dep.c: Made verify return FALSE if the dep 
+	was < or <= and the target had no version info. This was to get 
+	around an issue where a package conflicted with < V of another 
+	package bar, and bar was a virtual package provided by bar1.2. This 
+	should be investigated further.
+
+	* test_deps.c: Added a few features; this will be used 
+	now to verify helix packages against RC before pushing to server.
+
+2000-09-28  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* deps.c: Got rid of superfluous debug crap
+
+	* pkginfo.c, rc-channel.c,
+	xml-util.c: Made it happy with new libxml
+
+	* Makefile.am: added (commented out rc-crypto.c, rc-crypto.h)
+
+	* rc-crypto.c, libreadcarpet/rc-crypto.h: Initial
+	checkin. Don't use.
+
+2000-09-28  Joe Shaw  <joe@helixcode.com>
+
+	* rc-channel.h: Removed title_color and title_bg_image
+	from the channel struct.
+
+	* rc-channel.c: Remove references to title_color and
+	title_bg_image.
+
+	* rc-package-spec.c (vercmp): Added a clause that says
+	that a number vs. word comparison always goes in favor of the word.
+	For example, in helix1 vs. 1, helix1 wins. This fixes a bunch of
+	incorrect compares with the Debian packages.
+
+2000-09-28  Ian Peters  <itp@helixcode.com>
+
+	* rc-rpmman.h, rc-rpmman.c: merge in the rpm4
+	changes courtesy of msw
+
+2000-09-27  Joe Shaw  <joe@helixcode.com>
+
+	* pkginfo.c (debian_packages_helper): Correctly handle
+	package sizes such that they are put into the update structure
+
+2000-09-18  Ian Peters  <itp@helixcode.com>
+
+	* pkginfo.c, rc-debman.c,
+	rc-debman.h: merge vlad's fork of the /var/lib/dpkg/status
+	parsing stuff back in, so I get his fixes and he gets a non-broken
+	read_line.
+
+2000-09-11  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* rc-util.c, rc-util.h: Two functions,
+	rc_url_is_absolute() and rc_build_url(). The latter takes a method,
+	host, path, and "rest" of the URL, and will build the right thing
+	depending on if path or rest are absolute or relative, etc.
+
+2000-09-08  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* deps.c, deps.h: Fixed ian's
+	conflicts bugs -- conflicts and uninstalls should work now; it needs
+	testing.
+
+	* pkginfo.c: debian packages weren't getting the
+	provides into the hash correctly (oops!)
+
+2000-08-31  Ian Peters  <itp@helixcode.com>
+
+	* Makefile.am: add rc-string to the sources for
+	libredcarpet.a
+
+	* rc-packman.c, rc-packman.h,
+	rc-debman.c, rc-debman.h,
+	rc-rpmman.c, rc-rpmman.h: changed the
+	interface drastically (hopefully for that last time).  Got rid of
+	_install and _remove (and associated signals, etc), and replaced it
+	with a transactional interface (with degenerate install and remove
+	cases, obviously).  This is required to make the debian backend work,
+	and makes the rpm one cleaner (also, I learned how to make my own
+	rpmTransaction things, so I got rid of the poached rpmInstall and
+	rpmErase functions).  The debian code is beautiful, I'm in love with
+	it in a big way.  The rpm code is pretty nice, although currently I'm
+	not dealing with errors in any big way (I'm waiting for a chance to
+	talk with joe (and vlad) about how to handle errors (fatal and
+	non-fatal) in the cleanest way possible.
+
+	* rc-package-spec.c, rc-package-spec.h:
+	added my rc_package_spec_copy and killed vlad's (since mine's nicer :)
+
+	* rc-package.c, rc-package.h:
+	added rc_package_copy_spec
+
+	* rc-string.c, rc-string.h: a small
+	convenience for me to use, I wrote it to implement the safe function
+	to read a line of text from /var/lib/dpkg/status in rc-debman.c
+
+2000-08-30  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* pkginfo.c, pkginfo.h:
+	rc_subchannel_parse_xml got renamed to rc_subchannel_parse; in
+	the .c file there are now 3 separate functions for parsing
+	helix-style XML files, debian-style Packages.gz files, and
+	redhat's xml/rdf stuff. (the latter is a noop for now). There
+	are also copies of Ian's debian parsing stuff in here -- these
+	need to be merged later with his code.
+
+	* rc-channel.c, rc-channel.h:
+	Added a few XML props -- "type" which defaults to helix, but can
+	be debian or redhat, pkginfo_file which has the name of the
+	package info file (defaults to packageinfo.xml.gz),
+	pkginfo_compressed, which, if present, indicates that the file
+	is gzip'd (I think you have to at least say pkginfo_compressed=1);
+	also fixed minor typo in hash table type def in the .h.
+
+	* rc-package-spec.c, rc-package-spec.h:
+	Added rc_package_spec_copy (src, dst)
+
+2000-08-25  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* deps.c, deps.h: Added global
+	settings call to change the way conflicts work, as debian and rpm
+	handle them differently (debian only conflicts real packages, rpm
+	conflicts virtual packages as well).
+
+	* pkginfo.c: Added Defensive Programming
+	NULL string check
+
+	* deps.c, deps.h: Fixed
+	lots of conflict things. Still some work to do, but this
+	is a checkpoint for ian so that he can continue.
+
+2000-08-24  Joe Shaw  <joe@helixcode.com>
+
+	* rc-package-spec.c: Added a static table for mapping
+	section strings to section enums.
+
+	* rc-package-spec.h: Define the above table and declare
+	it (sectable) extern.
+
+2000-08-24  Ian Peters  <itp@helixcode.com>
+
+	* libredcarpet.h, rc-channel.c,
+	rc-channel.h, rc-common.h,
+	rc-package-dep.c, rc-package-dep.h,
+	rc-package-spec.c,	rc-package-spec.h,
+	rc-package-update.c, rc-package-update.h,
+	rc-package.c, rc-package.h,
+	rc-util.c, rc-util.h: Added.  The scattered
+	remnants of the horror that was common.c and common.h.
+
+	* channel.c, channel.h,
+	common.c, common.h,
+	packagespec.c, packagespec.h: removed.
+	Contents moved into the above files.
+
+	* Makefile.am: updated to build the new files not the old
+	ones
+
+	* deps.c, deps.h, distro.c,
+	pkginfo.c, pkginfo.h,
+	rc-debman.c, rc-md5.c,
+	rc-packman.h: updated to include the right files
+
+2000-08-23  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* deps.c, pkginfo.c: Made it not barf
+	(hopefully) if the current channel is NULL (i.e. summary Next
+	button). Added a g_assert check to pkginfo to warn if a null
+	channel makes it to that point.
+
+	* deps.h: removed unused element from struct
+
