@@ -1,5 +1,14 @@
 2003-09-18  Joe Shaw  <joe@ximian.com>
 
+	* rc-subscription.c (rc_subscription_match): A NULL legacy ID is
+	okay, so handle it gracefully instead of crashing on strlen().
+
+	* rc-world-system.c (rc_world_system_load_packages):
+	rc_world_store_clear() calls rc_world_store_remove_packages(), so
+	we don't need to do both.  Just do the former, and do it after try
+	to query the system packages so we can fall back on that cached
+	data if we fail.
+
 	* rc-rpmman.c (rc_rpmman_depends_fill): Make sure the package
 	filename is valid UTF-8 before adding it as a provide.  Works
 	around some broken SuSE packages.

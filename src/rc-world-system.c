@@ -42,8 +42,6 @@ rc_world_system_load_packages (RCWorldSystem *system)
 
     rc_debug (RC_DEBUG_LEVEL_MESSAGE, "Loading system packages");
 
-    rc_world_store_clear (store);
-
     system_packages = rc_packman_query_all (packman);
     if (rc_packman_get_error (packman)) {
         rc_debug (RC_DEBUG_LEVEL_ERROR,
@@ -52,7 +50,7 @@ rc_world_system_load_packages (RCWorldSystem *system)
         goto finished;
     }
 
-    rc_world_store_remove_packages (store, RC_CHANNEL_SYSTEM);
+    rc_world_store_clear (store);
 
     for (iter = system_packages; iter; iter = iter->next) {
         RCPackage *pkg = iter->data;

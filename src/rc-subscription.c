@@ -90,8 +90,13 @@ rc_subscription_match (RCSubscription *sub, RCChannel *channel)
        compare it against the channel id's tail. */
     if (sub->old) {
         const char *id = rc_channel_get_legacy_id (channel);
-        int len1 = strlen (sub->channel_id);
-        int len2 = strlen (id);
+        int len1, len2;
+
+        if (!id)
+            return FALSE;
+
+        len1 = strlen (sub->channel_id);
+        len2 = strlen (id);
 
         if (len1 > len2)
             return FALSE;
