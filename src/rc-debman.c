@@ -34,6 +34,9 @@
 #include <sys/wait.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/poll.h>
+
+#include <gdk/gdkkeysyms.h>
 
 #include "rc-util.h"
 #include "rc-line-buf.h"
@@ -48,6 +51,9 @@ static GtkObjectClass *rc_debman_parent;
 
 static char *status_file = NULL;
 static char *rc_status_file = NULL;
+
+/* The evil evil evil evil global variable needed to do the get input hack */
+gboolean child_wants_input = FALSE;
 
 guint
 rc_debman_get_type (void)
@@ -701,7 +707,19 @@ do_unpack (RCPackman *p, GSList *pkgs, DebmanInstallState *dis)
  * --configure --pending.  Also sniffs the out.
  */
 
-typedef DebmanDoPurgeInfo DebmanDoConfigureInfo;
+typedef struct _DebmanDoConfigureInfo DebmanDoConfigureInfo;
+
+struct _DebmanDoConfigureInfo {
+    RCPackman *pman;
+    GMainLoop *loop;
+    RCLineBuf *lb;
+    DebmanInstallState *dis;
+    guint read_line_id;
+    guint read_done_id;
+    guint poll_write_id;
+    GString *buf;
+    int write_fd;
+};
 
 static void
 do_configure_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
@@ -710,9 +728,14 @@ do_configure_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
 
     printf ("%s\n", line);
 
+    ddci->buf = g_string_append (ddci->buf, line);
+    ddci->buf = g_string_append (ddci->buf, "\n");
+
     if (!strncmp (line, "Setting up ", strlen ("Setting up "))) {
         rc_packman_configure_step (ddci->pman, ++ddci->dis->seqno,
                                    ddci->dis->total);
+        g_string_free (ddci->buf, TRUE);
+        ddci->buf = g_string_new (NULL);
     }
 }
 
@@ -732,23 +755,122 @@ do_configure_read_done_cb (RCLineBuf *lb, RCLineBufStatus status,
     g_main_quit (ddci->loop);
 }
 
+static void
+debman_do_configure_sigusr2_cb (int signum)
+{
+    child_wants_input = TRUE;
+    fflush (stdout);
+}
+
+static gboolean
+key_press_cb (GtkWidget *widget, GdkEventKey *event, gpointer data)
+{
+    printf ("key_press_cb\n");
+
+    if (event->keyval == GDK_Return) {
+        g_main_quit ((GMainLoop *)data);
+        return (FALSE);
+    }
+
+    return (TRUE);
+}
+
+static gint
+debman_do_configure_poll_write_cb (gpointer data)
+{
+    GMainLoop *loop;
+    GtkWidget *window;
+    GtkWidget *entry;
+    GtkWidget *label;
+    GtkWidget *vbox;
+    DebmanDoConfigureInfo *ddci = (DebmanDoConfigureInfo *)data;
+    gchar *line;
+    struct pollfd check;
+
+    if (!child_wants_input) {
+        return (TRUE);
+    }
+
+    check.fd = g_io_channel_unix_get_fd (ddci->lb->channel);
+    check.events = POLLIN;
+
+    if (poll (&check, 1, 0)) {
+        return (TRUE);
+    }
+
+    loop = g_main_new (FALSE);
+
+    window = gtk_window_new (GTK_WINDOW_DIALOG);
+
+    entry = gtk_entry_new ();
+
+    line = rc_line_buf_get_buf (ddci->lb);
+    ddci->buf = g_string_append (ddci->buf, line);
+    g_free (line);
+
+    line = ddci->buf->str;
+    line = g_strstrip (line);
+    label = gtk_label_new (line);
+    g_string_free (ddci->buf, TRUE);
+    ddci->buf = g_string_new (NULL);
+
+    gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
+
+    vbox = gtk_vbox_new (FALSE, 5);
+    gtk_box_pack_start (GTK_BOX (vbox), label, TRUE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox), entry, FALSE, FALSE, 0);
+
+    gtk_signal_connect (GTK_OBJECT (entry), "key-press-event",
+                        GTK_SIGNAL_FUNC (key_press_cb), (gpointer) loop);
+
+    gtk_container_border_width (GTK_CONTAINER (window), 5);
+
+    gtk_container_add (GTK_CONTAINER (window), vbox);
+
+    gtk_widget_show_all (window);
+    gtk_widget_grab_focus (entry);
+
+    g_main_run (loop);
+
+    line = gtk_editable_get_chars (GTK_EDITABLE (entry), 0, -1);
+
+    gtk_widget_destroy (window);
+
+    rc_write (ddci->write_fd, line, strlen (line));
+    rc_write (ddci->write_fd, "\n", 1);
+
+    g_free (line);
+
+    child_wants_input = FALSE;
+
+    return (TRUE);
+}
+
 static gboolean
 do_configure (RCPackman *p, DebmanInstallState *dis)
 {
     pid_t child;
+    pid_t parent;
     int status;
     int rfds[2];
+    int master, slave;
     RCLineBuf *lb;
     DebmanDoConfigureInfo ddci;
     GMainLoop *loop;
+    gchar *evil_environment_line;
 
     pipe (rfds);
     fcntl (rfds[0], F_SETFL, O_NONBLOCK);
     fcntl (rfds[1], F_SETFL, O_NONBLOCK);
 
+    openpty (&master, &slave, NULL, NULL, NULL);
+
     unlock_database (RC_DEBMAN (p));
 
     signal (SIGCHLD, SIG_DFL);
+    signal (SIGUSR2, debman_do_configure_sigusr2_cb);
+
+    parent = getpid ();
 
     child = fork ();
 
@@ -762,6 +884,9 @@ do_configure (RCPackman *p, DebmanInstallState *dis)
         close (rfds[0]);
         close (rfds[1]);
 
+        close (master);
+        close (slave);
+
         return (FALSE);
         break;
 
@@ -771,30 +896,51 @@ do_configure (RCPackman *p, DebmanInstallState *dis)
         fflush (stdout);
         close (rfds[0]);
         dup2 (rfds[1], STDOUT_FILENO);
+        close (rfds[1]);
 
-        fclose (stderr);
+        close (master);
+        dup2 (slave, STDIN_FILENO);
+        close (slave);
 
+//        fclose (stderr);
+
+        evil_environment_line = g_strdup_printf ("RC_READ_NOTIFY_PID=%d",
+                                                 parent);
+        fprintf (stderr, "evil env: %s\n", evil_environment_line);
+        putenv ("LD_PRELOAD=" SHAREDIR "/dpkg-helper.so");
+        putenv (evil_environment_line);
         execl ("/usr/bin/dpkg", "/usr/bin/dpkg", "--configure", "--pending",
                NULL);
         break;
 
     default:
         close (rfds[1]);
+        close (slave);
 
         loop = g_main_new (FALSE);
 
         ddci.pman = p;
         ddci.loop = loop;
         ddci.dis = dis;
+        ddci.buf = g_string_new (NULL);
+        ddci.write_fd = master;
 
         lb = rc_line_buf_new ();
 
-        gtk_signal_connect (GTK_OBJECT (lb), "read_line",
-                            GTK_SIGNAL_FUNC (do_configure_read_line_cb),
-                            (gpointer) &ddci);
-        gtk_signal_connect (GTK_OBJECT (lb), "read_done",
-                            GTK_SIGNAL_FUNC (do_configure_read_done_cb),
-                            (gpointer) &ddci);
+        ddci.lb = lb;
+
+        ddci.read_line_id =
+            gtk_signal_connect (GTK_OBJECT (lb), "read_line",
+                                GTK_SIGNAL_FUNC (do_configure_read_line_cb),
+                                (gpointer) &ddci);
+        ddci.read_done_id =
+            gtk_signal_connect (GTK_OBJECT (lb), "read_done",
+                                GTK_SIGNAL_FUNC (do_configure_read_done_cb),
+                                (gpointer) &ddci);
+        ddci.poll_write_id =
+            gtk_timeout_add (100,
+                             (GtkFunction) debman_do_configure_poll_write_cb,
+                             (gpointer) &ddci);
 
         rc_line_buf_set_fd (lb, rfds[0]);
 
@@ -806,10 +952,13 @@ do_configure (RCPackman *p, DebmanInstallState *dis)
         g_main_destroy (loop);
 
         close (rfds[0]);
+        close (master);
 
         waitpid (child, &status, 0);
         break;
     }
+
+    signal (SIGUSR2, SIG_DFL);
 
     if (!(lock_database (RC_DEBMAN (p)))) {
         /* FIXME: need to handle this */

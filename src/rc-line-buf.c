@@ -108,7 +108,7 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
     guint bytes_read;
     guint count;
     guint base = 0;
-    gchar *buf;
+    gchar buf[101];
 
     if (condition == G_IO_HUP) {
         gtk_signal_emit (GTK_OBJECT (lb), signals[READ_DONE],
@@ -118,15 +118,12 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
         return (FALSE);
     }
 
-    buf = g_new0 (gchar, 101);
-
     ret = g_io_channel_read (source, buf, 100, &bytes_read);
 
     switch (ret) {
     case G_IO_ERROR_AGAIN:
         /* This really shouldn't happen; why on earth would we get called if
            there's no data waiting? */
-        g_free (buf);
         return (TRUE);
         break;
 
@@ -139,7 +136,6 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
            the infamous big bad oh-what-the-fuck bug, so... */
         g_source_remove (lb->cb_id);
         lb->cb_id = 0;
-        g_free (buf);
         return (FALSE);
         break;
 
@@ -151,7 +147,6 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
                    solution to the infamous big bad oh-what-the-fuck bug, so */
             g_source_remove (lb->cb_id);
             lb->cb_id = 0;
-            g_free (buf);
             return (FALSE);
         }
 
@@ -170,8 +165,6 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
         }
 
         lb->buf = g_string_append (lb->buf, buf + base);
-
-        g_free (buf);
 
         return (TRUE);
         break;
@@ -200,4 +193,17 @@ rc_line_buf_set_fd (RCLineBuf *lb, int fd)
     lb->cb_id = g_io_add_watch (lb->channel, G_IO_IN | G_IO_HUP,
                                 (GIOFunc) rc_line_buf_cb,
                                 (gpointer) lb);
+}
+
+gchar *
+rc_line_buf_get_buf (RCLineBuf *lb)
+{
+    gchar *tmp;
+
+    tmp = lb->buf->str;
+
+    g_string_free (lb->buf, FALSE);
+    lb->buf = g_string_new (NULL);
+
+    return (tmp);
 }

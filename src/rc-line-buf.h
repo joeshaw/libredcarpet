@@ -48,4 +48,6 @@ RCLineBuf *rc_line_buf_new (void);
 
 void rc_line_buf_set_fd (RCLineBuf *lb, int fd);
 
+gchar *rc_line_buf_get_buf (RCLineBuf *lb);
+
 #endif
