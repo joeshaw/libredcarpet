@@ -1,3 +1,13 @@
+2002-09-11  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-channel.c (rc_channel_set_subscription): If we changed the
+	state of the channel's subscription, call
+	rc_world_touch_sequence_number on the channel's world so that we
+	can detect the change.
+
+	* rc-world.c (rc_world_touch_sequence_number): Added.  Marks the
+	world as changed so that the sequence number will increment.
+
 2002-09-09  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c: missing include

@@ -270,6 +270,8 @@ void
 rc_channel_set_subscription (RCChannel *channel,
                              gboolean   subscribed)
 {
+    if ((channel->subscribed ^ subscribed) && channel->world != NULL)
+        rc_world_touch_sequence_number (channel->world);
     channel->subscribed = subscribed;
 }
 

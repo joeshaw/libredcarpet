@@ -324,6 +324,14 @@ rc_world_sequence_number (RCWorld *world)
     return world->seq_no;
 }
 
+void
+rc_world_touch_sequence_number (RCWorld *world)
+{
+    g_return_if_fail (world != NULL);
+
+    world->changed = TRUE;
+}
+
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
  
 void

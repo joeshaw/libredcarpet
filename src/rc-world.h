@@ -42,7 +42,8 @@ RCWorld   *rc_get_world (void);
 RCWorld   *rc_world_new  (RCPackman *packman);
 void       rc_world_free (RCWorld *world);
 
-guint      rc_world_sequence_number (RCWorld *world);
+guint      rc_world_sequence_number       (RCWorld *world);
+void       rc_world_touch_sequence_number (RCWorld *world);
 
 /* Packmanish operations */
 
