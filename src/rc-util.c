@@ -610,6 +610,12 @@ rc_bunzip2_memory (const guint8 *input_buffer, guint32 input_length,
 
         if (bzret == BZ_STREAM_END)
             break;
+
+        if (bzs.avail_in == 0) {
+            /* The data is incomplete */
+            bzret = -1;
+            break;
+        }
     }
 
     BZ2_bzDecompressEnd (&bzs);
@@ -759,7 +765,7 @@ rc_buffer_map_file(const char *filename)
     if (fd < 0)
         return NULL;
 
-    data = mmap(NULL, s.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    data = mmap(NULL, s.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
 
     close (fd);
 

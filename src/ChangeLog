@@ -1,3 +1,9 @@
+2004-02-04  Vladimir Vukicevic  <vladimir@pobox.com>
+
+       * rc-util.c: check if avail_in is 0 in loop in bunzip2_memory;
+       if it goes to 0, we have an incomplete stream (an error that
+       bzlib can't detect by itself)
+
 2004-01-20  Joe Shaw  <joe@ximian.com>
 
 	* distributions.xml: Change the RHEL 3 strings to detect both
