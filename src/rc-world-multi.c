@@ -379,6 +379,7 @@ rc_world_multi_refresh_fn (RCWorld *world)
                 if (!pending) {
                     pending = rc_pending_new ("Refreshing multi world");
                     refresh_info->multi_pending = pending;
+                    rc_pending_begin (pending);
                 } else
                     refresh_info->multi_pending = g_object_ref (pending);
 
@@ -408,9 +409,6 @@ rc_world_multi_refresh_fn (RCWorld *world)
     }
 
     rc_world_multi_cut_over_to_new_subworlds (multi);
-
-    if (pending)
-        rc_pending_begin (pending);
 
     return pending;
 }

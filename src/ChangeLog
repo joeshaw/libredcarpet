@@ -1,5 +1,11 @@
 2003-08-28  Joe Shaw  <joe@ximian.com>
 
+	* rc-world-multi.c (rc_world_multi_refresh_fn): Begin the pending
+	after we create it instead of later, since we could hit the
+	main loop and get failed assertions.
+
+2003-08-28  Joe Shaw  <joe@ximian.com>
+
 	* rc-world-multi.c (rc_world_multi_mount_service): See if we have
 	mounted another service with the same id.
 
