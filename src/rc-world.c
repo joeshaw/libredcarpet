@@ -49,10 +49,16 @@ struct _RCWorld {
 
     RCPackman *packman;
 
-    /* The sequence number gets incremented every
+    /* The sequence numbers gets incremented every
        time the RCWorld is changed. */
-    gboolean changed;
-    guint seq_no;
+
+    gboolean changed_packages;
+    gboolean changed_channels;
+    gboolean changed_subscriptions;
+
+    guint seq_no_packages;
+    guint seq_no_channels;
+    guint seq_no_subscriptions;
 
     /* Set if we know package db has changed. */
     gboolean dirty;
@@ -310,26 +316,68 @@ rc_world_get_system_packages (RCWorld *world)
 }
 
 guint
-rc_world_sequence_number (RCWorld *world)
+rc_world_get_package_sequence_number (RCWorld *world)
 {
     g_return_val_if_fail (world != NULL, 0);
 
     rc_world_sync (world);
 
-    if (world->changed) {
-        ++world->seq_no;
-        world->changed = FALSE;
+    if (world->changed_packages) {
+        ++world->seq_no_packages;
+        world->changed_packages = FALSE;
     }
 
-    return world->seq_no;
+    return world->seq_no_packages;
+}
+
+guint
+rc_world_get_channel_sequence_number (RCWorld *world)
+{
+    g_return_val_if_fail (world != NULL, 0);
+
+    if (world->changed_channels) {
+        ++world->seq_no_channels;
+        world->changed_channels = FALSE;
+    }
+
+    return world->seq_no_channels;
+}
+
+guint
+rc_world_get_subscription_sequence_number (RCWorld *world)
+{
+    g_return_val_if_fail (world != NULL, 0);
+    
+    if (world->changed_subscriptions) {
+        ++world->seq_no_subscriptions;
+        world->changed_subscriptions = FALSE;
+    }
+
+    return world->seq_no_subscriptions;
 }
 
 void
-rc_world_touch_sequence_number (RCWorld *world)
+rc_world_touch_package_sequence_number (RCWorld *world)
 {
     g_return_if_fail (world != NULL);
 
-    world->changed = TRUE;
+    world->changed_packages = TRUE;
+}
+
+void
+rc_world_touch_channel_sequence_number (RCWorld *world)
+{
+    g_return_if_fail (world != NULL);
+
+    world->changed_subscriptions = TRUE;
+}
+
+void
+rc_world_touch_subscription_sequence_number (RCWorld *world)
+{
+    g_return_if_fail (world != NULL);
+
+    world->changed_subscriptions = TRUE;
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
@@ -381,8 +429,13 @@ rc_world_new (RCPackman *packman)
 {
     RCWorld *world = g_new0 (RCWorld, 1);
 
-    world->changed = FALSE;
-    world->seq_no  = 1;
+    world->changed_packages      = FALSE;
+    world->changed_channels      = FALSE;
+    world->changed_subscriptions = FALSE;
+
+    world->seq_no_packages       = 1;
+    world->seq_no_channels       = 1;
+    world->seq_no_subscriptions  = 1;
 
 	world->packages_by_name = hashed_slist_new ();
     world->provides_by_name = hashed_slist_new ();
@@ -453,7 +506,7 @@ rc_world_add_channel (RCWorld *world,
     g_return_val_if_fail (channel_name && *channel_name, NULL);
     g_return_val_if_fail (alias, NULL);
 
-    world->changed = TRUE;
+    rc_world_touch_channel_sequence_number (world);
 
     channel = rc_channel_new ();
 
@@ -482,8 +535,8 @@ rc_world_remove_channel (RCWorld *world,
 
     g_return_if_fail (world != NULL);
     g_return_if_fail (channel != NULL);
-
-    world->changed = TRUE;
+    
+    rc_world_touch_channel_sequence_number (world);
 
     for (iter = world->channels; iter != NULL; iter = iter->next) {
         if (iter->data == channel) {
@@ -739,7 +792,7 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
     g_return_if_fail (world != NULL);
     g_return_if_fail (package != NULL);
 
-    world->changed = TRUE;
+    rc_world_touch_package_sequence_number (world);
 
     /* The world holds a reference to the package */
     rc_package_ref (package);
@@ -838,7 +891,7 @@ rc_world_remove_package (RCWorld *world,
     g_return_if_fail (world != NULL);
     g_return_if_fail (package != NULL);
 
-    world->changed = TRUE;
+    rc_world_touch_package_sequence_number (world);
 
     /* FIXME: This is fairly inefficient */
 
@@ -908,7 +961,7 @@ rc_world_remove_packages (RCWorld *world,
 {
     g_return_if_fail (world != NULL);
 
-    world->changed = TRUE;
+    rc_world_touch_package_sequence_number (world);
 
     hashed_slist_foreach_remove (world->provides_by_name,
                                  remove_package_struct_by_channel_cb,
