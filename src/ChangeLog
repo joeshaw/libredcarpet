@@ -1,3 +1,8 @@
+2003-04-03  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-world.c (rc_world_add_package): If a package is installed,
+	don't ever filter it out due to an incompatible arch.
+
 2003-04-03  Ian Peters  <itp@ximian.com>
 
 	* rc-util.c (rc_rmdir): remove symlinks, too, if we can

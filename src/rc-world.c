@@ -963,13 +963,6 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
     arch_score = rc_arch_get_compat_score (compat_arch_list,
                                            package->arch);
 
-    /* Filter out packages with incompatible arches */
-    if (arch_score < 0) {
-        rc_debug (RC_DEBUG_LEVEL_DEBUG,
-                  "Ignoring package with incompatible arch: %s",
-                  rc_package_to_str_static (package));
-        goto finished;
-    }
 
     /* Before we do anything, check to make sure that a package of the
        same name isn't already in that channel.  If there is a
@@ -984,6 +977,15 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
 
         RCPackage *dup_package;
         int dup_arch_score;
+
+        /* Filter out packages with totally incompatible arches */
+        if (arch_score < 0) {
+            rc_debug (RC_DEBUG_LEVEL_DEBUG,
+                      "Ignoring package with incompatible arch: %s",
+                      rc_package_to_str_static (package));
+            goto finished;
+        }
+
         
         package_name = g_quark_to_string (RC_PACKAGE_SPEC (package)->nameq);
         dup_package = rc_world_get_package (world,
