@@ -198,7 +198,7 @@ rc_world_parse_debian (RCWorld *world, RCChannel *rcc, char *buf)
             ob = b+1;
             continue;
         }
-        p = g_new0 (RCPackage, 1);
+        p = rc_package_new ();
         debian_packages_helper (b, p, rcc->file_path);
         ((RCPackageUpdate *)(p->history->data))->package = p;
         ob = b+1;

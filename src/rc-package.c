@@ -31,6 +31,7 @@ rc_package_new (void)
     RCPackage *package = g_new0 (RCPackage, 1);
 
     package->section = RC_SECTION_MISC;
+    package->refs    = 1;
 
     return (package);
 } /* rc_package_new */
@@ -76,31 +77,49 @@ rc_package_copy (RCPackage *old_package)
     return (package);
 } /* rc_package_copy */
 
-void
-rc_package_free (RCPackage *package)
+RCPackage *
+rc_package_ref (RCPackage *package)
 {
-    g_return_if_fail (package);
+    if (package) {
+        g_assert (package->refs > 0);
+        ++package->refs;
+    }
 
-    rc_package_spec_free_members (RC_PACKAGE_SPEC (package));
+    return package;
+} /* rc_package_ref */
 
-    rc_package_dep_slist_free (package->requires);
-    rc_package_dep_slist_free (package->provides);
-    rc_package_dep_slist_free (package->conflicts);
-    rc_package_dep_slist_free (package->obsoletes);
+void
+rc_package_unref (RCPackage *package)
+{
+    if (package) {
 
-    rc_package_dep_slist_free (package->suggests);
-    rc_package_dep_slist_free (package->recommends);
+        g_assert (package->refs > 0);
+        --package->refs;
 
-    g_free (package->summary);
-    g_free (package->description);
+        if (package->refs == 0) {
 
-    rc_package_update_slist_free (package->history);
+            rc_package_spec_free_members (RC_PACKAGE_SPEC (package));
 
-    g_free (package->package_filename);
-    g_free (package->signature_filename);
+            rc_package_dep_slist_free (package->requires);
+            rc_package_dep_slist_free (package->provides);
+            rc_package_dep_slist_free (package->conflicts);
+            rc_package_dep_slist_free (package->obsoletes);
 
-    g_free (package);
-} /* rc_package_free */
+            rc_package_dep_slist_free (package->suggests);
+            rc_package_dep_slist_free (package->recommends);
+
+            g_free (package->summary);
+            g_free (package->description);
+
+            rc_package_update_slist_free (package->history);
+            
+            g_free (package->package_filename);
+            g_free (package->signature_filename);
+
+            g_free (package);
+        }
+    }
+} /* rc_package_unref */
 
 char *
 rc_package_to_str (RCPackage *package)
@@ -133,9 +152,9 @@ rc_package_is_installed (RCPackage *package)
 }
 
 void
-rc_package_slist_free (RCPackageSList *packages)
+rc_package_slist_unref (RCPackageSList *packages)
 {
-    g_slist_foreach (packages, (GFunc) rc_package_free, NULL);
+    g_slist_foreach (packages, (GFunc) rc_package_unref, NULL);
 
     g_slist_free (packages);
 } /* rc_package_slist_free */

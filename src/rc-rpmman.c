@@ -601,8 +601,8 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
             state.install_extra++;
         }
 
-        rc_package_free (file_package);
-        rc_package_free (inst_package);
+        rc_package_unref (file_package);
+        rc_package_unref (inst_package);
     }
 
     /* trust me */
@@ -1668,7 +1668,7 @@ rc_rpmman_query_all_v3 (RCPackman *packman)
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "Unable to read RPM database entry");
 
-            rc_package_slist_free (list);
+            rc_package_slist_unref (list);
 
             goto ERROR;
         }

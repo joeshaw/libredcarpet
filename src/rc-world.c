@@ -194,6 +194,9 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
     g_return_if_fail (world != NULL);
     g_return_if_fail (package != NULL);
 
+    /* The world holds a reference to the package */
+    rc_package_ref (package);
+
     /* Store all of our packages in a hash by name. */
 
     rc_hash_table_slist_insert (world->packages_by_name,
@@ -255,7 +258,7 @@ remove_packages_generic (GSList *slist, RCPackage *package_to_remove, RCChannel 
         && channel == RC_WORLD_ANY_CHANNEL) {
         for (iter = slist; iter != NULL; iter = iter->next) {
             if (iter->data)
-                rc_package_free (iter->data);
+                rc_package_unref (iter->data);
         }
         
         g_slist_free (slist);
@@ -276,9 +279,7 @@ remove_packages_generic (GSList *slist, RCPackage *package_to_remove, RCChannel 
             ((package_to_remove && package == package_to_remove)
              || channel_match (package->channel, channel))) {
 
-            /* FIXME: Why does freeing the package here lead to corruption?
-               Where else is it being freed? */
-            /* rc_package_free (package); */
+            rc_package_unref (package);
 
             if (iter == slist) {
                 iter->data = NULL;

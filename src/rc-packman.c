@@ -331,7 +331,7 @@ rc_packman_query_file_list (RCPackman *packman, GSList *filenames)
         package = rc_packman_query_file (packman, filename);
 
         if (packman->priv->error) {
-            rc_package_free (package);
+            rc_package_unref (package);
             return (ret);
         }
 

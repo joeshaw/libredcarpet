@@ -51,7 +51,7 @@ struct _RCPackage {
 
     RCPackageSection section;
 
-    gboolean installed;
+    gint refs;
 
     guint32 file_size;
     guint32 installed_size;
@@ -74,27 +74,28 @@ struct _RCPackage {
 
     RCPackageUpdateSList *history;
 
-    /* Don't upgrade this package */
-    gboolean hold;
-
     /* After downloading this package, fill in the local file name,
        and signature, if appropriate */
     gchar *package_filename;
     gchar *signature_filename;
+
+    guint installed : 1;
+    guint hold      : 1; /* Don't upgrade this package */
 };
 
 RCPackage *rc_package_new (void);
 
 RCPackage *rc_package_copy (RCPackage *package);
 
-void rc_package_free (RCPackage *package);
+RCPackage *rc_package_ref   (RCPackage *package);
+void       rc_package_unref (RCPackage *package);
 
 char       *rc_package_to_str        (RCPackage *package);
 const char *rc_package_to_str_static (RCPackage *package);
 
 gboolean rc_package_is_installed (RCPackage *package);
 
-void rc_package_slist_free (RCPackageSList *packages);
+void rc_package_slist_unref (RCPackageSList *packages);
 
 RCPackageSList *rc_package_slist_sort_by_name (RCPackageSList *packages);
 RCPackageSList *rc_package_slist_sort_by_spec (RCPackageSList *packages);

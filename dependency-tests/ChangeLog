@@ -1,3 +1,8 @@
+2002-05-01  Jon Trowbridge  <trow@ximian.com>
+
+	* deptestomatic.c (main): Call rc_world_free when we are finished,
+	to better detect memory management errors.
+
 2002-03-26  Jon Trowbridge  <trow@ximian.com>
 
 	* deptestomatic.c (load_channel): Use rc_world_parse_channel, and
