@@ -1,5 +1,11 @@
 2004-05-13  James Willcox  <james@ximian.com>
 
+	* rc-rpmman.c: (load_fake_syms), (load_rpm_syms):
+
+	Support RPM 4.2.2.
+
+2004-05-13  James Willcox  <james@ximian.com>
+
 	* distributions.xml: Add rhel-3ws-x86_64
 	* rc-arch.c:  Add compat stuff for x86)64
 	* rc-distro.c: (sax_end_element): Pick the best distro, not just the
