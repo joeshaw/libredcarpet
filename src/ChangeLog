@@ -1,3 +1,12 @@
+2002-11-11  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c (close_database): do nothing if the database isn't
+	open
+	(open_database): set the db_watcher id to 0 when we
+	g_source_remove it
+	(rc_rpmman_finalize): remove the db_watcher timeout when we
+	finalize the object to avoid crashing, d'oh
+
 2002-11-05  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-world-import.c (refresh_channel_from_dir): If there are

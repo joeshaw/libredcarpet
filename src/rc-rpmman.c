@@ -199,6 +199,9 @@ close_database (RCRpmman *rpmman)
         return;
 #endif
 
+    if (rpmman->db_status == RC_RPMMAN_DB_NONE)
+        return;
+
     rc_rpmman_is_database_changed (RC_PACKMAN (rpmman));
     rpmman->db_watcher_cb =
         g_timeout_add (5000, (GSourceFunc) database_check_func,
@@ -314,6 +317,7 @@ open_database (RCRpmman *rpmman, gboolean write)
     }
 
     g_source_remove (rpmman->db_watcher_cb);
+    rpmman->db_watcher_cb = 0;
 
     return TRUE;
 
@@ -2496,6 +2500,11 @@ rc_rpmman_finalize (GObject *obj)
     g_module_close (rpmman->rpm_lib);
 #endif
 #endif
+
+    if (rpmman->db_watcher_cb) {
+        g_source_remove (rpmman->db_watcher_cb);
+        rpmman->db_watcher_cb = 0;
+    }
 
     if (parent_class->finalize)
         parent_class->finalize (obj);
