@@ -94,14 +94,24 @@ rc-dpkg-helper.so: $(srcdir)/rc-dpkg-helper.c
 
 libredcarpet.a: libredcarpettmp.a
 if STATIC_RPM
-	-rm -rf db1 gz popt rpm
-	(mkdir db1 && cd db1 && ar x /usr/lib/libdb1.a)
-	(mkdir gz && cd gz && ar x /usr/lib/libz.a)
-	(mkdir popt && cd popt && ar x /usr/lib/libpopt.a)
-	(mkdir rpm && cd rpm && ar x /usr/lib/librpm.a)
-	cp libredcarpettmp.a libredcarpet.a
-	ar cru libredcarpet.a gz/*.o popt/*.o db1/*.o rpm/*.o
-	rm -rf bz2 gz popt db1 rpm
+	rm -f libredcarpetbuild.a; \
+	cp libredcarpettmp.a libredcarpetbuild.a; \
+	for lib in $(RPM_STATIC_LIBS) ; do \
+		dir=`basename $$lib`; \
+		rm -rf $$dir; \
+		mkdir $$dir; \
+		cd $$dir; \
+		ar x $$lib; \
+		for object in `ls .` ; do \
+			mv $$object $$dir-$$object; \
+		done; \
+		cd ..; \
+		ar cru libredcarpetbuild.a $$dir/*.o; \
+		rm -rf $$dir; \
+	done; \
+	ranlib libredcarpetbuild.a; \
+	mv libredcarpetbuild.a libredcarpet.a; \
+	rm -f libredcarpettmp.a
 else
 	cp libredcarpettmp.a libredcarpet.a
 endif

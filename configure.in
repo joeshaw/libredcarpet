@@ -43,19 +43,22 @@ AC_ARG_ENABLE(backend-rpm,  [  --enable-backend-rpm     include RPM backend],
   enable_backend_rpm=yes, enable_backend_rpm=no)
 AC_ARG_ENABLE(backend-rpm3-static,  [  --enable-backend-rpm3-static include static RPM3 backend],
   enable_backend_rpm3_static=yes, enable_backend_rpm3_static=no)
+AC_ARG_ENABLE(backend-rpm4-static,  [  --enable-backend-rpm4-static include static RPM4 backend],
+  enable_backend_rpm4_static=yes, enable_backend_rpm4_static=no)
 
-if test "x$enable_backend_dpkg" != "xyes" -a "x$enable_backend_rpm" != "xyes" -a "x$enable_backend_rpm3_static" != "xyes";
+if test "x$enable_backend_dpkg" != "xyes" -a "x$enable_backend_rpm" != "xyes" -a "x$enable_backend_rpm3_static" != "xyes" -a "x$enable_backend_rpm4_static";
 then
   AC_WARN([no backends were specified])
 fi
 
-if test "x$enable_backend_rpm" = "xyes" -a "x$enable_backend_rpm3_static" = "xyes";
-then
-  AC_ERROR([dynamic and static rpm backends may not both be compiled in])
-fi
-
 AC_ARG_WITH(rpm-prefix,
 [  --with-rpm-prefix=DIR   prefix where rpm header files are installed (/usr)], [RPM_PREFIX=$withval], [RPM_PREFIX=/usr])
+
+AC_ARG_WITH(rpm-static-libs,
+[  --with-rpm-extra-libs=], [RPM_STATIC_LIBS=$withval], [RPM_STATIC_LIBS="/usr/lib/librpm.a /usr/lib/libpopt.a /usr/lib/libz.a /usr/lib/libbz2.a /usr/lib/libdb1.a"])
+
+AC_SUBST(RPM_PREFIX)
+AC_SUBST(RPM_STATIC_LIBS)
 
 AM_CONDITIONAL(ENABLE_RPM, false)
 AM_CONDITIONAL(STATIC_RPM, false)
@@ -78,17 +81,20 @@ if test "x$enable_backend_rpm" = "xyes"; then
 fi
 
 dnl RPM (static)
-if test "x$enable_backend_rpm3_static" = "xyes"; then
+if test "x$enable_backend_rpm3_static" = "xyes" -o "x$enable_backend_rpm4_static" = "xyes"; then
   save_CPPFLAGS="$CPPFLAGS"
   CPPFLAGS="$CPPFLAGS -I$RPM_PREFIX/include/rpm"
 
   AC_CHECK_HEADERS(rpm/rpmlib.h,, AC_MSG_ERROR(couldn't find rpmlib.h))
 
-dnl  if grep -q ugid.h "$RPM_PREFIX/include/rpm/misc.h"; then
-dnl    if test \! -r /usr/include/rpm/ugid.h ; then
-dnl      AC_MSG_ERROR([broken rpm/misc.h, see README-ugid])
-dnl    fi
-dnl  fi
+  if test "x$enable_backend_rpm4_static" = "xyes"; then
+    if grep -q ugid.h "$RPM_PREFIX/include/rpm/misc.h"; then
+      if test \! -r /usr/include/rpm/ugid.h ; then
+        AC_MSG_ERROR([broken rpm/misc.h, see README-ugid])
+      fi
+    fi
+    AC_DEFINE(RC_RPM4)
+  fi
 
   RPMLIB_CFLAGS="-I$RPM_PREFIX/include/rpm"
 

@@ -2014,17 +2014,27 @@ load_fake_syms (RCRpmman *rpmman)
     rpmman->rpmdbClose = &rpmdbClose;
     rpmman->rpmProblemString = &rpmProblemString;
 
-    if (rpmman->major_version == 3) {
-        rpmman->rpmdbFirstRecNum = &rpmdbFirstRecNum;
-        rpmman->rpmdbNextRecNum = &rpmdbNextRecNum;
-        rpmman->rpmdbFindByLabel = &rpmdbFindByLabel;
-        rpmman->rpmdbFindPackage = &rpmdbFindPackage;
-        rpmman->rpmdbFindByFile = &rpmdbFindByFile;
-        rpmman->rpmdbGetRecord = &rpmdbGetRecord;
-        rpmman->dbiIndexSetCount = &dbiIndexSetCount;
-        rpmman->dbiIndexRecordOffset = &dbiIndexRecordOffset;
-        rpmman->dbiFreeIndexRecord = &dbiFreeIndexRecord;
-    }
+#ifdef RC_RPM4
+
+    rpmman->rpmdbInitIterator = &rpmdbInitIterator;
+    rpmman->rpdbGetIteratorCount = &rpmdbGetIteratorCount;
+    rpmman->rpmdbFreeIterator = &rpmdbFreeIterator;
+    rpmman->rpmdbNextIterator = &xrpmdbNextIterator;
+    rpmman->rpmdbGetIteratorOffset = &rpmdbGetIteratorOffset;
+
+#else
+
+    rpmman->rpmdbFirstRecNum = &rpmdbFirstRecNum;
+    rpmman->rpmdbNextRecNum = &rpmdbNextRecNum;
+    rpmman->rpmdbFindByLabel = &rpmdbFindByLabel;
+    rpmman->rpmdbFindPackage = &rpmdbFindPackage;
+    rpmman->rpmdbFindByFile = &rpmdbFindByFile;
+    rpmman->rpmdbGetRecord = &rpmdbGetRecord;
+    rpmman->dbiIndexSetCount = &dbiIndexSetCount;
+    rpmman->dbiIndexRecordOffset = &dbiIndexRecordOffset;
+    rpmman->dbiFreeIndexRecord = &dbiFreeIndexRecord;
+
+#endif
 }
 
 #else

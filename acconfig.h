@@ -7,3 +7,4 @@
 #undef ENABLE_DPKG
 #undef ENABLE_RPM
 #undef STATIC_RPM
+#undef RC_RPM4
