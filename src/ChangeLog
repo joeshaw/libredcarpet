@@ -1,3 +1,8 @@
+2001-02-08  Joe Shaw  <joe@ximian.com>
+
+	* rc-distro.c (distro_figurers): Move Mandrake ahead of Red Hat, 
+	because Mandrake (7.0, anyway) has /etc/redhat-release.
+
 2001-02-08  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-distro.c: Oops. check for architecture the "correct" correct way.

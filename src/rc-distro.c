@@ -71,6 +71,13 @@ RCDistroChunk distro_figurers[] = {
     { "scyld-20-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/scyld-release", "Scyld Beowulf release 2", NULL, 0 },
 
+    { "mandrake-70-i386", RC_ARCH_IA32,
+      func_string_in_file, "/etc/mandrake-release", "7.0", NULL, 0 },
+    { "mandrake-71-i386", RC_ARCH_IA32,
+      func_string_in_file, "/etc/mandrake-release", "7.1", NULL, 0 },
+    { "mandrake-72-i386", RC_ARCH_IA32,
+      func_string_in_file, "/etc/mandrake-release", "7.2", NULL, 0 },
+
     { "redhat-60-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/redhat-release", "6.0", NULL, 0 },
     { "redhat-61-i386", RC_ARCH_IA32,
@@ -96,13 +103,6 @@ RCDistroChunk distro_figurers[] = {
       func_string_in_file, "/etc/SuSE-release", "6.4", NULL, 0 },
     { "suse-70-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/SuSE-release", "7.0", NULL, 0 },
-
-    { "mandrake-70-i386", RC_ARCH_IA32,
-      func_string_in_file, "/etc/mandrake-release", "7.0", NULL, 0 },
-    { "mandrake-71-i386", RC_ARCH_IA32,
-      func_string_in_file, "/etc/mandrake-release", "7.1", NULL, 0 },
-    { "mandrake-72-i386", RC_ARCH_IA32,
-      func_string_in_file, "/etc/mandrake-release", "7.2", NULL, 0 },
 
     { "debian-22-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/debian_version", "2.2", NULL, 0},
