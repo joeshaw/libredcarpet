@@ -1,3 +1,9 @@
+2001-07-11  Ian Peters  <itp@ximian.com>
+
+	* rc-deps.c (deps_create_extra_info): s/_append/_prepend
+
+	* rc-util.c (rc_slist_unique): actually return out at the end ;-)
+
 2001-07-11  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c: Oops, we need to look at what a package provides,
