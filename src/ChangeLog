@@ -1,3 +1,8 @@
+2002-01-04  Joe Shaw  <joe@ximian.com>
+
+	* rc-rpmman.c (rc_rpmman_transact): Add back in my RC_JUST_KIDDING
+	envvar that Ian backed out for some reason.  Boo!  Hiss!
+
 2001-12-17  Ian Peters  <itp@ximian.com>
 
 	* rc-deps.c: some stuff I don't understand
