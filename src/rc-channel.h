@@ -35,6 +35,8 @@ struct _RCChannel {
     gchar *name;
     gchar *description;
 
+    gboolean mirrored;
+
     RCChannelType type;
 
     gchar *distribution;

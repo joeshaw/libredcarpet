@@ -71,28 +71,22 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
 
     RC_ENTRY;
 
-    /* We first write this to a file, because xmlbuf contains
-     * gzip-compressed data (and gnome-transfer's gzip handling
-     * is broken), because then we can use gnome-xml's transparent
-     * gzip handling
-     */
-
     if (compressed_length) {
-        gchar *gz_tmp_name = g_strdup ("/tmp/rc-xml.XXXXXX");
+        gchar *gz_tmp_name = g_strdup("/tmp/rc-xml.XXXXXX");
         int gz_fd;
-        gz_fd = mkstemp (gz_tmp_name);
-        write (gz_fd, xmlbuf, compressed_length);
-        /* gz_fd is purposely kept open so that no intruding file
-         * can be stuck instead of our gz
-         */
-        doc = xmlParseFile (gz_tmp_name);
-        close (gz_fd);
-        unlink (gz_tmp_name);
-        g_free (gz_tmp_name);
-    } else {
-        doc = xmlParseMemory(xmlbuf, strlen(xmlbuf));
+        gz_fd = mkstemp(gz_tmp_name);
+        write(gz_fd, xmlbuf, compressed_length);
+        /* gz_fd is purposely kept open so that no intruding file can be
+           struck instead of our gz */
+        doc = xmlParseFile(gz_tmp_name);
+        close(gz_fd);
+        unlink(gz_tmp_name);
+        g_free(gz_tmp_name);
     }
-    
+    else {
+	doc = xmlParseMemory(xmlbuf, strlen(xmlbuf));
+    }
+
     if (!doc) {
         g_warning("Unable to parse channel list.");
         RC_EXIT;
@@ -131,6 +125,14 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
 	channel->description = xml_get_prop(node, "description");
         channel->distribution = xml_get_prop(node, "distribution");
         channel->pkginfo_file = xml_get_prop(node, "pkginfo_file");
+	tmp = xml_get_prop(node, "mirrored");
+	if (tmp) {
+	    channel->mirrored = TRUE;
+	    g_free(tmp);
+	}
+	else {
+	    channel->mirrored = FALSE;
+	}
         tmp = xml_get_prop(node, "pkginfo_compressed");
         if (tmp) {
             channel->pkginfo_compressed = TRUE;
