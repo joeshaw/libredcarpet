@@ -60,6 +60,7 @@ typedef struct {
 typedef struct {
     Header h;
     Header altH;
+    const void *key;
     rpmProblemType type;
     int ignoreProblem;
     const char *str1;

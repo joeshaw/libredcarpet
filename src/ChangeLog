@@ -1,3 +1,10 @@
+2003-04-08  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman-types.h: add a missing field to RCrpmProblemOlder
+
+	* rc-rpmman.h: rpmdbMatchIterator needs to be
+	rc_rpmdbMatchIterator
+
 2003-04-04  Joe Shaw  <joe@ximian.com>
 
 	* distributions.xml: Add support for SLEC 1 and Red Hat 9, from

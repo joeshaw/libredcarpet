@@ -170,8 +170,8 @@ struct _RCRpmman {
      */
     int (*rpmReadPackageFile) (rpmts, FD_t, const char *, Header *);
     int (*rpmReadSignature)(FD_t, Header *, short, const char **);
-    rpmdbMatchIterator (*rpmtsInitIterator) (const rpmts, int, const void *,
-                                             size_t);
+    rc_rpmdbMatchIterator (*rpmtsInitIterator) (const rpmts, int, const void *,
+                                                size_t);
     rpmts (*rpmtsCreate) (void);
     void (*rpmtsSetRootDir) (rpmts, const char *);
     int (*rpmtsAddInstallElement) (rpmts, Header, const void *,
