@@ -176,6 +176,8 @@ packman_test_query_all (RCPackman *p, gchar *buf)
 static void
 pretty_print_pkg (RCPackage *pkg)
 {
+    RCPackageDepSList *iter;
+
     printf ("%-15s%-25.25s%-15s%-25d\n", "Name:", pkg->spec.name,
             "Epoch:", pkg->spec.epoch);
     printf ("%-15s%-25.25s%-15s%-25.25s\n", "Version:", pkg->spec.version,
@@ -185,7 +187,23 @@ pretty_print_pkg (RCPackage *pkg)
             pkg->spec.installed_size);
     printf ("\n");
     printf ("Summary:\n%s\n\n", pkg->summary);
-    printf ("Description:\n%s\n", pkg->description);
+    printf ("Description:\n%s\n\n", pkg->description);
+
+    for (iter = pkg->requires; iter; iter = iter->next) {
+        RCPackageDepItem *di = ((RCPackageDep *)iter->data)->data;
+        printf ("Requires: %s %d %s %s\n", di->spec.name, di->spec.epoch,
+                di->spec.version, di->spec.release);
+    }
+    for (iter = pkg->provides; iter; iter = iter->next) {
+        RCPackageDepItem *di = ((RCPackageDep *)iter->data)->data;
+        printf ("Provides: %s %d %s %s\n", di->spec.name, di->spec.epoch,
+                di->spec.version, di->spec.release);
+    }
+    for (iter = pkg->conflicts; iter; iter = iter->next) {
+        RCPackageDepItem *di = ((RCPackageDep *)iter->data)->data;
+        printf ("Conflicts: %s %d %s %s\n", di->spec.name, di->spec.epoch,
+                di->spec.version, di->spec.release);
+    }
 }
 
 static RCPackage *

@@ -1124,10 +1124,11 @@ query_all_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
         return;
     }
 
+    /* We now also recognize "hold ok installed", and we set the hold bit
+       appropriately.  Yay for us! */
     if (!strcmp (line, "Status: hold ok installed")) {
         dqi->buf_pkg->spec.installed = TRUE;
         dqi->buf_pkg->hold = TRUE;
-        fprintf (stderr, "HOLDING PACKAGE %s\n", dqi->buf_pkg->spec.name);
         return;
     }
 
