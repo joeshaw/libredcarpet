@@ -46,6 +46,11 @@ struct _RCWorld {
 
     RCPackman *packman;
 
+    /* The sequence number gets incremented every
+       time the RCWorld is changed. */
+    gboolean changed;
+    guint seq_no;
+
     /* Set if we know package db has changed. */
     gboolean dirty;
 };
@@ -258,6 +263,9 @@ rc_world_new (void)
 {
 	RCWorld *world = g_new0 (RCWorld, 1);
 
+    world->changed = FALSE;
+    world->seq_no  = 1;
+
 	world->packages_by_name = hashed_slist_new ();
     world->provides_by_name = hashed_slist_new ();
     world->requires_by_name = hashed_slist_new ();
@@ -302,6 +310,19 @@ rc_world_free (RCWorld *world)
 		g_free (world);
 
 	}
+}
+
+guint
+rc_world_sequence_number (RCWorld *world)
+{
+    g_return_val_if_fail (world != NULL, 0);
+
+    if (world->changed) {
+        ++world->seq_no;
+        world->changed = TRUE;
+    }
+
+    return world->seq_no;
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
@@ -418,6 +439,8 @@ rc_world_add_channel (RCWorld *world,
     g_return_val_if_fail (channel_name && *channel_name, NULL);
     g_return_val_if_fail (alias, NULL);
 
+    world->changed = TRUE;
+
     channel = rc_channel_new ();
 
     channel->world = world;
@@ -444,6 +467,8 @@ rc_world_remove_channel (RCWorld *world,
 
     g_return_if_fail (world != NULL);
     g_return_if_fail (channel != NULL);
+
+    world->changed = TRUE;
 
     for (iter = world->channels; iter != NULL; iter = iter->next) {
         if (iter->data == channel) {
@@ -682,6 +707,8 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
     g_return_if_fail (world != NULL);
     g_return_if_fail (package != NULL);
 
+    world->changed = TRUE;
+
     /* The world holds a reference to the package */
     rc_package_ref (package);
 
@@ -779,6 +806,8 @@ rc_world_remove_package (RCWorld *world,
     g_return_if_fail (world != NULL);
     g_return_if_fail (package != NULL);
 
+    world->changed = TRUE;
+
     /* FIXME: This is fairly inefficient */
 
     hashed_slist_foreach_remove (world->provides_by_name,
@@ -846,6 +875,8 @@ rc_world_remove_packages (RCWorld *world,
                           RCChannel *channel)
 {
     g_return_if_fail (world != NULL);
+
+    world->changed = TRUE;
 
     hashed_slist_foreach_remove (world->provides_by_name,
                                  remove_package_struct_by_channel_cb,
