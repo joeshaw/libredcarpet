@@ -1,0 +1,16 @@
+>!> Solution #1:
+>!> remove  screem-0.4.1-3mdk
+>!> |unflag bug-buddy-1:2.0.6-4[redhat]
+>!> |unflag gdm-1:2.2.3.1-20[redhat]
+>!> |unflag gedit-1:0.9.4-6[redhat]
+>!> |unflag gnome-applets-1:1.4.0.1-6[redhat]
+>!> |unflag gnome-core-1:1.4.0.4-38[redhat]
+>!> |unflag gnome-games-1:1.4.0.1-4[redhat]
+>!> |unflag gnome-media-1.2.3-4[redhat]
+>!> |unflag gnome-utils-1:1.4.0-4[redhat]
+>!> |unflag gnumeric-devel-1:0.67-10[redhat]
+>!> |unflag mozilla-24:0.9.2.1-2[redhat]
+>!> |unflag nautilus-1.0.4-43[redhat]
+>!> |unflag sawfish-1:0.38-11[redhat]
+>!> |unflag xml-i18n-tools-0.9-2[redhat]
+>!> installs=0, upgrades=0, uninstalls=1
