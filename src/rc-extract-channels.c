@@ -89,7 +89,7 @@ rc_extract_channels_from_helix_buffer (const guint8 *data, int len,
             for (iter = targets; iter && *iter; iter++)
                 rc_channel_add_distro_target (channel, *iter);
 
-            g_free (targets);
+            g_strfreev (targets);
         }
 
         tmp = xml_get_prop(node, "type");

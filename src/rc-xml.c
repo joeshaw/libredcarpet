@@ -311,6 +311,11 @@ sax_start_element(void *data, const xmlChar *name, const xmlChar **attrs)
     RCPackageSAXContext *ctx = (RCPackageSAXContext *) data;
     int i;
 
+    if (ctx->text_buffer) {
+        g_free (ctx->text_buffer);
+        ctx->text_buffer = NULL;
+    }
+
     if (getenv ("RC_SPEW_XML"))
         rc_debug (RC_DEBUG_LEVEL_ALWAYS, "* Start element (%s)", name);
 

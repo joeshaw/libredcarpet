@@ -1,3 +1,24 @@
+2003-08-21  Joe Shaw  <joe@ximian.com>
+
+	* rc-extract-channels.c (rc_extract_channels_from_helix_buffer):
+	g_strfreev() the distro target vector, not g_free().
+
+	* rc-world-multi.c (rc_world_multi_cut_over_to_new_subworlds):
+	Unref the subworld after it's been added to the multi world, this
+	fixes a HUUUUUUUUUGE memleak.
+	(refresh_info_free): Conditionally unref the multi world's
+	pending.
+	(rc_world_multi_refresh_fn): Fix the case where none of the
+	subworld's have a pending to return.
+
+	* rc-world-store.c (rc_world_store_finalize): Clear our locks.
+
+	* rc-world-system.c (rc_world_system_finalize): Added.  Unref the
+	system channel.
+
+	* rc-xml.c (sax_start_element): Free the text buffer whenever we
+	enter a tag, because we don't care about (or want) the old data.
+
 2003-08-20  Joe Shaw  <joe@ximian.com>
 
 	* Makefile.am: Fix a lot of srcdir/builddir issues.

@@ -29,6 +29,8 @@
 
 #include "rc-debug.h"
 
+static RCWorldServiceClass *parent_class;
+
 static gboolean
 rc_world_system_load_packages (RCWorldSystem *system)
 {
@@ -131,17 +133,29 @@ rc_world_system_assemble (RCWorldService *service)
     return TRUE;
 }
 
-/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+static void
+rc_world_system_finalize (GObject *obj)
+{
+    RCWorldSystem *system = RC_WORLD_SYSTEM (obj);
 
-static RCWorldServiceClass *parent_class;
+    rc_channel_unref (system->system_channel);
+
+    if (G_OBJECT_CLASS (parent_class)->finalize)
+        G_OBJECT_CLASS (parent_class)->finalize (obj);
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 static void
 rc_world_system_class_init (RCWorldSystemClass *klass)
 {
+    GObjectClass *object_class = G_OBJECT_CLASS (klass);
     RCWorldClass *world_class = RC_WORLD_CLASS (klass);
     RCWorldServiceClass *service_class = RC_WORLD_SERVICE_CLASS (klass);
 
     parent_class = g_type_class_peek_parent (klass);
+
+    object_class->finalize       = rc_world_system_finalize;
 
     /* Set up the vtable */
     world_class->sync_fn         = rc_world_system_sync;

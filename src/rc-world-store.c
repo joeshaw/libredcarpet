@@ -550,7 +550,7 @@ rc_world_store_foreach_conflicting_fn (RCWorld          *world,
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
-static GObjectClass *parent_class;
+static RCWorldClass *parent_class;
 
 static void
 rc_world_store_finalize (GObject *obj)
@@ -570,8 +570,10 @@ rc_world_store_finalize (GObject *obj)
     g_slist_foreach (store->channels, (GFunc) channel_info_free, NULL);
     g_slist_free (store->channels);
 
-    if (parent_class->finalize)
-        parent_class->finalize (obj);
+    rc_world_store_clear_locks (store);
+
+    if (G_OBJECT_CLASS (parent_class)->finalize)
+        G_OBJECT_CLASS (parent_class)->finalize (obj);
 }
 
 static void
