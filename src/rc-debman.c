@@ -77,6 +77,20 @@ rc_debman_get_type (void)
     return type;
 }
 
+static void
+dump_argv (gchar **argv)
+{
+    guint count;
+
+    fprintf (stderr, "DEBMAN:");
+
+    for (count = 0; argv[count]; count++) {
+        fprintf (stderr, " %s", argv[count]);
+    }
+
+    fprintf (stderr, "\n");
+}
+
 /*
  * These functions are used to cleanly destroy the hash table in an RCDebman,
  * either after an rc_packman_transact, when we need to invalidate the hash
@@ -366,6 +380,8 @@ do_purge_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
 {
     DebmanDoPurgeInfo *ddpi = (DebmanDoPurgeInfo *)data;
 
+    fprintf (stderr, "DEBMAN: %s\n", line);
+
     if (!strncmp (line, "Removing", strlen ("Removing"))) {
         rc_packman_transaction_step (ddpi->pman, ++ddpi->dis->seqno,
                                      ddpi->dis->total);
@@ -425,6 +441,8 @@ do_purge (RCPackman *p, DebmanInstallState *dis)
         fflush (stdout);
         close (rfds[0]);
         dup2 (rfds[1], 1);
+
+        fprintf (stderr, "DEBMAN: /usr/bin/dpkg --purge --pending\n");
 
         fclose (stderr);
 
@@ -547,6 +565,8 @@ do_unpack_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
 {
     DebmanDoUnpackInfo *ddui = (DebmanDoUnpackInfo *)data;
 
+    fprintf (stderr, "DEBMAN: %s\n", line);
+
     if (!strncmp (line, "Unpacking", strlen ("Unpacking")) ||
         !strncmp (line, "Purging", strlen ("Purging")))
     {
@@ -629,6 +649,8 @@ do_unpack (RCPackman *p, GSList *pkgs, DebmanInstallState *dis)
             fflush (stdout);
             dup2 (rfds[1], STDOUT_FILENO);
             close (rfds[1]);
+
+            dump_argv (argv);
 
             fclose (stderr);
 
@@ -726,7 +748,7 @@ do_configure_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
 {
     DebmanDoConfigureInfo *ddci = (DebmanDoConfigureInfo *)data;
 
-    printf ("%s\n", line);
+    fprintf (stderr, "DEBMAN: %s\n", line);
 
     ddci->buf = g_string_append (ddci->buf, line);
     ddci->buf = g_string_append (ddci->buf, "\n");
@@ -903,6 +925,8 @@ do_configure (RCPackman *p, DebmanInstallState *dis)
         close (slave);
 
 //        fclose (stderr);
+
+        fprintf (stderr, "DEBMAN: /usr/bin/dpkg --configure --pending\n");
 
         evil_environment_line = g_strdup_printf ("RC_READ_NOTIFY_PID=%d",
                                                  parent);
