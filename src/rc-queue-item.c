@@ -494,9 +494,20 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
     for (iter = conflicts; iter != NULL; iter = iter->next) {
         RCPackage *conflicting_package = iter->data;
         RCResolverInfo *log_info;
-        RCQueueItem *uninstall_item = rc_queue_item_new_uninstall (rc_queue_item_get_world (item),
-                                                                   conflicting_package,
-                                                                   "conflict");
+        RCQueueItem *uninstall_item;
+
+        /* Check to see if we conflict with ourself and don't create
+         * an uninstall item for it if we do.  This is Debian's way of
+         * saying that one and only one package with this provide may
+         * exist on the system at a time.
+         */
+        if (rc_package_spec_equal (RC_PACKAGE_SPEC (conflicting_package),
+                                   RC_PACKAGE_SPEC (package)))
+            continue;
+
+        uninstall_item = rc_queue_item_new_uninstall (rc_queue_item_get_world (item),
+                                                      conflicting_package,
+                                                      "conflict");
         rc_queue_item_uninstall_set_due_to_conflict (uninstall_item);
         log_info = rc_resolver_info_conflicts_with_new (conflicting_package, package);
         rc_queue_item_add_info (uninstall_item, log_info);

@@ -1,5 +1,11 @@
 2003-11-11  Joe Shaw  <joe@ximian.com>
 
+	* rc-queue-item.c (install_item_process): When iterating through
+	our list of conflicts, if the conflicting package is the same as
+	ourself, don't create an uninstall queue item.
+
+2003-11-11  Joe Shaw  <joe@ximian.com>
+
 	* rc-extract-packages.c (rc_extract_package_from_undump_buffer):
 	Call the channel callback for the system channel too.
 
