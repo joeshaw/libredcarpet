@@ -93,6 +93,8 @@ RCPackageSList *rc_package_hash_table_by_string_to_list (RCPackageHashTableBySpe
 
 RCPackageUpdate *rc_package_get_latest_update(RCPackage *package);
 
+GSList *rc_package_slist_find_duplicates (RCPackageSList *pkgs);
+
 RCPackage *rc_xml_node_to_package (const xmlNode *,
                                    const RCSubchannel *subchannel);
 

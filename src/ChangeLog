@@ -1,3 +1,13 @@
+2001-02-16  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps-util.c, rc-deps-util.h: New files that have some verification
+	stuff in them.
+
+	* rc-package.c, rc-package.h: rc_package_slist_find_duplicates (for
+	verification)
+
+	* Makefile.am: Add rc-deps-util.[ch]
+
 2001-02-12  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-package-set.h: Fix #endif to get rid of compiler warning

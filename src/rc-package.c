@@ -296,3 +296,45 @@ rc_xml_node_to_package (const xmlNode *node, const RCSubchannel *subchannel)
 
     return (package);
 }
+
+
+GSList *
+rc_package_slist_find_duplicates (RCPackageSList *pkgs)
+{
+    RCPackageSList *sorted_slist, *iter;
+    RCPackage *prev_pkg = NULL;
+    GSList *out_list = NULL;
+    RCPackageSList *cur_dupes = NULL;
+
+    sorted_slist = rc_package_slist_sort_by_name (g_slist_copy (pkgs));
+
+    iter = sorted_slist;
+    while (iter) {
+        RCPackage *cur_pkg = (RCPackage *) iter->data;
+
+        if (prev_pkg) {
+            if (!strcmp (prev_pkg->spec.name, cur_pkg->spec.name)) {
+                if (!cur_dupes) {
+                    cur_dupes = g_slist_append (cur_dupes, prev_pkg);
+                }
+
+                cur_dupes = g_slist_append (cur_dupes, cur_pkg);
+            } else if (cur_dupes) {
+                out_list = g_slist_append (out_list, cur_dupes);
+                cur_dupes = NULL;
+            }
+        }
+
+        prev_pkg = cur_pkg;
+        iter = iter->next;
+    }
+
+    if (cur_dupes) {
+        /* This means that the last set of packages in the list was a duplicate */
+        out_list = g_slist_append (out_list, cur_dupes);
+    }
+
+    g_slist_free (sorted_slist);
+
+    return out_list;
+}
