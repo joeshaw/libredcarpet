@@ -1,3 +1,8 @@
+2001-07-11  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c (rc_rpmman_section_to_package_section): fix stupid
+	crash
+
 2001-07-11  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c, rc-deps.h: Add some helper functions to give better

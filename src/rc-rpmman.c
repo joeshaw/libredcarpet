@@ -665,7 +665,7 @@ rc_rpmman_section_to_package_section (const gchar *rpmsection)
         *ptr++ = tolower (*ptr);
     }
     ptr = minor_section;
-    while (*ptr) {
+    while (ptr && *ptr) {
         *ptr++ = tolower (*ptr);
     }
 
