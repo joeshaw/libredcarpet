@@ -67,8 +67,6 @@ PyPackage_is_synthetic (PyObject *self, PyObject *args)
 	return Py_BuildValue ("i", rc_package_is_synthetic (package));
 }
 
-#if BINDINGS_NOT_TOTALLY_BROKEN
-
 static PyObject *
 PyPackage_get_best_upgrade (PyObject *self, PyObject *args)
 {
@@ -102,8 +100,6 @@ PyPackage_get_latest_update (PyObject *self, PyObject *args)
 
 	return PyPackageUpdate_new (update);
 }
-
-#endif
 
 static PyObject *
 PyPackage_add_dummy_update (PyObject *self, PyObject *args)

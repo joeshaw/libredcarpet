@@ -37,6 +37,8 @@ typedef struct {
 	PyObject_HEAD;
 	RCResolver *resolver;
 	gboolean borrowed;
+
+	PyWorld *py_world;
 } PyResolver;
 
 static PyTypeObject PyResolver_type_info = {
@@ -66,6 +68,7 @@ PyResolver_set_timeout (PyObject *self, PyObject *args)
 static PyObject *
 PyResolver_set_world (PyObject *self, PyObject *args)
 {
+	PyResolver *py_resolver = (PyResolver *) self;
 	RCResolver *resolver = PyResolver_get_resolver (self);
 	PyObject *obj;
 	RCWorld *world;
@@ -77,6 +80,14 @@ PyResolver_set_world (PyObject *self, PyObject *args)
 		return NULL;
 
 	rc_resolver_set_world (resolver, world);
+
+	if (py_resolver->py_world) {
+		Py_DECREF (py_resolver->py_world);
+	}
+
+	py_resolver->py_world = (PyWorld *) obj;
+	Py_INCREF (py_resolver->py_world);
+
 	Py_INCREF (Py_None);
 	return Py_None;
 }
@@ -84,16 +95,9 @@ PyResolver_set_world (PyObject *self, PyObject *args)
 static PyObject *
 PyResolver_get_world (PyObject *self, PyObject *args)
 {
-	RCResolver *resolver = PyResolver_get_resolver (self);
-	RCWorld *world;
+	PyResolver *py_resolver = (PyResolver *) self;
 
-	world = rc_resolver_get_world (resolver);
-	if (world == NULL) {
-		Py_INCREF (Py_None);
-		return Py_None;
-	}
-
-	return PyWorld_new (world);
+	return (PyObject *) py_resolver->py_world;
 }
 
 static PyObject *

@@ -38,13 +38,12 @@
 #include "package.h"
 #include "packman.h"
 #include "channel.h"
-#if BINDINGS_NOT_TOTALLY_BROKEN
 #include "world.h"
+#include "world-store.h"
 #include "resolver-info.h"
 #include "resolver-context.h"
 #include "resolver-queue.h"
 #include "resolver.h"
-#endif
 #include "package-file.h"
 
 
@@ -70,13 +69,12 @@ static RegistrationFn redcarpet_registration_fns[] = {
 	PyPackage_register,
 	PyPackman_register,
 	PyChannel_register,
-#if BINDINGS_NOT_TOTALLY_BROKEN
 	PyWorld_register,
+	PyWorldStore_register,
 	PyResolverInfo_register,
 	PyResolverContext_register,
 	PyResolverQueue_register,
 	PyResolver_register,
-#endif
 	PyPackageFile_register,
 	NULL
 };

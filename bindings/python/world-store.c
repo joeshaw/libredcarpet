@@ -24,24 +24,46 @@
  * USA.
  */
 
+#include "world-store.h"
 #include "world.h"
 
-#include "channel.h"
-#include "package.h"
-#include "package-dep.h"
+#if 0
+#include "packman.h"
 #include "package-match.h"
+#include "package-dep.h"
 #include "package-spec.h"
+#include "package.h"
+#include "channel.h"
+#endif
+
 #include "pyutil.h"
 
-PyTypeObject PyWorld_type_info = {
+struct _PyWorldStore {
+	PyWorld parent;
+
+	RCWorldStore *store;
+};
+
+PyTypeObject PyWorldStore_type_info = {
 	PyObject_HEAD_INIT(&PyType_Type)
 	0,
-	"World",
-	sizeof (PyWorld),
+	"WorldStore",
+	sizeof (PyWorldStore),
 	0
 };
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+#if 0
+static PyObject *
+PyWorld_set (PyObject *self, PyObject *args)
+{
+	RCWorld *world = PyWorld_get_world (self);
+
+	rc_set_world (world);
+	Py_INCREF (Py_None);
+	return Py_None;
+}
 
 static PyObject *
 PyWorld_get_package_seq_num (PyObject *self, PyObject *args)
@@ -799,6 +821,7 @@ PyWorld_add_channel_from_dir (PyObject *self, PyObject *args)
 #endif
 
 static PyMethodDef PyWorld_methods[] = {
+	{ "set",                                PyWorld_set,                   METH_NOARGS  },
 	{ "get_package_sequence_number",        PyWorld_get_package_seq_num,   METH_NOARGS  },
 	{ "get_channel_sequence_number",        PyWorld_get_channel_seq_num,   METH_NOARGS  },
 	{ "get_subscriprion_sequence_number",   PyWorld_get_sub_seq_num,       METH_NOARGS  },
@@ -861,99 +884,68 @@ static PyMethodDef PyWorld_methods[] = {
 
 	{ NULL, NULL }
 };
+#endif
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
-
-static PyWorld *global_pyworld = NULL;
 
 static PyObject *
-PyWorld_get_global_world (PyObject *self, PyObject *args)
+PyWorldStore_tp_new (PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
-	RCWorld *world;
+	PyWorldStore *py_store;
+	PyWorld *py_world;
 
-	world = rc_get_world ();
+	py_store = (PyWorldStore *) type->tp_alloc (type, 0);
 
-	if (!world) {
-		Py_INCREF (Py_None);
-		return Py_None;
-	}
+	py_world = (PyWorld *) py_store;
+	py_world->world = rc_world_store_new ();
 
-	return (PyObject *) global_pyworld;
-}
+	py_store->store = RC_WORLD_STORE (py_world->world);
 
-static PyObject *
-PyWorld_set_global_world (PyObject *self, PyObject *args)
-{
-	PyObject *obj;
-	RCWorld *world;
-
-	if (!PyArg_ParseTuple (args, "O", &obj))
-		return NULL;
-
-	world = PyWorld_get_world (obj);
-	if (world == NULL)
-		return NULL;
-
-	rc_set_world (world);
-
-	if (global_pyworld) {
-		Py_DECREF (global_pyworld);
-	}
-
-	global_pyworld = (PyWorld *) obj;
-	Py_INCREF (global_pyworld);
-
-	Py_INCREF (Py_None);
-	return Py_None;
-}
-
-static PyMethodDef PyWorld_global_methods[] = {
-	{ "get_world", PyWorld_get_global_world, METH_NOARGS },
-	{ "set_world", PyWorld_set_global_world, METH_VARARGS },
-	{ NULL }
-};
-
-/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
-
-static void
-PyWorld_tp_dealloc (PyObject *self)
-{
-	PyWorld *py_world = (PyWorld *) self;
-
-	if (py_world->world)
-		g_object_unref (py_world->world);
-
-	if (self->ob_type->tp_free)
-		self->ob_type->tp_free (self);
-	else
-		PyObject_Del (self);
+	return (PyObject *) py_store;
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
-void PyWorld_register (PyObject *dict)
+void PyWorldStore_register (PyObject *dict)
 {
-	PyWorld_type_info.tp_dealloc = PyWorld_tp_dealloc;
-	PyWorld_type_info.tp_methods = PyWorld_methods;
+	PyWorldStore_type_info.tp_new = PyWorldStore_tp_new;
+#if 0
+	PyWorldStore_type_info.tp_methods = PyWorldStore_methods;
+#endif
 
-	pyutil_register_type (dict, &PyWorld_type_info);
+	PyWorldStore_type_info.tp_base = &PyWorld_type_info;
+	PyWorldStore_type_info.tp_bases =
+		Py_BuildValue ("(O)", &PyWorld_type_info);
 
-	pyutil_register_methods (dict, PyWorld_global_methods);
+	pyutil_register_type (dict, &PyWorldStore_type_info);
 }
 
 int
-PyWorld_check (PyObject *obj)
+PyWorldStore_check (PyObject *obj)
 {
-	return PyObject_TypeCheck (obj, &PyWorld_type_info);
+	return PyObject_TypeCheck (obj, &PyWorldStore_type_info);
 }
 
-RCWorld *
-PyWorld_get_world (PyObject *obj)
+#if 0
+PyObject *
+PyWorld_new (RCWorld *world)
 {
-	if (! PyWorld_check (obj)) {
-		PyErr_SetString (PyExc_TypeError, "Given object is not a World");
+	PyObject *py_world;
+
+	py_world = PyWorld_type_info.tp_alloc (&PyWorld_type_info, 0);
+	((PyWorld *) py_world)->world = g_object_ref (world);
+
+	return py_world;
+}
+#endif
+
+RCWorldStore *
+PyWorldStore_get_store (PyObject *obj)
+{
+	if (! PyWorldStore_check (obj)) {
+		PyErr_SetString (PyExc_TypeError, "Given object is not a WorldStore");
 		return NULL;
 	}
 
-	return ((PyWorld *) obj)->world;
+	return ((PyWorldStore *) obj)->store;
 }

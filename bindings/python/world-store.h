@@ -1,17 +1,15 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
- * world.c
+ * world-store.h
  *
- * Copyright (C) 2003 The Free Software Foundation, Inc.
+ * Copyright (C) 2003 Ximian, Inc.
  *
- * Developed by Tambet Ingo <tambet@ximian.com>
  */
 
 /*
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of the
- * License, or (at your option) any later version.
+ * modify it under the terms of the GNU General Public License,
+ * version 2, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -24,25 +22,21 @@
  * USA.
  */
 
-#ifndef __WORLD_H__
-#define __WORLD_H__
+#ifndef __WORLD_STORE_H__
+#define __WORLD_STORE_H__
 
 #include <Python.h>
 #include <libredcarpet.h>
 
-typedef struct _PyWorld PyWorld;
+typedef struct _PyWorldStore PyWorldStore;
 
-struct _PyWorld {
-	PyObject_HEAD;
-	RCWorld *world;
-};
+extern PyTypeObject PyWorldStore_type_info;
 
-extern PyTypeObject PyWorld_type_info;
+void          PyWorldStore_register    (PyObject *dict);
 
-void       PyWorld_register    (PyObject *dict);
+int           PyWorldStore_check       (PyObject *obj);
 
-int        PyWorld_check       (PyObject *obj);
+PyObject     *PyWorldStore_new         (RCWorldStore *store);
+RCWorldStore *PyWorldStore_get_store   (PyObject *obj);
 
-RCWorld   *PyWorld_get_world   (PyObject *obj);
-
-#endif /* __WORLD_H__ */
+#endif /* __WORLD_STORE_H__ */
