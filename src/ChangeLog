@@ -1,5 +1,8 @@
 2001-03-29  Vladimir Vukicevic  <vladimir@ximian.com>
 
+	* rc-deps.c (deps_find_best_package_for_dep): Doh. Don't iterate
+	over the variable you just made a copy of in a temporary iterator.
+	
 	* rc-deps.c (deps_find_provide):  Only upgrade at most one package
 	per pass, since we might have the same package in there twice
 	at this point and we don't want to remove the wrong thing.
