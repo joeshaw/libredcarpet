@@ -1,5 +1,7 @@
 2001-02-27  Vladimir Vukicevic  <vladimir@ximian.com>
 
+	* rc-deps.c: updated rant
+
 	* rc-deps.c: Get rid of old provides conflicts if there is a new one
 	coming in, doh.
 
