@@ -1,3 +1,8 @@
+2002-10-01  Joe Shaw  <joe@ximian.com>
+
+	* rc-util.c (rc_rmdir): If S_ISSOCK is defined, remove any sockets
+	in the directory as well.
+
 2002-09-27  Joe Shaw  <joe@ximian.com>
 
 	* rc-rpmman.c (split_rpm): Don't free the buffer we get back from

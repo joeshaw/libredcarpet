@@ -138,6 +138,13 @@ rc_rmdir (const char *dir)
                     ret = -1;
                 }
             }
+#ifdef S_ISSOCK
+            else if (S_ISSOCK (buf.st_mode)) {
+                if (unlink (filename)) {
+                    ret = -1;
+                }
+            }
+#endif
 
             g_free (filename);
         }
