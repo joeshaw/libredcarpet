@@ -26,6 +26,7 @@
 
 #include <glib.h>
 #include <time.h>
+#include <stdio.h>
 
 /* Function to safely delete a directory recursively (only deletes regular
    files), should be safe from symlink attacks.
@@ -55,5 +56,23 @@ gboolean rc_url_is_absolute (const char *url);
 /* Build a URL given the info, checking if rest_url is absolute */
 gchar *rc_build_url (const gchar *method, const gchar *host,
                      const gchar *path, const gchar *rest_url);
+
+
+
+typedef struct _RCLineBuf RCLineBuf;
+struct _RCLineBuf {
+    FILE *fp;
+    int fp_length;
+    gchar *save_buf;
+    size_t save_buf_len;
+    gchar *save_buf_base;
+    size_t save_buf_base_len;
+
+    int eof;
+};
+
+RCLineBuf *rc_line_buf_new (FILE *fp);
+gchar *rc_line_buf_read (RCLineBuf *lb);
+void rc_line_buf_destroy (RCLineBuf *lb);
 
 #endif

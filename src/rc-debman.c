@@ -29,7 +29,7 @@
 #include <string.h>
 #include <signal.h>
 #include <errno.h>
-
+#include <ctype.h>
 #include <sys/wait.h>
 
 #include "rc-util.h"
@@ -63,37 +63,6 @@ rc_debman_get_type (void)
     return type;
 } /* rc_debman_get_type */
 
-/* You know, you'd think that in as robust a platform as UNIX in general is,
-   there'd be some standard, portable, safe way to read from a text file a line
-   at a time.  Of course, you'd be wrong.
-
-   Returns the line (no \n at the end), an empty string if the line is blank,
-   and NULL on EOF. */
-static gchar *
-read_line (FILE *fp)
-{
-    RCString *buf = rc_string_new (80);
-    gchar c;
-    gchar *ret;
-
-    c = fgetc (fp);
-
-    if (c == EOF) {
-        return (NULL);
-    }
-
-    while ((c != '\n') && (c != EOF)) {
-        buf = rc_string_append_c (buf, c);
-        c = fgetc (fp);
-    }
-
-    ret = rc_string_get_chars (buf);
-
-    rc_string_free (buf);
-
-    return (ret);
-}
-
 /* Since I only want to scan through /var/lib/dpkg/status once, I need a
    shorthand way to match potentially many strings.  Returns the name of the
    package that matched, or NULL if none did. */
@@ -125,6 +94,7 @@ mark_purge (RCPackman *p, RCPackageSList *remove_pkgs)
 {
     FILE *in_fp, *out_fp;
     gchar *line;
+    RCLineBuf *lb;
 
     g_return_val_if_fail (g_slist_length (remove_pkgs) > 0, TRUE);
 
@@ -143,13 +113,14 @@ mark_purge (RCPackman *p, RCPackageSList *remove_pkgs)
         return (FALSE);
     }
 
-    while ((line = read_line (in_fp))) {
+    lb = rc_line_buf_new (in_fp);
+    while ((line = rc_line_buf_read (lb))) {
         gchar *package_name;
 
         fprintf (out_fp, "%s\n", line);
 
         if ((package_name = package_accept (line, remove_pkgs))) {
-            gchar *status = read_line (in_fp);
+            gchar *status = rc_line_buf_read (lb);
 
             if (strcmp (status, "Status: install ok installed")) {
                 gchar *error;
@@ -175,6 +146,7 @@ mark_purge (RCPackman *p, RCPackageSList *remove_pkgs)
 
         g_free (line);
     }
+    rc_line_buf_destroy (lb);
 
     fclose (out_fp);
     fclose (in_fp);
@@ -792,14 +764,14 @@ rc_debman_fill_depends (gchar *input, RCPackageDepSList *list)
 /* Given a file pointer to the beginning of a block of package information,
    fill in the data in the RCPackage fields. */
 static void
-rc_debman_query_helper (FILE *fp, RCPackage *pkg)
+rc_debman_query_helper (RCLineBuf *lb, RCPackage *pkg)
 {
     gchar *buf;
     RCPackageDepItem *item;
     RCPackageDep *dep = NULL;
     gboolean desc = FALSE;
 
-    while ((buf = read_line (fp)) && buf[0]) {
+    while ((buf = rc_line_buf_read (lb)) && buf[0]) {
         if (!strncmp (buf, "Status: install ok installed",
                       strlen ("Status: install ok installed"))) {
             pkg->spec.installed = TRUE;
@@ -949,6 +921,7 @@ rc_debman_query (RCPackman *p, RCPackage *pkg)
     FILE *fp;
     gchar *buf;
     gchar *target;
+    RCLineBuf *lb;
 
     if (!(fp = fopen ("/var/lib/dpkg/status", "r"))) {
         rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
@@ -963,18 +936,19 @@ rc_debman_query (RCPackman *p, RCPackage *pkg)
 
     target = g_strconcat ("Package: ", pkg->spec.name, NULL);
 
-    while ((buf = read_line (fp))) {
+    lb = rc_line_buf_new (fp);
+    while ((buf = rc_line_buf_read (lb))) {
         if (!strcmp (buf, target)) {
             g_free (buf);
-            rc_debman_query_helper (fp, pkg);
+            rc_debman_query_helper (lb, pkg);
             break;
         }
 
         g_free (buf);
     }
+    rc_line_buf_destroy (lb);
 
     g_free (target);
-
     fclose (fp);
     
     return (pkg);
@@ -989,6 +963,7 @@ rc_debman_query_file (RCPackman *p, gchar *filename)
     RCPackage *pkg = rc_package_new ();
     gchar *buf;
     gchar *path;
+    RCLineBuf *lb;
 
     path = rc_mktmpdir (NULL);
 
@@ -1022,13 +997,16 @@ rc_debman_query_file (RCPackman *p, gchar *filename)
     
     g_free (file);
 
-    buf = read_line (fp);
+    lb = rc_line_buf_new (fp);
+    buf = rc_line_buf_read (lb);
 
     pkg->spec.name = g_strdup (buf + strlen ("Package: "));
 
     g_free (buf);
 
-    rc_debman_query_helper (fp, pkg);
+    rc_debman_query_helper (lb, pkg);
+    rc_line_buf_destroy (lb);
+    fclose (fp);
 
     rc_rmdir (path);
 
@@ -1043,6 +1021,7 @@ rc_debman_query_all (RCPackman *p)
     FILE *fp;
     gchar *buf;
     RCPackageSList *pkgs = NULL;
+    RCLineBuf *lb;
 
     if (!(fp = fopen ("/var/lib/dpkg/status", "r"))) {
         rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
@@ -1050,7 +1029,9 @@ rc_debman_query_all (RCPackman *p)
         return (NULL);
     }
 
-    while ((buf = read_line (fp))) {
+    lb = rc_line_buf_new (fp);
+
+    while ((buf = rc_line_buf_read (lb))) {
         RCPackage *pkg = rc_package_new ();
 
         if (strncmp (buf, "Package: ", strlen ("Package: "))) {
@@ -1066,7 +1047,7 @@ rc_debman_query_all (RCPackman *p)
 
         g_free (buf);
 
-        rc_debman_query_helper (fp, pkg);
+        rc_debman_query_helper (lb, pkg);
 
         if (pkg->spec.installed) {
             pkgs = g_slist_append (pkgs, pkg);
@@ -1074,6 +1055,9 @@ rc_debman_query_all (RCPackman *p)
             rc_package_free (pkg);
         }
     }
+
+    rc_line_buf_destroy (lb);
+    fclose (fp);
 
     return (pkgs);
 }
