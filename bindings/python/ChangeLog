@@ -1,3 +1,21 @@
+2003-09-17  Joe Shaw  <joe@ximian.com>
+
+	* packman.c (PyPackman_transact, PyPackman_query,
+	PyPackman_query_all): Call g_slist_free() on the list
+	of RCPackageSLists after unreffing its members.
+	(PyPackman_find_file): Update for the rc_packman_find_file()
+	return value change.
+
+	* resolver.c (PyResolver_add_packages_to_install,
+	PyResolver_add_packages_to_remove): Call g_slist_free() on the
+	RCPackageSList after unreffing its members.
+
+	* world-store.c (PyWorld_transact): Call g_slist_free() on the
+	RCPAckageSLists after unreffing its members.
+
+	* world.c (PyWorld_transact): Call g_slist_free() on the
+	RCPAckageSLists after unreffing its members.
+
 2003-09-11  James Willcox  <james@ximian.com>
 
 	* redcarpet.c: (initredcarpet):
@@ -32,7 +50,8 @@
 
 2003-08-24  James Willcox  <james@ximian.com>
 
-	* package.c: (PyPackage_init):  allow pkg xml and a channel to be passed
+	* package.c: (PyPackage_init): allow pkg xml and a channel to be
+	passed
 	* world.c: (PyWorld_add_channel):  add keywords for all the args
 
 	Start keeping a ChangeLog

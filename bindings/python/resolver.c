@@ -156,6 +156,7 @@ PyResolver_add_packages_to_install (PyObject *self, PyObject *args)
 	rc_resolver_add_packages_to_install_from_slist (resolver, pkg_list);
 
 	rc_package_slist_unref (pkg_list);
+	g_slist_free (pkg_list);
 
 	Py_INCREF (Py_None);
 	return Py_None;
@@ -178,6 +179,7 @@ PyResolver_add_packages_to_remove (PyObject *self, PyObject *args)
 	rc_resolver_add_packages_to_remove_from_slist (resolver, pkg_list);
 
 	rc_package_slist_unref (pkg_list);
+	g_slist_free (pkg_list);
 
 	Py_INCREF (Py_None);
 	return Py_None;

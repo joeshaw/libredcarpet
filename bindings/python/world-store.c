@@ -772,7 +772,10 @@ PyWorld_transact (PyObject *self, PyObject *args)
 	rc_world_transact (world, install_packages, remove_packages, flags);
 
 	rc_package_slist_unref (install_packages);
+	g_slist_free (install_packages);
+
 	rc_package_slist_unref (remove_packages);
+	g_slist_free (remove_packages);
 
 	Py_INCREF (Py_None);
 	return Py_None;

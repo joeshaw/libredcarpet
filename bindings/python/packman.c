@@ -70,7 +70,11 @@ PyPackman_transact (PyObject *self, PyObject *args)
 	rc_packman_transact (packman, install_packages, remove_packages, flags);
 
 	rc_package_slist_unref (install_packages);
+	g_slist_free (install_packages);
+
 	rc_package_slist_unref (remove_packages);
+	g_slist_free (remove_packages);
+
 	Py_INCREF (Py_None);
 	return Py_None;
 }
@@ -113,6 +117,7 @@ PyPackman_query (PyObject *self, PyObject *args)
 
 	py_list = rc_package_slist_to_PyList (slist);
 	rc_package_slist_unref (slist);
+	g_slist_free (slist);
 
 	return py_list;
 }
@@ -132,6 +137,7 @@ PyPackman_query_all (PyObject *self, PyObject *args)
 
 	py_list = rc_package_slist_to_PyList (slist);
 	rc_package_slist_unref (slist);
+	g_slist_free (slist);
 
 	return py_list;
 }
@@ -211,19 +217,24 @@ static PyObject *
 PyPackman_find_file (PyObject *self, PyObject *args)
 {
 	RCPackman *packman = PyPackman_get_packman (self);
-	RCPackage *package;
+	RCPackageSList *slist;
+	PyObject *py_list;
 	char *filename;
 
 	if (! PyArg_ParseTuple (args, "s", &filename))
 		return NULL;
 
-	package = rc_packman_find_file (packman, filename);
-	if (package == NULL) {
+	slist = rc_packman_find_file (packman, filename);
+	if (slist == NULL) {
 		Py_INCREF (Py_None);
 		return Py_None;
 	}
 
-	return PyPackage_new (package);
+	py_list = rc_package_slist_to_PyList (slist);
+	rc_package_slist_unref (slist);
+	g_slist_free (slist);
+
+	return py_list;
 }
 
 static PyObject *
