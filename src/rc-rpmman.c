@@ -1957,6 +1957,55 @@ rc_rpmman_query_all (RCPackman *packman)
 }
 
 static gboolean
+rc_rpmman_package_is_repackaged (RCPackman *packman, RCPackage *package)
+{
+    RCRpmman *rpmman = RC_RPMMAN (packman);
+    FD_t rpm_fd = NULL;
+    int rc;
+    Header header = NULL;
+    char *buf = NULL;
+    guint32 count = 0;
+
+    if (!package->package_filename) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "no file name specified");
+        goto cleanup;
+    }
+
+    rpm_fd = rc_rpm_open (rpmman, package->package_filename, "r.fdio",
+                          O_RDONLY, 0);
+
+    if (rpm_fd == NULL) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "unable to open %s", package->package_filename);
+        goto cleanup;
+    }
+
+    rc = rpmman->rpmReadPackageHeader (rpm_fd, &header, NULL, NULL, NULL);
+
+    if (rc) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "unable to read package header");
+        goto cleanup;
+    }
+
+    rpmman->headerGetEntry (header, RPMTAG_REMOVETID, NULL,
+                            (void **) &buf, &count);
+
+cleanup:
+    if (header)
+        rpmman->headerFree (header);
+
+    if (rpm_fd)
+        rc_rpm_close (rpmman, rpm_fd);
+
+    if (count > 0)
+        return TRUE;
+    else
+        return FALSE;
+}
+
+static gboolean
 split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
            gchar **payload_filename, guint8 **md5sum, guint32 *size)
 {
@@ -2048,13 +2097,6 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
         rpmman->headerFree (signature_header);
         signature_header = NULL;
     }
-    else if (rpmman->version >= 40004 && rc == RPMRC_BADSIZE) {
-        /*
-         * RPM writes out bad signatures when it repacks, and we get
-         * back RPMRC_BADSIZE.  So if we're on RPM 4.0.4 and we get it,
-         * chances are we're dealing with a repacked package.
-         */
-    }
     else {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "failed to read RPM signature section");
@@ -2121,6 +2163,13 @@ rc_rpmman_verify (RCPackman *packman, RCPackage *package, guint32 type)
     guint8 *md5sum = NULL;
     guint32 size;
 
+    /*
+     * Repackaged RPMs don't have correct md5sums, signatures, or file
+     * sizes, so just skip over verification if it is.
+     */
+    if (rc_rpmman_package_is_repackaged (packman, package))
+        return NULL;
+    
     if (!split_rpm (packman, package, &signature_filename, &payload_filename,
                     &md5sum, &size))
     {

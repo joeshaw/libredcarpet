@@ -1,3 +1,11 @@
+2002-11-22  Joe Shaw  <joe@ximian.com>
+
+	* rc-rpmman.c (rc_rpmman_package_is_repackaged): Added.  Opens up
+	the package file and looks for the header to indicate that it's a
+	repackaged RPM.
+	(split_rpm): Remove the hack that we used before to guess that it
+	was a repackaged RPM as it won't work in 4.1.
+
 2002-11-21  Joe Shaw  <joe@ximian.com>
 
 	* rc-package.c (rc_package_copy, rc_package_slist_copy): Removed.
