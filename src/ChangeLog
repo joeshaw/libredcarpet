@@ -1,5 +1,10 @@
 2002-08-05  Ian Peters  <itp@ximian.com>
 
+	* rc-rpmman.c (rc_rpmman_transact): joe was right a few days ago,
+	real_remove_packages doesn't need to be a deep copy or free
+
+2002-08-05  Ian Peters  <itp@ximian.com>
+
 	* Makefile.am: get rid of the rc-marshal.[ch] stamp stuff, and add
 	them to libredcarpettmp_a_SOURCES
 

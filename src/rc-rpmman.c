@@ -715,7 +715,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
 
     /* If any of the remove packages are obsoleted by any of the
      * install packages, we want to filter them out */
-    real_remove_packages = rc_package_slist_copy (remove_packages);
+    real_remove_packages = g_slist_copy (remove_packages);
 
     if (real_remove_packages && install_packages) {
         GSList *install_iter;
@@ -762,8 +762,6 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         RCPackage *obsolete = (RCPackage *)(iter->data);
 
         real_remove_packages = g_slist_remove (real_remove_packages, obsolete);
-
-        rc_package_unref (obsolete);
     }
 
     g_slist_free (obsoleted);
@@ -930,7 +928,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     g_signal_emit_by_name (packman, "transact_done");
     GTKFLUSH;
 
-    rc_package_slist_unref (real_remove_packages);
+    g_slist_free (real_remove_packages);
 
     if (close_db)
         close_database (rpmman);
@@ -944,7 +942,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     if (close_db)
         close_database (rpmman);
 
-    rc_package_slist_unref (real_remove_packages);
+    g_slist_free (real_remove_packages);
 } /* rc_rpmman_transact */
 
 static RCPackageSection
@@ -1653,20 +1651,11 @@ rc_rpmman_query_file (RCPackman *packman, const gchar *filename)
     Header header;
     RCPackage *package;
     RCRpmman *rpmman = RC_RPMMAN (packman);
-    gboolean close = FALSE;
 
     if (!rc_file_exists(filename)) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "file '%s' does not exist", filename);
         return NULL;
-    }
-
-    /* This shouldn't be necessary, but it takes care of a valgrind
-     * error regarding unitialized values in Fdopen in rpm */
-    if (rpmman->db_status < RC_RPMMAN_DB_RDONLY) {
-        if (!open_database (rpmman, FALSE))
-            return NULL;
-        close = TRUE;
     }
 
     fd = rc_rpm_open (rpmman, filename, "r.fdio", O_RDONLY, 0444);
@@ -1692,9 +1681,6 @@ rc_rpmman_query_file (RCPackman *packman, const gchar *filename)
 
     rpmman->headerFree (header);
     rc_rpm_close (rpmman, fd);
-
-    if (close)
-        close_database (rpmman);
 
     return (package);
 
