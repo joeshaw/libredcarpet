@@ -1,4 +1,4 @@
-INCLUDES = -I$(top_srcdir) -I$(includedir) $(RPMLIB_CFLAGS) $(GTK_CFLAGS) $(XML_CFLAGS) -DG_LOG_DOMAIN=\"libredcarpet\" -DSHAREDIR=\""$(datadir)/redcarpet"\"
+INCLUDES = -I$(top_srcdir) -I$(includedir) $(RPMLIB_CFLAGS) $(GLIB_CFLAGS) $(GTK_CFLAGS) $(XML_CFLAGS) -DG_LOG_DOMAIN=\"libredcarpet\" -DSHAREDIR=\""$(datadir)/redcarpet"\"
 
 noinst_LIBRARIES = libredcarpet.a
 

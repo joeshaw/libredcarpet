@@ -46,6 +46,10 @@ static void rc_rpmman_init       (RCRpmman *obj);
 
 static GtkObjectClass *parent_class;
 
+/* rpmlib sucks */
+gint rpm_error;
+const gchar *rpm_reason;
+
 guint
 rc_rpmman_get_type (void)
 {
@@ -480,13 +484,25 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     state->install_extra = extras;
     state->remove_total = g_slist_length (remove_packages);
 
+#if 0
     gtk_signal_emit_by_name (GTK_OBJECT (packman), "transaction_step", 0,
                              state->install_total + state->remove_total +
                              state->install_extra);
     GTKFLUSH;
+#endif
+
+    rpm_error = 0;
+    rpm_reason = NULL;
 
     rc = rpmRunTransactions (transaction, transact_cb, (void *) state,
                              NULL, &probs, 0, 0);
+
+    if (rpm_error) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "%d -- %s", rpm_error, rpm_reason);
+
+        goto ERROR;
+    }
 
     gtk_signal_emit_by_name (GTK_OBJECT (packman), "transaction_done");
     GTKFLUSH;
@@ -1781,6 +1797,13 @@ rc_rpmman_class_init (RCRpmmanClass *klass)
 } /* rc_rpmman_class_init */
 
 static void
+rc_rpmman_error_cb ()
+{
+    rpm_error = rpmErrorCode ();
+    rpm_reason = rpmErrorString ();
+}
+
+static void
 rc_rpmman_init (RCRpmman *obj)
 {
     RCPackman *packman = RC_PACKMAN (obj);
@@ -1801,6 +1824,8 @@ rc_rpmman_init (RCRpmman *obj)
         RC_PACKMAN_FEATURE_PKG_PROGRESS;
 
     rc_package_dep_system_is_rpmish (TRUE);
+
+    rpmErrorSetCallback ((rpmErrorCallBackType) rc_rpmman_error_cb);
 } /* rc_rpmman_init */
 
 RCRpmman *

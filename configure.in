@@ -172,6 +172,9 @@ LDFLAGS="$save_LDFLAGS"
 dnl gtk
 AM_PATH_GTK(1.2.0)
 
+dnl glib???
+AM_PATH_GLIB(1.2.0)
+
 AC_OUTPUT([
 Makefile
 src/Makefile

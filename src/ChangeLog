@@ -1,5 +1,12 @@
 2001-01-29  Ian Peters  <itp@ximian.com>
 
+	* rc-rpmman.c (rc_rpmman_transact): get rid of a broken
+	transaction step, add some rpmError handling, etc
+
+	* Makefile.am: add $(GLIB_CFLAGS) to the includes
+
+2001-01-29  Ian Peters  <itp@ximian.com>
+
 	* rc-verification.c (rc_verify_gpg): set --logger-fd to 1 instead
 	of 2, which is the fd the RCLineBuf is listening on.  It's ok,
 	since it'll ignore hte lines that don't begin with [GNUPG:], and
