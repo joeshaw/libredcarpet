@@ -278,13 +278,10 @@ rc_packman_transact (RCPackman       *packman,
 
     g_assert (klass->rc_packman_real_transact);
 
-#if 0
-    packman->priv->rollback_enabled = TRUE;
-#endif
-
     rollback_enabled =
         rc_packman_get_capabilities (packman) & RC_PACKMAN_CAP_ROLLBACK &&
-        packman->priv->rollback_enabled;
+        packman->priv->rollback_enabled &&
+        !(flags & RC_TRANSACT_FLAG_NO_ACT);
 
     if (rollback_enabled) {
         rollback_info = rc_rollback_info_new (packman,
