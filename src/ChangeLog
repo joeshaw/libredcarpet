@@ -1,5 +1,10 @@
 2001-03-08  Ian Peters  <itp@ximian.com>
 
+	* rc-rpmman.c (rc_rpmman_init): only open the database for writing
+	if we're root; otherwise open the database for reading only
+
+2001-03-08  Ian Peters  <itp@ximian.com>
+
 	* rc-rpmman.c (rc_rpmman_transact): avoid using the
 	rpmErrorCallback stuff, instead use the rpmProblemSet information
 	as appropriate given the return value of rpmRunTransactions.

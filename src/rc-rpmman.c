@@ -1956,6 +1956,7 @@ rc_rpmman_init (RCRpmman *obj)
 {
     RCPackman *packman = RC_PACKMAN (obj);
     gchar *tmp;
+    int flags;
 
     rpmReadConfigFiles (NULL, NULL);
 
@@ -1967,8 +1968,15 @@ rc_rpmman_init (RCRpmman *obj)
         obj->rpmroot = g_strdup ("/");
     }
 
+    /* If we're not root we can't open the database for writing */
+    if (geteuid ()) {
+        flags = O_RDONLY;
+    } else {
+        flags = O_RDWR;
+    }
+
     if (!getenv ("RC_NO_RPM_DB")) {
-        if (rpmdbOpen (obj->rpmroot, &obj->db, O_RDWR, 0644)) {
+        if (rpmdbOpen (obj->rpmroot, &obj->db, flags, 0644)) {
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
                                   "unable to open RPM database");
         }
