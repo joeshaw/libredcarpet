@@ -24,10 +24,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#include <rpm/rpmurl.h>
-#include <rpm/rpmmacro.h>
-#include <rpm/misc.h>
-#include <rpm/header.h>
 #include <rpm/rpmlib.h>
 
 #include "rc-packman-private.h"

@@ -1,5 +1,9 @@
 2001-01-22  Ian Peters  <itp@helixcode.com>
 
+	* rc-rpmman.c: remove some spurious rpm includes
+
+2001-01-22  Ian Peters  <itp@helixcode.com>
+
 	* rc-verification.c (rc_verify_gpg): don't pass the
 	--no-auto-key-retrieve option, as it does not appear to be present
 	in gpg 1.0.1 on RH6.2.  Initialize the verification as
