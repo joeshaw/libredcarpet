@@ -87,33 +87,49 @@ Transaction transaction;
 guint num_commands = sizeof (commands) / sizeof (Command) - 1;
 
 static void
-transaction_progress_cb (RCPackman *p, int amount, int total)
+transact_start_cb (RCPackman *packman, gint total)
 {
-    printf ("Transaction progress %d of %d\n", amount, total);
+    printf ("About to transact %d packages\n", total);
 }
 
 static void
-transaction_step_cb (RCPackman *p, int seqno, int total)
+transact_step_cb (RCPackman *packman, gboolean install, gchar *name,
+                     gint seqno)
 {
-    printf ("Transaction step %d of %d\n", seqno, total);
+    printf ("%s %s (package %d)\n",
+            install ? "Installing" : "Removing",
+            name ? name : "something", seqno);
 }
 
 static void
-transaction_done_cb (RCPackman *p)
+transact_progress_cb (RCPackman *packman, gint amount, gint total)
+{
+    printf ("  (%d of %d complete)\n");
+}
+
+static void
+transact_done_cb (RCPackman *packman)
 {
     printf ("Transaction done.\n");
 }
 
 static void
-configure_progress_cb (RCPackman *p, int amount, int total)
+configure_start_cb (RCPackman *packman, gint total)
 {
-    printf ("Configure progress %d of %d\n", amount, total);
+    printf ("About to configure %d packages\n", total);
 }
 
 static void
-configure_step_cb (RCPackman *p, int seqno, int total)
+configure_step_cb (RCPackman *packman, gchar *name, gint seqno)
 {
-    printf ("Configure step %d of %d\n", seqno, total);
+    printf ("Configuring %s (package %d)\n",
+            name ? name : "something", seqno);
+}
+
+static void
+configure_progress_cb (RCPackman *packman, gint amount, gint total)
+{
+    printf ("  (%d of %d complete)\n", amount, total);
 }
 
 static void
@@ -586,16 +602,20 @@ int main (int argc, char **argv)
         exit (-1);
     }
 
-    gtk_signal_connect (GTK_OBJECT (p), "transaction_progress",
-                        GTK_SIGNAL_FUNC (transaction_progress_cb), NULL);
-    gtk_signal_connect (GTK_OBJECT (p), "transaction_step",
-                        GTK_SIGNAL_FUNC (transaction_step_cb), NULL);
-    gtk_signal_connect (GTK_OBJECT (p), "transaction_done",
-                        GTK_SIGNAL_FUNC (transaction_done_cb), NULL);
-    gtk_signal_connect (GTK_OBJECT (p), "configure_progress",
-                        GTK_SIGNAL_FUNC (configure_progress_cb), NULL);
+    gtk_signal_connect (GTK_OBJECT (p), "transact_start",
+                        GTK_SIGNAL_FUNC (transact_start_cb), NULL);
+    gtk_signal_connect (GTK_OBJECT (p), "transact_step",
+                        GTK_SIGNAL_FUNC (transact_step_cb), NULL);
+    gtk_signal_connect (GTK_OBJECT (p), "transact_progress",
+                        GTK_SIGNAL_FUNC (transact_progress_cb), NULL);
+    gtk_signal_connect (GTK_OBJECT (p), "transact_done",
+                        GTK_SIGNAL_FUNC (transact_done_cb), NULL);
+    gtk_signal_connect (GTK_OBJECT (p), "configure_start",
+                        GTK_SIGNAL_FUNC (configure_start_cb), NULL);
     gtk_signal_connect (GTK_OBJECT (p), "configure_step",
                         GTK_SIGNAL_FUNC (configure_step_cb), NULL);
+    gtk_signal_connect (GTK_OBJECT (p), "configure_progress",
+                        GTK_SIGNAL_FUNC (configure_progress_cb), NULL);
     gtk_signal_connect (GTK_OBJECT (p), "configure_done",
                         GTK_SIGNAL_FUNC (configure_done_cb), NULL);
 
