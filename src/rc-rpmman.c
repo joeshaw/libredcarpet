@@ -170,7 +170,7 @@ transaction_add_install_packages (RCPackman *packman,
     for (iter = install_packages; iter; iter = iter->next) {
         gchar *filename = ((RCPackage *)(iter->data))->package_filename;
 
-        fd = Fopen (filename, "r.ufdio");
+        fd = fdOpen (filename, O_RDONLY, 0);
 
         if (fd == NULL || Ferror (fd)) {
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
@@ -183,7 +183,7 @@ transaction_add_install_packages (RCPackman *packman,
 
         switch (rc) {
         case 1:
-            Fclose (fd);
+            fdClose (fd);
 
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "can't read RPM header in %s", filename);
@@ -191,7 +191,7 @@ transaction_add_install_packages (RCPackman *packman,
             return (0);
 
         default:
-            Fclose (fd);
+            fdClose (fd);
 
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "%s is not installable", filename);
@@ -203,7 +203,7 @@ transaction_add_install_packages (RCPackman *packman,
                                      NULL);
             count++;
             headerFree (header);
-            Fclose (fd);
+            fdClose (fd);
 
             switch (rc) {
             case 0:
@@ -1515,7 +1515,7 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
         return (FALSE);
     }
 
-    rpm_fd = Fopen (package->package_filename, "r.ufdio");
+    rpm_fd = fdOpen (package->package_filename, O_RDONLY, 0);
 
     if (!rpm_fd || Ferror (rpm_fd)) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
@@ -1529,7 +1529,7 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
                               "unable to read from %s",
                               package->package_filename);
 
-        Fclose (rpm_fd);
+        fdClose (rpm_fd);
 
         return (FALSE);
     }
@@ -1553,7 +1553,7 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
 
             headerFree (signature_header);
 
-            Fclose (rpm_fd);
+            fdClose (rpm_fd);
 
             return (FALSE);
         }
@@ -1564,7 +1564,7 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
 
             headerFree (signature_header);
 
-            Fclose (rpm_fd);
+            fdClose (rpm_fd);
 
             return (FALSE);
         }
@@ -1586,9 +1586,7 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
 
         *payload_filename = NULL;
     } else {
-        while ((num_bytes = Fread (buffer, sizeof (char), sizeof (buffer),
-                                   rpm_fd)) > 0)
-        {
+        while ((num_bytes = fdRead (rpm_fd, buffer, sizeof (buffer))) > 0) {
             if (!rc_write (payload_fd, buffer, num_bytes)) {
                 rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                       "unable to write temporary payload "
@@ -1598,14 +1596,14 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
 
                 headerFree (signature_header);
 
-                Fclose (rpm_fd);
+                fdClose (rpm_fd);
 
                 return (FALSE);
             }
         }
     }
 
-    Fclose (rpm_fd);
+    fdClose (rpm_fd);
 
     count = 0;
 
