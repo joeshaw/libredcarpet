@@ -32,8 +32,6 @@
 static void rc_rpmman_class_init (RCRpmmanClass *klass);
 static void rc_rpmman_init       (RCRpmman *obj);
 
-static gchar *rpmroot;
-
 guint
 rc_rpmman_get_type (void)
 {
@@ -281,12 +279,12 @@ rc_rpmman_transact (RCPackman *p, GSList *install_pkgs,
     rpmProblemSet probs = NULL;
     InstallState *state;
 
-    if (rpmdbOpen (rpmroot, &db, O_RDWR | O_CREAT, 0644)) {
+    if (rpmdbOpen (RC_RPMMAN (p)->rpmroot, &db, O_RDWR | O_CREAT, 0644)) {
         /* FIXME: Fatal error opening the database */
         return;
     }
 
-    transaction = rpmtransCreateSet (db, rpmroot);
+    transaction = rpmtransCreateSet (db, RC_RPMMAN (p)->rpmroot);
 
     if (!(transaction_add_install_pkgs (p, transaction, install_pkgs))) {
         /* FIXME: Uh oh */
@@ -735,6 +733,92 @@ rc_rpmman_depends_fill (Header hdr, RCPackage *pkg)
    installed size...).  If you specify more than just a name, it tries to match
    those criteria. */
 
+static gboolean
+rc_rpmman_check_match (Header hdr, RCPackage *pkg)
+{
+    gchar *version = NULL, *release = NULL;
+    gchar *summary = NULL, *description = NULL;
+    guint32 size = 0, epoch = 0;
+    RCPackageSection section = SECTION_MISC;
+
+    rc_rpmman_read_header (hdr, NULL, &epoch, &version, &release, &section,
+                           &size, &summary, &description);
+
+    /* FIXME: this could potentially be a big problem if an rpm can have
+       just an epoch (serial), and no version/release.  I'm choosing to
+       ignore that for now, because I need to get this stuff done and it
+       doesn't seem very likely, but... */
+
+    if ((!pkg->spec.version || !strcmp (pkg->spec.version, version)) &&
+        (!pkg->spec.release || !strcmp (pkg->spec.release, release)) &&
+        (!pkg->spec.epoch || pkg->spec.epoch == epoch)) {
+
+        g_free (pkg->spec.version);
+        g_free (pkg->spec.release);
+
+        pkg->spec.epoch = epoch;
+        pkg->spec.version = version;
+        pkg->spec.release = release;
+        pkg->summary = summary;
+        pkg->description = description;
+        pkg->spec.installed = TRUE;
+        pkg->spec.installed_size = size;
+
+        rc_rpmman_depends_fill (hdr, pkg);
+
+        return (TRUE);
+    } else {
+        g_free (version);
+        g_free (release);
+        g_free (summary);
+        g_free (description);
+    }
+
+    return (FALSE);
+}
+
+#ifdef HAVE_RPM_4_0
+
+static RCPackage *
+rc_rpmman_query (RCPackman *p, RCPackage *pkg)
+{
+    rpmdb db;
+    rpmdbMatchIterator mi = NULL;
+    Header hdr;
+
+    if (rpmdbOpen (RC_RPMMAN (p)->rpmroot, &db, O_RDONLY, 0444)) {
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+                              "Unable to open RPM database");
+        return (pkg);
+    }
+
+    mi = rpmdbInitIterator (db, RPMDBI_LABEL, pkg->spec.name, 0);
+
+    if (!mi) {
+        pkg->spec.installed = FALSE;
+        pkg->spec.installed_size = 0;
+        return (pkg);
+    }
+
+    while ((hdr = rpmdbNextIterator (mi))) {
+        if (rc_rpmman_check_match (hdr, pkg)) {
+            rpmdbFreeIterator (mi);
+            rpmdbClose (db);
+            return (pkg);
+        }
+    }
+
+    pkg->spec.installed = FALSE;
+    pkg->spec.installed_size = 0;
+
+    rpmdbFreeIterator (mi);
+    rpmdbClose (db);
+
+    return (pkg);
+} /* rc_packman_query */
+
+#else /* !HAVE_RPM_4_0 */
+
 static RCPackage *
 rc_rpmman_query (RCPackman *p, RCPackage *pkg)
 {
@@ -742,7 +826,7 @@ rc_rpmman_query (RCPackman *p, RCPackage *pkg)
     dbiIndexSet matches;
     guint i;
 
-    if (rpmdbOpen (rpmroot, &db, O_RDONLY, 0444)) {
+    if (rpmdbOpen (RC_RPMMAN (p)->rpmroot, &db, O_RDONLY, 0444)) {
         rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
                               "Unable to open RPM database");
         return (pkg);
@@ -757,10 +841,6 @@ rc_rpmman_query (RCPackman *p, RCPackage *pkg)
 
     for (i = 0; i < matches.count; i++) {
         Header hdr;
-        gchar *version = NULL, *release = NULL;
-        gchar *summary = NULL, *description = NULL;
-        guint32 size = 0, epoch = 0;
-        RCPackageSection section = SECTION_MISC;
 
         if (!(hdr = rpmdbGetRecord (db, matches.recs[i].recOffset))) {
             rpmdbClose (db);
@@ -769,44 +849,12 @@ rc_rpmman_query (RCPackman *p, RCPackage *pkg)
             return (pkg);
         }
 
-        rc_rpmman_read_header (hdr, NULL, &epoch, &version, &release, &section,
-                               &size, &summary, &description);
-
-        /* FIXME: this could potentially be a big problem if an rpm can have
-           just an epoch (serial), and no version/release.  I'm choosing to
-           ignore that for now, because I need to get this stuff done and it
-           doesn't seem very likely, but... */
-
-        if ((!pkg->spec.version || !strcmp (pkg->spec.version, version)) &&
-            (!pkg->spec.release || !strcmp (pkg->spec.release, release)) &&
-            (!pkg->spec.epoch || pkg->spec.epoch == epoch)) {
-
-            g_free (pkg->spec.version);
-            g_free (pkg->spec.release);
-
-            pkg->spec.epoch = epoch;
-            pkg->spec.version = version;
-            pkg->spec.release = release;
-            pkg->summary = summary;
-            pkg->description = description;
-            pkg->spec.installed = TRUE;
-            pkg->spec.installed_size = size;
-
-            rc_rpmman_depends_fill (hdr, pkg);
-
+        if (rc_rpmman_check_match (hdr, pkg)) {
             headerFree (hdr);
             dbiFreeIndexRecord (matches);
             rpmdbClose (db);
-
             return (pkg);
-        } else {
-            g_free (version);
-            g_free (release);
-            g_free (summary);
-            g_free (description);
         }
-
-        headerFree (hdr);
     }
 
     pkg->spec.installed = FALSE;
@@ -817,6 +865,8 @@ rc_rpmman_query (RCPackman *p, RCPackage *pkg)
 
     return (pkg);
 } /* rc_packman_query */
+
+#endif /* !HAVE_RPM_4_0 */
 
 /* Query a file for rpm header information */
 
@@ -852,6 +902,50 @@ rc_rpmman_query_file (RCPackman *p, gchar *filename)
 
 /* Query all of the packages on the system */
 
+#ifdef HAVE_RPM_4_0
+
+static RCPackageSList *
+rc_rpmman_query_all (RCPackman *p)
+{
+    rpmdb db;
+    RCPackageSList *list = NULL;
+    rpmdbMatchIterator mi = NULL;
+    Header hdr;
+
+    if (rpmdbOpen (RC_RPMMAN (p)->rpmroot, &db, O_RDONLY, 0444)) {
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+                              "Unable to open RPM database");
+        return (NULL);
+    }
+
+    mi = rpmdbInitIterator (db, RPMDBI_PACKAGES, NULL, 0);
+
+    if (!mi) {
+        rpmdbClose (Db);
+        return (NULL);
+    }
+
+    while ((hdr = rpmdbNextIterator (mi))) {
+        RCPackage *pkg = rc_package_new ();
+
+        rc_rpmman_read_header (hdr, &pkg->spec.name, &pkg->spec.epoch,
+                               &pkg->spec.version, &pkg->spec.release,
+                               &pkg->spec.section,
+                               &pkg->spec.installed_size, &pkg->summary,
+                               &pkg->description);
+
+        rc_rpmman_depends_fill (hdr, pkg);
+
+        list = g_slist_append (list, pkg);
+    }
+
+    rpmdbClose (db);
+
+    return (list);
+} /* rc_rpmman_query_all */
+
+#else /* !HAVE_RPM_4_0 */
+
 static RCPackageSList *
 rc_rpmman_query_all (RCPackman *p)
 {
@@ -859,7 +953,7 @@ rc_rpmman_query_all (RCPackman *p)
     RCPackageSList *list = NULL;
     guint recno;
 
-    if (rpmdbOpen (rpmroot, &db, O_RDONLY, 0444)) {
+    if (rpmdbOpen (RC_RPMMAN (p)->rpmroot, &db, O_RDONLY, 0444)) {
         rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
                               "Unable to open RPM database");
         return (NULL);
@@ -906,6 +1000,8 @@ rc_rpmman_query_all (RCPackman *p)
 
     return (list);
 } /* rc_rpmman_query_all */
+
+#endif /* !HAVE_RPM_4_0 */
 
 static gint
 rc_rpmman_version_compare (RCPackman *p, RCPackageSpec *s1, RCPackageSpec *s2)
@@ -986,9 +1082,9 @@ rc_rpmman_init (RCRpmman *obj)
     tmp = getenv ("RC_RPM_ROOT");
 
     if (tmp) {
-        rpmroot = g_strdup (tmp);
+        obj->rpmroot = g_strdup (tmp);
     } else {
-        rpmroot = g_strdup ("/");
+        obj->rpmroot = g_strdup ("/");
     }
 
     p->pre_config = TRUE;

@@ -46,6 +46,8 @@ struct _RCRpmman {
 
     gint package_count;
     gint package_total;
+
+    gchar *rpmroot;
 };
 
 struct _RCRpmmanClass {
