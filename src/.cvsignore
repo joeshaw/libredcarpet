@@ -5,5 +5,4 @@ Makefile
 *.so.0
 rc-marshal.c
 rc-marshal.h
-
-
+distributions-xml.h

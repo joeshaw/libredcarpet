@@ -1,447 +1,698 @@
-/* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
-/* rc-distro.c
- * Copyright (C) 2000, 2001 Ximian, Inc.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307, USA.
- */
+#include <libxml/xmlmemory.h>
+#include <libxml/parser.h>
 
 #include <string.h>
-#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include <unistd.h>
-#include <sys/fcntl.h>
-#include <errno.h>
-#include <stdio.h>
 
+#include "rc-debug.h"
 #include "rc-distro.h"
+#include "rc-line-buf.h"
+#include "rc-util.h"
 
-typedef gboolean (*distro_check_function) (gpointer param1, gpointer param2, gpointer param3);
+#include "distributions-xml.h"
 
-#define CHECK_OP_NONE	0
-#define CHECK_OP_AND	1
-#define CHECK_OP_NOT	2
-#define CHECK_OP_OR	3
+/* A DistroCheck is a predicate that determines if we are on the given
+ * distribution */
 
-typedef struct _RCDistroChunk {
-    char *unique_name;
-    RCArch arch;
-    distro_check_function func1;
-    gpointer param11;
-    gpointer param12;
-    gpointer param13;
-    short op;
-    distro_check_function func2;
-    gpointer param21;
-    gpointer param22;
-    gpointer param23;
-} RCDistroChunk;
+typedef enum {
+    DISTRO_CHECK_TYPE_FILE,
+    DISTRO_CHECK_TYPE_COMMAND,
+} DistroCheckType;
 
-/* Various comparison functions */
-static gboolean func_string_in_file (gpointer arg1,  /* filename */
-                                     gpointer arg2,  /* string */
-                                     gpointer arg3); /* exact_match */
-static gboolean func_nth_string_in_file (gpointer arg1,  /* filename */
-                                         gpointer arg2,  /* string */
-                                         gpointer arg3); /* n */
-static gboolean func_sys (gpointer arg1,  /* prog to call, with args */
-                          gpointer arg2,  /* string */
-                          gpointer arg3); /* exact_match */
+typedef struct {
+    DistroCheckType  type;
+    char            *source;
+    char            *substring;
+} DistroCheck;
 
-
-/*
- * Note: The unique name strings should be kept in sync with the build system
- */
-
-RCDistroChunk distro_figurers[] = {
-    { "linuxppc-2000-ppc", RC_ARCH_PPC,
-      func_string_in_file, "/etc/redhat-release", "LinuxPPC 2000", NULL, 0 },
-    { "linuxppc-2000q4-ppc", RC_ARCH_PPC,
-      func_string_in_file, "/etc/redhat-release", "Linux/PPC 2000 Q4", NULL, 0 },
-
-    { "yellowdog-12-ppc", RC_ARCH_PPC,
-      func_string_in_file, "/etc/yellowdog-release", "1.2", NULL, 0 },
-    { "yellowdog-20-ppc", RC_ARCH_PPC,
-      func_string_in_file, "/etc/yellowdog-release", "2.0", NULL, 0 },
-    { "yellowdog-21-ppc", RC_ARCH_PPC,
-      func_string_in_file, "/etc/yellowdog-release", "2.1", NULL, 0 },
-    { "yellowdog-22-ppc", RC_ARCH_PPC,
-      func_string_in_file, "/etc/yellowdog-release", "2.2", NULL, 0 },
-
-    { "mandrake-70-i586", RC_ARCH_I586,
-      func_string_in_file, "/etc/mandrake-release", "7.0", NULL, 0 },
-    { "mandrake-71-i586", RC_ARCH_I586,
-      func_string_in_file, "/etc/mandrake-release", "7.1", NULL, 0 },
-    { "mandrake-72-i586", RC_ARCH_I586,
-      func_string_in_file, "/etc/mandrake-release", "7.2", NULL, 0 },
-    { "mandrake-80-i586", RC_ARCH_I586,
-      func_string_in_file, "/etc/mandrake-release", "8.0", NULL, 0 },
-    { "mandrake-81-i586", RC_ARCH_I586,
-      func_string_in_file, "/etc/mandrake-release", "8.1", NULL, 0 },
-    { "mandrake-82-i586", RC_ARCH_I586,
-      func_string_in_file, "/etc/mandrake-release", "8.2", NULL, 0 },
-
-    { "redhat-60-i386", RC_ARCH_I386,
-      func_string_in_file, "/etc/redhat-release", "6.0", NULL, 0 },
-    { "redhat-61-i386", RC_ARCH_I386,
-      func_string_in_file, "/etc/redhat-release", "6.1", NULL, 0 },
-    { "redhat-62-i386", RC_ARCH_I386,
-      func_string_in_file, "/etc/redhat-release", "6.2", NULL, 0 },
-    { "redhat-70-i386", RC_ARCH_I386,
-      func_string_in_file, "/etc/redhat-release", "7.0", NULL, 0 },
-    { "redhat-71-i386", RC_ARCH_I386,
-      func_string_in_file, "/etc/redhat-release", "7.1", NULL, 0 },
-    { "redhat-72-i386", RC_ARCH_I386,
-      func_string_in_file, "/etc/redhat-release", "7.2", NULL, 0 },
-    { "redhat-73-i386", RC_ARCH_I386,
-      func_string_in_file, "/etc/redhat-release", "7.3", NULL, 0 },
-
-    { "turbolinux-60-i386", RC_ARCH_I386,
-      func_string_in_file, "/etc/turbolinux-release", "6.0", NULL, 0 },
-    { "turbolinux-70-i386", RC_ARCH_I386,
-      func_string_in_file, "/etc/turbolinux-release", "7.0", NULL, 0 },
-
-    { "suse-63-i386", RC_ARCH_I386,
-      func_string_in_file, "/etc/SuSE-release", "6.3", NULL, 0 },
-    { "suse-64-i386", RC_ARCH_I386,
-      func_string_in_file, "/etc/SuSE-release", "6.4", NULL, 0 },
-    { "suse-70-i386", RC_ARCH_I386,
-      func_string_in_file, "/etc/SuSE-release", "7.0", NULL, 0 },
-    { "suse-71-i386", RC_ARCH_I386,
-      func_string_in_file, "/etc/SuSE-release", "7.1", NULL, 0 },
-    { "suse-72-i386", RC_ARCH_I386,
-      func_string_in_file, "/etc/SuSE-release", "7.2", NULL, 0 },
-    { "suse-73-i386", RC_ARCH_I386,
-      func_string_in_file, "/etc/SuSE-release", "7.3", NULL, 0 },
-    { "suse-80-i386", RC_ARCH_I386,
-      func_string_in_file, "/etc/SuSE-release", "8.0", NULL, 0 },
-
-    { "debian-potato-i386", RC_ARCH_I386,
-      func_string_in_file, "/etc/debian_version", "2.2", NULL, 0},
-    { "debian-potato-i386", RC_ARCH_I386,
-      func_string_in_file, "/etc/debian_version", "potato", NULL, 0},
-    { "debian-woody-i386", RC_ARCH_I386,
-      func_string_in_file, "/etc/debian_version", "3.0", NULL, 0},
-    { "debian-woody-i386", RC_ARCH_I386,
-      func_string_in_file, "/etc/debian_version", "woody", NULL, 0},
-    { "debian-testing-i386", RC_ARCH_I386,
-      func_string_in_file, "/etc/debian_version", "testing", NULL, 0},
-/* When debian comes up with the next name, put it here and uncomment */
-/*    { "debian-testing-i386", RC_ARCH_I386,
-      func_string_in_file, "/etc/debain_version", "TOYSTORY", NULL, 0}, */
-    { "debian-sid-i386", RC_ARCH_I386,
-      func_string_in_file, "/etc/debian_version", "sid", NULL, 0},
-    { "debian-sid-i386", RC_ARCH_I386,
-      func_string_in_file, "/etc/debian_version", "unstable", NULL, 0},
-
-    { "solaris-7-sun4", RC_ARCH_SPARC64,
-      func_sys, "uname -s", "SunOS", (gpointer) 0, CHECK_OP_AND,
-      func_sys, "uname -r", "5.7", (gpointer) 0 },
-
-    { "solaris-8-sun4", RC_ARCH_SPARC64,
-      func_sys, "uname -s", "SunOS", (gpointer) 0, CHECK_OP_AND,
-      func_sys, "uname -r", "5.8", (gpointer) 0 },
-
-    { NULL }
-};
-
-RCDistroType distro_types[] = {
-    { "redhat-60-i386", NULL, "Red Hat Linux", "6.0", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "redhat-61-i386", NULL, "Red Hat Linux", "6.1", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "redhat-62-i386", NULL, "Red Hat Linux", "6.2", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "redhat-70-i386", NULL, "Red Hat Linux", "7.0", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "redhat-71-i386", NULL, "Red Hat Linux", "7.1", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "redhat-72-i386", NULL, "Red Hat Linux", "7.2", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "redhat-73-i386", NULL, "Red Hat Linux", "7.3", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=5, non-gdm-runlevel=3" },
-
-    { "turbolinux-60-i386", NULL, "TurboLinux", "6.0", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "turbolinux-70-i386", NULL, "TurboLinux", "7.0", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=5, non-gdm-runlevel=3" },
-
-    { "suse-63-i386", NULL, "SuSE", "6.3", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=3, non-gdm-runlevel=2" },
-    { "suse-64-i386", NULL, "SuSE", "6.4", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=3, non-gdm-runlevel=2" },
-    { "suse-70-i386", NULL, "SuSE", "7.0", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=3, non-gdm-runlevel=2" },
-    { "suse-71-i386", NULL, "SuSE", "7.1", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "suse-72-i386", NULL, "SuSE", "7.2", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "suse-73-i386", NULL, "SuSE", "7.3", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "suse-80-i386", NULL, "SuSE", "8.0", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=5, non-gdm-runlevel=3" },
-
-    { "mandrake-70-i586", NULL, "Linux Mandrake", "7.0", RC_PKG_RPM, RC_ARCH_I586, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "mandrake-71-i586", NULL, "Linux Mandrake", "7.1", RC_PKG_RPM, RC_ARCH_I586, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "mandrake-72-i586", NULL, "Linux Mandrake", "7.2", RC_PKG_RPM, RC_ARCH_I586, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "mandrake-80-i586", NULL, "Linux Mandrake", "8.0", RC_PKG_RPM, RC_ARCH_I586, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "mandrake-81-i586", NULL, "Linux Mandrake", "8.1", RC_PKG_RPM, RC_ARCH_I586, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "mandrake-82-i586", NULL, "Linux Mandrake", "8.2", RC_PKG_RPM, RC_ARCH_I586, "gdm-runlevel=5, non-gdm-runlevel=3" },
-
-    { "debian-sid-i386", NULL, "Debian GNU/Linux", "sid", RC_PKG_DPKG, RC_ARCH_I386, NULL },
-    { "debian-testing-i386", NULL, "Debian GNU/Linux", "testing", RC_PKG_DPKG, RC_ARCH_I386, NULL },
-    { "debian-woody-i386", NULL, "Debian GNU/Linux", "woody", RC_PKG_DPKG, RC_ARCH_I386, NULL },
-    { "debian-potato-i386", NULL, "Debian GNU/Linux", "potato", RC_PKG_DPKG, RC_ARCH_I386, NULL },
-
-    { "linuxppc-2000-ppc", NULL, "LinuxPPC", "2000", RC_PKG_RPM, RC_ARCH_PPC, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "linuxppc-2000q4-ppc", NULL, "Linux/PPC", "2000 Q4", RC_PKG_RPM, RC_ARCH_PPC, "gdm-runlevel=5, non-gdm-runlevel=3" },
-
-    { "yellowdog-12-ppc", NULL, "Yellow Dog Linux", "1.2", RC_PKG_RPM, RC_ARCH_PPC, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "yellowdog-20-ppc", NULL, "Yellow Dog Linux", "2.0", RC_PKG_RPM, RC_ARCH_PPC, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "yellowdog-21-ppc", NULL, "Yellow Dog Linux", "2.1", RC_PKG_RPM, RC_ARCH_PPC, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "yellowdog-22-ppc", NULL, "Yellow Dog Linux", "2.2", RC_PKG_RPM, RC_ARCH_PPC, "gdm-runlevel=5, non-gdm-runlevel=3" },
-
-    { "solaris-7-sun4", NULL, "Sun Solaris 7", "7", RC_PKG_RPM, RC_ARCH_SPARC64, "" },
-    { "solaris-8-sun4", NULL, "Sun Solaris 8", "8", RC_PKG_RPM, RC_ARCH_SPARC64, "" },
-
-    { NULL }
-};
-
-static gint
-suck_file (gchar *filename, gchar **out_buf)
+static DistroCheck *
+distro_check_new (void)
 {
-    int fd;
-    gchar *buf;
-    gint buf_sz;
-    struct stat st;
-
-    if (stat (filename, &st)) {
-        return -1;
-    }
-
-    buf_sz = st.st_size;
-
-    if ((fd = open (filename, O_RDONLY)) < 0) {
-        return -1;
-    }
-
-    buf = g_malloc (buf_sz + 1);
-
-    if (read (fd, buf, buf_sz) != buf_sz) {
-        perror ("read");
-        g_warning ("read didn't complete on %s", filename);
-        g_free (buf);
-        close (fd);
-        return -1;
-    }
-    buf[buf_sz] = 0;
-
-    close (fd);
-
-    *out_buf = buf;
-    return buf_sz;
+    return g_new0 (DistroCheck, 1);
 }
 
-static gint
-call_system (gchar *cmdline, gchar **out_buf)
+static void
+distro_check_free (DistroCheck *check)
 {
-    gchar *result = NULL;
-    int res_size;
-    FILE *fp;
-    int ret;
+    g_free (check->source);
+    g_free (check->substring);
 
-    fp = popen (cmdline, "r");
-    if (fp == NULL)
-        return -1;
+    g_free (check);
+}
 
-    result = g_malloc(1024);
-    res_size = 1024;
-    ret = fread (result, 1, 1023, fp);
-    result[ret] = '\0';
-    while (ret == 1023) {
-        gchar more[1024];
-        ret = fread (more, 1, 1024, fp);
-        g_realloc (result, res_size + ret);
-        strcpy (result + res_size - 1, more);
-        res_size += ret; /* We have the extra byte already from above */
+/* Look for a given string on a file descriptor */
+
+typedef struct {
+    GMainLoop  *loop;
+    const char *target;
+    gboolean    found;
+} DistroCheckEvalFDInfo;
+
+static void
+distro_check_eval_fd_read_line_cb (RCLineBuf *line_buf, const char *line,
+                       gpointer user_data)
+{
+    DistroCheckEvalFDInfo *info = user_data;
+
+    if (strstr (line, info->target)) {
+        info->found = TRUE;
+        g_main_quit (info->loop);
     }
+}
 
-    pclose (fp);
-    *out_buf = result;
+static void
+distro_check_eval_fd_read_done_cb (RCLineBuf *line_buf, RCLineBufStatus status,
+                       gpointer user_data)
+{
+    DistroCheckEvalFDInfo *info = user_data;
 
-    return res_size;
+    g_main_quit (info->loop);
 }
 
 static gboolean
-check_string_in_data (gint (*data_func) (gchar *, gchar **),
-                      gchar *data_arg,
-                      gchar *str,
-                      gboolean exact)
+distro_check_eval_fd (DistroCheck *check, int fd)
 {
-    gchar *data_out;
+    RCLineBuf *line_buf;
+    GMainLoop *loop;
+    DistroCheckEvalFDInfo info;
+
+    line_buf = rc_line_buf_new ();
+    rc_line_buf_set_fd (line_buf, fd);
+
+    loop = g_main_new (FALSE);
+    info.loop = loop;
+
+    info.target = check->substring;
+    info.found = FALSE;
+
+    g_signal_connect (line_buf, "read_line",
+                      (GCallback) distro_check_eval_fd_read_line_cb, &info);
+    g_signal_connect (line_buf, "read_done",
+                      (GCallback) distro_check_eval_fd_read_done_cb, &info);
+
+    g_main_run (loop);
+
+    g_object_unref (line_buf);
+
+    g_main_destroy (loop);
+
+    return info.found;
+}
+
+/* Look in a file for a string */
+
+static gboolean
+distro_check_file_eval (DistroCheck *check)
+{
+    int fd;
     gboolean ret;
 
-    if (data_func (data_arg, &data_out) < 0)
+    if ((fd = open (check->source, O_RDONLY)) == -1)
         return FALSE;
 
-    if (exact) {
-        if (strcmp (data_out, str) == 0)
-            ret = TRUE;
-        else
-            ret = FALSE;
-    } else {
-        if (strstr (data_out, str) != NULL)
-            ret = TRUE;
-        else
-            ret = FALSE;
-    }
+    ret = distro_check_eval_fd (check, fd);
 
-    g_free (data_out);
+    /* FIXME: rc_close */
+    close (fd);
+
     return ret;
 }
 
-static gboolean
-func_string_in_file (gpointer arg1, gpointer arg2, gpointer arg3)
-{
-    gchar *fn = (gchar *) arg1;
-    gchar *str = (gchar *) arg2;
-    gboolean exact = (arg3 != NULL);
+/* Run a command, look for a string */
 
-    return check_string_in_data (suck_file, fn, str, exact);
+static gboolean
+distro_check_command_eval (DistroCheck *check)
+{
+    int fds[2];
+    pid_t pid;
+    gboolean ret;
+
+    if (pipe (fds))
+        return FALSE;
+
+    pid = fork ();
+
+    if (pid == -1) {
+        close (fds[0]);
+        close (fds[1]);
+        return FALSE;
+    }
+
+    if (pid == 0) {
+        close (fds[0]);
+
+        fflush (stdout);
+        dup2 (fds[1], STDOUT_FILENO);
+
+        fflush (stderr);
+        dup2 (fds[1], STDERR_FILENO);
+
+        execlp ("/bin/sh", "/bin/sh", "-c", check->source, NULL);
+
+        _exit (-1);
+    }
+
+    close (fds[1]);
+
+    waitpid (pid, NULL, 0);
+
+    ret = distro_check_eval_fd (check, fds[0]);
+
+    close (fds[0]);
+
+    return ret;
 }
 
+/* Run a check for a distribution */
+
 static gboolean
-func_nth_string_in_file (gpointer arg1, gpointer arg2, gpointer arg3)
+distro_check_eval (DistroCheck *check)
 {
-/*
-    gchar *fn = (gchar *) arg1;
-    gchar *str = (gchar *) arg2;
-    gint n = (gint) arg3;
-*/
-    g_error ("Implement nth_string_in_file in rc-distro.c!");
+    switch (check->type) {
+    case DISTRO_CHECK_TYPE_FILE:
+        return distro_check_file_eval (check);
+    case DISTRO_CHECK_TYPE_COMMAND:
+        return distro_check_command_eval (check);
+    }
+
     return FALSE;
 }
 
+/* Run a list of checks (results are ANDed together) */
 
 static gboolean
-func_sys (gpointer arg1, gpointer arg2, gpointer arg3)
+distro_check_eval_list (GSList *checks)
 {
-    gchar *cmd = (gchar *) arg1;
-    gchar *str = (gchar *) arg2;
-    gboolean exact = (arg3 != NULL);
+    GSList *iter;
+    gboolean ret = TRUE;
 
-    return check_string_in_data (call_system, cmd, str, exact);
+    for (iter = checks; iter; iter = iter->next) {
+        DistroCheck *check = iter->data;
+
+        ret = ret && distro_check_eval (check);
+    }
+
+    return ret;
 }
 
-/* These are here to shut gcc up about unused functions */
-void *foo_unused__func_nth_string_in_file = func_nth_string_in_file;
-void *foo_unused__func_sys = func_sys;
+/* A distribution record */
+
+typedef struct {
+    char                *name;
+    char                *version;
+    RCArch               arch;
+    RCDistroPackageType  type;
+    char                *target;
+    RCDistroStatus       status;
+    time_t               death_date;
+} Distro;
+
+static Distro *system_distro = NULL;
+
+static Distro *
+distro_new (void)
+{
+    return g_new0 (Distro, 1);
+}
+
+static void
+distro_free (Distro *distro)
+{
+    g_free (distro->name);
+    g_free (distro->version);
+    g_free (distro->target);
+
+    g_free (distro);
+}
+
+/* The SAX parser for the distributions.xml file */
+
+typedef enum {
+    PARSER_DISTROS,
+    PARSER_DISTRO,
+    PARSER_NAME,
+    PARSER_VERSION,
+    PARSER_ARCH,
+    PARSER_TYPE,
+    PARSER_TARGET,
+    PARSER_STATUS,
+    PARSER_ENDDATE,
+    PARSER_DETECT,
+    PARSER_FILE,
+    PARSER_COMMAND,
+    PARSER_UNKNOWN,
+} ParserState;
+
+typedef struct {
+    /* A stack of the various states we've walked through */
+    GSList        *state;
+
+    /* Our current potential distribution, and the checks for it */
+    Distro        *cur_distro;
+    GSList        *cur_checks;
+
+    /* Character data accumulator */
+    GString       *text_buffer;
+
+    /* Once we find a matching distro, it gets returned here */
+    Distro        *our_distro;
+
+    /* The compatability list for our system architecture */ 
+    GSList        *compat_arch_list;
+
+    /* A backpointer to our parser context */
+    xmlParserCtxt *ctxt;
+} DistroParseState;
+
+static void
+parser_push_state (DistroParseState *state, ParserState new_state)
+{
+    state->state = g_slist_prepend (state->state,
+                                    GINT_TO_POINTER (new_state));
+}
+
+static ParserState
+parser_pop_state (DistroParseState *state)
+{
+    ParserState ret;
+
+    ret = GPOINTER_TO_INT (state->state->data);
+    state->state = g_slist_delete_link (state->state, state->state);
+
+    return ret;
+}
+
+static ParserState
+parser_get_state (DistroParseState *state)
+{
+    return GPOINTER_TO_INT (state->state->data);
+}
+
+static void
+sax_start_document (void *data)
+{
+    DistroParseState *state = data;
+
+    state->state = NULL;
+    state->cur_distro = NULL;
+    state->cur_checks = NULL;
+    state->our_distro = NULL;
+    state->compat_arch_list =
+        rc_arch_get_compat_list (rc_arch_get_system_arch ());
+    state->text_buffer = g_string_new ("");
+}
+
+static void
+sax_end_document (void *data)
+{
+    DistroParseState *state = data;
+
+    g_slist_free (state->compat_arch_list);
+    g_string_free (state->text_buffer, TRUE);
+}
+
+static void
+sax_start_element (void *data, const xmlChar *name, const xmlChar **attrs)
+{
+    DistroParseState *state = data;
+    DistroCheck *check = NULL;
+    int i;
+
+    state->text_buffer = g_string_truncate (state->text_buffer, 0);
+
+    if (!strcmp (name, "distros")) {
+        parser_push_state (state, PARSER_DISTROS);
+        return;
+    }
+
+    if (!strcmp (name, "distro")) {
+        if (parser_get_state (state) == PARSER_DISTROS) {
+            parser_push_state (state, PARSER_DISTRO);
+            state->cur_distro = distro_new ();
+        } else
+            parser_push_state (state, PARSER_UNKNOWN);
+        return;
+    }
+
+    if (!strcmp (name, "name")) {
+        if (parser_get_state (state) == PARSER_DISTRO)
+            parser_push_state (state, PARSER_NAME);
+        else
+            parser_push_state (state, PARSER_UNKNOWN);
+        return;
+    }
+
+    if (!strcmp (name, "version")) {
+        if (parser_get_state (state) == PARSER_DISTRO)
+            parser_push_state (state, PARSER_VERSION);
+        else
+            parser_push_state (state, PARSER_UNKNOWN);
+        return;
+    }
+
+    if (!strcmp (name, "arch")) {
+        if (parser_get_state (state) == PARSER_DISTRO)
+            parser_push_state (state, PARSER_ARCH);
+        else
+            parser_push_state (state, PARSER_UNKNOWN);
+        return;
+    }
+
+    if (!strcmp (name, "type")) {
+        if (parser_get_state (state) == PARSER_DISTRO)
+            parser_push_state (state, PARSER_TYPE);
+        else
+            parser_push_state (state, PARSER_UNKNOWN);
+        return;
+    }
+
+    if (!strcmp (name, "target")) {
+        if (parser_get_state (state) == PARSER_DISTRO)
+            parser_push_state (state, PARSER_TARGET);
+        else
+            parser_push_state (state, PARSER_UNKNOWN);
+        return;
+    }
+
+    if (!strcmp (name, "status")) {
+        if (parser_get_state (state) == PARSER_DISTRO)
+            parser_push_state (state, PARSER_STATUS);
+        else
+            parser_push_state (state, PARSER_UNKNOWN);
+        return;
+    }
+
+    if (!strcmp (name, "enddate")) {
+        if (parser_get_state (state) == PARSER_DISTRO)
+            parser_push_state (state, PARSER_ENDDATE);
+        else
+            parser_push_state (state, PARSER_UNKNOWN);
+        return;
+    }
+
+    if (!strcmp (name, "detect")) {
+        if (parser_get_state (state) == PARSER_DISTRO)
+            parser_push_state (state, PARSER_DETECT);
+        else
+            parser_push_state (state, PARSER_UNKNOWN);
+        return;
+    }
+
+    if (!strcmp (name, "file")) {
+        if (parser_get_state (state) == PARSER_DETECT) {
+            parser_push_state (state, PARSER_FILE);
+            check = distro_check_new ();
+            check->type = DISTRO_CHECK_TYPE_FILE;
+        } else
+            parser_push_state (state, PARSER_UNKNOWN);
+        goto CHECK;
+    }
+
+    if (!strcmp (name, "command")) {
+        if (parser_get_state (state) == PARSER_DETECT) {
+            parser_push_state (state, PARSER_COMMAND);
+            check = distro_check_new ();
+            check->type = DISTRO_CHECK_TYPE_COMMAND;
+        } else
+            parser_push_state (state, PARSER_UNKNOWN);
+        goto CHECK;
+    }
+
+    parser_push_state (state, PARSER_UNKNOWN);
+    return;
+
+  CHECK:
+    for (i = 0; attrs[i]; i += 2) {
+        if (!strcmp (attrs[i], "source"))
+            check->source = g_strdup (attrs[i + 1]);
+        else if (!strcmp (attrs[i], "substring"))
+            check->substring = g_strdup (attrs[i + 1]);
+    }
+
+    if (check->source && check->substring)
+        state->cur_checks = g_slist_prepend (state->cur_checks, check);
+    else {
+        rc_debug (RC_DEBUG_LEVEL_WARNING,
+                  "incomplete distro check tag");
+        distro_check_free (check);
+    }
+}
+
+static char *
+parser_get_chars (DistroParseState *state)
+{
+    char *ret;
+
+    ret = g_strdup (state->text_buffer->str);
+    g_string_truncate (state->text_buffer, 0);
+
+    return ret;
+}
+
+static void
+sax_warning (void *data, const char *msg, ...)
+{
+    va_list args;
+    char *tmp;
+
+    va_start (args, msg);
+
+    tmp = g_strdup_vprintf (msg, args);
+    rc_debug (RC_DEBUG_LEVEL_WARNING, tmp);
+    g_free (tmp);
+
+    va_end (args);
+}
+
+static void sax_parser_disable (DistroParseState *state);
+
+static void
+sax_end_element (void *data, const xmlChar *name)
+{
+    DistroParseState *state = data;
+    char *tmp;
+
+    switch (parser_pop_state (state)) {
+    case PARSER_NAME:
+        state->cur_distro->name = parser_get_chars (state);
+        break;
+    case PARSER_VERSION:
+        state->cur_distro->version = parser_get_chars (state);
+        break;
+    case PARSER_ARCH:
+        tmp = parser_get_chars (state);
+        state->cur_distro->arch = rc_arch_from_string (tmp);
+        g_free (tmp);
+        break;
+    case PARSER_TYPE:
+        tmp = parser_get_chars (state);
+        if (!strcmp (tmp, "rpm"))
+            state->cur_distro->type = RC_DISTRO_PACKAGE_TYPE_RPM;
+        else if (!strcmp (tmp, "dpkg"))
+            state->cur_distro->type = RC_DISTRO_PACKAGE_TYPE_DPKG;
+        else
+            state->cur_distro->type = RC_DISTRO_PACKAGE_TYPE_UNKNOWN;
+        g_free (tmp);
+        break;
+    case PARSER_TARGET:
+        state->cur_distro->target = parser_get_chars (state);
+        break;
+    case PARSER_STATUS:
+        tmp = parser_get_chars (state);
+        if (!strcmp (tmp, "unsupported"))
+            state->cur_distro->status = RC_DISTRO_STATUS_UNSUPPORTED;
+        else if (!strcmp (tmp, "presupported"))
+            state->cur_distro->status = RC_DISTRO_STATUS_PRESUPPORTED;
+        else if (!strcmp (tmp, "supported"))
+            state->cur_distro->status = RC_DISTRO_STATUS_SUPPORTED;
+        else if (!strcmp (tmp, "deprecated"))
+            state->cur_distro->status = RC_DISTRO_STATUS_DEPRECATED;
+        else if (!strcmp (tmp, "retired"))
+            state->cur_distro->status = RC_DISTRO_STATUS_RETIRED;
+        else
+            state->cur_distro->status = RC_DISTRO_STATUS_UNSUPPORTED;
+        g_free (tmp);
+        break;
+    case PARSER_ENDDATE:
+        tmp = parser_get_chars (state);
+        state->cur_distro->death_date = strtoul (tmp, NULL, 10);
+        g_free (tmp);
+        break;
+    case PARSER_DETECT:
+        /* We'll run the checks when we finish the distro tag, not the
+         * detect tag */
+    case PARSER_FILE:
+        /* All handled by attributes */
+        break;
+    case PARSER_COMMAND:
+        /* All handled by attributes */
+        break;
+    case PARSER_DISTRO:
+        if (rc_arch_get_compat_score (
+                state->compat_arch_list, state->cur_distro->arch) &&
+            distro_check_eval_list (state->cur_checks))
+        {
+            state->our_distro = state->cur_distro;
+            sax_parser_disable (state);
+        } else
+            distro_free (state->cur_distro);
+        g_slist_foreach (state->cur_checks, (GFunc) distro_check_free, NULL);
+        g_slist_free (state->cur_checks);
+        state->cur_checks = NULL;
+        break;
+    case PARSER_DISTROS:
+        break;
+    case PARSER_UNKNOWN:
+        break;
+    }
+}
+
+static void
+sax_characters (void *data, const xmlChar *chars, int len)
+{
+    DistroParseState *state = data;
+
+    state->text_buffer = g_string_append_len (
+        state->text_buffer, chars, len);
+}
+
+static void
+sax_parser_enable (DistroParseState *state)
+{
+    state->ctxt->sax->startDocument = sax_start_document;
+    state->ctxt->sax->endDocument = sax_end_document;
+    state->ctxt->sax->startElement = sax_start_element;
+    state->ctxt->sax->endElement = sax_end_element;
+    state->ctxt->sax->characters = sax_characters;
+
+    state->ctxt->sax->warning = sax_warning;
+    state->ctxt->sax->error = sax_warning;
+    state->ctxt->sax->fatalError = sax_warning;
+}
+
+static void
+sax_parser_disable (DistroParseState *state)
+{
+    state->ctxt->sax->startDocument = 0;
+    state->ctxt->sax->endDocument = 0;
+    state->ctxt->sax->startElement = 0;
+    state->ctxt->sax->endElement = 0;
+    state->ctxt->sax->characters = 0;
+}
+
+/* Public methods */
+
+gboolean
+rc_distro_parse_xml (const char *xml_buf,
+                     guint compressed_length)
+{
+    DistroParseState state;
+    xmlParserCtxt *ctxt;
+    GByteArray *byte_array = NULL;
+    const char *buf;
+
+    if (xml_buf == NULL) {
+        xml_buf = distros_xml;
+        compressed_length = distros_xml_len;
+    }
+
+    if (compressed_length) {
+        if (rc_uncompress_memory ((char *)xml_buf, compressed_length,
+                                  &byte_array))
+        {
+            rc_debug (RC_DEBUG_LEVEL_WARNING, "Uncompression failed");
+            return FALSE;
+        }
+        buf = byte_array->data;
+    } else
+        buf = xml_buf;
+
+    ctxt = xmlCreateDocParserCtxt ((char *)buf);
+    if (!ctxt)
+        goto ERROR;
+
+    state.ctxt = ctxt;
+
+    sax_parser_enable (&state);
+
+    ctxt->userData = &state;
+
+    xmlParseDocument (ctxt);
+
+    if (!ctxt->wellFormed)
+        rc_debug (RC_DEBUG_LEVEL_WARNING,
+                  "distribution list not well formed");
+    xmlFreeParserCtxt (ctxt);
+
+    if (state.our_distro) {
+        if (system_distro)
+            distro_free (system_distro);
+        system_distro = state.our_distro;
+        if (byte_array)
+            g_byte_array_free (byte_array, TRUE);
+        if (system_distro->name && system_distro->version &&
+            system_distro->target)
+            return TRUE;
+        distro_free (system_distro);
+        system_distro = NULL;
+    }
+
+  ERROR:
+    if (byte_array)
+        g_byte_array_free (byte_array, TRUE);
+
+    return FALSE;
+}
 
 const char *
-rc_distro_option_lookup(RCDistroType *distro, const char *key)
+rc_distro_get_name (void)
 {
-    return g_hash_table_lookup(distro->extra_hash, key);
-} /* rc_distro_option_lookup */
+    g_assert (system_distro);
+    return (const char *)system_distro->name;
+}
 
-RCDistroType *
-rc_figure_distro (void)
+const char *
+rc_distro_get_version (void)
 {
-    int i = 0;
-    RCArch arch;
-    GSList *compat_arch_list;
-    gchar *distro_name = NULL;
-    char **options;
+    g_assert (system_distro);
+    return (const char *)system_distro->version;
+}
 
-    static RCDistroType *dtype = NULL;
+RCArch
+rc_distro_get_arch (void)
+{
+    g_assert (system_distro);
+    return system_distro->arch;
+}
 
-    if (!dtype) {
-        if (!getenv ("RC_DISTRO_NAME")) {
-            /* Go through each chunk and figure out if it matches */
-            arch = rc_arch_get_system_arch ();
-            if (arch == RC_ARCH_UNKNOWN) {
-                g_warning("Unable to figure out what architecture you're on");
-                return NULL;
-            }
-            compat_arch_list = rc_arch_get_compat_list (arch);
-            
-            while (distro_figurers[i].unique_name) {
-                gboolean result;
-                if (!distro_figurers[i].func1) {
-                    g_error ("Malformed distro discovery array");
-                }
+RCDistroPackageType
+rc_distro_get_package_type (void)
+{
+    g_assert (system_distro);
+    return system_distro->type;
+}
 
-                /* Check if this is the right architecture */
-                if (rc_arch_get_compat_score (
-                        compat_arch_list, distro_figurers[i].arch) < 0) {
-                    i++;
-                    continue;
-                }
-                
-                result = (*distro_figurers[i].func1) (distro_figurers[i].param11,
-                                                      distro_figurers[i].param12,
-                                                      distro_figurers[i].param13);
-            
-                if (distro_figurers[i].op) {
-                    gboolean res2;
-                    res2 = (*distro_figurers[i].func2) (distro_figurers[i].param21,
-                                                        distro_figurers[i].param22,
-                                                        distro_figurers[i].param23);
-                    switch (distro_figurers[i].op) {
-                        case CHECK_OP_AND:
-                            result = result && res2;
-                            break;
-                        case CHECK_OP_OR:
-                            result = result || res2;
-                            break;
-                        case CHECK_OP_NOT:
-                            result = result && !res2;
-                            break;
-                        default:
-                            g_warning ("Unkown check_op!\n");
-                            break;
-                    }
-                }
-                
-                if (result) {
-                    /* We'll take this one! */
-                    distro_name = distro_figurers[i].unique_name;
-                    break;
-                }
-                i++;
-            }
-        } else {
-            distro_name = getenv ("RC_DISTRO_NAME");
-        }
+const char *
+rc_distro_get_target (void)
+{
+    g_assert (system_distro);
+    return (const char *)system_distro->target;
+}
 
-        if (distro_name) {
-            /* It's a real one! */
-            int j = 0;
-            while (distro_types[j].unique_name &&
-                   strcmp (distro_name, distro_types[j].unique_name) != 0)
-                j++;
-            
-            if (distro_types[j].unique_name) {
-                dtype = &distro_types[j];
-            }
-        }
-    }
+RCDistroStatus
+rc_distro_get_status (void)
+{
+    g_assert (system_distro);
+    return system_distro->status;
+}
 
-    if (dtype) {
-        dtype->extra_hash = g_hash_table_new(g_str_hash, g_str_equal);
-        if (dtype->extra_stuff) {
-            options = g_strsplit(dtype->extra_stuff, ",", 0);
-            for (i = 0; options[i]; i++) {
-                char **parseit;
-            
-                parseit = g_strsplit(options[i], "=", 2);
-                if (!parseit[0] || !parseit[1]) {
-                    g_warning("Invalid distribution option: %s", options[i]);
-                    continue;
-                }
-                g_hash_table_insert(
-                    dtype->extra_hash, g_strstrip(parseit[0]), 
-                    g_strstrip(parseit[1]));
-                g_strfreev(parseit);
-            }
-            g_strfreev(options);
-        }
-    }
-
-    return dtype;
+time_t
+rc_distro_get_death_date (void)
+{
+    g_assert (system_distro);
+    return system_distro->death_date;
 }

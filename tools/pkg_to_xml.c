@@ -38,6 +38,8 @@ int main (int argc, char *argv[])
 
     g_type_init ();
     
+    if (!rc_distro_parse_xml (NULL, 0))
+        exit (-1);
     packman = rc_distman_new ();
 
     if (! packman)

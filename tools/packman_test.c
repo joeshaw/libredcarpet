@@ -13,6 +13,7 @@
 #include <rpm/rpmlib.h>
 #endif
 
+#include <rc-distro.h>
 #include <rc-distman.h>
 
 /* DEBUG ONLY */
@@ -585,10 +586,16 @@ int main (int argc, char **argv)
     RCPackman *p;
     gboolean done = FALSE;
 
+    rl_initialize ();
+
     g_type_init ();
 
     transaction.install_pkgs = NULL;
     transaction.remove_pkgs = NULL;
+
+    if (!rc_distro_parse_xml (NULL, 0)) {
+        exit (-1);
+    }
 
     p = rc_distman_new ();
 

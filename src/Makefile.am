@@ -29,6 +29,7 @@ dpkg_sources2 = $(dpkg_sources)
 endif
 
 BUILT_SOURCES =				\
+	distributions-xml.h		\
 	rc-marshal.h			\
 	rc-marshal.c
 
@@ -119,7 +120,8 @@ EXTRA_DIST =				\
 	rc-channel-private.h		\
 	rc-dpkg-helper.c 		\
 	make_stub.sh			\
-	rc-marshal.list
+	rc-marshal.list			\
+	packer.pl
 
 if ENABLE_DPKG
 dpkghelperdir = $(libdir)/@PRIVATE_NAMESPACE@
@@ -196,6 +198,11 @@ else
 	cp libredcarpettmp.a libredcarpet.a
 endif
 
+distributions-xml.h: distributions.xml packer.pl
+	gzip -9 -c distributions.xml > distributions.xml.gz \
+	&& ./packer.pl distributions.xml.gz distros_xml > distributions-xml.h \
+	&& rm distributions.xml.gz
+
 ###
 ### Deal with auto-generating the signal marshallers
 ###
@@ -220,3 +227,4 @@ stamp-rc-marshal.c: rc-marshal.list
 
 clean-local:
 	rm -f libredcarpet.a
+	rm -f distributions-xml.h

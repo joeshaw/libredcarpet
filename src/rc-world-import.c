@@ -63,16 +63,8 @@ void
 rc_world_add_channels_from_xml (RCWorld *world,
                                 xmlNode *node)
 {
-    RCDistroType *dt;
-    char *distro_name = NULL;
-
     g_return_if_fail (world != NULL);
     g_return_if_fail (node != NULL);
-
-    dt = rc_figure_distro ();
-    if (dt) {
-        distro_name = dt->pretend_name ? dt->pretend_name : dt->unique_name;
-    }
 
     while (node) {
         char *tmp;
@@ -101,12 +93,8 @@ rc_world_add_channels_from_xml (RCWorld *world,
             for (iter = targets; iter && *iter; iter++) {
                 distro_target = g_slist_append (distro_target, *iter);
                 
-                if (distro_name) {
-                    if (! strcmp (*iter, distro_name))
-                        valid_channel_for_distro = TRUE;
-                } else {
+                if (!strcmp (*iter, rc_distro_get_target ()))
                     valid_channel_for_distro = TRUE;
-                }
             }
 
             g_free (targets);

@@ -1,0 +1,395 @@
+<distros>
+  <distro>
+    <name>LinuxPPC</name>
+    <version>2000</version>
+		<arch>ppc</arch>
+		<type>rpm</type>
+		<target>linuxppc-2000-ppc</target>
+		<status>retired</status>
+		<enddate>0</enddate>
+		<detect>
+			<file source="/etc/redhat-release" substring="LinuxPPC 2000"/>
+		</detect>
+	</distro>
+  <distro>
+    <name>Linux/PPC</name>
+    <version>2000 Q4</version>
+		<arch>ppc</arch>
+		<type>rpm</type>
+		<target>linuxppc-2000q4-ppc</target>
+		<status>retired</status>
+		<enddate>0</enddate>
+		<detect>
+			<file source="/etc/redhat-release" substring="Linux/PPC 2000 Q4"/>
+		</detect>
+	</distro>
+
+	<distro>
+		<name>Yellow Dog Linux</name>
+		<version>1.2</version>
+		<arch>ppc</arch>
+		<type>rpm</type>
+		<target>yellowdog-12-ppc</target>
+		<status>retired</status>
+		<enddate>0</enddate>
+		<detect>
+			<file source="/etc/yellowdog-release" substring="1.2"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>Yellow Dog Linux</name>
+		<version>2.0</version>
+		<arch>ppc</arch>
+		<type>rpm</type>
+		<target>yellowdog-20-ppc</target>
+		<status>retired</status>
+		<enddate>0</enddate>
+		<detect>
+			<file source="/etc/yellowdog-release" substring="2.0"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>Yellow Dog Linux</name>
+		<version>2.1</version>
+		<arch>ppc</arch>
+		<type>rpm</type>
+		<target>yellowdog-21-ppc</target>
+		<status>retired</status>
+		<enddate>0</enddate>
+		<detect>
+			<file source="/etc/yellowdog-release" substring="2.1"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>Yellow Dog Linux</name>
+		<version>2.2</version>
+		<arch>ppc</arch>
+		<type>rpm</type>
+		<target>yellowdog-22-ppc</target>
+		<status>supported</status>
+		<detect>
+			<file source="/etc/yellowdog-release" substring="2.2"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>Yellow Dog Linux</name>
+		<version>2.3</version>
+		<arch>ppc</arch>
+		<type>rpm</type>
+		<target>yellowdog-23-ppc</target>
+		<status>presupported</status>
+		<detect>
+			<file source="/etc/yellowdog-release" substring="2.3"/>
+		</detect>
+	</distro>
+
+	<distro>
+		<name>Linux Mandrake</name>
+		<version>7.0</version>
+		<arch>i586</arch>
+		<type>rpm</type>
+		<target>mandrake-70-i586</target>
+		<status>retired</status>
+		<enddate>0</enddate>
+		<detect>
+			<file source="/etc/mandrake-release" substring="7.0"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>Linux Mandrake</name>
+		<version>7.1</version>
+		<arch>i586</arch>
+		<type>rpm</type>
+		<target>mandrake-71-i586</target>
+		<status>retired</status>
+		<enddate>0</enddate>
+		<detect>
+			<file source="/etc/mandrake-release" substring="7.1"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>Linux Mandrake</name>
+		<version>7.2</version>
+		<arch>i586</arch>
+		<type>rpm</type>
+		<target>mandrake-72-i586</target>
+		<status>retired</status>
+		<enddate>0</enddate>
+		<detect>
+			<file source="/etc/mandrake-release" substring="7.2"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>Linux Mandrake</name>
+		<version>8.0</version>
+		<arch>i586</arch>
+		<type>rpm</type>
+		<target>mandrake-80-i586</target>
+		<status>retired</status>
+		<enddate>0</enddate>
+		<detect>
+			<file source="/etc/mandrake-release" substring="8.0"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>Linux Mandrake</name>
+		<version>8.1</version>
+		<arch>i586</arch>
+		<type>rpm</type>
+		<target>mandrake-81-i586</target>
+		<status>supported</status>
+		<detect>
+			<file source="/etc/mandrake-release" substring="8.1"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>Linux Mandrake</name>
+		<version>8.2</version>
+		<arch>i586</arch>
+		<type>rpm</type>
+		<target>mandrake-82-i586</target>
+		<status>supported</status>
+		<detect>
+			<file source="/etc/mandrake-release" substring="8.2"/>
+		</detect>
+	</distro>
+
+	<distro>
+		<name>Red Hat Linux</name>
+		<version>6.0</version>
+		<arch>i386</arch>
+		<type>rpm</type>
+		<target>redhat-60-i386</target>
+		<status>retired</status>
+		<enddate>0</enddate>
+		<detect>
+			<file source="/etc/redhat-release" substring="6.0"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>Red Hat Linux</name>
+		<version>6.1</version>
+		<arch>i386</arch>
+		<type>rpm</type>
+		<target>redhat-61-i386</target>
+		<status>retired</status>
+		<enddate>0</enddate>
+		<detect>
+			<file source="/etc/redhat-release" substring="6.1"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>Red Hat Linux</name>
+		<version>6.2</version>
+		<arch>i386</arch>
+		<type>rpm</type>
+		<target>redhat-62-i386</target>
+		<status>supported</status>
+		<detect>
+			<file source="/etc/redhat-release" substring="6.2"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>Red Hat Linux</name>
+		<version>7.0</version>
+		<arch>i386</arch>
+		<type>rpm</type>
+		<target>redhat-70-i386</target>
+		<status>retired</status>
+		<enddate>0</enddate>
+		<detect>
+			<file source="/etc/redhat-release" substring="7.0"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>Red Hat Linux</name>
+		<version>7.1</version>
+		<arch>i386</arch>
+		<type>rpm</type>
+		<target>redhat-71-i386</target>
+		<status>supported</status>
+		<detect>
+			<file source="/etc/redhat-release" substring="7.1"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>Red Hat Linux</name>
+		<version>7.2</version>
+		<arch>i386</arch>
+		<type>rpm</type>
+		<target>redhat-72-i386</target>
+		<status>supported</status>
+		<detect>
+			<file source="/etc/redhat-release" substring="7.2"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>Red Hat Linux</name>
+		<version>7.3</version>
+		<arch>i386</arch>
+		<type>rpm</type>
+		<target>redhat-73-i386</target>
+		<status>supported</status>
+		<detect>
+			<file source="/etc/redhat-release" substring="7.3"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>Red Hat Linux</name>
+		<version>8.0</version>
+		<arch>i386</arch>
+		<type>rpm</type>
+		<target>redhat-80-i386</target>
+		<status>presupported</status>
+		<detect>
+			<file source="/etc/redhat-release" substring="8.0"/>
+		</detect>
+	</distro>
+
+	<distro>
+		<name>TurboLinux</name>
+		<version>6.0</version>
+		<arch>i386</arch>
+		<type>rpm</type>
+		<target>turbolinux-60-i386</target>
+		<status>retired</status>
+		<enddate>0</enddate>
+		<detect>
+			<file source="/etc/turbolinux-release" substring="6.0"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>TurboLinux</name>
+		<version>6.0</version>
+		<arch>i386</arch>
+		<type>rpm</type>
+		<target>turbolinux-70-i386</target>
+		<status>retired</status>
+		<enddate>0</enddate>
+		<detect>
+			<file source="/etc/turbolinux-release" substring="7.0"/>
+		</detect>
+	</distro>
+
+	<distro>
+		<name>SuSE Linux</name>
+		<version>6.3</version>
+		<arch>i386</arch>
+		<type>rpm</type>
+		<target>suse-63-i386</target>
+		<status>retired</status>
+		<enddate>0</enddate>
+		<detect>
+			<file source="/etc/SuSE-release" substring="6.3"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>SuSE Linux</name>
+		<version>6.4</version>
+		<arch>i386</arch>
+		<type>rpm</type>
+		<target>suse-64-i386</target>
+		<status>retired</status>
+		<enddate>0</enddate>
+		<detect>
+			<file source="/etc/SuSE-release" substring="6.4"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>SuSE Linux</name>
+		<version>7.0</version>
+		<arch>i386</arch>
+		<type>rpm</type>
+		<target>suse-70-i386</target>
+		<status>retired</status>
+		<enddate>0</enddate>
+		<detect>
+			<file source="/etc/SuSE-release" substring="7.0"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>SuSE Linux</name>
+		<version>7.1</version>
+		<arch>i386</arch>
+		<type>rpm</type>
+		<target>suse-71-i386</target>
+		<status>retired</status>
+		<enddate>0</enddate>
+		<detect>
+			<file source="/etc/SuSE-release" substring="7.1"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>SuSE Linux</name>
+		<version>7.2</version>
+		<arch>i386</arch>
+		<type>rpm</type>
+		<target>suse-72-i386</target>
+		<status>retired</status>
+		<enddate>0</enddate>
+		<detect>
+			<file source="/etc/SuSE-release" substring="7.2"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>SuSE Linux</name>
+		<version>7.3</version>
+		<arch>i386</arch>
+		<type>rpm</type>
+		<target>suse-73-i386</target>
+		<status>supported</status>
+		<detect>
+			<file source="/etc/SuSE-release" substring="7.3"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>SuSE Linux</name>
+		<version>8.0</version>
+		<arch>i386</arch>
+		<type>rpm</type>
+		<target>suse-80-i386</target>
+		<status>supported</status>
+		<detect>
+			<file source="/etc/SuSE-release" substring="8.0"/>
+		</detect>
+	</distro>
+
+	<distro>
+		<name>Debian GNU/Linux</name>
+		<version>2.2 (Potato)</version>
+		<arch>i386</arch>
+		<type>dpkg</type>
+		<target>debian-potato-i386</target>
+		<status>supported</status>
+		<detect>
+			<file source="/etc/debian_version" substring="2.2"/>
+		</detect>
+	</distro>
+
+	<distro>
+		<name>Solaris</name>
+		<version>7</version>
+		<arch>sparc64</arch>
+		<type>rpm</type>
+		<target>solaris-7-sun4</target>
+		<status>retired</status>
+		<enddate>0</enddate>
+		<detect>
+			<command source="uname -s" substring="SunOS"/>
+			<command source="uname -r" substring="5.7"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>Solaris</name>
+		<version>8</version>
+		<arch>sparc64</arch>
+		<type>rpm</type>
+		<target>solaris-8-sun4</target>
+		<status>supported</status>
+		<enddate>0</enddate>
+		<detect>
+			<command source="uname -s" substring="SunOS"/>
+			<command source="uname -r" substring="5.8"/>
+		</detect>
+	</distro>
+</distros>

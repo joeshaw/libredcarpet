@@ -1,3 +1,32 @@
+2002-08-03  Ian Peters  <itp@ximian.com>
+
+	* distributions.xml: added.  XML file describing every
+	distribution we recognize, and whether it's supported or not.
+
+	* packer.pl: added.  perl script to generate a C character array
+	from a file.
+
+	* Makefile.am: add distributions-xml.h to BUILT_SOURCES, packer.pl
+	to EXTRA_DIST, build distributions-xml.h out of distributions.xml
+	using packer.pl, and add distributions-xml.h to clean-local.
+
+	* .cvsignore: added distributions-xml.h
+
+	* rc-distro.[ch]: added.  Now parses distribution information out
+	of a supplied XML file -- or, if no XML file is supplied, uses a
+	gzipped backup copy as a fallback (the distribution-xml.h stuff
+	from above).  distributions.xml in CVS should be kept up to date,
+	and is used for things like the tools, etc, that have no need to
+	download their own copies, but long term, the client and daemon
+	should be downloading copies of these files.  Also has a new,
+	simpler public interface.
+
+	* rc-distman.c (rc_distman_new): no rc_figure_distro anymore,
+	simply use rc_distro_get_package_type directly
+
+	* rc-world-import.c (rc_world_add_channels_from_xml): no
+	rc_figure_distro, simply use rc_distro_get_target instead
+
 2002-08-02  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-resolver-queue.c (rc_resolver_queue_process_once): Fixed

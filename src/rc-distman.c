@@ -36,16 +36,8 @@
 RCPackman *
 rc_distman_new (void)
 {
-    RCDistroType *dtype;
 	RCPackman *packman = NULL;
     char *env;
-
-    dtype = rc_figure_distro ();
-
-    if (!dtype) {
-        g_warning("Cannot determine what distribution you're on");
-        return NULL;
-    }
 
     env = getenv("RC_PACKMAN_TYPE");
     if (env && g_strcasecmp(env, "dpkg") == 0) {
@@ -61,27 +53,27 @@ rc_distman_new (void)
         g_warning ("RPM support not enabled.");
 #endif
     } else {
-        switch (dtype->pkgtype) {
-            case RC_PKG_UNSUPPORTED:
-            case RC_PKG_UNKNOWN:
-                break;
-            case RC_PKG_DPKG:
+        switch (rc_distro_get_package_type ()) {
+        case RC_DISTRO_PACKAGE_TYPE_UNKNOWN:
+            break;
+        case RC_DISTRO_PACKAGE_TYPE_DPKG:
 #ifdef ENABLE_DPKG
-                packman = RC_PACKMAN (rc_debman_new ());
+            packman = RC_PACKMAN (rc_debman_new ());
 #else
-                g_warning ("DPKG support not enabled.");
+            g_warning ("DPKG support not enabled.");
 #endif
-                break;
-            case RC_PKG_RPM:
+            break;
+        case RC_DISTRO_PACKAGE_TYPE_RPM:
 #ifdef ENABLE_RPM
-                packman = RC_PACKMAN (rc_rpmman_new ());
+            packman = RC_PACKMAN (rc_rpmman_new ());
 #else
-                g_warning ("RPM support not enabled.");
+            g_warning ("RPM support not enabled.");
 #endif
-                break;
-            default:
-                g_error ("Cannot determine correct distman for your distro (%s)", dtype->unique_name);
-                break;
+            break;
+        default:
+            g_error ("Cannot determine correct distman for your distro (%s)",
+                     rc_distro_get_name ());
+            break;
         }
     }
 
