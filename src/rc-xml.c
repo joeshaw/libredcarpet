@@ -452,6 +452,9 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
             g_quark_from_string (rc_xml_strip (ctx->text_buffer));
         g_free (ctx->text_buffer);
         ctx->text_buffer = NULL;
+    } else if (!strcmp(name, "pretty_name")) {
+        ctx->current_package->pretty_name = rc_xml_strip (ctx->text_buffer);
+        ctx->text_buffer = NULL;
     } else if (!strcmp(name, "summary")) {
         ctx->current_package->summary = rc_xml_strip (ctx->text_buffer);
         ctx->text_buffer = NULL;

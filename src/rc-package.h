@@ -50,12 +50,12 @@ typedef gboolean (*RCPackageAndSpecCheckFn) (RCPackage *, RCPackageSpec *, gpoin
 
 struct _RCPackage {
     RCPackageSpec spec;
-    RCArch arch;
-
-    RCPackageSection section;
 
     gint refs;
 
+    RCArch arch;
+    RCPackageSection section;
+    
     guint32 file_size;
     guint32 installed_size;
 
@@ -72,6 +72,7 @@ struct _RCPackage {
     RCPackageDepArray *recommends_a;
 
     /* Filled in by package info XML */
+    gchar *pretty_name;
     gchar *summary;
     gchar *description;
 

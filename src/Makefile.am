@@ -64,7 +64,6 @@ libredcarpet_public_headers = 		\
 	rc-package-update.h		\
 	rc-package-section.h		\
         rc-packman.h                    \
-	rc-pretty-name.h		\
 	rc-queue-item.h			\
 	rc-resolver.h			\
 	rc-resolver-compare.h		\
@@ -107,7 +106,6 @@ libredcarpettmp_a_SOURCES =		\
 	rc-package-section.c		\
         rc-packman.c                    \
         rc-packman-private.h            \
-	rc-pretty-name.c		\
 	rc-queue-item.c			\
 	rc-resolver.c			\
 	rc-resolver-compare.c		\
@@ -149,7 +147,7 @@ rc-dpkg-helper.so: $(srcdir)/rc-dpkg-helper.c
 	gcc -fPIC -c -o rc-dpkg-helper.o $(srcdir)/rc-dpkg-helper.c
 	ld -soname rc-dpkg-helper -shared -o rc-dpkg-helper.so rc-dpkg-helper.o
 
-CLEANFILES += dpkg-helper.h rc-dpkg-helper.so
+CLEANFILES = dpkg-helper.h rc-dpkg-helper.so
 
 RPM_STUBS = rc-{rpm}.so.0 rc-{rpm_rpmio}.so.0 rc-{rpm_rpmio_rpmdb}-4.0.3.so rc-{rpm_rpmio_rpmdb}-4.0.4.so
 

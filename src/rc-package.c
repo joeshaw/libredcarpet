@@ -23,7 +23,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "rc-pretty-name.h"
 #include "rc-channel-private.h"
 #include "rc-world.h"
 #include "rc-arch.h"
@@ -196,21 +195,28 @@ rc_package_slist_unref (RCPackageSList *packages)
 RCPackageUpdateSList *
 rc_package_slist_sort_by_name (RCPackageSList *packages)
 {
-    return (g_slist_sort (packages, (GCompareFunc) rc_package_spec_compare_name));
+    return g_slist_sort (packages, (GCompareFunc) rc_package_spec_compare_name);
 } /* rc_package_slist_sort_by_name */
 
-static int pretty_name_package_strcmp (const RCPackage *a, const RCPackage *b)
+static gint
+rc_package_compare_pretty_name (void *a, void *b)
 {
-    return g_strcasecmp (rc_pretty_name_lookup (
-                             g_quark_to_string (a->spec.nameq)),
-                         rc_pretty_name_lookup (
-                             g_quark_to_string (b->spec.nameq)));
+    RCPackage *ap, *bp;
+    const char *one, *two;
+
+    ap = (RCPackage *) a;
+    bp = (RCPackage *) b;
+
+    one = ap->pretty_name ? ap->pretty_name : g_quark_to_string (ap->spec.nameq);
+    two = bp->pretty_name ? bp->pretty_name : g_quark_to_string (bp->spec.nameq);
+
+    return strcmp (one, two);
 }
 
 RCPackageUpdateSList *
 rc_package_slist_sort_by_pretty_name (RCPackageSList *packages)
 {
-    return (g_slist_sort (packages, (GCompareFunc) pretty_name_package_strcmp));
+    return g_slist_sort (packages, (GCompareFunc) rc_package_compare_pretty_name);
 } /* rc_package_slist_sort_by_pretty_name */
 
 static void
