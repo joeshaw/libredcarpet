@@ -419,7 +419,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     struct rpmDependencyConflict *conflicts;
     int transaction_flags, problem_filter;
 
-    install_flags = 0; /* Nothing interesting to do here */
+    transaction_flags = 0; /* Nothing interesting to do here */
     problem_filter =
         RPMPROB_FILTER_REPLACEPKG |
         RPMPROB_FILTER_REPLACEOLDFILES |
