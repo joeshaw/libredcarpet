@@ -11,7 +11,8 @@ rpm_sources =			\
 	rc-rpmman.h		\
 	rc-rpmman-types.h	\
 	rpm-rpmlead.h		\
-	rpm-signature.h
+	rpm-signature.h		\
+	rpm-ugid.h
 
 rpm_built_sources =		\
 	rpm-stubs.h

@@ -1,3 +1,11 @@
+2003-10-08  Joe Shaw  <joe@ximian.com>
+
+	* rpm-ugid.h: "Borrow" a header from RPM in the spirit of
+	rpm-signature.h and rpm-rpmlead.h so we can build statically on
+	Solaris.
+
+	* rc-rpmman.c: #include rpm-ugid.h
+
 2003-10-07  Joe Shaw  <joe@ximian.com>
 
 	* rc-packman.c (rc_packman_transact): Remove rollback from here.

@@ -45,6 +45,7 @@
 
 #include "rpm-rpmlead.h"
 #include "rpm-signature.h"
+#include "rpm-ugid.h"
 
 /*
  * We define this so people can't build or use libredcarpet against a
