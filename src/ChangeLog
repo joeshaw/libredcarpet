@@ -1,5 +1,9 @@
 2002-03-09  Jon Trowbridge  <trow@ximian.com>
 
+	* rc-world.c (remove_package_structs_generic): Uh, don't go
+	into an infinite loop if we decide not to remove a specific
+	package struct.  Double-doh!
+
 	* rc-queue-item.c (require_process_cb): Screen out "impossible"
 	installs from the list.  This could save us a lot of fruitless
 	branchless in some cases.

@@ -276,8 +276,8 @@ remove_package_structs_generic (GSList *slist, RCPackage *package_to_remove, RCC
                     g_slist_free_1 (iter);
                 }
             }
-            iter = next;
         }
+        iter = next;
     }
 
     /* Sanity check: make sure the head of the list didn't change. */
