@@ -1,5 +1,9 @@
 2001-02-19  Vladimir Vukicevic  <vladimir@ximian.com>
 
+	* rc-package-dep.c: rpm sucks my ass and ignores epochs and/or releases
+	in comparisons if they're not specified in the dependency -- so now
+	we do that for all deps, not just equals.
+
 	* rc-deps-util.c: Oops. Remove all but the /newest/ duplicate,
 	not all but the oldest (doh!)
 

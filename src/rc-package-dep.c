@@ -293,7 +293,7 @@ rc_package_dep_item_verify_relation (RCPackageDepItem *dep,
      * comparing.
      */
     if (rpmish) {
-        if (unweak_rel == RC_RELATION_EQUAL && (dep->spec.release == NULL || dep->spec.epoch == 0)) {
+        if ((dep->spec.release == NULL || dep->spec.epoch == 0)) {
             /* it's not depending on any particular release */
             newspecspec.name = spec->name;
             newspecspec.epoch = dep->spec.epoch ? spec->epoch : 0;
