@@ -1,3 +1,10 @@
+2003-04-17  Jon Trowbridge  <trow@ximian.com>
+
+	* deptestomatic.c (load_channel): Set channel IDs as strings.
+	(get_package): Properly handle finding packages in the system
+	channel.
+	(parse_xml_setup): Added a forgotten newline to some spew.
+
 2003-03-27  Joe Shaw  <joe@ximian.com>
 
 	* deptestomatic.c (parse_xml_trial): Update for the

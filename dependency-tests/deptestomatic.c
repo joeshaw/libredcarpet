@@ -78,7 +78,7 @@ load_channel (const char *name,
     channel = rc_world_add_channel_from_buffer (world,
                                                 name, /* name */
                                                 name, /* alias */
-                                                0xdead, 0xbeef, /* fake IDs */
+                                                "bogus id",
                                                 channel_type, buffer,
                                                 is_compressed ? file_size : 0);
 
@@ -142,7 +142,7 @@ get_package (const char *channel_name, const char *package_name)
 
     channel = rc_world_get_channel_by_name (world, channel_name);
 
-    if (channel == NULL) {
+    if (channel == NULL && strcmp(channel_name, "SYSTEM")) {
         g_warning ("Can't find package '%s': channel '%s' not defined",
                    package_name, channel_name);
         return NULL;
@@ -239,7 +239,7 @@ parse_xml_setup (xmlNode *node)
                 g_warning ("Can't force-install uninstalled package '%s'\n",
                            package_name);
             } else {
-                g_print (">!> Force-uninstalling '%s'", package_name);
+                g_print (">!> Force-uninstalling '%s'\n", package_name);
                 rc_world_remove_package (world, package);
             }
 
