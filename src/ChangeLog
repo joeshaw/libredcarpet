@@ -1,5 +1,11 @@
 2003-04-08  Joe Shaw  <joe@ximian.com>
 
+	* rc-distro.c (rc_distro_parse_xml): Check to see if
+	RC_DISTRIBUTIONS_FILE is set when we're asked for our internal
+	distributions.xml representation and use it if so.
+
+2003-04-08  Joe Shaw  <joe@ximian.com>
+
 	* rc-package-update.c (rc_package_update_copy): Nuke this.
 	(rc_package_update_slist_copy): Ditto.
 	(rc_package_update_free): Free the license string.

@@ -632,8 +632,43 @@ rc_distro_parse_xml (const char *xml_buf,
     const char *buf;
 
     if (xml_buf == NULL) {
-        xml_buf = distros_xml;
-        compressed_length = distros_xml_len;
+        char *distro_file = getenv ("RC_DISTRIBUTIONS_FILE");
+
+        if (distro_file) {
+            RCBuffer *buffer;
+
+            if (!g_file_test (distro_file, G_FILE_TEST_EXISTS)) {
+                rc_debug (RC_DEBUG_LEVEL_CRITICAL,
+                          "RC_DISTRIBUTIONS_FILE %s does not exist",
+                          distro_file);
+                goto ERROR;
+            }
+
+            buffer = rc_buffer_map_file (distro_file);
+            if (!buffer) {
+                rc_debug (RC_DEBUG_LEVEL_CRITICAL,
+                          "Unable to map RC_DISTRIBUTIONS_FILE %s",
+                          distro_file);
+                goto ERROR;
+            }
+
+            /* Try once compressed, once uncompressed */
+            if (!rc_distro_parse_xml (buffer->data, buffer->size) &&
+                !rc_distro_parse_xml (buffer->data, 0)) {
+                rc_debug (RC_DEBUG_LEVEL_CRITICAL,
+                          "Unable to parse RC_DISTRIBUTIONS_FILE %s",
+                          distro_file);
+                rc_buffer_unmap_file (buffer);
+                goto ERROR;
+            }
+
+            rc_buffer_unmap_file (buffer);
+
+            return TRUE;
+        } else {
+            xml_buf = distros_xml;
+            compressed_length = distros_xml_len;
+        }
     }
 
     if (compressed_length) {
