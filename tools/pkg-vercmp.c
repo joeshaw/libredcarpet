@@ -59,7 +59,7 @@ int main (int argc, char *argv[])
 
     spec1 = g_new0 (RCPackageSpec, 1);
     rc_package_spec_init (spec1, "package", has_epoch,
-                          epoch, version, release);
+                          epoch, version, release, RC_ARCH_UNKNOWN);
 
     if (!rc_packman_parse_version (packman, argv[2], &has_epoch, &epoch,
                                    &version, &release)) {
@@ -68,7 +68,7 @@ int main (int argc, char *argv[])
 
     spec2 = g_new0 (RCPackageSpec, 2);
     rc_package_spec_init (spec2, "package", has_epoch,
-                          epoch, version, release);
+                          epoch, version, release, RC_ARCH_UNKNOWN);
 
     rc = rc_packman_version_compare (packman, spec1, spec2);
     if (rc > 0)

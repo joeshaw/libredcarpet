@@ -1,3 +1,7 @@
+2005-01-03  Tambet Ingo  <tambet@ximian.com>
+
+	* pkg-vercmp.c (main): update.
+
 2004-11-30  Tambet Ingo  <tambet@ximian.com>
 
 	* pkg_to_xml.c (main): Update call to rc_packman_query_file call.
