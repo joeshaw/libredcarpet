@@ -71,9 +71,6 @@ struct _RCPackman {
 struct _RCPackmanClass {
     GtkObjectClass parent_class;
 
-    /* In _step install is TRUE for a package being installed, FALSE
-     * for a package being removed */
-
     void (*transact_start)(RCPackman *packman, gint total_steps);
     void (*transact_step)(RCPackman *packman, gint seqno, RCPackmanStep step,
                           gchar *name);

@@ -1,3 +1,7 @@
+2001-07-24  Joe Shaw  <joe@ximian.com>
+
+	* rc-packman.h: Fix an erroneous comment about a signal's parameters.
+
 2001-07-24  unknown  <vladimir@rain.ximian.com>
 
 	* rc-deps.c: Don't do a stupid check for a dependency
