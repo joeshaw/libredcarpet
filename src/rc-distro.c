@@ -126,6 +126,8 @@ RCDistroType distro_types[] = {
 
     { "turbolinux-60-i386", NULL, "TurboLinux", "6.0", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
 
+    { "caldera-24-i386", NULL, "Caldera OpenLinux eDesktop", "2.4", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
+
     { "suse-63-i386", NULL, "SuSE", "6.3", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
     { "suse-64-i386", NULL, "SuSE", "6.4", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
     { "suse-70-i386", NULL, "SuSE", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
