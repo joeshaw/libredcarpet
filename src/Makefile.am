@@ -162,6 +162,8 @@ all-local: libredcarpet.a
 
 lib_LIBRARIES = libredcarpet.a
 
+libredcarpet_a_SOURCES = $(libredcarpet_public_headers)
+
 libredcarpetincludedir = $(includedir)/libredcarpet-2.0
 
 libredcarpetinclude_HEADERS = \
