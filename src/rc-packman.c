@@ -408,7 +408,7 @@ rc_packman_set_error (RCPackman *packman, RCPackmanError error,
 guint
 rc_packman_get_error (RCPackman *packman)
 {
-    g_return_val_if_fail (packman, RC_PACKMAN_ERROR_ABORT);
+    g_return_val_if_fail (packman, RC_PACKMAN_ERROR_FATAL);
 
     return (packman->priv->error);
 }
