@@ -1,3 +1,9 @@
+2001-03-18  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* configure.in: put square brackets around the misc.h warning,
+	otherwise the "see README-ugid" doesn't get printed after the
+	comma.
+
 2001-02-14  Ian Peters  <itp@ximian.com>
 
 	* configure.in: some rpm detection loving

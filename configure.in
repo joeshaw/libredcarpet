@@ -85,7 +85,7 @@ if test "x$enable_backend_rpm4" = "xyes"; then
   AC_CHECK_HEADERS(rpm/rpmlib.h,, AC_MSG_ERROR(couldn't find rpmlib.h))
   if grep -q ugid.h "$RPM_PREFIX/include/rpm/misc.h"; then
     if test \! -r /usr/include/rpm/ugid.h ; then
-      AC_MSG_ERROR(broken misc.h, see README-ugid)
+      AC_MSG_ERROR([broken rpm/misc.h, see README-ugid])
     fi
   fi
 
