@@ -1,0 +1,64 @@
+	// public struct PackageDepArray : ICollection, ICloneable {
+
+	  // ICollection
+	  public int Count {
+	    get { return (int) this.Len; }
+	  }
+
+	  public object this [int index] {
+	    get {
+		 if (index >= 0 && index < this.Count)
+		   return this.Nth ((uint) index);
+		 return null;
+	    }
+	  }
+
+	  public bool IsSynchronized {
+	    get { return false; }
+	  }
+
+	  public object SyncRoot {
+	    get { return null; }
+	  }
+
+	  public void CopyTo (Array array, int index) {
+	    object[] orig = new object[this.Count];
+	    int i = 0;
+	    foreach (object o in this)
+		 orig[i++] = o;
+
+	    orig.CopyTo (array, index);
+	  }
+
+	  private class PackageDepArrayEnumerator : IEnumerator {
+	    private int n = -1;
+	    private PackageDepArray array;
+
+	    public PackageDepArrayEnumerator (PackageDepArray array) {
+		 this.array = array;
+	    }
+
+	    public object Current {
+		 get { return this.array.Nth ((uint) n); }
+	    }
+
+	    public bool MoveNext () {
+		 if (++n < this.array.Count)
+		   return true;
+		 return false;
+	    }
+
+	    public void Reset () {
+		 this.n = -1;
+	    }
+	  }
+
+	  // IEnumerable
+	  public IEnumerator GetEnumerator () {
+	    return new PackageDepArrayEnumerator (this);
+	  }
+
+	  // ICloneable
+	  public object Clone () {
+	    return this.Copy ();
+	  }

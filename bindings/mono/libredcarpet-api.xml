@@ -2259,8 +2259,14 @@
       <method name="GetChannel" cname="rc_package_get_channel">
         <return-type type="RCChannel*" />
       </method>
+      <method name="GetConflicts" cname="rc_package_get_conflicts">
+        <return-type type="RCPackageDepArray*" />
+      </method>
       <method name="GetDescription" cname="rc_package_get_description">
         <return-type type="gchar*" />
+      </method>
+      <method name="GetFileSize" cname="rc_package_get_file_size">
+        <return-type type="guint32" />
       </method>
       <method name="GetFilename" cname="rc_package_get_filename">
         <return-type type="const-char*" />
@@ -2273,6 +2279,15 @@
       </method>
       <method name="GetName" cname="rc_package_get_name">
         <return-type type="const-char*" />
+      </method>
+      <method name="GetObsoletes" cname="rc_package_get_obsoletes">
+        <return-type type="RCPackageDepArray*" />
+      </method>
+      <method name="GetProvides" cname="rc_package_get_provides">
+        <return-type type="RCPackageDepArray*" />
+      </method>
+      <method name="GetRequires" cname="rc_package_get_requires">
+        <return-type type="RCPackageDepArray*" />
       </method>
       <method name="GetSection" cname="rc_package_get_section">
         <return-type type="RCPackageSection" />
@@ -2416,6 +2431,9 @@
       <method name="GetRelation" cname="rc_package_dep_get_relation">
         <return-type type="RCPackageRelation" />
       </method>
+      <method name="GetSpec" cname="rc_package_dep_get_spec">
+        <return-type type="RCPackageSpec*" />
+      </method>
       <method name="IsOr" cname="rc_package_dep_is_or">
         <return-type type="gboolean" />
       </method>
@@ -2502,6 +2520,12 @@
         <return-type type="RCPackageDepArray*" />
         <parameters>
           <parameter type="RCPackageDepSList**" name="list" />
+        </parameters>
+      </method>
+      <method name="Nth" cname="rc_package_dep_array_nth">
+        <return-type type="RCPackageDep*" />
+        <parameters>
+          <parameter type="guint" name="n" />
         </parameters>
       </method>
     </struct>
@@ -2734,7 +2758,7 @@
           <parameter type="RCPackageUpdateSList*" name="old_slist" />
         </parameters>
       </method>
-      <method name="ToXmlNode" cname="rc_package_update_to_xml_node">
+      <method name="ToXmlNode" cname="rc_package_update_to_xml_node" hidden="1">
         <return-type type="xmlNode*" />
       </method>
     </struct>
@@ -3758,14 +3782,20 @@
           <parameter type="const-char*" name="child_path" />
         </parameters>
       </method>
-      <method name="ParseXmlFromBuffer" cname="rc_parse_xml_from_buffer" shared="true">
+      <method name="PakcageGetChildren" cname="rc_pakcage_get_children" shared="true">
+        <return-type type="RCPackageDepArray*" />
+        <parameters>
+          <parameter type="RCPackage*" name="package" />
+        </parameters>
+      </method>
+      <method name="ParseXmlFromBuffer" cname="rc_parse_xml_from_buffer" shared="true" hidden="1">
         <return-type type="xmlDoc*" />
         <parameters>
           <parameter type="const-guint8*" name="input_buffer" />
           <parameter type="guint32" name="input_length" />
         </parameters>
       </method>
-      <method name="ParseXmlFromFile" cname="rc_parse_xml_from_file" shared="true">
+      <method name="ParseXmlFromFile" cname="rc_parse_xml_from_file" shared="true" hidden="1">
         <return-type type="xmlDoc*" />
         <parameters>
           <parameter type="const-char*" name="filename" />
@@ -3811,7 +3841,7 @@
         </parameters>
       </method>
     </class>
-    <class name="Debug" cname="RcDebug_">
+    <class name="Debug" cname="RcDebug_" hidden="1">
       <method name="AddHandler" cname="rc_debug_add_handler" shared="true">
         <return-type type="guint" />
         <parameters>
@@ -3944,7 +3974,7 @@
           <parameter type="gpointer" name="user_data" />
         </parameters>
       </method>
-      <method name="PackagesFromXmlNode" cname="rc_extract_packages_from_xml_node" shared="true">
+      <method name="PackagesFromXmlNode" cname="rc_extract_packages_from_xml_node" shared="true" hidden="1">
         <return-type type="gint" />
         <parameters>
           <parameter type="xmlNode*" name="node" />
@@ -4084,7 +4114,7 @@
         </parameters>
       </method>
     </class>
-    <class name="Xml" cname="RcXml_">
+    <class name="Xml" cname="RcXml_" hidden="1">
       <method name="NodeToPackage" cname="rc_xml_node_to_package" shared="true">
         <return-type type="RCPackage*" />
         <parameters>

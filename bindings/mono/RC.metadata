@@ -51,4 +51,17 @@
   <attr path="/api/namespace/*/*/*/*[@type='RCPackage*']" name="pass_as">ref</attr>
   <attr path="/api/namespace/*/*/*/*[@type='RCChannel*']" name="pass_as">ref</attr>
 -->
+
+   <attr path="/api/namespace/struct[@cname='RCPackageDep']/constructor[@name='rc_package_dep_new_from_spec']/*/*[@type='RCChannel']" name="null_ok">1</attr>
+
+
+   <!-- Hide methods. These are not required and make reading of gapi-fixup hard -->
+
+   <attr path="/api/namespace/struct[@cname='RCPackageUpdate']/method[@cname='rc_package_update_to_xml_node']" name="hidden">1</attr>
+   <attr path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_parse_xml_from_buffer']" name="hidden">1</attr>
+   <attr path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_parse_xml_from_file']" name="hidden">1</attr>
+   <attr path="/api/namespace/class[@cname='RcDebug_']" name="hidden">1</attr>
+   <attr path="/api/namespace/class[@cname='RcExtract_']/method[@cname='rc_extract_packages_from_xml_node']" name="hidden">1</attr>
+   <attr path="/api/namespace/class[@cname='RcXml_']" name="hidden">1</attr>
+   
 </metadata>
