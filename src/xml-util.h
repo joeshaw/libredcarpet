@@ -35,8 +35,8 @@
 gchar *xml_get_value(xmlNode *node, const gchar *name);
 gchar *xml_get_prop(xmlNode *node, const gchar *name);
 gboolean xml_get_gint32_value(xmlNode *node, const gchar *name, gint32 *value);
-gint32 xml_get_gint32_value_default (xmlNode *node, const gchar *name);
+gint32 xml_get_gint32_value_default (xmlNode *node, const gchar *name, gint32 def);
 gboolean xml_get_guint32_value(xmlNode *node, const gchar *name, guint32 *value);
-guint32 xml_get_guint32_value_default (xmlNode *node, const gchar *name);
+guint32 xml_get_guint32_value_default (xmlNode *node, const gchar *name, guint32 def);
 
 #endif /* __SOFTMGR_XML_UTIL_H */

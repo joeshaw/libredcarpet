@@ -74,13 +74,13 @@ xml_get_prop(xmlNode *node, const gchar *name)
     }
 } /* xml_get_prop */
 
-gint32 xml_get_gint32_value_default (xmlNode *node, const gchar *name)
+gint32 xml_get_gint32_value_default (xmlNode *node, const gchar *name, gint32 def)
 {
     gint32 z;
     if (xml_get_gint32_value (node, name, &z))
         return z;
     else
-        return 0;
+        return def;
 }
 	       
 gboolean
@@ -105,13 +105,13 @@ xml_get_gint32_value(xmlNode *node, const gchar *name, gint32 *value)
     return TRUE;
 }
 
-guint32 xml_get_guint32_value_default (xmlNode *node, const gchar *name)
+guint32 xml_get_guint32_value_default (xmlNode *node, const gchar *name, guint32 def)
 {
     guint32 z;
     if (xml_get_guint32_value (node, name, &z))
         return z;
     else
-        return 0;
+        return def;
 }
 
 gboolean
