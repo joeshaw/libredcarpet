@@ -1,3 +1,8 @@
+2001-09-25  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c: minor mem leak fixes, also make sure
+	deps_find_newer finds the biggest version package it can
+
 2001-09-24  Ian Peters  <itp@ximian.com>
 
 	* rc-packman.c: add some sanity checks to the rc_packman_transact
