@@ -59,6 +59,7 @@ doc_DATA =				\
 	libredcarpet-sharp-docs.source
 
 EXTRA_DIST =				\
+	libredcarpet-sharp.snk		\
 	libredcarpet-sharp.pc.in	\
 	libredcarpet-sources.xml 	\
 	RC.metadata			\
