@@ -687,6 +687,8 @@ rc_rpmman_depends_fill (Header hdr, RCPackage *pkg)
                how I want to support it, but I don't intend to drop to the
                filesystem and verify it, or ask vlad to do so.  For now I'm
                just going to ignore it. */
+        } else if (!strncmp (names[i], "rpmlib(", strlen ("rpmlib("))) {
+            /* This is a "seekret" message for rpmlib only */
         } else {
             /* Add the dependency to the list of dependencies */
 
