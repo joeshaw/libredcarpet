@@ -31,3 +31,20 @@ rc_package_file_new (void)
     return file;
 }
 
+void
+rc_package_file_free (RCPackageFile *file)
+{
+    g_return_if_fail (file);
+
+    g_free (file->filename);
+    g_free (file->md5sum);
+
+    g_free (file);
+}
+
+void
+rc_package_file_slist_free (RCPackageFileSList *files)
+{
+    g_slist_foreach (files, (GFunc) rc_package_file_free, NULL);
+    g_slist_free (files);
+}

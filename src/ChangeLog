@@ -1,3 +1,16 @@
+2003-05-05  Joe Shaw  <joe@ximian.com>
+
+	* rc-package-file.c (rc_package_file_free,
+	rc_package_file_slist_free): Added.
+
+	* rc-packman-private.h: Change track_changes to
+	transaction_tracking.
+
+	* rc-packman.c: Do the tracking in /var/lib/rcd/tracking.  Track
+	all transactions, not just changes to the individual files during
+	upgrades and removals.  Update the code to correctly handle errors
+	that occur doing the transaction itself.  And other minor fixes.
+
 2003-05-02  Joe Shaw  <joe@ximian.com>
 	
 	* rc-world.c (rc_world_add_package): Fix backwards arch score

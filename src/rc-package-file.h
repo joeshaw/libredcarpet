@@ -42,4 +42,7 @@ typedef GSList RCPackageFileSList;
 
 RCPackageFile *rc_package_file_new (void);
 
+void rc_package_file_free       (RCPackageFile *file);
+void rc_package_file_slist_free (RCPackageFileSList *files);
+
 #endif /* _RC_PACKAGE_FILE_H */
