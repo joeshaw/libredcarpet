@@ -60,6 +60,8 @@ void       rc_world_remove_packages (RCWorld *, RCChannel *);
 
 RCPackage *rc_world_find_installed_version (RCWorld *, RCPackage *);
 
+RCPackage *rc_world_get_package (RCWorld *, RCChannel *, const char *name);
+
 int        rc_world_foreach_package (RCWorld *world, RCChannel *channel,
                                      RCPackageFn fn, gpointer user_data);
 

@@ -15,7 +15,7 @@
   <install channel="mandrake" package="glibc-devel"/>
   <install channel="mandrake" package="libsasl7-plug-digestmd5"/>
   <install channel="ximian" package="gnumeric-devel"/>
-  <install channel="preview" package="control-center"/>
+  <install channel="ximian" package="control-center"/>
   <install channel="mandrake" package="gcc"/>
   <install channel="mandrake" package="util-linux"/>
   <install channel="mandrake" package="openldap"/>
@@ -48,7 +48,7 @@
   <install channel="ximian" package="libxmms1"/>
   <install channel="mandrake" package="gcc-cpp"/>
   <install channel="mandrake" package="libsasl7-plug-crammd5"/>
-  <install channel="preview" package=" control-center-devel"/>
+  <install channel="ximian" package="control-center-devel"/>
   <install channel="mandrake" package="rsync"/>
   <install channel="mandrake" package="libgnet1-devel"/>
   <install channel="mandrake" package="sudo"/>

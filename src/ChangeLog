@@ -1,3 +1,8 @@
+2002-03-19  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-world.c (rc_world_get_package): Added.  Looks up a
+	package by channel and name.
+
 2002-03-18  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-resolver-info.c (rc_resolver_info_merge): Fix logic bug

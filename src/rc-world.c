@@ -415,6 +415,31 @@ rc_world_find_installed_version (RCWorld *world,
     return NULL;
 }
 
+RCPackage *
+rc_world_get_package (RCWorld *world,
+                      RCChannel *channel,
+                      const char *name)
+{
+    GSList *slist;
+
+    g_return_val_if_fail (world != NULL, NULL);
+    g_return_val_if_fail (channel != NULL, NULL);
+    g_return_val_if_fail (name && *name, NULL);
+    
+    g_return_val_if_fail (channel != RC_WORLD_ANY_CHANNEL
+                          && channel != RC_WORLD_ANY_NON_SYSTEM, NULL);
+
+    slist = g_hash_table_lookup (world->packages_by_name, name);
+    while (slist) {
+        RCPackage *package = slist->data;
+        if (package && package->channel == channel)
+            return package;
+        slist = slist->next;
+    }
+
+    return NULL;
+}
+
 struct ForeachPackageInfo {
     RCChannel *channel;
     RCPackageFn fn;

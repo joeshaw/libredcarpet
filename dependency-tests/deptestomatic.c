@@ -118,12 +118,6 @@ load_channel (const char *name,
     g_hash_table_insert (channel_hash, g_strdup (name), channel);
 }
 
-static void
-set_ptr (RCPackage *package, gpointer user_data)
-{
-    *(RCPackage **) user_data = package;
-}
-
 static RCPackage *
 get_package (const char *channel_name, const char *package_name)
 {
@@ -143,12 +137,7 @@ get_package (const char *channel_name, const char *package_name)
         return NULL;
     }
 
-    package = NULL;
-    rc_world_foreach_package_by_name (rc_get_world (),
-                                      package_name,
-                                      channel,
-                                      set_ptr,
-                                      &package);
+    package = rc_world_get_package (rc_get_world (), channel, package_name);
 
     if (package == NULL) {
         g_warning ("Can't find package '%s' in channel '%s': no such package",
