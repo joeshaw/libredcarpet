@@ -17,6 +17,7 @@ rpm_sources2 = $(rpm_sources)
 endif
 
 libredcarpet_a_SOURCES =		\
+	libredcarpet.h			\
 	rc-package-spec.c		\
 	rc-package-spec.h		\
 	rc-package-dep.c		\
@@ -36,7 +37,7 @@ libredcarpet_a_SOURCES =		\
         distro.h                        \
         pkginfo.c                       \
         pkginfo.h                       \
-        helix-packman-helper.h          \
+	rc-common.h			\
         rc-distman.c                    \
         rc-distman.h                    \
         rc-packman.c                    \
