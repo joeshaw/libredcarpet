@@ -144,8 +144,8 @@ LDFLAGS="$LDFLAGS $XML_LIBS"
 AC_CHECK_LIB(xml, xmlDocDump,,
   AC_MSG_ERROR(couldn't find libxml))
 
-AC_CHECK_HEADERS(tree.h,,
-  AC_MSG_ERROR(couldn't find tree.h))
+AC_CHECK_HEADERS(gnome-xml/tree.h,,
+  AC_MSG_ERROR(couldn't find gnome-xml/tree.h))
 
 CPPFLAGS="$save_CPPFLAGS"
 LDFLAGS="$save_LDFLAGS"

@@ -1,5 +1,9 @@
 2001-04-05  Ian Peters  <itp@ximian.com>
 
+	* configure.in: check for gnome-xml/tree.h not tree.h
+	
+2001-04-05  Ian Peters  <itp@ximian.com>
+
 	* configure.in: get rid of gnome-xml from the include path, sigh
 
 2001-04-03  Ian Peters  <itp@ximian.com>
