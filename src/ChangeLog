@@ -1,3 +1,9 @@
+2002-01-14  Joe Shaw  <joe@ximian.com>
+
+	* rc-rpmman.c (rc_rpmman_query_file): First check to see if the
+	file exists, and then try to open it, but bail out if it doesn't
+	work.
+
 2002-01-11  Joe Shaw  <joe@ximian.com>
 
 	* rc-debman.c (i18n_fixer): Set the PATH environment variable to

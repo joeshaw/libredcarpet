@@ -1460,13 +1460,25 @@ rc_rpmman_query_file (RCPackman *packman, const gchar *filename)
     RCPackage *package;
     RCRpmman *rpmman = RC_RPMMAN (packman);
 
+    if (!rc_file_exists(filename)) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "file '%s' does not exist", filename);
+        return NULL;
+    }
+
     fd = rc_rpm_open (rpmman, filename, "r.fdio", O_RDONLY, 0444);
+
+    if (fd == NULL) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "unable to open package '%s'", filename);
+        return NULL;
+    }
 
     if (rpmman->rpmReadPackageHeader (fd, &header, NULL, NULL, NULL)) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "unable to read package header");
 
-        goto ERROR;
+        return NULL;
     }
 
     package = rc_package_new ();
