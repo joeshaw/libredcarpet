@@ -1,3 +1,11 @@
+2001-02-07  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c: More fixications for debian. All known breakage cases don't
+	break now.
+
+	* rc-deps.c: Fix for installing packages that conflict with eachother in the
+	install step.
+
 2001-02-07  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c (rc_rpmman_section_to_package_section): stop leaking
