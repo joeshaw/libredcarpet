@@ -630,203 +630,6 @@ rc_rpmman_read_header (Header hdr, gchar **name, guint32 *epoch,
     }
 }
 
-/* Query for information about a package (version, release, installed status,
-   installed size...).  If you specify more than just a name, it tries to match
-   those criteria. */
-
-static RCPackage *
-rc_rpmman_query (RCPackman *p, RCPackage *pkg)
-{
-    rpmdb db;
-    dbiIndexSet matches;
-    guint i;
-
-    if (rpmdbOpen (rpmroot, &db, O_RDONLY, 0444)) {
-        rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
-                              "Unable to open RPM database");
-        return (pkg);
-    }
-
-    if (rpmdbFindPackage (db, pkg->spec.name, &matches)) {
-        rpmdbClose (db);
-        rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
-                              "Unable to perform RPM database search");
-        return (pkg);
-    }
-
-    for (i = 0; i < matches.count; i++) {
-        Header hdr;
-        gchar *version = NULL, *release = NULL;
-        guint32 size = 0, epoch = 0;
-
-        if (!(hdr = rpmdbGetRecord (db, matches.recs[i].recOffset))) {
-            rpmdbClose (db);
-            rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
-                                  "Unable to fetch RPM header from database");
-            return (pkg);
-        }
-
-        rc_rpmman_read_header (hdr, NULL, &epoch, &version, &release, &size);
-
-        /* FIXME: this could potentially be a big problem if an rpm can have
-           just an epoch (serial), and no version/release.  I'm choosing to
-           ignore that for now, because I need to get this stuff done and it
-           doesn't seem very likely, but... */
-
-        if ((!pkg->spec.version || !strcmp (pkg->spec.version, version)) &&
-            (!pkg->spec.release || !strcmp (pkg->spec.release, release)) &&
-            (!pkg->spec.epoch || pkg->spec.epoch == epoch)) {
-
-            g_free (pkg->spec.version);
-            g_free (pkg->spec.release);
-
-            pkg->spec.epoch = epoch;
-            pkg->spec.version = g_strdup (version);
-            pkg->spec.release = g_strdup (release);
-            pkg->spec.installed = TRUE;
-            pkg->spec.installed_size = size;
-
-            headerFree (hdr);
-            dbiFreeIndexRecord (matches);
-            rpmdbClose (db);
-
-            return (pkg);
-        }
-
-        headerFree (hdr);
-    }
-
-    pkg->spec.installed = FALSE;
-    pkg->spec.installed_size = 0;
-
-    dbiFreeIndexRecord (matches);
-    rpmdbClose (db);
-
-    return (pkg);
-} /* rc_packman_query */
-
-/* Query a file for rpm header information */
-
-static RCPackage *
-rc_rpmman_query_file (RCPackman *p, gchar *filename)
-{
-    FD_t fd;
-    Header hdr;
-    gchar *name = NULL, *version = NULL, *release = NULL;
-    guint32 size = 0, epoch = 0;
-    RCPackage *pkg = rc_package_new ();
-
-    fd = fdOpen (filename, O_RDONLY, 0444);
-
-    if (rpmReadPackageHeader (fd, &hdr, NULL, NULL, NULL)) {
-        rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
-                              "Unable to read package header");
-        rc_package_free (pkg);
-        return (NULL);
-    }
-
-    rc_rpmman_read_header (hdr, &name, &epoch, &version, &release, &size);
-
-    pkg->spec.name = g_strdup (name);
-    pkg->spec.epoch = epoch;
-    pkg->spec.version = g_strdup (version);
-    pkg->spec.release = g_strdup (release);
-    pkg->spec.installed_size = size;
-
-    headerFree (hdr);
-    fdClose (fd);
-
-    return (pkg);
-} /* rc_packman_query_file */
-
-/* Query all of the packages on the system */
-
-static RCPackageSList *
-rc_rpmman_query_all (RCPackman *p)
-{
-    rpmdb db;
-    RCPackageSList *list = NULL;
-    guint recno;
-
-    if (rpmdbOpen (rpmroot, &db, O_RDONLY, 0444)) {
-        rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
-                              "Unable to open RPM database");
-        return (NULL);
-    }
-
-    if (!(recno = rpmdbFirstRecNum (db))) {
-        rpmdbClose (db);
-        rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
-                              "Unable to access RPM database");
-        return (NULL);
-    }
-
-    for (; recno; recno = rpmdbNextRecNum (db, recno)) {
-        Header hdr;
-        gchar *name = NULL, *version = NULL, *release = NULL;
-        guint32 size = 0, epoch = 0;
-        
-        if (!(hdr = rpmdbGetRecord (db, recno))) {
-            rpmdbClose (db);
-            rc_package_slist_free (list);
-            rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
-                                  "Unable to read RPM database entry");
-            return (NULL);
-        }
-
-        rc_rpmman_read_header (hdr, &name, &epoch, &version, &release, &size);
-        
-        list = rc_package_slist_add_package (list, name, epoch, version,
-                                             release, TRUE, size);
-
-        headerFree(hdr);
-    }
-
-    rpmdbClose (db);
-
-    return (list);
-} /* rc_rpmman_query_all */
-
-static gint
-rc_rpmman_version_compare (RCPackman *p, RCPackageSpec *s1, RCPackageSpec *s2)
-{
-    int stat;
-    gchar *v1 = s1->version, *r1 = s1->release, *v2 = s2->version,
-        *r2 = s2->release;
-
-    g_return_val_if_fail(p, -1);
-
-    /* Are we requiring that they provide strings for v1, r1, v2, and r2? If
-       so, we can just remove the following code and put some
-       g_return_val_if_fails instead. Otherwise... 
-    */
-
-    /* I don't think we should require that; this code looks correct.  Any
-       non-NULL string should be interpreted as a "later" version than a NULL
-       string. */
-
-    if (v1 && !v2)
-        return 1;
-    else if (v2 && !v1)
-        return -1;
-    else if (!v1 && !v2)
-        stat = 0;
-    else
-        stat = rpmvercmp(v1, v2);
-
-    if (stat)
-        return stat;
-    
-    if (r1 && !r2)
-        return 1;
-    else if (r2 && !r1)
-        return -1;
-    else if (!r1 && !r2)
-        return 0;
-    else
-        return rpmvercmp(r1, r2);
-}
-
 /* Takes an array of strings, which may be of the form <version>, or
    <epoch>:<version>, or <version>-<release>, or <epoch>:<version>-<release>,
    and does the right thing, breaking them into the right parts and returning
@@ -866,11 +669,8 @@ parse_versions (gchar **inputs, guint32 **epochs, gchar ***versions,
     }
 }
 
-/* FIXME FIXME FIXME: the strfreev is leaking all over the place, need to fix
-   that shit nowish but I need sleep */
-
 static void
-rc_rpmman_depends_fill (RCPackage *pkg, Header hdr)
+rc_rpmman_depends_fill (Header hdr, RCPackage *pkg)
 {
     gchar **names, **verrels, **versions, **releases;
     guint32 *epochs;
@@ -1054,125 +854,213 @@ rc_rpmman_depends_fill (RCPackage *pkg, Header hdr)
     g_free (epochs);
 } /* rc_rpmman_depends_fill */
 
-/* Given a GSList of RCPackmanPackage, fills in the three dependency lists
-   (requires, provides, conflicts) in place for all of the packages.  rpmlib
-   is really really ugly.  FIXME: correctly handle multiple installs of the
-   same package (could have different dependencies...) */
+/* Query for information about a package (version, release, installed status,
+   installed size...).  If you specify more than just a name, it tries to match
+   those criteria. */
 
-static GSList *
-rc_rpmman_depends (RCPackman *p, RCPackageSList *pkgs)
+static RCPackage *
+rc_rpmman_query (RCPackman *p, RCPackage *pkg)
 {
-    RCPackageSList *iter;
     rpmdb db;
+    dbiIndexSet matches;
+    guint i;
 
     if (rpmdbOpen (rpmroot, &db, O_RDONLY, 0444)) {
-        g_free (p->reason);
-        p->reason = g_strdup ("Unable to open RPM database");
+        rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
+                              "Unable to open RPM database");
+        return (pkg);
+    }
+
+    if (rpmdbFindPackage (db, pkg->spec.name, &matches)) {
+        rpmdbClose (db);
+        rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
+                              "Unable to perform RPM database search");
+        return (pkg);
+    }
+
+    for (i = 0; i < matches.count; i++) {
+        Header hdr;
+        gchar *version = NULL, *release = NULL;
+        guint32 size = 0, epoch = 0;
+
+        if (!(hdr = rpmdbGetRecord (db, matches.recs[i].recOffset))) {
+            rpmdbClose (db);
+            rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
+                                  "Unable to fetch RPM header from database");
+            return (pkg);
+        }
+
+        rc_rpmman_read_header (hdr, NULL, &epoch, &version, &release, &size);
+
+        /* FIXME: this could potentially be a big problem if an rpm can have
+           just an epoch (serial), and no version/release.  I'm choosing to
+           ignore that for now, because I need to get this stuff done and it
+           doesn't seem very likely, but... */
+
+        if ((!pkg->spec.version || !strcmp (pkg->spec.version, version)) &&
+            (!pkg->spec.release || !strcmp (pkg->spec.release, release)) &&
+            (!pkg->spec.epoch || pkg->spec.epoch == epoch)) {
+
+            g_free (pkg->spec.version);
+            g_free (pkg->spec.release);
+
+            pkg->spec.epoch = epoch;
+            pkg->spec.version = g_strdup (version);
+            pkg->spec.release = g_strdup (release);
+            pkg->spec.installed = TRUE;
+            pkg->spec.installed_size = size;
+
+            rc_rpmman_depends_fill (hdr, pkg);
+
+            headerFree (hdr);
+            dbiFreeIndexRecord (matches);
+            rpmdbClose (db);
+
+            return (pkg);
+        }
+
+        headerFree (hdr);
+    }
+
+    pkg->spec.installed = FALSE;
+    pkg->spec.installed_size = 0;
+
+    dbiFreeIndexRecord (matches);
+    rpmdbClose (db);
+
+    return (pkg);
+} /* rc_packman_query */
+
+/* Query a file for rpm header information */
+
+static RCPackage *
+rc_rpmman_query_file (RCPackman *p, gchar *filename)
+{
+    FD_t fd;
+    Header hdr;
+    gchar *name = NULL, *version = NULL, *release = NULL;
+    guint32 size = 0, epoch = 0;
+    RCPackage *pkg = rc_package_new ();
+
+    fd = fdOpen (filename, O_RDONLY, 0444);
+
+    if (rpmReadPackageHeader (fd, &hdr, NULL, NULL, NULL)) {
+        rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
+                              "Unable to read package header");
+        rc_package_free (pkg);
         return (NULL);
     }
 
-    /* Run through all of the packages for which dependency information is
-       desired */
-    for (iter = pkgs; iter; iter = iter->next) {
-        dbiIndexSet matches;
-        Header hdr = NULL;
-        RCPackage *d = (RCPackage *)(iter->data);
+    rc_rpmman_read_header (hdr, &name, &epoch, &version, &release, &size);
 
-        rpmdbFindPackage (db, d->spec.name, &matches);
+    pkg->spec.name = g_strdup (name);
+    pkg->spec.epoch = epoch;
+    pkg->spec.version = g_strdup (version);
+    pkg->spec.release = g_strdup (release);
+    pkg->spec.installed_size = size;
 
-        /* Is this really what I want? */
-        g_assert (matches.count > 0);
+    rc_rpmman_depends_fill (hdr, pkg);
 
-        rc_packman_query (p, d);
+    headerFree (hdr);
+    fdClose (fd);
 
-        if (d->spec.installed) {
-            char *version = NULL, *release = NULL;
-            guint i = 0;
-            int type, count;
+    return (pkg);
+} /* rc_packman_query_file */
 
-            do {
-                if (hdr)
-                    headerFree(hdr);
+/* Query all of the packages on the system */
 
-                if (!(hdr = rpmdbGetRecord (db, matches.recs[i].recOffset))) {
-                    rpmdbClose (db);
-                    g_free (p->reason);
-                    p->reason = g_strdup ("Unable to read RPM database entry");
-                    return (NULL);
-                }
+static RCPackageSList *
+rc_rpmman_query_all (RCPackman *p)
+{
+    rpmdb db;
+    RCPackageSList *list = NULL;
+    guint recno;
 
-                headerGetEntry (hdr, RPMTAG_VERSION, &type,
-                                (void **)&version, &count);
-                headerGetEntry (hdr, RPMTAG_RELEASE, &type,
-                                (void **)&release, &count);
+    if (rpmdbOpen (rpmroot, &db, O_RDONLY, 0444)) {
+        rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
+                              "Unable to open RPM database");
+        return (NULL);
+    }
 
-                i++;
-            } while ((i < matches.count) &&
-                     (strcmp (version, d->spec.version) ||
-                      strcmp (release, d->spec.release)));
+    if (!(recno = rpmdbFirstRecNum (db))) {
+        rpmdbClose (db);
+        rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
+                              "Unable to access RPM database");
+        return (NULL);
+    }
 
-            if (!strcmp (version, d->spec.version) &&
-                !strcmp (release, d->spec.release)) {
-                /* This is the match we were looking for */
-
-                rc_rpmman_depends_fill (d, hdr);
-            }
-
-            headerFree(hdr);
+    for (; recno; recno = rpmdbNextRecNum (db, recno)) {
+        Header hdr;
+        RCPackage *pkg = rc_package_new ();
+        
+        if (!(hdr = rpmdbGetRecord (db, recno))) {
+            rpmdbClose (db);
+            rc_package_slist_free (list);
+            rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
+                                  "Unable to read RPM database entry");
+            return (NULL);
         }
 
-        dbiFreeIndexRecord (matches);
+        rc_rpmman_read_header (hdr, &pkg->spec.name, &pkg->spec.epoch,
+                               &pkg->spec.version, &pkg->spec.release,
+                               &pkg->spec.installed_size);
 
+        rc_rpmman_depends_fill (hdr, pkg);
+
+        list = g_slist_append (list, pkg);
+
+        headerFree(hdr);
     }
 
-    return (pkgs);
-} /* rc_rpmman_depends */
+    rpmdbClose (db);
 
-static GSList *
-rc_rpmman_depends_files (RCPackman *p, GSList *files)
+    return (list);
+} /* rc_rpmman_query_all */
+
+static gint
+rc_rpmman_version_compare (RCPackman *p, RCPackageSpec *s1, RCPackageSpec *s2)
 {
-    GSList *iter;
-    RCPackageSList *dlist = NULL;
+    int stat;
+    gchar *v1 = s1->version, *r1 = s1->release, *v2 = s2->version,
+        *r2 = s2->release;
 
-    for (iter = files; iter; iter = iter->next) {
-        gchar *filename = (gchar *)(iter->data);
-        FD_t fd;
-        Header hdr;
-        int ret;
-        RCPackage *d = rc_package_new ();
-        int count;
-        gchar *name, *version, *release;
-        gint32 size, epoch;
+    g_return_val_if_fail(p, -1);
 
-        fd = fdOpen (filename, O_RDONLY, 0444);
+    /* Are we requiring that they provide strings for v1, r1, v2, and r2? If
+       so, we can just remove the following code and put some
+       g_return_val_if_fails instead. Otherwise... 
+    */
 
-        ret = rpmReadPackageHeader (fd, &hdr, NULL, NULL, NULL);
+    /* I don't think we should require that; this code looks correct.  Any
+       non-NULL string should be interpreted as a "later" version than a NULL
+       string. */
 
-        headerGetEntry (hdr, RPMTAG_NAME, NULL, (void **)&name, &count);
-        headerGetEntry (hdr, RPMTAG_EPOCH, NULL, (void **)&epoch, &count);
-        headerGetEntry (hdr, RPMTAG_VERSION, NULL, (void **)&version, &count);
-        headerGetEntry (hdr, RPMTAG_RELEASE, NULL, (void **)&release, &count);
-        headerGetEntry (hdr, RPMTAG_SIZE, NULL, (void **)&size, &count);
+    if (v1 && !v2)
+        return 1;
+    else if (v2 && !v1)
+        return -1;
+    else if (!v1 && !v2)
+        stat = 0;
+    else
+        stat = rpmvercmp(v1, v2);
 
-        d->spec.name = g_strdup (name);
-        d->spec.version = g_strdup (version);
-        d->spec.release = g_strdup (release);
-
-        d->spec.epoch = epoch;
-        d->spec.installed_size = size;
-
-        rc_rpmman_depends_fill (d, hdr);
-
-        dlist = g_slist_append (dlist, d);
-
-        fdClose (fd);
-    }
-
-    return (dlist);
+    if (stat)
+        return stat;
+    
+    if (r1 && !r2)
+        return 1;
+    else if (r2 && !r1)
+        return -1;
+    else if (!r1 && !r2)
+        return 0;
+    else
+        return rpmvercmp(r1, r2);
 }
 
-/* FIXME: need to write this ;) */
+/* FIXME FIXME FIXME: the strfreev is leaking all over the place, need to fix
+   that shit nowish but I need sleep */
 
+/* FIXME: need to write this ;) */
 static gboolean
 rc_rpmman_verify (RCPackman *p, RCPackage *d)
 {
@@ -1191,8 +1079,6 @@ rc_rpmman_class_init (RCRpmmanClass *klass)
     hpc->rc_packman_real_query_all = rc_rpmman_query_all;
     hpc->rc_packman_real_query_file = rc_rpmman_query_file;
     hpc->rc_packman_real_version_compare = rc_rpmman_version_compare;
-    hpc->rc_packman_real_depends = rc_rpmman_depends;
-    hpc->rc_packman_real_depends_files = rc_rpmman_depends_files;
 //    hpc->rc_packman_real_verify = rc_rpmman_verify;
 } /* rc_rpmman_class_init */
 
@@ -1203,7 +1089,7 @@ rc_rpmman_init (RCRpmman *obj)
       RCPackman *hp = RC_PACKMAN (obj);
     */
     /*
-      rpmdb db;
+    rpmdb db;
     */
 
     gchar *tmp;
@@ -1222,12 +1108,14 @@ rc_rpmman_init (RCRpmman *obj)
 
     /* Probably not, at least not this simplistically */
 
-    /* 
-       if (rpmdbOpen (rpmroot, &db, O_RDONLY, 0644)) {
-       if (rpmdbInit (rpmroot, 0644)) {
-       g_assert_not_reached ();
-       }
-       }
+    /*
+    if (rpmdbOpen (rpmroot, &db, O_RDONLY, 0644)) {
+        if (rpmdbInit (rpmroot, 0644)) {
+            g_assert_not_reached ();
+        }
+    }
+
+    rpmdbClose (db);
     */
     
 } /* rc_rpmman_init */
