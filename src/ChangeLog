@@ -1,7 +1,8 @@
 2003-04-30  Joe Shaw  <joe@ximian.com>
 
 	* distributions.xml: Add support for Mandrake 9.1
-	(mandrake-91-i586) and SuSE 8.2 (suse-82-i586; yes, i586).
+	(mandrake-91-i586) and SuSE 8.2 (suse-82-i586; yes, i586).  Fixes
+	#41870.
 
 	* rc-rpmman.c (rc_rpmman_init): Try RPM versions newest-first, so
 	we don't pull in rpm 4.0.4 from librpm404 on machines upgraded
