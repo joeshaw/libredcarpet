@@ -307,7 +307,8 @@ RCPackageUpdate *
 rc_package_get_latest_update(RCPackage *package)
 {
     g_return_val_if_fail (package, NULL);
-    g_return_val_if_fail (package->history, NULL);
+    if (package->history == NULL)
+        return NULL;
 
     return (RCPackageUpdate *) package->history->data;
 } /* rc_package_get_latest_update */

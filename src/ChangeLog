@@ -1,3 +1,9 @@
+2002-06-11  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-package.c (rc_package_get_latest_update): Just return NULL if
+	package->history is NULL, rather than complaining via
+	g_return_val_if_fail.
+
 2002-06-07  Joe Shaw  <joe@ximian.com>
 
 	* rc-world.c (rc_world_foreach_channel): Protect against removing
