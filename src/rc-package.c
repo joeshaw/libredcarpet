@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include "rc-package.h"
+#include "rc-pretty-name.h"
 #include "xml-util.h"
 
 RCPackage *
