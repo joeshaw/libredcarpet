@@ -123,7 +123,7 @@ if STATIC_RPM
 			mv $$object $$dir-$$object; \
 		done; \
 		cd ..; \
-		ar cru libredcarpetbuild.a $$dir/*.o; \
+		ar cru libredcarpetbuild.a $$dir/*; \
 		rm -rf $$dir; \
 	done; \
 	ranlib libredcarpetbuild.a; \

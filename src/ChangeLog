@@ -1,5 +1,10 @@
 2001-07-24  Ian Peters  <itp@ximian.com>
 
+	* Makefile.am: look for *, not *.o, in the static libraries we
+	unpack, as libdb-3.1.a isn't make up of .o files, apparently
+
+2001-07-24  Ian Peters  <itp@ximian.com>
+
 	* rc-rpmman.c (rc_rpmman_depends_fill): add /usr/local/bin and
 	/usr/local/sbin to the list of directories for which we honor
 	files as provisions, needed to support msc linux according to
