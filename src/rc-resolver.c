@@ -91,6 +91,14 @@ rc_resolver_free (RCResolver *resolver)
 }
 
 void
+rc_resolver_set_timeout (RCResolver *resolver, int timeout)
+{
+    g_return_if_fail (resolver != NULL);
+
+    resolver->timeout_seconds = timeout;
+}
+
+void
 rc_resolver_set_world (RCResolver *resolver, RCWorld *world)
 {
     g_return_if_fail (resolver != NULL);
@@ -288,6 +296,7 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
     RCResolverQueue *initial_queue;
     RCChannel *local_pkg_channel;
     GSList *iter;
+    time_t t_start, t_now;
     gboolean extremely_noisy = getenv ("RC_SPEW") != NULL;
 
     g_return_if_fail (resolver != NULL);
@@ -363,6 +372,8 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
 
     resolver->pending_queues = g_slist_prepend (resolver->pending_queues, initial_queue);
 
+    time (&t_start);
+
     while (resolver->pending_queues) {
 
         RCResolverQueue *queue = resolver->pending_queues->data;
@@ -375,6 +386,14 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
                      g_slist_length (resolver->pruned_queues),
                      g_slist_length (resolver->deferred_queues),
                      g_slist_length (resolver->invalid_queues));
+        }
+
+        if (resolver->timeout_seconds > 0) {
+            time (&t_now);
+            if (difftime (t_now, t_start) > resolver->timeout_seconds) {
+                resolver->timed_out = TRUE;
+                break;
+            }
         }
 
         resolver->pending_queues = remove_head (resolver->pending_queues);

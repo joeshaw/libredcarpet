@@ -35,6 +35,7 @@ struct _RCResolver {
     
     RCWorld *world;
 
+    int timeout_seconds;
     gboolean verifying;
 
     GSList *initial_items;
@@ -53,10 +54,13 @@ struct _RCResolver {
     int valid_solution_count;
 
     RCResolverContext *best_context;
+    gboolean timed_out;
 };
 
 RCResolver *rc_resolver_new  (void);
 void        rc_resolver_free (RCResolver *);
+
+void        rc_resolver_set_timeout (RCResolver *, int seconds);
 
 void        rc_resolver_set_world (RCResolver *, RCWorld *);
 RCWorld    *rc_resolver_get_world (RCResolver *);
