@@ -27,6 +27,12 @@ AC_HEADER_STDC
 AC_ARG_PROGRAM
 AC_PROG_LIBTOOL
 
+dnl gtk
+AM_PATH_GTK(1.2.0)
+
+dnl glib???
+AM_PATH_GLIB(1.2.0)
+
 dnl Check for libz to handle compressed xml files
 AC_CHECK_LIB(z, inflate)
 
@@ -49,8 +55,7 @@ then
 fi
 
 AC_ARG_WITH(rpm-prefix,
-[  --with-rpm-prefix=DIR   prefix where rpm header files are installed (/usr)],
-,[RPM_PREFIX=/usr])
+[  --with-rpm-prefix=DIR   prefix where rpm header files are installed (/usr)], [RPM_PREFIX=$withval], [RPM_PREFIX=/usr])
 
 AM_CONDITIONAL(ENABLE_RPM, false)
 
@@ -130,12 +135,6 @@ AC_CHECK_HEADERS(tree.h,,
 
 CPPFLAGS="$save_CPPFLAGS"
 LDFLAGS="$save_LDFLAGS"
-
-dnl gtk
-AM_PATH_GTK(1.2.0)
-
-dnl glib???
-AM_PATH_GLIB(1.2.0)
 
 AC_OUTPUT([
 Makefile
