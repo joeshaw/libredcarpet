@@ -129,6 +129,9 @@ dnl libxml
 XML_LIBS=`xml-config --libs`
 XML_CFLAGS=`xml-config --cflags`
 
+dnl aargh
+XML_CFLAGS=`echo $XML_CFLAGS | sed "s/\/gnome-xml//g"`
+
 if test "x$XML_LIBS" = "x"; then
   AC_MSG_ERROR(couldn't find xml-config)
 fi
