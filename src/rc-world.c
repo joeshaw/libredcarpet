@@ -319,7 +319,7 @@ rc_world_sequence_number (RCWorld *world)
 
     if (world->changed) {
         ++world->seq_no;
-        world->changed = TRUE;
+        world->changed = FALSE;
     }
 
     return world->seq_no;
