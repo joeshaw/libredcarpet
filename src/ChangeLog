@@ -1,3 +1,7 @@
+2001-04-23  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c: add some stupid /opt/gnome SuSE directories
+
 2001-04-23  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c: sort of reverted older commit where we were passing a

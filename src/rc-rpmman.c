@@ -1201,6 +1201,10 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
             "/usr/games/",
             "/usr/share/dict/words",
             "/etc/",
+            "/opt/gnome/bin",
+            "/opt/gnome/sbin",
+            "/opt/gnome/etc",
+            "/opt/gnome/games",
             NULL
         };
 
