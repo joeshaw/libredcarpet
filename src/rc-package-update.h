@@ -63,6 +63,8 @@ const gchar *rc_package_importance_to_string (RCPackageImportance importance);
 
 xmlNode *rc_package_update_to_xml_node (RCPackageUpdate *);
 
-RCPackageUpdate *rc_xml_node_to_package_update (xmlNode *);
+RCPackageUpdate *rc_xml_node_to_package_update (xmlNode *,
+                                                const gchar *url_prefix,
+                                                const gchar *name);
 
 #endif /* _RC_PACKAGE_UPDATE_H */

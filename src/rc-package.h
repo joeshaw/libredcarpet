@@ -88,6 +88,7 @@ RCPackageSList *rc_package_hash_table_by_string_to_list (RCPackageHashTableBySpe
 
 xmlNode *rc_package_to_xml_node (RCPackage *);
 
-RCPackage *rc_xml_node_to_package (xmlNode *);
+RCPackage *rc_xml_node_to_package (xmlNode *, const gchar *url_prefix,
+                                   guint channel_id, guint subchannel_id);
 
 #endif /* _RC_PACKAGE_H */

@@ -177,7 +177,8 @@ rc_package_update_to_xml_node (RCPackageUpdate *update)
 }
 
 RCPackageUpdate *
-rc_xml_node_to_package_update (xmlNode *node)
+rc_xml_node_to_package_update (xmlNode *node, const gchar *url_prefix,
+                               const gchar *name)
 {
     RCPackageUpdate *update;
     xmlNode *iter;
@@ -204,7 +205,14 @@ rc_xml_node_to_package_update (xmlNode *node)
         } else if (!g_strcasecmp (iter->name, "release")) {
             update->spec.release = xml_get_content (iter);
         } else if (!g_strcasecmp (iter->name, "filename")) {
-            update->package_url = xml_get_content (iter);
+            if (url_prefix) {
+                gchar *tmp = xml_get_content (iter);
+                update->package_url =
+                    g_strconcat (url_prefix, "/", tmp, NULL);
+                g_free (tmp);
+            } else {
+                update->package_url = xml_get_content (iter);
+            }
         } else if (!g_strcasecmp (iter->name, "filesize")) {
             update->package_size =
                 xml_get_guint32_content_default (iter, 0);
@@ -212,7 +220,14 @@ rc_xml_node_to_package_update (xmlNode *node)
             update->spec.installed_size =
                 xml_get_guint32_content_default (iter, 0);
         } else if (!g_strcasecmp (iter->name, "signaturename")) {
-            update->signature_url = xml_get_content (iter);
+            if (url_prefix) {
+                gchar *tmp = xml_get_content (iter);
+                update->signature_url =
+                    g_strconcat (url_prefix, "/", tmp, NULL);
+                g_free (tmp);
+            } else {
+                update->signature_url = xml_get_content (iter);
+            }
         } else if (!g_strcasecmp (iter->name, "signaturesize")) {
             update->signature_size =
                 xml_get_guint32_content_default (iter, 0);
@@ -232,6 +247,8 @@ rc_xml_node_to_package_update (xmlNode *node)
 
         iter = iter->next;
     }
+
+    update->spec.name = g_strdup (name);
 
     return (update);
 }

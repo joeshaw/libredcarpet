@@ -297,7 +297,8 @@ rc_package_to_xml_node (RCPackage *package)
 }
 
 RCPackage *
-rc_xml_node_to_package (xmlNode *node)
+rc_xml_node_to_package (xmlNode *node, const gchar *url_prefix,
+                        guint channel_id, guint subchannel_id)
 {
     RCPackage *package;
     xmlNode *iter;
@@ -335,9 +336,14 @@ rc_xml_node_to_package (xmlNode *node)
             iter2 = iter->children;
 #endif
             while (iter2) {
+                RCPackageUpdate *update;
+
+                update = rc_xml_node_to_package_update (iter2, url_prefix,
+                                                        package->spec.name);
+
                 package->history =
-                    g_slist_append (package->history,
-                                    rc_xml_node_to_package_update (iter2));
+                    g_slist_append (package->history, update);
+
                 iter2 = iter2->next;
             }
         } else if (!g_strcasecmp (iter->name, "requires")) {
@@ -419,12 +425,8 @@ rc_xml_node_to_package (xmlNode *node)
     package->spec.release = g_strdup (
         ((RCPackageUpdate *)package->history->data)->spec.release);
 
-    for (update_iter = package->history; update_iter;
-         update_iter = update_iter->next)
-    {
-        RCPackageUpdate *update = (RCPackageUpdate *)(update_iter->data);
-        update->spec.name = g_strdup (package->spec.name);
-    }
+    package->spec.channel = channel_id;
+    package->spec.subchannel = subchannel_id;
 
     return (package);
 }

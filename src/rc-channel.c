@@ -462,7 +462,7 @@ rc_channel_to_xml_node (RCChannel *channel)
 }
 
 static RCSubchannel *
-rc_xml_node_to_subchannel (xmlNode *node, gchar *url_prefix)
+rc_xml_node_to_subchannel (xmlNode *node, gchar *url_prefix, guint channel_id)
 {
     RCSubchannel *subchannel;
     xmlNode *iter;
@@ -492,31 +492,10 @@ rc_xml_node_to_subchannel (xmlNode *node, gchar *url_prefix)
 
     while (iter) {
         RCPackage *package;
-        RCPackageUpdateSList *update_iter;
         RCPackageDepSList *prov_iter;
 
-        package = rc_xml_node_to_package (iter);
-
-        if (url_prefix) {
-            for (update_iter = package->history; update_iter;
-                 update_iter = update_iter->next)
-            {
-                RCPackageUpdate *update =
-                    (RCPackageUpdate *)(update_iter->data);
-                gchar *tmp;
-
-                tmp = g_strconcat (url_prefix, "/", update->package_url, NULL);
-                g_free (update->package_url);
-                update->package_url = tmp;
-
-                if (update->signature_url) {
-                    tmp = g_strconcat (url_prefix, "/", update->signature_url,
-                                       NULL);
-                    g_free (update->signature_url);
-                    update->signature_url = tmp;
-                }
-            }
-        }
+        package = rc_xml_node_to_package (iter, url_prefix, channel_id,
+                                          subchannel->preference);
 
         for (prov_iter = package->provides; prov_iter;
              prov_iter = prov_iter->next)
@@ -564,7 +543,8 @@ rc_xml_node_to_channel (RCChannel *channel, xmlNode *node)
         channel->subchannels =
             g_slist_append (channel->subchannels,
                             rc_xml_node_to_subchannel (iter,
-                                                       channel->file_path));
+                                                       channel->file_path,
+                                                       channel->id));
         iter = iter->next;
     }
 
