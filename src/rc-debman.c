@@ -3139,7 +3139,7 @@ find_file_read_done_cb (RCLineBuf *line_buf, RCLineBufStatus status,
     g_main_quit (find_file_info->loop);
 }
 
-static RCPackage *
+static RCPackageSList *
 rc_debman_find_file (RCPackman *packman, const gchar *filename)
 {
     DIR *info_dir;
@@ -3232,7 +3232,6 @@ rc_debman_find_file (RCPackman *packman, const gchar *filename)
 
         if (find_file_info.accept) {
             RCPackageSList *packages;
-            RCPackage *package;
             gchar *name;
 
             name = g_strndup (info_file->d_name, length - 5);
@@ -3240,13 +3239,7 @@ rc_debman_find_file (RCPackman *packman, const gchar *filename)
 
             packages = rc_packman_query (packman, name);
 
-            if (!packages)
-                return NULL;
-            else {
-                package = packages->data;
-                g_slist_free (packages);
-                return package;
-            }
+            return packages;
         }
     }
 
@@ -3320,7 +3313,9 @@ rc_debman_file_list (RCPackman *packman, RCPackage *package)
     int child_pid, stdout_fd;
     RCLineBuf *line_buf;
     DebmanFileListInfo file_list_info;
+#if 0
     int status;
+#endif
 
     if (!debman->priv->hash_valid)
         rc_debman_query_all_real (packman);

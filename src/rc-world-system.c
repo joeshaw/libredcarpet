@@ -27,6 +27,8 @@
 #include "rc-world-system.h"
 
 #include "rc-debug.h"
+#include "rc-package-dep.h"
+#include "rc-package-spec.h"
 
 static RCWorldServiceClass *parent_class;
 
@@ -112,6 +114,58 @@ rc_world_system_transact (RCWorld *world,
     return TRUE;
 }
 
+static int
+rc_world_system_foreach_providing (RCWorld *world,
+                                   RCPackageDep *dep,
+                                   RCPackageAndSpecFn callback,
+                                   gpointer user_data)
+{
+    RCPackman *packman;
+    const char *name;
+    int count = 0;
+    RCPackageSList *packages, *iter;
+
+    packman = rc_packman_get_global ();
+    g_assert (packman != NULL);
+
+    name = g_quark_to_string (RC_PACKAGE_SPEC (dep)->nameq);
+    g_assert (name);
+
+    if (RC_WORLD_CLASS (parent_class)->foreach_providing_fn) {
+        count = RC_WORLD_CLASS (parent_class)->foreach_providing_fn (world,
+                                                                     dep,
+                                                                     callback,
+                                                                     user_data);
+    }
+
+    if (count != 0 || *name != '/')
+        return count;
+
+    /* File dep and no matches, let's ask the packman */
+    packages = rc_packman_find_file (packman, name);
+
+    for (iter = packages; iter; iter = iter->next) {
+        RCPackage *package = iter->data;
+
+        if (callback) {
+            if (!callback (package, RC_PACKAGE_SPEC (dep), user_data)) {
+                count = -1;
+                goto cleanup;
+            }
+        }
+
+        count++;
+    }
+
+cleanup:
+    if (packages) {
+        rc_package_slist_unref (packages);
+        g_slist_free (packages);
+    }
+
+    return count;
+}
+
 static gboolean
 rc_world_system_assemble (RCWorldService *service, GError **error)
 {
@@ -173,15 +227,16 @@ rc_world_system_class_init (RCWorldSystemClass *klass)
 
     parent_class = g_type_class_peek_parent (klass);
 
-    object_class->finalize       = rc_world_system_finalize;
+    object_class->finalize            = rc_world_system_finalize;
 
     /* Set up the vtable */
-    world_class->sync_fn         = rc_world_system_sync;
-    world_class->refresh_fn      = rc_world_system_refresh;
-    world_class->can_transact_fn = rc_world_system_can_transact;
-    world_class->transact_fn     = rc_world_system_transact;
+    world_class->sync_fn              = rc_world_system_sync;
+    world_class->refresh_fn           = rc_world_system_refresh;
+    world_class->can_transact_fn      = rc_world_system_can_transact;
+    world_class->transact_fn          = rc_world_system_transact;
+    world_class->foreach_providing_fn = rc_world_system_foreach_providing;
 
-    service_class->assemble_fn   = rc_world_system_assemble;
+    service_class->assemble_fn        = rc_world_system_assemble;
 }
 
 static void

@@ -456,7 +456,7 @@ rc_packman_verify (RCPackman *packman, RCPackage *package, guint32 type)
     return (klass->rc_packman_real_verify (packman, package, type));
 }
 
-RCPackage *
+RCPackageSList *
 rc_packman_find_file (RCPackman *packman, const gchar *filename)
 {
     RCPackmanClass *klass;

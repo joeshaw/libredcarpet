@@ -1,3 +1,26 @@
+2003-09-17  Joe Shaw  <joe@ximian.com>
+
+	* rc-debman.c (rc_debman_find_file): Return an RCPackageSList.
+
+	* rc-packman.c (rc_packman_find_file): Return an
+	RCPackageSList... RPM can have files which are owned by multiple
+	packages (notably /etc/rc.d/init.d).
+
+	* rc-rpmman.c (rc_rpmman_section_to_package_section): Fix some
+	pointer arithmetic which is technically undefined in C.
+	(rc_rpmman_find_file_v4, rc_rpmman_find_file_v3): Fix these to
+	return a list of packages instead of just one.  Also set the
+	installed bit on these packages (they weren't set before), which
+	is technically correct.
+	(rc_rpmman_fine_file): Return an RCPackageSList.
+
+	* rc-world-system.c (rc_world_system_foreach_providing): If the
+	parent's function returns 0 and we're dealing with a file
+	dependency, ask the packman for a list of packages which provide
+	that dep.
+	(rc_world_system_class_init): Connect our implementation of
+	foreach_providing_fn.
+
 2003-09-16  Joe Shaw  <joe@ximian.com>
 
 	* rc-channel.c (RCChannel): Add a legacy_id field for migrating

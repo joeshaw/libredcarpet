@@ -1398,11 +1398,13 @@ rc_rpmman_section_to_package_section (const gchar *rpmsection)
 
     ptr = major_section;
     while (*ptr) {
-        *ptr++ = tolower (*ptr);
+        *ptr = tolower (*ptr);
+        ptr++;
     }
     ptr = minor_section;
     while (ptr && *ptr) {
-        *ptr++ = tolower (*ptr);
+        *ptr = tolower (*ptr);
+        ptr++;
     }
 
     if (!major_section || !major_section[0]) {
@@ -2674,12 +2676,12 @@ rc_rpmman_version_compare (RCPackman *packman,
     return rc;
 }
 
-static RCPackage *
+static RCPackageSList *
 rc_rpmman_find_file_v4 (RCPackman *packman, const gchar *filename)
 {
     rc_rpmdbMatchIterator mi = NULL;
     Header header;
-    RCPackage *package;
+    RCPackageSList *packages = NULL;
     RCRpmman *rpmman = RC_RPMMAN (packman);
 
     if (rpmman->version >= 40100) {
@@ -2698,38 +2700,33 @@ rc_rpmman_find_file_v4 (RCPackman *packman, const gchar *filename)
         goto ERROR;
     }
 
-    header = rpmman->rpmdbNextIterator (mi);
+    while ((header = rpmman->rpmdbNextIterator (mi))) {
+        RCPackage *package = rc_package_new ();
 
-    if (rpmman->rpmdbNextIterator (mi)) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              "found owners != 1");
+        rc_rpmman_read_header (rpmman, header, package);
 
-        rpmman->rpmdbFreeIterator (mi);
+        package->installed = TRUE;
 
-        goto ERROR;
+        packages = g_slist_prepend (packages, package);
     }
-
-    package = rc_package_new ();
-
-    rc_rpmman_read_header (rpmman, header, package);
 
     rpmman->rpmdbFreeIterator (mi);
 
-    return (package);
+    return packages;
 
   ERROR:
     rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                           "Find file failed");
 
-    return (NULL);
+    return NULL;
 }
 
-static RCPackage *
+static RCPackageSList *
 rc_rpmman_find_file_v3 (RCPackman *packman, const gchar *filename)
 {
     rc_dbiIndexSet matches;
-    Header header;
-    RCPackage *package;
+    RCPackageSList *packages = NULL;
+    int i;
     RCRpmman *rpmman = RC_RPMMAN (packman);
 
     if (rpmman->rpmdbFindByFile (rpmman->db, filename, &matches) == -1) {
@@ -2739,40 +2736,41 @@ rc_rpmman_find_file_v3 (RCPackman *packman, const gchar *filename)
         goto ERROR;
     }
 
-    if (matches.count != 1) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              "found owners != 1");
+    for (i = 0; i < matches.count; i++) {
+        Header header;
+        RCPackage *package;
 
-        goto ERROR;
+        if (!(header = rpmman->rpmdbGetRecord (rpmman->db,
+                                               matches.recs[i].recOffset))) {
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "read of RPM header failed");
+            return NULL;
+        }
+
+        package = rc_package_new ();
+
+        rc_rpmman_read_header (rpmman, header, package);
+
+        package->installed = TRUE;
+
+        packages = g_slist_prepend (packages, package);
     }
-
-    if (!(header = rpmman->rpmdbGetRecord (rpmman->db,
-                                           matches.recs[0].recOffset))) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              "read of RPM header failed");
-
-        goto ERROR;
-    }
-
-    package = rc_package_new ();
-
-    rc_rpmman_read_header (rpmman, header, package);
 
     rpmman->dbiFreeIndexRecord (matches);
 
-    return (package);
+    return packages;
 
   ERROR:
     rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                           "Find file failed");
 
-    return (NULL);
+    return NULL;
 }
 
-static RCPackage *
+static RCPackageSList *
 rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
 {
-    RCPackage *ret;
+    RCPackageSList *ret;
     gboolean close_db = FALSE;
 
     if ((RC_RPMMAN (packman))->db_status < RC_RPMMAN_DB_RDONLY) {
