@@ -101,6 +101,9 @@ RCDistroChunk distro_figurers[] = {
     { "yellowdog-20-ppc", RC_ARCH_PPC,
       func_string_in_file, "/etc/yellowdog-release", "Yellow Dog Linux release 2.0 (Pomona)",
       NULL, 0 },
+    { "yellowdog-21-ppc", RC_ARCH_PPC,
+      func_string_in_file, "/etc/yellowdog-release", "Yellow Dog Linux release 2.1 (Fuji)",
+      NULL, 0 },
 
     { "mandrake-70-i586", RC_ARCH_IA32,
       func_string_in_file, "/etc/mandrake-release", "7.0", NULL, 0 },
@@ -141,6 +144,8 @@ RCDistroChunk distro_figurers[] = {
       func_string_in_file, "/etc/SuSE-release", "7.1", NULL, 0 },
     { "suse-72-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/SuSE-release", "7.2", NULL, 0 },
+    { "suse-73-i386", RC_ARCH_IA32,
+      func_string_in_file, "/etc/SuSE-release", "7.3", NULL, 0 },
 
     { "debian-potato-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/debian_version", "2.2", NULL, 0},
@@ -182,6 +187,7 @@ RCDistroType distro_types[] = {
     { "suse-70-i386", NULL, "SuSE", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=3, non-gdm-runlevel=2" },
     { "suse-71-i386", NULL, "SuSE", "7.1", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
     { "suse-72-i386", NULL, "SuSE", "7.2", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "suse-73-i386", NULL, "SuSE", "7.3", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
 
     { "mandrake-70-i586", NULL, "Linux Mandrake", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
     { "mandrake-71-i586", NULL, "Linux Mandrake", "7.1", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
@@ -198,6 +204,7 @@ RCDistroType distro_types[] = {
 
     { "yellowdog-12-ppc", NULL, "Yellow Dog Linux", "1.2", RC_PKG_RPM, RC_ARCH_PPC, "gdm-runlevel=5, non-gdm-runlevel=3" },
     { "yellowdog-20-ppc", NULL, "Yellow Dog Linux", "2.0", RC_PKG_RPM, RC_ARCH_PPC, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "yellowdog-21-ppc", NULL, "Yellow Dog Linux", "2.1", RC_PKG_RPM, RC_ARCH_PPC, "gdm-runlevel=5, non-gdm-runlevel=3" },
 
     { "solaris-7-sun4", NULL, "Sun Solaris 7", "7", RC_PKG_RPM, RC_ARCH_SPARC, "" },
     { "solaris-8-sun4", NULL, "Sun Solaris 8", "8", RC_PKG_RPM, RC_ARCH_SPARC, "" },

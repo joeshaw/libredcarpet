@@ -1,3 +1,7 @@
+2001-10-30    <itp@ximian.com>
+
+	* rc-distro.c: add ydl 2.1 and suse 7.3
+
 2001-10-30  Joe Shaw  <joe@ximian.com>
 
 	* rc-channel.c (rc_channel_parse_xml): Get the new channel tier,
