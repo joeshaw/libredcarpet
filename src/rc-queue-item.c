@@ -1008,6 +1008,24 @@ require_item_copy (const RCQueueItem *src, RCQueueItem *dest)
     dest_require->remove_only       = src_require->remove_only;
 }
 
+static int
+require_item_cmp (const RCQueueItem *item_a, const RCQueueItem *item_b)
+{
+    int cmp;
+
+    const RCQueueItem_Require *a = (const RCQueueItem_Require *) item_a;
+    const RCQueueItem_Require *b = (const RCQueueItem_Require *) item_b;
+
+    cmp = rc_packman_version_compare (rc_world_get_packman (item_a->world),
+                                      RC_PACKAGE_SPEC (a->dep),
+                                      RC_PACKAGE_SPEC (b->dep));
+    if (cmp)
+        return cmp;
+
+    return CMP ((int) rc_package_dep_get_relation (a->dep),
+                (int) rc_package_dep_get_relation (b->dep));
+}
+
 static char *
 require_item_to_string (RCQueueItem *item)
 {
@@ -1041,6 +1059,7 @@ rc_queue_item_new_require (RCWorld *world, RCPackageDep *dep)
     item->process   = require_item_process;
     item->destroy   = require_item_destroy;
     item->copy      = require_item_copy;
+    item->cmp       = require_item_cmp;
     item->to_string = require_item_to_string;
 
     require->dep = dep;
@@ -1314,6 +1333,146 @@ rc_queue_item_branch_contains (RCQueueItem *item,
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
+static gboolean
+group_item_process (RCQueueItem *item,
+                    RCResolverContext *context,
+                    GSList **new_items)
+{
+    RCQueueItem_Group *grp = (RCQueueItem_Group *) item;
+    GSList *iter;
+    gboolean did_something = FALSE;
+
+    /* Just move all of the group's subitems onto the new_items
+       list. */
+    for (iter = grp->subitems; iter != NULL; iter = iter->next) {
+        RCQueueItem *this_item = iter->data;
+        
+        if (this_item) {
+            *new_items = g_slist_prepend (*new_items, this_item);
+            did_something = TRUE;
+        }
+    }
+
+    g_slist_free (grp->subitems);
+    grp->subitems = NULL;
+    rc_queue_item_free (item);
+
+    return did_something;
+}
+
+static void
+group_item_destroy (RCQueueItem *item)
+{
+    RCQueueItem_Group *grp = (RCQueueItem_Group *) item;
+    
+    g_slist_foreach (grp->subitems,
+                     (GFunc) rc_queue_item_free, 
+                     NULL);
+    g_slist_free (grp->subitems);
+
+}
+
+static void
+group_item_copy (const RCQueueItem *src, RCQueueItem *dest)
+{
+    const RCQueueItem_Group *src_grp = (const RCQueueItem_Group *) src;
+    RCQueueItem_Group *dest_grp = (RCQueueItem_Group *) dest;
+    GSList *iter;
+
+    for (iter = src_grp->subitems; iter != NULL; iter = iter->next) {
+        RCQueueItem *copy = rc_queue_item_copy (iter->data);
+        dest_grp->subitems = 
+            g_slist_prepend (dest_grp->subitems, copy);
+    }
+}
+
+static int
+group_item_cmp (const RCQueueItem *item_a, const RCQueueItem *item_b)
+{
+    const RCQueueItem_Group *a = (const RCQueueItem_Group *) item_a;
+    const RCQueueItem_Group *b = (const RCQueueItem_Group *) item_b;
+    GSList *ia, *ib;
+    int cmp;
+
+    /* First, sort by # of subitems. */
+    cmp = CMP(g_slist_length (a->subitems), g_slist_length (b->subitems));
+    if (cmp)
+        return cmp;
+
+    /* We can do a by-item cmp since the possible items are kept in sorted order. */
+    ia = a->subitems;
+    ib = b->subitems;
+    while (ia != NULL && ib != NULL) {
+        if (ia->data && ib->data) {
+            cmp = rc_queue_item_cmp (ia->data, ib->data);
+            if (cmp)
+                return cmp;
+        }
+        ia = ia->next;
+        ib = ib->next;
+    }
+
+    /* Both lists should end at the same time, since we initially
+       sorted on length. */
+    g_assert (ia == NULL && ib == NULL);
+
+    return 0;
+}
+
+static char *
+group_item_to_string (RCQueueItem *item)
+{
+    RCQueueItem_Group *group = (RCQueueItem_Group *) item;
+    char *str, *items_str;
+
+    items_str = item_slist_to_string (group->subitems);
+    str = g_strdup_printf ("group\n     %s", items_str);
+    g_free (items_str);
+
+    return str;
+}
+
+RCQueueItem *
+rc_queue_item_new_group (RCWorld *world)
+{
+    RCQueueItem *item;
+    RCQueueItem_Group *group;
+
+    group = g_new0 (RCQueueItem_Group, 1);
+    item = (RCQueueItem *) group;
+    
+    item->type      = RC_QUEUE_ITEM_TYPE_GROUP;
+    item->size      = sizeof (RCQueueItem_Group);
+    item->world     = world;
+    item->process   = group_item_process;
+    item->destroy   = group_item_destroy;
+    item->copy      = group_item_copy;
+    item->cmp       = group_item_cmp;
+    item->to_string = group_item_to_string;
+    
+    return item;
+}
+
+void
+rc_queue_item_group_add_item (RCQueueItem *item, RCQueueItem *subitem)
+{
+    RCQueueItem_Group *group;
+
+    g_return_if_fail (item != NULL);
+    g_return_if_fail (rc_queue_item_type (item) == RC_QUEUE_ITEM_TYPE_GROUP);
+    g_return_if_fail (subitem != NULL);
+
+    group = (RCQueueItem_Group *) item;
+
+    /* We need to keep the list sorted for comparison purposes. */
+    group->subitems = g_slist_insert_sorted (group->subitems,
+                                             subitem,
+                                             (GCompareFunc) rc_queue_item_cmp);
+}
+
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
 struct ConflictProcessInfo {
     RCWorld *world;
     RCPackage *conflicting_package;
@@ -1500,6 +1659,24 @@ conflict_item_copy (const RCQueueItem *src, RCQueueItem *dest)
     dest_conflict->conflicting_package = src_conflict->conflicting_package;
 }
 
+static int
+conflict_item_cmp (const RCQueueItem *item_a, const RCQueueItem *item_b)
+{
+    int cmp;
+
+    const RCQueueItem_Conflict *a = (const RCQueueItem_Conflict *) item_a;
+    const RCQueueItem_Conflict *b = (const RCQueueItem_Conflict *) item_b;
+
+    cmp = rc_packman_version_compare (rc_world_get_packman (item_a->world),
+                                      RC_PACKAGE_SPEC (a->dep),
+                                      RC_PACKAGE_SPEC (b->dep));
+    if (cmp)
+        return cmp;
+
+    return CMP ((int) rc_package_dep_get_relation (a->dep),
+                (int) rc_package_dep_get_relation (b->dep));
+}
+
 static char *
 conflict_item_to_string (RCQueueItem *item)
 {
@@ -1542,6 +1719,7 @@ rc_queue_item_new_conflict (RCWorld *world, RCPackageDep *dep, RCPackage *packag
     item->process   = conflict_item_process;
     item->destroy   = conflict_item_destroy;
     item->copy      = conflict_item_copy;
+    item->cmp       = conflict_item_cmp;
     item->to_string = conflict_item_to_string;
 
     conflict->dep = dep;

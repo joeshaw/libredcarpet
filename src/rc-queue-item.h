@@ -35,6 +35,7 @@ typedef enum {
     RC_QUEUE_ITEM_TYPE_INSTALL,
     RC_QUEUE_ITEM_TYPE_REQUIRE,
     RC_QUEUE_ITEM_TYPE_BRANCH,
+    RC_QUEUE_ITEM_TYPE_GROUP,
     RC_QUEUE_ITEM_TYPE_CONFLICT,
     RC_QUEUE_ITEM_TYPE_UNINSTALL,
     RC_QUEUE_ITEM_TYPE_LAST
@@ -44,6 +45,7 @@ typedef struct _RCQueueItem           RCQueueItem;
 typedef struct _RCQueueItem_Install   RCQueueItem_Install;
 typedef struct _RCQueueItem_Require   RCQueueItem_Require;
 typedef struct _RCQueueItem_Branch    RCQueueItem_Branch;
+typedef struct _RCQueueItem_Group     RCQueueItem_Group;
 typedef struct _RCQueueItem_Conflict  RCQueueItem_Conflict;
 typedef struct _RCQueueItem_Uninstall RCQueueItem_Uninstall;
 
@@ -98,6 +100,12 @@ struct _RCQueueItem_Branch {
     GSList *possible_items;
 };
 
+struct _RCQueueItem_Group {
+    RCQueueItem parent;
+    
+    GSList *subitems;
+};
+
 struct _RCQueueItem_Conflict {
     RCQueueItem parent;
 
@@ -149,6 +157,9 @@ void         rc_queue_item_branch_add_item (RCQueueItem *branch, RCQueueItem *su
 gboolean     rc_queue_item_branch_is_empty (RCQueueItem *branch);
 gboolean     rc_queue_item_branch_contains (RCQueueItem *branch,
                                             RCQueueItem *possible_subbranch);
+
+RCQueueItem *rc_queue_item_new_group       (RCWorld *);
+void         rc_queue_item_group_add_item  (RCQueueItem *group, RCQueueItem *subitem);
 
 RCQueueItem *rc_queue_item_new_conflict       (RCWorld *, RCPackageDep *dep, RCPackage *package);
  
