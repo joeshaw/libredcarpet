@@ -1,5 +1,9 @@
 2003-01-24  Jon Trowbridge  <trow@ximian.com>
 
+	* rc-queue-item.c (require_item_process): If there are no
+	installable providers, give a slightly more detailed error
+	message.
+
 	* rc-resolver.c (rc_resolver_resolve_dependencies): Flag the
 	temporary 'Local Packages' channel as silent.
 

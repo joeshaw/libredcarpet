@@ -712,6 +712,7 @@ rc_queue_item_install_set_explicitly_requested (RCQueueItem *item)
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 struct RequireProcessInfo {
+    RCPackage *package;
     RCResolverContext *context;
     RCWorld *world;
     GSList *providers;
@@ -735,6 +736,50 @@ require_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data)
         info->providers = g_slist_prepend (info->providers, package);
         g_hash_table_insert (info->uniq, package, GINT_TO_POINTER (1));
     }
+}
+
+static void
+no_installable_providers_info_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data)
+{
+    struct RequireProcessInfo *info = user_data;
+    RCPackageStatus status;
+    char *msg_str = NULL;
+
+    status = rc_resolver_context_get_status (info->context, package);
+
+    if (rc_package_status_is_to_be_uninstalled (status)) {
+        msg_str = g_strconcat (rc_package_to_str_static (package),
+                               " provides ",
+                               rc_package_spec_to_str_static (spec),
+                               ", but is scheduled to be uninstalled.",
+                               NULL);
+    } else if (rc_resolver_context_is_parallel_install (info->context, package)) {
+        msg_str = g_strconcat (rc_package_to_str_static (package),
+                               " provides ",
+                               rc_package_spec_to_str_static (spec),
+                               ", but another version of that package is already installed.",
+                               NULL);
+    } else if (! rc_resolver_context_package_is_possible (info->context, package)) {
+        msg_str = g_strconcat (rc_package_to_str_static (package),
+                               " provides ",
+                               rc_package_spec_to_str_static (spec),
+                               ", but it is uninstallable.  Try installing it on its own for more details.",
+                               NULL);
+    } else if (rc_world_package_is_locked (info->world, package)) {
+        msg_str = g_strconcat (rc_package_to_str_static (package),
+                               " provides ",
+                               rc_package_spec_to_str_static (spec),
+                               ", but it is locked.",
+                               NULL);
+    }
+
+    if (msg_str) {
+        rc_resolver_context_add_info_str (info->context, 
+                                          info->package,
+                                          RC_RESOLVER_INFO_PRIORITY_VERBOSE,
+                                          msg_str);
+    }
+    
 }
 
 static void
@@ -787,6 +832,7 @@ require_item_process (RCQueueItem *item,
         goto finished;
     }
 
+    info.package = require->requiring_package;
     info.context = context;
     info.world = world;
     info.providers = NULL;
@@ -808,7 +854,7 @@ require_item_process (RCQueueItem *item,
         gboolean explore_uninstall_branch = TRUE;
 
         if (require->upgraded_package == NULL) {
-            RCResolverInfo *info;
+            RCResolverInfo *err_info;
 
             msg = g_strconcat ("There are no ",
                                require->remove_only ? "alternative installed" : "installable",
@@ -819,11 +865,17 @@ require_item_process (RCQueueItem *item,
                                rc_package_to_str_static (require->requiring_package) : NULL,
                                NULL);
 
-            info = rc_resolver_info_misc_new (require->requiring_package,
-                                              RC_RESOLVER_INFO_PRIORITY_VERBOSE,
-                                              msg);
+            err_info = rc_resolver_info_misc_new (require->requiring_package,
+                                                  RC_RESOLVER_INFO_PRIORITY_VERBOSE,
+                                                  msg);
 
-            rc_resolver_context_add_info (context, info);
+            rc_resolver_context_add_info (context, err_info);
+
+            /* Maybe we can add some extra info on why none of the providers
+               are suitable. */
+            rc_world_foreach_providing_package (world, require->dep,
+                                                RC_WORLD_ANY_CHANNEL,
+                                                no_installable_providers_info_cb, &info);
         }
         
         /* If this is an upgrade, we might be able to avoid removing stuff by upgrading
