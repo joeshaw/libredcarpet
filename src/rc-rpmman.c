@@ -590,7 +590,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         GString *report = g_string_new ("");
 
         for (count = 0; count < probs->numProblems; count++) {
-            g_string_sprintfa ("\n%s", rpmProblemString (*problem));
+            g_string_sprintfa (report, "\n%s", rpmProblemString (*problem));
             problem++;
         }
 
