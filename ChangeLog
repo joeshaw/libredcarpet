@@ -1,3 +1,16 @@
+2003-09-05  James Willcox  <james@ximian.com>
+
+	* bindings/python/package-file.c: (PyPackageFile_tp_str):
+	* bindings/python/package.c: (PyPackage_get_channel),
+	(PyPackage_set_channel):
+	* src/rc-package.c: (rc_package_get_channel),
+	(rc_package_set_channel), (rc_package_get_filename),
+	(rc_package_set_filename):
+	* src/rc-package.h:
+	* src/rc-rpmman.c: (rc_rpmman_query_file):
+
+	Add some getters/setters, and fixup the python bindings some
+
 2003-09-03  James Willcox  <james@ximian.com>
 
 	* Makefile.am:

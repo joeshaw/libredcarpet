@@ -344,3 +344,36 @@ rc_package_add_dummy_update (RCPackage  *package,
     
     rc_package_add_update (package, update);
 }
+
+RCChannel *
+rc_package_get_channel (RCPackage *package)
+{
+    g_return_val_if_fail (package != NULL, NULL);
+
+    return package->channel;
+}
+
+void
+rc_package_set_channel (RCPackage *package, RCChannel *channel)
+{
+    g_return_if_fail (package != NULL);
+
+    package->channel = channel;
+}
+
+const char *
+rc_package_get_filename (RCPackage *package)
+{
+    g_return_val_if_fail (package != NULL, NULL);
+
+    return package->package_filename;
+}
+
+void
+rc_package_set_filename (RCPackage *package, const char *filename)
+{
+    g_return_if_fail (package != NULL);
+
+    g_free (package->package_filename);
+    package->package_filename = g_strdup (filename);
+}

@@ -156,13 +156,25 @@ static PyObject *
 PyPackage_get_channel (PyObject *self, void *closure)
 {
 	RCPackage *pkg = PyPackage_get_package (self);
+	RCChannel *channel;
 
-	if (pkg->channel == NULL) {
+	channel = rc_package_get_channel (pkg);
+	if (channel == NULL) {
 		Py_INCREF (Py_None);
 		return Py_None;
 	}
 
-	return PyChannel_new (pkg->channel);
+	return PyChannel_new (channel);
+}
+
+static PyObject *
+PyPackage_set_channel (PyObject *self, PyObject *val, void *closure)
+{
+	RCPackage *pkg = PyPackage_get_package (self);
+
+	rc_package_set_channel (pkg, PyChannel_get_channel (val));
+
+	return 0;
 }
 
 static PyObject *
@@ -332,7 +344,8 @@ static PyGetSetDef PyPackage_getsets[] = {
 	{ "spec",           (getter) PyPackage_get_spec,           (setter) 0 },
 	{ "file_size",      (getter) PyPackage_get_file_size,      (setter) 0 },
 	{ "installed_size", (getter) PyPackage_get_installed_size, (setter) 0 },
-	{ "channel",        (getter) PyPackage_get_channel,        (setter) 0 },
+	{ "channel",        (getter) PyPackage_get_channel,
+	  (setter) PyPackage_set_channel },
 	{ "requires",       (getter) PyPackage_get_requires,       (setter) 0 },
 	{ "provides",       (getter) PyPackage_get_provides,       (setter) 0 },
 	{ "conflicts",      (getter) PyPackage_get_conflicts,      (setter) 0 },
@@ -348,7 +361,6 @@ static PyGetSetDef PyPackage_getsets[] = {
 	  (setter) PyPackage_set_package_filename },
 	{ "signature_filename", (getter) PyPackage_get_signature_filename,
 	  (setter) PyPackage_set_signature_filename },
-	
 	
 	{ NULL, (getter)0, (setter)0 },
 };

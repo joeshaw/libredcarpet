@@ -62,7 +62,8 @@ PyPackageFile_tp_new (PyTypeObject *type, PyObject *args, PyObject *kwds)
 static PyObject *
 PyPackageFile_tp_str (PyObject *self)
 {
-	return PyString_FromString ("FIXME");
+	RCPackageFile *file = PyPackageFile_get_package_file (self);
+	return PyString_FromString (file->filename);
 }
 
 static void

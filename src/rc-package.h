@@ -125,4 +125,12 @@ void             rc_package_add_dummy_update  (RCPackage  *package,
                                                const char *package_filename,
                                                guint32     package_size);
 
+RCChannel       *rc_package_get_channel       (RCPackage *package);
+void             rc_package_set_channel       (RCPackage *package,
+					       RCChannel *channel);
+
+const char      *rc_package_get_filename      (RCPackage  *package);
+void             rc_package_set_filename      (RCPackage  *package,
+					       const char *filename);
+
 #endif /* _RC_PACKAGE_H */

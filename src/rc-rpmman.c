@@ -2087,6 +2087,8 @@ rc_rpmman_query_file (RCPackman *packman, const gchar *filename)
 
     rc_rpmman_header_info_free (rpmman, hi);
 
+    rc_package_set_filename (package, filename);
+
     return (package);
 } /* rc_packman_query_file */
 
