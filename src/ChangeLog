@@ -1,5 +1,7 @@
 2001-02-08  Vladimir Vukicevic  <vladimir@ximian.com>
 
+	* rc-distro.c: Oops. check for architecture the "correct" correct way.
+
 	* rc-deps.c: Fixed rpm breakage introduced.
 
 	* rc-deps.c: Okay, so even more fixications. Will test on redhat.

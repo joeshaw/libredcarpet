@@ -80,6 +80,9 @@ RCDistroChunk distro_figurers[] = {
     { "redhat-70-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/redhat-release", "7.0", NULL, CHECK_OP_OR,
       func_string_in_file, "/etc/redhat-release", "Rawhide", NULL },
+    { "redhat-71-i386", RC_ARCH_IA32,
+      func_string_in_file, "/etc/redhat-release", "7.0.9", NULL, CHECK_OP_OR,
+      func_string_in_file, "/etc/redhat-release", "Fisher", NULL },
 
     { "turbolinux-60-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/turbolinux-release", "6.0", NULL, 0 },
@@ -102,17 +105,13 @@ RCDistroChunk distro_figurers[] = {
       func_string_in_file, "/etc/mandrake-release", "7.2", NULL, 0 },
 
     { "debian-22-i386", RC_ARCH_IA32,
-      func_string_in_file, "/etc/debian_version", "2.2", NULL, CHECK_OP_AND,
-      func_sys, "/bin/arch", "86", 0 },
+      func_string_in_file, "/etc/debian_version", "2.2", NULL, 0},
     { "debian-woody-i386", RC_ARCH_IA32,
-      func_string_in_file, "/etc/debian_version", "woody", NULL, CHECK_OP_AND,
-      func_sys, "/bin/arch", "86", 0 },
+      func_string_in_file, "/etc/debian_version", "woody", NULL, 0},
     { "debian-sid-i386", RC_ARCH_IA32,
-      func_string_in_file, "/etc/debian_version", "sid", NULL, CHECK_OP_AND,
-      func_sys, "/bin/arch", "86", 0 },
+      func_string_in_file, "/etc/debian_version", "sid", NULL, 0},
     { "debian-sid-i386", RC_ARCH_IA32,
-      func_string_in_file, "/etc/debian_version", "unstable", NULL, CHECK_OP_AND,
-      func_sys, "/bin/arch", "86", 0 },
+      func_string_in_file, "/etc/debian_version", "unstable", NULL, 0},
     { NULL }
 };
 
@@ -121,6 +120,7 @@ RCDistroType distro_types[] = {
     { "redhat-61-i386", NULL, "Red Hat Linux", "6.1", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
     { "redhat-62-i386", NULL, "Red Hat Linux", "6.2", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
     { "redhat-70-i386", NULL, "Red Hat Linux", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
+    { "redhat-71-i386", NULL, "Red Hat Linux", "7.1", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
 
     { "scyld-20-i386", NULL, "Scyld Beowulf", "2.0", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
 
@@ -349,6 +349,12 @@ rc_figure_distro (void)
                 gboolean result;
                 if (!distro_figurers[i].func1) {
                     g_error ("Malformed distro discovery array");
+                }
+
+                /* Check if this is the right architecture */
+                if (distro_figurers[i].arch != arch) {
+                    i++;
+                    continue;
                 }
                 
                 result = (*distro_figurers[i].func1) (distro_figurers[i].param11,
