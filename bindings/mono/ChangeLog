@@ -1,3 +1,7 @@
+2004-10-29  James Willcox  <james@ximian.com>
+
+	* Makefile.am: don't regenerate stuff automatically
+
 2004-10-29  Tambet Ingo  <tambet@ximian.com>
 
 	* generated/PackageSpec.cs: The change from PackageSpec.custom

@@ -16,12 +16,12 @@ all: $(ASSEMBLY)
 $(API):
 	$(GAPI_PARSER) $(SOURCES)
 
-generated-stamp: $(API) RC.metadata
+update-generated: $(API) RC.metadata
 	$(GAPI_FIXUP) --api=$(API) --metadata=RC.metadata && \
 	$(GAPI_CODEGEN) --generate $(API) --outdir=generated \
 	--customdir=. --assembly-name=libredcarpet-sharp && touch generated-stamp
 
-$(ASSEMBLY): generated-stamp
+$(ASSEMBLY): generated/*.cs
 	$(MCS) --unsafe -target:library -pkg:gtk-sharp -o $(ASSEMBLY) --recurse '*.cs'
 
 update-docs:
