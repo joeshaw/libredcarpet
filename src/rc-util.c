@@ -258,6 +258,8 @@ rc_slist_unique (const GSList *sorted_list)
         }
         iter = iter->next;
     }
+
+    return out;
 }
 
 /* Oh, how I wish I was using a real language and didn't have to do this tripe */
