@@ -91,9 +91,11 @@ void
 rc_package_match_set_dep (RCPackageMatch *match,
 			  RCPackageDep   *dep)
 {
+  RCPackageDep *new_dep;
   g_return_if_fail (match != NULL);
+  new_dep = rc_package_dep_ref (dep);
   rc_package_dep_unref (match->dep);
-  match->dep = rc_package_dep_ref (dep);
+  match->dep = new_dep;
 }
 
 RCPackageDep *
@@ -305,6 +307,7 @@ rc_package_match_from_xml_node (xmlNode *node,
       RCPackageDep *dep;
       dep = rc_xml_node_to_package_dep (node);
       rc_package_match_set_dep (match, dep);
+      rc_package_dep_unref (dep);
 
     } else if (! g_strcasecmp (node->name, "glob")) {
 

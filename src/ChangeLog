@@ -1,5 +1,15 @@
 2003-02-04  Jon Trowbridge  <trow@ximian.com>
 
+	* rc-xml.c (rc_xml_node_to_package_dep_internal): Free some
+	leaked strings.
+
+	* rc-package-match.c (rc_package_match_set_dep): Ref the new dep
+	before unreffing the old dep, just in case we are in some weird
+	situation where they are equal.  It never hurts to be paranoid.
+	(rc_package_match_from_xml_node): Unref the dep we created from
+	the xml node after we call rc_package_match_set_dep.  This fixes a
+	small memory leak.
+
 	* rc-world.c (rc_world_get_system_packages): Unref the contents of
 	system_packages before freeing the slist.  If our system query
 	fails, free the slist.  (Probably fixes most of #37576)

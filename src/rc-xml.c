@@ -1070,6 +1070,7 @@ rc_xml_node_to_package_dep_internal (const xmlNode *node)
     gboolean has_epoch = FALSE;
     guint32 epoch = 0;
     RCPackageRelation relation;
+    RCPackageDep *dep;
     
     gchar *tmp;
 
@@ -1088,13 +1089,19 @@ rc_xml_node_to_package_dep_internal (const xmlNode *node)
             xml_get_prop (node, "version");
         release =
             xml_get_prop (node, "release");
-        g_free (tmp);
     } else {
         relation = RC_RELATION_ANY;
     }
 
-    return rc_package_dep_new (name, has_epoch, epoch, version, release,
-                               relation, FALSE, FALSE);
+    dep = rc_package_dep_new (name, has_epoch, epoch, version, release,
+                              relation, FALSE, FALSE);
+
+    g_free (tmp);
+    g_free (name);
+    g_free (version);
+    g_free (release);
+
+    return dep;
 } /* rc_xml_node_to_package_dep_internal */
 
 RCPackageDep *
