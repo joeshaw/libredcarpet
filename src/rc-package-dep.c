@@ -367,6 +367,7 @@ rc_package_dep_array_from_slist (RCPackageDepSList **list)
 
     while (iter) {
         memcpy (array->data + i, iter->data, sizeof (RCPackageDep));
+        g_free (iter->data);
         iter = iter->next;
         i++;
     }
