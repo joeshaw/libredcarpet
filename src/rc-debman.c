@@ -60,7 +60,12 @@ rc_debman_get_type (void)
 
 /* Helper function used by rc_debman_install during its "Oh fuck" disaster
    recovery phase, and also by rc_debman_remove.  Given a GSList * of package
-   names, remove them from the system. */
+   names, remove them from the system.
+
+   Returns 0 on success, non-zero on failure.
+
+   If it returns non-zero, we're really fucked.
+*/
 static gint
 rc_debman_do_purge (GSList *pkgs)
 {
@@ -77,7 +82,10 @@ rc_debman_do_purge (GSList *pkgs)
         gchar *pkg = (gchar *)(iter->data);
 
         /* This would definitely be an issue */
-        g_assert (pkg);
+        if (!pkg) {
+            g_strfreev (filev);
+            return (-1);
+        }
 
         filev[2 + i++] = g_strdup (pkg);
     }
@@ -114,8 +122,8 @@ rc_debman_do_purge (GSList *pkgs)
    of the packages, and at the end we configure them.  The only tricky part is
    keeping a list of all of the packages we've already unpacked, so that if we
    have to abort at any point, we can purge the unpacked but unconfigured
-   packages. */
-
+   packages.
+*/
 static void
 rc_debman_install (RCPackman *p, GSList *pkgs)
 {
@@ -420,6 +428,8 @@ rc_debman_query_helper (FILE *fp, RCPackage *pkg, gboolean do_depends)
 {
     gchar *buf;
 
+    do_depends = TRUE;
+
     while ((buf = readline (fp)) && buf[0]) {
         if (!strncmp (buf, "Status: install", strlen ("Status: install"))) {
             pkg->spec.installed = TRUE;
@@ -520,6 +530,7 @@ rc_debman_query (RCPackman *p, RCPackage *pkg)
 static RCPackageSList *
 rc_debman_depends (RCPackman *p, RCPackageSList *pkgs)
 {
+    /*
     RCPackageSList *iter;
 
     for (iter = pkgs; iter; iter = iter->next) {
@@ -550,6 +561,7 @@ rc_debman_depends (RCPackman *p, RCPackageSList *pkgs)
 
         fclose (fp);
     }
+    */    
     
     return (pkgs);
 }
