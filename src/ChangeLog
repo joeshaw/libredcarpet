@@ -1,5 +1,10 @@
 2001-06-20  Vladimir Vukicevic  <vladimir@ximian.com>
 
+	* rc-package-info.c: Oops, dep_name_table needs slists to be
+	hashed into it, not packages
+
+	* rc-deps-util.c: Added the one line to make debian work
+
 	* rc-deps.c, rc-deps-private.h: Fixed some memory corruption
 	double-free issues.
 
