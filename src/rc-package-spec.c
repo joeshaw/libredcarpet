@@ -176,3 +176,32 @@ rc_package_spec_compare (void *a, void *b)
 
     return rc_packman_version_compare (das_global_packman, &apkg->spec, &bpkg->spec);
 }
+
+
+static gint
+spec_find_by_name (gconstpointer a, gconstpointer b)
+{
+    const RCPackageSpec *s = (const RCPackageSpec *) a;
+    const gchar *name = (const gchar *) b;
+
+    if (s->name) {
+        return strcmp (s->name, name);
+    } else {
+        return -1;
+    }
+}
+
+gpointer
+rc_package_spec_slist_find_name (GSList *specs, gchar *name)
+{
+    GSList *lnk;
+
+    lnk = g_slist_find_custom (specs,
+                               name,
+                               spec_find_by_name);
+    if (lnk)
+        return lnk->data;
+    else
+        return NULL;
+}
+
