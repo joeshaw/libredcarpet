@@ -1,3 +1,14 @@
+2001-06-14  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c (transaction_add_install_packages): clarify the
+	INSTALL_UPGRADE bit
+	(rc_rpmman_transact): fix the rpmProblem fuckup
+	(split_rpm): s/close/rc_close/
+	(load_fake_syms): fix two typos, we never statically link against
+	rpm4 so this never came up before
+
+	* rc-md5.c (rc_md5): s/close/rc_close/
+
 2001-05-15  Joe Shaw  <joe@ximian.com>
 
 	* rc-packman-private.h (RCPackmanPrivate): Add an extension field for

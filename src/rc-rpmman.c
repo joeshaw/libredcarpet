@@ -253,7 +253,7 @@ transaction_add_install_packages (RCPackman *packman,
 
         case 0:
             rc = rpmman->rpmtransAddPackage (
-                transaction, header, NULL, filename, 1, NULL);
+                transaction, header, NULL, filename, INSTALL_UPGRADE, NULL);
             count++;
             rpmman->headerFree (header);
             rc_rpm_close (rpmman, fd);
@@ -629,12 +629,12 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
 #endif
     } else if (rc > 0) {
         guint count;
-        rpmProblem *problem = probs->probs;
+        rpmProblem problem = probs->probs;
         GString *report = g_string_new ("");
 
         for (count = 0; count < probs->numProblems; count++) {
             g_string_sprintfa (report, "\n%s",
-                               rpmman->rpmProblemString (*problem));
+                               rpmman->rpmProblemString (problem));
             problem++;
         }
 
@@ -1747,7 +1747,7 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
             }
         }
 
-        close (payload_fd);
+        rc_close (payload_fd);
     }
 
     rc_rpm_close (rpmman, rpm_fd);
@@ -2183,9 +2183,9 @@ load_fake_syms (RCRpmman *rpmman)
 #ifdef RC_RPM4
 
     rpmman->rpmdbInitIterator = &rpmdbInitIterator;
-    rpmman->rpdbGetIteratorCount = &rpmdbGetIteratorCount;
+    rpmman->rpmdbGetIteratorCount = &rpmdbGetIteratorCount;
     rpmman->rpmdbFreeIterator = &rpmdbFreeIterator;
-    rpmman->rpmdbNextIterator = &xrpmdbNextIterator;
+    rpmman->rpmdbNextIterator = &XrpmdbNextIterator;
     rpmman->rpmdbGetIteratorOffset = &rpmdbGetIteratorOffset;
 
 #else
