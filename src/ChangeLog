@@ -1,5 +1,20 @@
 2002-05-02  Jon Trowbridge  <trow@ximian.com>
 
+	* rc-xml.c (sax_end_document): Just to be sure, free
+	->text_buffer.
+	(parser_package_end): Set our package variables using a
+	g_strstripped version of ->text_buffer.
+	(parser_update_end): Set of update variables using a g_strstripped
+	version of ->text_buffer.
+	(sax_end_element): Clear ->text_buffer when we hit channel or
+	subchannel elements.
+	(sax_characters): If we get multiple sax_characters calls in a
+	row, concatenate the characters into text_buffer instead of
+	leaking/dropping the previous characters.
+
+	* rc-resolver.c (rc_resolver_resolve_dependencies): Don't leak the
+	split resolver queue.
+
 	* rc-xml.c (parser_package_end): strdup the version and release
 	when copying the update spec info to the package spec, thus
 	avoiding a segfault when the package is unrefed.

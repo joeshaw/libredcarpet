@@ -310,10 +310,12 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
             /* If our queue is isn't empty and isn't invalid, that can only mean
                one thing: we are down to nothing but branches. */
 
-            rc_resolver_queue_split_first_branch (queue,
-                                                  &resolver->pending_queues);
+            rc_resolver_queue_split_first_branch (queue, &resolver->pending_queues);
+            rc_resolver_queue_free (queue);
             
         }
+
+
         
     }
 }
