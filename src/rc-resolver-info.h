@@ -55,10 +55,12 @@ struct _RCResolverInfo {
 
     guint is_error     : 1;
     guint is_important : 1;
-    guint is_notable   : 1;
 };
 
 typedef void (*RCResolverInfoFn) (RCResolverInfo *, gpointer);
+
+const char        *rc_resolver_info_type_to_str      (RCResolverInfoType);
+RCResolverInfoType rc_resolver_info_type_from_str    (const char *);
 
 RCResolverInfoType rc_resolver_info_type             (RCResolverInfo *);
 gboolean           rc_resolver_info_merge            (RCResolverInfo *, RCResolverInfo *);

@@ -26,6 +26,49 @@
 #include <config.h>
 #include "rc-resolver-info.h"
 
+struct {
+    RCResolverInfoType type;
+    const char        *str;
+} type_str_table[] = {
+    { RC_RESOLVER_INFO_TYPE_NEEDED_BY,      "needed_by" },
+    { RC_RESOLVER_INFO_TYPE_CONFLICTS_WITH, "conflicts_with" },
+    { RC_RESOLVER_INFO_TYPE_OBSOLETES,      "obsoletes" },
+    { RC_RESOLVER_INFO_TYPE_DEPENDS_ON,     "depended_on" },
+    { RC_RESOLVER_INFO_TYPE_MISC,           "misc" },
+    { RC_RESOLVER_INFO_TYPE_INVALID,        "invalid" },
+    { RC_RESOLVER_INFO_TYPE_INVALID,        NULL }
+};
+
+const char *
+rc_resolver_info_type_to_str (RCResolverInfoType type)
+{
+    int i;
+
+    for (i = 0; type_str_table[i].str != NULL; ++i) {
+        if (type == type_str_table[i].type)
+            return type_str_table[i].str;
+    }
+
+    return NULL;
+}
+
+RCResolverInfoType
+rc_resolver_info_type_from_str (const char *str)
+{
+    int i;
+
+    g_return_val_if_fail (str != NULL, RC_RESOLVER_INFO_TYPE_INVALID);
+
+    for (i = 0; type_str_table[i].str != NULL; ++i) {
+        if (! g_strcasecmp (str, type_str_table[i].str))
+            return type_str_table[i].type;
+    }
+
+    return RC_RESOLVER_INFO_TYPE_INVALID;
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
 RCResolverInfoType
 rc_resolver_info_type (RCResolverInfo *info)
 {
