@@ -2083,7 +2083,7 @@ rc_rpmman_verify (RCPackman *packman, RCPackage *package, guint32 type)
         ret = g_slist_append (ret, verification);
     }
 
-    if ((size > 0) && (type && RC_VERIFICATION_TYPE_SIZE)) {
+    if ((size > 0) && (type & RC_VERIFICATION_TYPE_SIZE)) {
         verification = rc_verify_size (payload_filename, size);
 
         ret = g_slist_append (ret, verification);

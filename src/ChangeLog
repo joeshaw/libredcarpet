@@ -1,3 +1,8 @@
+2002-09-06  Joe Shaw  <joe@ximian.com>
+
+	* rc-rpmman.c (rc_rpmman_verify): Fix a typo.  We want a bitwise
+	and, not a logical and.
+
 2002-09-04  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-channel.c (rc_channel_get_subs_file): Added an accessor for
