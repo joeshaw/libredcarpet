@@ -165,6 +165,10 @@ close_database (RCRpmman *rpmman)
         rpmman->rpmdbClose (rpmman->db);
         rpmman->db = NULL;
         rpmman->db_status = RC_RPMMAN_DB_NONE;
+
+        if (rpmman->lock_fd) {
+            close (rpmman->lock_fd);
+        }
     }
 }
 
@@ -196,6 +200,39 @@ open_database (RCRpmman *rpmman, gboolean write)
         rc_packman_set_error (RC_PACKMAN (rpmman), RC_PACKMAN_ERROR_ABORT,
                               "rpmdbOpen failed");
         goto ERROR;
+    }
+
+    if (write) {
+        struct flock fl;
+        gchar *db_filename;
+
+        if (rpmman->version < 40000)
+            db_filename = g_strconcat (rpmman->rpmroot,
+                                       "/var/lib/rpm/packages.rpm", NULL);
+        else
+            db_filename = g_strconcat (rpmman->rpmroot,
+                                       "/var/lib/rpm/Packages", NULL);
+
+        rpmman->lock_fd = open (db_filename, O_RDWR);
+
+        if (rpmman->lock_fd == -1) {
+            rc_packman_set_error (RC_PACKMAN (rpmman), RC_PACKMAN_ERROR_ABORT,
+                                  "open(2) failed");
+            rpmman->rpmdbClose (rpmman->db);
+            goto ERROR;
+        }
+
+        fl.l_type = F_WRLCK;
+        fl.l_whence = SEEK_SET;
+        fl.l_start = 0;
+        fl.l_len = 0;
+
+        if (fcntl (rpmman->lock_fd, F_SETLK, &fl) == -1) {
+            rc_packman_set_error (RC_PACKMAN (rpmman), RC_PACKMAN_ERROR_ABORT,
+                                  "fcntl failed");
+            rpmman->rpmdbClose (rpmman->db);
+            goto ERROR;
+        }
     }
 
     if (root && rpmman->version >= 40003) {

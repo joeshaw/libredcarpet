@@ -54,6 +54,7 @@ struct _RCRpmman {
 
     rpmdb db;
     int db_status;
+    int lock_fd;
 
     gchar *rpmroot;
 

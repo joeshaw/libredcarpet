@@ -1,3 +1,13 @@
+2002-07-26  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c (open_database): turns out rpm database locking is
+	broken; to make sure things work correctly, after opening the
+	database in O_RDWR, we need to use fcntl to lock the database by
+	hand.  Fun.
+	(close_database): close the db fd to release the lock
+
+	* rc-rpmman.h: add a lock_fd to the Rpmman struct
+
 2002-07-26  Joe Shaw  <joe@ximian.com>
 
 	* rc-debman.c (verify_status): Make sure we unlock the database in
