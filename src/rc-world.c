@@ -195,6 +195,39 @@ rc_world_add_packages_from_slist (RCWorld *world,
     rc_world_thaw (world);
 }
 
+guint
+rc_world_add_packages_from_xml (RCWorld *world, RCChannel *channel, xmlNode *node)
+{
+    RCPackage *package;
+    guint count = 0;
+    
+    g_return_val_if_fail (world != NULL, 0);
+
+    rc_world_freeze (world);
+
+    while (node && g_strcasecmp (node->name, "package"))
+        node = node->xmlChildrenNode;
+
+    while (node) {
+
+        if (! g_strcasecmp (node->name, "package")) {
+
+            package = rc_xml_node_to_package (node, channel);
+            if (package) {
+                rc_world_add_package (world, package);
+                ++count;
+            }
+            
+        } 
+
+        node = node->next;
+    }
+
+    rc_world_thaw (world);
+
+    return count;
+}
+
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 static gboolean
@@ -423,11 +456,9 @@ rc_world_get_package (RCWorld *world,
     GSList *slist;
 
     g_return_val_if_fail (world != NULL, NULL);
-    g_return_val_if_fail (channel != NULL, NULL);
-    g_return_val_if_fail (name && *name, NULL);
-    
     g_return_val_if_fail (channel != RC_WORLD_ANY_CHANNEL
                           && channel != RC_WORLD_ANY_NON_SYSTEM, NULL);
+    g_return_val_if_fail (name && *name, NULL);
 
     slist = g_hash_table_lookup (world->packages_by_name, name);
     while (slist) {
@@ -438,6 +469,33 @@ rc_world_get_package (RCWorld *world,
     }
 
     return NULL;
+}
+
+RCPackage *
+rc_world_get_package_with_constraint (RCWorld *world,
+                                      RCChannel *channel,
+                                      const char *name,
+                                      RCPackageDep *constraint,
+                                      gboolean is_and)
+{
+    RCPackage *pkg;
+
+    g_return_val_if_fail (world != NULL, NULL);
+    g_return_val_if_fail (channel != RC_WORLD_ANY_CHANNEL
+                          && channel != RC_WORLD_ANY_NON_SYSTEM, NULL);
+    g_return_val_if_fail (name && *name, NULL);
+    
+    pkg = rc_world_get_package (world, channel, name);
+
+    if (pkg != NULL && constraint != NULL) {
+        RCPackageDep *dep;
+        dep = rc_package_dep_new_from_spec (&(pkg->spec), RC_RELATION_EQUAL);
+        if (! rc_package_dep_verify_relation (constraint, dep))
+            pkg = NULL;
+        rc_package_dep_free (dep);
+    }
+
+    return pkg;
 }
 
 struct ForeachPackageInfo {

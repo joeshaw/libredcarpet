@@ -37,8 +37,6 @@
 
 #include "rc-channel.h"
 
-#include "rc-package-info.h"
-
 #include "rc-distro.h"
 
 #include "rc-md5.h"
@@ -53,6 +51,8 @@
 
 #include "rc-resolver.h"
 #include "rc-resolver-queue.h"
+
 #include "rc-world.h"
+#include "rc-world-import.h"
 
 #endif

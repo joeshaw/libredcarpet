@@ -37,8 +37,6 @@ libredcarpettmp_a_SOURCES =		\
 	rc-package-spec.h		\
 	rc-package-dep.c		\
 	rc-package-dep.h		\
-	rc-package-info.c		\
-	rc-package-info.h		\
 	rc-package-importance.c		\
 	rc-package-importance.h		\
 	rc-package-update.c		\
@@ -51,6 +49,8 @@ libredcarpettmp_a_SOURCES =		\
 	rc-package-section.h		\
 	rc-world.c			\
 	rc-world.h			\
+	rc-world-import.c		\
+	rc-world-import.h		\
 	rc-resolver-info.c		\
 	rc-resolver-info.h		\
 	rc-resolver-context.c		\

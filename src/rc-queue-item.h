@@ -56,6 +56,8 @@ struct _RCQueueItem {
     size_t size;
     GSList *pending_info;
 
+    RCWorld *world;
+
     /* 
        is_redundant TRUE == can be dropped from any branch
     
@@ -123,8 +125,9 @@ RCQueueItem    *rc_queue_item_copy         (RCQueueItem *);
 char           *rc_queue_item_to_string    (RCQueueItem *);
 void            rc_queue_item_add_info     (RCQueueItem *, RCResolverInfo *);
 void            rc_queue_item_log_info     (RCQueueItem *, RCResolverContext *);
+RCWorld        *rc_queue_item_get_world    (RCQueueItem *);
 
-RCQueueItem *rc_queue_item_new_install                  (RCPackage *package);
+RCQueueItem *rc_queue_item_new_install                  (RCWorld *, RCPackage *package);
 void         rc_queue_item_install_set_upgrade_package  (RCQueueItem *item, RCPackage *upgrades);
 void         rc_queue_item_install_add_dep              (RCQueueItem *item, RCPackageDep *dep);
 void         rc_queue_item_install_add_needed_by        (RCQueueItem *item, RCPackage *package);
@@ -133,16 +136,16 @@ int          rc_queue_item_install_get_channel_priority (RCQueueItem *item);
 void         rc_queue_item_install_set_other_penalty    (RCQueueItem *item, int);
 int          rc_queue_item_install_get_other_penalty    (RCQueueItem *item);
 
-RCQueueItem *rc_queue_item_new_require         (RCPackageDep *dep);
+RCQueueItem *rc_queue_item_new_require         (RCWorld *, RCPackageDep *dep);
 void         rc_queue_item_require_add_package (RCQueueItem *item, RCPackage *package);
 void         rc_queue_item_require_set_remove_only (RCQueueItem *item);
 
-RCQueueItem *rc_queue_item_new_branch      (void);
+RCQueueItem *rc_queue_item_new_branch      (RCWorld *);
 void         rc_queue_item_branch_add_item (RCQueueItem *branch, RCQueueItem *subitem);
 
-RCQueueItem *rc_queue_item_new_conflict       (RCPackageDep *dep, RCPackage *package);
+RCQueueItem *rc_queue_item_new_conflict       (RCWorld *, RCPackageDep *dep, RCPackage *package);
  
-RCQueueItem *rc_queue_item_new_uninstall                (RCPackage *package, const char *reason);
+RCQueueItem *rc_queue_item_new_uninstall                (RCWorld *, RCPackage *package, const char *reason);
 void         rc_queue_item_uninstall_set_dep            (RCQueueItem *item, RCPackageDep *dep);
 void         rc_queue_item_uninstall_set_remove_only    (RCQueueItem *item);
 void         rc_queue_item_uninstall_set_upgraded_to    (RCQueueItem *item, RCPackage *packageo);

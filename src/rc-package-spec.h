@@ -24,6 +24,8 @@
 #include <glib.h>
 #include <string.h>
 
+struct _RCWorld;
+
 typedef struct _RCPackageSpec RCPackageSpec;
 
 typedef enum {
@@ -54,7 +56,7 @@ void rc_package_spec_copy (RCPackageSpec *new, RCPackageSpec *old);
 
 void rc_package_spec_free_members (RCPackageSpec *rcps);
 
-RCPackageSpecType rc_package_spec_get_type (RCPackageSpec *);
+RCPackageSpecType rc_package_spec_get_type (struct _RCWorld *, RCPackageSpec *);
 
 gint rc_package_spec_compare_name (void *a, void *b);
 gint rc_package_spec_compare (void *a, void *b);

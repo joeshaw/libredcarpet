@@ -78,9 +78,12 @@ spec_type_cb (RCPackage *package, gpointer user_data)
 }
 
 RCPackageSpecType
-rc_package_spec_get_type (RCPackageSpec *spec)
+rc_package_spec_get_type (RCWorld *world, RCPackageSpec *spec)
 {
     g_return_val_if_fail (spec != NULL, RC_PACKAGE_SPEC_TYPE_UNKNOWN);
+
+    if (world == NULL)
+        world = rc_get_world ();
 
     if (spec->type == RC_PACKAGE_SPEC_TYPE_UNKNOWN) {
 
@@ -94,7 +97,7 @@ rc_package_spec_get_type (RCPackageSpec *spec)
             info.spec = spec;
             info.flag = FALSE;
 
-            rc_world_foreach_package_by_name (rc_get_world (),
+            rc_world_foreach_package_by_name (world,
                                               spec->name,
                                               RC_WORLD_ANY_CHANNEL,
                                               spec_type_cb, &info);

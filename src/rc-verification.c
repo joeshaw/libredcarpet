@@ -19,6 +19,7 @@
  */
 
 #include <unistd.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <string.h>
 #include <signal.h>
@@ -178,7 +179,7 @@ rc_verify_gpg (gchar *file, gchar *sig)
     GMainLoop *loop;
     gchar *gpg_command;
     RCVerification *verification;
-    gchar *homedir, *gpgdir;
+    gchar *gpgdir;
 
     RC_ENTRY;
 

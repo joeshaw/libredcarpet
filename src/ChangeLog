@@ -1,3 +1,57 @@
+2002-03-26  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-world.c (rc_world_add_packages_from_xml): Added.
+	(rc_world_get_package): Fixed input variable checks.
+	(rc_world_get_package_with_constraint): Added.  Replaces the
+	similarly-named function from rc-package-info.c.
+
+	* rc-verification.c: #include <stdlib.h> to get rid of
+	compiler warnings. 
+	(rc_verify_gpg): Removed unused local variable.
+
+	* rc-resolver.c: Each RCResolver now carries around an RCWorld,
+	which is to be used for all package queries related to that
+	resolution.
+	(rc_resolver_set_world): Added.
+	(rc_resolver_get_world): Added.  Use the global RCWorld as a
+	fallback.
+	(rc_resolver_verify_system): Use our local RCWorld.
+	(rc_resolver_resolve_dependencies): Initialize our root context
+	with our local world.
+
+	* rc-resolver-queue.c (rc_resolver_queue_add_package_to_install):
+	Initialize the install item using the RCResolverContext's RCWorld.
+	(rc_resolver_queue_add_package_to_remove): Ditto with the
+	uninstall item.
+	(rc_resolver_queue_add_package_to_verify): Ditto with the require
+	and conflict items.
+
+	* rc-resolver-context.c: Each RCResolverContext now carries around
+	an RCWorld, which it uses for all package queries.
+
+	* rc-queue-item.c: Each RCQueueItem now carries around an RCWorld,
+	which it uses for all package queries.  This change leads to a
+	bunch of small changes throughout the API and in the code.
+
+	* rc-package.c (rc_xml_node_to_package): If a package doesn't have
+	any history, we try to guess the version number information by
+	looking for a provide with the same name as the package.
+
+	* rc-package-spec.c (rc_package_spec_get_type): Added an
+	RCWorld argument.
+
+	* rc-package-info.c (rc_channel_parse): Took all of this code
+	and...
+
+	* rc-world-import.c (rc_world_parse_channel): ...moved it
+	here, along with some renaming.
+
+	* rc-dep-or.c: Removed rc_dep_or_process_system_and_channels and
+	associated helper functions.
+
+	* rc-channel.c: Removed inclusion of "rc-package-info.h".
+	Removed rc_xml_node_process and rc_xml_node_to_channel.
+
 2002-03-22  Peter Bowen  <pzb@ximian.com>
 
 	* rc-rpmman.c (vercmp): add comments, remove #if 0 code,
@@ -9,6 +63,10 @@
 	* rc-rpmman.c: minor fix to how we parse EVRs
 
 2002-03-20  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-world.c (rc_world_foreach_requiring_package): The order of
+	the arguments to rc_package_dep_verify_relation matters, or
+	so I'm told...
 
 	* rc-world.c (rc_world_get_best_upgrade): Added.  Returns the best
 	upgrade for a package, or NULL if none is available.  Right now

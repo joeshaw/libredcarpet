@@ -70,6 +70,7 @@ rc_resolver_context_new_child (RCResolverContext *parent)
     context->parent = rc_resolver_context_ref (parent);
 
     if (parent) {
+        context->world           = parent->world;
         context->install_count   = parent->install_count;
         context->upgrade_count   = parent->upgrade_count;
         context->uninstall_count = parent->uninstall_count;
@@ -124,6 +125,17 @@ rc_resolver_context_unref (RCResolverContext *context)
             g_free (context);
         }
     }
+}
+
+RCWorld *
+rc_resolver_context_get_world (RCResolverContext *context)
+{
+    g_return_val_if_fail (context != NULL, NULL);
+
+    if (context->world)
+        return context->world;
+    else
+        return rc_get_world ();
 }
 
 void
@@ -441,6 +453,7 @@ rc_resolver_context_foreach_marked_package (RCResolverContext *context,
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 struct InstallInfo {
+    RCWorld *world;
     RCMarkedPackageFn fn;
     gpointer user_data;
     int count;
@@ -455,7 +468,7 @@ install_pkg_cb (RCPackage *package,
 
     if (status == RC_PACKAGE_STATUS_TO_BE_INSTALLED
         && ! rc_package_is_installed (package)
-        && rc_world_find_installed_version (rc_get_world (), package) == NULL) {
+        && rc_world_find_installed_version (info->world, package) == NULL) {
 
         if (info->fn)
             info->fn (package, status, info->user_data);
@@ -472,6 +485,7 @@ rc_resolver_context_foreach_install (RCResolverContext *context,
 
     g_return_val_if_fail (context != NULL, -1);
 
+    info.world = rc_resolver_context_get_world (context);
     info.fn = fn;
     info.user_data = user_data;
     info.count = 0;
@@ -486,6 +500,7 @@ rc_resolver_context_foreach_install (RCResolverContext *context,
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 struct UpgradeInfo {
+    RCWorld *world;
     RCMarkedPackagePairFn fn;
     gpointer user_data;
     RCResolverContext *context;
@@ -504,7 +519,7 @@ upgrade_pkg_cb (RCPackage *package,
     if (status == RC_PACKAGE_STATUS_TO_BE_INSTALLED
         && ! rc_package_is_installed (package)) {
         
-        to_be_upgraded = rc_world_find_installed_version (rc_get_world (), package);
+        to_be_upgraded = rc_world_find_installed_version (info->world, package);
         if (to_be_upgraded) {
             tbu_status = rc_resolver_context_get_status (info->context, to_be_upgraded);
             
@@ -527,6 +542,7 @@ rc_resolver_context_foreach_upgrade (RCResolverContext *context,
 
     g_return_val_if_fail (context != NULL, -1);
 
+    info.world = rc_resolver_context_get_world (context);
     info.fn = fn;
     info.user_data = user_data;
     info.context = context;
@@ -747,18 +763,17 @@ gboolean
 rc_resolver_context_requirement_is_met (RCResolverContext *context,
                                         RCPackageDep *dep)
 {
-    RCWorld *world;
     struct RequirementMetInfo info;
 
     g_return_val_if_fail (context != NULL, FALSE);
     g_return_val_if_fail (dep != NULL, FALSE);
 
-    world = rc_get_world ();
-
     info.context = context;
     info.flag = FALSE;
 
-    rc_world_check_providing_package (world, dep, RC_WORLD_ANY_CHANNEL, FALSE, requirement_met_cb, &info);
+    rc_world_check_providing_package (rc_resolver_context_get_world (context),
+                                      dep, RC_WORLD_ANY_CHANNEL, FALSE,
+                                      requirement_met_cb, &info);
     
     return info.flag;
 }
@@ -780,18 +795,17 @@ gboolean
 rc_resolver_context_requirement_is_possible (RCResolverContext *context,
                                              RCPackageDep *dep)
 {
-    RCWorld *world;
     struct RequirementMetInfo info;
 
     g_return_val_if_fail (context != NULL, FALSE);
     g_return_val_if_fail (dep != NULL, FALSE);
 
-    world = rc_get_world ();
-
     info.context = context;
     info.flag = FALSE;
 
-    rc_world_check_providing_package (world, dep, RC_WORLD_ANY_CHANNEL, FALSE, requirement_possible_cb, &info);
+    rc_world_check_providing_package (rc_resolver_context_get_world (context),
+                                      dep, RC_WORLD_ANY_CHANNEL, FALSE, 
+                                      requirement_possible_cb, &info);
     
     return info.flag;
 }

@@ -77,7 +77,8 @@ rc_resolver_queue_add_package_to_install (RCResolverQueue *queue,
         return;
     }
 
-    item = rc_queue_item_new_install (package);
+    item = rc_queue_item_new_install (rc_resolver_context_get_world (queue->context),
+                                      package);
 
     queue->items = g_slist_prepend (queue->items, item);
 }
@@ -95,7 +96,8 @@ rc_resolver_queue_add_package_to_remove (RCResolverQueue *queue,
     if (rc_resolver_context_package_is_absent (queue->context, package))
         return;
 
-    item = rc_queue_item_new_uninstall (package, "user request");
+    item = rc_queue_item_new_uninstall (rc_resolver_context_get_world (queue->context),
+                                        package, "user request");
     if (remove_only_mode)
         rc_queue_item_uninstall_set_remove_only (item);
     queue->items = g_slist_prepend (queue->items, item);
@@ -105,15 +107,18 @@ void
 rc_resolver_queue_add_package_to_verify (RCResolverQueue *queue,
                                          RCPackage *package)
 {
+    RCWorld *world;
     GSList *iter;
     
     g_return_if_fail (queue != NULL);
     g_return_if_fail (package != NULL);
 
+    world = rc_resolver_context_get_world (queue->context);
+
     for (iter = package->requires; iter != NULL; iter = iter->next) {
         RCQueueItem *item;
         RCPackageDep *dep = iter->data;
-        item = rc_queue_item_new_require (dep);
+        item = rc_queue_item_new_require (world, dep);
         rc_queue_item_require_add_package (item, package);
         queue->items = g_slist_prepend (queue->items, item);
     }
@@ -121,7 +126,7 @@ rc_resolver_queue_add_package_to_verify (RCResolverQueue *queue,
     for (iter = package->conflicts; iter != NULL; iter = iter->next) {
         RCQueueItem *item;
         RCPackageDep *dep = iter->data;
-        item = rc_queue_item_new_conflict (dep, package);
+        item = rc_queue_item_new_conflict (world, dep, package);
         queue->items = g_slist_prepend (queue->items, item);
     }
 }

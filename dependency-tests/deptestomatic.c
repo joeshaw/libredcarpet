@@ -40,6 +40,8 @@
 static GHashTable *channel_hash = NULL;
 static RCPackman *packman = NULL;
 
+static RCWorld *world = NULL;
+
 static gboolean allow_virtual_conflicts;
 
 static void
@@ -59,6 +61,7 @@ load_channel (const char *name,
     gboolean is_compressed;
     struct stat stat_buf;
     int file_size;
+    guint count;
     char *buffer;
     FILE *in;
 
@@ -97,19 +100,25 @@ load_channel (const char *name,
         else if (g_strcasecmp(type, "debian") == 0)
             channel->type = RC_CHANNEL_TYPE_DEBIAN;
     }
-
-    rc_channel_parse (channel, buffer, is_compressed ? file_size : 0);
+    
+    count = rc_world_parse_channel (world, channel, buffer, is_compressed ? file_size : 0);
 
     g_free (buffer);
 
+    if (count < 0) {
+        g_print ("Couldn't load packages from %s\n", filename);
+        return;
+    }
+
     if (system_packages) {
-        rc_world_foreach_package (rc_get_world (),
+        rc_world_foreach_package (world,
                                   channel,
                                   mark_as_system_cb,
                                   NULL);
     }
 
-    g_print ("Loaded packages from %s\n", filename);
+    g_print ("Loaded %d package%s from %s\n",
+             count, count == 1 ? "" : "s", filename);
 
     if (channel_hash == NULL) {
         channel_hash = g_hash_table_new (g_str_hash, g_str_equal);
@@ -137,7 +146,7 @@ get_package (const char *channel_name, const char *package_name)
         return NULL;
     }
 
-    package = rc_world_get_package (rc_get_world (), channel, package_name);
+    package = rc_world_get_package (world, channel, package_name);
 
     if (package == NULL) {
         g_warning ("Can't find package '%s' in channel '%s': no such package",
@@ -218,7 +227,7 @@ parse_xml_setup (xmlNode *node)
                            package_name);
             } else {
                 g_print (">!> Force-uninstalling '%s'", package_name);
-                rc_world_remove_package (rc_get_world (), package);
+                rc_world_remove_package (world, package);
             }
 
 
@@ -369,6 +378,7 @@ parse_xml_trial (xmlNode *node)
     print_sep ();
 
     resolver = rc_resolver_new ();
+    rc_resolver_set_world (resolver, world);
 
     rc_resolver_allow_virtual_conflicts (resolver, allow_virtual_conflicts);
 
@@ -449,7 +459,7 @@ parse_xml_trial (xmlNode *node)
 
             g_print (">!> Checking for upgrades...\n");
 
-            count = rc_world_foreach_system_package_with_upgrade (rc_get_world (),
+            count = rc_world_foreach_system_package_with_upgrade (world,
                                                                   trial_upgrade_cb,
                                                                   resolver);
 
@@ -547,6 +557,8 @@ main (int argc, char *argv[])
 
     packman = rc_distman_new ();
     rc_packman_set_packman (packman);
+
+    world = rc_world_new ();
 
     if (argc != 2) {
         g_print ("Usage: deptestomatic testfile.xml\n");

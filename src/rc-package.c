@@ -321,12 +321,36 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
         iter = iter->next;
     }
 
-    package->spec.epoch =
-        ((RCPackageUpdate *)package->history->data)->spec.epoch;
-    package->spec.version = g_strdup (
-        ((RCPackageUpdate *)package->history->data)->spec.version);
-    package->spec.release = g_strdup (
-        ((RCPackageUpdate *)package->history->data)->spec.release);
+    if (package->history && package->history->data) {
+
+        /* If possible, we grab the version info from the most
+           recent update. */
+
+        RCPackageUpdate *update = package->history->data;
+
+        package->spec.epoch   = update->spec.epoch;
+        package->spec.version = update->spec.version;
+        package->spec.release = update->spec.release;
+
+    } else {
+
+        /* Otherwise, try to find where the package provides itself,
+           and use that version info. */
+        
+        RCPackageDepSList *iter3;
+
+        for (iter3 = package->provides; iter3 != NULL; iter3 = iter3->next) {
+            RCPackageDep *dep = (RCPackageDep *) iter3->data;
+            
+            if (dep->relation == RC_RELATION_EQUAL
+                && ! strcmp (dep->spec.name, package->spec.name)) {
+                package->spec.epoch   = dep->spec.epoch;
+                package->spec.version = dep->spec.version;
+                package->spec.release = dep->spec.release;
+                break;
+            }
+        }
+    }
 
     return (package);
 }

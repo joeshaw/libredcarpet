@@ -35,6 +35,8 @@ typedef struct _RCResolver RCResolver;
 struct _RCResolver {
     RCChannel *current_channel;
     GSList    *subscribed_channels;
+    
+    RCWorld *world;
 
     GSList *packages_to_install;
     GSList *packages_to_remove;
@@ -52,8 +54,11 @@ struct _RCResolver {
     RCResolverContext *best_context;
 };
 
-RCResolver *rc_resolver_new                    (void);
-void        rc_resolver_free                   (RCResolver *);
+RCResolver *rc_resolver_new  (void);
+void        rc_resolver_free (RCResolver *);
+
+void        rc_resolver_set_world (RCResolver *, RCWorld *);
+RCWorld    *rc_resolver_get_world (RCResolver *);
 
 void        rc_resolver_allow_virtual_conflicts (RCResolver *, gboolean);
 

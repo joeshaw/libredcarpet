@@ -28,6 +28,7 @@
 #ifndef __RC_RESOLVER_CONTEXT_H__
 #define __RC_RESOLVER_CONTEXT_H__
 
+#include "rc-world.h"
 #include "rc-package.h"
 #include "rc-resolver-info.h"
 
@@ -49,6 +50,8 @@ typedef void (*RCMarkedPackagePairFn) (RCPackage *, RCPackageStatus,
 
 struct _RCResolverContext {
     int refs;
+    
+    RCWorld *world;
 
     GHashTable *status;  /* keys=ptr to package objects, vals=RCPackageStatus */
     RCPackage *last_checked_package;
@@ -85,6 +88,8 @@ RCResolverContext *rc_resolver_context_new_child (RCResolverContext *parent);
 
 RCResolverContext *rc_resolver_context_ref   (RCResolverContext *);
 void               rc_resolver_context_unref (RCResolverContext *);
+
+RCWorld           *rc_resolver_context_get_world (RCResolverContext *);
 
 void               rc_resolver_context_set_status (RCResolverContext *, RCPackage *,
                                                    RCPackageStatus status);

@@ -28,7 +28,6 @@
 #include "rc-world.h"
 #include "rc-channel.h"
 #include "rc-util.h"
-#include "rc-package-info.h"
 #include "rc-debug.h"
 #include "xml-util.h"
 
@@ -526,49 +525,3 @@ rc_channel_compare_func (gconstpointer a, gconstpointer b)
     return (FALSE);
 }
 
-static void
-rc_xml_node_process (xmlNode *node, RCChannel *channel)
-{
-    RCWorld *world = rc_get_world ();
-    const xmlNode *iter;
-
-    if (g_strcasecmp (node->name, "subchannel")) {
-        return;
-    }
-
-    iter = node->xmlChildrenNode;
-
-    rc_world_freeze (world);
-
-    while (iter) {
-        RCPackage *package;
-
-        package = rc_xml_node_to_package (iter, channel);
-
-        if (package) 
-            rc_world_add_package (world, package);
-
-        iter = iter->next;
-    }
-
-    rc_world_thaw (world);
-}
-
-guint
-rc_xml_node_to_channel (RCChannel *channel, xmlNode *node)
-{
-    xmlNode *iter;
-
-    if (g_strcasecmp (node->name, "channel")) {
-        return (1);
-    }
-
-    iter = node->xmlChildrenNode;
-
-    while (iter) {
-        rc_xml_node_process (iter, channel);
-        iter = iter->next;
-    }
-
-    return (0);
-}

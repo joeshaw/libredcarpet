@@ -80,6 +80,25 @@ rc_resolver_free (RCResolver *resolver)
 }
 
 void
+rc_resolver_set_world (RCResolver *resolver, RCWorld *world)
+{
+    g_return_if_fail (resolver != NULL);
+
+    resolver->world = world;
+}
+
+RCWorld *
+rc_resolver_get_world (RCResolver *resolver)
+{
+    g_return_val_if_fail (resolver != NULL, NULL);
+
+    if (resolver->world)
+        return resolver->world;
+
+    return rc_get_world ();
+}
+
+void
 rc_resolver_allow_virtual_conflicts (RCResolver *resolver,
                                      gboolean x)
 {
@@ -174,7 +193,7 @@ rc_resolver_verify_system (RCResolver *resolver)
 {
     g_return_if_fail (resolver != NULL);
 
-    rc_world_foreach_package (rc_get_world (),
+    rc_world_foreach_package (rc_resolver_get_world (resolver),
                               RC_WORLD_SYSTEM_PACKAGES,
                               verify_system_cb,
                               resolver);
@@ -204,7 +223,9 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
 
     initial_queue = rc_resolver_queue_new ();
     
-    /* Stick the current/subscribed channel info into the context */
+    /* Stick the current/subscribed channel and world info into the context */
+
+    initial_queue->context->world = resolver->world;
     
     initial_queue->context->current_channel = resolver->current_channel;
     

@@ -1,3 +1,14 @@
+2002-03-26  Jon Trowbridge  <trow@ximian.com>
+
+	* deptestomatic.c (load_channel): Use rc_world_parse_channel, and
+	display the package count in our spew.
+	(get_package): Use our local world, not the global one.
+	(parse_xml_setup): Use our local world.
+	(parse_xml_trial): Initialize our RCResolver to use our local
+	world.
+	(parse_xml_trial): Use our local world.
+	(main): Create our local world.
+
 2002-03-20  Jon Trowbridge  <trow@ximian.com>
 	
 	* deptestomatic.c (assemble_upgrade_cb): Rationalized how

@@ -160,6 +160,17 @@ rc_queue_item_log_info (RCQueueItem *item, RCResolverContext *context)
     item->pending_info = NULL;
 }
 
+RCWorld *
+rc_queue_item_get_world (RCQueueItem *item)
+{
+    g_return_val_if_fail (item != NULL, NULL);
+
+    if (item->world)
+        return item->world;
+
+    return rc_get_world ();
+}
+
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 static GSList *
@@ -303,7 +314,8 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
         rc_resolver_context_upgrade_package (context, package,
                                              rc_queue_item_install_get_other_penalty (item));
 
-        uninstall_item = rc_queue_item_new_uninstall (install->upgrades, "upgrade");
+        uninstall_item = rc_queue_item_new_uninstall (rc_queue_item_get_world (item),
+                                                      install->upgrades, "upgrade");
         rc_queue_item_uninstall_set_upgraded_to (uninstall_item, package);
 
         *new_items = g_slist_prepend (*new_items, uninstall_item);
@@ -356,7 +368,7 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
         RCPackageDep *dep = iter->data;
 
         if (!rc_resolver_context_requirement_is_met (context, dep)) {
-            RCQueueItem *req_item = rc_queue_item_new_require (dep);
+            RCQueueItem *req_item = rc_queue_item_new_require (rc_queue_item_get_world (item), dep);
             rc_queue_item_require_add_package (req_item, package);
             
             *new_items = g_slist_prepend (*new_items, req_item);
@@ -366,7 +378,8 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
     /* Construct conflict items for each of the package's conflicts. */
     for (iter = package->conflicts; iter != NULL; iter = iter->next) {
         RCPackageDep *dep = iter->data;
-        RCQueueItem *conflict_item = rc_queue_item_new_conflict (dep, package);
+        RCQueueItem *conflict_item = rc_queue_item_new_conflict (rc_queue_item_get_world (item),
+                                                                 dep, package);
         
         *new_items = g_slist_prepend (*new_items, conflict_item);
     }
@@ -426,7 +439,7 @@ install_item_to_string (RCQueueItem *item)
 }
 
 RCQueueItem *
-rc_queue_item_new_install (RCPackage *package)
+rc_queue_item_new_install (RCWorld *world, RCPackage *package)
 {
     RCQueueItem *item;
     RCQueueItem_Install *install;
@@ -439,6 +452,7 @@ rc_queue_item_new_install (RCPackage *package)
 
     item->type         = RC_QUEUE_ITEM_TYPE_INSTALL;
     item->size         = sizeof (RCQueueItem_Install);
+    item->world        = world;
     item->process      = install_item_process;
     item->destroy      = install_item_destroy;
     item->copy         = install_item_copy;
@@ -447,7 +461,7 @@ rc_queue_item_new_install (RCPackage *package)
 
     install->package = package;
 
-    upgrades = rc_world_find_installed_version (rc_get_world (), package);
+    upgrades = rc_world_find_installed_version (rc_queue_item_get_world (item), package);
     if (upgrades && upgrades != package)
         rc_queue_item_install_set_upgrade_package (item, upgrades);
 
@@ -619,7 +633,7 @@ require_item_process (RCQueueItem *item,
     int num_providers = 0;
     struct RequireProcessInfo info;
 
-    RCWorld *world = rc_get_world ();
+    RCWorld *world = rc_queue_item_get_world (item);
     char *msg;
 
     if (rc_resolver_context_requirement_is_met (context, require->dep))
@@ -664,7 +678,7 @@ require_item_process (RCQueueItem *item,
         if (require->upgraded_package) {
             GSList *upgrade_list = NULL;
 
-            rc_world_foreach_upgrade (rc_get_world (),
+            rc_world_foreach_upgrade (rc_queue_item_get_world (item),
                                       require->requiring_package,
                                       RC_WORLD_ANY_CHANNEL,
                                       look_for_upgrades_cb,
@@ -672,7 +686,7 @@ require_item_process (RCQueueItem *item,
 
             if (upgrade_list) {
                 GSList *iter;
-                branch_item = rc_queue_item_new_branch ();
+                branch_item = rc_queue_item_new_branch (world);
 
                 for (iter = upgrade_list; iter != NULL; iter = iter->next) {
                     RCPackage *upgrade_package = iter->data;
@@ -681,7 +695,7 @@ require_item_process (RCQueueItem *item,
 
                     if (rc_resolver_context_package_is_possible (context, upgrade_package)) {
                     
-                        install_item = rc_queue_item_new_install (upgrade_package);
+                        install_item = rc_queue_item_new_install (world, upgrade_package);
                     
                         rc_queue_item_install_set_upgrade_package (install_item,
                                                                    require->requiring_package);
@@ -725,7 +739,8 @@ require_item_process (RCQueueItem *item,
             
         if (explore_uninstall_branch) {
             RCResolverInfo *log_info;
-            uninstall_item = rc_queue_item_new_uninstall (require->requiring_package,
+            uninstall_item = rc_queue_item_new_uninstall (world,
+                                                          require->requiring_package,
                                                           "unsatisfied requirements");
             rc_queue_item_uninstall_set_dep (uninstall_item, require->dep);
             
@@ -750,7 +765,7 @@ require_item_process (RCQueueItem *item,
         
     } else if (num_providers == 1) {
         
-        RCQueueItem *install_item = rc_queue_item_new_install ((RCPackage *) info.providers->data);
+        RCQueueItem *install_item = rc_queue_item_new_install (world, (RCPackage *) info.providers->data);
         rc_queue_item_install_add_dep (install_item, require->dep);
 
         rc_queue_item_install_add_needed_by (install_item,
@@ -760,9 +775,9 @@ require_item_process (RCQueueItem *item,
 
     } else if (num_providers > 1) {
 
-        RCQueueItem *branch_item = rc_queue_item_new_branch ();
+        RCQueueItem *branch_item = rc_queue_item_new_branch (world);
         for (iter = info.providers; iter != NULL; iter = iter->next) {
-            RCQueueItem *install_item = rc_queue_item_new_install (iter->data);
+            RCQueueItem *install_item = rc_queue_item_new_install (world, iter->data);
             rc_queue_item_install_add_dep (install_item, require->dep);
             rc_queue_item_branch_add_item (branch_item, install_item);
 
@@ -817,7 +832,7 @@ require_item_to_string (RCQueueItem *item)
 }
 
 RCQueueItem *
-rc_queue_item_new_require (RCPackageDep *dep)
+rc_queue_item_new_require (RCWorld *world, RCPackageDep *dep)
 {
     RCQueueItem *item;
     RCQueueItem_Require *require;
@@ -829,6 +844,7 @@ rc_queue_item_new_require (RCPackageDep *dep)
 
     item->type      = RC_QUEUE_ITEM_TYPE_REQUIRE;
     item->size      = sizeof (RCQueueItem_Require);
+    item->world     = world;
     item->process   = require_item_process;
     item->destroy   = require_item_destroy;
     item->copy      = require_item_copy;
@@ -909,7 +925,7 @@ branch_item_process (RCQueueItem *item,
         did_something = FALSE;
 
     } else {
-        RCQueueItem *new_branch = rc_queue_item_new_branch ();
+        RCQueueItem *new_branch = rc_queue_item_new_branch (rc_queue_item_get_world (item));
         GSList *iter;
         for (iter = live_branches; iter != NULL; iter = iter->next) {
             rc_queue_item_branch_add_item (new_branch, rc_queue_item_copy (iter->data));
@@ -963,7 +979,7 @@ branch_item_to_string (RCQueueItem *item)
 }
 
 RCQueueItem *
-rc_queue_item_new_branch (void)
+rc_queue_item_new_branch (RCWorld *world)
 {
     RCQueueItem *item;
     RCQueueItem_Branch *branch;
@@ -973,6 +989,7 @@ rc_queue_item_new_branch (void)
 
     item->type      = RC_QUEUE_ITEM_TYPE_BRANCH;
     item->size      = sizeof (RCQueueItem_Branch);
+    item->world     = world;
     item->process   = branch_item_process;
     item->destroy   = branch_item_destroy;
     item->copy      = branch_item_copy;
@@ -1000,6 +1017,7 @@ rc_queue_item_branch_add_item (RCQueueItem *item, RCQueueItem *subitem)
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 struct ConflictProcessInfo {
+    RCWorld *world;
     RCPackage *conflicting_package;
     RCPackageDep *dep;
     RCResolverContext *context;
@@ -1020,7 +1038,7 @@ conflict_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data
         return;
 
     if (! info->context->allow_conflicts_with_virtual_provides
-        && rc_package_spec_get_type (spec) == RC_PACKAGE_SPEC_TYPE_VIRTUAL) {
+        && rc_package_spec_get_type (info->world, spec) == RC_PACKAGE_SPEC_TYPE_VIRTUAL) {
         return;
     }
 
@@ -1035,7 +1053,7 @@ conflict_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data
         RCQueueItem *uninstall;
         RCResolverInfo *log_info;
 
-        uninstall = rc_queue_item_new_uninstall (package, "conflict");
+        uninstall = rc_queue_item_new_uninstall (info->world, package, "conflict");
         rc_queue_item_uninstall_set_dep (uninstall, info->dep);
         
         log_info = rc_resolver_info_conflicts_with_new (package, info->conflicting_package);
@@ -1096,10 +1114,11 @@ conflict_item_process (RCQueueItem *item,
                        GSList **new_items)
 {
     RCQueueItem_Conflict *conflict = (RCQueueItem_Conflict *) item;
-    RCWorld *world = rc_get_world ();
+    RCWorld *world = rc_queue_item_get_world (item);
 
     struct ConflictProcessInfo info;
 
+    info.world = rc_queue_item_get_world (item);
     info.conflicting_package = conflict->conflicting_package;
     info.dep = conflict->dep;
     info.context = context;
@@ -1161,7 +1180,7 @@ conflict_item_to_string (RCQueueItem *item)
 
 
 RCQueueItem *
-rc_queue_item_new_conflict (RCPackageDep *dep, RCPackage *package)
+rc_queue_item_new_conflict (RCWorld *world, RCPackageDep *dep, RCPackage *package)
 {
     RCQueueItem_Conflict *conflict;
     RCQueueItem *item;
@@ -1174,6 +1193,7 @@ rc_queue_item_new_conflict (RCPackageDep *dep, RCPackage *package)
 
     item->type      = RC_QUEUE_ITEM_TYPE_CONFLICT;
     item->size      = sizeof (RCQueueItem_Conflict);
+    item->world     = world;
     item->process   = conflict_item_process;
     item->destroy   = conflict_item_destroy;
     item->copy      = conflict_item_copy;
@@ -1188,6 +1208,7 @@ rc_queue_item_new_conflict (RCPackageDep *dep, RCPackage *package)
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 struct UninstallProcessInfo {
+    RCWorld *world;
     RCResolverContext *context;
     RCPackage *uninstalled_package;
     RCPackage *upgraded_package;
@@ -1207,7 +1228,7 @@ uninstall_process_cb (RCPackage *package, RCPackageDep *dep, gpointer user_data)
     if (rc_resolver_context_requirement_is_met (info->context, dep))
         return;
 
-    require_item = rc_queue_item_new_require (dep);
+    require_item = rc_queue_item_new_require (info->world, dep);
     rc_queue_item_require_add_package (require_item, package);
     if (info->remove_only)
         rc_queue_item_require_set_remove_only (require_item);
@@ -1223,7 +1244,7 @@ uninstall_item_process (RCQueueItem *item,
                         GSList **new_items)
 {
     RCQueueItem_Uninstall *uninstall = (RCQueueItem_Uninstall *) item;
-    RCWorld *world = rc_get_world ();
+    RCWorld *world = rc_queue_item_get_world (item);
     
     RCPackageStatus status;
     char *pkg_str, *dep_str = NULL;
@@ -1264,7 +1285,8 @@ uninstall_item_process (RCQueueItem *item,
         for (iter = uninstall->package->provides; iter != NULL; iter = iter->next) {
             RCPackageDep *dep = iter->data;
             struct UninstallProcessInfo info;
-
+            
+            info.world = rc_queue_item_get_world (item);
             info.context = context;
             info.uninstalled_package = uninstall->package;
             info.upgraded_package = uninstall->upgraded_to;
@@ -1320,7 +1342,7 @@ uninstall_item_to_string (RCQueueItem *item)
 }
 
 RCQueueItem *
-rc_queue_item_new_uninstall (RCPackage *package, const char *reason)
+rc_queue_item_new_uninstall (RCWorld *world, RCPackage *package, const char *reason)
 {
     RCQueueItem_Uninstall *uninstall;
     RCQueueItem *item;
@@ -1334,6 +1356,7 @@ rc_queue_item_new_uninstall (RCPackage *package, const char *reason)
     item->type      = RC_QUEUE_ITEM_TYPE_UNINSTALL;
     item->priority  = 100;
     item->size      = sizeof (RCQueueItem_Uninstall);
+    item->world     = world;
     item->process   = uninstall_item_process;
     item->destroy   = uninstall_item_destroy;
     item->copy      = uninstall_item_copy;
