@@ -1,3 +1,7 @@
+2003-04-03  Ian Peters  <itp@ximian.com>
+
+	* rc-util.c (rc_rmdir): remove symlinks, too, if we can
+
 2003-03-27  Jose Mercado <jose@ximian.com>
     * distributions.xml: Change detect string for SuSE 8.1 to something
     more unique.

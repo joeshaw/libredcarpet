@@ -145,6 +145,14 @@ rc_rmdir (const char *dir)
                 }
             }
 #endif
+#ifdef S_ISLNK
+            else if (S_ISLNK (buf.st_mode)) {
+                if (unlink (filename)) {
+                    ret = -1;
+                }
+            }
+#endif
+		
 
             g_free (filename);
         }
