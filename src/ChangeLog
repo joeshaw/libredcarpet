@@ -1,3 +1,10 @@
+2001-06-25  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c: Don't be fascist about removing packages;
+	give 'em a chance to get upgraded.
+
+	* rc-deps-util.c: finish up package_hash_helper.
+
 2001-06-21  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-line-buf.c: debugging output die die die
