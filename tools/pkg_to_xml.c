@@ -27,25 +27,67 @@
 
 int main (int argc, char *argv[])
 {
+    char *distro_xml;
     RCPackman *packman;
-    xmlDoc *doc;
+    xmlDoc *doc = NULL;
     xmlNode *root;
     gboolean failed = FALSE;
     int i;
     
-
     g_type_init ();
-    
-    if (!rc_distro_parse_xml (NULL, 0))
-        exit (-1);
+
+    distro_xml = getenv ("RC_DISTRIBUTIONS_FILE");
+
+    if (distro_xml) {
+        RCBuffer *buf;
+
+        if (!g_file_test (distro_xml, G_FILE_TEST_EXISTS)) {
+            g_printerr ("Distributions file '%s' not found.\n", distro_xml);
+            failed = TRUE;
+            goto out;
+        }
+
+        buf = rc_buffer_map_file (distro_xml);
+        if (!buf) {
+            g_printerr ("Unable to open distributions file '%s'.\n",
+                        distro_xml);
+            failed = TRUE;
+            goto out;
+        }
+
+        /* Try once compressed, once uncompressed */
+        if (!rc_distro_parse_xml (buf->data, buf->size) &&
+            !rc_distro_parse_xml (buf->data, 0)) {
+            g_printerr ("Unable to parse distributions file '%s'.\n",
+                        distro_xml);
+            rc_buffer_unmap_file (buf);
+            failed = TRUE;
+            goto out;
+        }
+
+        rc_buffer_unmap_file (buf);
+    }
+    else {
+        if (!rc_distro_parse_xml (NULL, 0)) {
+            g_printerr ("Unable to parse internal distribution info\n");
+            failed = TRUE;
+            goto out;
+        }
+    }
+
     packman = rc_distman_new ();
 
-    if (! packman)
-        g_error ("Couldn't access the packaging system");
+    if (! packman) {
+        g_printerr ("Couldn't access the packaging system.\n");
+        failed = TRUE;
+        goto out;
+    }
 
     if (rc_packman_get_error (packman)) {
-        g_error ("Couldn't access the packaging system: %s",
-                 rc_packman_get_reason (packman));
+        g_printerr ("Couldn't access the packaging system: %s\n",
+                    rc_packman_get_reason (packman));
+        failed = TRUE;
+        goto out;
     }
 
     doc = xmlNewDoc ("1.0");
@@ -93,7 +135,8 @@ int main (int argc, char *argv[])
             }
         }
     }
-    
+
+out:
     if (failed)
         g_printerr ("XML generation cancelled.\n");
     else
