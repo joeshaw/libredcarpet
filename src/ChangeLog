@@ -1,3 +1,12 @@
+2001-08-27  Joe Shaw  <joe@ximian.com>
+
+	* rc-deps-util.c (rc_dep_string_to_or_dep_slist): Fix a crash that
+	would happen in the case where a munged string would come in as
+	(||package1|package2|package3&>=&1.0) and when processing the
+	first package (package1) it would strchr() for the '&' and get
+	the one in package3 and barf trying to allocate negative memory
+	because of bad pointer arithmetic.
+
 2001-08-17  Joe Shaw  <joe@ximian.com>
 
 	* rc-channel.c (rc_channel_parse_xml): Don't panic if there aren't
