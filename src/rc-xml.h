@@ -30,7 +30,7 @@ typedef struct _RCPackageSAXContext      RCPackageSAXContext;
 
 RCPackageSAXContext *rc_package_sax_context_new (RCChannel *channel);
 void rc_package_sax_context_parse_chunk (RCPackageSAXContext *ctx,
-                                         char *xmlbuf,
+                                         const char *xmlbuf,
                                          int size);
 RCPackageSList *rc_package_sax_context_done (RCPackageSAXContext *ctx);
 

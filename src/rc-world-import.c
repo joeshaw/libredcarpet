@@ -3,7 +3,7 @@
 /*
  * rc-world-import.c
  *
- * Copyright (C) 2002 Ximian, Inc.
+ * Copyright (C) 2000-2002 Ximian, Inc.
  *
  */
 
@@ -53,9 +53,9 @@ enum _DepType {
     DEP_TYPE_RECOMMENDS
 };
 
-static guint rc_world_parse_helix (RCWorld *, RCChannel *, gchar *);
-static guint rc_world_parse_debian (RCWorld *, RCChannel *, gchar *);
-static guint rc_world_parse_redhat (RCWorld *, RCChannel *, gchar *);
+static guint rc_world_parse_helix  (RCWorld *, RCChannel *, const char *);
+static guint rc_world_parse_debian (RCWorld *, RCChannel *, const char *);
+static guint rc_world_parse_redhat (RCWorld *, RCChannel *, const char *);
 
 void
 rc_world_add_channels_from_xml (RCWorld *world,
@@ -364,7 +364,7 @@ rc_world_add_channel_from_buffer (RCWorld *world,
                                   guint32 channel_id,
                                   guint32 base_id,
                                   RCChannelType type,
-                                  gchar *tbuf,
+                                  const char *tbuf,
                                   gint compressed_length)
 {
     RCChannel *channel;
@@ -391,10 +391,10 @@ rc_world_add_channel_from_buffer (RCWorld *world,
 gboolean
 rc_world_add_packages_from_buffer (RCWorld *world,
                                    RCChannel *channel,
-                                   gchar *tbuf, 
+                                   const char *tbuf, 
                                    int compressed_length)
 {
-    gchar *buf;
+    const char *buf;
     GByteArray *byte_array = NULL;
     guint count = -1;
 
@@ -435,7 +435,7 @@ rc_world_add_packages_from_buffer (RCWorld *world,
 }
 
 static guint
-rc_world_parse_helix (RCWorld *world, RCChannel *channel, gchar *buf)
+rc_world_parse_helix (RCWorld *world, RCChannel *channel, const char *buf)
 {
     xmlDoc *xml_doc;
     xmlNode *root;
@@ -476,244 +476,153 @@ rc_world_parse_helix (RCWorld *world, RCChannel *channel, gchar *buf)
     return count;
 }
 
-static void debian_packages_helper (gchar *mbuf, RCPackage *pkg, gchar *url_prefix);
-
-static guint
-rc_world_parse_debian (RCWorld *world, RCChannel *rcc, char *buf)
+static int
+fill_debian_package (RCPackage  *pkg,
+                     const char *buf,
+                     const char *url_prefix)
 {
-    /* Note that buf is NOT ours -- we can't munge it, and strdup'ing the
-     * whole thing would be ufly. So, we let packages_query_helper handle
-     */
-    gchar *b, *ob;
-    guint count = 0;
-
-    rc_world_freeze (world);
-
-    /* Keep looking for a "Packages: " */
-    ob = buf;
-    while ((b = strstr (ob, "Package: ")) != NULL) {
-        RCPackage *p;
-        if (b != buf && b[-1] != '\r' && b[-1] != '\n') {
-            ob = b+1;
-            continue;
-        }
-        p = rc_package_new ();
-        /* All debian packages have epochs */
-        p->spec.has_epoch = 1;
-        debian_packages_helper (b, p, rcc->file_path);
-        ((RCPackageUpdate *)(p->history->data))->package = p;
-        ob = b+1;
-
-        p->channel = rc_channel_ref (rcc);
-
-        rc_world_add_package (world, p);
-        rc_package_unref (p);
-        ++count;
-    }
-
-    rc_world_thaw (world);
-
-    return count;
-}
-
-/*
- * This code needs to be kept super fast
- */
-
-static void
-debian_packages_helper (gchar *mbuf, RCPackage *pkg, gchar *url_prefix)
-{
-    gchar *ibuf = mbuf;
-    gchar *buf, *p;
+    const char *ibuf;
     RCPackageUpdate *up = NULL;
-    gboolean desc = FALSE;
-    int ilen;
     RCPackageSList *requires = NULL, *provides = NULL, *conflicts = NULL,
         *suggests = NULL, *recommends = NULL;
 
     up = rc_package_update_new ();
-    /* All debian packages "have" epochs */
-    up->spec.has_epoch = 1;
 
+    ibuf = buf;
     while (1) {
-        /* FIXME -- handle all empty line with spaces */
+        char *key;
+        GString *value = NULL;
+        const char *p;
+        int ind;
+
+        /* Linebreaks indicate the end of a package block. */
         if (*ibuf == '\0' || *ibuf == '\n') break;
 
-        buf = strchr (ibuf, '\n');
-        if (buf == NULL) break; /* something bizzare  happened */
+        p = strchr (ibuf, ':');
 
-        ilen = buf - ibuf;      /* the length of the line */
-        buf = ibuf;             /* start of buf again */
-        buf[ilen] = '\0';       /* we probably shouldn't modify the string in-place, but
-                                 * we restore it at the end */
-        ibuf += ilen + 1;
+        /* Something bad happened, we're supposed to have a colon. */
+        if (!p) break;
 
-        /* Downcase the sucker - I hate debian - it's SUPPOSED to be nicely
-         * capitalized, but.. */
-        p = buf;
-        if (*p != ' ')
-            while (*p != ':') *p++ = tolower(*p);
+        /* Copy the name of the key and lowercase it */
+        key = g_ascii_strdown (ibuf, p - ibuf);
+        
+        /* Move past the colon and any spaces */
+        ibuf = p;
+        while (*ibuf && (*ibuf == ':' || *ibuf == ' ')) ibuf++;
 
-        if (!strncmp (buf, "package: ", strlen ("package: "))) {
-            gchar *tmp =  g_strndup (buf + strlen ("package: "),
-                                     ilen - strlen ("package: "));
-            pkg->spec.nameq = g_quark_from_string (tmp);
-            g_free (tmp);
-        } else if (!strncmp (buf, "installed-size: ", strlen ("installed-size: "))) {
-            up->installed_size = strtoul (buf +
-                                          strlen ("installed-size: "),
-                                          NULL, 10) * 1024;
-        } else if (!strncmp (buf, "size: ", strlen ("size: "))) {
-            up->package_size = strtoul(buf + strlen("size: "), NULL, 10);
-        } else if (!strncmp (buf, "description: ", strlen ("description: "))) {
-            pkg->summary = g_strndup (buf + strlen ("description: "),
-                                      ilen - strlen ("description: "));
-            desc = TRUE;
-        } else if (*buf == ' ' && desc) {
-            if (ilen == 2 && buf[1] == '.') {
-                /* It's just a newline */
-                if (pkg->description) {
-                    int l = strlen (pkg->description);
-                    gchar *tmp = g_malloc (l + 2);
-                    strcpy (tmp, pkg->description);
-                    tmp[l] = '\n';
-                    tmp[l+1] = '\0';
-                    g_free (pkg->description);
-                    pkg->description = tmp;
-                } else {
-                    pkg->description = g_strndup ("\n", 1);
-                }
-            } else {
-                /* More than a newline */
-                if (pkg->description) {
-                    int l = strlen (pkg->description);
-                    gchar *tmp = g_malloc (l + ilen + 1);
-                    strcpy (tmp, pkg->description);
-                    tmp[l] = '\n';
-                    strncpy (tmp + l + 1, buf+1, ilen-1);
-                    tmp[l + ilen] = '\0';
-                    g_free (pkg->description);
-                    pkg->description = tmp;
-                } else {
-                    pkg->description = g_strndup (buf+1, ilen-1);
+        ind = 0;
+        while ((p = strchr (ibuf, '\n'))) {
+            if (!value)
+                value = g_string_new ("");
+
+            g_string_append_len (value, ibuf, p - ibuf);
+            ind += p - ibuf;
+
+            ibuf = p;
+
+            /* Move past the newline */
+            ibuf++;
+
+            /* Check to see if this is a continuation of the previous line */
+            if (*ibuf == ' ') {
+                /* It is.  Move past the space */
+                ibuf++;
+
+                /*
+                 * This is a hack.  Description is special because it's
+                 * intended to be multiline and user-visible.  So if we're
+                 * dealing with description, add a newline.
+                 */
+
+                if (strncmp (key, "description",
+                             strlen ("description")) == 0) {
+                    g_string_append_c (value, '\n');
+
+                    /*
+                     * A period on a line by itself indicates that it
+                     * should be a blank line.  A newline will follow the
+                     * period, so we'll just skip over it.
+                     */
+                    if (*ibuf == '.')
+                        ibuf++;
                 }
             }
-        } else if (!strncmp (buf, "version: ", strlen ("version: "))) {
+            else {
+                /* It isn't.  Break out. */
+                break;
+            }
+        }
+
+        if (!strncmp (key, "package", strlen ("package"))) {
+            pkg->spec.nameq = g_quark_from_string (value->str);
+        } else if (!strncmp (key, "installed-size",
+                             strlen ("installed-size"))) {
+            up->installed_size = strtoul (value->str, NULL, 10) * 1024;
+        } else if (!strncmp (key, "size", strlen ("size"))) {
+            up->package_size = strtoul(value->str, NULL, 10);
+        } else if (!strncmp (key, "description", strlen ("description"))) {
+            char *newline;
+
+            /*
+             * We only want the first line for the summary, and all the
+             * other lines for the description.
+             */
+
+            newline = strchr (value->str, '\n');
+            if (!newline) {
+                pkg->summary = g_strdup (value->str);
+                pkg->description = g_strconcat (value->str, "\n", NULL);
+            }
+            else {
+                pkg->summary = g_strndup (value->str, newline - value->str);
+                pkg->description = g_strconcat (newline + 1, "\n", NULL);
+            }
+        } else if (!strncmp (key, "version", strlen ("version"))) {
             guint epoch;
-            rc_debman_parse_version (buf + strlen ("Version: "),
+            rc_debman_parse_version (value->str,
                                      &epoch, &pkg->spec.version,
                                      &pkg->spec.release);
             pkg->spec.epoch = epoch;
-        } else if (!strncmp (buf, "section: ", strlen ("section: "))) {
-            gchar **tokens = g_strsplit (buf + strlen ("section: "), "/", -1);
-            gint i = 0;
-            gchar *sec;
-            while (tokens[i+1] != NULL) i++;
-            sec = g_strchomp (tokens[i]);
-            p = sec;
-            while (*p) *p++ = tolower(*p);
-            pkg->section = rc_debman_section_to_package_section (sec);
-#if 0
-            if (!strcmp (sec, "admin")) {
-                pkg->section = RC_SECTION_SYSTEM;
-            } else if (!strcmp (sec, "base")) {
-                pkg->section = RC_SECTION_SYSTEM;
-            } else if (!strcmp (sec, "comm")) {
-                pkg->section = RC_SECTION_INTERNET;
-            } else if (!strcmp (sec, "devel")) {
-                pkg->section = RC_SECTION_DEVEL;
-            } else if (!strcmp (sec, "doc")) {
-                pkg->section = RC_SECTION_DOC;
-            } else if (!strcmp (sec, "editors")) {
-                pkg->section = RC_SECTION_UTIL;
-            } else if (!strcmp (sec, "electronics")) {
-                pkg->section = RC_SECTION_MISC;
-            } else if (!strcmp (sec, "games")) {
-                pkg->section = RC_SECTION_GAME;
-            } else if (!strcmp (sec, "graphics")) {
-                pkg->section = RC_SECTION_IMAGING;
-            } else if (!strcmp (sec, "hamradio")) {
-                pkg->section = RC_SECTION_MISC;
-            } else if (!strcmp (sec, "interpreters")) {
-                pkg->section = RC_SECTION_DEVELUTIL;
-            } else if (!strcmp (sec, "libs")) {
-                pkg->section = RC_SECTION_LIBRARY;
-            } else if (!strcmp (sec, "mail")) {
-                pkg->section = RC_SECTION_PIM;
-            } else if (!strcmp (sec, "math")) {
-                pkg->section = RC_SECTION_MISC;
-            } else if (!strcmp (sec, "misc")) {
-                pkg->section = RC_SECTION_MISC;
-            } else if (!strcmp (sec, "net")) {
-                pkg->section = RC_SECTION_INTERNET;
-            } else if (!strcmp (sec, "news")) {
-                pkg->section = RC_SECTION_INTERNET;
-            } else if (!strcmp (sec, "oldlibs")) {
-                pkg->section = RC_SECTION_LIBRARY;
-            } else if (!strcmp (sec, "otherosfs")) {
-                pkg->section = RC_SECTION_MISC;
-            } else if (!strcmp (sec, "science")) {
-                pkg->section = RC_SECTION_MISC;
-            } else if (!strcmp (sec, "shells")) {
-                pkg->section = RC_SECTION_SYSTEM;
-            } else if (!strcmp (sec, "sound")) {
-                pkg->section = RC_SECTION_MULTIMEDIA;
-            } else if (!strcmp (sec, "tex")) {
-                pkg->section = RC_SECTION_MISC;
-            } else if (!strcmp (sec, "text")) {
-                pkg->section = RC_SECTION_UTIL;
-            } else if (!strcmp (sec, "utils")) {
-                pkg->section = RC_SECTION_UTIL;
-            } else if (!strcmp (sec, "web")) {
-                pkg->section = RC_SECTION_INTERNET;
-            } else if (!strcmp (sec, "x11")) {
-                pkg->section = RC_SECTION_XAPP;
-            } else {
-                pkg->section = RC_SECTION_MISC;
-            }
-#endif
-            g_strfreev (tokens);
-        } else if (!strncmp (buf, "depends: ", strlen ("depends: "))) {
+        } else if (!strncmp (key, "section", strlen ("section"))) {
+            pkg->section = rc_debman_section_to_package_section (value->str);
+        } else if (!strncmp (key, "depends", strlen ("depends"))) {
             requires = g_slist_concat (
                 requires,
-                rc_debman_fill_depends (buf + strlen ("depends: "), FALSE));
-        } else if (!strncmp (buf, "recommends: ", strlen ("recommends: "))) {
+                rc_debman_fill_depends (value->str, FALSE));
+        } else if (!strncmp (key, "recommends", strlen ("recommends"))) {
             recommends = g_slist_concat (
                 recommends,
-                rc_debman_fill_depends (buf + strlen ("recommends: "), FALSE));
-        } else if (!strncmp (buf, "suggests: ", strlen ("suggests: "))) {
+                rc_debman_fill_depends (value->str, FALSE));
+        } else if (!strncmp (key, "suggests", strlen ("suggests"))) {
             suggests = g_slist_concat (
                 suggests,
-                rc_debman_fill_depends (buf + strlen ("suggests: "), FALSE));
-        } else if (!strncmp (buf, "pre-depends: ", strlen ("pre-depends: "))) {
+                rc_debman_fill_depends (value->str, FALSE));
+        } else if (!strncmp (key, "pre-depends", strlen ("pre-depends"))) {
             requires = g_slist_concat (
                 requires,
-                rc_debman_fill_depends (buf + strlen ("pre-depends: "), TRUE));
-        } else if (!strncmp (buf, "conflicts: ", strlen ("conflicts: "))) {
+                rc_debman_fill_depends (value->str, TRUE));
+        } else if (!strncmp (key, "conflicts", strlen ("conflicts"))) {
             conflicts = g_slist_concat (
                 conflicts,
-                rc_debman_fill_depends (buf + strlen ("conflicts: "), FALSE));
-        } else if (!strncmp (buf, "provides: ", strlen ("provides: "))) {
+                rc_debman_fill_depends (value->str, FALSE));
+        } else if (!strncmp (key, "provides", strlen ("provides"))) {
             provides = g_slist_concat (
                 provides,
-                rc_debman_fill_depends (buf + strlen ("provides: "), FALSE));
-
-        } else if (!strncmp (buf, "filename: ", strlen ("filename: "))) {
+                rc_debman_fill_depends (value->str, FALSE));
+        } else if (!strncmp (key, "filename", strlen ("filename"))) {
             /* Build a new update with just this version */
             if (url_prefix) {
                 up->package_url = g_strconcat (url_prefix, "/",
-                                               buf + strlen ("filename: "),
+                                               value->str,
                                                NULL);
             } else {
-                up->package_url = g_strndup (buf + strlen ("filename: "),
-                                             ilen - strlen ("filename: "));
+                up->package_url = g_strdup (value->str);
             }
-        } else if (!strncmp (buf, "md5sum: ", strlen ("md5sum: "))) {
-            up->md5sum = g_strndup (buf + strlen ("md5sum: "),
-                                    ilen - strlen ("md5sum: "));
+        } else if (!strncmp (key, "md5sum", strlen ("md5sum"))) {
+            up->md5sum = g_strdup (value->str);
         }
 
-        buf[ilen] = '\n';
+        g_string_free (value, TRUE);
     }
 
     up->importance = RC_IMPORTANCE_SUGGESTED;
@@ -723,20 +632,57 @@ debian_packages_helper (gchar *mbuf, RCPackage *pkg, gchar *url_prefix)
 
     /* Make sure to provide myself, for the dep code! */
     provides =
-        g_slist_append (provides, rc_package_dep_new_from_spec
-                        (&pkg->spec,
-                         RC_RELATION_EQUAL, FALSE, FALSE));
+        g_slist_append (provides, rc_package_dep_new_from_spec (
+                            &pkg->spec, RC_RELATION_EQUAL, FALSE, FALSE));
 
     pkg->requires_a = rc_package_dep_array_from_slist (&requires);
     pkg->provides_a = rc_package_dep_array_from_slist (&provides);
     pkg->conflicts_a = rc_package_dep_array_from_slist (&conflicts);
+    pkg->obsoletes_a = rc_package_dep_array_from_slist (NULL);
     pkg->suggests_a = rc_package_dep_array_from_slist (&suggests);
     pkg->recommends_a = rc_package_dep_array_from_slist (&recommends);
+
+    /* returns the number of characters we processed */
+    return ibuf - buf;
 }
 
+static guint
+rc_world_parse_debian (RCWorld *world, RCChannel *rcc, const char *buf)
+{
+    const char *iter;
+    guint count = 0;
+
+    rc_world_freeze (world);
+
+    /* Keep looking for a "Package: " */
+    iter = buf;
+    while ((iter = strstr (iter, "Package: ")) != NULL) {
+        RCPackage *p;
+        int off;
+
+        p = rc_package_new ();
+
+        /* All debian packages "have" epochs */
+        p->spec.has_epoch = TRUE;
+
+        off = fill_debian_package (p, iter, rcc->file_path);
+
+        p->channel = rc_channel_ref (rcc);
+
+        rc_world_add_package (world, p);
+        rc_package_unref (p);
+        ++count;
+
+        iter += off;
+    }
+
+    rc_world_thaw (world);
+
+    return count;
+}
 
 static guint
-rc_world_parse_redhat (RCWorld *world, RCChannel *rcc, char *buf)
+rc_world_parse_redhat (RCWorld *world, RCChannel *rcc, const char *buf)
 {
     g_warning ("No redhat channel support!");
     return 0;

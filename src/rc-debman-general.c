@@ -217,14 +217,16 @@ rc_debman_fill_depends (gchar *input, gboolean pre)
 
         g_strfreev (elems);
 
-        if (dep->next) {
-            RCDepOr *or = rc_dep_or_new (dep);
-            the_dep = rc_dep_or_new_provide (or);
-        } else {
-            the_dep = dep->data;
-            g_slist_free (dep);
+        if (dep) {
+            if (dep->next) {
+                RCDepOr *or = rc_dep_or_new (dep);
+                the_dep = rc_dep_or_new_provide (or);
+            } else {
+                the_dep = dep->data;
+                g_slist_free (dep);
+            }
+            list = g_slist_append (list, the_dep);
         }
-        list = g_slist_append (list, the_dep);
     }
 
     g_strfreev (deps);

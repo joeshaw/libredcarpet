@@ -695,7 +695,7 @@ static xmlSAXHandler sax_handler = {
 
 void
 rc_package_sax_context_parse_chunk(RCPackageSAXContext *ctx,
-                                   char *xmlbuf, int size)
+                                   const char *xmlbuf, int size)
 {
     xmlSubstituteEntitiesDefault(TRUE);
     

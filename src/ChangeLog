@@ -1,3 +1,32 @@
+2002-11-14  Joe Shaw  <joe@ximian.com>
+
+	* rc-debman-general.c (rc_debman_fill_depends): Don't muck around
+	with the dep if it's NULL.
+
+	* rc-debman.c (query_all_read_line_cb, rc_debman_query_file):
+	Initialize the package's obsoletes array.
+
+	* rc-package-dep.c (rc_package_dep_array_from_slist): Allow the
+	argument to be NULL, and short circuit in the case where the list
+	is valid but empty.
+
+	* rc-util.c (count_gzip_header, rc_uncompress_memory,
+	rc_compress_memory, rc_uncompress_xml): Make the buffers const.
+
+	* rc-world-import.c (rc_world_add_channel_from_buffer,
+	rc_world_add_packages_from_buffer, rc_world_parse_helix,
+	rc_world_parse_debian, rc_world_parse_redhat): Make the buffers
+	const.
+	(rc_world_parse_debian): Rewrote the debian Packages file parser
+	to (a) be cleaner and (b) deal with entries that span multiple
+	lines.  It's a little bit slower than the old one, by about .4
+	seconds, and there's plenty of room to speed it up.  Make it
+	initialize the obsoletes package dep array, and remove a lot of
+	redundant code.
+
+	* rc-xml.c (rc_package_sax_context_parse_chunk): Make the buffer
+	const.
+
 2002-11-11  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c (close_database): do nothing if the database isn't

@@ -365,6 +365,14 @@ rc_package_dep_array_from_slist (RCPackageDepSList **list)
     int i;
 
     array = g_new0 (RCPackageDepArray, 1);
+
+    if (!list || !*list) {
+        array->len = 0;
+        array->data = NULL;
+
+        return array;
+    }
+
     array->len = g_slist_length (*list);
     array->data = g_new0 (RCPackageDep *, array->len);
 

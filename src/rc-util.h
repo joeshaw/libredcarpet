@@ -65,15 +65,15 @@ GSList *rc_slist_unique (const GSList *sorted_list);
 
 /* uncompress memory */
 
-gint rc_uncompress_memory (guint8 *input_buffer,
+gint rc_uncompress_memory (const guint8 *input_buffer,
                            guint32 input_length,
                            GByteArray **out_ba);
 
-gint rc_compress_memory (guint8 *input_buffer,
+gint rc_compress_memory (const guint8 *input_buffer,
                          guint32 input_length,
                          GByteArray **out_ba);
 
-xmlDoc *rc_uncompress_xml (guint8 *input_buffer,
+xmlDoc *rc_uncompress_xml (const guint8 *input_buffer,
                            guint32 input_length);
 
 /* Safely write a buffer to a fd (handle all those pesky EINTR issues) */

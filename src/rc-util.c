@@ -309,10 +309,10 @@ static int gz_magic[2] = {0x1f, 0x8b};
 #define GZ_RESERVED     0xE0 /* bits 5..7: reserved */
 
 static int
-count_gzip_header (guint8 *buf, guint32 input_length)
+count_gzip_header (const guint8 *buf, guint32 input_length)
 {
     int method, flags;
-    guint8 *s = buf;
+    const guint8 *s = buf;
     guint32 left_len = input_length;
 
     if (left_len < 4) return -1;
@@ -365,7 +365,7 @@ count_gzip_header (guint8 *buf, guint32 input_length)
 }
 
 gint
-rc_uncompress_memory (guint8 *input_buffer, guint32 input_length,
+rc_uncompress_memory (const guint8 *input_buffer, guint32 input_length,
                       GByteArray **out_ba)
 {
     z_stream zs;
@@ -386,7 +386,7 @@ rc_uncompress_memory (guint8 *input_buffer, guint32 input_length,
     if (gzip_hdr < 0)
         return -1;
 
-    zs.next_in = input_buffer + gzip_hdr;
+    zs.next_in = (guint8 *) input_buffer + gzip_hdr;
     zs.avail_in = input_length - gzip_hdr;
     zs.zalloc = NULL;
     zs.zfree = NULL;
@@ -431,7 +431,7 @@ rc_uncompress_memory (guint8 *input_buffer, guint32 input_length,
 }
 
 gint
-rc_compress_memory (guint8 *input_buffer, guint input_length,
+rc_compress_memory (const guint8 *input_buffer, guint input_length,
                     GByteArray **out_ba)
 {
     z_stream zs;
@@ -446,7 +446,7 @@ rc_compress_memory (guint8 *input_buffer, guint input_length,
 
     ba = g_byte_array_new ();
 
-    zs.next_in = input_buffer;
+    zs.next_in = (guint8 *) input_buffer;
     zs.avail_in = input_length;
     zs.zalloc = NULL;
     zs.zfree = NULL;
@@ -492,7 +492,7 @@ rc_compress_memory (guint8 *input_buffer, guint input_length,
 } /* rc_compress_memory */
 
 xmlDoc *
-rc_uncompress_xml (guint8 *input_buffer,
+rc_uncompress_xml (const guint8 *input_buffer,
                    guint32 input_length)
 {
     GByteArray *buf;

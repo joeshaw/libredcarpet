@@ -44,12 +44,12 @@ RCChannel *rc_world_add_channel_from_buffer (RCWorld *world,
                                              guint32 channel_id,
                                              guint32 base_id,
                                              RCChannelType type,
-                                             gchar *buf,
+                                             const char *buf,
                                              gint compressed_length);
 
 gboolean rc_world_add_packages_from_buffer (RCWorld *world,
                                             RCChannel *channel,
-                                            gchar *buf,
+                                            const char *buf,
                                             gint compressed_length);
 
 RCChannel * rc_world_add_channel_from_directory (RCWorld *world,

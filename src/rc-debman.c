@@ -2455,6 +2455,8 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
                 rc_package_dep_array_from_slist (&query_info->conflicts_buf);
             query_info->package_buf->provides_a =
                 rc_package_dep_array_from_slist (&query_info->provides_buf);
+            query_info->package_buf->obsoletes_a =
+                rc_package_dep_array_from_slist (NULL);
             query_info->packages = g_slist_prepend (query_info->packages,
                                                     query_info->package_buf);
             query_info->package_buf = NULL;
@@ -2964,6 +2966,8 @@ rc_debman_query_file (RCPackman *packman, const gchar *filename)
         rc_package_dep_array_from_slist (&query_info.conflicts_buf);
     query_info.package_buf->provides_a =
         rc_package_dep_array_from_slist (&query_info.provides_buf);
+    query_info.package_buf->obsoletes_a =
+        rc_package_dep_array_from_slist (NULL);
 
     return (query_info.package_buf);
 }
