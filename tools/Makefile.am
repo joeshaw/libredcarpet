@@ -14,20 +14,20 @@ bin_PROGRAMS = pkg_to_xml pkg-vercmp cur_to_xml dep_lint
 
 dep_lint_SOURCES = dep_lint.c
 dep_lint_LDADD = 				\
-	$(top_builddir)/src/libredcarpet.a	\
+	$(top_builddir)/src/.libs/libredcarpet.so	\
 	$(LIBREDCARPET_LIBS)
 
 cur_to_xml_SOURCES = cur_to_xml.c
 cur_to_xml_LDADD =	\
-	$(top_builddir)/src/libredcarpet.a	\
+	$(top_builddir)/src/.libs/libredcarpet.so	\
 	$(LIBREDCARPET_LIBS)
 
 pkg_to_xml_SOURCES = pkg_to_xml.c
 pkg_to_xml_LDADD =	\
-	$(top_builddir)/src/libredcarpet.a	\
+	$(top_builddir)/src/.libs/libredcarpet.so	\
 	$(LIBREDCARPET_LIBS)
 
 pkg_vercmp_SOURCES = pkg-vercmp.c
 pkg_vercmp_LDADD =	\
-	$(top_builddir)/src/libredcarpet.a	\
+	$(top_builddir)/src/.libs/libredcarpet.so	\
 	$(LIBREDCARPET_LIBS)

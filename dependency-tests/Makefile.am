@@ -14,7 +14,7 @@ deptestomatic_SOURCES = \
 	deptestomatic.c
 
 deptestomatic_LDADD = \
-	../src/libredcarpet.a \
+	../src/.libs/libredcarpet.so \
 	$(LIBREDCARPET_LIBS)
 
 #TESTS_ENVIRONMENT = \
