@@ -1,3 +1,10 @@
+2001-03-16  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c (rc_rpmman_transact): switch back to "\n" instead of
+	"<br>" in the error strings, we'll handle this in the GUI.  New
+	approach to handling all of the different RPMSENSE_FOO defines,
+	try to avoid the ?? relation.
+
 2001-03-13  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c (rc_rpmman_transact): put "<br>" instead of "\n"

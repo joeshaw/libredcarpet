@@ -471,7 +471,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         GString *dep_info = g_string_new ("");
 
         for (count = 0; count < rc; count++) {
-            g_string_sprintfa (dep_info, "<br>%s", conflict->byName);
+            g_string_sprintfa (dep_info, "\n%s", conflict->byName);
             if (conflict->byVersion && conflict->byVersion[0]) {
                 g_string_sprintfa (dep_info, "-%s", conflict->byVersion);
                 if (conflict->byRelease && conflict->byRelease[0]) {
@@ -479,40 +479,34 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
                 }
             }
 
-            g_string_sprintfa (
-                dep_info, " %s ",
-                conflict->sense ? "conflicts with" : "requires");
+            if (conflict->sense == RPMDEP_SENSE_CONFLICTS) {
+                g_string_sprintfa (dep_info, " conflicts with ");
+            } else { /* RPMDEP_SENSE_REQUIRES */
+                if (conflict->needsFlags & RPMSENSE_PREREQ) {
+                    g_string_sprintfa (dep_info, " pre-requires ");
+                } else {
+                    g_string_sprintfa (dep_info, " requires ");
+                }
+            }
 
             g_string_sprintfa (dep_info, "%s", conflict->needsName);
 
             if (conflict->needsVersion && conflict->needsVersion[0]) {
-                switch (conflict->needsFlags) {
-                case RPMSENSE_LESS:
-                    g_string_sprintfa (dep_info, " < ");
-                    break;
+                g_string_sprintfa (dep_info, " ");
 
-                case RPMSENSE_EQUAL:
-                    g_string_sprintfa (dep_info, " = ");
-                    break;
-
-                case RPMSENSE_GREATER:
-                    g_string_sprintfa (dep_info, " > ");
-                    break;
-
-                case (RPMSENSE_LESS | RPMSENSE_EQUAL):
-                    g_string_sprintfa (dep_info, " <= ");
-                    break;
-
-                case (RPMSENSE_GREATER | RPMSENSE_EQUAL):
-                    g_string_sprintfa (dep_info, " >= ");
-                    break;
-
-                default:
-                    g_string_sprintfa (dep_info, " ?? ");
-                    break;
+                if (conflict->needsFlags & RPMSENSE_LESS) {
+                    g_string_sprintfa (dep_info, "<");
                 }
 
-                g_string_sprintfa (dep_info, "%s", conflict->needsVersion);
+                if (conflict->needsFlags & RPMSENSE_GREATER) {
+                    g_string_sprintfa (dep_info, ">");
+                }
+
+                if (conflict->needsFlags & RPMSENSE_EQUAL) {
+                    g_string_sprintfa (dep_info, "=");
+                }
+
+                g_string_sprintfa (dep_info, " %s", conflict->needsVersion);
             }
 
             conflict++;
@@ -591,7 +585,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         GString *report = g_string_new ("");
 
         for (count = 0; count < probs->numProblems; count++) {
-            g_string_sprintfa (report, "<br>%s", rpmProblemString (*problem));
+            g_string_sprintfa (report, "\n%s", rpmProblemString (*problem));
             problem++;
         }
 
