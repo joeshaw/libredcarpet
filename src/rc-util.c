@@ -70,39 +70,6 @@ rc_mkdir(const char *dir, guint mode)
     return 0;
 } /* rc_mkdir */
 
-
-gchar *
-rc_mktmpdir (const gchar *prefix) {
-    gchar *path;
-    gchar *tmpdir;
-
-    tmpdir = getenv ("REDCARPET_TMPDIR");
-    if (!tmpdir) {
-        tmpdir = getenv ("TMPDIR");
-    }
-    if (tmpdir) {
-        tmpdir = g_strdup (tmpdir);
-    } else {
-        tmpdir = g_strdup ("/tmp");
-    }
-
-    if (prefix) {
-        path = g_strconcat (tmpdir, "/", prefix, "-XXXXXX", NULL);
-    } else {
-        path = g_strconcat (tmpdir, "/redcarpet-XXXXXX", NULL);
-    }
-    g_free (tmpdir);
-
-    path = mktemp (path);
-
-    if (mkdir (path, 0700)) {
-        g_free (path);
-        return (NULL);
-    }
-
-    return (path);
-}
-
 gint
 rc_rmdir (gchar *dir)
 {

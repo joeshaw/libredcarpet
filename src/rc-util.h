@@ -35,16 +35,6 @@
 */
 gint rc_rmdir (gchar *dir);
 
-/* Create a temporary directory, in REDCARPET_TMPDIR, then TMPDIR, then /tmp.
-   If prefix is NULL, the directory name begins with redcarpet.
-
-   Returns: the name of a newly created temporary directory, which must be
-   freed when you are done with it.  Remove the directory when you want with
-   rc_rmdir()
-*/
-gchar *rc_mktmpdir (const gchar *prefix);
-
-
 /* Create the directory specified and all of the child directories. Whee. */
 gint rc_mkdir(const char *dir, guint mode);
 
