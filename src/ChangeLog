@@ -1,3 +1,8 @@
+2001-04-13  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c: when rpmRunTransactions returns < 0, don't treat
+	this as a bad error.  Stupid rpm.
+
 2001-04-10  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c, rc-rpmman.h: introduce rc_rpm_open, rc_rpm_close,

@@ -611,10 +611,14 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
                                      transaction_flags, problem_filter);
 
     if (rc < 0) {
+        /* After looking more closely at the RPM CLI, this isn't a
+         * -real- error, although I'm not sure what it is. */
+#if 0
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "install payload failed");
 
         goto ERROR;
+#endif
     } else if (rc > 0) {
         guint count;
         rpmProblem *problem = probs->probs;
