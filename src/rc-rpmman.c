@@ -1073,7 +1073,8 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     problem_filter =
         /* This isn't really a problem, and we'll trust RC to do the
            right thing here */
-        RPMPROB_FILTER_OLDPACKAGE;
+        RPMPROB_FILTER_OLDPACKAGE |
+        RPMPROB_FILTER_REPLACEPKG;
 
     state.packman = packman;
     state.seqno = 0;
