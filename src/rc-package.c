@@ -130,21 +130,5 @@ rc_package_compare_func (gconstpointer a, gconstpointer b)
     RCPackage *one = (RCPackage *)(a);
     RCPackage *two = (RCPackage *)(b);
 
-    if (strcmp (one->spec.name, two->spec.name)) {
-        return (1);
-    }
-
-    if (one->spec.epoch != two->spec.epoch) {
-        return (1);
-    }
-
-    if (strcmp (one->spec.version, two->spec.version)) {
-        return (1);
-    }
-
-    if (strcmp (one->spec.release, two->spec.release)) {
-        return (1);
-    }
-
-    return (0);
+    return rc_package_spec_compare (&one->spec, &two->spec);
 }
