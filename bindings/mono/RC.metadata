@@ -9,6 +9,8 @@
   <attr path="/api/namespace/callback[@name='WorldForeachPackageSpecFn']" name="hidden">1</attr>
   <attr path="/api/namespace/callback[@name='WorldServiceAssembleFn']" name="hidden">1</attr>
   <attr path="/api/namespace/class[@cname='Global']/method[@name='FileExists']" name="hidden">1</attr>
+  <attr path="/api/namespace/class[@cname='Global']/method[@name='MaybeMergePaths']" name="hidden">1</attr>
+  <attr path="/api/namespace/class[@cname='Global']/method[@name='StringToGuint32WithDefault']" name="hidden">1</attr>
   <attr path="/api/namespace/boxed[@cname='RCPackage']/method[@name='ToStr']" name="name">ToString</attr>
   <attr path="/api/namespace/boxed[@cname='RCPackage']/method[@name='ToStrStatic']" name="hidden">1</attr>
   <attr path="/api/namespace/struct[@cname='RCPackageSpec']/method[@name='ToStr']" name="name">ToString</attr>

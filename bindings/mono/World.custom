@@ -1,0 +1,10 @@
+		[DllImport("libredcarpet")]
+		static extern void rc_world_set_refresh_function(IntPtr raw, RCSharp.WorldRefreshFnNative refresh_fn);
+
+		public RC.WorldRefreshFn RefreshDelegate { 
+			set {
+				RCSharp.WorldRefreshFnWrapper value_wrapper = null;
+				value_wrapper = new RCSharp.WorldRefreshFnWrapper (value, this);
+				rc_world_set_refresh_function(Handle, value_wrapper.NativeDelegate);
+			}
+		}

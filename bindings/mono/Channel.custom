@@ -1,3 +1,6 @@
+public static Channel SYSTEM = new Channel (new IntPtr (1));
+public static Channel ANY = new Channel (new IntPtr (2));
+public static Channel NON_SYSTEM = new Channel (new IntPtr (3));
 
 		[DllImport("libredcarpet")]
                 static extern IntPtr rc_channel_get_world(IntPtr raw);
