@@ -1,3 +1,11 @@
+2002-07-25  Ian Peters  <itp@ximian.com>
+
+	* rc-packman.h, rc-packman.c: rc_packman_transact takes a final
+	gboolean, if set to TRUE, the transaction is actually run, if
+	FALSE, equivalent to settting RC_JUST_KIDDING.
+
+	* rc-rpmman.c, rc-debman.c: update to new _transact.
+
 2002-07-25  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-debman.c (query_all_read_line_cb): The epoch is now a

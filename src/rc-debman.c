@@ -1377,7 +1377,7 @@ do_unpack_read_done_cb (RCLineBuf *line_buf, RCLineBufStatus status,
 
 static gboolean
 do_unpack (RCPackman *packman, RCPackageSList *packages,
-           DebmanInstallState *install_state)
+           DebmanInstallState *install_state, gboolean perform)
 {
     GSList *argvl = NULL;
     GSList *iter;
@@ -1496,7 +1496,7 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
         int master, slave;
         int status;
 
-        if (!getenv ("RC_JUST_KIDDING")) {
+        if (!getenv ("RC_JUST_KIDDING") && perform) {
             /* So this is a crufy hack, but I need something to replace
              * the --no-act with, and there doesn't seem to be a --yes-act
              * option.  Since --abort-after=50 is the default, this should
@@ -2150,7 +2150,7 @@ order_packages (RCPackageSList *packages)
 
 static void
 rc_debman_transact (RCPackman *packman, RCPackageSList *install_packages,
-                    RCPackageSList *remove_packages)
+                    RCPackageSList *remove_packages, gboolean perform)
 {
     DebmanInstallState *install_state = g_new0 (DebmanInstallState, 1);
 
@@ -2179,7 +2179,7 @@ rc_debman_transact (RCPackman *packman, RCPackageSList *install_packages,
     if (install_packages) {
         rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ": about to unpack\n");
 
-        if (!(do_unpack (packman, install_packages, install_state))) {
+        if (!(do_unpack (packman, install_packages, install_state, perform))) {
             rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ ": unpack failed\n");
 
             if (rc_packman_get_error (packman) == RC_PACKMAN_ERROR_FATAL) {

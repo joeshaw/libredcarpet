@@ -480,7 +480,7 @@ render_problems (RCPackman *packman, rpmProblemSet probs)
 
 static void
 rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
-                    RCPackageSList *remove_packages)
+                    RCPackageSList *remove_packages, gboolean perform)
 {
     rpmTransactionSet transaction;
     rpmTransactionSet install_transaction;
@@ -497,7 +497,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     int transaction_flags, problem_filter;
     RCRpmman *rpmman = RC_RPMMAN (packman);
 
-    if (getenv ("RC_JUST_KIDDING"))
+    if (getenv ("RC_JUST_KIDDING") || !perform)
         transaction_flags = RPMTRANS_FLAG_TEST;
     else
         transaction_flags = 0; /* Nothing interesting to do here */

@@ -183,7 +183,7 @@ rc_packman_new (void)
 
 void
 rc_packman_transact (RCPackman *packman, RCPackageSList *install_packages,
-                     RCPackageSList *remove_packages)
+                     RCPackageSList *remove_packages, gboolean perform)
 {
     RCPackmanClass *klass;
     RCPackageSList *iter;
@@ -257,7 +257,7 @@ rc_packman_transact (RCPackman *packman, RCPackageSList *install_packages,
     packman->priv->busy = TRUE;
 
     klass->rc_packman_real_transact (packman, install_packages,
-                                     remove_packages);
+                                     remove_packages, perform);
 
     packman->priv->busy = FALSE;
 }

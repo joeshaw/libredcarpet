@@ -1,5 +1,11 @@
 2002-07-25  Ian Peters  <itp@ximian.com>
 
+	* packman_test.c: the "run" command can now be followed by the
+	word test; if it is, _transact is called with FALSE, and the
+	transaction will have no effect (but will still be run).
+
+2002-07-25  Ian Peters  <itp@ximian.com>
+
 	* packman_test.c: packman_test_query and packman_test_remove
 	updated to use rc_packman_query properly.
 

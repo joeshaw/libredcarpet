@@ -520,9 +520,16 @@ packman_test_list (RCPackman *p, char *line)
 static void
 packman_test_run (RCPackman *p, char *line)
 {
-    CHECK_EXTRA (line, "run");
+    char *test;
+    gboolean flag = TRUE;
 
-    rc_packman_transact (p, transaction.install_pkgs, transaction.remove_pkgs);
+    line = pop_token (line, &test);
+
+    if (test && !strcmp (test, "test"))
+        flag = FALSE;
+
+    rc_packman_transact (p, transaction.install_pkgs, transaction.remove_pkgs,
+                         flag);
 
     if (rc_packman_get_error (p)) {
         packman_test_print (

@@ -85,7 +85,8 @@ struct _RCPackmanClass {
 
     void (*rc_packman_real_transact)(RCPackman *packman,
                                      RCPackageSList *install_packages,
-                                     RCPackageSList *remove_packages);
+                                     RCPackageSList *remove_packages,
+                                     gboolean perform);
 
     RCPackageSList *(*rc_packman_real_query)(RCPackman *packman,
                                              const char *name);
@@ -113,7 +114,8 @@ RCPackman *rc_packman_new (void);
 
 void rc_packman_transact (RCPackman *packman,
                           RCPackageSList *install_packages,
-                          RCPackageSList *remove_packages);
+                          RCPackageSList *remove_packages,
+                          gboolean perform);
 
 RCPackageSList *rc_packman_query (RCPackman *packman, const char *name);
 
