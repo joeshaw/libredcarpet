@@ -45,6 +45,11 @@ prefix=@prefix@
 apidir=$(prefix)/share/gapi
 libdir=$(prefix)/lib
 
+EXTRA_DIST = libredcarpet-sharp.pc.in
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = libredcarpet-sharp.pc
+
 SHELL = @SHELL@
 top_srcdir = @top_srcdir@
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
@@ -52,6 +57,8 @@ mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 install: all
 	$(mkinstalldirs) $(libdir) &&		\
 	$(mkinstalldirs) $(apidir) &&		\
+	$(mkinstalldirs) $(pkgconfigdir) &&\
 	cp $(API) $(apidir) &&			\
 	cp $(ASSEMBLY) $(libdir) &&		\
+	cp $(pkgconfig_DATA) $(pkgconfigdir) &&	\
 	install -m 644 libredcarpet-sharp-docs.zip libredcarpet-sharp-docs.source libredcarpet-sharp-docs.tree `monodoc --get-sourcesdir`

@@ -1,3 +1,9 @@
+2004-08-13  Tambet Ingo  <tambet@ximian.com>
+
+	* libredcarpet-sharp.pc.in: New file.
+
+	* Makefile.am (install): Add libredcarpet-pc.in.
+
 2004-08-12  Tambet Ingo  <tambet@ximian.com>
 
 	* RC.metadata: Hide some more utility functions which are not required
