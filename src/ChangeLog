@@ -1,5 +1,10 @@
 2002-07-31  Joe Shaw  <joe@ximian.com>
 
+	* rc-xml.c: Don't output the SAX parser spew normally.  Only do it
+	if the RC_SPEW_XML env var is set.
+
+2002-07-31  Joe Shaw  <joe@ximian.com>
+
 	* rc-xml.c (parser_package_start): Add a comment about the deps
 	tag being ignored in the SAX parser.
 	(extract_dep_info): Extract parsing of the various dependency

@@ -63,7 +63,8 @@ sax_start_document(void *data)
 
     g_return_if_fail(!ctx->processing);
 
-    rc_debug(RC_DEBUG_LEVEL_DEBUG, "* Start document\n");
+    if (getenv ("RC_SPEW_XML"))
+        rc_debug (RC_DEBUG_LEVEL_ALWAYS, "* Start document");
 
     ctx->processing = TRUE;
 } /* sax_start_document */
@@ -75,7 +76,8 @@ sax_end_document(void *data)
 
     g_return_if_fail(ctx->processing);
 
-    rc_debug(RC_DEBUG_LEVEL_DEBUG, "* End document\n");
+    if (getenv ("RC_SPEW_XML"))
+        rc_debug (RC_DEBUG_LEVEL_ALWAYS, "* End document");
 
     ctx->processing = FALSE;
 
@@ -99,8 +101,10 @@ parser_toplevel_start(RCPackageSAXContext *ctx,
         ctx->current_package->channel = ctx->channel;
         rc_channel_ref (ctx->channel);
     }
-    else
-        rc_debug(RC_DEBUG_LEVEL_DEBUG, "! Not handling %s\n", name);
+    else {
+        if (getenv ("RC_SPEW_XML"))
+            rc_debug (RC_DEBUG_LEVEL_ALWAYS, "! Not handling %s", name);
+    }
 } /* parser_toplevel_start */
 
 static void
@@ -170,8 +174,10 @@ parser_package_start(RCPackageSAXContext *ctx,
         ctx->current_dep_list = ctx->toplevel_dep_list =
             &ctx->current_package->provides;
     }
-    else
-        rc_debug(RC_DEBUG_LEVEL_DEBUG, "! Not handling %s\n", name);
+    else {
+        if (getenv ("RC_SPEW_XML"))
+            rc_debug (RC_DEBUG_LEVEL_ALWAYS, "! Not handling %s", name);
+    }
 } /* parser_package_start */
 
 static void
@@ -190,8 +196,10 @@ parser_history_start(RCPackageSAXContext *ctx,
         
         ctx->state = PARSER_UPDATE;
     }
-    else
-        rc_debug(RC_DEBUG_LEVEL_DEBUG, "! Not handling %s\n", name);
+    else {
+        if (getenv ("RC_SPEW_XML"))
+            rc_debug (RC_DEBUG_LEVEL_ALWAYS, "! Not handling %s", name);
+    }
 }
 
 static gboolean
@@ -227,8 +235,10 @@ parse_dep_attrs(RCPackageDep *dep, const xmlChar **attrs)
             tmp_release = g_strdup(value);
         else if (!strcmp (attr, "obsoletes"))
             is_obsolete = TRUE;
-        else
-            rc_debug(RC_DEBUG_LEVEL_DEBUG, "! Unknown attribute: %s = %s", attr, value);
+        else {
+            if (getenv ("RC_SPEW_XML"))
+                rc_debug (RC_DEBUG_LEVEL_ALWAYS, "! Unknown attribute: %s = %s", attr, value);
+        }
 
         g_free(attr);
     }
@@ -271,8 +281,10 @@ parser_dep_start(RCPackageSAXContext *ctx,
     }
     else if (!strcmp(name, "or"))
         ctx->current_dep_list = g_new0(RCPackageDepSList *, 1);
-    else
-        rc_debug(RC_DEBUG_LEVEL_DEBUG, "! Not handling %s\n", name);
+    else {
+        if (getenv ("RC_SPEW_XML"))
+            rc_debug (RC_DEBUG_LEVEL_ALWAYS, "! Not handling %s", name);
+    }
 } /* parser_dep_start */
 
 static void
@@ -281,11 +293,14 @@ sax_start_element(void *data, const xmlChar *name, const xmlChar **attrs)
     RCPackageSAXContext *ctx = (RCPackageSAXContext *) data;
     int i;
 
-    rc_debug(RC_DEBUG_LEVEL_DEBUG, "* Start element (%s)\n", name);
+    if (getenv ("RC_SPEW_XML"))
+        rc_debug (RC_DEBUG_LEVEL_ALWAYS, "* Start element (%s)", name);
 
     if (attrs) {
-        for (i = 0; attrs[i]; i += 2)
-            rc_debug(RC_DEBUG_LEVEL_DEBUG, "   - Attribute (%s=%s)\n", attrs[i], attrs[i+1]);
+        for (i = 0; attrs[i]; i += 2) {
+            if (getenv ("RC_SPEW_XML"))
+                rc_debug (RC_DEBUG_LEVEL_ALWAYS, "   - Attribute (%s=%s)", attrs[i], attrs[i+1]);
+        }
     }
 
     if (!strcmp(name, "channel") || !strcmp(name, "subchannel")) {
@@ -500,7 +515,8 @@ sax_end_element(void *data, const xmlChar *name)
 {
     RCPackageSAXContext *ctx = (RCPackageSAXContext *) data;
 
-    rc_debug(RC_DEBUG_LEVEL_DEBUG, "* End element (%s)\n", name);
+    if (getenv ("RC_SPEW_XML"))
+        rc_debug (RC_DEBUG_LEVEL_ALWAYS, "* End element (%s)", name);
     
     if (!strcmp(name, "channel") || !strcmp(name, "subchannel")) {
         /* Unneeded container tags.  Ignore */
@@ -545,7 +561,8 @@ sax_characters(void *data, const xmlChar *ch, int len)
         ctx->text_buffer = g_strndup(ch, len);
     }
 
-    rc_debug(RC_DEBUG_LEVEL_DEBUG, "* Characters: \"%s\"\n", ctx->text_buffer);
+    if (getenv ("RC_SPEW_XML"))
+        rc_debug (RC_DEBUG_LEVEL_ALWAYS, "* Characters: \"%s\"", ctx->text_buffer);
 } /* sax_characters */
 
 static void
@@ -557,7 +574,8 @@ sax_warning(void *data, const char *msg, ...)
     va_start(args, msg);
 
     tmp = g_strdup_vprintf(msg, args);
-    rc_debug(RC_DEBUG_LEVEL_DEBUG, "* Warning: %s\n", tmp);
+    if (getenv ("RC_SPEW_XML"))
+        rc_debug (RC_DEBUG_LEVEL_ALWAYS, "* Warning: %s", tmp);
     g_free(tmp);
 
     va_end(args);
@@ -642,7 +660,8 @@ rc_package_sax_context_new(RCChannel *channel)
     ctx = g_new0(RCPackageSAXContext, 1);
     ctx->channel = channel;
 
-    rc_debug(RC_DEBUG_LEVEL_DEBUG, "* Context created (%p)\n", ctx);
+    if (getenv ("RC_SPEW_XML"))
+        rc_debug (RC_DEBUG_LEVEL_ALWAYS, "* Context created (%p)", ctx);
 
     return ctx;
 }
