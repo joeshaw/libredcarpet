@@ -106,21 +106,21 @@ RCDistroChunk distro_figurers[] = {
 
 RCDistroType distro_types[] = {
     { "redhat-60-i386", NULL, "Red Hat Linux", "6.0", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
-    { "redhat-61-i386", "redhat-60-i386", "Red Hat Linux", "6.1", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
-    { "redhat-62-i386", "redhat-60-i386", "Red Hat Linux", "6.2", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
-    { "redhat-70-i386", "redhat-70-i386", "Red Hat Linux", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
+    { "redhat-61-i386", NULL, "Red Hat Linux", "6.1", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
+    { "redhat-62-i386", NULL, "Red Hat Linux", "6.2", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
+    { "redhat-70-i386", NULL, "Red Hat Linux", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
 
-    { "turbolinux-60-i386", "turbolinux-60-i386", "TurboLinux", "6.0", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
+    { "turbolinux-60-i386", NULL, "TurboLinux", "6.0", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
 
     { "suse-63-i386", NULL, "SuSE", "6.3", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
-    { "suse-64-i386", "suse-63-i386", "SuSE", "6.4", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
-    { "suse-70-i386", "suse-70-i386", "SuSE", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
+    { "suse-64-i386", NULL, "SuSE", "6.4", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
+    { "suse-70-i386", NULL, "SuSE", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
 
     { "mandrake-70-i386", NULL, "Linux Mandrake", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
-    { "mandrake-71-i386", "mandrake-70-i386", "Linux Mandrake", "7.1", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
+    { "mandrake-71-i386", NULL, "Linux Mandrake", "7.1", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
 
     { "debian-woody-i386", NULL, "Debian GNU/Linux", "woody", RC_PKG_DPKG, RC_ARCH_IA32, "gdmrunlevel=2,3,4,5 restartgdm" },
-    { "debian-22-i386", "debian-woody-i386", "Debian GNU/Linux", "2.2", RC_PKG_DPKG, RC_ARCH_IA32, "gdmrunlevel=2,3,4,5 restartgdm" },
+    { "debian-22-i386", NULL, "Debian GNU/Linux", "2.2", RC_PKG_DPKG, RC_ARCH_IA32, "gdmrunlevel=2,3,4,5 restartgdm" },
     { NULL }
 };
 

@@ -48,7 +48,7 @@ typedef enum _RCDistroArch {
 
 typedef struct _RCDistroType {
     char *unique_name;
-    char *same_as;              /* i.e. connectiva-foo-i386 is the same as redhat-62-i386 */
+    char *pretend_name; /* i.e. connectiva-foo-i386 is the same as redhat-62-i386 */
     char *full_name;
     char *ver_string;
     RCPackageType pkgtype;
