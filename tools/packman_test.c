@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 #ifdef HAVE_LIBRPM
 #include <rpm/rpmlib.h>
@@ -89,7 +90,7 @@ guint num_commands = sizeof (commands) / sizeof (Command) - 1;
 static void
 transact_start_cb (RCPackman *packman, gint total)
 {
-    printf ("About to transact %d packages\n", total);
+    printf ("About to transact in %d steps\n", total);
 }
 
 static void
@@ -128,20 +129,92 @@ transact_done_cb (RCPackman *packman)
     printf ("Transaction done.\n");
 }
 
-static gchar **
-pop_token (gchar *buf)
+typedef enum {
+    PACKMAN_TEST_DEBUG,
+    PACKMAN_TEST_WARNING,
+    PACKMAN_TEST_ERROR,
+} PackmanTestPrintLevel;
+
+static void
+packman_test_print (PackmanTestPrintLevel level, const char *format, ...)
 {
-    gchar **tokens;
+    va_list args;
 
-    buf = g_strstrip (buf);
+    va_start (args, format);
 
-    tokens = g_strsplit (buf, " ", 1);
+    switch (level) {
+    case PACKMAN_TEST_DEBUG:
+        fprintf (stderr, "DEBUG: ");
+        break;
+    case PACKMAN_TEST_WARNING:
+        fprintf (stderr, "WARNING: ");
+        break;
+    case PACKMAN_TEST_ERROR:
+        fprintf (stderr, "ERROR: ");
+        break;
+    }
+    vfprintf (stderr, format, args);
+    fprintf (stderr, "\n");
 
+    va_end (args);
+}
+
+#define CHECK_PARAMS(line, func) \
+if (!line) { \
+    packman_test_print ( \
+        PACKMAN_TEST_ERROR, \
+        "\"%s\" requires parameters (see \"help %s\")", func, func); \
+    return; \
+}
+
+#define CHECK_EXTRA(line, func) \
+if (line) { \
+    packman_test_print ( \
+        PACKMAN_TEST_WARNING, \
+        "ignoring extraneous parameters to \"%s\"", func); \
+}
+
+static char *
+pop_token (char *line, char **token)
+{
+    char *start = line;
+    char *ptr;
+
+    if (!line) {
 #ifdef DEBUG
-    printf ("DEBUG: pop_token has \"%s\" and \"%s\"\n", tokens[0], tokens[1]);
+        packman_test_print (PACKMAN_TEST_DEBUG,
+                            "attempt to pop from NULL input");
 #endif
+        *token = NULL;
+        return NULL;
+    }
 
-    return (tokens);
+    while (start && *start == ' ') {
+        start++;
+    }
+
+    if (!start) {
+        *token = NULL;
+        return NULL;
+    }
+
+    ptr = strchr (start, ' ');
+    if (ptr) {
+        *ptr = '\0';
+        ptr++;
+    }
+
+    *token = start;
+
+    while (ptr && *ptr == ' ') {
+        ptr++;
+    }
+
+    if (ptr && !*ptr) {
+        ptr = NULL;
+    }
+
+    return (ptr);
 }
 
 static void
@@ -159,16 +232,13 @@ print_pkg (RCPackage *pkg)
 }
 
 static void
-packman_test_query_all (RCPackman *p, gchar *buf)
+packman_test_query_all (RCPackman *p, char *line)
 {
     RCPackageSList *pkg_list;
     RCPackageSList *iter;
 
-    if (buf) {
-        printf ("ERROR: extraneous characters after \"query_all\"\n");
-        return;
-    }
-    
+    CHECK_EXTRA (line, "query_all");
+
     pkg_list = rc_packman_query_all (p);
 
     print_pkg_list_header ();
@@ -219,32 +289,24 @@ pretty_print_pkg (RCPackage *pkg)
 }
 
 static RCPackage *
-packman_test_make_pkg (RCPackman *p, gchar *buf)
+packman_test_make_pkg (RCPackman *p, char *name, char *line)
 {
     RCPackage *pkg;
-    gchar **tokens;
-    gchar *attribs;
-
-    tokens = pop_token (buf);
 
     pkg = rc_package_new ();
-    pkg->spec.name = g_strdup (tokens[0]);
+    pkg->spec.name = g_strdup (name);
 
-    attribs = g_strdup (tokens[1]);
-
-    g_strfreev (tokens);
-
-    while (attribs) {
+    while (line) {
         gchar **parts;
+        char *attrib;
 
-        tokens = pop_token (attribs);
-        g_free (attribs);
-        attribs = g_strdup (tokens[1]);
-        parts = g_strsplit (tokens[0], "=", 1);
-        g_strfreev (tokens);
+        line = pop_token (line, &attrib);
+        parts = g_strsplit (attrib, "=", 1);
 
         if (!parts[1]) {
-            printf ("ERROR: must provide attributes as <attribute>=<value>\n");
+            packman_test_print (
+                PACKMAN_TEST_ERROR,
+                "must provide attributes as <attribute>=<value>");
             g_strfreev (parts);
             rc_package_free (pkg);
             return (NULL);
@@ -268,7 +330,9 @@ packman_test_make_pkg (RCPackman *p, gchar *buf)
             continue;
         }
 
-        printf ("ERROR: unknown attribute \"%s\"\n", parts[0]);
+        packman_test_print (
+            PACKMAN_TEST_ERROR,
+            "unknown attribute \"%s\"", parts[0]);
         g_strfreev (parts);
         rc_package_free (pkg);
         return (NULL);
@@ -280,16 +344,16 @@ packman_test_make_pkg (RCPackman *p, gchar *buf)
 }
 
 static void
-packman_test_query (RCPackman *p, gchar *buf)
+packman_test_query (RCPackman *p, char *line)
 {
     RCPackage *pkg;
+    char *name;
 
-    if (!buf) {
-        printf ("ERROR: \"query\" requires parameters (see \"help query\")\n");
-        return;
-    }
+    CHECK_PARAMS (line, "query");
 
-    pkg = packman_test_make_pkg (p, buf);
+    line = pop_token (line, &name);
+
+    pkg = packman_test_make_pkg (p, name, line);
 
     if (!pkg) {
         return;
@@ -305,25 +369,18 @@ packman_test_query (RCPackman *p, gchar *buf)
 }
 
 static void
-packman_test_find_file (RCPackman *p, gchar *buf)
+packman_test_find_file (RCPackman *p, char *line)
 {
     RCPackage *package;
-    gchar **tokens;
+    char *file;
 
-    if (!buf) {
-        printf ("ERROR: \"find\" requires parameters (see \"help find\")\n");
-        return;
-    }
+    CHECK_PARAMS (line, "find");
 
-    tokens = pop_token (buf);
+    line = pop_token (line, &file);
 
-    if (tokens[1]) {
-        printf ("ERROR: extraneous characters after \"%s\"\n", tokens[0]);
-        g_strfreev (tokens);
-        return;
-    }
+    CHECK_EXTRA (line, "find");
 
-    package = rc_packman_find_file (p, tokens[0]);
+    package = rc_packman_find_file (p, file);
 
     if (!package) {
         return;
@@ -332,31 +389,29 @@ packman_test_find_file (RCPackman *p, gchar *buf)
     pretty_print_pkg (package);
 
     rc_package_free (package);
-    g_strfreev (tokens);
 }
 
 static void
-packman_test_query_file (RCPackman *p, gchar *line)
+packman_test_query_file (RCPackman *p, char *line)
 {
     struct stat buf;
-    gchar **tokens;
+    char *file;
     RCPackage *pkg;
 
-    tokens = pop_token (line);
+    CHECK_PARAMS (line, "query_file");
 
-    if (tokens[1]) {
-        printf ("ERROR: extraneous characters after \"%s\"\n", tokens[0]);
-        g_strfreev (tokens);
+    line = pop_token (line, &file);
+
+    CHECK_EXTRA (line, "query_file");
+
+    if (stat (file, &buf)) {
+        packman_test_print (
+            PACKMAN_TEST_ERROR,
+            "could not stat local file \"%s\"", file);
         return;
     }
 
-    if (stat (tokens[0], &buf)) {
-        printf ("ERROR: could not stat local file \"%s\"\n", tokens[0]);
-        g_strfreev (tokens);
-        return;
-    }
-
-    pkg = rc_packman_query_file (p, tokens[0]);
+    pkg = rc_packman_query_file (p, file);
 
     if (!pkg) {
         return;
@@ -365,15 +420,14 @@ packman_test_query_file (RCPackman *p, gchar *line)
     pretty_print_pkg (pkg);
 
     rc_package_free (pkg);
-    g_strfreev (tokens);
 }
 
 static void
-packman_test_help (RCPackman *p, gchar *line)
+packman_test_help (RCPackman *p, char *line)
 {
-    gchar **tokens;
     guint i;
     gboolean handled = FALSE;
+    char *command;
 
     if (!line) {
         guint count = 0;
@@ -395,16 +449,12 @@ packman_test_help (RCPackman *p, gchar *line)
         return;
     }
 
-    tokens = pop_token (line);
+    line = pop_token (line, &command);
 
-    if (tokens[1]) {
-        printf ("ERROR: extraneous characters after \"%s\"\n", tokens[0]);
-        g_strfreev (tokens);
-        return;
-    }
+    CHECK_EXTRA (line, "help");
 
     for (i = 0; i < num_commands; i++) {
-        if (!strcmp (commands[i].name, tokens[0])) {
+        if (!strcmp (commands[i].name, command)) {
             printf ("Description:\n  %s\n\n", commands[i].help);
             printf ("Syntax:\n  %s\n", commands[i].syntax);
             handled = TRUE;
@@ -413,77 +463,75 @@ packman_test_help (RCPackman *p, gchar *line)
     }
 
     if (!handled) {
-        printf ("ERROR: unknown command \"%s\"\n", tokens[0]);
+        packman_test_print (
+            PACKMAN_TEST_ERROR,
+            "unknown command \"%s\"", command);
     }
-
-    g_strfreev (tokens);
 }
 
 static void
-packman_test_quit (RCPackman *p, gchar *line)
+packman_test_quit (RCPackman *p, char *line)
 {
-    if (line) {
-        printf ("ERROR: extraneous characters after \"quit\"\n");
-        return;
-    }
+    CHECK_EXTRA (line, "quit");
 
     exit (0);
 }
 
 static void
-packman_test_install (RCPackman *p, gchar *line)
+packman_test_install (RCPackman *p, char *line)
 {
     struct stat buf;
-    gchar **tokens;
+    char *file;
     RCPackage *package;
 
-    tokens = pop_token (line);
+    CHECK_PARAMS (line, "install");
 
-    if (tokens[1]) {
-        printf ("ERROR: extraneous characters after \"%s\"\n", tokens[0]);
-        g_strfreev (tokens);
-        return;
-    }
+    line = pop_token (line, &file);
 
-    if (stat (tokens[0], &buf)) {
-        printf ("ERROR: could not stat local file \"%s\"\n", tokens[0]);
-        g_strfreev (tokens);
+    CHECK_EXTRA (line, "install");
+
+    if (stat (file, &buf)) {
+        packman_test_print (
+            PACKMAN_TEST_ERROR,
+            "could not stat local file \"%s\"", file);
         return;
     }
 
     package = rc_package_new ();
 
-    package->package_filename = g_strdup (tokens[0]);
+    package->package_filename = g_strdup (file);
 
     transaction.install_pkgs = g_slist_append (transaction.install_pkgs,
                                                package);
-
-    g_strfreev (tokens);
 }
 
 static void
-packman_test_remove (RCPackman *p, gchar *line)
+packman_test_remove (RCPackman *p, char *line)
 {
     RCPackage *pkg;
+    char *name;
 
-    pkg = packman_test_make_pkg (p, line);
+    CHECK_PARAMS (line, "remove");
+
+    line = pop_token (line, &name);
+
+    pkg = packman_test_make_pkg (p, name, line);
 
     if (pkg->installed) {
         transaction.remove_pkgs = g_slist_append (transaction.remove_pkgs,
                                                   pkg);
     } else {
-        printf ("ERROR: package \"%s\" is not installed\n", pkg->spec.name);
+        packman_test_print (
+            PACKMAN_TEST_ERROR,
+            "package \"%s\" is not installed", pkg->spec.name);
         rc_package_free (pkg);
     }
 }
 
 static void
-packman_test_clear (RCPackman *p, gchar *line)
+packman_test_clear (RCPackman *p, char *line)
 {
-    if (line) {
-        printf ("ERROR: extraneous characters after \"clear\"\n");
-        return;
-    }
+    CHECK_EXTRA (line, "clear");
 
     rc_package_slist_free (transaction.install_pkgs);
     transaction.install_pkgs = NULL;
@@ -495,19 +543,16 @@ packman_test_clear (RCPackman *p, gchar *line)
 }
 
 static void
-packman_test_list (RCPackman *p, gchar *line)
+packman_test_list (RCPackman *p, char *line)
 {
     GSList *iter;
 
-    if (line) {
-        printf ("ERROR: extraneous characters after \"list\"\n");
-        return;
-    }
+    CHECK_EXTRA (line, "list");
 
     for (iter = transaction.install_pkgs; iter; iter = iter->next) {
-        gchar *name = (gchar *)(iter->data);
+        RCPackage *pkg = (RCPackage *)(iter->data);
 
-        printf ("Install: %s\n", name);
+        printf ("Install: %s\n", pkg->package_filename);
     }
 
     for (iter = transaction.remove_pkgs; iter; iter = iter->next) {
@@ -519,21 +564,19 @@ packman_test_list (RCPackman *p, gchar *line)
 }
 
 static void
-packman_test_run (RCPackman *p, gchar *line)
+packman_test_run (RCPackman *p, char *line)
 {
-    if (line) {
-        printf ("ERROR: extraneous characters after \"run\"\n");
-        return;
-    }
+    CHECK_EXTRA (line, "run");
 
     rc_packman_transact (p, transaction.install_pkgs, transaction.remove_pkgs);
 
     if (rc_packman_get_error (p)) {
-        printf ("ERROR: %s\n", rc_packman_get_reason (p));
+        packman_test_print (
+            PACKMAN_TEST_ERROR,
+            "%s", rc_packman_get_reason (p));
     }
 
-    g_slist_foreach (transaction.install_pkgs, (GFunc) g_free, NULL);
-    g_slist_free (transaction.install_pkgs);
+    rc_package_slist_free (transaction.install_pkgs);
     transaction.install_pkgs = NULL;
 
     rc_package_slist_free (transaction.remove_pkgs);
@@ -576,10 +619,8 @@ packman_completion (char *text, int start, int end)
 int main (int argc, char **argv)
 {
     RCPackman *p;
-    char *buf;
     gboolean done = FALSE;
 
-//    gtk_type_init ();
     gtk_init (&argc, &argv);
 
     transaction.install_pkgs = NULL;
@@ -605,40 +646,41 @@ int main (int argc, char **argv)
     rl_attempted_completion_function = (CPPFunction *)packman_completion;
 
     while (!done) {
-        gchar **tokens;
+        char *buf, *line, *command;
         guint i;
         gboolean handled = FALSE;
 
         buf = readline ("> ");
 
-        if (!buf) {
+        line = buf;
+
+        if (!line) {
             printf ("\n");
             done = TRUE;
             continue;
         }
 
-        if (!*buf) {
+        if (!*line) {
             free (buf);
             continue;
         }
 
-        add_history (buf);
+        add_history (line);
 
-        tokens = pop_token (buf);
+        line = pop_token (line, &command);
 
         for (i = 0; i < num_commands; i++) {
-            if (!strcmp (commands[i].name, tokens[0])) {
-                commands[i].func (p, tokens[1]);
+            if (!strcmp (commands[i].name, command)) {
+                commands[i].func (p, line);
                 handled = TRUE;
                 break;
             }
         }
 
         if (!handled) {
-            printf ("ERROR: unknown command \"%s\"\n", tokens[0]);
+            printf ("ERROR: unknown command \"%s\"\n", command);
         }
 
-        g_strfreev (tokens);
         free (buf);
     }
 
