@@ -29,8 +29,8 @@
 #include <rpm/misc.h>
 #include <rpm/header.h>
 
-#if 0
-#    define RPM_ROOTDIR "/cvs/rpmdb"
+#if 1
+#    define RPM_ROOTDIR "/cvs/redhat"
 #else
 #    define RPM_ROOTDIR "/"
 #endif
@@ -853,6 +853,14 @@ rc_rpmman_depends_fill (RCPackage *pkg, Header hdr)
     /* Break this useless information into version and release fields.
        FIXME: this needs to do the epoch too */
 
+    /* Some packages, such as setup and termcap, store a NULL in the
+       RPMTAG_REQUIREVERSION, yet set the count to 1. That's pretty damned
+       broken, so if that's the case, we'll set the count to zero, as we
+       should. *sigh* */
+
+    if (verrels == NULL)
+	count = 0;
+
     parse_versions (verrels, &versions, &releases, count);
 
     for (i = 0; i < count; i++) {
@@ -937,7 +945,7 @@ rc_rpmman_depends_fill (RCPackage *pkg, Header hdr)
     headerGetEntry (hdr, RPMTAG_CONFLICTVERSION, NULL, (void **)&versions,
                     &count);
 
-    parse_versions (verrels, &versions, &releases, count);
+    parse_versions (versions, &versions, &releases, count);
 
     for (i = 0; i < count; i++) {
         RCPackageRelation relation = 0;
@@ -956,7 +964,7 @@ rc_rpmman_depends_fill (RCPackage *pkg, Header hdr)
             versions[i] = NULL;
         }
 
-        if (!releases[i][0]) {
+        if (releases[i] && !releases[i][0]) {
             releases[i] = NULL;
         }
 
