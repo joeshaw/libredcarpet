@@ -1,3 +1,10 @@
+2001-09-14  Ian Peters  <itp@ximian.com>
+
+	* src/rc-distro.c: add RH 7.2 support
+
+	* src/rc-rpmman.c: sigh, forgot all about that octal shit... get
+	rid of the leading 0 in the rpm version
+
 2001-09-13  Ian Peters  <itp@ximian.com>
 
 	* src/rc-rpm-helper-with-rpmio-and-rpmdb.so: another shared

@@ -451,7 +451,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     rpmProblemSet probs = NULL;
     InstallState state;
     RCPackageSList *iter;
-#if RPM_VERSION >= 040003
+#if RPM_VERSION >= 40003
     rpmDependencyConflict conflicts;
 #else
     struct rpmDependencyConflict *conflicts;
@@ -510,7 +510,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     }
 
     if (rpmman->rpmdepCheck (transaction, &conflicts, &rc) || rc) {
-#if RPM_VERSION >= 040003
+#if RPM_VERSION >= 40003
         rpmDependencyConflict conflict = conflicts;
 #else
         struct rpmDependencyConflict *conflict = conflicts;
@@ -628,7 +628,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
 #endif
     } else if (rc > 0) {
         guint count;
-#if RPM_VERSION >= 040002
+#if RPM_VERSION >= 40002
         rpmProblem problem = probs->probs;
 #else
         rpmProblem *problem = probs->probs;
@@ -636,8 +636,8 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         GString *report = g_string_new ("");
 
         for (count = 0; count < probs->numProblems; count++) {
-#if RPM_VERSION >= 040002
-            if (rpmman->version >= 040002) {
+#if RPM_VERSION >= 40002
+            if (rpmman->version >= 40002) {
                 g_string_sprintfa (
                     report, "\n%s",
                     rpmman->rpmProblemString (problem));
@@ -647,7 +647,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
                     rpmman->rpmProblemString (*((rpmProblem *)problem)));
             }
 #else
-            if (rpmman->version >= 040002) {
+            if (rpmman->version >= 40002) {
                 g_string_sprintfa (
                     report, "\n%s",
                     rpmman->rpmProblemString ((rpmProblem *)&problem));
@@ -2414,7 +2414,7 @@ parse_rpm_version (RCRpmman *rpmman, const gchar *version)
         rpmman->micro_version = strtoul (nptr, &endptr, 10);
     }
 
-    tmp = g_strdup_printf ("%02d%02d%02d", rpmman->major_version,
+    tmp = g_strdup_printf ("%d%02d%02d", rpmman->major_version,
                            rpmman->minor_version, rpmman->micro_version);
     rpmman->version = atoi (tmp);
     g_free (tmp);
