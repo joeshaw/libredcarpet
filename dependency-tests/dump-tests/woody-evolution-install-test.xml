@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+
+<test>
+
+<setup>
+  <undump file="woody-evolution-install-dump.xml.gz"/>
+</setup>
+
+<trial>
+  <note>Trying to install evolution on a woody machine.  It has a dependency on xlibs > 4.1.0.  The old code would barf because debian tests relations with the release field even if it isn't specified.</note>
+  <install channel="Ximian Evolution qa" package="evolution"/>
+</trial>
+
+</test>
