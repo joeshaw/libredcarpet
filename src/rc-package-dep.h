@@ -82,10 +82,10 @@ struct _RCPackageDep {
     guint pre   : 1;
 };
 
-RCPackageDep *rc_package_dep_new (gchar *name,
+RCPackageDep *rc_package_dep_new (const gchar *name,
                                   guint32 epoch,
-                                  gchar *version,
-                                  gchar *release,
+                                  const gchar *version,
+                                  const gchar *release,
                                   RCPackageRelation relation);
 
 RCPackageDep *rc_package_dep_new_from_spec (

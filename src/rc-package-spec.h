@@ -47,10 +47,10 @@ struct _RCPackageSpec {
 #define RC_PACKAGE_SPEC(item) ((RCPackageSpec *)(item))
 
 void rc_package_spec_init (RCPackageSpec *rcps,
-                           gchar *name,
+                           const gchar *name,
                            guint32 epoch,
-                           gchar *version,
-                           gchar *release);
+                           const gchar *version,
+                           const gchar *release);
 
 void rc_package_spec_copy (RCPackageSpec *new, RCPackageSpec *old);
 

@@ -32,10 +32,10 @@ extern RCPackman *das_global_packman;
 
 void
 rc_package_spec_init (RCPackageSpec *rcps,
-                      gchar *name,
+                      const gchar *name,
                       guint32 epoch,
-                      gchar *version,
-                      gchar *release)
+                      const gchar *version,
+                      const gchar *release)
 {
     g_assert (rcps);
 

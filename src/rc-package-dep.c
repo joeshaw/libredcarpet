@@ -39,10 +39,10 @@
 extern RCPackman *das_global_packman;
 
 RCPackageDep *
-rc_package_dep_new (gchar *name,
+rc_package_dep_new (const gchar *name,
                     guint32 epoch,
-                    gchar *version,
-                    gchar *release,
+                    const gchar *version,
+                    const gchar *release,
                     RCPackageRelation relation)
 {
     RCPackageDep *rcpd = g_new0 (RCPackageDep, 1);
