@@ -389,12 +389,12 @@ rc_packman_get_reason (RCPackman *p)
 RCPackageSList *
 rc_package_slist_add_package (RCPackageSList *pkgs, gchar *name,
                               gchar *epoch, gchar *version, gchar *release,
-                              guint32 size)
+                              gboolean installed, guint32 installed_size)
 {
     RCPackage *pkg = rc_package_new ();
 
     rc_package_spec_init (RC_PACKAGE_SPEC (pkg), name, epoch, version, release,
-                          size, 0, 0);
+                          installed, size, 0, 0);
 
     pkgs = g_slist_append (list, pkg);
 

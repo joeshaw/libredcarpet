@@ -55,9 +55,10 @@ typedef enum _RCPackmanStatus {
 } RCPackmanStatus;
 
 typedef enum _RCPackmanError {
-    RC_PACKMAN_NONE = 0,        /* No error */
-    RC_PACKMAN_NO_BACKEND,      /* You're not using a subclass of RCPackman */
-    RC_PACKMAN_NOT_IMPLEMENTED, /* Current object doesn't support operation */
+    RC_PACKMAN_NONE = 0,         /* No error */
+    RC_PACKMAN_NO_BACKEND,       /* You're not using a subclass of RCPackman */
+    RC_PACKMAN_NOT_IMPLEMENTED,  /* Current object doesn't support operation */
+    RC_PACKMAN_OPERATION_FAILED, /* Package system specific failure */
 } RCPackmanError;
 
 struct _RCPackman {
@@ -217,6 +218,7 @@ void rc_packman_remove_done (RCPackman *p,
 RCPackageSList *rc_package_slist_add_package (RCPackageSList *pkgs,
                                               gchar *name, gchar *epoch,
                                               gchar *version, gchar *release,
-                                              guint32 size);
+                                              gboolean installed,
+                                              guint32 installed_size);
 
 #endif /* _RC_PACKMAN_H */
