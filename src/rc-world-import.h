@@ -30,6 +30,9 @@
 
 #include <rc-world.h>
 
+void  rc_world_add_channels_from_xml (RCWorld *world,
+                                      xmlNode *node);
+
 void  rc_world_add_packages_from_slist (RCWorld *world,
                                         RCPackageSList *package_list);
 

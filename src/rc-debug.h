@@ -37,6 +37,7 @@
 #endif
 
 typedef enum {
+    RC_DEBUG_LEVEL_ALWAYS   = -1,
     RC_DEBUG_LEVEL_NONE     = 0,
     RC_DEBUG_LEVEL_ERROR    = 1,
     RC_DEBUG_LEVEL_CRITICAL = 2,
@@ -46,9 +47,13 @@ typedef enum {
     RC_DEBUG_LEVEL_DEBUG    = 6,
 } RCDebugLevel;
 
+typedef void (*RCDebugFn) (const char *debug_message, gpointer user_data);
+
 guint rc_debug_get_display_level (void);
 
 void rc_debug_set_display_level (guint level);
+
+void rc_debug_set_display_handler (RCDebugFn fn, gpointer user_data);
 
 guint rc_debug_get_log_level (void);
 

@@ -43,6 +43,7 @@
 #include "rc-xml.h"
 #include "xml-util.h"
 #include "rc-package-update.h"
+#include "rc-distro.h"
 
 typedef enum _DepType DepType;
 
@@ -57,6 +58,190 @@ enum _DepType {
 static guint rc_world_parse_helix (RCWorld *, RCChannel *, gchar *);
 static guint rc_world_parse_debian (RCWorld *, RCChannel *, gchar *);
 static guint rc_world_parse_redhat (RCWorld *, RCChannel *, gchar *);
+
+void
+rc_world_add_channels_from_xml (RCWorld *world,
+                                xmlNode *node)
+{
+    RCDistroType *dt;
+    char *distro_name = NULL;
+
+    g_return_if_fail (world != NULL);
+    g_return_if_fail (node != NULL);
+
+    dt = rc_figure_distro ();
+    if (dt) {
+        distro_name = dt->pretend_name ? dt->pretend_name : dt->unique_name;
+    }
+
+    while (node) {
+        char *tmp;
+        GSList *distro_target;
+        gchar *name;
+        guint32 id;
+        RCChannelType type = RC_CHANNEL_TYPE_HELIX;
+        gchar **targets;
+        gchar **iter;
+        RCChannel *channel;
+        gboolean valid_channel_for_distro;
+
+        /* Skip comments */
+        if (node->type == XML_COMMENT_NODE || node->type == XML_TEXT_NODE) {
+            node = node->next;
+            continue;
+        }
+
+        distro_target = NULL;
+        valid_channel_for_distro = FALSE;
+        tmp = xml_get_prop (node, "distro_target");
+        if (tmp) {
+            targets = g_strsplit (tmp, ":", 0);
+            g_free (tmp);
+
+            for (iter = targets; iter && *iter; iter++) {
+                distro_target = g_slist_append (distro_target, *iter);
+                
+                if (distro_name) {
+                    if (! strcmp (*iter, distro_name))
+                        valid_channel_for_distro = TRUE;
+                } else {
+                    valid_channel_for_distro = TRUE;
+                }
+            }
+
+            g_free (targets);
+        }
+
+        if (! valid_channel_for_distro) {
+
+            g_slist_foreach (distro_target, (GFunc) g_free, NULL);
+            g_slist_free (distro_target);
+ 
+        } else {
+            
+            name = xml_get_prop(node, "name");
+
+            tmp = xml_get_prop(node, "id");
+            id = atoi(tmp);
+            g_free(tmp);
+
+            tmp = xml_get_prop(node, "type");
+            if (tmp) {
+                if (g_strcasecmp (tmp, "helix") == 0)
+                    type = RC_CHANNEL_TYPE_HELIX;
+                else if (g_strcasecmp (tmp, "debian") == 0)
+                    type = RC_CHANNEL_TYPE_DEBIAN;
+                else if (g_strcasecmp (tmp, "redhat") == 0)
+                    type = RC_CHANNEL_TYPE_REDHAT;
+                else
+                    type = RC_CHANNEL_TYPE_UNKNOWN;
+                g_free (tmp);
+            }
+
+            channel = rc_world_add_channel (world, name, id, type);
+
+            channel->path = xml_get_prop(node, "path");
+
+            tmp = xml_get_prop(node, "file_path");
+            channel->file_path = rc_maybe_merge_paths(channel->path, tmp);
+            g_free(tmp);
+        
+            tmp = xml_get_prop(node, "icon");
+            channel->icon_file = rc_maybe_merge_paths(channel->path, tmp);
+            g_free(tmp);
+
+            channel->description = xml_get_prop(node, "description");
+
+            channel->distro_target = distro_target;
+
+            tmp = xml_get_prop(node, "subs_url");
+            channel->subs_file = rc_maybe_merge_paths(channel->path, tmp);
+            g_free(tmp);
+
+            tmp = xml_get_prop(node, "unsubs_url");
+            channel->unsubs_file = rc_maybe_merge_paths(channel->path, tmp);
+            g_free(tmp);
+        
+            tmp = xml_get_prop(node, "mirrored");
+            if (tmp) {
+                channel->mirrored = TRUE;
+                g_free(tmp);
+            }
+            else {
+                channel->mirrored = FALSE;
+            }
+
+            tmp = xml_get_prop(node, "pkginfo_compressed");
+            if (tmp) {
+                channel->pkginfo_compressed = TRUE;
+                g_free (tmp);
+            } else {
+                channel->pkginfo_compressed = FALSE;
+            }
+
+            tmp = xml_get_prop(node, "pkgset_compressed");
+            if (tmp) {
+                channel->pkgset_compressed = TRUE;
+                g_free (tmp);
+            } else {
+                channel->pkgset_compressed = FALSE;
+            }
+            
+            tmp = xml_get_prop(node, "pkginfo_file");
+            if (!tmp) {
+                /* default */
+                tmp = g_strdup("packageinfo.xml.gz");
+                channel->pkginfo_compressed = TRUE;
+            }
+            channel->pkginfo_file = rc_maybe_merge_paths(channel->path, tmp);
+            g_free(tmp);
+            
+            tmp = xml_get_prop(node, "pkgset_file");
+            if (!tmp) {
+                /* default */
+                tmp = g_strdup("packageset.xml.gz");
+                channel->pkgset_compressed = TRUE;
+            }
+            channel->pkgset_file = rc_maybe_merge_paths(channel->path, tmp);
+            g_free(tmp);
+            
+            
+            /* Tiers determine how channels are ordered in the client. */
+            tmp = xml_get_prop(node, "tier");
+            if (tmp) {
+                channel->tier = atoi(tmp);
+                g_free(tmp);
+            }
+            
+            /* Priorities determine affinity amongst channels in dependency
+               resolution. */
+            tmp = xml_get_prop(node, "priority");
+            if (tmp) {
+                channel->priority = rc_channel_priority_parse(tmp);
+                g_free(tmp);
+            }
+            
+            tmp = xml_get_prop(node, "priority_when_current");
+            if (tmp) {
+                channel->priority_current = rc_channel_priority_parse(tmp);
+                g_free(tmp);
+            }
+            
+            tmp = xml_get_prop(node, "priority_when_unsubscribed");
+            if (tmp) {
+                channel->priority_unsubd = rc_channel_priority_parse(tmp);
+                g_free(tmp);
+            }
+            
+            tmp = xml_get_prop(node, "last_update");
+            if (tmp)
+                channel->last_update = atol(tmp);
+            g_free(tmp);
+        }
+
+        node = node->next;
+    }
+}
 
 void
 rc_world_add_packages_from_slist (RCWorld *world,

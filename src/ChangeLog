@@ -1,3 +1,21 @@
+2002-05-28  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-world-import.c (rc_world_add_channels_from_xml): Added.
+	Processes the red-carpet channel XML file, filtering out channels
+	that don't match our distro.
+
+	* rc-util.c (rc_uncompress_xml): Added.  Uncompresses & xml-parses
+	a block of memory.
+
+	* rc-debug.c (rc_debug_set_display_handler): Added the ability to
+	set a displayed message handler.
+	(rc_debug): If a displayed message handler is set, use it.
+
+	* rc-channel.c: Removed rc_chanel_parse_xml, Worldifiying it and
+	moving it to rc-world-import.c.
+
+	* rc-world.c (rc_world_add_channel): Added debug spew.
+
 2002-05-23  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-resolver.c: (rc_resolver_add_subscribed_channel) Removed.

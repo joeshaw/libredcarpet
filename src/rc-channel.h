@@ -67,6 +67,11 @@ int           rc_channel_get_priority    (const RCChannel *channel,
 RCChannelType rc_channel_get_type        (const RCChannel *channel);
 
 
+const char   *rc_channel_get_pkginfo_file       (const RCChannel *channel);
+
+gboolean      rc_channel_get_pkginfo_compressed (const RCChannel *channel);
+
+
 /* Subscription management */
 
 gboolean rc_channel_subscribed       (const RCChannel *channel);
@@ -84,8 +89,6 @@ int rc_channel_package_count (const RCChannel *channel);
 
 
 /* Other */
-
-RCChannelSList *rc_channel_parse_xml (char *xmlbuf, int compressed_length);
 
 int rc_channel_get_id_by_name (RCChannelSList *channels, char *name);
 

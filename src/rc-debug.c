@@ -25,10 +25,12 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-static RCDebugLevel display_level = RC_DEBUG_LEVEL_WARNING;
+static RCDebugLevel display_level = RC_DEBUG_LEVEL_MESSAGE;
 static RCDebugLevel log_level     = RC_DEBUG_LEVEL_DEBUG;
 
 static FILE *log_file = NULL;
+static RCDebugFn debug_handler_fn = NULL;
+static gpointer debug_handler_user_data = NULL;
 
 guint
 rc_debug_get_display_level ()
@@ -55,6 +57,14 @@ rc_debug_set_log_level (guint level)
 }
 
 void
+rc_debug_set_display_handler (RCDebugFn fn,
+                              gpointer user_data)
+{
+    debug_handler_fn = fn;
+    debug_handler_user_data = user_data;
+}
+
+void
 rc_debug_set_log_file (FILE *file)
 {
     log_file = file;
@@ -64,16 +74,23 @@ void
 rc_debug (RCDebugLevel level, gchar *format, ...)
 {
     va_list args;
+    char *str;
 
     va_start (args, format);
+    str = g_strdup_vprintf (format, args);
+    va_end (args);
 
     if (level <= display_level) {
-        vfprintf (stderr, format, args);
+
+        if (debug_handler_fn == NULL)
+            fputs (str, stderr);
+        else
+            debug_handler_fn (str, debug_handler_user_data);
     }
 
     if (level <= log_level && log_file) {
-        vfprintf (log_file, format, args);
+        fputs (str, log_file);
     }
 
-    va_end (args);
+    g_free (str);
 }

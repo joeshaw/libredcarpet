@@ -402,6 +402,24 @@ rc_uncompress_memory (guint8 *input_buffer, guint32 input_length,
     return zret;
 }
 
+xmlDoc *
+rc_uncompress_xml (guint8 *input_buffer,
+                   guint32 input_length)
+{
+    GByteArray *buf;
+    xmlDoc *doc;
+
+    g_return_val_if_fail (input_buffer != NULL, NULL);
+    
+    if (rc_uncompress_memory (input_buffer, input_length, &buf))
+        return NULL;
+
+    doc = xmlParseMemory (buf->data, buf->len - 1);
+    g_byte_array_free (buf, TRUE);
+
+    return doc;
+}
+
 gboolean
 rc_write (int fd, const void *buf, size_t count)
 {

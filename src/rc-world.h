@@ -84,7 +84,7 @@ void       rc_world_remove_package  (RCWorld *world,
                                      RCPackage *package);
 
 void       rc_world_remove_packages (RCWorld *world,
-                                     RCChannel *package);
+                                     RCChannel *channel);
 
 
 /* Single package queries */

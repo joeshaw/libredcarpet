@@ -29,6 +29,7 @@
 #include "rc-world.h"
 #include "rc-world-import.h"
 
+#include "rc-debug.h"
 #include "rc-channel-private.h"
 #include "rc-util.h"
 #include "rc-dep-or.h"
@@ -386,6 +387,10 @@ rc_world_add_channel (RCWorld *world,
     
     world->channels = g_slist_prepend (world->channels,
                                        channel);
+
+    rc_debug (RC_DEBUG_LEVEL_DEBUG,
+              "Adding channel '%s' (%d)",
+              channel_name, channel_id);
 
     return channel;
 }

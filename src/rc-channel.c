@@ -189,6 +189,22 @@ rc_channel_get_type (const RCChannel *channel)
     return channel->type;
 }
 
+const char *
+rc_channel_get_pkginfo_file (const RCChannel *channel)
+{
+    g_return_val_if_fail (channel != NULL, NULL);
+
+    return channel->pkginfo_file;
+}
+
+gboolean
+rc_channel_get_pkginfo_compressed (const RCChannel *channel)
+{
+    g_return_val_if_fail (channel != NULL, FALSE);
+
+    return channel->pkginfo_compressed;
+}
+
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 gboolean
@@ -240,211 +256,6 @@ rc_channel_package_count (const RCChannel *channel)
                           
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
-
-RCChannelSList *
-rc_channel_parse_xml(char *xmlbuf, int compressed_length)
-{
-    RCChannelSList *channel_slist = NULL;
-    xmlDoc *doc;
-    xmlNode *root, *node;
-
-    RC_ENTRY;
-
-    if (compressed_length) {
-        GByteArray *buf;
-
-        if (rc_uncompress_memory (xmlbuf, compressed_length, &buf)) {
-            rc_debug (RC_DEBUG_LEVEL_CRITICAL, "%s: uncompression failed\n",
-                      __FUNCTION__);
-
-            RC_EXIT;
-
-            return (NULL);
-        }
-
-        doc = xmlParseMemory (buf->data, buf->len - 1);
-        g_byte_array_free (buf, TRUE);
-    } else {
-        doc = xmlParseMemory (xmlbuf, strlen(xmlbuf));
-    }
-
-    if (!doc) {
-        rc_debug (RC_DEBUG_LEVEL_CRITICAL,
-                  "%s: unable to parse channel list\n", __FUNCTION__);
-
-        RC_EXIT;
-
-        return (NULL);
-    }
-
-    root = xmlDocGetRootElement (doc);
-
-    if (!root) {
-        rc_debug (RC_DEBUG_LEVEL_CRITICAL, "%s: channels.xml has no root\n",
-                  __FUNCTION__);
-
-        xmlFreeDoc(doc);
-
-        RC_EXIT;
-
-        return (NULL);
-    }
-
-    node = root->xmlChildrenNode;
-
-    while (node) {
-        char *tmp;
-        gchar **targets;
-        gchar **iter;
-        RCChannel *channel;
-
-        /* Skip comments */
-        if (node->type == XML_COMMENT_NODE || node->type == XML_TEXT_NODE) {
-            node = node->next;
-            continue;
-        }
-
-        channel = rc_channel_new();
-
-        channel->name = xml_get_prop(node, "name");
-        channel->path = xml_get_prop(node, "path");
-
-        tmp = xml_get_prop(node, "file_path");
-        channel->file_path = rc_maybe_merge_paths(channel->path, tmp);
-        g_free(tmp);
-        
-        tmp = xml_get_prop(node, "icon");
-        channel->icon_file = rc_maybe_merge_paths(channel->path, tmp);
-        g_free(tmp);
-
-        channel->description = xml_get_prop(node, "description");
-
-        channel->distro_target = NULL;
-
-        tmp = xml_get_prop (node, "distro_target");
-        if (tmp) {
-            targets = g_strsplit (tmp, ":", 0);
-            g_free (tmp);
-
-            for (iter = targets; iter && *iter; iter++) {
-                channel->distro_target =
-                    g_slist_append (channel->distro_target, *iter);
-            }
-
-            g_free (targets);
-        }
-
-        tmp = xml_get_prop(node, "subs_url");
-        channel->subs_file = rc_maybe_merge_paths(channel->path, tmp);
-        g_free(tmp);
-
-        tmp = xml_get_prop(node, "unsubs_url");
-        channel->unsubs_file = rc_maybe_merge_paths(channel->path, tmp);
-        g_free(tmp);
-
-        tmp = xml_get_prop(node, "mirrored");
-        if (tmp) {
-            channel->mirrored = TRUE;
-            g_free(tmp);
-        }
-        else {
-            channel->mirrored = FALSE;
-        }
-
-        tmp = xml_get_prop(node, "pkginfo_compressed");
-        if (tmp) {
-            channel->pkginfo_compressed = TRUE;
-            g_free (tmp);
-        } else {
-            channel->pkginfo_compressed = FALSE;
-        }
-
-        tmp = xml_get_prop(node, "pkgset_compressed");
-        if (tmp) {
-            channel->pkgset_compressed = TRUE;
-            g_free (tmp);
-        } else {
-            channel->pkgset_compressed = FALSE;
-        }
-            
-        tmp = xml_get_prop(node, "pkginfo_file");
-        if (!tmp) {
-            /* default */
-            tmp = g_strdup("packageinfo.xml.gz");
-            channel->pkginfo_compressed = TRUE;
-        }
-        channel->pkginfo_file = rc_maybe_merge_paths(channel->path, tmp);
-        g_free(tmp);
-
-        tmp = xml_get_prop(node, "pkgset_file");
-        if (!tmp) {
-            /* default */
-            tmp = g_strdup("packageset.xml.gz");
-            channel->pkgset_compressed = TRUE;
-        }
-        channel->pkgset_file = rc_maybe_merge_paths(channel->path, tmp);
-        g_free(tmp);
-
-        tmp = xml_get_prop(node, "id");
-        channel->id = atoi(tmp);
-        g_free(tmp);
-
-        /* Tiers determine how channels are ordered in the client. */
-        tmp = xml_get_prop(node, "tier");
-        if (tmp) {
-            channel->tier = atoi(tmp);
-            g_free(tmp);
-        }
-
-        /* Priorities determine affinity amongst channels in dependency
-           resolution. */
-        tmp = xml_get_prop(node, "priority");
-        if (tmp) {
-            channel->priority = rc_channel_priority_parse(tmp);
-            g_free(tmp);
-        }
-
-        tmp = xml_get_prop(node, "priority_when_current");
-        if (tmp) {
-            channel->priority_current = rc_channel_priority_parse(tmp);
-            g_free(tmp);
-        }
-
-        tmp = xml_get_prop(node, "priority_when_unsubscribed");
-        if (tmp) {
-            channel->priority_unsubd = rc_channel_priority_parse(tmp);
-            g_free(tmp);
-        }
-
-        tmp = xml_get_prop(node, "last_update");
-        if (tmp)
-            channel->last_update = atol(tmp);
-        g_free(tmp);
-
-        tmp = xml_get_prop(node, "type");
-        if (tmp) {
-            if (g_strcasecmp (tmp, "helix") == 0)
-                channel->type = RC_CHANNEL_TYPE_HELIX;
-            else if (g_strcasecmp (tmp, "debian") == 0)
-                channel->type = RC_CHANNEL_TYPE_DEBIAN;
-            else if (g_strcasecmp (tmp, "redhat") == 0)
-                channel->type = RC_CHANNEL_TYPE_REDHAT;
-            else
-                channel->type = RC_CHANNEL_TYPE_UNKNOWN;
-            g_free (tmp);
-        }
-
-        channel_slist = g_slist_append (channel_slist, channel);
-
-        node = node->next;
-    }
-
-    xmlFreeDoc (doc);
-
-    RC_EXIT;
-
-    return channel_slist;
-} /* rc_channel_parse_xml */
 
 #if 0
 RCChannelSList *

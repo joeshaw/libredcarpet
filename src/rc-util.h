@@ -24,6 +24,7 @@
 #include <glib.h>
 #include <time.h>
 #include <stdio.h>
+#include <libxml/parser.h>
 
 /* Function to safely delete a directory recursively (only deletes regular
    files), should be safe from symlink attacks.
@@ -60,8 +61,13 @@ void rc_hash_table_slist_free (GHashTable *ht);
 GSList *rc_slist_unique (const GSList *sorted_list);
 
 /* uncompress memory */
-gint rc_uncompress_memory (guint8 *input_buffer, guint32 input_length,
+
+gint rc_uncompress_memory (guint8 *input_buffer,
+                           guint32 input_length,
                            GByteArray **out_ba);
+
+xmlDoc *rc_uncompress_xml (guint8 *input_buffer,
+                           guint32 input_length);
 
 /* Safely write a buffer to a fd (handle all those pesky EINTR issues) */
 gboolean rc_write (int fd, const void *buf, size_t count);
