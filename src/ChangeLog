@@ -1,3 +1,7 @@
+2001-01-28  Ian Peters  <itp@ximian.com>
+
+	* rc-distman.c: change the ENABLE_RPM3 / ENABLE_RPM4 to ENABLE_RPM
+
 2001-01-28  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c: Lots of yummy fixes.  Removes work better,

@@ -29,7 +29,7 @@
 #include "rc-debman.h"
 #endif
 
-#if (defined(ENABLE_RPM3) || defined(ENABLE_RPM4))
+#ifdef ENABLE_RPM
 #include "rc-rpmman.h"
 #endif
 
@@ -54,7 +54,7 @@ rc_distman_new (void)
         g_warning ("DPKG support not enabled.");
 #endif
     } else if (env && g_strcasecmp(env, "rpm") == 0) {
-#if (defined(ENABLE_RPM3) || defined(ENABLE_RPM4))
+#ifdef ENABLE_RPM
         packman = RC_PACKMAN(rc_rpmman_new());
 #else
         g_warning ("RPM support not enabled.");
@@ -72,7 +72,7 @@ rc_distman_new (void)
 #endif
                 break;
             case RC_PKG_RPM:
-#if (defined(ENABLE_RPM3) || defined(ENABLE_RPM4))
+#ifdef ENABLE_RPM
                 packman = RC_PACKMAN (rc_rpmman_new ());
 #else
                 g_warning ("RPM support not enabled.");
