@@ -1,3 +1,9 @@
+2001-02-02  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c: Yay for typos. Made debian conflicts (mostly) work
+	again.  Nuked a single line so a list wasn't getting looked up
+	and was always null..
+
 2001-02-01  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c: bite me
