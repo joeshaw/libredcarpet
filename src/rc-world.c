@@ -317,6 +317,8 @@ rc_world_sequence_number (RCWorld *world)
 {
     g_return_val_if_fail (world != NULL, 0);
 
+    rc_world_sync (world);
+
     if (world->changed) {
         ++world->seq_no;
         world->changed = FALSE;
