@@ -1,3 +1,10 @@
+2001-04-18  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c (fill_depends): attempt to handle both the the pre
+	3.0.3 and 3.0.4 and above cases for file dependencies.  This
+	commit may be broken; I'll revert this commit if testing doesn't
+	pan out.
+
 2001-04-17  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c (fill_depends): when adding the contents of an RPM

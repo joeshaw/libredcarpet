@@ -41,14 +41,22 @@
 
 #undef rpmdbNextIterator
 
-/* if we're compiling against rpm 3.0.3, we won't have
- * RPMTAG_BASENAMES, but that's not important as we only use that tag
- * on rpm 4.x systems
+/* in rpm <= 3.0.4, the filenames are stored in a single array in the
+ * RPMTAG_FILENAMES header.  In rpm >= 3.0.4, the basenames and
+ * directories are stored in RPMTAG_BASENAMES and RPMTAG_DIRNAMES,
+ * where RPMTAG_DIRINDEXES contains an index for each BASENAME into
+ * the RPMTAG_DIRNAMES header.  This appears to be a file level
+ * incompatability -- packages built with rpm 3.0.3 will not have
+ * entries for RPMTAG_BASENAMES, whereas packages built with rpm 3.0.4
+ * will not have entries for RPMTAG_FILENAMES.  Consequently, any
+ * given client needs to know to look for both.  Since these aren't
+ * all defined in all rpm versions, we'll just cheat.
  */
 
-#ifndef RPMTAG_BASENAMES
-#define RPMTAG_BASENAMES RPMTAG_NAME
-#endif
+#define RPMTAG_FILENAMES  1027
+#define RPMTAG_DIRINDEXES 1116
+#define RPMTAG_BASENAMES  1117
+#define RPMTAG_DIRNAMES   1118
 
 static void rc_rpmman_class_init (RCRpmmanClass *klass);
 static void rc_rpmman_init       (RCRpmman *obj);
@@ -1196,16 +1204,15 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
             NULL
         };
 
-#ifdef RPMTAG_DIRNAMES
         gchar **basenames, **dirnames;
         guint32 *dirindexes;
 
         rpmman->headerGetEntry (header, RPMTAG_BASENAMES, NULL,
                                 (void **)&basenames, &count);
         rpmman->headerGetEntry (header, RPMTAG_DIRNAMES, NULL,
-                                (void **)&dirnames, &count);
+                                (void **)&dirnames, NULL);
         rpmman->headerGetEntry (header, RPMTAG_DIRINDEXES, NULL,
-                                (void **)&dirindexes, &count);
+                                (void **)&dirindexes, NULL);
 
         for (i = 0; i < count; i++) {
             gchar *tmp = g_strconcat (dirnames[dirindexes[i]], basenames[i],
@@ -1227,7 +1234,7 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
         names = NULL;
         free (dirnames);
         versions = NULL;
-#else
+
         rpmman->headerGetEntry (header, RPMTAG_FILENAMES, NULL,
                                 (void **)&names, &count);
 
@@ -1244,7 +1251,6 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
 
         free (names);
         names = NULL;
-#endif
     }
 
     /* RPM doesn't do versioned provides (as of 3.0.4), so we only need to find
