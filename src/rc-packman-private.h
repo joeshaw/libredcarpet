@@ -23,6 +23,7 @@
 
 #include "rc-packman.h"
 
-void rc_packman_set_error (RCPackman *p, RCPackmanError error, gchar *reason);
+void rc_packman_set_error (RCPackman *p, RCPackmanError error,
+                           const gchar *reason);
 
 #endif

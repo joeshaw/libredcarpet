@@ -160,7 +160,7 @@ RCPackage *rc_packman_query_file (RCPackman *p, gchar *filename);
    installed on the system.  This function will return all instances of a
    package installed, unlike _query. */
 
-RCPackageSList *rc_packman_query_all (RCPackan *p);
+RCPackageSList *rc_packman_query_all (RCPackman *p);
 
 /* Use the system package manager style comparison to do a strcmp-semantics
    like comparison on the two RCPackageSpec's. */
@@ -216,7 +216,7 @@ void rc_packman_remove_done (RCPackman *p,
 /* Helper function to build RCPackageSList's easily */
 
 RCPackageSList *rc_package_slist_add_package (RCPackageSList *pkgs,
-                                              gchar *name, gchar *epoch,
+                                              gchar *name, guint32 epoch,
                                               gchar *version, gchar *release,
                                               gboolean installed,
                                               guint32 installed_size);
