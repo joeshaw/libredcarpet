@@ -1,3 +1,8 @@
+2001-01-30  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c (transact_cb): with a hack hack here and a hack hack
+	there, here a hack, there a hack, everywhere a hack hack...
+
 2001-01-30  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c, rc-deps.h: More yum yum fixes. Shouldn't

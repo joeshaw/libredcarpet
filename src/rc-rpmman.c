@@ -93,6 +93,11 @@ transact_cb (const Header h, const rpmCallbackType what,
     static FD_t fd;
     InstallState *state = (InstallState *)data;
 
+    /* heh heh heh */
+    while (gtk_events_pending ()) {
+        gtk_main_iteration ();
+    }
+
     switch (what) {
     case RPMCALLBACK_INST_OPEN_FILE:
         fd = fdOpen(filename, O_RDONLY, 0);
