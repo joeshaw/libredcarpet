@@ -1,0 +1,10 @@
+>!> Locking ytalk from channel SYSTEM
+>!> Checking for upgrades...
+>!> Upgrading foo-set-1:1.0-1-ximian.1 => foo-set-1:2.0-1-ximian.1[/home/trow/synth]
+>!> Upgrading 1 package
+>!> Solution #1:
+>!> install gtkglarea-0:1.2.2-10[Red Hat Linux 7.3]
+>!> install xtraceroute-0:0.9.0-6[Red Hat Linux 7.3]
+>!> remove  xtoolwait-1.3-1
+>!> upgrade foo-set-1:1.0-1-ximian.1 => foo-set-1:2.0-1-ximian.1[/home/trow/synth]
+>!> installs=2, upgrades=1, uninstalls=1
