@@ -977,9 +977,6 @@ rc_rpmman_query_file (RCPackman *p, gchar *filename)
 {
     FD_t fd;
     Header hdr;
-    gchar *name = NULL, *version = NULL, *release = NULL;
-    gchar *summary = NULL, *description = NULL;
-    guint32 size = 0, epoch = 0;
     RCPackage *pkg = rc_package_new ();
 
     fd = fdOpen (filename, O_RDONLY, 0444);
