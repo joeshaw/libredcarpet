@@ -676,11 +676,12 @@ rc_distro_parse_xml (const char *data, guint size)
         }
 
         buf = byte_array->data;
+        size = byte_array->len;
     }
     else
         buf = data;
 
-    ctxt = xmlCreateDocParserCtxt ((char *) buf);
+    ctxt = xmlCreatePushParserCtxt (NULL, NULL, NULL, 0, NULL);
     if (!ctxt)
         goto ERROR;
 
@@ -690,7 +691,7 @@ rc_distro_parse_xml (const char *data, guint size)
 
     ctxt->userData = &state;
 
-    xmlParseDocument (ctxt);
+    xmlParseChunk(ctxt, buf, size, 1);
 
     if (!ctxt->wellFormed)
         rc_debug (RC_DEBUG_LEVEL_WARNING,

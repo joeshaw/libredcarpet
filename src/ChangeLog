@@ -1,3 +1,12 @@
+2003-09-15  Joe Shaw  <joe@ximian.com>
+
+	* rc-distro.c (rc_distro_parse_xml): Set up a push parser instead
+	of a doc parser so that we don't have to null-terminate our distro
+	data.
+
+	* rc-xml.c (rc_package_sax_context_parse_chunk): Remove some old
+	code which could cause problems in rather exotic cases.
+
 2003-09-11  Joe Shaw  <joe@ximian.com>
 
 	* rc-extract-packages.c (rc_extract_packages_from_directory): Add

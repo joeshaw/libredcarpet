@@ -710,8 +710,6 @@ void
 rc_package_sax_context_parse_chunk(RCPackageSAXContext *ctx,
                                    const char *xmlbuf, int size)
 {
-    gboolean terminate = FALSE;
-
     xmlSubstituteEntitiesDefault(TRUE);
     
     if (!ctx->xml_context) {
@@ -719,10 +717,7 @@ rc_package_sax_context_parse_chunk(RCPackageSAXContext *ctx,
             &sax_handler, ctx, NULL, 0, NULL);
     }
 
-    if (xmlbuf[size-1] == '\0')
-        terminate = TRUE;
-
-    xmlParseChunk(ctx->xml_context, xmlbuf, size, terminate);
+    xmlParseChunk(ctx->xml_context, xmlbuf, size, 0);
 }
 
 RCPackageSList *
