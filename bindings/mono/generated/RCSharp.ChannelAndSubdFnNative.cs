@@ -9,7 +9,6 @@ namespace RCSharp {
 	internal delegate bool ChannelAndSubdFnNative(IntPtr arg1, bool arg2, IntPtr arg3);
 
 	internal class ChannelAndSubdFnWrapper : GLib.DelegateWrapper {
-		static bool _dummy;
 
 		public bool NativeCallback (IntPtr arg1, bool arg2, IntPtr arg3)
 		{

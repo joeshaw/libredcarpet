@@ -6,13 +6,13 @@ namespace RCSharp {
 	using System;
 	using System.Runtime.InteropServices;
 
-	internal delegate void voidObjectulongulongDelegate(IntPtr arg0, ulong arg1, ulong arg2, int key);
+	internal delegate void voidObjectulongulongDelegate(IntPtr arg0, UIntPtr arg1, UIntPtr arg2, int key);
 
 	internal class voidObjectulongulongSignal : GLib.SignalCallback {
 
 		private static voidObjectulongulongDelegate _Delegate;
 
-		private static void voidObjectulongulongCallback(IntPtr arg0, ulong arg1, ulong arg2, int key)
+		private static void voidObjectulongulongCallback(IntPtr arg0, UIntPtr arg1, UIntPtr arg2, int key)
 		{
 			if (!_Instances.Contains(key))
 				throw new Exception("Unexpected signal key " + key);
@@ -20,8 +20,8 @@ namespace RCSharp {
 			voidObjectulongulongSignal inst = (voidObjectulongulongSignal) _Instances[key];
 			GLib.SignalArgs args = (GLib.SignalArgs) Activator.CreateInstance (inst._argstype);
 			args.Args = new object[2];
-			args.Args[0] = arg1;
-			args.Args[1] = arg2;
+			args.Args[0] = (ulong) arg1;
+			args.Args[1] = (ulong) arg2;
 			object[] argv = new object[2];
 			argv[0] = inst._obj;
 			argv[1] = args;

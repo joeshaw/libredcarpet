@@ -21,7 +21,7 @@ namespace RCSharp {
 			GLib.SignalArgs args = (GLib.SignalArgs) Activator.CreateInstance (inst._argstype);
 			args.Args = new object[3];
 			args.Args[0] = arg1;
-			args.Args[1] = (RC.PackmanStep)arg2;
+			args.Args[1] = (RC.PackmanStep) arg2;
 			args.Args[2] = arg3;
 			object[] argv = new object[2];
 			argv[0] = inst._obj;

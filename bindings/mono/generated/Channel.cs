@@ -211,7 +211,7 @@ namespace RC {
 		public RC.ChannelType ChannelType { 
 			get {
 				int raw_ret = rc_channel_get_channel_type(Handle);
-				RC.ChannelType ret = (RC.ChannelType)raw_ret;
+				RC.ChannelType ret = (RC.ChannelType) raw_ret;
 				return ret;
 			}
 		}

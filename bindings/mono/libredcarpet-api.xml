@@ -1801,6 +1801,9 @@
       <method name="IsInstalled" cname="rc_package_is_installed">
         <return-type type="gboolean" />
       </method>
+      <method name="IsLocal" cname="rc_package_is_local">
+        <return-type type="gboolean" />
+      </method>
       <method name="IsPackageSet" cname="rc_package_is_package_set">
         <return-type type="gboolean" />
       </method>

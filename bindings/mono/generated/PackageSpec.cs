@@ -74,7 +74,7 @@ namespace RC {
 		public RC.Arch Arch { 
 			get {
 				int raw_ret = rc_package_spec_get_arch(Handle);
-				RC.Arch ret = (RC.Arch)raw_ret;
+				RC.Arch ret = (RC.Arch) raw_ret;
 				return ret;
 			}
 			set {

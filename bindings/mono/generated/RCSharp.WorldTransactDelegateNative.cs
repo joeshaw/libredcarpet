@@ -9,7 +9,6 @@ namespace RCSharp {
 	internal delegate bool WorldTransactDelegateNative(IntPtr world, IntPtr install_packages, IntPtr remove_packages, int flags);
 
 	internal class WorldTransactDelegateWrapper : GLib.DelegateWrapper {
-		static bool _dummy;
 
 		public bool NativeCallback (IntPtr world, IntPtr install_packages, IntPtr remove_packages, int flags)
 		{

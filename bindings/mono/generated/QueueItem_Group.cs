@@ -25,6 +25,9 @@ namespace RC {
 			return self;
 		}
 
+		private static GLib.GType GType {
+			get { return GLib.GType.Pointer; }
+		}
 #endregion
 	}
 }

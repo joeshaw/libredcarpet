@@ -38,7 +38,7 @@ namespace RC {
 		public RC.Arch Arch { 
 			get {
 				int raw_ret = rc_distro_get_arch(Handle);
-				RC.Arch ret = (RC.Arch)raw_ret;
+				RC.Arch ret = (RC.Arch) raw_ret;
 				return ret;
 			}
 		}
@@ -84,7 +84,7 @@ namespace RC {
 		public RC.DistroPackageType PackageType { 
 			get {
 				int raw_ret = rc_distro_get_package_type(Handle);
-				RC.DistroPackageType ret = (RC.DistroPackageType)raw_ret;
+				RC.DistroPackageType ret = (RC.DistroPackageType) raw_ret;
 				return ret;
 			}
 		}
@@ -102,7 +102,7 @@ namespace RC {
 		public RC.DistroStatus Status { 
 			get {
 				int raw_ret = rc_distro_get_status(Handle);
-				RC.DistroStatus ret = (RC.DistroStatus)raw_ret;
+				RC.DistroStatus ret = (RC.DistroStatus) raw_ret;
 				return ret;
 			}
 		}

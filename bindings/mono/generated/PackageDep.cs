@@ -49,7 +49,7 @@ namespace RC {
 		public RC.PackageRelation Relation { 
 			get {
 				int raw_ret = rc_package_dep_get_relation(Handle);
-				RC.PackageRelation ret = (RC.PackageRelation)raw_ret;
+				RC.PackageRelation ret = (RC.PackageRelation) raw_ret;
 				return ret;
 			}
 		}

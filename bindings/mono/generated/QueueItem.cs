@@ -13,7 +13,16 @@ namespace RC {
 
 		public RC.QueueItemType Type;
 		public int Priority;
-		public int Size;
+		private UIntPtr size;
+
+		public ulong Size {
+			get {
+				return (ulong) size;
+			}
+			set {
+				size = new UIntPtr (value);
+			}
+		}
 		private IntPtr _pending_info;
 		private IntPtr _world;
 
@@ -336,6 +345,9 @@ namespace RC {
 			return ret;
 		}
 
+		private static GLib.GType GType {
+			get { return GLib.GType.Pointer; }
+		}
 #endregion
 	}
 }

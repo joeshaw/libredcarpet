@@ -14,7 +14,7 @@ namespace RC {
 		public string OrDep;
 		private IntPtr _split_ors;
 		private IntPtr _created_provides;
-		public int Reference;
+		public int Ref;
 
 		public static RC.DepOr Zero = new RC.DepOr ();
 
@@ -75,6 +75,9 @@ namespace RC {
 			return ret;
 		}
 
+		private static GLib.GType GType {
+			get { return GLib.GType.Pointer; }
+		}
 #endregion
 	}
 }

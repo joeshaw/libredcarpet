@@ -13,9 +13,9 @@ namespace RCSharp {
 		public void NativeCallback (IntPtr pkg1, int status1, IntPtr pkg2, int status2, IntPtr data)
 		{
 			RC.Package _arg0 = new RC.Package(pkg1);
-			RC.PackageStatus _arg1 = (RC.PackageStatus)status1;
+			RC.PackageStatus _arg1 = (RC.PackageStatus) status1;
 			RC.Package _arg2 = new RC.Package(pkg2);
-			RC.PackageStatus _arg3 = (RC.PackageStatus)status2;
+			RC.PackageStatus _arg3 = (RC.PackageStatus) status2;
 			_managed ( _arg0,  _arg1,  _arg2,  _arg3);
 		}
 

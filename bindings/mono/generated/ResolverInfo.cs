@@ -107,7 +107,7 @@ namespace RC {
 
 		public static RC.ResolverInfoType TypeFromString(string arg1) {
 			int raw_ret = rc_resolver_info_type_from_string(arg1);
-			RC.ResolverInfoType ret = (RC.ResolverInfoType)raw_ret;
+			RC.ResolverInfoType ret = (RC.ResolverInfoType) raw_ret;
 			return ret;
 		}
 
@@ -263,6 +263,9 @@ namespace RC {
 			return ret;
 		}
 
+		private static GLib.GType GType {
+			get { return GLib.GType.Pointer; }
+		}
 #endregion
 	}
 }

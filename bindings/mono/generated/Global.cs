@@ -32,7 +32,7 @@ namespace RC {
 
 		public static RC.Arch ArchGetSystemArch() {
 			int raw_ret = rc_arch_get_system_arch();
-			RC.Arch ret = (RC.Arch)raw_ret;
+			RC.Arch ret = (RC.Arch) raw_ret;
 			return ret;
 		}
 
@@ -41,7 +41,7 @@ namespace RC {
 
 		public static RC.Arch ArchFromString(string arch_name) {
 			int raw_ret = rc_arch_from_string(arch_name);
-			RC.Arch ret = (RC.Arch)raw_ret;
+			RC.Arch ret = (RC.Arch) raw_ret;
 			return ret;
 		}
 
@@ -59,7 +59,7 @@ namespace RC {
 
 		public static RC.PackageImportance PackageImportanceFromString(string importance) {
 			int raw_ret = rc_string_to_package_importance(importance);
-			RC.PackageImportance ret = (RC.PackageImportance)raw_ret;
+			RC.PackageImportance ret = (RC.PackageImportance) raw_ret;
 			return ret;
 		}
 
@@ -86,7 +86,7 @@ namespace RC {
 
 		public static RC.PackageSection StringToPackageSection(string section) {
 			int raw_ret = rc_string_to_package_section(section);
-			RC.PackageSection ret = (RC.PackageSection)raw_ret;
+			RC.PackageSection ret = (RC.PackageSection) raw_ret;
 			return ret;
 		}
 

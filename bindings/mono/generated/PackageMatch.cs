@@ -58,7 +58,7 @@ namespace RC {
 
 		public RC.PackageImportance GetImportance(out bool match_gteq) {
 			int raw_ret = rc_package_match_get_importance(Handle, out match_gteq);
-			RC.PackageImportance ret = (RC.PackageImportance)raw_ret;
+			RC.PackageImportance ret = (RC.PackageImportance) raw_ret;
 			return ret;
 		}
 

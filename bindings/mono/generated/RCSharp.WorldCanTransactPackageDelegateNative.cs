@@ -9,7 +9,6 @@ namespace RCSharp {
 	internal delegate bool WorldCanTransactPackageDelegateNative(IntPtr world, IntPtr package);
 
 	internal class WorldCanTransactPackageDelegateWrapper : GLib.DelegateWrapper {
-		static bool _dummy;
 
 		public bool NativeCallback (IntPtr world, IntPtr package)
 		{

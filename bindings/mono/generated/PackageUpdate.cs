@@ -19,7 +19,7 @@ namespace RC {
 		public RC.PackageImportance Importance { 
 			get {
 				int raw_ret = rc_package_update_get_importance(Handle);
-				RC.PackageImportance ret = (RC.PackageImportance)raw_ret;
+				RC.PackageImportance ret = (RC.PackageImportance) raw_ret;
 				return ret;
 			}
 			set {

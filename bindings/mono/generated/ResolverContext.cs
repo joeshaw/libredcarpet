@@ -292,7 +292,7 @@ namespace RC {
 
 		public RC.PackageStatus GetStatus(RC.Package arg1) {
 			int raw_ret = rc_resolver_context_get_status(Handle, arg1.Handle);
-			RC.PackageStatus ret = (RC.PackageStatus)raw_ret;
+			RC.PackageStatus ret = (RC.PackageStatus) raw_ret;
 			return ret;
 		}
 

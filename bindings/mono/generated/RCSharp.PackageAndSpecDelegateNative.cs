@@ -9,7 +9,6 @@ namespace RCSharp {
 	internal delegate bool PackageAndSpecDelegateNative(IntPtr pkg, IntPtr spec, IntPtr data);
 
 	internal class PackageAndSpecDelegateWrapper : GLib.DelegateWrapper {
-		static bool _dummy;
 
 		public bool NativeCallback (IntPtr pkg, IntPtr spec, IntPtr data)
 		{

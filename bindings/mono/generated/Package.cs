@@ -19,7 +19,7 @@ namespace RC {
 		public RC.PackageSection Section { 
 			get {
 				int raw_ret = rc_package_get_section(Handle);
-				RC.PackageSection ret = (RC.PackageSection)raw_ret;
+				RC.PackageSection ret = (RC.PackageSection) raw_ret;
 				return ret;
 			}
 			set {
@@ -56,7 +56,7 @@ namespace RC {
 
 		public static RC.PackageRelation RelationFromString(string relation) {
 			int raw_ret = rc_package_relation_from_string(relation);
-			RC.PackageRelation ret = (RC.PackageRelation)raw_ret;
+			RC.PackageRelation ret = (RC.PackageRelation) raw_ret;
 			return ret;
 		}
 
@@ -225,6 +225,17 @@ namespace RC {
 			}
 			set {
 				rc_package_set_channel(Handle, value.Handle);
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern bool rc_package_is_local(IntPtr raw);
+
+		public bool IsLocal { 
+			get {
+				bool raw_ret = rc_package_is_local(Handle);
+				bool ret = raw_ret;
+				return ret;
 			}
 		}
 

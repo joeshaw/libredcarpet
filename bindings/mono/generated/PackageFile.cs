@@ -53,6 +53,9 @@ namespace RC {
 			rc_package_file_free(ref this);
 		}
 
+		private static GLib.GType GType {
+			get { return GLib.GType.Pointer; }
+		}
 #endregion
 	}
 }

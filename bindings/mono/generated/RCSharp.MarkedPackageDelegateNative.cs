@@ -13,7 +13,7 @@ namespace RCSharp {
 		public void NativeCallback (IntPtr pkg, int status, IntPtr data)
 		{
 			RC.Package _arg0 = new RC.Package(pkg);
-			RC.PackageStatus _arg1 = (RC.PackageStatus)status;
+			RC.PackageStatus _arg1 = (RC.PackageStatus) status;
 			_managed ( _arg0,  _arg1);
 		}
 
