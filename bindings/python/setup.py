@@ -17,7 +17,7 @@ pc.close()
 
 
 other_includes = ["../../src"]
-other_libs     = ["redcarpet"]
+other_libs     = ["redcarpet", "bz2"]
 other_libdirs  = ["../../src"]
  
 
@@ -42,7 +42,7 @@ py_tsar_sources = [ "pyutil.c",
                     ]
 
  
-module_redcarpet = Extension("xxx_redcarpet",
+module_redcarpet = Extension("redcarpet",
                              sources=py_tsar_sources,
                              extra_compile_args=["-Wall", "-g"],
                              include_dirs=pkg_includes+other_includes,

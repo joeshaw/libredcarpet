@@ -27,42 +27,67 @@
 #include "distro.h"
 #include "pyutil.h"
 
+typedef struct {
+	PyObject_HEAD;
+	RCDistro *distro;
+} PyDistro;
+
+static PyTypeObject PyDistro_type_info = {
+	PyObject_HEAD_INIT(&PyType_Type)
+	0,
+	"Distro",
+	sizeof (PyDistro),
+	0
+};
+
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 static PyObject *
 distro_get_name (PyObject *self, PyObject *args)
 {
-	return Py_BuildValue ("s", rc_distro_get_name ());
+	PyDistro *py_distro = (PyDistro *) self;
+
+	return Py_BuildValue ("s", rc_distro_get_name (py_distro->distro));
 }
 
 static PyObject *
 distro_get_version (PyObject *self, PyObject *args)
 {
-	return Py_BuildValue ("s", rc_distro_get_version ());
+	PyDistro *py_distro = (PyDistro *) self;
+
+	return Py_BuildValue ("s", rc_distro_get_version (py_distro->distro));
 }
 
 static PyObject *
 distro_get_package_type (PyObject *self, PyObject *args)
 {
-	return Py_BuildValue ("i", rc_distro_get_package_type ());
+	PyDistro *py_distro = (PyDistro *) self;
+
+	return Py_BuildValue ("i", rc_distro_get_package_type (py_distro->distro));
 }
 
 static PyObject *
 distro_get_target (PyObject *self, PyObject *args)
 {
-	return Py_BuildValue ("s", rc_distro_get_target ());
+	PyDistro *py_distro = (PyDistro *) self;
+
+	return Py_BuildValue ("s", rc_distro_get_target (py_distro->distro));
 }
 
 static PyObject *
 distro_get_status (PyObject *self, PyObject *args)
 {
-	return Py_BuildValue ("i", rc_distro_get_status ());
+	PyDistro *py_distro = (PyDistro *) self;
+
+	return Py_BuildValue ("i", rc_distro_get_status (py_distro->distro));
 }
 
 static PyObject *
 distro_get_death_date (PyObject *self, PyObject *args)
 {
-	return Py_BuildValue ("i", rc_distro_get_death_date ());
+	PyDistro *py_distro = (PyDistro *) self;
+
+	return Py_BuildValue ("i", rc_distro_get_death_date (py_distro->distro));
 }
 
 static PyMethodDef PyDistro_methods[] = {
@@ -77,9 +102,42 @@ static PyMethodDef PyDistro_methods[] = {
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
+static PyObject *
+PyDistro_tp_new (PyTypeObject *type, PyObject *args, PyObject *kwds)
+{
+	PyDistro *py_distro;
+
+	py_distro = (PyDistro *) type->tp_alloc (type, 0);
+	py_distro->distro = NULL;
+
+	return (PyObject *) py_distro;
+}
+
+static void
+PyDistro_tp_dealloc (PyObject *self)
+{
+	PyDistro *py_distro = (PyDistro *) self;
+
+	if (py_distro->distro)
+		rc_distro_free (py_distro->distro);
+
+	if (self->ob_type->tp_free)
+		self->ob_type->tp_free (self);
+	else
+		PyObject_Del (self);
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
 void
 PyDistro_register (PyObject *dict)
 {
+	PyDistro_type_info.tp_new  = PyDistro_tp_new;
+	PyDistro_type_info.tp_dealloc = PyDistro_tp_dealloc;
+	PyDistro_type_info.tp_methods = PyDistro_methods;
+
+	pyutil_register_type (dict, &PyDistro_type_info);
+
 	pyutil_register_methods (dict, PyDistro_methods);
 
 	pyutil_register_int_constant (dict, "DISTRO_PACKAGE_TYPE_UNKNOWN",

@@ -36,7 +36,6 @@
 typedef struct {
 	PyObject_HEAD;
 	RCWorld *world;
-	gboolean borrowed;
 } PyWorld;
 
 static PyTypeObject PyWorld_type_info = {
@@ -111,28 +110,6 @@ PyWorld_touch_sub_seq_num (PyObject *self, PyObject *args)
 }
 
 static PyObject *
-PyWorld_get_packman (PyObject *self, PyObject *args)
-{
-	RCWorld *world = PyWorld_get_world (self);
-	RCPackman *packman;
-
-	packman = rc_world_get_packman (world);
-	if (packman == NULL) {
-		Py_INCREF (Py_None);
-		return Py_None;
-	}
-
-	return PyPackman_new (packman);
-}
-
-static PyObject *
-PyWorld_get_system_packages (PyObject *self, PyObject *args)
-{
-	RCWorld *world = PyWorld_get_world (self);
-	return Py_BuildValue ("i", rc_world_get_system_packages (world));
-}
-
-static PyObject *
 PyWorld_add_channel (PyObject *self, PyObject *args, PyObject *kwds)
 {
 	RCWorld *world = PyWorld_get_world (self);
@@ -202,25 +179,6 @@ PyWorld_is_subscribed (PyObject *self, PyObject *args)
 		return NULL;
 
 	return Py_BuildValue ("i", rc_world_is_subscribed (world, channel));
-}
-
-static PyObject *
-PyWorld_migrate_channel (PyObject *self, PyObject *args)
-{
-	RCWorld *world = PyWorld_get_world (self);
-	PyObject *obj;
-	RCChannel *channel;
-
-	if (! PyArg_ParseTuple (args, "O", &obj))
-		return NULL;
-
-	channel = PyChannel_get_channel (obj);
-	if (channel == NULL)
-		return NULL;
-
-	rc_world_migrate_channel (world, channel);
-	Py_INCREF (Py_None);
-	return Py_None;
 }
 
 static PyObject *
@@ -369,12 +327,14 @@ PyWorld_clear_locks (PyObject *self, PyObject *args)
 	return Py_None;
 }
 
-static void
+static gboolean
 package_match_cb (RCPackageMatch *match, gpointer user_data)
 {
 	PyObject *list = user_data;
 
 	PyList_Append (list, PyPackageMatch_new (match));
+
+	return TRUE;
 }
 
 static PyObject *
@@ -404,26 +364,6 @@ PyWorld_pkg_is_locked (PyObject *self, PyObject *args)
 		return NULL;
 
 	return Py_BuildValue ("i", rc_world_package_is_locked (world, pkg));
-}
-
-static PyObject *
-PyWorld_freeze (PyObject *self, PyObject *args)
-{
-	RCWorld *world = PyWorld_get_world (self);
-
-	rc_world_freeze (world);
-	Py_INCREF (Py_None);
-	return Py_None;
-}
-
-static PyObject *
-PyWorld_thaw (PyObject *self, PyObject *args)
-{
-	RCWorld *world = PyWorld_get_world (self);
-
-	rc_world_thaw (world);
-	Py_INCREF (Py_None);
-	return Py_None;
 }
 
 static PyObject *
@@ -477,34 +417,6 @@ PyWorld_remove_packages (PyObject *self, PyObject *args)
 	rc_world_remove_packages (world, channel);
 	Py_INCREF (Py_None);
 	return Py_None;
-}
-
-static PyObject *
-PyWorld_set_synthetic_pkg_db (PyObject *self, PyObject *args)
-{
-	RCWorld *world = PyWorld_get_world (self);
-	char *filename;
-
-	if (! PyArg_ParseTuple (args, "s", &filename))
-		return NULL;
-
-	rc_world_set_synthetic_package_db (world, filename);
-	Py_INCREF (Py_None);
-	return Py_None;
-}
-
-static PyObject *
-PyWorld_load_synthetic_pkgs (PyObject *self, PyObject *args)
-{
-	RCWorld *world = PyWorld_get_world (self);
-	return Py_BuildValue ("i", rc_world_load_synthetic_packages (world));
-}
-
-static PyObject *
-PyWorld_save_synthetic_pkgs (PyObject *self, PyObject *args)
-{
-	RCWorld *world = PyWorld_get_world (self);
-	return Py_BuildValue ("i", rc_world_save_synthetic_packages (world));
 }
 
 static PyObject *
@@ -732,7 +644,7 @@ PyWorld_get_all_system_upgrades (PyObject *self, PyObject *args)
 	return py_list;
 }
 
-static void
+static gboolean
 get_all_providing_pkgs_cb (RCPackage *pkg, RCPackageSpec *spec, gpointer user_data)
 {
 	PyObject *list = user_data;
@@ -743,6 +655,8 @@ get_all_providing_pkgs_cb (RCPackage *pkg, RCPackageSpec *spec, gpointer user_da
 	PyTuple_SetItem (tuple, 1, PyPackageSpec_new (spec));
 
 	PyList_Append (list, tuple);
+
+	return TRUE;
 }
 
 static PyObject *
@@ -766,7 +680,7 @@ PyWorld_get_all_providing_pkgs (PyObject *self, PyObject *args)
 	return py_list;
 }
 
-static void
+static gboolean
 get_pkg_and_dep_cb (RCPackage *pkg, RCPackageDep *dep, gpointer user_data)
 {
 	PyObject *list = user_data;
@@ -777,6 +691,8 @@ get_pkg_and_dep_cb (RCPackage *pkg, RCPackageDep *dep, gpointer user_data)
 	PyTuple_SetItem (tuple, 1, PyPackageDep_new (dep));
 
 	PyList_Append (list, tuple);
+
+	return TRUE;
 }
 
 static PyObject *
@@ -897,12 +813,9 @@ static PyMethodDef PyWorld_methods[] = {
 	{ "touch_package_sequence_number",      PyWorld_touch_package_seq_num, METH_NOARGS  },
 	{ "touch_channel_sequence_number",      PyWorld_touch_channel_seq_num, METH_NOARGS  },
 	{ "touch_subscription_sequence_number", PyWorld_touch_sub_seq_num,     METH_NOARGS  },
-	{ "get_packman",                        PyWorld_get_packman,           METH_NOARGS  },
-	{ "get_system_packages",                PyWorld_get_system_packages,   METH_NOARGS  },
 	{ "add_channel",          (PyCFunction) PyWorld_add_channel,           METH_VARARGS|METH_KEYWORDS },
 	{ "set_subscription",                   PyWorld_set_subscription,      METH_VARARGS },
 	{ "is_subscribed",                      PyWorld_is_subscribed,         METH_VARARGS },
-	{ "migrate_channel",                    PyWorld_migrate_channel,       METH_VARARGS },
 	{ "remove_channel",                     PyWorld_remove_channel,        METH_VARARGS },
 	/* rc_world_foreach_channel */
 	{ "get_all_channels",                   PyWorld_get_all_channels,      METH_NOARGS  },
@@ -914,14 +827,9 @@ static PyMethodDef PyWorld_methods[] = {
 	{ "clear_locks",                        PyWorld_clear_locks,           METH_NOARGS  },
 	{ "get_all_locks",                      PyWorld_get_all_locks,         METH_NOARGS  },
 	{ "package_is_locked",                  PyWorld_pkg_is_locked,         METH_VARARGS },
-	{ "freeze",                             PyWorld_freeze,                METH_NOARGS  },
-	{ "thaw",                               PyWorld_thaw,                  METH_NOARGS  },
 	{ "add_package",                        PyWorld_add_package,           METH_VARARGS },
 	{ "remove_package",                     PyWorld_remove_package,        METH_VARARGS },
 	{ "remove_packages",                    PyWorld_remove_packages,       METH_VARARGS },
-	{ "set_synthetic_package_db",           PyWorld_set_synthetic_pkg_db,  METH_VARARGS },
-	{ "load_synthetic_packages",            PyWorld_load_synthetic_pkgs,   METH_NOARGS  },
-	{ "save_synthetic_packages",            PyWorld_save_synthetic_pkgs,   METH_NOARGS  },
 	{ "find_installed_version",             PyWorld_find_installed_version,METH_VARARGS },
 	{ "get_package",                        PyWorld_get_package,           METH_VARARGS },
 	{ "guess_package_channel",              PyWorld_guess_package_channel, METH_VARARGS },
@@ -950,7 +858,7 @@ static PyMethodDef PyWorld_methods[] = {
 	/* Methods from rc-world-import.c */
 
 	{ "add_channel_from_directory",         PyWorld_add_channel_from_dir,  METH_VARARGS },
-	
+
 	{ NULL, NULL }
 };
 
@@ -964,7 +872,7 @@ PyWorld_init (PyObject *self, PyObject *args, PyObject *kwds)
 
 	if (! PyArg_ParseTuple (args, "O", &obj)) {
 		py_world->world = rc_get_world();
-		py_world->borrowed = TRUE;
+		g_object_ref (py_world->world);
 	} else {
 		RCPackman *packman;
 
@@ -986,7 +894,6 @@ PyWorld_tp_new (PyTypeObject *type, PyObject *args, PyObject *kwds)
 
 	py_world = (PyWorld *) type->tp_alloc (type, 0);
 	py_world->world = NULL;
-	py_world->borrowed = FALSE;
 
 	return (PyObject *) py_world;
 }
@@ -996,8 +903,8 @@ PyWorld_tp_dealloc (PyObject *self)
 {
 	PyWorld *py_world = (PyWorld *) self;
 
-	if (py_world->world && py_world->borrowed == FALSE)
-		rc_world_free (py_world->world);
+	if (py_world->world)
+		g_object_unref (py_world->world);
 
 	if (self->ob_type->tp_free)
 		self->ob_type->tp_free (self);
@@ -1028,8 +935,7 @@ PyWorld_new (RCWorld *world)
 {
 	PyObject *py_world = PyWorld_tp_new (&PyWorld_type_info,
 					     NULL, NULL);
-	((PyWorld *) py_world)->world = world;
-	((PyWorld *) py_world)->borrowed = TRUE;
+	((PyWorld *) py_world)->world = g_object_ref (world);
 
 	return py_world;
 }

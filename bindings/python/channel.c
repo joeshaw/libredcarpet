@@ -99,20 +99,6 @@ PyChannel_get_pkginfo_file (PyObject *self, PyObject *args)
 }
 
 static PyObject *
-PyChannel_get_pkginfo_compressed (PyObject *self, PyObject *args)
-{
-	RCChannel *channel = PyChannel_get_channel (self);
-	return Py_BuildValue ("i", rc_channel_get_pkginfo_compressed (channel));
-}
-
-static PyObject *
-PyChannel_get_last_update (PyObject *self, PyObject *args)
-{
-	RCChannel *channel = PyChannel_get_channel (self);
-	return Py_BuildValue ("i", rc_channel_get_last_update (channel));
-}
-
-static PyObject *
 PyChannel_get_path (PyObject *self, PyObject *args)
 {
 	RCChannel *channel = PyChannel_get_channel (self);
@@ -130,7 +116,7 @@ static PyObject *
 PyChannel_subscribed (PyObject *self, PyObject *args)
 {
 	RCChannel *channel = PyChannel_get_channel (self);
-	return Py_BuildValue ("i", rc_channel_subscribed (channel));
+	return Py_BuildValue ("i", rc_channel_is_subscribed (channel));
 }
 
 static PyObject *
@@ -148,52 +134,6 @@ PyChannel_set_subscription (PyObject *self, PyObject *args)
 	return Py_None;
 }
 
-static void
-get_all_packages_cb (RCPackage *package, PyObject *list)
-{
-	PyList_Append (list, PyPackage_new (package));
-}
-
-static PyObject *
-PyChannel_get_all_packages (PyObject *self, PyObject *args)
-{
-	RCChannel *channel = PyChannel_get_channel (self);
-	PyObject *py_list;
-
-	py_list = PyList_New (0);
-	rc_channel_foreach_package (channel,
-				    (RCPackageFn) get_all_packages_cb,
-				    py_list);
-	return py_list;
-}
-
-static PyObject *
-PyChannel_has_refresh_magic (PyObject *self, PyObject *args)
-{
-	RCChannel *channel = PyChannel_get_channel (self);
-	return Py_BuildValue ("i", rc_channel_has_refresh_magic (channel));
-}
-
-static PyObject *
-PyChannel_use_refresh_magic (PyObject *self, PyObject *args)
-{
-	RCChannel *channel = PyChannel_get_channel (self);
-	return Py_BuildValue ("i", rc_channel_use_refresh_magic (channel));
-}
-
-static PyObject *
-PyChannel_get_transient (PyObject *self, PyObject *args)
-{
-	RCChannel *channel = PyChannel_get_channel (self);
-	return Py_BuildValue ("i", rc_channel_get_transient (channel));
-}
-
-static PyObject *
-PyChannel_get_silent (PyObject *self, PyObject *args)
-{
-	RCChannel *channel = PyChannel_get_channel (self);
-	return Py_BuildValue ("i", rc_channel_get_silent (channel));
-}
 
 static PyObject *
 PyChannel_is_wildcard (PyObject *self, PyObject *args)
@@ -229,17 +169,10 @@ static PyMethodDef PyChannel_methods[] = {
 	{ "get_priority",           PyChannel_get_priority,           METH_VARARGS },
 	{ "get_type",               PyChannel_get_type,               METH_NOARGS  },
 	{ "get_pkginfo_file",       PyChannel_get_pkginfo_file,       METH_NOARGS  },
-	{ "get_pkginfo_compressed", PyChannel_get_pkginfo_compressed, METH_NOARGS  },
-	{ "get_last_update",        PyChannel_get_last_update,        METH_NOARGS  },
 	{ "get_path",               PyChannel_get_path,               METH_NOARGS  },
 	{ "get_icon_file",          PyChannel_get_icon_file,          METH_NOARGS  },
 	{ "subscribed",             PyChannel_subscribed,             METH_NOARGS  },
 	{ "set_subscription",       PyChannel_set_subscription,       METH_VARARGS },
-	{ "get_all_packages",       PyChannel_get_all_packages,       METH_NOARGS  },
-	{ "has_refresh_magic",      PyChannel_has_refresh_magic,      METH_NOARGS  },
-	{ "use_refresh_magic",      PyChannel_use_refresh_magic,      METH_NOARGS  },
-	{ "get_transient",          PyChannel_get_transient,          METH_NOARGS  },
-	{ "get_silent",             PyChannel_get_silent,             METH_NOARGS  },
 
 	{ "is_wildcard",            PyChannel_is_wildcard,            METH_NOARGS  },
 
@@ -313,8 +246,8 @@ PyChannel_register (PyObject *dict)
 				      RC_CHANNEL_TYPE_HELIX);
 	pyutil_register_int_constant (dict, "CHANNEL_TYPE_DEBIAN",
 				      RC_CHANNEL_TYPE_DEBIAN);
-	pyutil_register_int_constant (dict, "CHANNEL_TYPE_REDHAT",
-				      RC_CHANNEL_TYPE_REDHAT);
+	pyutil_register_int_constant (dict, "CHANNEL_TYPE_APTRPM",
+				      RC_CHANNEL_TYPE_APTRPM);
 	pyutil_register_int_constant (dict, "CHANNEL_TYPE_UNKNOWN",
 				      RC_CHANNEL_TYPE_UNKNOWN);
 
