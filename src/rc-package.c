@@ -302,8 +302,8 @@ rc_package_hash_table_by_string_to_list (RCPackageHashTableByString *ht)
 RCPackageUpdate *
 rc_package_get_latest_update(RCPackage *package)
 {
-    g_return_if_fail(package);
-    g_return_if_fail(package->history);
+    g_return_val_if_fail (package, NULL);
+    g_return_val_if_fail (package->history, NULL);
 
     return (RCPackageUpdate *) package->history->data;
 } /* rc_package_get_latest_update */
