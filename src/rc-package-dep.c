@@ -35,9 +35,9 @@
 #undef DEBUG
 
 #if defined(ENABLE_RPM3) || defined(ENABLE_RPM4)
-gboolean rpmish = TRUE;
+static gboolean rpmish = TRUE;
 #else
-gboolean rpmish = FALSE;
+static gboolean rpmish = FALSE;
 #endif
 
 extern RCPackman *das_global_packman;
