@@ -337,7 +337,9 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
 
         RCQueueItem *uninstall_item;
 
-        rc_resolver_context_upgrade_package (context, package,
+        rc_resolver_context_upgrade_package (context,
+                                             package,
+                                             install->upgrades,
                                              rc_queue_item_install_get_other_penalty (item));
 
         uninstall_item = rc_queue_item_new_uninstall (rc_queue_item_get_world (item),

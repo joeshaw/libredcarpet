@@ -93,13 +93,19 @@ void               rc_resolver_context_set_status (RCResolverContext *, RCPackag
                                                    RCPackageStatus status);
 RCPackageStatus    rc_resolver_context_get_status (RCResolverContext *, RCPackage *);
 
-gboolean           rc_resolver_context_install_package (RCResolverContext *, RCPackage *,
-                                                        int other_penalty);
-gboolean           rc_resolver_context_upgrade_package (RCResolverContext *, RCPackage *,
-                                                        int other_penalty);
-gboolean           rc_resolver_context_uninstall_package (RCResolverContext *, RCPackage *,
-                                                          gboolean part_of_upgrade,
-                                                          gboolean due_to_obsolete);
+gboolean           rc_resolver_context_install_package (RCResolverContext *context,
+                                                        RCPackage         *package,
+                                                        int                other_penalty);
+
+gboolean           rc_resolver_context_upgrade_package (RCResolverContext *context,
+                                                        RCPackage         *new_package,
+                                                        RCPackage         *old_package,
+                                                        int                other_penalty);
+
+gboolean           rc_resolver_context_uninstall_package (RCResolverContext *context,
+                                                          RCPackage         *package,
+                                                          gboolean           part_of_upgrade,
+                                                          gboolean           due_to_obsolete);
 
 gboolean           rc_resolver_context_package_is_present (RCResolverContext *, RCPackage *);
 gboolean           rc_resolver_context_package_is_absent  (RCResolverContext *, RCPackage *);

@@ -294,6 +294,7 @@ rc_resolver_context_install_package (RCResolverContext *context,
 gboolean
 rc_resolver_context_upgrade_package (RCResolverContext *context,
                                      RCPackage *package,
+                                     RCPackage *old_package,
                                      int other_penalty)
 {
     RCPackageStatus status;
@@ -301,6 +302,7 @@ rc_resolver_context_upgrade_package (RCResolverContext *context,
 
     g_return_val_if_fail (context != NULL, FALSE);
     g_return_val_if_fail (package != NULL, FALSE);
+    g_return_val_if_fail (old_package != NULL, FALSE);
 
     status = rc_resolver_context_get_status (context, package);
 
@@ -315,12 +317,31 @@ rc_resolver_context_upgrade_package (RCResolverContext *context,
                                     RC_PACKAGE_STATUS_TO_BE_INSTALLED);
 
     if (status == RC_PACKAGE_STATUS_UNINSTALLED) {
+        
+        RCPackageStatus old_status;
+
+        ++context->upgrade_count;
+
+        /* In some cases, the package that we are upgrading has already been
+           marked as to-be-removed.  If this has happened, we decrement the
+           uninstall_count so that the removal isn't counted twice: an upgrade
+           explicitly counts as an install and a removal, and we could end up with
+           an inaccurate removal count otherwise. */
+        old_status = rc_resolver_context_get_status (context, old_package);
+        if (old_status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE
+            || old_status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED) {
+            g_assert (context->uninstall_count > 0);
+            --context->uninstall_count;
+        }
+        
+        context->download_size += package->file_size;
+        
 
         /* FIXME: Incomplete */
-        ++context->upgrade_count;
-        context->download_size += package->file_size;
         /* We should change installed_size to reflect the difference in
            installed size between the old and new versions. */
+
+        
 
         if (package->local_package)
             priority = 0;
