@@ -2057,8 +2057,6 @@ uninstall_item_process (RCQueueItem *item,
 
                     *new_items = g_slist_prepend (*new_items, uninstall_item);
 
-                } else {
-                    g_assert_not_reached (); /* FIXME! */
                 }
             }
 
