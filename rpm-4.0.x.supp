@@ -65,21 +65,27 @@
 }
 
 {
-   Fdopen
-   Fopen
    rc_rpm_open
+   Cond
+   fun:Fdopen
+   fun:Fopen
+   fun:rc_rpm_open
 }
 
 {
    dbiIndexRecordOffset
-   rpmdbInitIterator
-   unsatisfiedDepend
+   Cond
+   fun:dbiIndexRecordOffset
+   fun:rpmdbInitIterator
+   fun:unsatisfiedDepend
 }
 
 {
    mireDup
-   rpmdbSetIteratorRE
-   psmStage
+   Cond
+   fun:mireDup
+   fun:rpmdbSetIteratorRE
+   fun:psmStage
 }
 
 
