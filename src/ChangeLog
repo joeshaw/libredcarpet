@@ -1,3 +1,9 @@
+2004-06-11  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-world-service.c (rc_world_service_register): Don't assume
+	GType is 32 bit integer. Fixes crash on startup on ia64 machines.
+	(rc_world_service_lookup): Ditto.
+
 2004-06-10  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-distro.h: Add declaration of rc_distro_get_current().

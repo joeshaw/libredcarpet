@@ -133,16 +133,20 @@ GHashTable *scheme_handlers = NULL;
 void
 rc_world_service_register (const char *scheme, GType world_type)
 {
+    GType *p;
+
     g_return_if_fail (scheme && *scheme);
     g_return_if_fail (world_type);
 
     if (!scheme_handlers) {
         scheme_handlers = g_hash_table_new_full (g_str_hash, g_str_equal,
-                                                 g_free, NULL);
+                                                 g_free, g_free);
     }
 
-    g_hash_table_insert (scheme_handlers, g_strdup (scheme),
-                         GUINT_TO_POINTER (world_type));
+    p = g_new (GType, 1);
+    *p = world_type;
+
+    g_hash_table_insert (scheme_handlers, g_strdup (scheme), p);
 }
 
 void
@@ -159,12 +163,18 @@ rc_world_service_unregister (const char *scheme)
 GType
 rc_world_service_lookup (const char *scheme)
 {
+    GType *p;
+
     g_return_val_if_fail (scheme && *scheme, 0);
 
     if (!scheme_handlers)
         return 0;
 
-    return GPOINTER_TO_UINT (g_hash_table_lookup (scheme_handlers, scheme));
+    p = g_hash_table_lookup (scheme_handlers, scheme);
+    if (p)
+        return *p;
+
+    return 0;
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
