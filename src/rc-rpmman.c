@@ -2263,7 +2263,6 @@ rc_rpmman_init (RCRpmman *obj)
     RCPackman *packman = RC_PACKMAN (obj);
     gchar *tmp;
     int flags;
-    GModule *rpm_lib;
     gchar **rpm_version;
 
 #ifdef STATIC_RPM
