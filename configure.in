@@ -60,6 +60,8 @@ AC_ARG_WITH(rpm-prefix,
 AC_ARG_WITH(rpm-static-libs,
 [  --with-rpm-extra-libs=], [RPM_STATIC_LIBS=$withval], [RPM_STATIC_LIBS="/usr/lib/librpm.a /usr/lib/libpopt.a /usr/lib/libz.a /usr/lib/libbz2.a /usr/lib/libdb1.a"])
 
+RPM_STATIC_LIBS=`echo $RPM_STATIC_LIBS | sed 's,@, ,g'`
+
 AC_SUBST(RPM_PREFIX)
 AC_SUBST(RPM_STATIC_LIBS)
 
