@@ -1,3 +1,25 @@
+2002-03-07  Ian Peters  <itp@ximian.com>
+
+	* rc-debman.c (rc_debman_init): the extension was only being set
+	after the abort for non-root, leading to a crash for normal users.
+
+	* rc-deps-util.c (rc_dep_or_new): we were leaking the depstr when
+	we found an identical or_dep in the hash table.
+	(free_package_hash_helper): added
+	(rc_dep_or_process_system_and_channels): free the hash table and
+	shallow free the element slists, using free_package_hash_helper
+
+	* rc-package.c (rc_package_to_str_static): the local variable
+	wasn't flagged as static, so it was never freed.  whoops!
+
+	* rc-rpmman.c (load_fake_syms): whoops, the hdrVec stuff is
+	conditional at compile, not runtime, in the static case.
+
+	* rc-world.c (rc_world_check_providing_package): plug a huge
+	memory leak, the hash table constructed in this function was only
+	freed if our search was a failure and we returned FALSE.  Our
+	search succeeds quite a bit, is the thing.
+
 2002-03-06  Joe Shaw  <joe@ximian.com>
 
 	* rc-rpmman.c (rc_rpmman_transact): Free the correct transaction

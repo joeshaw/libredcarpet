@@ -2324,14 +2324,14 @@ load_fake_syms (RCRpmman *rpmman)
     /* rpmman->Ferror = &Ferror; */
     /* Look for hdrVec in load_rpm_syms for an explanation of what's
      * going on */
-    if (rpmman->version == 40004) {
-        /* FIXME: untested */
-        rpmman->headerGetEntry = ((void **)hdrVec)[15];
-        rpmman->headerFree = ((void **)hdrVec)[1];
-    } else {
-        rpmman->headerGetEntry = &headerGetEntry;
-        rpmman->headerFree = &headerFree;
-    }
+#if RPM_VERSION >= 40004
+    /* FIXME: untested */
+    rpmman->headerGetEntry = ((void **)hdrVec)[15];
+    rpmman->headerFree = ((void **)hdrVec)[1];
+#else
+    rpmman->headerGetEntry = &headerGetEntry;
+    rpmman->headerFree = &headerFree;
+#endif
     rpmman->rpmReadPackageHeader = &rpmReadPackageHeader;
     rpmman->rpmtransAddPackage = &rpmtransAddPackage;
     rpmman->rpmtransRemovePackage = &rpmtransRemovePackage;

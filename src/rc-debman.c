@@ -3122,6 +3122,10 @@ rc_debman_init (RCDebman *debman)
             g_strdup (DEBMAN_DEFAULT_STATUS_FILE ".redcarpet");
     }
 
+    rc_packman_set_file_extension(packman, "deb");
+
+    rc_package_dep_system_is_rpmish (FALSE);
+
     if (geteuid ()) {
         /* We can't really verify the status file or lock the database */
         return;
@@ -3137,10 +3141,6 @@ rc_debman_init (RCDebman *debman)
                                   debman->priv->status_file);
         }
     }
-
-    rc_packman_set_file_extension(packman, "deb");
-
-    rc_package_dep_system_is_rpmish (FALSE);
 }
 
 RCDebman *

@@ -602,6 +602,7 @@ rc_world_check_providing_package (RCWorld *world, RCPackageDep *dep,
 {
     GSList *slist, *iter;
     GHashTable *installed;
+    gboolean ret = FALSE;
 
     g_return_val_if_fail (world != NULL, TRUE);
     g_return_val_if_fail (dep != NULL, TRUE);
@@ -615,7 +616,7 @@ rc_world_check_providing_package (RCWorld *world, RCPackageDep *dep,
             terminated = rc_world_check_providing_package (world, iter->data,
                                                            channel, fn, user_data);
         }
-        g_slist_free (deps);
+        rc_package_dep_slist_free (deps);
         return terminated;
     }
 
@@ -642,15 +643,17 @@ rc_world_check_providing_package (RCWorld *world, RCPackageDep *dep,
             if (rc_package_is_installed (pas->package)
                 || g_hash_table_lookup (installed, & pas->package->spec) == NULL) {
 
-                if (! fn (pas->package, pas->spec, user_data))
-                    return TRUE;
+                if (! fn (pas->package, pas->spec, user_data)) {
+                    ret = TRUE;
+                    break;
+                }
             }
         }
     }
 
     g_hash_table_destroy (installed);
 
-    return FALSE;
+    return ret;
 }
 
 int

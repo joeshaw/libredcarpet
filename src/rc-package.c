@@ -115,7 +115,7 @@ rc_package_to_str (RCPackage *package)
 const char *
 rc_package_to_str_static (RCPackage *package)
 {
-    char *str = NULL;
+    static char *str = NULL;
 
     g_free (str);
     str = rc_package_to_str (package);
