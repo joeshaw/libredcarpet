@@ -1,4 +1,4 @@
-INCLUDES = -I$(top_srcdir) -I$(includedir) $(RPMLIB_CFLAGS) $(GLIB_CFLAGS) $(GTK_CFLAGS) $(XML_CFLAGS) -DG_LOG_DOMAIN=\"libredcarpet\" -DSHAREDIR=\""$(datadir)/redcarpet"\"
+INCLUDES = -I$(top_srcdir) -I$(includedir) $(RPMLIB_CFLAGS) $(GLIB_CFLAGS) $(GTK_CFLAGS) $(XML_CFLAGS) -DG_LOG_DOMAIN=\"libredcarpet\" -DSHAREDIR=\""$(datadir)/redcarpet"\" -DLIBDIR=\""$(libdir)/redcarpet"\"
 
 noinst_LIBRARIES = libredcarpet.a
 
@@ -80,7 +80,7 @@ libredcarpet_a_SOURCES =		\
 
 EXTRA_DIST = $(rpm_sources) $(dpkg_sources) rc-dpkg-helper.c
 
-helperdir = $(datadir)/redcarpet
+helperdir = $(libdir)/redcarpet
 helper_DATA = \
 	rc-dpkg-helper.so
 

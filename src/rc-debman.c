@@ -811,7 +811,7 @@ do_purge (RCPackman *packman, DebmanInstallState *install_state)
 
         close (slave);
 
-        putenv ("LD_PRELOAD=" SHAREDIR "/rc-dpkg-helper.so");
+        putenv ("LD_PRELOAD=" LIBDIR "/rc-dpkg-helper.so");
         putenv (g_strdup_printf ("RC_READ_NOTIFY_PID=%d", parent));
         putenv ("PAGER=cat");
 
@@ -1239,7 +1239,7 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
 
             close (slave);
 
-            putenv ("LD_PRELOAD=" SHAREDIR "/rc-dpkg-helper.so");
+            putenv ("LD_PRELOAD=" LIBDIR "/rc-dpkg-helper.so");
             putenv (g_strdup_printf ("RC_READ_NOTIFY_PID=%d", parent));
             putenv ("PAGER=cat");
 
@@ -1465,7 +1465,7 @@ do_configure (RCPackman *packman, DebmanInstallState *install_state)
 
         close (slave);
 
-        putenv ("LD_PRELOAD=" SHAREDIR "/rc-dpkg-helper.so");
+        putenv ("LD_PRELOAD=" LIBDIR "/rc-dpkg-helper.so");
         putenv (g_strdup_printf ("RC_READ_NOTIFY_PID=%d", parent));
         putenv ("PAGER=cat");
 
@@ -2412,22 +2412,23 @@ verify_status (RCPackman *packman)
     close (out_fd);
 
     if (verify_status_info.error) {
-        unlink ("/var/lib/dpkg/status.redcarpet");
+        unlink (debman->priv->rc_status_file);
 
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
                               "The %s file is malformed or contains errors",
                               debman->priv->status_file);
 
         rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
-                  ": couldn't rename /var/lib/dpkg/status.redcarpet\n");
+                  ": couldn't parse %s\n",
+                  debman->priv->status_file);
 
         RC_EXIT;
 
         return (FALSE);
     }
 
-    if (rename ("/var/lib/dpkg/status.redcarpet", "/var/lib/dpkg/status")) {
-        unlink ("/var/lib/dpkg/status.redcarpet");
+    if (rename (debman->priv->rc_status_file, debman->priv->status_file)) {
+        unlink (debman->priv->rc_status_file);
 
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
                               "couldn't rename %s to %s",
@@ -2435,7 +2436,8 @@ verify_status (RCPackman *packman)
                               debman->priv->status_file);
 
         rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
-                  ": couldn't rename /var/lib/dpkg/status.redcarpet\n");
+                  ": couldn't rename %s\n",
+                  debman->priv->rc_status_file);
 
         RC_EXIT;
 
@@ -2726,6 +2728,7 @@ rc_debman_destroy (GtkObject *obj)
 
     hash_destroy (debman);
 
+    g_free (debman->priv->rc_status_file);
     g_free (debman->priv);
 
     if (GTK_OBJECT_CLASS (parent_class)->destroy)
@@ -2781,7 +2784,7 @@ rc_debman_init (RCDebman *debman)
         debman->priv->rc_status_file =
             g_strconcat (debman->priv->status_file, ".redcarpet", NULL);
     } else {
-        debman->priv->status_file = g_strdup (DEBMAN_DEFAULT_STATUS_FILE);
+        debman->priv->status_file = DEBMAN_DEFAULT_STATUS_FILE;
         debman->priv->rc_status_file =
             g_strdup (DEBMAN_DEFAULT_STATUS_FILE ".redcarpet");
     }

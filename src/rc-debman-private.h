@@ -31,7 +31,7 @@ struct _RCDebmanPrivate {
     GHashTable *package_hash;
     gboolean hash_valid;
 
-    gchar *status_file;
+    const gchar *status_file;
     gchar *rc_status_file;
 };
 

@@ -1,3 +1,21 @@
+2001-02-25  Ian Peters  <itp@ximian.com>
+
+	* Makefile.am: add -DLIBDIR=... to the INCLUDES line, and install
+	rc-dpkg-helper.so into $(libdir)/redcarpet
+
+	* rc-debman-private.h: make the status_file member const
+
+	* rc-debman.c: grab the helper out of LIBDIR instead of SHAREDIR,
+	access the status_file and rc_status_file from the debman
+	consistantly
+
+	* rc-rpmman.h: rename db to read_db for clarity
+
+	* rc-rpmman.c: s/db/read_db/ where appropriate.  Open the rpm
+	database O_RDONLY initially, hold this lock while RC is running.
+	(rc_rpmman_transact): open the rpm database O_RDWR and use this
+	for creating and running the transaction.
+
 2001-02-24  Joe Shaw  <joe@ximian.com>
 
 	* rc-distro.c (rc_figure_distro): Don't error out if we can't
