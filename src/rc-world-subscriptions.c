@@ -35,7 +35,9 @@ static void
 clear_sub_cb (RCChannel *channel,
               gpointer   user_data)
 {
-    rc_channel_set_subscription (channel, FALSE);
+    /* Maintain the subscription to transient channels. */
+    if (! rc_channel_get_transient (channel))
+        rc_channel_set_subscription (channel, FALSE);
 }
 
 gboolean

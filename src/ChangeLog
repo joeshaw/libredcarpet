@@ -1,3 +1,9 @@
+2002-12-05  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-world-subscriptions.c (clear_sub_cb): When resetting our
+	subscriptions, maintain the current subscription state for
+	transient channels. (Fixes #35148)
+
 2002-12-05  Joe Shaw  <joe@ximian.com>
 
 	* rc-world.c (rc_world_add_channel_with_priorities): Added.
