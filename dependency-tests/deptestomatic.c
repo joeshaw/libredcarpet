@@ -43,7 +43,7 @@ static gboolean
 mark_as_system_cb (RCPackage *package, gpointer user_data)
 {
     package->installed = TRUE;
-    package->channel = NULL;
+
     return TRUE;
 }
 
@@ -87,6 +87,10 @@ load_channel (const char *name,
     }
 
     channel = rc_channel_new (name, name, name, name);
+
+    if (system_packages)
+        rc_channel_set_system (channel);
+
     rc_world_store_add_channel (RC_WORLD_STORE (store), channel);
     rc_channel_unref (channel);
 
@@ -138,7 +142,7 @@ get_package (const char *channel_name, const char *package_name)
 
     channel = rc_world_get_channel_by_name (world, channel_name);
 
-    if (channel == NULL && strcmp(channel_name, "SYSTEM")) {
+    if (channel == NULL) {
         g_warning ("Can't find package '%s': channel '%s' not defined",
                    package_name, channel_name);
         return NULL;
@@ -298,7 +302,7 @@ assemble_install_cb (RCPackage *package,
     char *str;
 
     str = g_strdup_printf ("%-7s %s",
-                           package->channel == NULL ? "|flag" : "install",
+                           rc_package_is_installed (package) ? "|flag" : "install",
                            rc_package_to_str_static (package));
 
     *list = g_list_prepend (*list, str);
@@ -313,7 +317,7 @@ assemble_uninstall_cb (RCPackage *package,
     char *str;
 
     str = g_strdup_printf ("%-7s %s",
-                           package->channel == NULL ? "remove" : "|unflag",
+                           rc_package_is_installed (package) ? "remove" : "|unflag",
                            rc_package_to_str_static (package));
 
     *list = g_list_prepend (*list, str);
