@@ -55,6 +55,7 @@ void rc_rollback_action_slist_free (RCRollbackActionSList *actions);
 gboolean rc_rollback_action_is_install (RCRollbackAction *action);
 RCPackage *rc_rollback_action_get_package (RCRollbackAction *action);
 RCPackageUpdate *rc_rollback_action_get_package_update (RCRollbackAction *action);
+RCPackage *rc_rollback_action_get_synth_package (RCRollbackAction *action);
 
 void rc_rollback_restore_files (RCRollbackActionSList *actions);
 

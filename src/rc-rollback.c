@@ -502,6 +502,30 @@ rc_rollback_action_get_package_update (RCRollbackAction *action)
     return action->update;
 }
 
+/* This function is evil. */
+RCPackage *
+rc_rollback_action_get_synth_package (RCRollbackAction *action)
+{
+    RCPackage *package;
+
+    g_return_val_if_fail (action != NULL, NULL);
+
+    package = rc_package_copy (action->package);
+
+    /* Clear out the RCPackageSpec and copy in the update's */
+    rc_package_spec_free_members (RC_PACKAGE_SPEC (package));
+    rc_package_spec_copy (RC_PACKAGE_SPEC (package),
+                          RC_PACKAGE_SPEC (action->update));
+
+    /* Delete the old history and replace it with one entry: the update */
+    rc_package_update_slist_free (package->history);
+    package->history = NULL;
+    package->history = g_slist_prepend (package->history,
+                                        rc_package_update_copy (action->update));
+
+    return package;
+}
+
 typedef struct {
     RCPackman *packman;
     RCPackageDep *dep_to_match;

@@ -1,3 +1,8 @@
+2005-01-21  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-rollback.c (rc_rollback_action_get_synth_package): Implement.
+	Well, actually mostly moved it here from rcd.
+
 2005-01-14  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-world-multi.c (rc_world_multi_transact_real): Implement. Move
