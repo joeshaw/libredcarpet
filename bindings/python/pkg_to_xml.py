@@ -2,7 +2,16 @@
 
 import sys
 import os.path
+
+path = os.path.join(os.path.dirname("."),
+                    "build",
+                    "lib.linux-i686-2.2")
+sys.path.insert(0, path)
+
 import redcarpet
+
+sys.path.pop(0)
+
 import xml.dom.minidom
 
 packman = redcarpet.Packman()
