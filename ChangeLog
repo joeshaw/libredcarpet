@@ -1,3 +1,14 @@
+2001-12-13  Joe Shaw  <joe@ximian.com>
+
+	Patch from Frank Belew (frb@ximian.com):
+	
+	* configure.in: Add a --with-private-namespace so we can put the
+	GPG key and RPM stubs in a different libdir.
+
+	* Makefile.am: set gpgdir to $(datadir)/@PRIVATE_NAMESPACE@
+	* src/Makefile.am: set LIBDIR to $(libdir)/@PRIVATE_NAMESPACE@
+	Ditto for dpkghelperdir and rpmhelperdir.
+
 2001-09-18  Ian Peters  <itp@ximian.com>
 
 	* red-carpet.gpg: new keys for SuSE and Mandrake

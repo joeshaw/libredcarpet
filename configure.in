@@ -48,6 +48,11 @@ AC_ARG_ENABLE(backend-rpm3-static,  [  --enable-backend-rpm3-static include stat
   enable_backend_rpm3_static=yes, enable_backend_rpm3_static=no)
 AC_ARG_ENABLE(backend-rpm4-static,  [  --enable-backend-rpm4-static include static RPM4 backend],
   enable_backend_rpm4_static=yes, enable_backend_rpm4_static=no)
+AC_ARG_WITH(private-namespace, 
+[  --with-private-namespace=NAME   subdir of $libdir and $datadir where private libraries/data will be installed (redcarpet) ],
+[PRIVATE_NAMESPACE="$withval"], [PRIVATE_NAMESPACE="redcarpet"])
+
+AC_SUBST(PRIVATE_NAMESPACE)
 
 if test "x$enable_backend_dpkg" != "xyes" -a "x$enable_backend_rpm" != "xyes" -a "x$enable_backend_rpm3_static" != "xyes" -a "x$enable_backend_rpm4_static";
 then

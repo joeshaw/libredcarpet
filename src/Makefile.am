@@ -1,4 +1,4 @@
-INCLUDES = -I$(top_srcdir) -I$(includedir) $(RPMLIB_CFLAGS) $(GLIB_CFLAGS) $(GTK_CFLAGS) $(XML_CFLAGS) -DG_LOG_DOMAIN=\"libredcarpet\" -DSHAREDIR=\""$(datadir)/redcarpet"\" -DLIBDIR=\""$(libdir)/redcarpet"\"
+INCLUDES = -I$(top_srcdir) -I$(includedir) $(RPMLIB_CFLAGS) $(GLIB_CFLAGS) $(GTK_CFLAGS) $(XML_CFLAGS) -DG_LOG_DOMAIN=\"libredcarpet\" -DSHAREDIR=\""$(datadir)/@PRIVATE_NAMESPACE@"\" -DLIBDIR=\""$(libdir)/@PRIVATE_NAMESPACE@"\"
 
 noinst_LIBRARIES = libredcarpettmp.a
 
@@ -82,7 +82,7 @@ EXTRA_DIST = \
 	$(rpm_sources) $(dpkg_sources) rc-dpkg-helper.c make_stub.sh
 
 if ENABLE_DPKG
-dpkghelperdir = $(libdir)/redcarpet
+dpkghelperdir = $(libdir)/@PRIVATE_NAMESPACE@
 dpkghelper_DATA = \
 	rc-dpkg-helper.so
 CLEANFILES += rc-dpkg-helper.so
@@ -95,7 +95,7 @@ rc-dpkg-helper.so: $(srcdir)/rc-dpkg-helper.c
 if ENABLE_RPM
 if STATIC_RPM
 else
-rpmhelperdir = $(libdir)/redcarpet
+rpmhelperdir = $(libdir)/@PRIVATE_NAMESPACE@
 rpmhelper_DATA = \
 	rc-{rpm}.so.0 \
 	rc-{rpm_rpmio}.so.0 \
