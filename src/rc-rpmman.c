@@ -222,9 +222,10 @@ transaction_add_remove_pkgs (RCPackman *p, rpmTransactionSet transaction,
     for (iter = remove_pkgs; iter; iter = iter->next) {
         RCPackage *pkg = (RCPackage *)(iter->data);
         gchar *pkg_name = rc_package_to_rpm_name (pkg);
-        rpmdbMatchIterator *mi;
+        rpmdbMatchIterator mi;
         Header hdr;
         unsigned int offset;
+	int count;
 
         mi = rpmdbInitIterator (db, RPMDBI_LABEL, pkg_name, 0);
         count = rpmdbGetIteratorCount (mi);
@@ -965,7 +966,7 @@ rc_rpmman_query_all (RCPackman *p)
     mi = rpmdbInitIterator (db, RPMDBI_PACKAGES, NULL, 0);
 
     if (!mi) {
-        rpmdbClose (Db);
+        rpmdbClose (db);
         return (NULL);
     }
 
