@@ -352,10 +352,33 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
         if (! still_needed)
             goto finished;
     }
+    
+    /* If we are in verify mode and this install is about to fail, don't let it happen... 
+       instead, we try to back out of the install by removing whatever it was that
+       needed this. */
+    if (context->verifying
+        && rc_package_status_is_to_be_uninstalled (rc_resolver_context_get_status (context, package))
+        && install->needed_by != NULL) {
+
+        RCQueueItem *uninstall_item;
+
+        for (iter = install->needed_by; iter != NULL; iter = iter->next) {
+            RCPackage *needing_package = iter->data;
+
+            uninstall_item = rc_queue_item_new_uninstall (rc_queue_item_get_world (item),
+                                                          needing_package,
+                                                          "uninstallable package");
+
+            *new_items = g_slist_prepend (*new_items, uninstall_item);
+        }
+        
+        goto finished;
+    }
 
     if (install->upgrades == NULL) {
 
         rc_resolver_context_install_package (context, package, 
+                                             context->verifying, /* is_soft */
                                              rc_queue_item_install_get_other_penalty (item));
 
     } else {
@@ -365,6 +388,7 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
         rc_resolver_context_upgrade_package (context,
                                              package,
                                              install->upgrades,
+                                             context->verifying, /* is_soft */
                                              rc_queue_item_install_get_other_penalty (item));
 
         uninstall_item = rc_queue_item_new_uninstall (rc_queue_item_get_world (item),
@@ -882,6 +906,11 @@ require_item_process (RCQueueItem *item,
 
         } /* if (require->upgrade_package && require->requiring_package) ... */
 
+        /* We always consider uninstalling when in verification mode. */
+        if (context->verifying)
+            explore_uninstall_branch = TRUE;
+    
+
         if (explore_uninstall_branch && require->requiring_package) {
             RCResolverInfo *log_info;
             uninstall_item = rc_queue_item_new_uninstall (world,
@@ -1328,7 +1357,8 @@ conflict_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data
 
     switch (status) {
         
-    case RC_PACKAGE_STATUS_INSTALLED: {
+    case RC_PACKAGE_STATUS_INSTALLED:
+    case RC_PACKAGE_STATUS_TO_BE_INSTALLED_SOFT :{
         RCQueueItem *uninstall;
         RCResolverInfo *log_info;
 

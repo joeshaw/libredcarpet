@@ -41,6 +41,8 @@ rc_package_status_to_string (RCPackageStatus status)
         return "uninstalled";
     case RC_PACKAGE_STATUS_TO_BE_INSTALLED:
         return "to be installed";
+    case RC_PACKAGE_STATUS_TO_BE_INSTALLED_SOFT:
+        return "to be installed (soft)";
     case RC_PACKAGE_STATUS_TO_BE_UNINSTALLED:
         return "to be uninstalled";
     case RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE:
@@ -82,6 +84,7 @@ rc_resolver_context_new_child (RCResolverContext *parent)
         context->min_priority = G_MAXINT;
     }
 
+    context->verifying = parent ? parent->verifying : FALSE;
     context->invalid = FALSE;
 
     return context;
@@ -145,7 +148,7 @@ rc_resolver_context_set_status (RCResolverContext *context,
 
     old_status = rc_resolver_context_get_status (context, package);
 
-    if (status == RC_PACKAGE_STATUS_TO_BE_INSTALLED 
+    if (rc_package_status_is_to_be_installed (status)
         || rc_package_status_is_to_be_uninstalled (status)) {
         
         if (status != old_status) {
@@ -206,6 +209,7 @@ rc_resolver_context_get_status (RCResolverContext *context,
 gboolean
 rc_resolver_context_install_package (RCResolverContext *context,
                                      RCPackage *package,
+                                     gboolean is_soft,
                                      int other_penalty)
 {
     RCPackageStatus status;
@@ -229,17 +233,8 @@ rc_resolver_context_install_package (RCResolverContext *context,
         return FALSE;
     }
 
-    if (status == RC_PACKAGE_STATUS_TO_BE_INSTALLED) {
-        msg = g_strconcat ("Marking already-installed package ",
-                           rc_package_spec_to_str_static (& package->spec),
-                           " as needed",
-                           NULL);
-        rc_resolver_context_add_info_str (context,
-                                          package,
-                                          RC_RESOLVER_INFO_PRIORITY_VERBOSE,
-                                          msg);
+    if (rc_package_status_is_to_be_installed (status))
         return TRUE;
-    }
 
     if (rc_resolver_context_is_parallel_install (context, package)) {
         msg = g_strconcat ("Can't install ",
@@ -255,6 +250,8 @@ rc_resolver_context_install_package (RCResolverContext *context,
     }
 
     rc_resolver_context_set_status (context, package,
+                                    is_soft ? 
+                                    RC_PACKAGE_STATUS_TO_BE_INSTALLED_SOFT : 
                                     RC_PACKAGE_STATUS_TO_BE_INSTALLED);
 
     if (status == RC_PACKAGE_STATUS_UNINSTALLED) {
@@ -285,6 +282,7 @@ gboolean
 rc_resolver_context_upgrade_package (RCResolverContext *context,
                                      RCPackage *package,
                                      RCPackage *old_package,
+                                     gboolean is_soft,
                                      int other_penalty)
 {
     RCPackageStatus status;
@@ -299,10 +297,12 @@ rc_resolver_context_upgrade_package (RCResolverContext *context,
     if (rc_package_status_is_to_be_uninstalled (status))
         return FALSE;
 
-    if (status == RC_PACKAGE_STATUS_TO_BE_INSTALLED)
+    if (rc_package_status_is_to_be_installed (status))
         return TRUE;
 
     rc_resolver_context_set_status (context, package,
+                                    is_soft ? 
+                                    RC_PACKAGE_STATUS_TO_BE_INSTALLED_SOFT :
                                     RC_PACKAGE_STATUS_TO_BE_INSTALLED);
 
     if (status == RC_PACKAGE_STATUS_UNINSTALLED) {
@@ -358,6 +358,10 @@ rc_resolver_context_uninstall_package (RCResolverContext *context,
         return FALSE;
     }
 
+    if (rc_package_status_is_to_be_uninstalled (status)) {
+        return TRUE;
+    }
+    
     if (status == RC_PACKAGE_STATUS_UNINSTALLED) {
         msg = g_strconcat ("Marking package ",
                            rc_package_spec_to_str_static (& package->spec),
@@ -367,12 +371,8 @@ rc_resolver_context_uninstall_package (RCResolverContext *context,
                                           package,
                                           RC_RESOLVER_INFO_PRIORITY_VERBOSE,
                                           msg);
-        return TRUE;
     }
 
-    if (rc_package_status_is_to_be_uninstalled (status)) {
-        return TRUE;
-    }
 
     if (due_to_obsolete)
         new_status = RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE;
@@ -380,7 +380,7 @@ rc_resolver_context_uninstall_package (RCResolverContext *context,
         new_status = RC_PACKAGE_STATUS_TO_BE_UNINSTALLED;
 
     rc_resolver_context_set_status (context, package, new_status);
-
+    
     if (status == RC_PACKAGE_STATUS_INSTALLED) {
         /* FIXME: incomplete */
     }
@@ -401,7 +401,7 @@ rc_resolver_context_package_is_present (RCResolverContext *context,
     g_return_val_if_fail (status != RC_PACKAGE_STATUS_UNKNOWN, FALSE);
 
     return status == RC_PACKAGE_STATUS_INSTALLED
-        || status == RC_PACKAGE_STATUS_TO_BE_INSTALLED;
+        || rc_package_status_is_to_be_installed (status);
 }
 
 gboolean
@@ -470,7 +470,7 @@ install_pkg_cb (RCPackage *package,
 {
     struct InstallInfo *info = user_data;
 
-    if (status == RC_PACKAGE_STATUS_TO_BE_INSTALLED
+    if (rc_package_status_is_to_be_installed (status)
         && ! rc_package_is_installed (package)
         && rc_world_find_installed_version (info->world, package) == NULL) {
 
@@ -520,7 +520,7 @@ upgrade_pkg_cb (RCPackage *package,
     RCPackage *to_be_upgraded;
     RCPackageStatus tbu_status;
 
-    if (status == RC_PACKAGE_STATUS_TO_BE_INSTALLED
+    if (rc_package_status_is_to_be_installed (status)
         && ! rc_package_is_installed (package)) {
         
         to_be_upgraded = rc_world_find_installed_version (info->world, package);
@@ -1167,7 +1167,7 @@ dup_name_check_cb (RCPackage *package, RCPackageStatus status, gpointer user_dat
     struct DupNameCheckInfo *info = user_data;
 
     if (! info->flag
-        && status == RC_PACKAGE_STATUS_TO_BE_INSTALLED
+        && rc_package_status_is_to_be_installed (status)
         && info->spec->nameq == package->spec.nameq
         && rc_package_spec_not_equal (info->spec, & package->spec)) {
         info->flag = TRUE;

@@ -35,6 +35,8 @@ struct _RCResolver {
     
     RCWorld *world;
 
+    gboolean verifying;
+
     GSList *packages_to_install;
     GSList *packages_to_remove;
     GSList *packages_to_verify;

@@ -206,7 +206,15 @@ rc_resolver_verify_system (RCResolver *resolver)
                               verify_system_cb,
                               resolver);
 
+    resolver->verifying = TRUE;
+
+    /* FIXME: Should walk across world looking for installs of multiple
+       packages with the same name.  If this happens, add branches to the
+       resolver to test removing each of the multiples. */
+
     rc_resolver_resolve_dependencies (resolver);
+
+
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
@@ -251,6 +259,9 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
     initial_queue->context->world = world;
     
     initial_queue->context->current_channel = resolver->current_channel;
+
+    /* If this is a verify, we do a "soft resolution" */
+    initial_queue->context->verifying = resolver->verifying;
     
     for (iter = resolver->packages_to_install; iter != NULL; iter = iter->next) {
         RCPackage *pkg = iter->data;

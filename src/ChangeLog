@@ -1,3 +1,49 @@
+2002-08-28  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-queue-item.c (install_item_process): If we are in
+	verification mode and it looks like our install is about to fail,
+	don't let it happen.  Instead, back out the install and remove
+	whatever packages caused us to need to install this thing in the
+	first place.  Set the is_soft mode on our install and upgrade
+	operation if we are in verification mode.
+	(require_item_process): If we are in verification mode, we always
+	need to try the uninstall branch.
+
+	* rc-resolver.c (rc_resolver_verify_system): Set the ->verifying
+	flag to TRUE.
+	(rc_resolver_resolve_dependencies): Initialize the ->verifying flag
+	on our initial queue's context.
+
+	* rc-resolver.h: Added 'verifying' flag to RCResolver struct.
+
+	* rc-resolver-context.c (rc_package_status_to_string): Added a
+	string for RC_PACKAGE_STATUS_TO_BE_INSTALLED_SOFT.
+	(rc_resolver_context_new_child): Initialize the ->verifying flag.
+	(rc_resolver_context_set_status): Use the
+	rc_package_status_is_to_be_installed macro.
+	(rc_resolver_context_install_package): Added an is_soft argument.
+	When it is set, the installed package's status is set to
+	RC_PACKAGE_STATUS_TO_BE_INSTALLED_SOFT instead of
+	RC_PACKAGE_STATUS_TO_BE_INSTALLED.  Changed to use the
+	rc_package_status_is_to_be_installed macro.  Removed a totally
+	useless elog message.
+	(rc_resolver_context_upgrade_package): Added an is_soft argument,
+	and changed to use the rc_package_status_is_to_be_installed macro.
+	(rc_resolver_context_uninstall_package): Terminate early if
+	rc_package_status_is_to_be_uninstalled succeeds.  The is probably
+	a pointless optimization, since I think we already filter for this
+	before calling the function... but I added in anyway, mostly for
+	symmetry with the other rc_resolver_context_*_package functions.
+	(rc_resolver_context_package_is_present): Use
+	rc_package_status_is_to_be_installed macro.
+	(install_pkg_cb): Ditto.
+	(upgrade_pkg_cb): Ditto.
+
+	* rc-resolver-context.h: Added
+	RC_PACKAGE_STATUS_TO_BE_INSTALLED_SOFT to RCPackageStatus enum.
+	Added rc_package_status_is_to_be_installed macro.  Added
+	'verifying' flag to RCResolverContext struct.
+
 2002-08-28  Ian Peters  <itp@ximian.com>
 
 	* Makefile.am: add libpopt.so to the shared stubs, as there are

@@ -35,10 +35,13 @@ typedef enum {
     RC_PACKAGE_STATUS_INSTALLED,
     RC_PACKAGE_STATUS_UNINSTALLED,
     RC_PACKAGE_STATUS_TO_BE_INSTALLED,
+    RC_PACKAGE_STATUS_TO_BE_INSTALLED_SOFT,
     RC_PACKAGE_STATUS_TO_BE_UNINSTALLED,
     RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE
 } RCPackageStatus;
 
+#define rc_package_status_is_to_be_installed(x) \
+(((x) == RC_PACKAGE_STATUS_TO_BE_INSTALLED) || ((x) == RC_PACKAGE_STATUS_TO_BE_INSTALLED_SOFT))
 #define rc_package_status_is_to_be_uninstalled(x) \
 (((x) == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED) || ((x) == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE))
 
@@ -74,7 +77,8 @@ struct _RCResolverContext {
 
     RCResolverContext *parent;
 
-    guint invalid : 1;
+    guint verifying : 1;
+    guint invalid   : 1;
 };
 
 const char        *rc_package_status_to_string (RCPackageStatus status);
@@ -93,11 +97,13 @@ RCPackageStatus    rc_resolver_context_get_status (RCResolverContext *, RCPackag
 
 gboolean           rc_resolver_context_install_package (RCResolverContext *context,
                                                         RCPackage         *package,
+                                                        gboolean           is_soft,
                                                         int                other_penalty);
 
 gboolean           rc_resolver_context_upgrade_package (RCResolverContext *context,
                                                         RCPackage         *new_package,
                                                         RCPackage         *old_package,
+                                                        gboolean           is_soft,
                                                         int                other_penalty);
 
 gboolean           rc_resolver_context_uninstall_package (RCResolverContext *context,
