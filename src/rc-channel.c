@@ -300,10 +300,6 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
             channel->pkgset_compressed = TRUE;
         }
 
-        if (channel->file_path == NULL) {
-            channel->file_path = g_strdup (channel->path);
-        }
-
         channel_slist = g_slist_append (channel_slist, channel);
 
         node = node->next;

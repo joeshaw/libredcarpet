@@ -1,3 +1,9 @@
+2001-05-14  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-channel.c (rc_channel_parse_xml): if file_path isn't specified,
+	don't copy path into it -- it should be null, since path is always
+	prepended.
+	
 2001-05-07  Joe Shaw  <joe@ximian.com>
 
 	* rc-md5.c (rc_md5): Close the file descriptor when we're done. Plugs
