@@ -1,0 +1,105 @@
+<!doctype book PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
+
+<!entity rc-channel SYSTEM "sgml/rc-channel.sgml">
+<!entity rc-crypto SYSTEM "sgml/rc-crypto.sgml">
+<!entity rc-debman-general SYSTEM "sgml/rc-debman-general.sgml">
+<!entity rc-debman-private SYSTEM "sgml/rc-debman-private.sgml">
+<!entity rc-debman SYSTEM "sgml/rc-debman.sgml">
+<!entity rc-debug-misc SYSTEM "sgml/rc-debug-misc.sgml">
+<!entity rc-debug SYSTEM "sgml/rc-debug.sgml">
+<!entity rc-deps-private SYSTEM "sgml/rc-deps-private.sgml">
+<!entity rc-deps SYSTEM "sgml/rc-deps.sgml">
+<!entity rc-deps-util SYSTEM "sgml/rc-deps-util.sgml">
+<!entity rc-distman SYSTEM "sgml/rc-distman.sgml">
+<!entity rc-distro SYSTEM "sgml/rc-distro.sgml">
+<!entity rc-line-buf-private SYSTEM "sgml/rc-line-buf-private.sgml">
+<!entity rc-line-buf SYSTEM "sgml/rc-line-buf.sgml">
+<!entity rc-md5-private SYSTEM "sgml/rc-md5-private.sgml">
+<!entity rc-md5 SYSTEM "sgml/rc-md5.sgml">
+<!entity rc-package-dep SYSTEM "sgml/rc-package-dep.sgml">
+<!entity rc-package-importance SYSTEM "sgml/rc-package-importance.sgml">
+<!entity rc-package-info SYSTEM "sgml/rc-package-info.sgml">
+<!entity rc-package-section SYSTEM "sgml/rc-package-section.sgml">
+<!entity rc-package-set SYSTEM "sgml/rc-package-set.sgml">
+<!entity rc-package SYSTEM "sgml/rc-package.sgml">
+<!entity rc-package-spec SYSTEM "sgml/rc-package-spec.sgml">
+<!entity rc-package-update SYSTEM "sgml/rc-package-update.sgml">
+<!entity rc-packman-private SYSTEM "sgml/rc-packman-private.sgml">
+<!entity rc-packman SYSTEM "sgml/rc-packman.sgml">
+<!entity rc-pretty-name SYSTEM "sgml/rc-pretty-name.sgml">
+<!entity rc-queue-item SYSTEM "sgml/rc-queue-item.sgml">
+<!entity rc-resolver-compare SYSTEM "sgml/rc-resolver-compare.sgml">
+<!entity rc-resolver-context SYSTEM "sgml/rc-resolver-context.sgml">
+<!entity rc-resolver-info SYSTEM "sgml/rc-resolver-info.sgml">
+<!entity rc-resolver-queue SYSTEM "sgml/rc-resolver-queue.sgml">
+<!entity rc-resolver SYSTEM "sgml/rc-resolver.sgml">
+<!entity rc-rpmman SYSTEM "sgml/rc-rpmman.sgml">
+<!entity rc-rpmman-types SYSTEM "sgml/rc-rpmman-types.sgml">
+<!entity rc-util SYSTEM "sgml/rc-util.sgml">
+<!entity rc-verification-private SYSTEM "sgml/rc-verification-private.sgml">
+<!entity rc-verification SYSTEM "sgml/rc-verification.sgml">
+<!entity rc-world SYSTEM "sgml/rc-world.sgml">
+<!entity rpm-rpmlead SYSTEM "sgml/rpm-rpmlead.sgml">
+<!entity rpm-signature SYSTEM "sgml/rpm-signature.sgml">
+<!entity tree_index SYSTEM "sgml/tree_index.sgml">
+<!entity xml-util SYSTEM "sgml/xml-util.sgml">
+
+]>
+
+<book>
+  <bookinfo>
+    <title>The libredcarpet library</title>
+
+    <authorgroup>
+      <author>
+        <firstname>Assorted</firstname>
+        <surname>Hackers</surname>
+        <affiliation>
+          <OrgName>Ximian, Inc.</OrgName>
+        </affiliation>
+      </author>        
+    </authorgroup>
+
+
+    <legalnotice>
+      <para>
+        Permission is granted to copy, distribute and/or modify this document
+        under the terms of the GNU Free Documentation License, Version 1.1
+        or any later version published by the Free Software Foundation;
+        with the Invariant Sections being  with no
+        Front-Cover Texts, and with no Back-Cover Texts.
+        A copy of the license is included in the section entitled "GNU
+        Free Documentation License".
+      </para>
+    </legalnotice>
+
+    <copyright>
+      <year>2001</year>
+      <holder>The Free Software Foundation</holder>
+    </copyright>
+  </bookinfo>
+
+  <chapter>
+    <title>Basic Data Types</title>
+    &rc-channel;
+    &rc-package-spec;
+    &rc-package-dep;
+    &rc-package;
+  </chapter>
+
+  <chapter>
+    <title>Global Data</title>
+    &rc-world;
+  </chapter>
+
+  <chapter>
+    <title>Dependency Resolution</title>
+    &rc-resolver-context;
+    &rc-resolver-info;
+    &rc-resolver-queue;
+    &rc-resolver;
+    &rc-resolver-compare;
+    &rc-queue-item;
+  </chapter>
+
+</book>

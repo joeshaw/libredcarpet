@@ -176,9 +176,9 @@ rc_maybe_merge_paths(const char *parent_path, const char *child_path)
        parent path.
        Ex: rc_maybe_merge_paths("/foo", "bar/baz") => "/foo/bar/baz" */
     if (parent_path[strlen(parent_path) - 1] == '/')
-        return g_strdup_printf("%s%s", parent_path, child_path);
+        return g_strconcat(parent_path, child_path, NULL);
     else
-        return g_strdup_printf("%s/%s", parent_path, child_path);
+        return g_strconcat(parent_path, "/", child_path, NULL);
 } /* rc_maybe_merge_paths */
 
 static void

@@ -23,9 +23,7 @@
 
 #include <glib.h>
 
-typedef enum _RCPackageImportance RCPackageImportance;
-
-enum _RCPackageImportance {
+typedef enum {
     RC_IMPORTANCE_INVALID = -1,
 
     RC_IMPORTANCE_NECESSARY,
@@ -36,7 +34,7 @@ enum _RCPackageImportance {
 
     /* Not a real importance */
     RC_IMPORTANCE_LAST
-};
+} RCPackageImportance;
 
 const gchar *rc_package_importance_to_string (RCPackageImportance importance);
 

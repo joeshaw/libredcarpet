@@ -33,12 +33,10 @@
 #define IS_RC_LINE_BUF_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), \
                                      RC_TYPE_LINE_BUF))
 
-typedef enum _RCLineBufStatus RCLineBufStatus;
-
-enum _RCLineBufStatus {
+typedef enum {
     RC_LINE_BUF_OK,
     RC_LINE_BUF_ERROR
-};
+} RCLineBufStatus;
 
 typedef struct _RCLineBuf        RCLineBuf;
 typedef struct _RCLineBufClass   RCLineBufClass;

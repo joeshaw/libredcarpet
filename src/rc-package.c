@@ -18,6 +18,7 @@
  * 02111-1307, USA.
  */
 
+#include <stdlib.h>
 #include <string.h>
 
 #include "rc-package.h"
@@ -52,7 +53,7 @@ rc_package_copy (RCPackage *old_package)
 
     package->installed_size = old_package->installed_size;
 
-    package->subchannel = old_package->subchannel;
+    package->channel = old_package->channel;
 
     package->requires = rc_package_dep_slist_copy (old_package->requires);
     package->provides = rc_package_dep_slist_copy (old_package->provides);
@@ -98,6 +99,36 @@ rc_package_free (RCPackage *package)
 
     g_free (package);
 } /* rc_package_free */
+
+char *
+rc_package_to_str (RCPackage *package)
+{
+    g_return_val_if_fail (package != NULL, NULL);
+
+    return g_strconcat (rc_package_spec_to_str_static (&package->spec),
+                        package->channel ? "[" : NULL,
+                        package->channel ? package->channel->name : "",
+                        "]",
+                        NULL);
+}
+
+const char *
+rc_package_to_str_static (RCPackage *package)
+{
+    char *str = NULL;
+
+    g_free (str);
+    str = rc_package_to_str (package);
+    return str;
+}
+
+gboolean
+rc_package_is_installed (RCPackage *package)
+{
+    g_return_val_if_fail (package != NULL, FALSE);
+
+    return package->channel == NULL || package->installed;
+}
 
 void
 rc_package_slist_free (RCPackageSList *packages)
@@ -179,7 +210,7 @@ rc_package_get_latest_update(RCPackage *package)
 } /* rc_package_get_latest_update */
 
 RCPackage *
-rc_xml_node_to_package (const xmlNode *node, const RCSubchannel *subchannel)
+rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
 {
     RCPackage *package;
     const xmlNode *iter;
@@ -190,13 +221,9 @@ rc_xml_node_to_package (const xmlNode *node, const RCSubchannel *subchannel)
 
     package = rc_package_new ();
 
-    package->subchannel = subchannel;
+    package->channel = channel;
 
-#if LIBXML_VERSION < 20000
-    iter = node->childs;
-#else
-    iter = node->children;
-#endif
+    iter = node->xmlChildrenNode;
 
     while (iter) {
         if (!g_strcasecmp (iter->name, "name")) {
@@ -209,13 +236,19 @@ rc_xml_node_to_package (const xmlNode *node, const RCSubchannel *subchannel)
             gchar *tmp = xml_get_content (iter);
             package->section = rc_string_to_package_section (tmp);
             g_free (tmp);
+        } else if (!g_strcasecmp (iter->name, "filesize")) {
+            gchar *tmp = xml_get_content (iter);
+            package->file_size = tmp && *tmp ? atoi (tmp) : 0;
+            g_free (tmp);
+        } else if (!g_strcasecmp (iter->name, "installedsize")) {
+            gchar *tmp = xml_get_content (iter);
+            package->installed_size = tmp && *tmp ? atoi (tmp) : 0;
+            g_free (tmp);
         } else if (!g_strcasecmp (iter->name, "history")) {
             const xmlNode *iter2;
-#if LIBXML_VERSION < 20000
-            iter2 = iter->childs;
-#else
-            iter2 = iter->children;
-#endif
+
+            iter2 = iter->xmlChildrenNode;
+
             while (iter2) {
                 RCPackageUpdate *update;
 
@@ -228,11 +261,9 @@ rc_xml_node_to_package (const xmlNode *node, const RCSubchannel *subchannel)
             }
         } else if (!g_strcasecmp (iter->name, "requires")) {
             const xmlNode *iter2;
-#if LIBXML_VERSION < 20000
-            iter2 = iter->childs;
-#else
-            iter2 = iter->children;
-#endif
+
+            iter2 = iter->xmlChildrenNode;
+
             while (iter2) {
                 package->requires =
                     g_slist_append (package->requires,
@@ -241,11 +272,9 @@ rc_xml_node_to_package (const xmlNode *node, const RCSubchannel *subchannel)
             }
         } else if (!g_strcasecmp (iter->name, "recommends")) {
             const xmlNode *iter2;
-#if LIBXML_VERSION < 20000
-            iter2 = iter->childs;
-#else
-            iter2 = iter->children;
-#endif
+
+            iter2 = iter->xmlChildrenNode;
+
             while (iter2) {
                 package->recommends =
                     g_slist_append (package->recommends,
@@ -254,11 +283,9 @@ rc_xml_node_to_package (const xmlNode *node, const RCSubchannel *subchannel)
             }
         } else if (!g_strcasecmp (iter->name, "suggests")) {
             const xmlNode *iter2;
-#if LIBXML_VERSION < 20000
-            iter2 = iter->childs;
-#else
-            iter2 = iter->children;
-#endif
+
+            iter2 = iter->xmlChildrenNode;
+
             while (iter2) {
                 package->suggests =
                     g_slist_append (package->suggests,
@@ -267,11 +294,9 @@ rc_xml_node_to_package (const xmlNode *node, const RCSubchannel *subchannel)
             }
         } else if (!g_strcasecmp (iter->name, "conflicts")) {
             const xmlNode *iter2;
-#if LIBXML_VERSION < 20000
-            iter2 = iter->childs;
-#else
-            iter2 = iter->children;
-#endif
+
+            iter2 = iter->xmlChildrenNode;
+
             while (iter2) {
                 package->conflicts =
                     g_slist_append (package->conflicts,
@@ -280,11 +305,9 @@ rc_xml_node_to_package (const xmlNode *node, const RCSubchannel *subchannel)
             }
         } else if (!g_strcasecmp (iter->name, "provides")) {
             const xmlNode *iter2;
-#if LIBXML_VERSION < 20000
-            iter2 = iter->childs;
-#else
-            iter2 = iter->children;
-#endif
+
+            iter2 = iter->xmlChildrenNode;
+
             while (iter2) {
                 package->provides =
                     g_slist_append (package->provides,
@@ -304,8 +327,6 @@ rc_xml_node_to_package (const xmlNode *node, const RCSubchannel *subchannel)
         ((RCPackageUpdate *)package->history->data)->spec.version);
     package->spec.release = g_strdup (
         ((RCPackageUpdate *)package->history->data)->spec.release);
-
-    package->subchannel = subchannel;
 
     return (package);
 }

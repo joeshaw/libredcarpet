@@ -1,0 +1,9 @@
+>!> Installing G from channel test
+>!> Solution #1:
+>!> +A-1.0-1 +C-1.0-1 +G-1.0-1 
+>!> Installing H from channel test
+>!> Solution #1:
+>!> +E-1.0-1 +H-1.0-1 
+>!> Installing I from channel test
+>!> Solution #1:
+>!> +C-1.0-1 +D-1.0-1 +I-1.0-1 |-A-1.0-1 |-E-1.0-1 |-F-1.0-1 

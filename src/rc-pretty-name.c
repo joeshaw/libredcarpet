@@ -77,11 +77,7 @@ rc_pretty_name_parse_xml (gchar *tbuf, gint compressed_length)
 
     xml_doc = xmlParseMemory (buf, strlen (buf));
 
-#if LIBXML_VERSION < 20000
-    xml_iter = xml_doc->root;
-#else
-    xml_iter = xml_doc->root;
-#endif
+    xml_iter = xml_doc->xmlRootNode;
     
     while (xml_iter) {
         xmlNodePtr item_iter;
@@ -91,11 +87,7 @@ rc_pretty_name_parse_xml (gchar *tbuf, gint compressed_length)
             continue;
         }
 
-#if LIBXML_VERSION < 20000
-        item_iter = xml_iter->childs;
-#else
-        item_iter = xml_iter->children;
-#endif
+        item_iter = xml_iter->xmlChildrenNode;
 
         while (item_iter) {
             xmlNodePtr attr_iter;
@@ -107,11 +99,7 @@ rc_pretty_name_parse_xml (gchar *tbuf, gint compressed_length)
                 continue;
             }
 
-#if LIBXML_VERSION < 20000
-            attr_iter = item_iter->childs;
-#else
-            attr_iter = item_iter->children;
-#endif
+            attr_iter = item_iter->xmlChildrenNode;
 
             while (attr_iter) {
                 xmlChar *xml_s;

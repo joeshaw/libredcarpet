@@ -1496,9 +1496,12 @@ rc_rpmman_query_file (RCPackman *packman, const gchar *filename)
 
     return (package);
 
+#if 0
+    /* This error condition is never called! */
   ERROR:
     rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                           "File query failed");
+#endif
 
     return (NULL);
 } /* rc_packman_query_file */
@@ -2234,8 +2237,16 @@ load_fake_syms (RCRpmman *rpmman)
     rpmman->rc_fdRead = &fdRead;
     rpmman->rc_fdClose = &fdClose;
     /* rpmman->Ferror = &Ferror; */
-    rpmman->headerGetEntry = &headerGetEntry;
-    rpmman->headerFree = &headerFree;
+    /* Look for hdrVec in load_rpm_syms for an explanation of what's
+     * going on */
+    if (rpmman->version == 40004) {
+        /* FIXME: untested */
+        rpmman->headerGetEntry = ((void **)hdrVec)[15];
+        rpmman->headerFree = ((void **)hdrVec)[1];
+    } else {
+        rpmman->headerGetEntry = &headerGetEntry;
+        rpmman->headerFree = &headerFree;
+    }
     rpmman->rpmReadPackageHeader = &rpmReadPackageHeader;
     rpmman->rpmtransAddPackage = &rpmtransAddPackage;
     rpmman->rpmtransRemovePackage = &rpmtransRemovePackage;
@@ -2323,13 +2334,31 @@ load_rpm_syms (RCRpmman *rpmman)
     }
     */
 
-    if (!g_module_symbol (rpmman->rpm_lib, "headerGetEntry",
-                          ((gpointer)&rpmman->headerGetEntry))) {
-        return (FALSE);
-    }
-    if (!g_module_symbol (rpmman->rpm_lib, "headerFree",
-                          ((gpointer)&rpmman->headerFree))) {
-        return (FALSE);
+    /* RPM 4.0.4 marked our two header manipulation functions as
+     * static, which is a bit of a pain.  The workaround is to look
+     * for hdrVec, a globally exported virtual function table, and
+     * find the functions we need by absolute offset.  It's not very
+     * pretty, and could quite possibly break with successive releases
+     * of RPM, which is why I check for 4.0.4 exactly, rather than
+     * 4.0.4 and all later versions.  Blah. */
+    if (rpmman->version == 40004) {
+        void **(*hdrfuncs);
+
+        if (!g_module_symbol (rpmman->rpm_lib, "hdrVec",
+                              ((gpointer)&hdrfuncs))) {
+            return (FALSE);
+        }
+        rpmman->headerFree = *(*hdrfuncs + 1);
+        rpmman->headerGetEntry = *(*hdrfuncs + 15);
+    } else {
+        if (!g_module_symbol (rpmman->rpm_lib, "headerGetEntry",
+                              ((gpointer)&rpmman->headerGetEntry))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "headerFree",
+                              ((gpointer)&rpmman->headerFree))) {
+            return (FALSE);
+        }
     }
 
     if (!g_module_symbol (rpmman->rpm_lib, "rpmReadPackageHeader",
@@ -2521,15 +2550,18 @@ rc_rpmman_init (RCRpmman *obj)
         "rc-{rpm}.so.0",
         "rc-{rpm_rpmio}.so.0",
         "rc-{rpm_rpmio_rpmdb}-4.0.3.so",
+        "rc-{rpm_rpmio_rpmdb}-4.0.4.so",
         "rc-{rpm_rpmio_rpmdb}.so",
         NULL };
     const char **iter;
 
 #ifdef STATIC_RPM
 
-    extern char *RPMVERSION;
+    /* Used to use RPMVERSION rathre than rpmEVR, until that broke in
+     * RPM 4.0.4.  rpmEVR seems to contain the same thing? */
+    extern char *rpmEVR;
 
-    parse_rpm_version (obj, RPMVERSION);
+    parse_rpm_version (obj, rpmEVR);
 
     load_fake_syms (obj);
 
@@ -2556,7 +2588,9 @@ rc_rpmman_init (RCRpmman *obj)
         return;
     }
 
-    if (!(g_module_symbol (obj->rpm_lib, "RPMVERSION",
+    /* Used to use RPMVERSION rather than rpmEVR, until that broke in
+     * RPM 4.0.4.  rpmEVR seems to contain the same thing? */
+    if (!(g_module_symbol (obj->rpm_lib, "rpmEVR",
                            ((gpointer)&rpm_version))))
     {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,

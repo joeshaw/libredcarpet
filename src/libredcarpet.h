@@ -53,4 +53,8 @@
 
 #include "rc-pretty-name.h"
 
+#include "rc-resolver.h"
+#include "rc-resolver-queue.h"
+#include "rc-world.h"
+
 #endif

@@ -59,7 +59,7 @@ int rpmLookupSignatureType(int action);
 char *rpmGetPassPhrase(const char *prompt, const int sigTag);
 
 /* >0 is a valid PGP version */
-typedef enum pgpVersion_e {
+typedef enum {
 	PGP_NOTDETECTED = -1, PGP_UNKNOWN = 0, PGP_2 = 2, PGP_5 = 5
 } pgpVersion;
 

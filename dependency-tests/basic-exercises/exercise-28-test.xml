@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<test>
+<setup>
+  <system file="exercise-27-system.xml"/>
+  <channel name="channel" type="debian" file="exercise-28-packages.xml"/>
+</setup>
+<trial>
+  <install channel="channel" package="xchat-gnome"/>
+  <install channel="channel" package="xchat"/>
+</trial>
+</test>

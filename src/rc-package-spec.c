@@ -24,6 +24,7 @@
 
 /* #define DEBUG 50 */
 
+#include "rc-world.h"
 #include "rc-package-spec.h"
 #include "rc-packman.h"
 
@@ -40,6 +41,7 @@ rc_package_spec_init (RCPackageSpec *rcps,
     rcps->epoch = epoch;
     rcps->version = g_strdup (version);
     rcps->release = g_strdup (release);
+    rcps->type = RC_PACKAGE_SPEC_TYPE_UNKNOWN;
 } /* rc_package_spec_init */
 
 void
@@ -47,6 +49,7 @@ rc_package_spec_copy (RCPackageSpec *new, RCPackageSpec *old)
 {
     rc_package_spec_init (new, old->name, old->epoch, old->version,
                           old->release);
+    new->type = old->type;
 }
 
 void
@@ -56,6 +59,55 @@ rc_package_spec_free_members (RCPackageSpec *rcps)
     g_free (rcps->version);
     g_free (rcps->release);
 } /* rc_package_spec_free_members */
+
+struct SpecTypeInfo {
+    RCPackageSpec *spec;
+    gboolean flag;
+};
+
+static void
+spec_type_cb (RCPackage *package, gpointer user_data)
+{
+    struct SpecTypeInfo *info = user_data;
+
+    if (! info->flag
+        && rc_package_spec_equal (info->spec, &package->spec))
+        info->flag = TRUE;
+}
+
+RCPackageSpecType
+rc_package_spec_get_type (RCPackageSpec *spec)
+{
+    g_return_val_if_fail (spec != NULL, RC_PACKAGE_SPEC_TYPE_UNKNOWN);
+
+    if (spec->type == RC_PACKAGE_SPEC_TYPE_UNKNOWN) {
+
+        if (*spec->name == '/') {
+
+            spec->type = RC_PACKAGE_SPEC_TYPE_FILE;
+
+        } else {
+
+            struct SpecTypeInfo info;
+            info.spec = spec;
+            info.flag = FALSE;
+
+            rc_world_foreach_package_by_name (rc_get_world (),
+                                              spec->name,
+                                              RC_WORLD_ANY_CHANNEL,
+                                              spec_type_cb, &info);
+
+            if (info.flag)
+                spec->type = RC_PACKAGE_SPEC_TYPE_PACKAGE;
+        }
+
+        if (spec->type == RC_PACKAGE_SPEC_TYPE_UNKNOWN)
+            spec->type = RC_PACKAGE_SPEC_TYPE_VIRTUAL;
+
+    }
+
+    return (RCPackageSpecType) spec->type;
+}
 
 gint
 rc_package_spec_compare_name (void *a, void *b)
@@ -73,20 +125,22 @@ rc_package_spec_to_str (RCPackageSpec *spec)
 {
     gchar *buf;
     if (spec->epoch) {
-        buf = g_strdup_printf ("%s%s%d:%s%s%s",
-                               (spec->name ? spec->name  : ""),
-                               (spec->version ? "-" : ""),
-                               spec->epoch,
-                               (spec->version ? spec->version : ""),
-                               (spec->release ? "-" : ""),
-                               (spec->release ? spec->release : ""));
+        gchar epoch_buf[32];
+        g_snprintf (epoch_buf, 32, "%d:", spec->epoch);
+        buf = g_strconcat ((spec->name ? spec->name  : ""),
+                           (spec->version ? "-" : ""),
+                           epoch_buf,
+                           (spec->version ? spec->version : ""),
+                           (spec->release ? "-" : ""),
+                           (spec->release ? spec->release : ""),
+                           NULL);
     } else {
-        buf = g_strdup_printf ("%s%s%s%s%s",
-                               (spec->name ? spec->name  : ""),
-                               (spec->version ? "-" : ""),
-                               (spec->version ? spec->version : ""),
-                               (spec->release ? "-" : ""),
-                               (spec->release ? spec->release : ""));
+        buf = g_strconcat ((spec->name ? spec->name  : ""),
+                           (spec->version ? "-" : ""),
+                           (spec->version ? spec->version : ""),
+                           (spec->release ? "-" : ""),
+                           (spec->release ? spec->release : ""),
+                           NULL);
     }
 
     return buf;
@@ -97,16 +151,18 @@ rc_package_spec_version_to_str (RCPackageSpec *spec)
 {
     gchar *buf;
     if (spec->epoch) {
-        buf = g_strdup_printf ("%d:%s%s%s",
-                               spec->epoch,
-                               (spec->version ? spec->version : ""),
-                               (spec->release ? "-" : ""),
-                               (spec->release ? spec->release : ""));
+        gchar epoch_buf[32];
+        g_snprintf (epoch_buf, 32, "%d:", spec->epoch);
+        buf = g_strconcat (epoch_buf,
+                           (spec->version ? spec->version : ""),
+                           (spec->release ? "-" : ""),
+                           (spec->release ? spec->release : ""),
+                           NULL);
     } else {
-        buf = g_strdup_printf ("%s%s%s",
-                               (spec->version ? spec->version : ""),
-                               (spec->release ? "-" : ""),
-                               (spec->release ? spec->release : ""));
+        buf = g_strconcat ((spec->version ? spec->version : ""),
+                           (spec->release ? "-" : ""),
+                           (spec->release ? spec->release : ""),
+                           NULL);
     }
     return buf;
 }
@@ -115,26 +171,12 @@ const gchar *
 rc_package_spec_to_str_static (RCPackageSpec *spec)
 {
     static gchar *buf = NULL;
-    if (!buf) {
-        buf = g_malloc (128);
-    }
 
-    if (spec->epoch) {
-        snprintf (buf, 128, "%s%s%d:%s%s%s",
-                  (spec->name ? spec->name  : ""),
-                  (spec->version ? "-" : ""),
-                  spec->epoch,
-                  (spec->version ? spec->version : ""),
-                  (spec->release ? "-" : ""),
-                  (spec->release ? spec->release : ""));
-    } else {
-        snprintf (buf, 128, "%s%s%s%s%s",
-                  (spec->name ? spec->name  : ""),
-                  (spec->version ? "-" : ""),
-                  (spec->version ? spec->version : ""),
-                  (spec->release ? "-" : ""),
-                  (spec->release ? spec->release : ""));
-    }
+    if (buf)
+        g_free (buf);
+
+    buf = rc_package_spec_to_str (spec);
+
     return buf;
 }
 
@@ -142,22 +184,12 @@ const gchar *
 rc_package_spec_version_to_str_static (RCPackageSpec *spec)
 {
     static gchar *buf = NULL;
-    if (!buf) {
-        buf = g_malloc (128);
-    }
 
-    if (spec->epoch) {
-        snprintf (buf, 128, "%d:%s%s%s",
-                  spec->epoch,
-                  (spec->version ? spec->version : ""),
-                  (spec->release ? "-" : ""),
-                  (spec->release ? spec->release : ""));
-    } else {
-        snprintf (buf, 128, "%s%s%s",
-                  (spec->version ? spec->version : ""),
-                  (spec->release ? "-" : ""),
-                  (spec->release ? spec->release : ""));
-    }
+    if (buf)
+        g_free (buf);
+
+    buf = rc_package_spec_version_to_str (spec);
+
     return buf;
 }
 
@@ -165,10 +197,25 @@ rc_package_spec_version_to_str_static (RCPackageSpec *spec)
 guint rc_package_spec_hash (gconstpointer ptr)
 {
     RCPackageSpec *spec = (RCPackageSpec *) ptr;
-    guint ret;
-    gchar *b = rc_package_spec_to_str (spec);
-    ret = g_str_hash (b);
-    g_free (b);
+    guint ret = spec->epoch + 1;
+    const char *spec_strs[3], *p;
+    int i;
+
+    spec_strs[0] = spec->name;
+    spec_strs[1] = spec->version;
+    spec_strs[2] = spec->release;
+
+    for (i = 0; i < 3; ++i) {
+        p = spec_strs[i];
+        if (p) {
+            for (p += 1; *p != '\0'; ++p) {
+                ret = (ret << 5) - ret + *p;
+            }
+        } else {
+            ret = ret * 17;
+        }
+    }
+
     return ret;
 }
 

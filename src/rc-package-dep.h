@@ -32,9 +32,7 @@
 
 /* This enum is here so that gdb can give us pretty strings */
 
-typedef enum _RCPackageRelation RCPackageRelation;
-
-enum _RCPackageRelation {
+typedef enum {
     RC_RELATION_INVALID            = -1,
     RC_RELATION_ANY                = RELATION_ANY,
     RC_RELATION_EQUAL              = RELATION_EQUAL,
@@ -61,7 +59,7 @@ enum _RCPackageRelation {
     RC_RELATION_WEAK_GREATER_EQUAL = RELATION_WEAK | RELATION_GREATER | RELATION_EQUAL,
     RC_RELATION_WEAK_NOT_EQUAL     = RELATION_WEAK | RELATION_LESS | RELATION_GREATER,
     RC_RELATION_WEAK_NONE          = RELATION_WEAK | RELATION_NONE,
-};
+} RCPackageRelation;
 
 typedef struct _RCPackageDep RCPackageDep;
 
@@ -74,12 +72,14 @@ typedef GSList RCPackageDepSList;
 #include "rc-package-spec.h"
 #include "rc-package.h"
 
+typedef void (*RCPackageAndDepFn) (RCPackage *, RCPackageDep *, gpointer);
+
 /* THE SPEC MUST BE FIRST */
 struct _RCPackageDep {
     RCPackageSpec spec;
     RCPackageRelation relation;
-    gboolean is_or;
-    gboolean pre;
+    guint is_or : 1;
+    guint pre   : 1;
 };
 
 RCPackageDep *rc_package_dep_new (gchar *name,
@@ -101,6 +101,9 @@ gboolean rc_package_dep_equal (RCPackageDep *a, RCPackageDep *b);
 RCPackageDepSList *rc_package_dep_slist_copy (RCPackageDepSList *old);
 
 void rc_package_dep_slist_free (RCPackageDepSList *rcpdsl);
+
+char       *rc_package_dep_to_str (RCPackageDep *dep);
+const char *rc_package_dep_to_str_static (RCPackageDep *dep);
 
 /* Dep verification */
 gboolean rc_package_dep_verify_relation (RCPackageDep *dep,

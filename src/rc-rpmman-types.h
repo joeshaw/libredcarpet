@@ -27,7 +27,7 @@ typedef struct {
 } rc_dbiIndexSet;
 
 typedef struct {
-//    DB *db;
+  /*    DB *db; */
     void *db;
     const char *indexname;
 } rc_dbiIndex;

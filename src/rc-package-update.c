@@ -133,20 +133,15 @@ rc_xml_node_to_package_update (const xmlNode *node, const RCPackage *package)
     update = rc_package_update_new ();
 
     update->package = package;
-
+    
     update->spec.name = g_strdup (package->spec.name);
 
-    if (package->subchannel && package->subchannel->channel &&
-        package->subchannel->channel->file_path)
+    if (package->channel && package->channel->file_path)
     {
-        url_prefix = package->subchannel->channel->file_path;
+        url_prefix = package->channel->file_path;
     }
 
-#if LIBXML_VERSION < 20000
-    iter = node->childs;
-#else
-    iter = node->children;
-#endif
+    iter = node->xmlChildrenNode;
 
     while (iter) {
         if (!g_strcasecmp (iter->name, "epoch")) {

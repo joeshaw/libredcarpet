@@ -23,9 +23,7 @@
 
 #include <glib.h>
 
-typedef enum _RCPackageSection RCPackageSection;
-
-enum _RCPackageSection {
+typedef enum {
     RC_SECTION_OFFICE = 0,
     RC_SECTION_IMAGING,
     RC_SECTION_PIM,
@@ -41,7 +39,7 @@ enum _RCPackageSection {
     RC_SECTION_DEVELUTIL,
     RC_SECTION_MISC,
     RC_SECTION_LAST
-};
+} RCPackageSection;
 
 const gchar *rc_package_section_to_string (RCPackageSection section);
 const gchar *rc_package_section_to_user_string (RCPackageSection section);

@@ -26,12 +26,20 @@
 
 typedef struct _RCPackageSpec RCPackageSpec;
 
+typedef enum {
+    RC_PACKAGE_SPEC_TYPE_UNKNOWN = 0,
+    RC_PACKAGE_SPEC_TYPE_PACKAGE,
+    RC_PACKAGE_SPEC_TYPE_FILE,
+    RC_PACKAGE_SPEC_TYPE_VIRTUAL
+} RCPackageSpecType;
+
 /* Make sure name is always the first element of this struct */
 struct _RCPackageSpec {
     gchar *name;
     guint32 epoch;
     gchar *version;
     gchar *release;
+    guint type : 2;
 };
 
 #define RC_PACKAGE_SPEC(item) ((RCPackageSpec *)(item))
@@ -45,6 +53,8 @@ void rc_package_spec_init (RCPackageSpec *rcps,
 void rc_package_spec_copy (RCPackageSpec *new, RCPackageSpec *old);
 
 void rc_package_spec_free_members (RCPackageSpec *rcps);
+
+RCPackageSpecType rc_package_spec_get_type (RCPackageSpec *);
 
 gint rc_package_spec_compare_name (void *a, void *b);
 gint rc_package_spec_compare (void *a, void *b);

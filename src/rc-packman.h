@@ -38,25 +38,21 @@
 typedef struct _RCPackman        RCPackman;
 typedef struct _RCPackmanClass   RCPackmanClass;
     
-typedef enum _RCPackmanError RCPackmanError;
-
-enum _RCPackmanError {
+typedef enum {
     /* No error */
     RC_PACKMAN_ERROR_NONE = 0,
     /* The requested operation failed, but is non-fatal to program execution */
     RC_PACKMAN_ERROR_ABORT,
     /* An error from which we cannot and should not attempt to recover */
     RC_PACKMAN_ERROR_FATAL,
-};
+} RCPackmanError;
 
-typedef enum _RCPackmanStep RCPackmanStep;
-
-enum _RCPackmanStep {
+typedef enum {
     RC_PACKMAN_STEP_UNKNOWN,
     RC_PACKMAN_STEP_CONFIGURE,
     RC_PACKMAN_STEP_INSTALL,
     RC_PACKMAN_STEP_REMOVE,
-};
+} RCPackmanStep;
 
 #include "rc-packman-private.h"
 #include "rc-package.h"

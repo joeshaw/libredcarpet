@@ -56,8 +56,8 @@ rc_package_dep_new (gchar *name,
                           release);
 
     rcpd->relation = relation;
-
-    rcpd->pre = FALSE;
+    rcpd->pre      = FALSE;
+    rcpd->is_or    = FALSE;
 
     return (rcpd);
 } /* rc_package_dep_new */
@@ -96,6 +96,8 @@ rc_package_dep_free (RCPackageDep *rcpd)
     g_free (rcpd);
 } /* rc_package_dep_free */
 
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
 RCPackageDepSList *
 rc_package_dep_slist_copy (RCPackageDepSList *old)
 {
@@ -120,6 +122,34 @@ rc_package_dep_slist_free (RCPackageDepSList *rcpdsl)
     g_slist_free (rcpdsl);
 } /* rc_package_dep_slist_free */
 
+char *
+rc_package_dep_to_str (RCPackageDep *dep)
+{
+    char *spec_str;
+    char *str;
+
+    g_return_val_if_fail (dep != NULL, NULL);
+
+    spec_str = rc_package_spec_to_str (&dep->spec);
+    str = g_strconcat (rc_package_relation_to_string (dep->relation, 0),
+                       spec_str,
+                       NULL);
+    g_free (spec_str);
+
+    return str;
+}
+
+const char *
+rc_package_dep_to_str_static (RCPackageDep *dep)
+{
+    static char *str = NULL;
+
+    g_return_val_if_fail (dep != NULL, NULL);
+
+    g_free (str);
+    str = rc_package_dep_to_str (dep);
+    return str;
+}
 
 gboolean
 rc_package_dep_slist_verify_relation (RCPackageDepSList *depl,
@@ -796,11 +826,7 @@ rc_xml_node_to_package_dep (const xmlNode *node)
     } else if (!g_strcasecmp (node->name, "or")) {
         RCPackageDepSList *or_dep_slist = NULL;
         RCDepOr *or;
-#if LIBXML_VERSION < 20000
-        xmlNode *iter = node->childs;
-#else
-        xmlNode *iter = node->children;
-#endif
+        xmlNode *iter = node->xmlChildrenNode;
 
         while (iter) {
             or_dep_slist = g_slist_append (or_dep_slist,

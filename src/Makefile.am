@@ -1,4 +1,11 @@
-INCLUDES = -I$(top_srcdir) -I$(includedir) $(RPMLIB_CFLAGS) $(GLIB_CFLAGS) $(GTK_CFLAGS) $(XML_CFLAGS) -DG_LOG_DOMAIN=\"libredcarpet\" -DSHAREDIR=\""$(datadir)/@PRIVATE_NAMESPACE@"\" -DLIBDIR=\""$(libdir)/@PRIVATE_NAMESPACE@"\"
+INCLUDES = 						\
+	-I$(top_srcdir) -Wall		 		\
+	$(RPMLIB_CFLAGS) 				\
+	$(GLIB_CFLAGS) $(GTK_CFLAGS) 			\
+	$(XML_CFLAGS) 					\
+	-DG_LOG_DOMAIN=\"libredcarpet\" 		\
+	-DSHAREDIR=\""$(datadir)/@PRIVATE_NAMESPACE@"\" \
+	-DLIBDIR=\""$(libdir)/@PRIVATE_NAMESPACE@"\"
 
 noinst_LIBRARIES = libredcarpettmp.a
 
@@ -42,6 +49,20 @@ libredcarpettmp_a_SOURCES =		\
 	rc-package.h			\
 	rc-package-section.c		\
 	rc-package-section.h		\
+	rc-world.c			\
+	rc-world.h			\
+	rc-resolver-info.c		\
+	rc-resolver-info.h		\
+	rc-resolver-context.c		\
+	rc-resolver-context.h		\
+	rc-resolver-compare.c		\
+	rc-resolver-compare.h		\
+	rc-queue-item.c			\
+	rc-queue-item.h			\
+	rc-resolver-queue.c		\
+	rc-resolver-queue.h		\
+	rc-resolver.c			\
+	rc-resolver.h			\
 	rc-verification.c		\
 	rc-verification.h		\
 	rc-verification-private.h	\
@@ -100,8 +121,9 @@ rpmhelper_DATA = \
 	rc-{rpm}.so.0 \
 	rc-{rpm_rpmio}.so.0 \
 	rc-{rpm_rpmio_rpmdb}-4.0.3.so \
+	rc-{rpm_rpmio_rpmdb}-4.0.4.so \
 	rc-{rpm_rpmio_rpmdb}.so
-CLEANFILES += rc-{rpm}.so.0 rc-{rpm_rpmio}.so.0 rc-{rpm_rpmio_rpmdb}-4.0.3.so rc-{rpm_rpmio_rpmdb}.so
+CLEANFILES += rc-{rpm}.so.0 rc-{rpm_rpmio}.so.0 rc-{rpm_rpmio_rpmdb}-4.0.3.so rc-{rpm_rpmio_rpmdb}-4.0.4.so rc-{rpm_rpmio_rpmdb}.so
 endif
 endif
 
@@ -113,6 +135,9 @@ rc-{rpm_rpmio}.so.0:
 
 rc-{rpm_rpmio_rpmdb}-4.0.3.so:
 	./make_stub.sh rc-{rpm_rpmio_rpmdb}-4.0.3.so librpm-4.0.3.so librpmio-4.0.3.so librpmdb-4.0.3.so
+
+rc-{rpm_rpmio_rpmdb}-4.0.4.so:
+	./make_stub.sh rc-{rpm_rpmio_rpmdb}-4.0.4.so librpm-4.0.4.so librpmio-4.0.4.so librpmdb-4.0.4.so
 
 rc-{rpm_rpmio_rpmdb}.so:
 	./make_stub.sh rc-{rpm_rpmio_rpmdb}.so librpm.so librpmio.so librpmdb.so

@@ -1,0 +1,13 @@
+html
+tmpl
+sgml
+*.o
+*.lo
+Makefile.in
+Makefile
+libredcarpet-scan
+*decl*.txt
+*.stamp
+*.args
+*.hierarchy
+

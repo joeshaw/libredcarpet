@@ -1,0 +1,77 @@
+2002-03-01  Jon Trowbridge  <trow@ximian.com>
+
+	* deptestomatic.c (parse_xml_trial): When we construct our
+	resolver, set whether or not we allow virtual conflicts.
+	(parse_xml_test): Look for the allow_virtual_conflicts attribute
+	in the test tag.
+
+2002-02-28  Jon Trowbridge  <trow@ximian.com>
+
+	* deptestomatic.c (load_channel): Manually set the channel name.
+	(soln_cb): Print more info about the scoring of the solutions.
+
+	* deptestomatic.c (parse_xml_trial): Add the ability to verify the
+	installed packages in a trial.
+
+2002-02-27  Jon Trowbridge  <trow@ximian.com>
+
+	* deptestomatic.c (parse_xml_trial): Added the ability to mark
+	channels as subscribed and a channel as current in trials.
+
+2002-02-26  Jon Trowbridge  <trow@ximian.com>
+
+	* deptestomatic.c (assemble_work_cb): Better notation for packages
+	that are to be installed/uninstalled, but are already
+	installed/uninstalled.
+
+2002-02-25  Jon Trowbridge  <trow@ximian.com>
+
+	* deptestomatic.c (soln_cb): Print some basic scoring info.
+
+2002-02-22  Joe Shaw  <joe@ximian.com>
+
+	* deptestomatic.c (load_channel): Add a type field, which is set
+	on the RCChannel.
+	(parse_xml_setup): Parse an optional "type" field, either "helix"
+	or "debian"
+
+2002-02-21  Jon Trowbridge  <trow@ximian.com>
+
+	* deptestomatic.c (parse_xml_trial): Also spew out info about
+	failed solutions.
+
+2002-02-20  Jon Trowbridge  <trow@ximian.com>
+
+	* deptestomatic.c (assemble_work_cb): Did the previous change
+	not take or something?
+	(soln_cb): Replace a _spew_log with a _spew_info.
+
+2002-02-18  Jon Trowbridge  <trow@ximian.com>
+
+	* deptestomatic.c (assemble_work_cb): Make this function a
+	RCMarkedPackageFn.
+
+2002-02-18  Jon Trowbridge  <trow@ximian.com>
+
+	* deptestomatic.c (parse_xml_trial): Add support for an uninstall
+	instruction in trials.
+
+2002-02-17  Jon Trowbridge  <trow@ximian.com>
+
+	* deptestomatic.c (parse_xml_trial): Modified to account for
+	changes to RCResolver and other dependency-related code.
+
+2002-02-16  Joe Shaw  <joe@ximian.com>
+
+	* basic-expressions/solution-24-*.xml: Added a new test case.
+
+2002-02-15  Jon Trowbridge  <trow@ximian.com>
+
+	* basic-exercises: XMLified versions of our test cases from
+	the magic-resolver-prototype.
+	
+	* run-tests.sh: A slightly modified version of our godlike
+	testing script.
+
+	* deptestomatic.c: Initial version of a dependency checker.
+

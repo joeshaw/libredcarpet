@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<test allow_virtual_conflicts="yes">
+<setup>
+  <system file="exercise-27-system.xml"/>
+  <channel name="channel" type="debian" file="exercise-28-packages.xml"/>
+</setup>
+<trial>
+  <install channel="channel" package="sendmail"/>
+</trial>
+</test>

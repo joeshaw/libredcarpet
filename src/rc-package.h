@@ -41,6 +41,11 @@ typedef GHashTable RCPackageHashTableBySpec;
 #include "rc-package-update.h"
 #include "rc-channel.h"
 
+typedef void     (*RCPackageFn) (RCPackage *, gpointer);
+typedef void     (*RCPackagePairFn) (RCPackage *, RCPackage *, gpointer);
+typedef void     (*RCPackageAndSpecFn) (RCPackage *, RCPackageSpec *, gpointer);
+typedef gboolean (*RCPackageAndSpecCheckFn) (RCPackage *, RCPackageSpec *, gpointer);
+
 struct _RCPackage {
     RCPackageSpec spec;
 
@@ -48,9 +53,10 @@ struct _RCPackage {
 
     gboolean installed;
 
+    guint32 file_size;
     guint32 installed_size;
 
-    const RCSubchannel *subchannel;
+    const RCChannel *channel;
 
     /* Filled in by the package manager or dependency XML */
     RCPackageDepSList *requires;
@@ -82,6 +88,11 @@ RCPackage *rc_package_copy (RCPackage *package);
 
 void rc_package_free (RCPackage *package);
 
+char       *rc_package_to_str        (RCPackage *package);
+const char *rc_package_to_str_static (RCPackage *package);
+
+gboolean rc_package_is_installed (RCPackage *package);
+
 void rc_package_slist_free (RCPackageSList *packages);
 
 RCPackageSList *rc_package_slist_sort_by_name (RCPackageSList *packages);
@@ -98,7 +109,6 @@ GSList *rc_package_slist_find_duplicates (RCPackageSList *pkgs);
 RCPackageSList *rc_package_slist_remove_older_duplicates (RCPackageSList *packages,
                                                           RCPackageSList **removed_packages);
 
-RCPackage *rc_xml_node_to_package (const xmlNode *,
-                                   const RCSubchannel *subchannel);
+RCPackage *rc_xml_node_to_package (const xmlNode *, const RCChannel *channel);
 
 #endif /* _RC_PACKAGE_H */

@@ -1,0 +1,8 @@
+*~
+*.mistake
+*.diff
+Makefile
+Makefile.in
+deptestomatic
+.libs
+.deps

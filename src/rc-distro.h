@@ -25,14 +25,14 @@
 #include <glib.h>
 #endif
 
-typedef enum _RCPackageType {
+typedef enum {
     RC_PKG_RPM,
     RC_PKG_DPKG,
     RC_PKG_UNSUPPORTED,
     RC_PKG_UNKNOWN
 } RCPackageType;
 
-typedef enum _RCDistroArch {
+typedef enum {
     RC_ARCH_UNKNOWN = 0,
     RC_ARCH_ANY,
     RC_ARCH_IA32,

@@ -1,8 +1,624 @@
+2002-03-04  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-queue-item.c (rc_queue_item_uninstall_set_dep): Changed from
+	_add_dep; only allow one dep per uninstall item.
+	(require_item_process): s/_add_dep/_set_dep/
+	(conflict_process_cb): s/_add_dep/_set_dep/
+	(uninstall_item_process): Use rc_package_dep_to_str to set
+	dep_str.
+	(uninstall_item_destroy): There is no more dep slist to free.
+	(uninstall_item_to_string): If we have a dep, add it to the
+	string.
+	(uninstall_item_copy): Copy the single dep, not a list.
+
+	* rc-package-dep.c (rc_package_dep_to_str): Added.
+	(rc_package_dep_to_str_static): Added.
+
+2002-03-01  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-package-spec.c (rc_package_spec_get_type): Added.  Tries to
+	figure out whether or not a provide is virtual.
+
+	* rc-resolver-context.c (rc_resolver_context_new_child): Track
+	whether or not we want to allow conflicts w/ virtual provides.
+
+	* rc-queue-item.c (conflict_process_cb): Check our context whether
+	or not we should allow conflicts w/ virtual provides.
+
+	* rc-world.c (rc_world_add_package): Mark our self-provides as
+	being of type 'package'.
+
+	* rc-channel.c (rc_channel_parse_xml): Removed unused variable.
+
+	* rc-world.c (rc_world_check_providing_package): Handle Debian
+	'or'-dependencies.
+
+	* rc-resolver.c (rc_resolver_resolve_dependencies):
+	s/RC_EXTEMELY_NOISY/RC_SPEW/.  There is no reason to have two
+	separate "dump everything to the console with extreme prejudice"
+	environment variables.
+
+	* rc-resolver-queue.c (rc_resolver_queue_process): Ditto.
+
+2002-02-28  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-queue-item.c: Replaced several instances of
+	rc_package_spec_to_str with rc_package_to_str.
+
+	* rc-resolver.c (rc_resolver_resolve_dependencies): Added more
+	RC_EXTREMELY_NOISY spew.
+
+	* rc-resolver-context.c
+	(rc_resolver_context_get_channel_priority): Call
+	rc_channel_get_priority with the arguments in the correct order.
+	Doh!
+	(rc_resolver_context_new_child): OK, once and for all, we do need
+	to hash on package spec.
+
+	* rc-package.c (rc_package_to_str_static): Added.
+	(rc_package_to_str): Added.  Produces a string of the package
+	name w/ the channel name attached.
+
+	* rc-channel.c (rc_channel_get_priority): Fixed to make the
+	current channel implicitly subscribed.
+	(rc_channel_parse_xml): Don't try to read the channel priority
+	here...
+	(rc_xml_node_to_channel): ...do it here instead.  Looking at the
+	correct xmlNode can work wonders.
+
+	* rc-resolver-compare.c (rc_resolver_context_partial_cmp): Get all
+	inequalities pointed in the right direction, so we don't
+	accidentally favor worse solutions.
+	(rc_resolver_context_cmp): Ditto.
+
+	* rc-queue-item.c (install_item_process): Don't generated the
+	"needed-by" info on upgrades.
+	(require_item_process): When upgrading due to a codependency,
+	explicity attach a "needed-by" log item for the package that
+	triggering the upgrade.
+
+	* rc-resolver.c (rc_resolver_free): Free ->packages_to_verify.
+	(rc_resolver_verify_system): Added.  Adds all system packages to
+	->packages_to_verify, then calls rc_resolver_resolve_dependencies.
+	(rc_resolver_resolve_dependencies): Iterate across
+	->packages_to_verify and add them to our initial queue.
+
+	* rc-resolver-queue.c (rc_resolver_queue_add_package_to_verify):
+	Added.  Walks across the package's list of requires and conflicts
+	and converts them into queue items.
+
+	* rc-world.c (rc_world_foreach_package): Added.
+
+2002-02-28  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c (load_rpm_syms): RPM 4.0.4 marked two functions that
+	we need as static, making them unavailable through dlsym.  The
+	answer turns out to be to dlsym a global virtual function table
+	and find the functions we need through absolute offset.  Ick.
+	(load_fake_syms): same fix, one less dlsym, for static linking
+	(rc_rpmman_init): add the RPM 4.0.4 specific stub file to the
+	list, use rpmEVR rather than RPMVERSION to get the version of the
+	RPM library.
+
+	* Makefile.am: build an RPM 4.0.4 specific stub file
+
+2002-02-27  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-package-info.c (rc_channel_parse_debian): Store packages
+	in our RCWorld as we parse them.
+
+	* rc-world.c (rc_world_foreach_providing_package): If we are
+	handed an or-dependency, split it up and call
+	rc_world_foreach_providing_package on each of the component
+	pieces.
+
+	* rc-resolver.c (rc_resolver_set_current_channel): Added.
+	(rc_resolver_add_subscribed_channel): Added.
+	(rc_resolver_resolve_dependencies): Store the current/subscribed
+	channel info in the context.
+
+	* rc-resolver-queue.c (copy_queue_except_for_branch): Get
+	priorities from the context instead of directly from the channel.
+
+	* rc-resolver-info.c (rc_resolver_info_merge): Use a hash to make
+	sure that our package list contains only unique entries when we
+	merge.
+	(rc_resolver_info_to_str): Add default stringifications for our
+	new types.
+	(rc_resolver_info_conflicts_with_new):
+	s/NEEDED_BY/CONFLICTS_WITH/.  The peril of cut&pasting code...
+	(rc_resolver_info_depends_on_new): Added.
+
+	* rc-resolver-context.c (rc_resolver_context_install_package):
+	Remove "favored" arg, get priorities from the new, improved
+	rc_resolver_context_get_channel_priority function.
+	(rc_resolver_context_upgrade_package): Ditto.
+	(rc_resolver_context_get_channel_priority): Added.  Use our
+	locally stored info about current/subscribed channels and
+	rc_channel_get_priority to compute priorities properly.
+
+	* rc-queue-item.c (rc_queue_item_free): Free pending info items.
+	(rc_queue_item_copy): Copy pending info items.
+	(rc_queue_item_add_info): Added.  Allows a pending info item to be
+	attached to a queue item.  The idea is that this info item will be
+	logged into the context if the queue item is successfully
+	processed.
+	(rc_queue_item_log_info): Added.  Moves any pending info items out
+	of the queue item and into the context.
+	(install_item_process): Use rc_r_c_install_package's new
+	signature.  Properly log our NEEDED_BY info.  Produce better
+	verbose logging in the case of upgrades.
+	(require_item_process): Log DEPENDS_ON info.
+	(conflict_process_cb): Log CONFLICTS_WITH info.
+	(uninstall_process_cb): Track the "lost" package in our require
+	queue item.
+	(uninstall_item_process): Log pending queue items on success.
+
+	* rc-channel.c (rc_channel_new): Set the various channel
+	priorities to -1, so that the default values will be used if no
+	other value is set.
+	(rc_channel_get_priority): Changed to return different priorities
+	depending on whether or not the channel is current or subscribed.
+
+2002-02-26  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-queue-item.c (codependent_pair): Recognize codependent pairs
+	by name.
+	(require_item_process): An evil optimization -- when doing an
+	upgrade involving codependency (that we can recognize via the
+	codependent_pair fn)q, don't explore the "remove" branch.
+	(uninstall_item_process): Avoid copying the list of require items,
+	instead just add them directly to the to the *new_items list.
+
+	* rc-package-spec.c (rc_package_spec_hash): As long as we are
+	optimizing, we might as well be able to do this hash without any
+	function calls.
+
+	* rc-resolver-context.c (rc_resolver_context_new_child): Since we
+	now do proper dup-checking in our rc_world_foreach functions, we
+	can go back to hashing on package pointers.
+	(rc_resolver_context_get_status): Cache the results of the last
+	get_status call, and return it w/o any hash lookups if we ask for
+	the same info in the next call.  This actually happens a lot, and
+	this optimization lets us avoid hash lookups in about 50% of all
+	cases.
+	(rc_resolver_context_set_status): Update the cache if we change
+	the status of the last package we called get_status on.
+
+2002-02-25  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-resolver-queue.c (rc_resolver_queue_add_package_to_install):
+	Remove used variable.
+
+	* rc-resolver-context.c (upgrade_pkg_cb): Make sure to_be_upgraded
+	isn't NULL.
+
+	* rc-queue-item.c (rc_queue_item_new_install): Make sure upgrades
+	!= package.
+
+	* rc-resolver-queue.c (rc_resolver_queue_add_package_to_install):
+	We don't need to check if this install is an upgrade here, since
+	it now happens automatically when we construct a install item.
+
+	* rc-queue-item.c (rc_queue_item_new_install): Check if this is an
+	upgrade, and do the appropriate magic, every time we construct an
+	install item.
+
+	* rc-util.c (rc_maybe_merge_paths): g_strconcat-ing printf
+	format strings is not a good idea.
+
+	* rc-package-spec.c (rc_package_spec_hash): Constructing the whole
+	RCPackageSpec string only to call g_str_hash is pretty wasteful,
+	so I've changed this to build up a hash value out of the spec's
+	various string elements.
+	(rc_package_spec_to_str_static): Changed to just call
+	rc_package_spec_to_str.  This avoids a bunch of snprintfs, but
+	means that the previous pointer becomes invalid each time this is
+	called.  But this isn't really a problem, since that pointer would
+	contain the wrong answer anyway under the old implementation.
+	(rc_package_spec_version_to_str_static): Ditto.
+	(rc_package_spec_to_str): Replaced g_strdup_printf with
+	g_strconcat.
+	(rc_package_spec_version_to_str): Ditto.
+
+	* rc-queue-item.c: Replaced g_strdup_printf with g_strconcat in
+	a whole bunch of places.
+
+	* rc-resolver-context.c (rc_resolver_context_install_package):
+	Replaced g_strdup_printf with g_strconcat.
+	(rc_resolver_context_uninstall_package): Ditto.
+
+	* rc-util.c (rc_mkdir): Replaced g_strdup_printf with g_strconcat.
+	(rc_rmdir): Ditto.
+	(rc_is_program_in_path): Ditto.
+	(rc_maybe_merge_paths): Ditto.
+
+	* rc-resolver-context.c (rc_resolver_context_foreach_upgrade):
+	Implemented.
+	(rc_resolver_context_foreach_uninstall): Build a hash of all of
+	our upgrade-related removals, and use it to make sure that we
+	don't report and of those as uninstalls.
+
+	* rc-resolver-info.c (rc_resolver_info_merge): Merge misc info
+	items with identical message strings.
+
+	* rc-queue-item.c (install_item_process): Track the upgraded
+	package when we generate an uninstall item associated with an
+	upgrade.
+	(require_item_process): If we need to remove items because of lost
+	dependencies associated with an upgrade, make a branch and try
+	upgrading the to-be-removed items.  (This is the foo/foo-devel
+	co-dependency case.)
+	(require_item_process): The requiring package in the require item
+	is now a singleton, not a list.
+	(require_item_copy): Ditto.
+	(rc_queue_item_require_add_package): Ditto.
+	(uninstall_process_cb): Track the upgraded package.  Don't try to
+	consolidate require items --- consolidation will happen when info
+	items are merged.
+	(uninstall_item_process): Track the upgraded package.
+	(uninstall_item_copy): Ditto.
+	(rc_queue_item_uninstall_set_upgraded_to): Ditto.
+
+	* rc-resolver-context.c (rc_resolver_context_foreach_info): Add a
+	merging pass.
+	
+	* rc-resolver-info.c (rc_resolver_info_copy): Added.
+	(rc_resolver_info_conflicts_with_new): Added.
+
+	* rc-resolver-queue.c (rc_resolver_queue_process): 
+
+	* rc-world.c (rc_world_foreach_upgrade): Added.
+	(rc_world_add_package): Use _slist_insert instead of
+	_slist_insert_unique.
+
 2002-02-23  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-package-update.c (rc_xml_node_to_package_update): use
 	rc_maybe_merge_paths instead of g_strconcat, so that we can
 	handle absolute URLs in history file paths.
+
+2002-02-22  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-resolver-queue.c (rc_resolver_queue_add_package_to_install):
+	Print a message if we try to install an already-installed package.
+	(rc_resolver_queue_process): Spew lots of debugging info if
+	the RC_EXTREMELY_NOISY env variable is set.
+
+	* rc-package-info.c (rc_channel_parse_debian): Store the channel
+	in the RCPackages we construct.
+
+	* rc-world.c (rc_world_foreach_package_by_name): Filter out
+	non-installed duplicates of an installed package.
+	(rc_world_foreach_providing_package): Ditto.
+	(rc_world_check_providing_package): Ditto.
+	(rc_world_foreach_requiring_package): Ditto.
+
+	* rc-queue-item.c (conflict_process_cb): Check package equality
+	using rc_package_spec_equal, not pointer equality.
+
+	* rc-queue-item.c (uninstall_process_cb): Group multiple packages
+	with a common requirement.
+
+	* rc-world.c (remove_package_cb): Comment out rc_package_free.
+	Why does this fix our memory corruption problem?  Where else is it
+	being freed?
+	(rc_world_spew): Added.
+
+	* rc-resolver-context.c (dup_name_check_cb): Make sure we don't
+	mistake two identical packages for a parallel install situation.
+
+2002-02-21  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-channel.c: Removed misleading comment about priorities.
+
+	* rc-resolver-info.c (rc_resolver_info_to_str): Renamed from
+	rc_resolver_info_to_text.
+	(rc_resolver_info_packages_to_str): Added.  Return a string with
+	comma-separated list of the names of the packages in package_list.
+	(rc_resolver_info_needed_by_new): Added.
+	(rc_resolver_info_needed_add): Added.
+	(rc_resolver_info_needed_add_slist): Added.
+
+	* rc-resolver-context.c (rc_resolver_context_is_parallel_install):
+	Added.  Check to see if a package with the same name is
+	to-be-installed.
+	(rc_resolver_context_install_package): Move the parallel install
+	check logic into its own function.
+
+	* rc-queue-item.c (install_item_process): Make our text-string log
+	messages have priority _VERBOSE.  Log what packages need the
+	installed package.
+	(rc_queue_item_install_add_needed_by): Added.
+	(require_process_cb): Packages that would be parallel installs do
+	not satisfy requires, since they are uninstallable.
+	(require_item_process): Track the packages that this requirement
+	comes from by passing them along to the newly-created install
+	items.
+
+2002-02-20  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-resolver-queue.c (rc_resolver_queue_add_package_to_install):
+	If another version of the package is already installed, mark our
+	install queue item as being an upgrade.
+
+	* rc-resolver-context.c (rc_resolver_context_unref): Free info
+	items in log list.
+	(rc_resolver_context_install_package): Replaced log entries with
+	info items.
+	(rc_resolver_context_uninstall_package): Track if we are part of
+	an upgrade, adjust stats accordingly.  Replaced log entries with
+	info items.
+	(rc_resolver_context_invalidate): Replaced log entry with info
+	item.
+	(rc_resolver_context_add_info): Replaces _add_log_entry.
+	(rc_resolver_context_add_info_str): Added.  A convenience function
+	that creates a misc info item and adds it to the log.
+	(rc_resolver_context_foreach_info): Replaces _foreach_log_entry.
+	(rc_resolver_context_spew_info): Replaces _spew_log.
+
+	* rc-queue-item.c (install_item_process): If this is an upgrade,
+	add a request to remove the currently-installed version.
+	(rc_queue_item_install_set_upgrade_package): Added.  Specify
+	that this install is upgrading (or downgrading, for that matter)
+	the given package.
+	(require_item_process): Replaced log entry with info items.
+	(conflict_process_cb): Replaced log entries with info items.
+	(uninstall_item_process): Replaced log entries with info items.
+	(rc_queue_item_uninstall_is_part_of_upgrade): Added.  Indicates
+	that this uninstall is really half of an upgrade.
+
+	* rc-world.c (remove_package_struct_cb): Check that our_struct !=
+	NULL.
+
+	* rc-resolver-queue.c (rc_resolver_queue_add_package_to_install):
+	If there is another version of the package already installed,
+	remove the old version.  (In other words, do the right thing for
+	upgrades.)
+
+	* rc-resolver-context.c (rc_resolver_context_new_child): Hash by
+	package spec, not pointer.
+	(rc_resolver_context_install_package): Don't flag a package as
+	needing to be installed if another package of the same name is
+	already scheduled for installation.
+
+2002-02-18  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-resolver-queue.c (copy_queue_except_for_branch): Use new
+	generalized branches.
+	(rc_resolver_queue_split_first_branch): Use new generalized
+	branches.
+
+	* rc-resolver.c (rc_resolver_add_packages_to_install_from_slist): Added.
+	(rc_resolver_add_packages_to_remove_from_slist): Added.
+
+	* rc-resolver-context.c (rc_resolver_context_install_package):
+	Attach packages to log entries.
+	(rc_resolver_context_upgrade_package): Attach packages to log
+	entries.
+	(rc_resolver_context_uninstall_package): Attach packages to log
+	entries.
+	(rc_resolver_context_foreach_marked_package): Change callback
+	function type to RCMarkedPackageFn.
+	(rc_resolver_context_add_log_entry): Allow a package to be tied to
+	a log entry.
+	(rc_resolver_context_foreach_log_entry): Allow the log messages to
+	be selected by package.
+	(rc_resolver_context_log_to_string): Added.  Get the log messages
+	(possibly for a single package) as one big string.
+	(rc_resolver_context_foreach_install): Added.
+	(rc_resolver_context_foreach_uninstall): Added.
+	(rc_resolver_context_invalidate): Attach NULL package to log
+	entry.
+	(rc_resolver_context_spew_log): Changed for
+	rc_resolver_context_foreach_uninstall's new signature.
+
+	* rc-queue-item.c (rc_queue_item_is_redundant): Added.
+	(rc_queue_item_is_satisfied): Added.
+	(item_slist_to_string): Added.
+	(install_item_is_satisfied): Added.
+	(install_item_process): Attach package to log entry.
+	(install_item_destroy): Remove our needed-by list.
+	(install_item_copy): Copy some stuff I forgot to copy before.
+	Doh.
+	(rc_queue_item_new_install): Initialize ->is_satisfied.
+	(require_item_process): Attach packages to log entries.  Use the
+	new-style generalized branches.
+	(require_item_copy): Copy the remove-only flag.
+	(branch_item_process): Generalized processing no longer assumes
+	that a branch is just a set of installs.
+	(branch_item_destroy): Don't leak the branch items.
+	(branch_item_copy): Generalized.
+	(branch_item_to_string): Generalized.
+	(rc_queue_item_branch_add_item): Added, replaces
+	rc_queue_item_add_package.
+	(conflict_process_cb): Attach packages to log entries.
+	(uninstall_item_process): Attach packages to log entries.
+	(uninstall_item_copy): Copy the remove-only flag.
+
+	* rc-package.c: Include stdlib.h to get rid of warning.
+
+2002-02-18  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-world.c (rc_world_find_installed_version): Added.
+
+	* rc-resolver.c (rc_resolver_resolve_dependencies): When removing
+	packages, always do so in remove-only mode.
+
+	* rc-resolver-queue.c (rc_resolver_queue_add_package_to_remove):
+	Add remove_only_mode arg, which causes the approrpriate flag to be
+	set in the uninstall item that is added to the queue.
+
+	* rc-resolver-context.c (rc_resolver_context_package_is_absent):
+	Doh!  Replaced a == with a != in a g_return_val_if_fail.
+
+	* rc-queue-item.c (rc_queue_item_require_set_remove_only): Added.
+	(rc_queue_item_uninstall_set_remove_only): Added.
+	(require_item_process): Modified so that remove-only-mode require
+	items will only generate (set-remove-only) uninstall items, and
+	will never try to pull in alternative providers.
+	(uninstall_process_cb): Make sure that set-remove-only uninstall
+	items generate set-remove-only require items.
+
+2002-02-17  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-resolver.c (remove_head): The type of thing that really
+	should be one line in glib (and is in 2.0, IIRC).
+	(rc_resolver_resolve_dependencies): Store invalid solutions in
+	their own list.  The processing of pending_queues has been
+	re-designed to do on-the-fly scoring and pruning.
+	Also, I've dropped our iterator functions.  For now, just read
+	the lists and other data directly from the struct (ugh).
+
+	* rc-resolver-queue.c (copy_queue_except_for_branch): Take a
+	penalty value as an argument, and attach it to the created install
+	item.
+	(rc_resolver_queue_split_first_branch): Track penalties, pass them
+	along to copy_queue_except_for_branch.
+	
+	* rc-resolver-context.c (rc_resolver_context_new_child): Copy
+	stats from the parent.
+	(rc_resolver_context_set_status): I've moved the intelligence out
+	of this routine and into the _(un)?install_package functions.
+	(rc_resolver_context_get_status): Simplified, no longer recursive.
+	(rc_resolver_context_install_package): Added.  Updates info
+	relevant to scoring.
+	(rc_resolver_context_upgrade_package): Added.  Updates info
+	relevant to scoring.  Currently unused.
+	(rc_resolver_context_uninstall_package): Added.  Updates info
+	relevant to scoring.
+	(rc_resolver_context_add_channel_priority): Added.
+	(rc_resolver_context_add_log_entry): If the log entry duplicates
+	the previous entry, drop it.
+	(requirement_met_cb): Return TRUE until we find a match.
+	(rc_resolver_context_requirement_is_met): Changed to use
+	rc_world_check_providing_package.
+
+	* rc-queue-item.c (install_item_process): Changed to use
+	rc_resolver_context_install_package.
+	(rc_queue_item_install_set_channel_priority): Added.
+	(rc_queue_item_install_get_channel_penalty): Added.
+	(rc_queue_item_install_set_other_penalty): Added.
+	(rc_queue_item_install_get_other_penalty): Added.
+	(uninstall_item_process): Changed to use
+	rc_resolver_context_uninstall_package.
+
+	* rc-package.c (rc_package_is_installed): Added.
+	(rc_xml_node_to_package): Parse file size and installed size out
+	of the package XML.
+
+	* rc-channel.c (rc_channel_priority_parse): Added.  Convert a
+	string into a priority rating.
+	(rc_channel_new): Set ->priority and ->favored_priority to the
+	default values.
+	(rc_channel_get_priority): Added.  A simple accessor.
+	(rc_channel_get_favored_priority): Ditto.
+	(rc_channel_parse_xml): Parse channel priorities.
+
+	* rc-world.c (rc_world_check_providing_package): Added.  This is
+	like rc_world_foreach_providing_package, except that it terminates
+	when the callback function returns FALSE.
+	(rc_world_foreach_requiring_package): Deal with list items with
+	NULL data.
+	(rc_world_foreach_providing_package): Deal with list items with
+	NULL data.
+	(rc_world_remove_packages): Implemented.
+
+2002-02-15  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-queue-item.c (conflict_process_cb): Add a missing break that
+	was causing us to fall through into our default:
+	g_assert_not_reached () case.
+
+	* rc-channel.c (rc_xml_node_process): Moved our call to
+	rc_world_add_package down into the if (package) block so we don't
+	get warnings on empty channels.
+
+	* rc-channel.h: Added 'priority' to RCChannel struct.
+	(Still not used for anything.)
+
+	* rc-package.h: Added RCPackageAndSpecFn.
+
+	* rc-world.c: Finished initial implementation.
+
+	* rc-resolver-context.c: Finished initial implementation.
+
+	* rc-queue-item.c: Finished initial implementation.
+
+	* rc-resolver-queue.c: Finished initial implementation.
+
+	* libredcarpet.h: Including rc-resolver.h, rc-world.h.
+
+2002-02-12  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-resolver-queue.c: Added.  Still under development.
+
+	* rc-queue-item.c: Added.  Still under development.
+
+	* rc-resolver-context.c: Added.  Still under development.
+
+	* rc-world.c: Added.  Still under development.
+
+	* rc-package-dep.h: Added RCPackageAndDepFn typedef.
+
+	* rc-package.h: Added RCPackageFn typedef.
+
+2002-02-05  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-channel.c: Removed RCSubchannel struct and functions.
+	(rc_channel_new): Initialize ->package, ->dep_table and
+	->dep_name_table hashes.
+	(rc_channel_free): Free the ->package, ->dep_table and
+	->dep_name_table hashes.  Removed subchannel stuff.
+	(rc_xml_node_process): This used to be rc_channel_get_subchannel.
+	Removed all subchannelisms.
+	(rc_xml_node_to_channel): Removed subchannel stuff.  Call
+	rc_xml_node_process to do the actual work.
+
+	* rc-deps-private.h: Remove pref argument from all prototypes.
+
+	* rc-deps-util.c (rc_dep_fix_system): Removed pref argument in
+	call to rc_dep_resolution_new.
+	(rc_dep_or_process_system_and_channels): Removed subchannel logic,
+	get channel directly from package.
+
+	* rc-deps.c: Drop pref arguments everywhere -- they were used for
+	selecting subchannels, which no longer exist.
+	(deps_find_provide): Get channel directly from package.
+	(deps_update_install_list): Get channel directly from package.
+
+	* rc-package-dep.c (rc_xml_node_to_package_dep): Removed libxml
+	version check, using ->xmlChildrenNode instead.
+
+	* rc-package-info.c: Renamed rc_subchannel_foo functions to
+	rc_channel_foo, and removed all subchannel-related logic.
+	(pkginfo_find_package_with_constraint): Removed subchannel-related
+	stuff, including the max_pref argument.
+	(pkginfo_find_package): Removed the max_pref argument and fix our
+	call to pkginfo_find_package_with_constraint.
+
+	* rc-package-set.c (rc_package_set_parse): Changed to use
+	->xmlChildrenNode.
+
+	* rc-package-update.c (rc_xml_node_to_package_update): Get the
+	channel directly from the package struct.  Changed to use
+	->xmlChildrenNode.
+
+	* rc-package.c (rc_package_copy): s/subchannel/channel/.
+	(rc_xml_node_to_package): s/subchannel/channel/.  Removed libxml
+	version check, using ->xmlChildrenNode instead.
+
+	* rc-package.h: Replace occurances of RCSubchannel by
+	RCChannel.
+
+	* rc-pretty-name.c (rc_pretty_name_parse_xml): Removed libxml
+	version check, using ->xmlRootNode and ->xmlChildrenNode instead.
+
+	* rc-rpmman.c (rc_rpmman_query_file): Wrap some unreachable code
+	in #if 0/#endif.
+
+	* xml-util.c (xml_get_value): Removed #if check for libxml version,
+	using ->xmlChildrenNode instead.
 
 2002-02-06  Vladimir Vukicevic  <vladimir@ximian.com>
 

@@ -23,24 +23,20 @@
 
 #include <glib.h>
 
-typedef enum _RCVerificationType RCVerificationType;
-
-enum _RCVerificationType {
+typedef enum {
     RC_VERIFICATION_TYPE_SIZE,
     RC_VERIFICATION_TYPE_MD5,
     RC_VERIFICATION_TYPE_GPG,
-};
+} RCVerificationType;
 
-typedef enum _RCVerificationStatus RCVerificationStatus;
-
-enum _RCVerificationStatus {
+typedef enum {
     /* The file is known to be bad */
     RC_VERIFICATION_STATUS_FAIL,
     /* The status of the file cannot be determined */
     RC_VERIFICATION_STATUS_UNDEF,
     /* The file is verifiably ok */
     RC_VERIFICATION_STATUS_PASS,
-};
+} RCVerificationStatus;
 
 typedef struct _RCVerification RCVerification;
 

@@ -25,12 +25,6 @@
 
 #include <gnome-xml/tree.h>
 
-typedef struct _RCSubchannel RCSubchannel;
-
-typedef GSList RCSubchannelSList;
-
-typedef enum _RCChannelType RCChannelType;
-
 typedef struct _RCChannel RCChannel;
 
 typedef GSList RCChannelSList;
@@ -38,37 +32,28 @@ typedef GSList RCChannelSList;
 #include "rc-package.h"
 #include "rc-package-set.h"
 
-struct _RCSubchannel {
-    gchar *name;
-    guint32 preference;
-
-    const RCChannel *channel;
-
-    RCPackageHashTableByString *packages;
-
-    RCPackageHashTableBySpec *dep_table;
-    RCPackageHashTableByString *dep_name_table;
-};
-
-RCSubchannel *rc_subchannel_new (void);
-
-void rc_subchannel_free (RCSubchannel *rcs);
-
-void rc_subchannel_slist_free(RCSubchannelSList *rcsl);
-
-enum _RCChannelType {
-    RC_CHANNEL_TYPE_HELIX,      /* packageinfo.xml */
-    RC_CHANNEL_TYPE_DEBIAN,     /* debian Packages.gz */
-    RC_CHANNEL_TYPE_REDHAT,     /* redhat up2date RDF [?] */
+/*
+  HELIX   packageinfo.xml
+   DEBIAN  debian Packages.gz 
+   REDHAT  up2date RDF [?]
+*/
+typedef enum {
+    RC_CHANNEL_TYPE_HELIX,  
+    RC_CHANNEL_TYPE_DEBIAN,
+    RC_CHANNEL_TYPE_REDHAT,   
     RC_CHANNEL_TYPE_UNKNOWN,
     RC_CHANNEL_TYPE_LAST
-};
+} RCChannelType;
 
 struct _RCChannel {
     guint32 id;
     gchar *name;
     gchar *description;
     guint32 tier;
+                           /* priority if channel is... */
+    gint priority;         /* subscribed */
+    gint priority_unsubd;  /* unsubscribed */
+    gint priority_current; /* the current channel */
 
     gboolean mirrored;
     gboolean featured;
@@ -93,14 +78,22 @@ struct _RCChannel {
 
     time_t last_update;
 
-    RCSubchannelSList *subchannels;
-
     RCPackageSetSList *package_sets;
+
+    RCPackageHashTableByString *packages;
+    RCPackageHashTableBySpec *dep_table;
+    RCPackageHashTableByString *dep_name_table;
 };
+
+int rc_channel_priority_parse (const char *);
 
 RCChannel *rc_channel_new (void);
 
 void rc_channel_free (RCChannel *rcc);
+
+int rc_channel_get_priority         (const RCChannel *,
+                                     gboolean is_subscribed,
+                                     gboolean is_current);
 
 void rc_channel_slist_free(RCChannelSList *rccl);
 
@@ -113,8 +106,6 @@ RCChannel *rc_channel_get_by_id(RCChannelSList *channels, int id);
 RCChannel *rc_channel_get_by_name(RCChannelSList *channels, char *name);
 
 gint rc_channel_compare_func (gconstpointer a, gconstpointer b);
-
-RCSubchannel *rc_channel_get_subchannel (RCChannel *channel, guint preference);
 
 guint rc_xml_node_to_channel (RCChannel *, xmlNode *);
 

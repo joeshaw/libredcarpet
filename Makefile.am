@@ -1,4 +1,10 @@
-SUBDIRS = src
+# if ENABLE_GTK_DOC
+# DOC_DIR=doc
+# else
+DOC_DIR=
+# endif
+
+SUBDIRS = src dependency-tests $(DOC_DIR)
 
 gpgdir = $(datadir)/@PRIVATE_NAMESPACE@
 gpg_DATA = red-carpet.gpg

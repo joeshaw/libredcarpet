@@ -1,3 +1,13 @@
+2002-03-01  Jon Trowbridge  <trow@ximian.com>
+
+	* Makefile.am: Don't add doc to SUBDIRS if the gtk-docs aren't
+	enabled.
+
+	* configure.in: Add a condition for enabling gtk-doc docs.
+	Build doc/Makefile.
+
+	* Makefile.am (SUBDIRS): Added doc.
+
 2001-12-13  Joe Shaw  <joe@ximian.com>
 
 	Patch from Frank Belew (frb@ximian.com):

@@ -77,24 +77,18 @@ rc_package_set_parse (char *buf,
         g_byte_array_free (ba, TRUE);
     }
     else {
-	doc = xmlParseMemory(buf, strlen(buf));
+        doc = xmlParseMemory(buf, strlen(buf));
     }
 
-#if LIBXML_VERSION  < 20000
-    root = doc->root;
-#else
-    root = xmlDocGetRootElement (doc);
-#endif
+    root = doc->xmlRootNode;
+
     if (!doc) {
         g_warning ("Unable to parse package set list.");
         return NULL;
     }
 
-#if LIBXML_VERSION  < 20000
-    node = root->childs;
-#else
-    node = root->children;
-#endif
+    node = root->xmlChildrenNode;
+
     while (node) {
         RCPackageSet *rps;
         xmlNode *xmn;
@@ -109,11 +103,8 @@ rc_package_set_parse (char *buf,
         rps->name = xml_get_value (node, "name");
         rps->description = xml_get_value (node, "description");
 
-#if LIBXML_VERSION < 20000
-        xmn = node->childs;
-#else
-        xmn = node->children;
-#endif
+        xmn = node->xmlChildrenNode;
+
         while (xmn) {
             if (strcasecmp (xmn->name, "include") == 0) {
                 gchar *temp;

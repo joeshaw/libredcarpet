@@ -36,9 +36,7 @@
 #define RC_EXIT ;
 #endif
 
-typedef enum _RCDebugLevel RCDebugLevel;
-
-enum _RCDebugLevel {
+typedef enum {
     RC_DEBUG_LEVEL_NONE     = 0,
     RC_DEBUG_LEVEL_ERROR    = 1,
     RC_DEBUG_LEVEL_CRITICAL = 2,
@@ -46,7 +44,7 @@ enum _RCDebugLevel {
     RC_DEBUG_LEVEL_MESSAGE  = 4,
     RC_DEBUG_LEVEL_INFO     = 5,
     RC_DEBUG_LEVEL_DEBUG    = 6,
-};
+} RCDebugLevel;
 
 guint rc_debug_get_display_level (void);
 

@@ -151,6 +151,9 @@ if test "x$enable_backend_dpkg" = "xyes"; then
   AC_DEFINE(ENABLE_DPKG)
 fi
 
+dnl gtk-doc
+AM_CONDITIONAL(ENABLE_GTK_DOC, test x$enable_gtk_doc = xyes)
+
 dnl libxml
 AC_SUBST(XML_LIBS)
 AC_SUBST(XML_CFLAGS)
@@ -182,7 +185,11 @@ LDFLAGS="$save_LDFLAGS"
 AC_OUTPUT([
 Makefile
 src/Makefile
+dependency-tests/Makefile
 ])
+
+# Removed cause it's busted-ass.
+# doc/Makefile
 
 echo "
 Configuration:

@@ -1,0 +1,3 @@
+>!> Installing sendmail from channel channel
+>!> Solution #1:
+>!> +sendmail-8.9.3-23 -exim-3.22-2 |-exim-3.12-10.2 |-masqmail-0.0.12-3 |-postfix-0.0.19991231pl11-2 |-ssmtp-2.33-1 |-zmailer-2.99.51.52pre3-2 

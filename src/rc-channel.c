@@ -20,81 +20,64 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <ctype.h>
 #include <glib.h>
 
 #include <gnome-xml/tree.h>
 
+#include "rc-world.h"
 #include "rc-channel.h"
 #include "rc-util.h"
 #include "rc-package-info.h"
 #include "rc-debug.h"
 #include "xml-util.h"
 
-RCSubchannel *
-rc_subchannel_new (void)
+#define DEFAULT_CHANNEL_PRIORITY 1600
+#define DEFAULT_CURRENT_CHANNEL_PRIORITY 12800
+#define UNSUBSCRIBED_CHANNEL_ADJUSTMENT(x) ((x)/2)
+#define BAD_CHANNEL_PRIORITY     0 
+
+static struct ChannelPriorityTable {
+    const char *str;
+    int priority;
+} channel_priority_table[] = { { "private",     6400 },
+                               { "ximian",      3200 },
+                               { "distro",      1600 },
+                               { "third_party",  800 },
+                               { "preview",      400 },
+                               { "untested",     200 },
+                               { "snapshot",     100 },
+                               { NULL,             0 } };
+
+int
+rc_channel_priority_parse (const char *priority_str)
 {
-    RCSubchannel *subchannel;
+    const char *c;
+    int i;
+    gboolean is_numeric = TRUE;
 
-    RC_ENTRY;
+    if (priority_str && *priority_str) {
 
-    subchannel = g_new0 (RCSubchannel, 1);
+        c = priority_str;
+        while (*c && is_numeric) {
+            if (! isdigit (*c))
+                is_numeric = FALSE;
+        }
+        if (is_numeric) {
+            return atoi (priority_str);
+        }
+        
+        for (i=0; channel_priority_table[i].str != NULL; ++i) {
+            if (! g_strcasecmp (channel_priority_table[i].str, priority_str))
+                return channel_priority_table[i].priority;
+        }
 
-    RC_EXIT;
+    }
 
-    return (subchannel);
-} /* rc_subchannel_new */
-
-static gboolean
-remove_helper (gchar *name, RCPackage *package, gpointer user_data)
-{
-    RC_ENTRY;
-
-    rc_package_free (package);
-
-    RC_EXIT;
-
-    return (TRUE);
+    return DEFAULT_CHANNEL_PRIORITY;
 }
 
-void
-rc_subchannel_free (RCSubchannel *subchannel)
-{
-    RC_ENTRY;
-
-    g_free (subchannel->name);
-
-    /* Everything in this table is a pointer into the elements of the
-       packages hash table, so it'll get free'd in a few lines */
-    if (subchannel->dep_table) {
-        rc_hash_table_slist_free (subchannel->dep_table);
-        g_hash_table_destroy (subchannel->dep_table);
-    }
-    if (subchannel->dep_name_table) {
-        rc_hash_table_slist_free (subchannel->dep_name_table);
-        g_hash_table_destroy (subchannel->dep_name_table);
-    }
-
-    g_hash_table_foreach_remove (subchannel->packages,
-                                 (GHRFunc) remove_helper, NULL);
-
-    g_hash_table_destroy (subchannel->packages);
-
-    g_free (subchannel);
-
-    RC_EXIT;
-} /* rc_subchannel_free */
-
-void
-rc_subchannel_slist_free(RCSubchannelSList *subchannel_slist)
-{
-    RC_ENTRY;
-
-    g_slist_foreach(subchannel_slist, (GFunc) rc_subchannel_free, NULL);
-
-    g_slist_free(subchannel_slist);
-
-    RC_EXIT;
-} /* rc_subchannel_slist_free */
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 RCChannel *
 rc_channel_new (void)
@@ -107,10 +90,32 @@ rc_channel_new (void)
 
     channel->type = RC_CHANNEL_TYPE_HELIX; /* default */
 
+    channel->priority = -1;
+    channel->priority_unsubd = -1;
+    channel->priority_current = -1;
+
+    channel->packages = g_hash_table_new (g_str_hash, g_str_equal);
+    channel->dep_table = g_hash_table_new (rc_package_spec_hash,
+                                           rc_package_spec_equal);
+    channel->dep_name_table = g_hash_table_new (g_str_hash, g_str_equal);
+
+
     return (channel);
 
     RC_EXIT;
 } /* rc_channel_new */
+
+static gboolean
+remove_helper (gchar *name, RCPackage *package, gpointer user_data)
+{
+    RC_ENTRY;
+
+    rc_package_free (package);
+
+    RC_EXIT;
+
+    return (TRUE);
+}
 
 void
 rc_channel_free (RCChannel *channel)
@@ -134,7 +139,21 @@ rc_channel_free (RCChannel *channel)
 
     g_free (channel->icon_file);
 
-    rc_subchannel_slist_free (channel->subchannels);
+    if (channel->dep_table) {
+        rc_hash_table_slist_free (channel->dep_table);
+        g_hash_table_destroy (channel->dep_table);
+    }
+
+    if (channel->dep_name_table) {
+        rc_hash_table_slist_free (channel->dep_name_table);
+        g_hash_table_destroy (channel->dep_name_table);
+    }
+
+    if (channel->packages) {
+        g_hash_table_foreach_remove (channel->packages,
+                                     (GHRFunc) remove_helper, NULL);
+        g_hash_table_destroy (channel->packages);
+    }
 
     rc_package_set_slist_free (channel->package_sets);
 
@@ -142,6 +161,38 @@ rc_channel_free (RCChannel *channel)
 
     RC_EXIT;
 } /* rc_channel_free */
+
+int
+rc_channel_get_priority (const RCChannel *channel,
+                         gboolean is_subscribed,
+                         gboolean is_current)
+{
+    int priority;
+
+    g_return_val_if_fail (channel != NULL, BAD_CHANNEL_PRIORITY);
+
+    if (is_current) {
+        priority = channel->priority_current;
+        if (priority < 0)
+            priority = DEFAULT_CURRENT_CHANNEL_PRIORITY;
+    } else {
+        priority = channel->priority;
+        if (priority < 0)
+            priority = DEFAULT_CHANNEL_PRIORITY;
+
+        if (!is_subscribed) {
+            if (channel->priority_unsubd > 0) {
+                priority = channel->priority_unsubd;
+            } else {
+                priority = UNSUBSCRIBED_CHANNEL_ADJUSTMENT (priority);
+            }
+        }
+    }
+
+    return priority;
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 void
 rc_channel_slist_free(RCChannelSList *channel_slist)
@@ -488,74 +539,43 @@ rc_channel_compare_func (gconstpointer a, gconstpointer b)
     return (FALSE);
 }
 
-RCSubchannel *
-rc_channel_get_subchannel (RCChannel *channel, guint preference)
+static void
+rc_xml_node_process (xmlNode *node, RCChannel *channel)
 {
-    RCSubchannelSList *iter;
-
-    for (iter = channel->subchannels; iter; iter = iter->next) {
-        RCSubchannel *subchannel = (RCSubchannel *)(iter->data);
-
-        if (subchannel->preference == preference) {
-            return (subchannel);
-        }
-    }
-
-    return (NULL);
-}
-
-static RCSubchannel *
-rc_xml_node_to_subchannel (xmlNode *node, const RCChannel *channel)
-{
-    RCSubchannel *subchannel;
     const xmlNode *iter;
 
     if (g_strcasecmp (node->name, "subchannel")) {
-        return (NULL);
+        return;
     }
 
-    subchannel = rc_subchannel_new ();
+    g_hash_table_freeze (channel->packages);
+    g_hash_table_freeze (channel->dep_table);
+    g_hash_table_freeze (channel->dep_name_table);
 
-    subchannel->channel = channel;
-
-    subchannel->name = xml_get_prop (node, "name");
-    subchannel->preference =
-        xml_get_guint32_prop_default (node, "preference", 0);
-
-    subchannel->packages = g_hash_table_new (g_str_hash, g_str_equal);
-    subchannel->dep_table = g_hash_table_new (rc_package_spec_hash,
-                                              rc_package_spec_equal);
-    subchannel->dep_name_table = g_hash_table_new (g_str_hash, g_str_equal);
-
-    g_hash_table_freeze (subchannel->packages);
-    g_hash_table_freeze (subchannel->dep_table);
-    g_hash_table_freeze (subchannel->dep_name_table);
-
-#if LIBXML_VERSION < 20000
-    iter = node->childs;
-#else
-    iter = node->children;
-#endif
+    iter = node->xmlChildrenNode;
 
     while (iter) {
         RCPackage *package;
         const RCPackageDepSList *prov_iter;
 
-        package = rc_xml_node_to_package (iter, subchannel);
+        package = rc_xml_node_to_package (iter, channel);
 
         if (package) {
+            RCWorld *world = rc_get_world ();
+            rc_world_add_package (world, package);
+
             for (prov_iter = package->provides; prov_iter;
                  prov_iter = prov_iter->next)
             {
                 const RCPackageDep *dep = (RCPackageDep *)(prov_iter->data);
                 
-                rc_hash_table_slist_insert_unique (subchannel->dep_table,
+                rc_hash_table_slist_insert_unique (channel->dep_table,
                                                    (gpointer) &dep->spec, package, NULL);
-                rc_hash_table_slist_insert_unique (subchannel->dep_name_table,
+                rc_hash_table_slist_insert_unique (channel->dep_name_table,
                                                    dep->spec.name, package, NULL);
             }
 
-            g_hash_table_insert (subchannel->packages,
+            g_hash_table_insert (channel->packages,
                                  (gpointer) package->spec.name,
                                  (gpointer) package);
         }
@@ -563,32 +583,43 @@ rc_xml_node_to_subchannel (xmlNode *node, const RCChannel *channel)
         iter = iter->next;
     }
 
-    g_hash_table_thaw (subchannel->packages);
-    g_hash_table_thaw (subchannel->dep_table);
-    g_hash_table_thaw (subchannel->dep_name_table);
-
-    return (subchannel);
+    g_hash_table_thaw (channel->packages);
+    g_hash_table_thaw (channel->dep_table);
+    g_hash_table_thaw (channel->dep_name_table);
 }
 
 guint
 rc_xml_node_to_channel (RCChannel *channel, xmlNode *node)
 {
     xmlNode *iter;
+    char *priority_str;
 
     if (g_strcasecmp (node->name, "channel")) {
         return (1);
     }
 
-#if LIBXML_VERSION < 20000
-    iter = node->childs;
-#else
-    iter = node->children;
-#endif
+    priority_str = xml_get_prop (node, "priority");
+    if (priority_str) {
+        channel->priority = rc_channel_priority_parse (priority_str);
+        g_free (priority_str);
+    }
+
+    priority_str = xml_get_prop (node, "priority_when_current");
+    if (priority_str) {
+        channel->priority_current = rc_channel_priority_parse (priority_str);
+        g_free (priority_str);
+    }
+
+    priority_str = xml_get_prop (node, "priority_when_unsubscribed");
+    if (priority_str) {
+        channel->priority_unsubd = rc_channel_priority_parse (priority_str);
+        g_free (priority_str);
+    }
+
+    iter = node->xmlChildrenNode;
 
     while (iter) {
-        channel->subchannels =
-            g_slist_append (channel->subchannels,
-                            rc_xml_node_to_subchannel (iter, channel));
+        rc_xml_node_process (iter, channel);
         iter = iter->next;
     }
 
