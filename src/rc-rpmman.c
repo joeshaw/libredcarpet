@@ -466,9 +466,15 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
 
     transaction_flags = 0; /* Nothing interesting to do here */
     problem_filter =
+        /* These need to go away as soon as possible, except many of
+           our packages are still broken so we can't get rid of them.
+           :-( */
+        RPMPROB_FILTER_REPLACENEWFILES |
+        RPMPROB_FILTER_REPLACEOLDFILES |
         /* This isn't really a problem, and we'll trust RC to do the
            right thing here */
         RPMPROB_FILTER_OLDPACKAGE;
+        
 
     transaction = rpmman->rpmtransCreateSet (rpmman->db, rpmman->rpmroot);
 

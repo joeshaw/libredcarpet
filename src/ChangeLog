@@ -1,3 +1,8 @@
+2001-11-20  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c: readd RPMPROB_FILTER_REPLACE[NEW|OLD]FILES for a
+	little while because of broken packages
+
 2001-11-08  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c (parse_versions): take out an unnecessary assert
