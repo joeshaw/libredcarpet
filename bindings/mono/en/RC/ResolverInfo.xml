@@ -1,0 +1,538 @@
+<Type Name="ResolverInfo" FullName="RC.ResolverInfo">
+  <TypeSignature Language="C#" Value="public sealed struct ResolverInfo" Maintainer="auto" />
+  <AssemblyInfo>
+    <AssemblyName>libredcarpet-sharp</AssemblyName>
+    <AssemblyPublicKey>
+    </AssemblyPublicKey>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <AssemblyCulture>neutral</AssemblyCulture>
+    <Attributes>
+      <Attribute>
+        <AttributeName>System.Security.AllowPartiallyTrustedCallersAttribute</AttributeName>
+      </Attribute>
+      <Attribute>
+        <AttributeName>System.Resources.NeutralResourcesLanguageAttribute</AttributeName>
+      </Attribute>
+      <Attribute>
+        <AttributeName>System.Runtime.InteropServices.ComVisibleAttribute</AttributeName>
+      </Attribute>
+    </Attributes>
+  </AssemblyInfo>
+  <ThreadSafetyStatement>Gtk# is thread aware, but not thread safe; See the <link location="node:gtk-sharp/programming/threads">Gtk# Thread Programming</link> for details.</ThreadSafetyStatement>
+  <Docs>
+    <summary>To be added</summary>
+    <remarks>To be added</remarks>
+  </Docs>
+  <Base>
+    <BaseTypeName>System.ValueType</BaseTypeName>
+  </Base>
+  <Interfaces />
+  <Attributes />
+  <Members>
+    <Member MemberName="Zero">
+      <MemberSignature Language="C#" Value="public static RC.ResolverInfo Zero;" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.ResolverInfo</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Type">
+      <MemberSignature Language="C#" Value="public RC.ResolverInfoType Type;" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.ResolverInfoType</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Priority">
+      <MemberSignature Language="C#" Value="public int Priority;" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Msg">
+      <MemberSignature Language="C#" Value="public string Msg;" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>System.String</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Action">
+      <MemberSignature Language="C#" Value="public string Action;" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>System.String</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Trigger">
+      <MemberSignature Language="C#" Value="public string Trigger;" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>System.String</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="New">
+      <MemberSignature Language="C#" Value="public static RC.ResolverInfo New (IntPtr raw);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.ResolverInfo</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="raw" Type="System.IntPtr" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="raw">a <see cref="T:System.IntPtr" /></param>
+        <returns>a <see cref="T:RC.ResolverInfo" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ChildOfNew">
+      <MemberSignature Language="C#" Value="public static RC.ResolverInfo ChildOfNew (RC.Package package, RC.Package dependency);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.ResolverInfo</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="package" Type="RC.Package" />
+        <Parameter Name="dependency" Type="RC.Package" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="package">a <see cref="T:RC.Package" /></param>
+        <param name="dependency">a <see cref="T:RC.Package" /></param>
+        <returns>a <see cref="T:RC.ResolverInfo" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="MiscNew">
+      <MemberSignature Language="C#" Value="public static RC.ResolverInfo MiscNew (RC.Package package, int priority, string msg);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.ResolverInfo</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="package" Type="RC.Package" />
+        <Parameter Name="priority" Type="System.Int32" />
+        <Parameter Name="msg" Type="System.String" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="package">a <see cref="T:RC.Package" /></param>
+        <param name="priority">a <see cref="T:System.Int32" /></param>
+        <param name="msg">a <see cref="T:System.String" /></param>
+        <returns>a <see cref="T:RC.ResolverInfo" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="TypeFromString">
+      <MemberSignature Language="C#" Value="public static RC.ResolverInfoType TypeFromString (string arg1);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.ResolverInfoType</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="arg1" Type="System.String" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="arg1">a <see cref="T:System.String" /></param>
+        <returns>a <see cref="T:RC.ResolverInfoType" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ConflictsWithNew">
+      <MemberSignature Language="C#" Value="public static RC.ResolverInfo ConflictsWithNew (RC.Package package, RC.Package conflicts_with);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.ResolverInfo</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="package" Type="RC.Package" />
+        <Parameter Name="conflicts_with" Type="RC.Package" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="package">a <see cref="T:RC.Package" /></param>
+        <param name="conflicts_with">a <see cref="T:RC.Package" /></param>
+        <returns>a <see cref="T:RC.ResolverInfo" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="DependsOnNew">
+      <MemberSignature Language="C#" Value="public static RC.ResolverInfo DependsOnNew (RC.Package package, RC.Package dependency);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.ResolverInfo</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="package" Type="RC.Package" />
+        <Parameter Name="dependency" Type="RC.Package" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="package">a <see cref="T:RC.Package" /></param>
+        <param name="dependency">a <see cref="T:RC.Package" /></param>
+        <returns>a <see cref="T:RC.ResolverInfo" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ObsoletesNew">
+      <MemberSignature Language="C#" Value="public static RC.ResolverInfo ObsoletesNew (RC.Package package, RC.Package obsoletes);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.ResolverInfo</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="package" Type="RC.Package" />
+        <Parameter Name="obsoletes" Type="RC.Package" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="package">a <see cref="T:RC.Package" /></param>
+        <param name="obsoletes">a <see cref="T:RC.Package" /></param>
+        <returns>a <see cref="T:RC.ResolverInfo" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="NeededByNew">
+      <MemberSignature Language="C#" Value="public static RC.ResolverInfo NeededByNew (RC.Package package);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.ResolverInfo</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="package" Type="RC.Package" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="package">a <see cref="T:RC.Package" /></param>
+        <returns>a <see cref="T:RC.ResolverInfo" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="MissingReqNew">
+      <MemberSignature Language="C#" Value="public static RC.ResolverInfo MissingReqNew (RC.Package package, RC.PackageDep missing_req);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.ResolverInfo</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="package" Type="RC.Package" />
+        <Parameter Name="missing_req" Type="RC.PackageDep" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="package">a <see cref="T:RC.Package" /></param>
+        <param name="missing_req">a <see cref="T:RC.PackageDep" /></param>
+        <returns>a <see cref="T:RC.ResolverInfo" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="TypeToString">
+      <MemberSignature Language="C#" Value="public static string TypeToString (RC.ResolverInfoType arg1);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.String</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="arg1" Type="RC.ResolverInfoType" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="arg1">a <see cref="T:System.Int32" /></param>
+        <returns>a <see cref="T:System.String" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="NeededAddSlist">
+      <MemberSignature Language="C#" Value="public void NeededAddSlist (GLib.SList arg1);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="arg1" Type="GLib.SList" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="arg1">a <see cref="T:GLib.SList" /></param>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="MiscAddAction">
+      <MemberSignature Language="C#" Value="public void MiscAddAction (string action_msg);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="action_msg" Type="System.String" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="action_msg">a <see cref="T:System.String" /></param>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="IsAbout">
+      <MemberSignature Language="C#" Value="public bool IsAbout (RC.Package arg1);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Boolean</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="arg1" Type="RC.Package" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="arg1">a <see cref="T:RC.Package" /></param>
+        <returns>a <see cref="T:System.Boolean" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="MiscAddTrigger">
+      <MemberSignature Language="C#" Value="public void MiscAddTrigger (string trigger_msg);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="trigger_msg" Type="System.String" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="trigger_msg">a <see cref="T:System.String" /></param>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Merge">
+      <MemberSignature Language="C#" Value="public bool Merge (RC.ResolverInfo arg1);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Boolean</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="arg1" Type="RC.ResolverInfo" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="arg1">a <see cref="T:RC.ResolverInfo" /></param>
+        <returns>a <see cref="T:System.Boolean" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="PackagesToString">
+      <MemberSignature Language="C#" Value="public string PackagesToString (bool names_only);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.String</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="names_only" Type="System.Boolean" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="names_only">a <see cref="T:System.Boolean" /></param>
+        <returns>a <see cref="T:System.String" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Mentions">
+      <MemberSignature Language="C#" Value="public bool Mentions (RC.Package arg1);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Boolean</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="arg1" Type="RC.Package" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="arg1">a <see cref="T:RC.Package" /></param>
+        <returns>a <see cref="T:System.Boolean" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Free">
+      <MemberSignature Language="C#" Value="public void Free ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="AddRelatedPackage">
+      <MemberSignature Language="C#" Value="public void AddRelatedPackage (RC.Package arg1);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="arg1" Type="RC.Package" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="arg1">a <see cref="T:RC.Package" /></param>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="FlagAsImportant">
+      <MemberSignature Language="C#" Value="public void FlagAsImportant ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ToString">
+      <MemberSignature Language="C#" Value="public override string ToString ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.String</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:System.String" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="FlagAsError">
+      <MemberSignature Language="C#" Value="public void FlagAsError ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="NeededAdd">
+      <MemberSignature Language="C#" Value="public void NeededAdd (RC.Package needed_by);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="needed_by" Type="RC.Package" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="needed_by">a <see cref="T:RC.Package" /></param>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Copy">
+      <MemberSignature Language="C#" Value="public RC.ResolverInfo Copy ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.ResolverInfo</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:RC.ResolverInfo" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="package">
+      <MemberSignature Language="C#" Value="public RC.Package package { set; get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Package</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:RC.Package" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="missing_req">
+      <MemberSignature Language="C#" Value="public RC.PackageDep missing_req { set; get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.PackageDep</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:RC.PackageDep" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="IsImportant">
+      <MemberSignature Language="C#" Value="public bool IsImportant { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Boolean</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:System.Boolean" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="IsError">
+      <MemberSignature Language="C#" Value="public bool IsError { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Boolean</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:System.Boolean" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+  </Members>
+</Type>

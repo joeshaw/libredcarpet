@@ -1,0 +1,545 @@
+<Type Name="Package" FullName="RC.Package">
+  <TypeSignature Language="C#" Value="public class Package : GLib.Opaque, IWrapper" Maintainer="auto" />
+  <AssemblyInfo>
+    <AssemblyName>libredcarpet-sharp</AssemblyName>
+    <AssemblyPublicKey>
+    </AssemblyPublicKey>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <AssemblyCulture>neutral</AssemblyCulture>
+    <Attributes>
+      <Attribute>
+        <AttributeName>System.Security.AllowPartiallyTrustedCallersAttribute</AttributeName>
+      </Attribute>
+      <Attribute>
+        <AttributeName>System.Resources.NeutralResourcesLanguageAttribute</AttributeName>
+      </Attribute>
+      <Attribute>
+        <AttributeName>System.Runtime.InteropServices.ComVisibleAttribute</AttributeName>
+      </Attribute>
+    </Attributes>
+  </AssemblyInfo>
+  <ThreadSafetyStatement>Gtk# is thread aware, but not thread safe; See the <link location="node:gtk-sharp/programming/threads">Gtk# Thread Programming</link> for details.</ThreadSafetyStatement>
+  <Docs>
+    <summary>To be added</summary>
+    <remarks>To be added</remarks>
+  </Docs>
+  <Base>
+    <BaseTypeName>GLib.Opaque</BaseTypeName>
+  </Base>
+  <Interfaces>
+    <Interface>
+      <InterfaceName>GLib.IWrapper</InterfaceName>
+    </Interface>
+  </Interfaces>
+  <Attributes />
+  <Members>
+    <Member MemberName="RelationFromString">
+      <MemberSignature Language="C#" Value="public static RC.PackageRelation RelationFromString (string relation);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.PackageRelation</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="relation" Type="System.String" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="relation">a <see cref="T:System.String" /></param>
+        <returns>a <see cref="T:RC.PackageRelation" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="SlistSortByName">
+      <MemberSignature Language="C#" Value="public static GLib.SList SlistSortByName (GLib.SList packages);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>GLib.SList</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="packages" Type="GLib.SList" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="packages">a <see cref="T:GLib.SList" /></param>
+        <returns>a <see cref="T:GLib.SList" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="SectionToUserString">
+      <MemberSignature Language="C#" Value="public static string SectionToUserString (RC.PackageSection section);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.String</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="section" Type="RC.PackageSection" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="section">a <see cref="T:System.Int32" /></param>
+        <returns>a <see cref="T:System.String" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="SlistSortByPrettyName">
+      <MemberSignature Language="C#" Value="public static GLib.SList SlistSortByPrettyName (GLib.SList packages);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>GLib.SList</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="packages" Type="GLib.SList" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="packages">a <see cref="T:GLib.SList" /></param>
+        <returns>a <see cref="T:GLib.SList" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="SlistRef">
+      <MemberSignature Language="C#" Value="public static GLib.SList SlistRef (GLib.SList packages);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>GLib.SList</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="packages" Type="GLib.SList" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="packages">a <see cref="T:GLib.SList" /></param>
+        <returns>a <see cref="T:GLib.SList" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="StatusToString">
+      <MemberSignature Language="C#" Value="public static string StatusToString (RC.PackageStatus status);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.String</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="status" Type="RC.PackageStatus" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="status">a <see cref="T:System.Int32" /></param>
+        <returns>a <see cref="T:System.String" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="RelationToString">
+      <MemberSignature Language="C#" Value="public static string RelationToString (RC.PackageRelation relation, int words);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.String</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="relation" Type="RC.PackageRelation" />
+        <Parameter Name="words" Type="System.Int32" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="relation">a <see cref="T:System.Int32" /></param>
+        <param name="words">a <see cref="T:System.Int32" /></param>
+        <returns>a <see cref="T:System.String" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="SpewLeaks">
+      <MemberSignature Language="C#" Value="public static void SpewLeaks ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="HashTableByStringToList">
+      <MemberSignature Language="C#" Value="public static GLib.SList HashTableByStringToList (IntPtr ht);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>GLib.SList</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="ht" Type="System.IntPtr" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="ht">a <see cref="T:System.IntPtr" /></param>
+        <returns>a <see cref="T:GLib.SList" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="HashTableBySpecToList">
+      <MemberSignature Language="C#" Value="public static GLib.SList HashTableBySpecToList (IntPtr ht);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>GLib.SList</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="ht" Type="System.IntPtr" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="ht">a <see cref="T:System.IntPtr" /></param>
+        <returns>a <see cref="T:GLib.SList" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ImportanceToString">
+      <MemberSignature Language="C#" Value="public static string ImportanceToString (RC.PackageImportance importance);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.String</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="importance" Type="RC.PackageImportance" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="importance">a <see cref="T:System.Int32" /></param>
+        <returns>a <see cref="T:System.String" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="SectionToString">
+      <MemberSignature Language="C#" Value="public static string SectionToString (RC.PackageSection section);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.String</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="section" Type="RC.PackageSection" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="section">a <see cref="T:System.Int32" /></param>
+        <returns>a <see cref="T:System.String" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="SlistUnref">
+      <MemberSignature Language="C#" Value="public static void SlistUnref (GLib.SList packages);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="packages" Type="GLib.SList" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="packages">a <see cref="T:GLib.SList" /></param>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="AddUpdate">
+      <MemberSignature Language="C#" Value="public void AddUpdate (RC.PackageUpdate update);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="update" Type="RC.PackageUpdate" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="update">a <see cref="T:RC.PackageUpdate" /></param>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Copy">
+      <MemberSignature Language="C#" Value="public RC.Package Copy ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Package</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:RC.Package" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ToString">
+      <MemberSignature Language="C#" Value="public override string ToString ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.String</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:System.String" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Ref">
+      <MemberSignature Language="C#" Value="public RC.Package Ref ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Package</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:RC.Package" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="AddDummyUpdate">
+      <MemberSignature Language="C#" Value="public void AddDummyUpdate (string package_filename, uint package_size);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="package_filename" Type="System.String" />
+        <Parameter Name="package_size" Type="System.UInt32" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="package_filename">a <see cref="T:System.String" /></param>
+        <param name="package_size">a <see cref="T:System.UInt32" /></param>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Unref">
+      <MemberSignature Language="C#" Value="public void Unref ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName=".ctor">
+      <MemberSignature Language="C#" Value="public Package (IntPtr raw);" />
+      <MemberType>Constructor</MemberType>
+      <ReturnValue />
+      <Parameters>
+        <Parameter Name="raw" Type="System.IntPtr" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="raw">a <see cref="T:System.IntPtr" /></param>
+        <returns>a <see cref="T:RC.Package" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName=".ctor">
+      <MemberSignature Language="C#" Value="public Package ();" />
+      <MemberType>Constructor</MemberType>
+      <ReturnValue />
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:RC.Package" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="GType">
+      <MemberSignature Language="C#" Value="public static GLib.GType GType { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>GLib.GType</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:GLib.GType" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Section">
+      <MemberSignature Language="C#" Value="public RC.PackageSection Section { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.PackageSection</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:RC.PackageSection" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Description">
+      <MemberSignature Language="C#" Value="public string Description { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>System.String</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:System.String" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Summary">
+      <MemberSignature Language="C#" Value="public string Summary { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>System.String</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:System.String" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Spec">
+      <MemberSignature Language="C#" Value="public RC.PackageSpec Spec { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.PackageSpec</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:RC.PackageSpec" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="IsInstalled">
+      <MemberSignature Language="C#" Value="public bool IsInstalled { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Boolean</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:System.Boolean" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="IsPackageSet">
+      <MemberSignature Language="C#" Value="public bool IsPackageSet { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Boolean</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:System.Boolean" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="SignatureFilename">
+      <MemberSignature Language="C#" Value="public string SignatureFilename { set; get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>System.String</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:System.String" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Channel">
+      <MemberSignature Language="C#" Value="public RC.Channel Channel { set; get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Channel</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:RC.Channel" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="LatestUpdate">
+      <MemberSignature Language="C#" Value="public RC.PackageUpdate LatestUpdate { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.PackageUpdate</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:RC.PackageUpdate" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Name">
+      <MemberSignature Language="C#" Value="public string Name { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>System.String</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:System.String" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Arch">
+      <MemberSignature Language="C#" Value="public RC.Arch Arch { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Arch</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:RC.Arch" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="IsSynthetic">
+      <MemberSignature Language="C#" Value="public bool IsSynthetic { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Boolean</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:System.Boolean" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Filename">
+      <MemberSignature Language="C#" Value="public string Filename { set; get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>System.String</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:System.String" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="InstalledSize">
+      <MemberSignature Language="C#" Value="public uint InstalledSize { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>System.UInt32</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:System.UInt32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+  </Members>
+</Type>

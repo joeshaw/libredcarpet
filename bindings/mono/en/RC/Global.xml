@@ -1,0 +1,350 @@
+<Type Name="Global" FullName="RC.Global">
+  <TypeSignature Language="C#" Value="public class Global" Maintainer="auto" />
+  <AssemblyInfo>
+    <AssemblyName>libredcarpet-sharp</AssemblyName>
+    <AssemblyPublicKey>
+    </AssemblyPublicKey>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <AssemblyCulture>neutral</AssemblyCulture>
+    <Attributes>
+      <Attribute>
+        <AttributeName>System.Security.AllowPartiallyTrustedCallersAttribute</AttributeName>
+      </Attribute>
+      <Attribute>
+        <AttributeName>System.Resources.NeutralResourcesLanguageAttribute</AttributeName>
+      </Attribute>
+      <Attribute>
+        <AttributeName>System.Runtime.InteropServices.ComVisibleAttribute</AttributeName>
+      </Attribute>
+    </Attributes>
+  </AssemblyInfo>
+  <ThreadSafetyStatement>Gtk# is thread aware, but not thread safe; See the <link location="node:gtk-sharp/programming/threads">Gtk# Thread Programming</link> for details.</ThreadSafetyStatement>
+  <Docs>
+    <summary>To be added</summary>
+    <remarks>To be added</remarks>
+  </Docs>
+  <Base>
+    <BaseTypeName>System.Object</BaseTypeName>
+  </Base>
+  <Interfaces />
+  <Attributes />
+  <Members>
+    <Member MemberName="UrlIsAbsolute">
+      <MemberSignature Language="C#" Value="public static bool UrlIsAbsolute (string url);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Boolean</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="url" Type="System.String" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="url">a <see cref="T:System.String" /></param>
+        <returns>a <see cref="T:System.Boolean" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ArchGetCompatList">
+      <MemberSignature Language="C#" Value="public static GLib.SList ArchGetCompatList (RC.Arch arch);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>GLib.SList</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="arch" Type="RC.Arch" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="arch">a <see cref="T:System.Int32" /></param>
+        <returns>a <see cref="T:GLib.SList" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="StringToPackageSection">
+      <MemberSignature Language="C#" Value="public static RC.PackageSection StringToPackageSection (string section);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.PackageSection</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="section" Type="System.String" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="section">a <see cref="T:System.String" /></param>
+        <returns>a <see cref="T:RC.PackageSection" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ArchGetSystemArch">
+      <MemberSignature Language="C#" Value="public static RC.Arch ArchGetSystemArch ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Arch</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:RC.Arch" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ArchFromString">
+      <MemberSignature Language="C#" Value="public static RC.Arch ArchFromString (string arch_name);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Arch</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="arch_name" Type="System.String" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="arch_name">a <see cref="T:System.String" /></param>
+        <returns>a <see cref="T:RC.Arch" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ArchGetCompatScore">
+      <MemberSignature Language="C#" Value="public static int ArchGetCompatScore (GLib.SList compat_arch_list, RC.Arch arch);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="compat_arch_list" Type="GLib.SList" />
+        <Parameter Name="arch" Type="RC.Arch" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="compat_arch_list">a <see cref="T:GLib.SList" /></param>
+        <param name="arch">a <see cref="T:System.Int32" /></param>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="GunzipMemory">
+      <MemberSignature Language="C#" Value="public static int GunzipMemory (out byte input_buffer, uint input_length, IntPtr out_ba);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="input_buffer" Type="System.Byte&amp;" RefType="out" />
+        <Parameter Name="input_length" Type="System.UInt32" />
+        <Parameter Name="out_ba" Type="System.IntPtr" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="input_buffer">a <see cref="T:System.Byte" /></param>
+        <param name="input_length">a <see cref="T:System.UInt32" /></param>
+        <param name="out_ba">a <see cref="T:System.IntPtr" /></param>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="GzipMemory">
+      <MemberSignature Language="C#" Value="public static int GzipMemory (out byte input_buffer, uint input_length, IntPtr out_ba);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="input_buffer" Type="System.Byte&amp;" RefType="out" />
+        <Parameter Name="input_length" Type="System.UInt32" />
+        <Parameter Name="out_ba" Type="System.IntPtr" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="input_buffer">a <see cref="T:System.Byte" /></param>
+        <param name="input_length">a <see cref="T:System.UInt32" /></param>
+        <param name="out_ba">a <see cref="T:System.IntPtr" /></param>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="MaybeMergePaths">
+      <MemberSignature Language="C#" Value="public static string MaybeMergePaths (string parent_path, string child_path);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.String</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="parent_path" Type="System.String" />
+        <Parameter Name="child_path" Type="System.String" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="parent_path">a <see cref="T:System.String" /></param>
+        <param name="child_path">a <see cref="T:System.String" /></param>
+        <returns>a <see cref="T:System.String" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="DistmanNew">
+      <MemberSignature Language="C#" Value="public static RC.Packman DistmanNew ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Packman</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:RC.Packman" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="StringToGuint32WithDefault">
+      <MemberSignature Language="C#" Value="public static uint StringToGuint32WithDefault (string n, uint def);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.UInt32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="n" Type="System.String" />
+        <Parameter Name="def" Type="System.UInt32" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="n">a <see cref="T:System.String" /></param>
+        <param name="def">a <see cref="T:System.UInt32" /></param>
+        <returns>a <see cref="T:System.UInt32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="FileExists">
+      <MemberSignature Language="C#" Value="public static bool FileExists (string filename);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Boolean</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="filename" Type="System.String" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="filename">a <see cref="T:System.String" /></param>
+        <returns>a <see cref="T:System.Boolean" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ErrorQuark">
+      <MemberSignature Language="C#" Value="public static int ErrorQuark ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="DepStringToOrDepSlist">
+      <MemberSignature Language="C#" Value="public static GLib.SList DepStringToOrDepSlist (string munged);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>GLib.SList</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="munged" Type="System.String" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="munged">a <see cref="T:System.String" /></param>
+        <returns>a <see cref="T:GLib.SList" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="StringToPackageImportance">
+      <MemberSignature Language="C#" Value="public static RC.PackageImportance StringToPackageImportance (string importance);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.PackageImportance</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="importance" Type="System.String" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="importance">a <see cref="T:System.String" /></param>
+        <returns>a <see cref="T:RC.PackageImportance" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="UncompressMemory">
+      <MemberSignature Language="C#" Value="public static int UncompressMemory (out byte input_buffer, uint input_length, IntPtr out_ba);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="input_buffer" Type="System.Byte&amp;" RefType="out" />
+        <Parameter Name="input_length" Type="System.UInt32" />
+        <Parameter Name="out_ba" Type="System.IntPtr" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="input_buffer">a <see cref="T:System.Byte" /></param>
+        <param name="input_length">a <see cref="T:System.UInt32" /></param>
+        <param name="out_ba">a <see cref="T:System.IntPtr" /></param>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ArchToString">
+      <MemberSignature Language="C#" Value="public static string ArchToString (RC.Arch arch);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.String</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="arch" Type="RC.Arch" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="arch">a <see cref="T:System.Int32" /></param>
+        <returns>a <see cref="T:System.String" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Init">
+      <MemberSignature Language="C#" Value="public static void Init ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName=".ctor">
+      <MemberSignature Language="C#" Value="public Global ();" />
+      <MemberType>Constructor</MemberType>
+      <ReturnValue />
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:RC.Global" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="World">
+      <MemberSignature Language="C#" Value="public static RC.World World { set; get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.World</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:RC.World" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+  </Members>
+</Type>

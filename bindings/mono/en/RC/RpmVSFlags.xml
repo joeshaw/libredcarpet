@@ -1,0 +1,199 @@
+<Type Name="RpmVSFlags" FullName="RC.RpmVSFlags">
+  <TypeSignature Language="C#" Value="public enum RpmVSFlags" Maintainer="auto" />
+  <AssemblyInfo>
+    <AssemblyName>libredcarpet-sharp</AssemblyName>
+    <AssemblyPublicKey>
+    </AssemblyPublicKey>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <AssemblyCulture>neutral</AssemblyCulture>
+    <Attributes>
+      <Attribute>
+        <AttributeName>System.Security.AllowPartiallyTrustedCallersAttribute</AttributeName>
+      </Attribute>
+      <Attribute>
+        <AttributeName>System.Resources.NeutralResourcesLanguageAttribute</AttributeName>
+      </Attribute>
+      <Attribute>
+        <AttributeName>System.Runtime.InteropServices.ComVisibleAttribute</AttributeName>
+      </Attribute>
+    </Attributes>
+  </AssemblyInfo>
+  <ThreadSafetyStatement>Gtk# is thread aware, but not thread safe; See the <link location="node:gtk-sharp/programming/threads">Gtk# Thread Programming</link> for details.</ThreadSafetyStatement>
+  <Docs>
+    <summary>To be added</summary>
+    <remarks>To be added</remarks>
+  </Docs>
+  <Base>
+    <BaseTypeName>System.Enum</BaseTypeName>
+  </Base>
+  <Interfaces>
+    <Interface>
+      <InterfaceName>System.IComparable</InterfaceName>
+    </Interface>
+    <Interface>
+      <InterfaceName>System.IConvertible</InterfaceName>
+    </Interface>
+    <Interface>
+      <InterfaceName>System.IFormattable</InterfaceName>
+    </Interface>
+  </Interfaces>
+  <Attributes />
+  <Members>
+    <Member MemberName="Default">
+      <MemberSignature Language="C#" Value="Default" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.RpmVSFlags</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Nohdrchk">
+      <MemberSignature Language="C#" Value="Nohdrchk" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.RpmVSFlags</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Needpayload">
+      <MemberSignature Language="C#" Value="Needpayload" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.RpmVSFlags</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Nosha1header">
+      <MemberSignature Language="C#" Value="Nosha1header" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.RpmVSFlags</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Nomd5header">
+      <MemberSignature Language="C#" Value="Nomd5header" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.RpmVSFlags</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Nodsaheader">
+      <MemberSignature Language="C#" Value="Nodsaheader" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.RpmVSFlags</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Norsaheader">
+      <MemberSignature Language="C#" Value="Norsaheader" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.RpmVSFlags</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Nosha1">
+      <MemberSignature Language="C#" Value="Nosha1" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.RpmVSFlags</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Nomd5">
+      <MemberSignature Language="C#" Value="Nomd5" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.RpmVSFlags</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Nodsa">
+      <MemberSignature Language="C#" Value="Nodsa" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.RpmVSFlags</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Norsa">
+      <MemberSignature Language="C#" Value="Norsa" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.RpmVSFlags</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="value__">
+      <MemberSignature Language="C#" Value="value__" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+  </Members>
+</Type>

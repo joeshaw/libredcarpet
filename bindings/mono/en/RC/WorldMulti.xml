@@ -1,0 +1,282 @@
+<Type Name="WorldMulti" FullName="RC.WorldMulti">
+  <TypeSignature Language="C#" Value="public class WorldMulti : RC.World, IWrapper, IDisposable" Maintainer="auto" />
+  <AssemblyInfo>
+    <AssemblyName>libredcarpet-sharp</AssemblyName>
+    <AssemblyPublicKey>
+    </AssemblyPublicKey>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <AssemblyCulture>neutral</AssemblyCulture>
+    <Attributes>
+      <Attribute>
+        <AttributeName>System.Security.AllowPartiallyTrustedCallersAttribute</AttributeName>
+      </Attribute>
+      <Attribute>
+        <AttributeName>System.Resources.NeutralResourcesLanguageAttribute</AttributeName>
+      </Attribute>
+      <Attribute>
+        <AttributeName>System.Runtime.InteropServices.ComVisibleAttribute</AttributeName>
+      </Attribute>
+    </Attributes>
+  </AssemblyInfo>
+  <ThreadSafetyStatement>Gtk# is thread aware, but not thread safe; See the <link location="node:gtk-sharp/programming/threads">Gtk# Thread Programming</link> for details.</ThreadSafetyStatement>
+  <Docs>
+    <summary>To be added</summary>
+    <remarks>To be added</remarks>
+  </Docs>
+  <Base>
+    <BaseTypeName>RC.World</BaseTypeName>
+  </Base>
+  <Interfaces>
+    <Interface>
+      <InterfaceName>GLib.IWrapper</InterfaceName>
+    </Interface>
+    <Interface>
+      <InterfaceName>System.IDisposable</InterfaceName>
+    </Interface>
+  </Interfaces>
+  <Attributes />
+  <Members>
+    <Member MemberName="Finalize">
+      <MemberSignature Language="C#" Value="protected override void Finalize ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="OnSubworldRemoved">
+      <MemberSignature Language="C#" Value="protected virtual void OnSubworldRemoved (RC.World subworld);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="subworld" Type="RC.World" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="subworld">a <see cref="T:RC.World" /></param>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="OnSubworldAdded">
+      <MemberSignature Language="C#" Value="protected virtual void OnSubworldAdded (RC.World subworld);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="subworld" Type="RC.World" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="subworld">a <see cref="T:RC.World" /></param>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="RemoveSubworld">
+      <MemberSignature Language="C#" Value="public void RemoveSubworld (RC.World arg1);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="arg1" Type="RC.World" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="arg1">a <see cref="T:RC.World" /></param>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ForeachSubworldByType">
+      <MemberSignature Language="C#" Value="public int ForeachSubworldByType (GLib.GType type, RC.WorldFn cb);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="type" Type="GLib.GType" />
+        <Parameter Name="cb" Type="RC.WorldFn" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="type">a <see cref="T:GLib.GType" /></param>
+        <param name="cb">a <see cref="T:RC.WorldFn" /></param>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="LookupServiceById">
+      <MemberSignature Language="C#" Value="public RC.WorldService LookupServiceById (string id);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.WorldService</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="id" Type="System.String" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="id">a <see cref="T:System.String" /></param>
+        <returns>a <see cref="T:RC.WorldService" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ForeachSubworld">
+      <MemberSignature Language="C#" Value="public int ForeachSubworld (RC.WorldFn cb);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="cb" Type="RC.WorldFn" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="cb">a <see cref="T:RC.WorldFn" /></param>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="LookupService">
+      <MemberSignature Language="C#" Value="public RC.WorldService LookupService (string url);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.WorldService</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="url" Type="System.String" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="url">a <see cref="T:System.String" /></param>
+        <returns>a <see cref="T:RC.WorldService" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="AddSubworld">
+      <MemberSignature Language="C#" Value="public void AddSubworld (RC.World arg1);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="arg1" Type="RC.World" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="arg1">a <see cref="T:RC.World" /></param>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="MountService">
+      <MemberSignature Language="C#" Value="public void MountService (string url);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="url" Type="System.String" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="url">a <see cref="T:System.String" /></param>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName=".ctor">
+      <MemberSignature Language="C#" Value="protected WorldMulti (GLib.GType gtype);" />
+      <MemberType>Constructor</MemberType>
+      <ReturnValue />
+      <Parameters>
+        <Parameter Name="gtype" Type="GLib.GType" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="gtype">a <see cref="T:GLib.GType" /></param>
+        <returns>a <see cref="T:RC.WorldMulti" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName=".ctor">
+      <MemberSignature Language="C#" Value="public WorldMulti (IntPtr raw);" />
+      <MemberType>Constructor</MemberType>
+      <ReturnValue />
+      <Parameters>
+        <Parameter Name="raw" Type="System.IntPtr" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="raw">a <see cref="T:System.IntPtr" /></param>
+        <returns>a <see cref="T:RC.WorldMulti" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName=".ctor">
+      <MemberSignature Language="C#" Value="public WorldMulti ();" />
+      <MemberType>Constructor</MemberType>
+      <ReturnValue />
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:RC.WorldMulti" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="GType">
+      <MemberSignature Language="C#" Value="public static GLib.GType GType { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>GLib.GType</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:GLib.GType" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Subworlds">
+      <MemberSignature Language="C#" Value="public GLib.SList Subworlds { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>GLib.SList</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:GLib.SList" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="SubworldRemoved">
+      <MemberSignature Language="C#" Value="public event RC.SubworldRemovedHandler SubworldRemoved;" />
+      <MemberType>Event</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.SubworldRemovedHandler</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="SubworldAdded">
+      <MemberSignature Language="C#" Value="public event RC.SubworldAddedHandler SubworldAdded;" />
+      <MemberType>Event</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.SubworldAddedHandler</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+  </Members>
+</Type>

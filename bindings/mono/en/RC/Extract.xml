@@ -1,0 +1,304 @@
+<Type Name="Extract" FullName="RC.Extract">
+  <TypeSignature Language="C#" Value="public class Extract" Maintainer="auto" />
+  <AssemblyInfo>
+    <AssemblyName>libredcarpet-sharp</AssemblyName>
+    <AssemblyPublicKey>
+    </AssemblyPublicKey>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <AssemblyCulture>neutral</AssemblyCulture>
+    <Attributes>
+      <Attribute>
+        <AttributeName>System.Security.AllowPartiallyTrustedCallersAttribute</AttributeName>
+      </Attribute>
+      <Attribute>
+        <AttributeName>System.Resources.NeutralResourcesLanguageAttribute</AttributeName>
+      </Attribute>
+      <Attribute>
+        <AttributeName>System.Runtime.InteropServices.ComVisibleAttribute</AttributeName>
+      </Attribute>
+    </Attributes>
+  </AssemblyInfo>
+  <ThreadSafetyStatement>Gtk# is thread aware, but not thread safe; See the <link location="node:gtk-sharp/programming/threads">Gtk# Thread Programming</link> for details.</ThreadSafetyStatement>
+  <Docs>
+    <summary>To be added</summary>
+    <remarks>To be added</remarks>
+  </Docs>
+  <Base>
+    <BaseTypeName>System.Object</BaseTypeName>
+  </Base>
+  <Interfaces />
+  <Attributes />
+  <Members>
+    <Member MemberName="PackagesFromHelixFile">
+      <MemberSignature Language="C#" Value="public static int PackagesFromHelixFile (string filename, RC.Channel channel, RC.PackageFn cb);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="filename" Type="System.String" />
+        <Parameter Name="channel" Type="RC.Channel" />
+        <Parameter Name="cb" Type="RC.PackageFn" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="filename">a <see cref="T:System.String" /></param>
+        <param name="channel">a <see cref="T:RC.Channel" /></param>
+        <param name="cb">a <see cref="T:RC.PackageFn" /></param>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="PackagesFromDirectory">
+      <MemberSignature Language="C#" Value="public static int PackagesFromDirectory (string path, RC.Channel channel, RC.Packman packman, bool recursive, RC.PackageFn cb);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="path" Type="System.String" />
+        <Parameter Name="channel" Type="RC.Channel" />
+        <Parameter Name="packman" Type="RC.Packman" />
+        <Parameter Name="recursive" Type="System.Boolean" />
+        <Parameter Name="cb" Type="RC.PackageFn" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="path">a <see cref="T:System.String" /></param>
+        <param name="channel">a <see cref="T:RC.Channel" /></param>
+        <param name="packman">a <see cref="T:RC.Packman" /></param>
+        <param name="recursive">a <see cref="T:System.Boolean" /></param>
+        <param name="cb">a <see cref="T:RC.PackageFn" /></param>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="YumPackage">
+      <MemberSignature Language="C#" Value="public static RC.Package YumPackage (out byte data, int len, RC.Packman packman, string url);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Package</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="data" Type="System.Byte&amp;" RefType="out" />
+        <Parameter Name="len" Type="System.Int32" />
+        <Parameter Name="packman" Type="RC.Packman" />
+        <Parameter Name="url" Type="System.String" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="data">a <see cref="T:System.Byte" /></param>
+        <param name="len">a <see cref="T:System.Int32" /></param>
+        <param name="packman">a <see cref="T:RC.Packman" /></param>
+        <param name="url">a <see cref="T:System.String" /></param>
+        <returns>a <see cref="T:RC.Package" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="PackagesFromDebianFile">
+      <MemberSignature Language="C#" Value="public static int PackagesFromDebianFile (string filename, RC.Channel channel, RC.PackageFn cb);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="filename" Type="System.String" />
+        <Parameter Name="channel" Type="RC.Channel" />
+        <Parameter Name="cb" Type="RC.PackageFn" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="filename">a <see cref="T:System.String" /></param>
+        <param name="channel">a <see cref="T:RC.Channel" /></param>
+        <param name="cb">a <see cref="T:RC.PackageFn" /></param>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="PackagesFromUndumpBuffer">
+      <MemberSignature Language="C#" Value="public static int PackagesFromUndumpBuffer (out byte data, int len, RC.ChannelAndSubdFn channel_callback, RC.PackageFn package_callback, RC.PackageMatchFn lock_callback);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="data" Type="System.Byte&amp;" RefType="out" />
+        <Parameter Name="len" Type="System.Int32" />
+        <Parameter Name="channel_callback" Type="RC.ChannelAndSubdFn" />
+        <Parameter Name="package_callback" Type="RC.PackageFn" />
+        <Parameter Name="lock_callback" Type="RC.PackageMatchFn" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="data">a <see cref="T:System.Byte" /></param>
+        <param name="len">a <see cref="T:System.Int32" /></param>
+        <param name="channel_callback">a <see cref="T:RC.ChannelAndSubdFn" /></param>
+        <param name="package_callback">a <see cref="T:RC.PackageFn" /></param>
+        <param name="lock_callback">a <see cref="T:RC.PackageMatchFn" /></param>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ChannelsFromHelixBuffer">
+      <MemberSignature Language="C#" Value="public static int ChannelsFromHelixBuffer (out byte data, int len, RC.ChannelFn cb);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="data" Type="System.Byte&amp;" RefType="out" />
+        <Parameter Name="len" Type="System.Int32" />
+        <Parameter Name="cb" Type="RC.ChannelFn" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="data">a <see cref="T:System.Byte" /></param>
+        <param name="len">a <see cref="T:System.Int32" /></param>
+        <param name="cb">a <see cref="T:RC.ChannelFn" /></param>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="PackagesFromAptrpmFile">
+      <MemberSignature Language="C#" Value="public static int PackagesFromAptrpmFile (string filename, RC.Packman packman, RC.Channel channel, RC.PackageFn cb);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="filename" Type="System.String" />
+        <Parameter Name="packman" Type="RC.Packman" />
+        <Parameter Name="channel" Type="RC.Channel" />
+        <Parameter Name="cb" Type="RC.PackageFn" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="filename">a <see cref="T:System.String" /></param>
+        <param name="packman">a <see cref="T:RC.Packman" /></param>
+        <param name="channel">a <see cref="T:RC.Channel" /></param>
+        <param name="cb">a <see cref="T:RC.PackageFn" /></param>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ChannelsFromHelixFile">
+      <MemberSignature Language="C#" Value="public static int ChannelsFromHelixFile (string filename, RC.ChannelFn cb);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="filename" Type="System.String" />
+        <Parameter Name="cb" Type="RC.ChannelFn" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="filename">a <see cref="T:System.String" /></param>
+        <param name="cb">a <see cref="T:RC.ChannelFn" /></param>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="PackagesFromAptrpmBuffer">
+      <MemberSignature Language="C#" Value="public static int PackagesFromAptrpmBuffer (out byte data, int len, RC.Packman packman, RC.Channel channel, RC.PackageFn cb);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="data" Type="System.Byte&amp;" RefType="out" />
+        <Parameter Name="len" Type="System.Int32" />
+        <Parameter Name="packman" Type="RC.Packman" />
+        <Parameter Name="channel" Type="RC.Channel" />
+        <Parameter Name="cb" Type="RC.PackageFn" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="data">a <see cref="T:System.Byte" /></param>
+        <param name="len">a <see cref="T:System.Int32" /></param>
+        <param name="packman">a <see cref="T:RC.Packman" /></param>
+        <param name="channel">a <see cref="T:RC.Channel" /></param>
+        <param name="cb">a <see cref="T:RC.PackageFn" /></param>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="PackagesFromHelixBuffer">
+      <MemberSignature Language="C#" Value="public static int PackagesFromHelixBuffer (byte [] data, int len, RC.Channel channel, RC.PackageFn cb);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="data" Type="System.Byte[]" />
+        <Parameter Name="len" Type="System.Int32" />
+        <Parameter Name="channel" Type="RC.Channel" />
+        <Parameter Name="cb" Type="RC.PackageFn" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="data">a <see cref="T:System.Byte" /></param>
+        <param name="len">a <see cref="T:System.Int32" /></param>
+        <param name="channel">a <see cref="T:RC.Channel" /></param>
+        <param name="cb">a <see cref="T:RC.PackageFn" /></param>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="PackagesFromUndumpFile">
+      <MemberSignature Language="C#" Value="public static int PackagesFromUndumpFile (string filename, RC.ChannelAndSubdFn channel_callback, RC.PackageFn package_callback, RC.PackageMatchFn lock_callback);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="filename" Type="System.String" />
+        <Parameter Name="channel_callback" Type="RC.ChannelAndSubdFn" />
+        <Parameter Name="package_callback" Type="RC.PackageFn" />
+        <Parameter Name="lock_callback" Type="RC.PackageMatchFn" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="filename">a <see cref="T:System.String" /></param>
+        <param name="channel_callback">a <see cref="T:RC.ChannelAndSubdFn" /></param>
+        <param name="package_callback">a <see cref="T:RC.PackageFn" /></param>
+        <param name="lock_callback">a <see cref="T:RC.PackageMatchFn" /></param>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="PackagesFromDebianBuffer">
+      <MemberSignature Language="C#" Value="public static int PackagesFromDebianBuffer (out byte data, int len, RC.Channel channel, RC.PackageFn cb);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="data" Type="System.Byte&amp;" RefType="out" />
+        <Parameter Name="len" Type="System.Int32" />
+        <Parameter Name="channel" Type="RC.Channel" />
+        <Parameter Name="cb" Type="RC.PackageFn" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="data">a <see cref="T:System.Byte" /></param>
+        <param name="len">a <see cref="T:System.Int32" /></param>
+        <param name="channel">a <see cref="T:RC.Channel" /></param>
+        <param name="cb">a <see cref="T:RC.PackageFn" /></param>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName=".ctor">
+      <MemberSignature Language="C#" Value="public Extract ();" />
+      <MemberType>Constructor</MemberType>
+      <ReturnValue />
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:RC.Extract" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+  </Members>
+</Type>

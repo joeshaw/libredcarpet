@@ -24,8 +24,10 @@ generated-stamp: $(API) RC.metadata
 $(ASSEMBLY): generated-stamp
 	$(MCS) --unsafe -target:library -pkg:gtk-sharp -o $(ASSEMBLY) --recurse '*.cs'
 
-libredcarpet-sharp-docs.zip libredcarpet-sharp-docs.tree:
+update-docs:
 	$(DOC_UPDATER) $(ASSEMBLY) -o en -f
+
+libredcarpet-sharp-docs.zip libredcarpet-sharp-docs.tree: $(srcdir)/en/*/*.xml
 	$(DOC_ASSEMBLER) --ecma en -o libredcarpet-sharp-docs
 
 merge-docs:

@@ -1,0 +1,264 @@
+<Type Name="Arch" FullName="RC.Arch">
+  <TypeSignature Language="C#" Value="public enum Arch" Maintainer="auto" />
+  <AssemblyInfo>
+    <AssemblyName>libredcarpet-sharp</AssemblyName>
+    <AssemblyPublicKey>
+    </AssemblyPublicKey>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <AssemblyCulture>neutral</AssemblyCulture>
+    <Attributes>
+      <Attribute>
+        <AttributeName>System.Security.AllowPartiallyTrustedCallersAttribute</AttributeName>
+      </Attribute>
+      <Attribute>
+        <AttributeName>System.Resources.NeutralResourcesLanguageAttribute</AttributeName>
+      </Attribute>
+      <Attribute>
+        <AttributeName>System.Runtime.InteropServices.ComVisibleAttribute</AttributeName>
+      </Attribute>
+    </Attributes>
+  </AssemblyInfo>
+  <ThreadSafetyStatement>Gtk# is thread aware, but not thread safe; See the <link location="node:gtk-sharp/programming/threads">Gtk# Thread Programming</link> for details.</ThreadSafetyStatement>
+  <Docs>
+    <summary>To be added</summary>
+    <remarks>To be added</remarks>
+  </Docs>
+  <Base>
+    <BaseTypeName>System.Enum</BaseTypeName>
+  </Base>
+  <Interfaces>
+    <Interface>
+      <InterfaceName>System.IComparable</InterfaceName>
+    </Interface>
+    <Interface>
+      <InterfaceName>System.IConvertible</InterfaceName>
+    </Interface>
+    <Interface>
+      <InterfaceName>System.IFormattable</InterfaceName>
+    </Interface>
+  </Interfaces>
+  <Attributes />
+  <Members>
+    <Member MemberName="Unknown">
+      <MemberSignature Language="C#" Value="Unknown" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Arch</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Noarch">
+      <MemberSignature Language="C#" Value="Noarch" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Arch</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="I386">
+      <MemberSignature Language="C#" Value="I386" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Arch</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="I486">
+      <MemberSignature Language="C#" Value="I486" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Arch</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="I586">
+      <MemberSignature Language="C#" Value="I586" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Arch</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="I686">
+      <MemberSignature Language="C#" Value="I686" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Arch</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="X8664">
+      <MemberSignature Language="C#" Value="X8664" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Arch</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Ia32e">
+      <MemberSignature Language="C#" Value="Ia32e" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Arch</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Athlon">
+      <MemberSignature Language="C#" Value="Athlon" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Arch</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Ppc">
+      <MemberSignature Language="C#" Value="Ppc" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Arch</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Ppc64">
+      <MemberSignature Language="C#" Value="Ppc64" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Arch</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="S390">
+      <MemberSignature Language="C#" Value="S390" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Arch</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="S390x">
+      <MemberSignature Language="C#" Value="S390x" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Arch</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Ia64">
+      <MemberSignature Language="C#" Value="Ia64" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Arch</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Sparc">
+      <MemberSignature Language="C#" Value="Sparc" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Arch</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Sparc64">
+      <MemberSignature Language="C#" Value="Sparc64" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Arch</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="value__">
+      <MemberSignature Language="C#" Value="value__" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+  </Members>
+</Type>

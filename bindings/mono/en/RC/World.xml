@@ -1,0 +1,984 @@
+<Type Name="World" FullName="RC.World">
+  <TypeSignature Language="C#" Value="public class World : GLib.Object, IWrapper, IDisposable" Maintainer="auto" />
+  <AssemblyInfo>
+    <AssemblyName>libredcarpet-sharp</AssemblyName>
+    <AssemblyPublicKey>
+    </AssemblyPublicKey>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <AssemblyCulture>neutral</AssemblyCulture>
+    <Attributes>
+      <Attribute>
+        <AttributeName>System.Security.AllowPartiallyTrustedCallersAttribute</AttributeName>
+      </Attribute>
+      <Attribute>
+        <AttributeName>System.Resources.NeutralResourcesLanguageAttribute</AttributeName>
+      </Attribute>
+      <Attribute>
+        <AttributeName>System.Runtime.InteropServices.ComVisibleAttribute</AttributeName>
+      </Attribute>
+    </Attributes>
+  </AssemblyInfo>
+  <ThreadSafetyStatement>Gtk# is thread aware, but not thread safe; See the <link location="node:gtk-sharp/programming/threads">Gtk# Thread Programming</link> for details.</ThreadSafetyStatement>
+  <Docs>
+    <summary>To be added</summary>
+    <remarks>To be added</remarks>
+  </Docs>
+  <Base>
+    <BaseTypeName>GLib.Object</BaseTypeName>
+  </Base>
+  <Interfaces>
+    <Interface>
+      <InterfaceName>GLib.IWrapper</InterfaceName>
+    </Interface>
+    <Interface>
+      <InterfaceName>System.IDisposable</InterfaceName>
+    </Interface>
+  </Interfaces>
+  <Attributes />
+  <Members>
+    <Member MemberName="Finalize">
+      <MemberSignature Language="C#" Value="protected override void Finalize ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="OnChangedChannels">
+      <MemberSignature Language="C#" Value="protected virtual void OnChangedChannels ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="OnChangedSubscriptions">
+      <MemberSignature Language="C#" Value="protected virtual void OnChangedSubscriptions ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="OnChangedLocks">
+      <MemberSignature Language="C#" Value="protected virtual void OnChangedLocks ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="OnChangedPackages">
+      <MemberSignature Language="C#" Value="protected virtual void OnChangedPackages ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="OnRefreshed">
+      <MemberSignature Language="C#" Value="protected virtual void OnRefreshed ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ForeachRequiringPackage">
+      <MemberSignature Language="C#" Value="public int ForeachRequiringPackage (RC.PackageDep dep, RC.PackageAndDepFn fn);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="dep" Type="RC.PackageDep" />
+        <Parameter Name="fn" Type="RC.PackageAndDepFn" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="dep">a <see cref="T:RC.PackageDep" /></param>
+        <param name="fn">a <see cref="T:RC.PackageAndDepFn" /></param>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="PackageIsLocked">
+      <MemberSignature Language="C#" Value="public bool PackageIsLocked (RC.Package package);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Boolean</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="package" Type="RC.Package" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="package">a <see cref="T:RC.Package" /></param>
+        <returns>a <see cref="T:System.Boolean" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="GetChannelByName">
+      <MemberSignature Language="C#" Value="public RC.Channel GetChannelByName (string channel_name);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Channel</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="channel_name" Type="System.String" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="channel_name">a <see cref="T:System.String" /></param>
+        <returns>a <see cref="T:RC.Channel" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ForeachLock">
+      <MemberSignature Language="C#" Value="public int ForeachLock (RC.PackageMatchFn fn);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="fn" Type="RC.PackageMatchFn" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="fn">a <see cref="T:RC.PackageMatchFn" /></param>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="GuessPackageChannel">
+      <MemberSignature Language="C#" Value="public RC.Channel GuessPackageChannel (RC.Package package);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Channel</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="package" Type="RC.Package" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="package">a <see cref="T:RC.Package" /></param>
+        <returns>a <see cref="T:RC.Channel" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="GetUpgrades">
+      <MemberSignature Language="C#" Value="public GLib.SList GetUpgrades (RC.Package package, RC.Channel channel);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>GLib.SList</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="package" Type="RC.Package" />
+        <Parameter Name="channel" Type="RC.Channel" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="package">a <see cref="T:RC.Package" /></param>
+        <param name="channel">a <see cref="T:RC.Channel" /></param>
+        <returns>a <see cref="T:GLib.SList" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="IsSubscribed">
+      <MemberSignature Language="C#" Value="public bool IsSubscribed (RC.Channel channel);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Boolean</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="channel" Type="RC.Channel" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="channel">a <see cref="T:RC.Channel" /></param>
+        <returns>a <see cref="T:System.Boolean" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="RefreshComplete">
+      <MemberSignature Language="C#" Value="public void RefreshComplete ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ForeachChannel">
+      <MemberSignature Language="C#" Value="public int ForeachChannel (RC.ChannelFn fn);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="fn" Type="RC.ChannelFn" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="fn">a <see cref="T:RC.ChannelFn" /></param>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ForeachProvidingPackage">
+      <MemberSignature Language="C#" Value="public int ForeachProvidingPackage (RC.PackageDep dep, RC.PackageAndSpecFn fn);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="dep" Type="RC.PackageDep" />
+        <Parameter Name="fn" Type="RC.PackageAndSpecFn" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="dep">a <see cref="T:RC.PackageDep" /></param>
+        <param name="fn">a <see cref="T:RC.PackageAndSpecFn" /></param>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="GetChannelByAlias">
+      <MemberSignature Language="C#" Value="public RC.Channel GetChannelByAlias (string alias);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Channel</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="alias" Type="System.String" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="alias">a <see cref="T:System.String" /></param>
+        <returns>a <see cref="T:RC.Channel" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="GetPackageWithConstraint">
+      <MemberSignature Language="C#" Value="public RC.Package GetPackageWithConstraint (RC.Channel channel, string name, RC.PackageDep constraint, bool is_and);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Package</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="channel" Type="RC.Channel" />
+        <Parameter Name="name" Type="System.String" />
+        <Parameter Name="constraint" Type="RC.PackageDep" />
+        <Parameter Name="is_and" Type="System.Boolean" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="channel">a <see cref="T:RC.Channel" /></param>
+        <param name="name">a <see cref="T:System.String" /></param>
+        <param name="constraint">a <see cref="T:RC.PackageDep" /></param>
+        <param name="is_and">a <see cref="T:System.Boolean" /></param>
+        <returns>a <see cref="T:RC.Package" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="GetPackage">
+      <MemberSignature Language="C#" Value="public RC.Package GetPackage (RC.Channel channel, string name);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Package</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="channel" Type="RC.Channel" />
+        <Parameter Name="name" Type="System.String" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="channel">a <see cref="T:RC.Channel" /></param>
+        <param name="name">a <see cref="T:System.String" /></param>
+        <returns>a <see cref="T:RC.Package" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ForeachPackage">
+      <MemberSignature Language="C#" Value="public int ForeachPackage (RC.Channel channel, RC.PackageFn fn);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="channel" Type="RC.Channel" />
+        <Parameter Name="fn" Type="RC.PackageFn" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="channel">a <see cref="T:RC.Channel" /></param>
+        <param name="fn">a <see cref="T:RC.PackageFn" /></param>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ForeachSystemUpgrade">
+      <MemberSignature Language="C#" Value="public int ForeachSystemUpgrade (bool subscribed_only, RC.PackagePairFn fn);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="subscribed_only" Type="System.Boolean" />
+        <Parameter Name="fn" Type="RC.PackagePairFn" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="subscribed_only">a <see cref="T:System.Boolean" /></param>
+        <param name="fn">a <see cref="T:RC.PackagePairFn" /></param>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="AddLock">
+      <MemberSignature Language="C#" Value="public void AddLock (RC.PackageMatch _lock);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="_lock" Type="RC.PackageMatch" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="_lock">a <see cref="T:RC.PackageMatch" /></param>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ContainsChannel">
+      <MemberSignature Language="C#" Value="public bool ContainsChannel (RC.Channel channel);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Boolean</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="channel" Type="RC.Channel" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="channel">a <see cref="T:RC.Channel" /></param>
+        <returns>a <see cref="T:System.Boolean" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="TouchChannelSequenceNumber">
+      <MemberSignature Language="C#" Value="public void TouchChannelSequenceNumber ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="RemoveLock">
+      <MemberSignature Language="C#" Value="public void RemoveLock (RC.PackageMatch _lock);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="_lock" Type="RC.PackageMatch" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="_lock">a <see cref="T:RC.PackageMatch" /></param>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="SetSubscription">
+      <MemberSignature Language="C#" Value="public void SetSubscription (RC.Channel channel, bool is_subscribed);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="channel" Type="RC.Channel" />
+        <Parameter Name="is_subscribed" Type="System.Boolean" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="channel">a <see cref="T:RC.Channel" /></param>
+        <param name="is_subscribed">a <see cref="T:System.Boolean" /></param>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ForeachPackageByMatch">
+      <MemberSignature Language="C#" Value="public int ForeachPackageByMatch (RC.PackageMatch match, RC.PackageFn fn);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="match" Type="RC.PackageMatch" />
+        <Parameter Name="fn" Type="RC.PackageFn" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="match">a <see cref="T:RC.PackageMatch" /></param>
+        <param name="fn">a <see cref="T:RC.PackageFn" /></param>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="TouchLockSequenceNumber">
+      <MemberSignature Language="C#" Value="public void TouchLockSequenceNumber ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ClearLocks">
+      <MemberSignature Language="C#" Value="public void ClearLocks ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Transact">
+      <MemberSignature Language="C#" Value="public bool Transact (GLib.SList install_packages, GLib.SList remove_packages, int flags);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Boolean</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="install_packages" Type="GLib.SList" />
+        <Parameter Name="remove_packages" Type="GLib.SList" />
+        <Parameter Name="flags" Type="System.Int32" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="install_packages">a <see cref="T:GLib.SList" /></param>
+        <param name="remove_packages">a <see cref="T:GLib.SList" /></param>
+        <param name="flags">a <see cref="T:System.Int32" /></param>
+        <returns>a <see cref="T:System.Boolean" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Refresh">
+      <MemberSignature Language="C#" Value="public RC.Pending Refresh ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Pending</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:RC.Pending" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ForeachUpgrade">
+      <MemberSignature Language="C#" Value="public int ForeachUpgrade (RC.Package package, RC.Channel channel, RC.PackageFn fn);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="package" Type="RC.Package" />
+        <Parameter Name="channel" Type="RC.Channel" />
+        <Parameter Name="fn" Type="RC.PackageFn" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="package">a <see cref="T:RC.Package" /></param>
+        <param name="channel">a <see cref="T:RC.Channel" /></param>
+        <param name="fn">a <see cref="T:RC.PackageFn" /></param>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="TouchPackageSequenceNumber">
+      <MemberSignature Language="C#" Value="public void TouchPackageSequenceNumber ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ForeachConflictingPackage">
+      <MemberSignature Language="C#" Value="public int ForeachConflictingPackage (RC.PackageDep dep, RC.PackageAndDepFn fn);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="dep" Type="RC.PackageDep" />
+        <Parameter Name="fn" Type="RC.PackageAndDepFn" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="dep">a <see cref="T:RC.PackageDep" /></param>
+        <param name="fn">a <see cref="T:RC.PackageAndDepFn" /></param>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="FindInstalledVersion">
+      <MemberSignature Language="C#" Value="public RC.Package FindInstalledVersion (RC.Package package);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Package</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="package" Type="RC.Package" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="package">a <see cref="T:RC.Package" /></param>
+        <returns>a <see cref="T:RC.Package" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ForeachParentPackage">
+      <MemberSignature Language="C#" Value="public int ForeachParentPackage (RC.PackageDep dep, RC.PackageAndDepFn fn);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="dep" Type="RC.PackageDep" />
+        <Parameter Name="fn" Type="RC.PackageAndDepFn" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="dep">a <see cref="T:RC.PackageDep" /></param>
+        <param name="fn">a <see cref="T:RC.PackageAndDepFn" /></param>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ForeachPackageByName">
+      <MemberSignature Language="C#" Value="public int ForeachPackageByName (string name, RC.Channel channel, RC.PackageFn fn);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="name" Type="System.String" />
+        <Parameter Name="channel" Type="RC.Channel" />
+        <Parameter Name="fn" Type="RC.PackageFn" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="name">a <see cref="T:System.String" /></param>
+        <param name="channel">a <see cref="T:RC.Channel" /></param>
+        <param name="fn">a <see cref="T:RC.PackageFn" /></param>
+        <returns>a <see cref="T:System.Int32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="SyncConditional">
+      <MemberSignature Language="C#" Value="public bool SyncConditional (RC.Channel arg1);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Boolean</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="arg1" Type="RC.Channel" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="arg1">a <see cref="T:RC.Channel" /></param>
+        <returns>a <see cref="T:System.Boolean" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Dup">
+      <MemberSignature Language="C#" Value="public RC.World Dup ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.World</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:RC.World" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="GetChannelById">
+      <MemberSignature Language="C#" Value="public RC.Channel GetChannelById (string channel_id);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Channel</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="channel_id" Type="System.String" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="channel_id">a <see cref="T:System.String" /></param>
+        <returns>a <see cref="T:RC.Channel" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Sync">
+      <MemberSignature Language="C#" Value="public bool Sync ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Boolean</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:System.Boolean" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="TouchSubscriptionSequenceNumber">
+      <MemberSignature Language="C#" Value="public void TouchSubscriptionSequenceNumber ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="GetBestUpgrade">
+      <MemberSignature Language="C#" Value="public RC.Package GetBestUpgrade (RC.Package package, bool subscribed_only);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Package</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="package" Type="RC.Package" />
+        <Parameter Name="subscribed_only" Type="System.Boolean" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="package">a <see cref="T:RC.Package" /></param>
+        <param name="subscribed_only">a <see cref="T:System.Boolean" /></param>
+        <returns>a <see cref="T:RC.Package" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="RefreshBegin">
+      <MemberSignature Language="C#" Value="public void RefreshBegin ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="CanTransactPackage">
+      <MemberSignature Language="C#" Value="public bool CanTransactPackage (RC.Package package);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Boolean</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="package" Type="RC.Package" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="package">a <see cref="T:RC.Package" /></param>
+        <returns>a <see cref="T:System.Boolean" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="GetSingleProvider">
+      <MemberSignature Language="C#" Value="public bool GetSingleProvider (RC.PackageDep dep, RC.Channel channel, RC.Package package);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Boolean</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="dep" Type="RC.PackageDep" />
+        <Parameter Name="channel" Type="RC.Channel" />
+        <Parameter Name="package" Type="RC.Package" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="dep">a <see cref="T:RC.PackageDep" /></param>
+        <param name="channel">a <see cref="T:RC.Channel" /></param>
+        <param name="package">a <see cref="T:RC.Package" /></param>
+        <returns>a <see cref="T:System.Boolean" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName=".ctor">
+      <MemberSignature Language="C#" Value="protected World (GLib.GType gtype);" />
+      <MemberType>Constructor</MemberType>
+      <ReturnValue />
+      <Parameters>
+        <Parameter Name="gtype" Type="GLib.GType" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="gtype">a <see cref="T:GLib.GType" /></param>
+        <returns>a <see cref="T:RC.World" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName=".ctor">
+      <MemberSignature Language="C#" Value="public World (IntPtr raw);" />
+      <MemberType>Constructor</MemberType>
+      <ReturnValue />
+      <Parameters>
+        <Parameter Name="raw" Type="System.IntPtr" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="raw">a <see cref="T:System.IntPtr" /></param>
+        <returns>a <see cref="T:RC.World" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName=".ctor">
+      <MemberSignature Language="C#" Value="protected World ();" />
+      <MemberType>Constructor</MemberType>
+      <ReturnValue />
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:RC.World" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="GType">
+      <MemberSignature Language="C#" Value="public static GLib.GType GType { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>GLib.GType</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:GLib.GType" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="SubscriptionSequenceNumber">
+      <MemberSignature Language="C#" Value="public uint SubscriptionSequenceNumber { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>System.UInt32</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:System.UInt32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ChannelSequenceNumber">
+      <MemberSignature Language="C#" Value="public uint ChannelSequenceNumber { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>System.UInt32</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:System.UInt32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="HasRefresh">
+      <MemberSignature Language="C#" Value="public bool HasRefresh { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Boolean</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:System.Boolean" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="PackageSequenceNumber">
+      <MemberSignature Language="C#" Value="public uint PackageSequenceNumber { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>System.UInt32</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:System.UInt32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Locks">
+      <MemberSignature Language="C#" Value="public GLib.SList Locks { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>GLib.SList</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:GLib.SList" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Channels">
+      <MemberSignature Language="C#" Value="public GLib.SList Channels { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>GLib.SList</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:GLib.SList" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="IsRefreshing">
+      <MemberSignature Language="C#" Value="public bool IsRefreshing { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Boolean</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:System.Boolean" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="LockSequenceNumber">
+      <MemberSignature Language="C#" Value="public uint LockSequenceNumber { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>System.UInt32</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:System.UInt32" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="RefreshDelegate">
+      <MemberSignature Language="C#" Value="public RC.WorldRefreshFn RefreshDelegate { set; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.WorldRefreshFn</ReturnType>
+      </ReturnValue>
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:RC.WorldRefreshFn" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ChangedChannels">
+      <MemberSignature Language="C#" Value="public event EventHandler ChangedChannels;" />
+      <MemberType>Event</MemberType>
+      <ReturnValue>
+        <ReturnType>System.EventHandler</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ChangedSubscriptions">
+      <MemberSignature Language="C#" Value="public event EventHandler ChangedSubscriptions;" />
+      <MemberType>Event</MemberType>
+      <ReturnValue>
+        <ReturnType>System.EventHandler</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ChangedLocks">
+      <MemberSignature Language="C#" Value="public event EventHandler ChangedLocks;" />
+      <MemberType>Event</MemberType>
+      <ReturnValue>
+        <ReturnType>System.EventHandler</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ChangedPackages">
+      <MemberSignature Language="C#" Value="public event EventHandler ChangedPackages;" />
+      <MemberType>Event</MemberType>
+      <ReturnValue>
+        <ReturnType>System.EventHandler</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Refreshed">
+      <MemberSignature Language="C#" Value="public event EventHandler Refreshed;" />
+      <MemberType>Event</MemberType>
+      <ReturnValue>
+        <ReturnType>System.EventHandler</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+  </Members>
+</Type>

@@ -1,0 +1,256 @@
+<Type Name="PackageDep" FullName="RC.PackageDep">
+  <TypeSignature Language="C#" Value="public class PackageDep : GLib.Opaque, IWrapper" Maintainer="auto" />
+  <AssemblyInfo>
+    <AssemblyName>libredcarpet-sharp</AssemblyName>
+    <AssemblyPublicKey>
+    </AssemblyPublicKey>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <AssemblyCulture>neutral</AssemblyCulture>
+    <Attributes>
+      <Attribute>
+        <AttributeName>System.Security.AllowPartiallyTrustedCallersAttribute</AttributeName>
+      </Attribute>
+      <Attribute>
+        <AttributeName>System.Resources.NeutralResourcesLanguageAttribute</AttributeName>
+      </Attribute>
+      <Attribute>
+        <AttributeName>System.Runtime.InteropServices.ComVisibleAttribute</AttributeName>
+      </Attribute>
+    </Attributes>
+  </AssemblyInfo>
+  <ThreadSafetyStatement>Gtk# is thread aware, but not thread safe; See the <link location="node:gtk-sharp/programming/threads">Gtk# Thread Programming</link> for details.</ThreadSafetyStatement>
+  <Docs>
+    <summary>To be added</summary>
+    <remarks>To be added</remarks>
+  </Docs>
+  <Base>
+    <BaseTypeName>GLib.Opaque</BaseTypeName>
+  </Base>
+  <Interfaces>
+    <Interface>
+      <InterfaceName>GLib.IWrapper</InterfaceName>
+    </Interface>
+  </Interfaces>
+  <Attributes />
+  <Members>
+    <Member MemberName="SlistCopy">
+      <MemberSignature Language="C#" Value="public static GLib.SList SlistCopy (GLib.SList list);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>GLib.SList</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="list" Type="GLib.SList" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="list">a <see cref="T:GLib.SList" /></param>
+        <returns>a <see cref="T:GLib.SList" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="SpewCache">
+      <MemberSignature Language="C#" Value="public static void SpewCache ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="SlistFree">
+      <MemberSignature Language="C#" Value="public static void SlistFree (GLib.SList list);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="list" Type="GLib.SList" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="list">a <see cref="T:GLib.SList" /></param>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="VerifyRelation">
+      <MemberSignature Language="C#" Value="public static bool VerifyRelation (RC.Packman packman, RC.PackageDep dep, RC.PackageDep prov);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Boolean</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="packman" Type="RC.Packman" />
+        <Parameter Name="dep" Type="RC.PackageDep" />
+        <Parameter Name="prov" Type="RC.PackageDep" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="packman">a <see cref="T:RC.Packman" /></param>
+        <param name="dep">a <see cref="T:RC.PackageDep" /></param>
+        <param name="prov">a <see cref="T:RC.PackageDep" /></param>
+        <returns>a <see cref="T:System.Boolean" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Ref">
+      <MemberSignature Language="C#" Value="public RC.PackageDep Ref ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.PackageDep</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:RC.PackageDep" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Unref">
+      <MemberSignature Language="C#" Value="public void Unref ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ToString">
+      <MemberSignature Language="C#" Value="public override string ToString ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.String</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:System.String" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName=".ctor">
+      <MemberSignature Language="C#" Value="public PackageDep (IntPtr raw);" />
+      <MemberType>Constructor</MemberType>
+      <ReturnValue />
+      <Parameters>
+        <Parameter Name="raw" Type="System.IntPtr" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="raw">a <see cref="T:System.IntPtr" /></param>
+        <returns>a <see cref="T:RC.PackageDep" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName=".ctor">
+      <MemberSignature Language="C#" Value="public PackageDep (string name, bool has_epoch, uint epoch, string version, string release, RC.PackageRelation relation, RC.Channel channel, bool pre, bool is_or);" />
+      <MemberType>Constructor</MemberType>
+      <ReturnValue />
+      <Parameters>
+        <Parameter Name="name" Type="System.String" />
+        <Parameter Name="has_epoch" Type="System.Boolean" />
+        <Parameter Name="epoch" Type="System.UInt32" />
+        <Parameter Name="version" Type="System.String" />
+        <Parameter Name="release" Type="System.String" />
+        <Parameter Name="relation" Type="RC.PackageRelation" />
+        <Parameter Name="channel" Type="RC.Channel" />
+        <Parameter Name="pre" Type="System.Boolean" />
+        <Parameter Name="is_or" Type="System.Boolean" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="name">a <see cref="T:System.String" /></param>
+        <param name="has_epoch">a <see cref="T:System.Boolean" /></param>
+        <param name="epoch">a <see cref="T:System.UInt32" /></param>
+        <param name="version">a <see cref="T:System.String" /></param>
+        <param name="release">a <see cref="T:System.String" /></param>
+        <param name="relation">a <see cref="T:System.Int32" /></param>
+        <param name="channel">a <see cref="T:RC.Channel" /></param>
+        <param name="pre">a <see cref="T:System.Boolean" /></param>
+        <param name="is_or">a <see cref="T:System.Boolean" /></param>
+        <returns>a <see cref="T:RC.PackageDep" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName=".ctor">
+      <MemberSignature Language="C#" Value="public PackageDep (RC.PackageSpec spec, RC.PackageRelation relation, RC.Channel channel, bool pre, bool is_or);" />
+      <MemberType>Constructor</MemberType>
+      <ReturnValue />
+      <Parameters>
+        <Parameter Name="spec" Type="RC.PackageSpec" />
+        <Parameter Name="relation" Type="RC.PackageRelation" />
+        <Parameter Name="channel" Type="RC.Channel" />
+        <Parameter Name="pre" Type="System.Boolean" />
+        <Parameter Name="is_or" Type="System.Boolean" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="spec">a <see cref="T:RC.PackageSpec" /></param>
+        <param name="relation">a <see cref="T:System.Int32" /></param>
+        <param name="channel">a <see cref="T:RC.Channel" /></param>
+        <param name="pre">a <see cref="T:System.Boolean" /></param>
+        <param name="is_or">a <see cref="T:System.Boolean" /></param>
+        <returns>a <see cref="T:RC.PackageDep" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="IsOr">
+      <MemberSignature Language="C#" Value="public bool IsOr { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Boolean</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:System.Boolean" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Relation">
+      <MemberSignature Language="C#" Value="public RC.PackageRelation Relation { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.PackageRelation</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:RC.PackageRelation" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="IsPre">
+      <MemberSignature Language="C#" Value="public bool IsPre { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Boolean</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:System.Boolean" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Channel">
+      <MemberSignature Language="C#" Value="public RC.Channel Channel { get; };" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.Channel</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <returns>a <see cref="T:RC.Channel" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+  </Members>
+</Type>

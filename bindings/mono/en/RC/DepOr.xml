@@ -1,0 +1,180 @@
+<Type Name="DepOr" FullName="RC.DepOr">
+  <TypeSignature Language="C#" Value="public sealed struct DepOr" Maintainer="auto" />
+  <AssemblyInfo>
+    <AssemblyName>libredcarpet-sharp</AssemblyName>
+    <AssemblyPublicKey>
+    </AssemblyPublicKey>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <AssemblyCulture>neutral</AssemblyCulture>
+    <Attributes>
+      <Attribute>
+        <AttributeName>System.Security.AllowPartiallyTrustedCallersAttribute</AttributeName>
+      </Attribute>
+      <Attribute>
+        <AttributeName>System.Resources.NeutralResourcesLanguageAttribute</AttributeName>
+      </Attribute>
+      <Attribute>
+        <AttributeName>System.Runtime.InteropServices.ComVisibleAttribute</AttributeName>
+      </Attribute>
+    </Attributes>
+  </AssemblyInfo>
+  <ThreadSafetyStatement>Gtk# is thread aware, but not thread safe; See the <link location="node:gtk-sharp/programming/threads">Gtk# Thread Programming</link> for details.</ThreadSafetyStatement>
+  <Docs>
+    <summary>To be added</summary>
+    <remarks>To be added</remarks>
+  </Docs>
+  <Base>
+    <BaseTypeName>System.ValueType</BaseTypeName>
+  </Base>
+  <Interfaces />
+  <Attributes />
+  <Members>
+    <Member MemberName="Zero">
+      <MemberSignature Language="C#" Value="public static RC.DepOr Zero;" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.DepOr</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="OrDep">
+      <MemberSignature Language="C#" Value="public string OrDep;" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>System.String</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Reference">
+      <MemberSignature Language="C#" Value="public int Reference;" />
+      <MemberType>Field</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters>
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="New">
+      <MemberSignature Language="C#" Value="public static RC.DepOr New (IntPtr raw);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.DepOr</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="raw" Type="System.IntPtr" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="raw">a <see cref="T:System.IntPtr" /></param>
+        <returns>a <see cref="T:RC.DepOr" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="New">
+      <MemberSignature Language="C#" Value="public static RC.DepOr New (GLib.SList deps);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.DepOr</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="deps" Type="GLib.SList" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="deps">a <see cref="T:GLib.SList" /></param>
+        <returns>a <see cref="T:RC.DepOr" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="NewByString">
+      <MemberSignature Language="C#" Value="public static RC.DepOr NewByString (string depstr);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.DepOr</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="depstr" Type="System.String" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="depstr">a <see cref="T:System.String" /></param>
+        <returns>a <see cref="T:RC.DepOr" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="NewProvide">
+      <MemberSignature Language="C#" Value="public static RC.DepOr NewProvide (RC.DepOr dor);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.DepOr</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="dor" Type="RC.DepOr" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="dor">a <see cref="T:RC.DepOr" /></param>
+        <returns>a <see cref="T:RC.DepOr" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="NewProvideByString">
+      <MemberSignature Language="C#" Value="public static RC.DepOr NewProvideByString (string dor_name);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>RC.DepOr</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="dor_name" Type="System.String" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="dor_name">a <see cref="T:System.String" /></param>
+        <returns>a <see cref="T:RC.DepOr" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="DepSlistToString">
+      <MemberSignature Language="C#" Value="public static string DepSlistToString (GLib.SList dep);" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.String</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="dep" Type="GLib.SList" />
+      </Parameters>
+      <Docs>
+        <summary>To be added</summary>
+        <param name="dep">a <see cref="T:GLib.SList" /></param>
+        <returns>a <see cref="T:System.String" /></returns>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Free">
+      <MemberSignature Language="C#" Value="public void Free ();" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>To be added</summary>
+        <remarks>To be added</remarks>
+      </Docs>
+    </Member>
+  </Members>
+</Type>

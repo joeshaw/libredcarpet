@@ -1,3 +1,10 @@
+2004-08-26  James Willcox  <james@ximian.com>
+
+	* Makefile.am:
+	* en/*:
+
+	Added docs
+
 2004-08-18  James Willcox  <james@ximian.com>
 
 	* Makefile.am:  cleaned up a bit
