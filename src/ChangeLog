@@ -1,5 +1,10 @@
 2001-07-11  Ian Peters  <itp@ximian.com>
 
+	* rc-rpmman.c: #if 0 the rpmGetRpmlibProvides for now, as this
+	interface -is- only in rpm 4.0.2 as I feared
+
+2001-07-11  Ian Peters  <itp@ximian.com>
+
 	* rc-rpmman.c (rc_rpmman_section_to_package_section): fix stupid
 	crash
 

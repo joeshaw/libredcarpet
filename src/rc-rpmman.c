@@ -1104,6 +1104,10 @@ depends_fill_helper (RCRpmman *rpmman, Header header, int names_tag,
         RCPackageDep *dep;
         RCPackageRelation relation = RC_RELATION_ANY;
 
+        if (!strncmp (names[i], "rpmlib(", strlen ("rpmlib("))) {
+            continue;
+        }
+
         if (versions_tag && versions_count) {
             if (flags_tag && flags_count) {
                 if (relations[i] & RPMSENSE_LESS) {
@@ -1520,6 +1524,7 @@ static RCPackageSList *
 rc_rpmman_query_all (RCPackman *packman)
 {
     RCPackageSList *packages;
+#if 0
     RCPackage *internal;
     int *relations;
     char **verrels, **names;
@@ -1527,6 +1532,7 @@ rc_rpmman_query_all (RCPackman *packman)
     guint32 *epochs;
     int i;
     int count;
+#endif
 
     if (RC_RPMMAN (packman)->major_version == 4) {
         packages = rc_rpmman_query_all_v4 (packman);
@@ -1534,6 +1540,7 @@ rc_rpmman_query_all (RCPackman *packman)
         packages = rc_rpmman_query_all_v3 (packman);
     }
 
+#if 0
     internal = rc_package_new ();
 
     internal->spec.name = g_strdup ("rpmlib-internal");
@@ -1571,6 +1578,7 @@ rc_rpmman_query_all (RCPackman *packman)
     g_strfreev (releases);
 
     packages = g_slist_prepend (packages, internal);
+#endif
 
     return packages;
 }
@@ -2121,7 +2129,9 @@ load_fake_syms (RCRpmman *rpmman)
     rpmman->rpmdbOpen = &rpmdbOpen;
     rpmman->rpmdbClose = &rpmdbClose;
     rpmman->rpmProblemString = &rpmProblemString;
+#if 0
     rpmman->rpmGetRpmlibProvides = &rpmGetRpmlibProvides;
+#endif
 
 #ifdef RC_RPM4
 
@@ -2262,10 +2272,12 @@ load_rpm_syms (RCRpmman *rpmman)
                           ((gpointer)&rpmman->rpmProblemString))) {
         return (FALSE);
     }
+#if 0
     if (!g_module_symbol (rpmman->rpm_lib, "rpmGetRpmlibProvides",
                           ((gpointer)&rpmman->rpmGetRpmlibProvides))) {
         return (FALSE);
     }
+#endif
 
     if (rpmman->major_version == 4) {
         if (!g_module_symbol (rpmman->rpm_lib, "rpmdbInitIterator",
