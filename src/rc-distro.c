@@ -67,6 +67,10 @@ static gboolean func_sys (gpointer arg1,  /* prog to call, with args */
  */
 
 RCDistroChunk distro_figurers[] = {
+    /* scyld needs to come before redhat, since they include a redhat-release */
+    { "scyld-20-i386", RC_ARCH_IA32,
+      func_string_in_file, "/etc/scyld-release", "Scyld Beowulf release 2", NULL, 0 },
+
     { "redhat-60-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/redhat-release", "6.0", NULL, 0 },
     { "redhat-61-i386", RC_ARCH_IA32,
@@ -76,9 +80,6 @@ RCDistroChunk distro_figurers[] = {
     { "redhat-70-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/redhat-release", "7.0", NULL, CHECK_OP_OR,
       func_string_in_file, "/etc/redhat-release", "Rawhide", NULL },
-
-    { "scyld-20-i386", RC_ARCH_IA32,
-      func_string_in_file, "/etc/redhat-release", "Scyld Beowulf release 2.0", NULL, 0 },
 
     { "turbolinux-60-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/turbolinux-release", "6.0", NULL, 0 },

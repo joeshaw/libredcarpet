@@ -1,5 +1,7 @@
 2001-01-23  Vladimir Vukicevic  <vladimir@helixcode.com>
 
+	* rc-distro.c: erm, get it right.
+
 	* rc-distro.c: Add Scyld Beowulf 2.0
 
 	* rc-package.c: Hmmm. You really -can't- strcmp() two
