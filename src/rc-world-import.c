@@ -433,6 +433,8 @@ rc_world_parse_debian (RCWorld *world, RCChannel *rcc, char *buf)
             continue;
         }
         p = rc_package_new ();
+        /* All debian packages have epochs */
+        p->spec.has_epoch = 1;
         debian_packages_helper (b, p, rcc->file_path);
         ((RCPackageUpdate *)(p->history->data))->package = p;
         ob = b+1;

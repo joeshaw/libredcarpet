@@ -202,6 +202,7 @@ parse_dep_attrs(RCPackageDep *dep, const xmlChar **attrs)
 
     if (op_present) {
         dep->spec.epoch = tmp_epoch;
+        dep->spec.has_epoch = 1;
         dep->spec.version = tmp_version;
         dep->spec.release = tmp_release;
     }
@@ -283,6 +284,7 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
         update = rc_package_get_latest_update(ctx->current_package);
         if (update) {
             ctx->current_package->spec.epoch   = update->spec.epoch;
+            ctx->current_package->spec.has_epoch = update->spec.has_epoch;
             ctx->current_package->spec.version = g_strdup (update->spec.version);
             ctx->current_package->spec.release = g_strdup (update->spec.release);
         }
@@ -296,6 +298,7 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
                 if (dep->relation == RC_RELATION_EQUAL &&
                     !strcmp(dep->spec.name, ctx->current_package->spec.name)) {
                     ctx->current_package->spec.epoch   = dep->spec.epoch;
+                    ctx->current_package->spec.has_epoch = dep->spec.has_epoch;
                     ctx->current_package->spec.version = g_strdup (dep->spec.version);
                     ctx->current_package->spec.release = g_strdup (dep->spec.release);
                     break;
@@ -365,6 +368,7 @@ parser_update_end(RCPackageSAXContext *ctx, const xmlChar *name)
     else if (!strcmp(name, "epoch")) {
         ctx->current_update->spec.epoch =
             rc_string_to_guint32_with_default(ctx->text_buffer, 0);
+        ctx->current_update->spec.has_epoch = 1;
     }
     else if (!strcmp(name, "version")) {
         char *stripped = g_strstrip (ctx->text_buffer);
@@ -804,6 +808,7 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
         RCPackageUpdate *update = package->history->data;
 
         package->spec.epoch   = update->spec.epoch;
+        package->spec.has_epoch = 1;
         package->spec.version = g_strdup (update->spec.version);
         package->spec.release = g_strdup (update->spec.release);
 
@@ -820,6 +825,7 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
             if (dep->relation == RC_RELATION_EQUAL
                 && ! strcmp (dep->spec.name, package->spec.name)) {
                 package->spec.epoch   = dep->spec.epoch;
+                package->spec.has_epoch = dep->spec.has_epoch;
                 package->spec.version = g_strdup (dep->spec.version);
                 package->spec.release = g_strdup (dep->spec.release);
                 break;
@@ -849,6 +855,7 @@ rc_xml_node_to_package_dep_internal (const xmlNode *node)
         dep_item->relation = rc_string_to_package_relation (tmp);
         dep_item->spec.epoch =
             xml_get_guint32_value_default (node, "epoch", 0);
+        dep_item->spec.has_epoch = 1;
         dep_item->spec.version =
             xml_get_prop (node, "version");
         dep_item->spec.release =
@@ -922,6 +929,7 @@ rc_xml_node_to_package_update (const xmlNode *node, const RCPackage *package)
         if (!g_strcasecmp (iter->name, "epoch")) {
             update->spec.epoch =
                 xml_get_guint32_content_default (iter, 0);
+            update->spec.has_epoch = 1;
         } else if (!g_strcasecmp (iter->name, "version")) {
             update->spec.version = xml_get_content (iter);
         } else if (!g_strcasecmp (iter->name, "release")) {
@@ -1115,7 +1123,7 @@ rc_package_dep_to_xml_node (RCPackageDep *dep_item)
         xmlSetProp (dep_node, "op",
                     rc_package_relation_to_string (dep_item->relation, FALSE));
 
-        if (dep_item->spec.epoch > 0) {
+        if (dep_item->spec.has_epoch) {
             gchar *tmp;
 
             tmp = g_strdup_printf ("%d", dep_item->spec.epoch);
@@ -1143,7 +1151,7 @@ rc_package_update_to_xml_node (RCPackageUpdate *update)
 
     update_node = xmlNewNode (NULL, "update");
 
-    if (update->spec.epoch) {
+    if (update->spec.has_epoch) {
         tmp_string = g_strdup_printf("%d", update->spec.epoch);
         xmlNewTextChild (update_node, NULL, "epoch", tmp_string);
         g_free(tmp_string);

@@ -33,6 +33,7 @@ extern RCPackman *das_global_packman;
 void
 rc_package_spec_init (RCPackageSpec *rcps,
                       const gchar *name,
+                      gboolean has_epoch,
                       guint32 epoch,
                       const gchar *version,
                       const gchar *release)
@@ -40,6 +41,7 @@ rc_package_spec_init (RCPackageSpec *rcps,
     g_assert (rcps);
 
     rcps->name = g_strdup (name);
+    rcps->has_epoch = has_epoch ? 1 : 0;
     rcps->epoch = epoch;
     rcps->version = g_strdup (version);
     rcps->release = g_strdup (release);
@@ -49,8 +51,8 @@ rc_package_spec_init (RCPackageSpec *rcps,
 void
 rc_package_spec_copy (RCPackageSpec *new, RCPackageSpec *old)
 {
-    rc_package_spec_init (new, old->name, old->epoch, old->version,
-                          old->release);
+    rc_package_spec_init (new, old->name, old->has_epoch, old->epoch,
+                          old->version, old->release);
     new->type = old->type;
 }
 
@@ -126,63 +128,22 @@ rc_package_spec_compare_name (void *a, void *b)
 }
 
 gchar *
-rc_package_spec_to_str (RCPackageSpec *spec)
-{
-    gchar *buf;
-    if (spec->epoch) {
-        gchar epoch_buf[32];
-        g_snprintf (epoch_buf, 32, "%d:", spec->epoch);
-        buf = g_strconcat ((spec->name ? spec->name  : ""),
-                           (spec->version ? "-" : ""),
-                           epoch_buf,
-                           (spec->version ? spec->version : ""),
-                           (spec->release ? "-" : ""),
-                           (spec->release ? spec->release : ""),
-                           NULL);
-    } else {
-        buf = g_strconcat ((spec->name ? spec->name  : ""),
-                           (spec->version ? "-" : ""),
-                           (spec->version ? spec->version : ""),
-                           (spec->release ? "-" : ""),
-                           (spec->release ? spec->release : ""),
-                           NULL);
-    }
-
-    return buf;
-}
-
-gchar *
 rc_package_spec_version_to_str (RCPackageSpec *spec)
 {
-    gchar *buf;
-    if (spec->epoch) {
-        gchar epoch_buf[32];
-        g_snprintf (epoch_buf, 32, "%d:", spec->epoch);
-        buf = g_strconcat (epoch_buf,
-                           (spec->version ? spec->version : ""),
-                           (spec->release ? "-" : ""),
-                           (spec->release ? spec->release : ""),
-                           NULL);
+    gchar epoch_buf[11];
+
+    if (spec->has_epoch) {
+        g_snprintf (epoch_buf, 11, "%d:", spec->epoch);
     } else {
-        buf = g_strconcat ((spec->version ? spec->version : ""),
-                           (spec->release ? "-" : ""),
-                           (spec->release ? spec->release : ""),
-                           NULL);
+        g_snprintf (epoch_buf, 11, "%s", "");
     }
-    return buf;
-}
 
-const gchar *
-rc_package_spec_to_str_static (RCPackageSpec *spec)
-{
-    static gchar *buf = NULL;
-
-    if (buf)
-        g_free (buf);
-
-    buf = rc_package_spec_to_str (spec);
-
-    return buf;
+    return (g_strdup_printf (
+                "%s%s%s%s",
+                epoch_buf,
+                spec->version,
+                (spec->release ? "-" : ""),
+                (spec->release ? spec->release : "")));
 }
 
 const gchar *
@@ -198,6 +159,26 @@ rc_package_spec_version_to_str_static (RCPackageSpec *spec)
     return buf;
 }
 
+gchar *
+rc_package_spec_to_str (RCPackageSpec *spec)
+{
+    return (g_strdup_printf (
+                "%s-%s", spec->name,
+                rc_package_spec_version_to_str_static (spec)));
+}
+
+const gchar *
+rc_package_spec_to_str_static (RCPackageSpec *spec)
+{
+    static gchar *buf = NULL;
+
+    if (buf)
+        g_free (buf);
+
+    buf = rc_package_spec_to_str (spec);
+
+    return buf;
+}
     
 guint rc_package_spec_hash (gconstpointer ptr)
 {
@@ -233,7 +214,14 @@ gint rc_package_spec_equal (gconstpointer a, gconstpointer b)
     g_assert (one);
     g_assert (two);
 
-    if (one->epoch != two->epoch) {
+    /* Why isn't there a logical XOR in C? */
+    if (!((one->has_epoch && two->has_epoch) ||
+          (!one->has_epoch && !two->has_epoch)))
+    {
+        return (FALSE);
+    }
+
+    if (one->has_epoch && (one->epoch != two->epoch)) {
         return (FALSE);
     }
 
@@ -278,7 +266,8 @@ rc_package_spec_compare (void *a, void *b)
 
     g_assert (das_global_packman);
 
-    return rc_packman_version_compare (das_global_packman, &apkg->spec, &bpkg->spec);
+    return rc_packman_version_compare (das_global_packman, &apkg->spec,
+                                       &bpkg->spec);
 }
 
 

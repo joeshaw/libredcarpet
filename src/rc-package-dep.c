@@ -40,6 +40,7 @@ extern RCPackman *das_global_packman;
 
 RCPackageDep *
 rc_package_dep_new (const gchar *name,
+                    gboolean has_epoch,
                     guint32 epoch,
                     const gchar *version,
                     const gchar *release,
@@ -47,8 +48,8 @@ rc_package_dep_new (const gchar *name,
 {
     RCPackageDep *rcpd = g_new0 (RCPackageDep, 1);
 
-    rc_package_spec_init (RC_PACKAGE_SPEC (rcpd), name, epoch, version,
-                          release);
+    rc_package_spec_init (RC_PACKAGE_SPEC (rcpd), name, has_epoch, epoch,
+                          version, release);
 
     rcpd->relation = relation;
     rcpd->pre      = FALSE;
@@ -61,10 +62,9 @@ RCPackageDep *
 rc_package_dep_new_from_spec (RCPackageSpec *spec,
                               RCPackageRelation relation)
 {
-    RCPackageDep *rcpd = rc_package_dep_new (spec->name, spec->epoch,
-                                             spec->version,
-                                             spec->release,
-                                             relation);
+    RCPackageDep *rcpd = rc_package_dep_new (
+        spec->name, spec->has_epoch, spec->epoch, spec->version,
+        spec->release, relation);
 
     return (rcpd);
 } /* rc_package_dep_new_from_spec */
@@ -177,7 +177,9 @@ rc_package_dep_verify_relation (RCPackageDep *dep,
     /* No specific version in the prov.  In RPM this means it will satisfy
      * any version, but debian it will not satisfy a versioned dep */
     if (unweak_provrel == RC_RELATION_ANY) {
-        if (rc_packman_get_capabilities(das_global_packman) & RC_PACKMAN_CAP_PROVIDE_ALL_VERSIONS) {
+        if (rc_packman_get_capabilities(das_global_packman) &
+            RC_PACKMAN_CAP_PROVIDE_ALL_VERSIONS)
+        {
             return TRUE;
         } else {
             return FALSE;
@@ -191,28 +193,33 @@ rc_package_dep_verify_relation (RCPackageDep *dep,
      * be a test for > 0.  Right now these are the same, but
      * please leave the code as-is. */
     
-    if (dep->spec.epoch && prov->spec.epoch) {
+    if (dep->spec.has_epoch && prov->spec.has_epoch) {
         /* HACK: This sucks, but I don't know a better way to compare 
          * elements one at a time */
         newdepspec.epoch = dep->spec.epoch;
+        newdepspec.has_epoch = dep->spec.has_epoch;
         newprovspec.epoch = prov->spec.epoch;
+        newprovspec.has_epoch = prov->spec.has_epoch;
         newdepspec.version = newprovspec.version = NULL;
         newdepspec.release = newprovspec.release = NULL;
         newdepspec.name = newprovspec.name = NULL;
         compare_ret = rc_packman_version_compare (das_global_packman, 
                                                   &newprovspec, &newdepspec);
-    } else if (prov->spec.epoch && prov->spec.epoch > 0 ) {
-        if (rc_packman_get_capabilities(das_global_packman) & RC_PACKMAN_CAP_LEGACY_EPOCH_HANDLING) {
+    } else if (prov->spec.has_epoch && prov->spec.epoch > 0 ) {
+        if (rc_packman_get_capabilities(das_global_packman) &
+            RC_PACKMAN_CAP_LEGACY_EPOCH_HANDLING)
+        {
             compare_ret = 0;
         } else {
             compare_ret = 1;
         }
-    } else if (dep->spec.epoch && dep->spec.epoch > 0 ) {
+    } else if (dep->spec.has_epoch && dep->spec.epoch > 0 ) {
         compare_ret = -1;
     }
 
     if (compare_ret == 0) {
         newdepspec.epoch = newprovspec.epoch = 0;
+        newdepspec.has_epoch = newprovspec.has_epoch = 0;
         newdepspec.version = dep->spec.version;
         newprovspec.version = prov->spec.version;
         if (dep->spec.release && prov->spec.release) {
@@ -226,14 +233,22 @@ rc_package_dep_verify_relation (RCPackageDep *dep,
                                                   &newprovspec, &newdepspec);
     }
 
-    if (compare_ret < 0 && ((unweak_provrel & RC_RELATION_GREATER) || (unweak_deprel & RC_RELATION_LESS))) {
+    if (compare_ret < 0 && ((unweak_provrel & RC_RELATION_GREATER) ||
+                            (unweak_deprel & RC_RELATION_LESS)))
+    {
         return TRUE;
-    } else if (compare_ret > 0 && ((unweak_provrel & RC_RELATION_LESS) || (unweak_deprel & RC_RELATION_GREATER))) {
+    } else if (compare_ret > 0 && ((unweak_provrel & RC_RELATION_LESS) ||
+                                   (unweak_deprel & RC_RELATION_GREATER)))
+    {
         return TRUE;
     } else if (compare_ret == 0 && (
-            ((unweak_provrel & RC_RELATION_EQUAL) && (unweak_deprel & RC_RELATION_EQUAL)) ||
-            ((unweak_provrel & RC_RELATION_LESS) && (unweak_deprel & RC_RELATION_LESS)) ||
-            ((unweak_provrel & RC_RELATION_GREATER) && (unweak_deprel & RC_RELATION_GREATER)))) {
+            ((unweak_provrel & RC_RELATION_EQUAL) &&
+             (unweak_deprel & RC_RELATION_EQUAL)) ||
+            ((unweak_provrel & RC_RELATION_LESS) &&
+             (unweak_deprel & RC_RELATION_LESS)) ||
+            ((unweak_provrel & RC_RELATION_GREATER) &&
+             (unweak_deprel & RC_RELATION_GREATER))))
+    {
         return TRUE;
     }
     

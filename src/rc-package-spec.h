@@ -42,12 +42,14 @@ struct _RCPackageSpec {
     gchar *version;
     gchar *release;
     guint type : 2;
+    guint has_epoch : 1;
 };
 
 #define RC_PACKAGE_SPEC(item) ((RCPackageSpec *)(item))
 
 void rc_package_spec_init (RCPackageSpec *rcps,
                            const gchar *name,
+                           gboolean has_epoch,
                            guint32 epoch,
                            const gchar *version,
                            const gchar *release);
@@ -56,7 +58,8 @@ void rc_package_spec_copy (RCPackageSpec *new, RCPackageSpec *old);
 
 void rc_package_spec_free_members (RCPackageSpec *rcps);
 
-RCPackageSpecType rc_package_spec_get_type (struct _RCWorld *, RCPackageSpec *);
+RCPackageSpecType rc_package_spec_get_type (struct _RCWorld *,
+                                            RCPackageSpec *);
 
 gint rc_package_spec_compare_name (void *a, void *b);
 gint rc_package_spec_compare (void *a, void *b);
@@ -81,7 +84,14 @@ gint rc_package_spec_equal (gconstpointer a, gconstpointer b) {
     g_assert (one);
     g_assert (two);
 
-    if (one->epoch != two->epoch) {
+    /* Why isn't there a logical XOR in C? */
+    if (!((one->has_epoch && two->has_epoch) ||
+          (!one->has_epoch && !two->has_epoch)))
+    {
+        return (FALSE);
+    }
+
+    if (one->has_epoch && (one->epoch != two->epoch)) {
         return (FALSE);
     }
 

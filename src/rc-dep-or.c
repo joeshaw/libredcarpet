@@ -82,7 +82,8 @@ rc_dep_or_new_provide (RCDepOr *dor)
 {
     RCPackageDep *new_dep;
 
-    new_dep = rc_package_dep_new (dor->or_dep, 0, NULL, NULL, RC_RELATION_ANY);
+    new_dep = rc_package_dep_new (dor->or_dep, 0, 0, NULL, NULL,
+                                  RC_RELATION_ANY);
     new_dep->is_or = TRUE;
     dor->created_provides = g_slist_prepend (dor->created_provides, new_dep);
 

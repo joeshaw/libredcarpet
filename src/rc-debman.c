@@ -2339,6 +2339,8 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
         }
 
         query_info->package_buf = rc_package_new ();
+        /* All debian packages "have" epochs */
+        query_info->package_buf->spec.has_epoch = 1;
 
         ptr = line + strlen ("package:");
         while (isspace (*ptr)) {

@@ -1,5 +1,60 @@
 2002-06-04  Ian Peters  <itp@ximian.com>
 
+	* rc-package-spec.h (struct _RCPackageSpec): add a has_epoch
+	bitfield
+	(rc_package_spec_init): take a has_epoch parameter
+	(rc_package_spec_equal): take the has_epoch flag into account
+
+	* rc-package-spec.c (rc_package_spec_init): has_epoch parameter
+	(rc_package_spec_copy): has_epoch parameter
+	(rc_package_spec_to_str, rc_package_spec_to_str_static,
+	rc_package_spec_version_to_str,
+	rc_package_spec_version_to_str_static): rewritten to not suck
+	(rc_package_spec_equal): take the has_epoch flag into account
+
+	* rc-package-dep.h (rc_package_dep_new): take a has_epoch flag
+
+	* rc-package-dep.c (rc_package_dep_new): has_epoch flag, pass it
+	to rc_package_spec_init
+	(rc_package_dep_new_from_spec): pass the has_epoch from the spec
+	to rc_package_dep_new
+	(rc_package_dep_verify_relation): reformat flow, make
+	modifications as appropriate for the has_epoch flag according to
+	comments in the code from pzb
+
+	* rc-debman-general.c (rc_debman_fill_depends): rc_package_dep_new
+	takes has_epoch now
+
+	* rc-dep-or.c (rc_dep_or_new_provide): rc_package_dep_new never
+	has an epoch here
+
+	* rc-world-import.c (rc_world_parse_debian): all debian packages
+	have epochs
+
+	* rc-debman.c (query_all_read_line_cb): all debian packages have
+	epochs
+
+	* rc-rpmman.c (rc_rpmman_read_header): take a has_epoch parameter,
+	and use it wisely
+	(parse_versions): take a has_epochs parameter, use it right
+	(depends_fill_helper): parse_versions needs has_epochs, pass that
+	into rc_package_dep_new
+	(rc_rpmman_depends_fill): when we provide ourselves, note whether
+	we have an epoch or not.  when we provide or require files, they
+	never have epochs
+	(rc_rpmman_check_match): take has_epoch into account
+	(rc_rpmman_query_file, rc_rpmman_query_all_v4,
+	rc_rpmman_query_all_v3, rc_rpmman_find_file_v4,
+	rc_rpmman_find_file_v3): take has_epoch into account
+	(rc_rpmman_version_compare): take has_epoch into account as per
+	pzb's comments in the code
+
+	* rc-xml.c: only write out epochs if has_epoch is set, set
+	has_epoch when we find an epoch in the xml -- if there's no epoch
+	in the xml, has_epoch remains 0
+
+2002-06-04  Ian Peters  <itp@ximian.com>
+
 	* rc-debman.c, rc-debman.h: compiles again against glib 2.0
 
 2002-06-03  Joe Shaw  <joe@ximian.com>

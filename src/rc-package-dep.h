@@ -83,6 +83,7 @@ struct _RCPackageDep {
 };
 
 RCPackageDep *rc_package_dep_new (const gchar *name,
+                                  gboolean has_epoch,
                                   guint32 epoch,
                                   const gchar *version,
                                   const gchar *release,

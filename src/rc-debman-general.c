@@ -178,7 +178,7 @@ rc_debman_fill_depends (gchar *input)
 
             if (!deprel) {
                 /* There's no version in this dependency, just a name. */
-                depi = rc_package_dep_new (depname, 0, NULL, NULL,
+                depi = rc_package_dep_new (depname, 0, 0, NULL, NULL,
                                            RC_RELATION_ANY);
             } else {
                 /* We've got to parse the rest of this mess. */
@@ -212,7 +212,7 @@ rc_debman_fill_depends (gchar *input)
 
                 g_free (depvers);
 
-                depi = rc_package_dep_new (depname, epoch, version,
+                depi = rc_package_dep_new (depname, 1, epoch, version,
                                            release, relation);
                 g_free (version);
                 g_free (release);
