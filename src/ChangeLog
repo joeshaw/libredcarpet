@@ -1,5 +1,15 @@
 2001-04-01  Ian Peters  <itp@ximian.com>
 
+	* Makefile.am: add rc-rpmman-types.h to rpm_sources.  add
+	rc-rpm-helper-with-rpmio.so and rc-rpm-helper.so to EXTRA_DIST.
+	Get rid of helperdir and helper_DATA, and conditionally use
+	rpmhelperdir, rpmhelper_DATA, dpkghelperdir, dpkghelper_DATA.
+	conditionally compile rc-dpkg-helper.c into rc-dpkg-helper.so,
+	otherwise just touch this file.  remove libredcarpet.a in
+	clean-local.  automake is now my bitch.
+
+2001-04-01  Ian Peters  <itp@ximian.com>
+
 	* Makefile.am: pick more proper names for the rpm .so files
 
 	* rc-rpmman.c: use those more proper names

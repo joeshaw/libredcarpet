@@ -5,6 +5,7 @@ noinst_LIBRARIES = libredcarpettmp.a
 rpm_sources =			\
 	rc-rpmman.c		\
 	rc-rpmman.h		\
+	rc-rpmman-types.h	\
 	rpmlead-3-0-x.h		\
 	signature-3-0-x.h	\
 	rpmlead-4-0-x.h		\
@@ -78,19 +79,33 @@ libredcarpettmp_a_SOURCES =		\
 	$(dpkg_sources2)		\
 	$(rpm_sources2)
 
-EXTRA_DIST = $(rpm_sources) $(dpkg_sources) rc-dpkg-helper.c
+EXTRA_DIST = \
+	$(rpm_sources) $(dpkg_sources) rc-dpkg-helper.c \
+	rc-rpm-helper-with-rpmio.so \
+	rc-rpm-helper.so
 
-helperdir = $(libdir)/redcarpet
-helper_DATA = \
-	rc-dpkg-helper.so		\
+if ENABLE_RPM
+rpmhelperdir = $(libdir)/redcarpet
+rpmhelper_DATA = \
 	rc-rpm-helper-with-rpmio.so	\
 	rc-rpm-helper.so
+endif
+
+if ENABLE_DPKG
+dpkghelperdir = $(libdir)/redcarpet
+dpkghelper_DATA = \
+	rc-dpkg-helper.so
+endif
 
 all-local: rc-dpkg-helper.so libredcarpet.a
 
 rc-dpkg-helper.so: $(srcdir)/rc-dpkg-helper.c
+if ENABLE_DPKG
 	gcc -fPIC -c -o rc-dpkg-helper.o $(srcdir)/rc-dpkg-helper.c
 	ld -soname rc-dpkg-helper -shared -o rc-dpkg-helper.so rc-dpkg-helper.o
+else
+	touch rc-dpkg-helper.so
+endif
 
 libredcarpet.a: libredcarpettmp.a
 if STATIC_RPM
@@ -117,4 +132,5 @@ else
 endif
 
 clean-local:
-	rm -f rc-dpkg-helper.so
+	rm -f rc-dpkg-helper.so	\
+	rm -f libredcarpet.a
