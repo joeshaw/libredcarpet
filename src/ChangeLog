@@ -1,5 +1,13 @@
 2004-12-09  James Willcox  <james@ximian.com>
 
+	* rc-resolver-context.c: (context_package_collector),
+	(rc_resolver_context_get_installs),
+	(rc_resolver_context_get_uninstalls):
+
+	Filter out bogus packages from installs and uninstalls
+
+2004-12-09  James Willcox  <james@ximian.com>
+
 	* rc-subscription.c: (rc_subscription_save),
 	(rc_subscription_load), (rc_subscription_set_file):
 	* rc-subscription.h:

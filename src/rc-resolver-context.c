@@ -489,6 +489,19 @@ marked_package_collector (RCPackage *package, RCPackageStatus status, gpointer u
     *list = g_slist_append (*list, package);
 }
 
+static void
+context_package_collector (RCPackage *package, RCPackageStatus status, gpointer user_data)
+{
+    GSList **slist = user_data;
+
+    if (rc_package_status_is_to_be_installed (status) ||
+        (rc_package_status_is_to_be_uninstalled (status)
+         && rc_package_is_installed (package))) {
+
+        *slist = g_slist_prepend (*slist, package);
+    } 
+}
+
 GSList *
 rc_resolver_context_get_marked_packages (RCResolverContext *context)
 {
@@ -551,7 +564,7 @@ rc_resolver_context_get_installs (RCResolverContext *context)
 {
     GSList *list = NULL;
 
-    rc_resolver_context_foreach_install (context, marked_package_collector, &list);
+    rc_resolver_context_foreach_install (context, context_package_collector, &list);
 
     return g_slist_reverse (list);
 }
@@ -706,7 +719,7 @@ rc_resolver_context_get_uninstalls (RCResolverContext *context)
 {
     GSList *list = NULL;
 
-    rc_resolver_context_foreach_uninstall (context, marked_package_collector, &list);
+    rc_resolver_context_foreach_uninstall (context, context_package_collector, &list);
 
     return g_slist_reverse (list);
 }
