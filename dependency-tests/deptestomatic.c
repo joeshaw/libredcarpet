@@ -35,7 +35,6 @@
 
 #include "xml-util.h"
 
-static GHashTable *channel_hash = NULL;
 static RCPackman *packman = NULL;
 
 static RCWorld *world = NULL;
@@ -56,37 +55,16 @@ load_channel (const char *name,
     RCChannel *channel;
     RCChannelType channel_type;
     gboolean is_compressed;
-    struct stat stat_buf;
-    int file_size;
     guint count;
     char *buffer;
-    FILE *in;
+    gsize file_size;
 
-    is_compressed =  (strlen (filename) >=  3)
-        && !strcmp (filename + strlen (filename) - 3, ".gz");
+    is_compressed =  g_pattern_match_simple ("*.gz", filename);
 
-    if (stat (filename, &stat_buf)) {
+    if (! g_file_get_contents (filename, &buffer, &file_size, NULL)) {
         g_warning ("Can't open file '%s'", filename);
         return;
     }
-
-    file_size = stat_buf.st_size;
-
-    in = fopen (filename, "r");
-    if (in == NULL) {
-        g_warning ("Can't open file '%s' -- very strange!", filename);
-        return;
-    }
-    
-    buffer = g_malloc (file_size + 1);
-    if (fread (buffer, 1, file_size, in) != file_size) {
-        g_warning ("Couldn't read all %d bytes from file '%s'", file_size, filename);
-        g_free (buffer);
-        return;
-    }
-    buffer[file_size] = '\0';
-    
-    fclose (in);
 
     channel_type = RC_CHANNEL_TYPE_HELIX;
 
@@ -98,7 +76,9 @@ load_channel (const char *name,
     }
 
     channel = rc_world_add_channel_from_buffer (world,
-                                                name, "foo", 666,
+                                                name, /* name */
+                                                name, /* alias */
+                                                666,
                                                 channel_type, buffer,
                                                 is_compressed ? file_size : 0);
 
@@ -120,12 +100,20 @@ load_channel (const char *name,
 
     g_print ("Loaded %d package%s from %s\n",
              count, count == 1 ? "" : "s", filename);
+}
 
-    if (channel_hash == NULL) {
-        channel_hash = g_hash_table_new (g_str_hash, g_str_equal);
+static void
+undump (const char *filename)
+{
+    char *buffer = NULL;
+    gsize len;
+
+    if (g_file_get_contents (filename, &buffer, &len, NULL)) {
+        rc_world_undump (world, buffer);
+        g_free (buffer);
+    } else {
+        g_warning ("Couldn't undump from file '%s'", filename);
     }
-
-    g_hash_table_insert (channel_hash, g_strdup (name), channel);
 }
 
 static RCPackage *
@@ -134,13 +122,8 @@ get_package (const char *channel_name, const char *package_name)
     RCChannel *channel;
     RCPackage *package;
 
-    if (channel_hash == NULL) {
-        g_warning ("Can't find package '%s' in channel '%s': no channels defined!",
-                   package_name, channel_name);
-        return NULL;
-    }
+    channel = rc_world_get_channel_by_name (world, channel_name);
 
-    channel = g_hash_table_lookup (channel_hash, channel_name);
     if (channel == NULL) {
         g_warning ("Can't find package '%s': channel '%s' not defined",
                    package_name, channel_name);
@@ -187,23 +170,28 @@ parse_xml_setup (xmlNode *node)
         }
 
         if (! g_strcasecmp (node->name, "system")) {
-            xmlChar *file = xml_get_prop (node, "file");
+            gchar *file = xml_get_prop (node, "file");
             g_assert (file);
             load_channel ("SYSTEM", file, RC_CHANNEL_TYPE_HELIX, TRUE);
             g_free (file);
         } else if (! g_strcasecmp (node->name, "channel")) {
-            xmlChar *name = xml_get_prop (node, "name");
-            xmlChar *file = xml_get_prop (node, "file");
-            xmlChar *type = xml_get_prop (node, "type");
+            gchar *name = xml_get_prop (node, "name");
+            gchar *file = xml_get_prop (node, "file");
+            gchar *type = xml_get_prop (node, "type");
             g_assert (name);
             g_assert (file);
             load_channel (name, file, type, FALSE);
             g_free (name);
             g_free (file);
             g_free (type);
+        } else if (! g_strcasecmp (node->name, "undump")) {
+            gchar *file = xml_get_prop (node, "file");
+            g_assert (file);
+            undump (file);
+            g_free(file);
         } else if (! g_strcasecmp (node->name, "force-install")) {
-            xmlChar *channel_name = xml_get_prop (node, "channel");
-            xmlChar *package_name = xml_get_prop (node, "package");
+            gchar *channel_name = xml_get_prop (node, "channel");
+            gchar *package_name = xml_get_prop (node, "package");
             RCPackage *package;
 
             g_assert (channel_name);
@@ -223,7 +211,7 @@ parse_xml_setup (xmlNode *node)
             g_free (channel_name);
             g_free (package_name);
         } else if (! g_strcasecmp (node->name, "force-uninstall")) {
-            xmlChar *package_name = xml_get_prop (node, "package");
+            gchar *package_name = xml_get_prop (node, "package");
             RCPackage *package;
 
             g_assert (package_name);
@@ -316,9 +304,17 @@ soln_cb (RCResolverContext *context, gpointer user_data)
         g_print (">!> Solution #%d:\n", *count);
         ++*count;
         
-        rc_resolver_context_foreach_install (context, assemble_install_cb, &items);
-        rc_resolver_context_foreach_uninstall (context, assemble_uninstall_cb, &items);
-        rc_resolver_context_foreach_upgrade (context, assemble_upgrade_cb, &items);
+        rc_resolver_context_foreach_install (context,
+                                             assemble_install_cb,
+                                             &items);
+        
+        rc_resolver_context_foreach_uninstall (context,
+                                               assemble_uninstall_cb,
+                                               &items);
+        
+        rc_resolver_context_foreach_upgrade (context,
+                                             assemble_upgrade_cb,
+                                             &items);
 
         items = g_list_sort (items, (GCompareFunc) strcmp);
         g_list_foreach (items, (GFunc) print_important, NULL);
@@ -431,10 +427,10 @@ parse_xml_trial (xmlNode *node)
 
         } else if (! g_strcasecmp (node->name, "current")) {
 
-            xmlChar *channel_name = xml_get_prop (node, "channel");
+            gchar *channel_name = xml_get_prop (node, "channel");
             RCChannel *channel;
 
-            channel = g_hash_table_lookup (channel_hash, channel_name);
+            channel = rc_world_get_channel_by_name (world, channel_name);
             if (channel != NULL) {
                 rc_resolver_set_current_channel (resolver, channel);
             } else {
@@ -445,10 +441,10 @@ parse_xml_trial (xmlNode *node)
 
         } else if (! g_strcasecmp (node->name, "subscribe")) {
 
-            xmlChar *channel_name = xml_get_prop (node, "channel");
+            gchar *channel_name = xml_get_prop (node, "channel");
             RCChannel *channel;
 
-            channel = g_hash_table_lookup (channel_hash, channel_name);
+            channel = rc_world_get_channel_by_name (world, channel_name);
             if (channel != NULL) {
                 rc_channel_set_subscription (channel, TRUE);
             } else {
@@ -459,8 +455,8 @@ parse_xml_trial (xmlNode *node)
         
         } else if (! g_strcasecmp (node->name, "install")) {
 
-            xmlChar *channel_name = xml_get_prop (node, "channel");
-            xmlChar *package_name = xml_get_prop (node, "package");
+            gchar *channel_name = xml_get_prop (node, "channel");
+            gchar *package_name = xml_get_prop (node, "package");
             RCPackage *package;
 
             g_assert (channel_name);
@@ -468,10 +464,12 @@ parse_xml_trial (xmlNode *node)
 
             package = get_package (channel_name, package_name);
             if (package) {
-                g_print (">!> Installing %s from channel %s\n", package_name, channel_name);
+                g_print (">!> Installing %s from channel %s\n",
+                         package_name, channel_name);
                 rc_resolver_add_package_to_install (resolver, package);
             } else {
-                g_warning ("Unknown package %s::%s", channel_name, package_name);
+                g_warning ("Unknown package %s::%s",
+                           channel_name, package_name);
             }
 
             g_free (channel_name);
@@ -479,7 +477,7 @@ parse_xml_trial (xmlNode *node)
 
         } else if (! g_strcasecmp (node->name, "uninstall")) {
 
-            xmlChar *package_name = xml_get_prop (node, "package");
+            gchar *package_name = xml_get_prop (node, "package");
             RCPackage *package;
 
             g_assert (package_name);
@@ -507,7 +505,8 @@ parse_xml_trial (xmlNode *node)
             if (count == 0)
                 g_print (">!> System is up-to-date, no upgrades required\n");
             else
-                g_print (">!> Upgrading %d package%s\n", count, count > 1 ? "s" : "");
+                g_print (">!> Upgrading %d package%s\n",
+                         count, count > 1 ? "s" : "");
 
         } else {
             g_warning ("Unknown tag '%s' in trial", node->name);
