@@ -935,15 +935,117 @@ package_size (RCPackage *package)
  * dependency information for fast look-ups later on.
  * 
  **/
-void
+gboolean
 rc_world_add_package (RCWorld *world, RCPackage *package)
 {
-//    const RCPackageDepSList *iter;
+    /* const RCPackageDepSList *iter; */
+    GSList *compat_arch_list;
     RCPackageAndDep *pad;
-    int i;
+    const char *package_name;
+    int i, arch_score;
+    gboolean actually_added_package = FALSE;
 
-    g_return_if_fail (world != NULL);
-    g_return_if_fail (package != NULL);
+    g_return_val_if_fail (world != NULL, FALSE);
+    g_return_val_if_fail (package != NULL, FALSE);
+
+    compat_arch_list = \
+        rc_arch_get_compat_list (rc_arch_get_system_arch ());
+
+    arch_score = rc_arch_get_compat_score (compat_arch_list,
+                                           package->arch);
+
+    /* Filter out packages with incompatible arches */
+    if (arch_score < 0) {
+        rc_debug (RC_DEBUG_LEVEL_DEBUG,
+                  "Ignoring package with incompatible arch: %s",
+                  rc_package_to_str_static (package));
+        goto finished;
+    }
+
+    /* Before we do anything, check to make sure that a package of the
+       same name isn't already in that channel.  If there is a
+       duplicate, we keep the one with the most recent version number
+       and drop the other.
+
+       This check only applies to packages in a channel.  We have
+       to allow for multiple installs.  Grrrr...
+    */
+
+    if (! rc_package_is_installed (package)) {
+
+        RCPackage *dup_package;
+        int dup_arch_score;
+        
+        package_name = g_quark_to_string (RC_PACKAGE_SPEC (package)->nameq);
+        dup_package = rc_world_get_package (world,
+                                            package->channel,
+                                            package_name);
+
+
+        /* This shouldn't happen (and would be caught by the check
+           below, because cmp will equal 0), but it never hurts to
+           check and produce a more explicit warning message. */
+
+        if (package == dup_package) {
+            rc_debug (RC_DEBUG_LEVEL_WARNING,
+                      "Ignoring re-add of package '%s'",
+                      package_name);
+            goto finished;
+        }
+
+        if (dup_package != NULL) {
+            
+            int cmp;
+            
+            cmp = rc_packman_version_compare (world->packman,
+                                              RC_PACKAGE_SPEC (package),
+                                              RC_PACKAGE_SPEC (dup_package));
+
+            dup_arch_score = rc_arch_get_compat_score (compat_arch_list,
+                                                       dup_package->arch);
+        
+
+            /* If the package we are trying to add has a lower 
+               version number, just ignore it. */
+
+            if (cmp < 0) {
+                rc_debug (RC_DEBUG_LEVEL_INFO,
+                          "Not adding package '%s'.  A newer version is "
+                          "already in the channel.",
+                          rc_package_to_str_static (package));
+                goto finished;
+            }
+
+
+            /* If the version numbers are equal, we ignore the package to
+               add if it has a less-preferable arch.  If both
+               packages have the same version # and arch, we favor the
+               first package and just return. */
+
+            if (cmp == 0 && arch_score <= dup_arch_score) {
+                rc_debug (RC_DEBUG_LEVEL_INFO,
+                          "Not adding package '%s'.  Another package "
+                          "with the same version but with a preferred arch "
+                          "is already in the channel.",
+                          rc_package_to_str_static (package));
+                goto finished;
+            }
+
+
+            /* Otherwise we throw out the old package and proceed with
+               adding the newer one. */
+
+            rc_debug (RC_DEBUG_LEVEL_INFO,
+                      "Replacing package '%s'.  Another package in "
+                      "the channel has the same name and a superior %s.",
+                      rc_package_to_str_static (dup_package),
+                      cmp ? "version" : "arch");
+
+            rc_world_remove_package (world, dup_package);
+        }
+    }
+
+    actually_added_package = TRUE;
 
     rc_world_touch_package_sequence_number (world);
 
@@ -1003,6 +1105,12 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
                               pad);
         }
 
+    
+ finished:
+    /* Clean-up */
+    g_slist_free (compat_arch_list);
+
+    return actually_added_package;
 }
 
 

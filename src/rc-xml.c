@@ -42,10 +42,7 @@ struct _RCPackageSAXContext {
     xmlParserCtxt *xml_context;
     RCPackageSAXContextState state;
 
-    /* Hash of RCPackage by package->spec.nameq */
-    GHashTable *packages;
-
-    GSList *compat_arch_list;
+    RCPackageSList *all_packages;
 
     /* Temporary state */
     RCPackage *current_package;
@@ -409,40 +406,8 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
         if (ctx->current_package->arch == RC_ARCH_UNKNOWN)
             ctx->current_package->arch = rc_arch_get_system_arch ();
 
-        if (rc_arch_get_compat_score (ctx->compat_arch_list,
-                                      ctx->current_package->arch) > -1)
-        {
-            RCPackage *old_package = NULL;
-            gboolean add = TRUE;
-
-            if ((old_package =
-                 g_hash_table_lookup (
-                     ctx->packages,
-                     GINT_TO_POINTER (ctx->current_package->spec.nameq))))
-            {
-                gint new_score, old_score;
-
-                new_score = rc_arch_get_compat_score (
-                    ctx->compat_arch_list, ctx->current_package->arch);
-                old_score = rc_arch_get_compat_score (
-                    ctx->compat_arch_list, old_package->arch);
-                if (new_score < old_score) {
-                    g_hash_table_remove (
-                        ctx->packages,
-                        GINT_TO_POINTER (old_package->spec.nameq));
-                    rc_package_unref (old_package);
-                } else
-                    add = FALSE;
-            }
-
-            if (add)
-                g_hash_table_insert (
-                    ctx->packages,
-                    GINT_TO_POINTER (ctx->current_package->spec.nameq),
-                    ctx->current_package);
-            else
-                rc_package_unref (ctx->current_package);
-        }
+        ctx->all_packages = g_slist_prepend (ctx->all_packages,
+                                             ctx->current_package);
         
         ctx->current_package = NULL;
         ctx->state = PARSER_TOPLEVEL;
@@ -723,17 +688,10 @@ rc_package_sax_context_parse_chunk(RCPackageSAXContext *ctx,
     xmlParseChunk(ctx->xml_context, xmlbuf, size, 0);
 }
 
-static void
-package_slist_build (GQuark name, RCPackage *package,
-                     RCPackageSList **package_list)
-{
-    *package_list = g_slist_prepend (*package_list, package);
-}
-
 RCPackageSList *
 rc_package_sax_context_done(RCPackageSAXContext *ctx)
 {
-    RCPackageSList *packages = NULL;
+    RCPackageSList *all_packages = NULL;
 
     if (ctx->processing)
         xmlParseChunk(ctx->xml_context, "\0", 1, 1);
@@ -753,15 +711,11 @@ rc_package_sax_context_done(RCPackageSAXContext *ctx)
 
     g_free (ctx->text_buffer);
 
-    g_hash_table_foreach (ctx->packages, (GHFunc) package_slist_build,
-                          &packages);
-    g_hash_table_destroy (ctx->packages);
-
-    g_slist_free (ctx->compat_arch_list);
+    all_packages = ctx->all_packages;
 
     g_free(ctx);
 
-    return packages;
+    return all_packages;
 } /* rc_package_sax_context_done */
 
 RCPackageSAXContext *
@@ -771,11 +725,6 @@ rc_package_sax_context_new(RCChannel *channel)
 
     ctx = g_new0(RCPackageSAXContext, 1);
     ctx->channel = channel;
-
-    ctx->packages = g_hash_table_new (NULL, NULL);
-
-    ctx->compat_arch_list =
-        rc_arch_get_compat_list (rc_arch_get_system_arch ());
 
     if (getenv ("RC_SPEW_XML"))
         rc_debug (RC_DEBUG_LEVEL_ALWAYS, "* Context created (%p)", ctx);
@@ -1076,7 +1025,7 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
         package->spec.release = g_strdup (update->spec.release);
 
     } else {
-
+        
         /* Otherwise, try to find where the package provides itself,
            and use that version info. */
         

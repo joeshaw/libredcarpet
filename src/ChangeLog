@@ -1,3 +1,22 @@
+2003-01-21  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-xml.c (parser_package_end): Removed all of the arch-related
+	checks.  That all happens inside of rc_world_add_packages_from_xml
+	now.
+	(rc_package_sax_context_done): Since arch checks are being done by
+	the RCWorld, this is all much simpler.
+
+	* rc-world-import.c (rc_world_add_packages_from_xml): Removed all
+	arch-related checks.  That all happens inside of
+	rc_world_add_package now.
+
+	* rc-world.c (rc_world_add_package): Do all arch checks when a
+	package is added to the world, taking version numbers into
+	account.  Now a higher version number trumps a superior arch
+	score.  This function returns a gboolean instead of void: if
+	the package actually gets added it returns TRUE.  If not
+	(for example, if the arch is bad), return FALSE.
+
 2003-01-08  Joe Shaw  <joe@ximian.com>
 
 	* Makefile.am: Remove rc-pretty-name.[ch]

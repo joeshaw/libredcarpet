@@ -254,14 +254,6 @@ rc_world_add_packages_from_slist (RCWorld *world,
     rc_world_thaw (world);
 }
 
-static void
-add_package_to_world (GQuark name, RCPackage *package,
-                      RCWorld *world)
-{
-    rc_world_add_package (world, package);
-    rc_package_unref (package);
-}
-
 guint
 rc_world_add_packages_from_xml (RCWorld *world,
                                 RCChannel *channel,
@@ -270,8 +262,6 @@ rc_world_add_packages_from_xml (RCWorld *world,
     RCPackage *package;
     guint count = 0;
     GHashTable *packages;
-    GSList *system_packages = NULL;
-    GSList *compat_arch_list;
 
     g_return_val_if_fail (world != NULL, 0);
 
@@ -288,69 +278,17 @@ rc_world_add_packages_from_xml (RCWorld *world,
 
     packages = g_hash_table_new (NULL, NULL);
 
-    compat_arch_list = rc_arch_get_compat_list (rc_arch_get_system_arch ());
-
     while (node) {
         if (! g_strcasecmp (node->name, "package")) {
-
-            /* We build up a separate list for system packages, so that
-               we can preserve broken systems w/ multiply-installed
-               packages (i.e. more than one package with the same name
-               installed at the same time) when undumping. */
-               
             package = rc_xml_node_to_package (node, channel);
-            if (package && (channel == NULL)) {
-
-                system_packages = g_slist_prepend (system_packages,
-                                                   package);
-
-            } else if (package
-                       && (rc_arch_get_compat_score (compat_arch_list,
-                                                     package->arch) > -1))
-            {
-                RCPackage *old = NULL;
-                gboolean add = TRUE;
-
-                if ((old = g_hash_table_lookup (
-                         packages, GINT_TO_POINTER (package->spec.nameq))))
-                {
-                    gint old_score, new_score;
-
-                    old_score = rc_arch_get_compat_score (compat_arch_list,
-                                                          old->arch);
-                    new_score = rc_arch_get_compat_score (compat_arch_list,
-                                                          package->arch);
-
-                    if (new_score < old_score) {
-                        g_hash_table_remove (
-                            packages, GINT_TO_POINTER (old->spec.nameq));
-                        rc_package_unref (old);
-                    } else
-                        add = FALSE;
-                }
-
-                if (add)
-                    g_hash_table_insert (packages,
-                                         GINT_TO_POINTER (package->spec.nameq),
-                                         package);
-                else
-                    rc_package_unref (package);
+            if (package) {
+                if (rc_world_add_package (world, package))
+                    ++count;
+                rc_package_unref (package);
             }
         }
-
         node = node->next;
     }
-
-    count = g_hash_table_size (packages) + g_slist_length (system_packages);
-
-    rc_world_add_packages_from_slist (world, system_packages);
-    g_hash_table_foreach (packages, (GHFunc) add_package_to_world,
-                          (gpointer) world);
-
-
-    rc_package_slist_unref (system_packages);
-    g_slist_free (system_packages);
-    g_hash_table_destroy (packages);
 
     rc_world_thaw (world);
 

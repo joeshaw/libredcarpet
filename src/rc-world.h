@@ -121,7 +121,7 @@ void       rc_world_freeze          (RCWorld *world);
 
 void       rc_world_thaw            (RCWorld *world);
 
-void       rc_world_add_package     (RCWorld *world,
+gboolean   rc_world_add_package     (RCWorld *world,
                                      RCPackage *pkg);
 
 void       rc_world_remove_package  (RCWorld *world,
