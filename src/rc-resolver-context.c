@@ -654,7 +654,7 @@ rc_resolver_context_add_info (RCResolverContext *context,
     g_return_if_fail (info != NULL);
 
     context->log = g_list_prepend (context->log, info);
-    context->propagated_importance = FALSE;
+    /* context->propagated_importance = FALSE; */
 
     if (rc_resolver_info_is_error (info)) {
 
