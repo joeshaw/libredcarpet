@@ -68,6 +68,7 @@
 #define RPMTAG_DIRINDEXES 1116
 #define RPMTAG_BASENAMES  1117
 #define RPMTAG_DIRNAMES   1118
+#define RPMTAG_REMOVETID  1129
 
 /* Repackaging was added in RPM 4.0.3, but broken until 4.0.4. */
 #define RPMTRANS_FLAG_REPACKAGE (1 << 10)
