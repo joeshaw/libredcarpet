@@ -242,6 +242,46 @@ rc_distro_free (RCDistro *distro)
     g_free (distro);
 }
 
+static RCDistro *global_distro = NULL;
+
+static RCDistro *
+rc_distro_copy (RCDistro *distro)
+{
+    RCDistro *copy;
+
+    copy = rc_distro_new ();
+
+    copy->name       = g_strdup (distro->name);
+    copy->version    = g_strdup (distro->version);
+    copy->arch       = distro->arch;
+    copy->type       = distro->type;
+    copy->target     = g_strdup (distro->target);
+    copy->status     = distro->status;
+    copy->death_date = distro->death_date;
+
+    return copy;
+}
+
+static void
+rc_distro_set_current (RCDistro *distro)
+{
+    if (global_distro)
+        rc_distro_free (global_distro);
+
+    global_distro = rc_distro_copy (distro);
+}
+
+RCDistro *
+rc_distro_get_current (void)
+{
+    RCDistro *distro;
+
+    distro = (global_distro == NULL) ?
+        global_distro : rc_distro_parse_xml (NULL, 0);
+
+    return rc_distro_copy (distro);
+}
+
 /* The SAX parser for the distributions.xml file */
 
 typedef enum {
@@ -679,6 +719,7 @@ rc_distro_parse_xml (const char *data, guint size)
 
             rc_buffer_unmap_file (buffer);
 
+            rc_distro_set_current (distro);
             return distro;
         } else {
             data = distros_xml;
@@ -723,9 +764,10 @@ rc_distro_parse_xml (const char *data, guint size)
 
         if (state.our_distro->name &&
             state.our_distro->version &&
-            state.our_distro->target)
+            state.our_distro->target) {
+            rc_distro_set_current (state.our_distro);
             return state.our_distro;
-        else
+        } else
             rc_distro_free (state.our_distro);
     }
 

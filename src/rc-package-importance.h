@@ -22,6 +22,10 @@
 
 #include <glib.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 typedef enum {
     RC_IMPORTANCE_INVALID = -1,
 
@@ -39,4 +43,8 @@ const gchar *rc_package_importance_to_string (RCPackageImportance importance);
 
 RCPackageImportance rc_string_to_package_importance (const gchar *importance);
 
-#endif
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif /* _RC_PACKAGE_IMPORTANCE_H */

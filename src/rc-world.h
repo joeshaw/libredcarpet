@@ -34,6 +34,10 @@
 #include "rc-package-match.h"
 #include "rc-pending.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 #define RC_TYPE_WORLD            (rc_world_get_type ())
 #define RC_WORLD(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), \
                                   RC_TYPE_WORLD, RCWorld))
@@ -354,6 +358,10 @@ RCWorld *rc_world_dup (RCWorld *world);
 /* Debugging output */
 
 void       rc_world_spew (RCWorld *world, FILE *out);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* __RC_WORLD_H__ */
 

@@ -23,6 +23,10 @@
 #include <glib.h>
 #include <string.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 typedef struct _RCPackageSpec RCPackageSpec;
 
 struct _RCPackageSpec {
@@ -42,7 +46,7 @@ void rc_package_spec_init (RCPackageSpec *rcps,
                            const gchar *version,
                            const gchar *release);
 
-void rc_package_spec_copy (RCPackageSpec *new, RCPackageSpec *old);
+void rc_package_spec_copy (RCPackageSpec *nuevo, RCPackageSpec *old);
 
 void rc_package_spec_free_members (RCPackageSpec *rcps);
 
@@ -62,5 +66,9 @@ const gchar *rc_package_spec_version_to_str_static (RCPackageSpec *spec);
 gpointer rc_package_spec_slist_find_name (GSList *specs, const gchar *name);
 
 gint rc_package_spec_equal (gconstpointer ptra, gconstpointer ptrb);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* _RC_PACKAGE_SPEC_H */

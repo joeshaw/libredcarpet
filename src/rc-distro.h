@@ -51,6 +51,8 @@ typedef enum {
 RCDistro *rc_distro_parse_xml (const char *xml_buf,
                                           guint compressed_length);
 
+RCDistro *rc_distro_get_current (void);
+
 void rc_distro_free (RCDistro *);
 
 const char          *rc_distro_get_name         (RCDistro *);

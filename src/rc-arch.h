@@ -28,6 +28,10 @@
 
 #include <glib.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 typedef enum {
     RC_ARCH_UNKNOWN = -1,
     RC_ARCH_NOARCH = 0,
@@ -62,4 +66,8 @@ rc_arch_get_compat_list (RCArch arch);
 gint
 rc_arch_get_compat_score (GSList *compat_arch_list, RCArch arch);
 
-#endif
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif /* RC_ARCH_H_ */

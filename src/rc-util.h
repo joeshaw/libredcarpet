@@ -25,6 +25,10 @@
 #include <stdio.h>
 #include <libxml/parser.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 /* Function to safely delete a directory recursively (only deletes regular
    files), should be safe from symlink attacks.
 
@@ -35,7 +39,7 @@ gint rc_rmdir (const char *dir);
 /* Create the directory specified and all of the child directories. Whee. */
 gint rc_mkdir(const char *dir, guint mode);
 
-char *rc_mkdtemp (char *template);
+char *rc_mkdtemp (char *templ);
 
 gboolean rc_file_exists (const char *filename);
 
@@ -123,4 +127,8 @@ GSList *rc_hash_keys_to_list   (GHashTable *hash_table);
 #define RC_ERROR rc_error_quark()
 GQuark rc_error_quark(void);
  
-#endif
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif /* _RC_UTIL_H */

@@ -29,12 +29,14 @@
 #include <time.h>
 #include <glib-object.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
-typedef   enum _RCPendingStatus RCPendingStatus;
 typedef struct _RCPending       RCPending;
 typedef struct _RCPendingClass  RCPendingClass;
 
-enum _RCPendingStatus {
+typedef enum {
     RC_PENDING_STATUS_INVALID = 0,
     RC_PENDING_STATUS_PRE_BEGIN,
     RC_PENDING_STATUS_RUNNING,
@@ -42,7 +44,7 @@ enum _RCPendingStatus {
     RC_PENDING_STATUS_ABORTED,
     RC_PENDING_STATUS_FAILED,
     RC_PENDING_STATUS_FINISHED
-};
+} RCPendingStatus;
 
 const char *rc_pending_status_to_string (RCPendingStatus status);
 
@@ -126,6 +128,10 @@ void            rc_pending_add_message        (RCPending *,
                                                  const char *message);
 GSList         *rc_pending_get_messages       (RCPending *);
 const char     *rc_pending_get_latest_message (RCPending *);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* __RC_PENDING_H__ */
 

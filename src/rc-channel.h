@@ -23,11 +23,15 @@
 #include <glib.h>
 #include <libxml/tree.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 struct _RCWorld;
 
 typedef struct _RCChannel RCChannel;
 typedef GSList RCChannelSList;
-typedef enum _RCChannelType RCChannelType;
+// typedef enum _RCChannelType RCChannelType;
 typedef gboolean (*RCChannelFn) (RCChannel *, gpointer);
 typedef gboolean (*RCChannelAndSubdFn) (RCChannel *, gboolean, gpointer);
 
@@ -37,12 +41,13 @@ typedef gboolean (*RCChannelAndSubdFn) (RCChannel *, gboolean, gpointer);
 #define RC_CHANNEL_ANY        ((RCChannel *) GINT_TO_POINTER (2))
 #define RC_CHANNEL_NON_SYSTEM ((RCChannel *) GINT_TO_POINTER (3))
 
-enum _RCChannelType {
+typedef enum {
     RC_CHANNEL_TYPE_UNKNOWN = -1,
     RC_CHANNEL_TYPE_HELIX,
     RC_CHANNEL_TYPE_DEBIAN,
     RC_CHANNEL_TYPE_APTRPM
-};
+} RCChannelType;
+
 
 int rc_channel_priority_parse (const char *);
 
@@ -150,5 +155,9 @@ gboolean rc_channel_is_hidden  (RCChannel *);
 gboolean rc_channel_is_wildcard (RCChannel *a);
 gboolean rc_channel_equal       (RCChannel *a, RCChannel *b);
 gboolean rc_channel_equal_id    (RCChannel *a, const char *id);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* _RC_CHANNEL_H */

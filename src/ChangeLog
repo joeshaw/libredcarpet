@@ -1,3 +1,26 @@
+2004-06-10  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-distro.h: Add declaration of rc_distro_get_current().
+
+	* rc-distro.c: Cache previously parsed RCDistro
+	(rc_distro_copy): Implement.
+	(rc_distro_set_current): Implement.
+	(rc_distro_get_current): Implement.
+
+	* rc-arch.h: Make it #include'able from C++
+
+	* rc-channel.h: ditto.
+
+	* rc-world.h: Ditto.
+
+	* rc-util.h: Ditto.
+
+	* rc-pending.h: Ditto.
+
+	* rc-package-spec.h: Ditto.
+
+	* rc-package-importance.h: Ditto.
+
 2004-06-09  James Willcox  <james@ximian.com>
 
 	* rc-arch.h:  Sigh, fix the build
