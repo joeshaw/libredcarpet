@@ -1,3 +1,9 @@
+2001-01-23  Ian Peters  <itp@ximian.com>
+
+	* rc-debman.c (do_purge): s/dpkg-helper/rc-dpkg-helper/
+	(do_unpack): ditto
+	(do_configure): ditto
+
 2001-01-23  Vladimir Vukicevic  <vladimir@helixcode.com>
 
 	* rc-package-spec.c, rc-package-spec.h: I want

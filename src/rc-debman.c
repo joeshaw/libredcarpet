@@ -811,7 +811,7 @@ do_purge (RCPackman *packman, DebmanInstallState *install_state)
 
         close (slave);
 
-        putenv ("LD_PRELOAD=" SHAREDIR "/dpkg-helper.so");
+        putenv ("LD_PRELOAD=" SHAREDIR "/rc-dpkg-helper.so");
         putenv (g_strdup_printf ("RC_READ_NOTIFY_PID=%d", parent));
         putenv ("PAGER=cat");
 
@@ -1114,7 +1114,7 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
 
             close (slave);
 
-            putenv ("LD_PRELOAD=" SHAREDIR "/dpkg-helper.so");
+            putenv ("LD_PRELOAD=" SHAREDIR "/rc-dpkg-helper.so");
             putenv (g_strdup_printf ("RC_READ_NOTIFY_PID=%d", parent));
             putenv ("PAGER=cat");
 
@@ -1340,7 +1340,7 @@ do_configure (RCPackman *packman, DebmanInstallState *install_state)
 
         close (slave);
 
-        putenv ("LD_PRELOAD=" SHAREDIR "/dpkg-helper.so");
+        putenv ("LD_PRELOAD=" SHAREDIR "/rc-dpkg-helper.so");
         putenv (g_strdup_printf ("RC_READ_NOTIFY_PID=%d", parent));
         putenv ("PAGER=cat");
 
