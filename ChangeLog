@@ -1,5 +1,9 @@
 2002-06-06  Ian Peters  <itp@ximian.com>
 
+	* .cvsignore: add libredcarpet-2.0.pc
+
+2002-06-06  Ian Peters  <itp@ximian.com>
+
 	* acconfig.h: removed RC_RPM4, added RPM_VERSION,
 	RPM_MAJOR_VERSION, RPM_MINOR_VERSION, RPM_MICRO_VERSION
 

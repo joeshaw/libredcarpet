@@ -18,3 +18,4 @@ config.guess
 aclocal.m4
 intl
 *.flc
+libredcarpet-2.0.pc
