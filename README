@@ -1,0 +1,41 @@
+The Red Carpet Library (libredcarpet) provides package management
+interfaces and associated functionality for RPM and DPKG based
+systems.  This version is used by the Red Carpet Daemon (rcd).
+
+ABOUT LIBREDCARPET
+------------------
+libredcarpet is the library that provides core functionality to the
+Red Carpet Daemon.  libredcarpet provides a limited package manager
+abstraction, a dependency resolver, and various structures and utility
+functions for manipulating them.
+
+Programs that use libredcarpet will run on systems with RPM, from
+version 3.0.3 to 4.0.4, as well as Debian-based systems without
+modification.  For the programmer, a common interface is provided to
+work with both systems.  Additional package manager interfaces can be
+added.
+
+Most client programs will probably want to run against the Red Carpet
+Daemon rather than linking directly to libredcarpet, as rcd provides
+additional features, such as management of content sources, access
+control, and so on.
+
+DOCUMENTATION
+-------------
+At this point in time, there is no developer documentation for
+libredcarpet.  Currently, the only available resources are the source
+and header files, and rcd, as sample code.
+
+BUILDING AND DEVELOPING
+-----------------------
+Building libredcarpet is tricky.  Please see the HACKING file for
+build instructions.
+
+We welcome contributors to libredcarpet.  Please see the HACKING file
+for more info on contributing.
+
+LIBREDCARPET PROGRAMS
+---------------------
+If you actually want to see libredcarpet do something, you probably
+want to take a look at the Red Carpet Daemon.  Check out the "rcd"
+module from GNOME CVS or wherever you got libredcarpet.
