@@ -1,0 +1,97 @@
+/* -*- Mode: csharp; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+
+//namespace {
+    public void ToXml (System.Xml.XmlTextWriter writer)
+    {
+        writer.WriteStartElement ("package");
+
+        writer.WriteElementString ("name", this.Name);
+
+        if (this.Spec.HasEpoch)
+            writer.WriteElementString ("epoch", System.Xml.XmlConvert.ToString (this.Spec.Epoch));
+
+        writer.WriteElementString ("version", this.Spec.Version);
+        writer.WriteElementString ("release", this.Spec.Release);
+        writer.WriteElementString ("summary", this.Summary);
+        writer.WriteElementString ("description", this.Description);
+        writer.WriteElementString ("arch", RC.Global.ArchToString (this.Arch));
+        writer.WriteElementString ("section", Package.SectionToString (this.Section));
+        writer.WriteElementString ("filesize", System.Xml.XmlConvert.ToString (this.FileSize));
+        writer.WriteElementString ("installedsize", System.Xml.XmlConvert.ToString (this.InstalledSize));
+
+        if (this.IsInstallOnly)
+            writer.WriteElementString ("install_only", "1");
+
+        if (this.IsPackageSet)
+            writer.WriteElementString ("package_set", "1");
+
+        if (this.Updates != null) {
+            writer.WriteStartElement ("history");
+            foreach (PackageUpdate update in this.Updates)
+                update.ToXml (writer);
+            writer.WriteEndElement ();
+        }
+
+        writer.WriteStartElement ("deps");
+
+        PackageDepArray deps;
+
+        deps = this.Requires;
+        if (deps.Count > 0) {
+            writer.WriteStartElement ("requires");
+            foreach (PackageDep dep in deps)
+                dep.ToXml (writer);
+            writer.WriteEndElement ();
+        }
+
+        deps = this.Recommends;
+        if (deps.Count > 0) {
+            writer.WriteStartElement ("recommends");
+            foreach (PackageDep dep in deps)
+                dep.ToXml (writer);
+            writer.WriteEndElement ();
+        }
+
+        deps = this.Suggests;
+        if (deps.Count > 0) {
+            writer.WriteStartElement ("suggests");
+            foreach (PackageDep dep in deps)
+                dep.ToXml (writer);
+            writer.WriteEndElement ();
+        }
+
+        deps = this.Conflicts;
+        if (deps.Count > 0) {
+            writer.WriteStartElement ("conflicts");
+            foreach (PackageDep dep in deps)
+                dep.ToXml (writer);
+            writer.WriteEndElement ();
+        }
+
+        deps = this.Obsoletes;
+        if (deps.Count > 0) {
+            writer.WriteStartElement ("obsoletes");
+            foreach (PackageDep dep in deps)
+                dep.ToXml (writer);
+            writer.WriteEndElement ();
+        }
+
+        deps = this.Children;
+        if (deps.Count > 0) {
+            writer.WriteStartElement ("children");
+            foreach (PackageDep dep in deps)
+                dep.ToXml (writer);
+            writer.WriteEndElement ();
+        }
+
+        deps = this.Provides;
+        if (deps.Count > 0) {
+            writer.WriteStartElement ("provides");
+            foreach (PackageDep dep in deps)
+                dep.ToXml (writer);
+            writer.WriteEndElement ();
+        }
+
+        writer.WriteEndElement (); // "deps"
+        writer.WriteEndElement (); // "package"
+    }

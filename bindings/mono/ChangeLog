@@ -1,3 +1,31 @@
+2004-09-10  Tambet Ingo  <tambet@ximian.com>
+
+	* libredcarpet-sources.xml: Exclude a bunch of unsused header files
+	from the list.
+
+	* libredcarpet-api.xml: Regenerate.
+
+	* RC.metadata: Hide all functions which have xmlNode argument in
+	signature. These won't work anyway and there's managed version of
+	all of them already implemented.
+	Hide some utility functions from Global class which are not needed
+	in C#.
+	Rename all delegates as s/Fn$/Delegate/.
+	Global.World -> World.Global
+	Global.DistmanNew -> Packman.Distman.
+
+	* Channel.custom: Fix indention. Implement ToXml().
+
+	* World.custom: Ditto.
+
+	* PackageUpdate.custom: Add. Implement ToXml().
+
+	* PackageMatch.custom: Ditto.
+
+	* PackageDep.custom: Ditto.
+
+	* Package.custom: Ditto.
+
 2004-09-02  Tambet Ingo  <tambet@ximian.com>
 
 	* RC.metadata: Set the element_type for rc_packman_file_list.

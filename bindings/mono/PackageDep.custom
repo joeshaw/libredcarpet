@@ -1,0 +1,60 @@
+/* -*- Mode: csharp; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+
+//namespace {
+    private void ParseXmlNode (System.Xml.XmlNode node) {
+        string name = node.Attributes["name"].Value;
+        string version = null;
+        string release = null;
+        bool has_epoch = false;
+        uint epoch = 0;
+        RC.PackageRelation relation = PackageRelation.Any;
+        RC.Channel channel = Channel.ANY;
+
+        if (node.Attributes["op"] != null) {
+            relation = Package.RelationFromString (node.Attributes["op"].Value);
+            version = node.Attributes["version"].Value;
+            release = node.Attributes["release"].Value;
+
+            if (node.Attributes["epoch"] != null) {
+                has_epoch = true;
+                epoch = Convert.ToUInt32 (node.Attributes["epoch"].Value);
+            }
+        }
+
+        Raw = rc_package_dep_new (name, has_epoch, epoch, version, release,
+                                  (int) relation, channel.Handle, false, false);
+    }
+
+    public PackageDep (System.Xml.XmlNode node) {
+        if (node.Name == "dep") {
+            ParseXmlNode (node);
+            // FIXME
+            // } else if (node.Name == "or") {
+        } else
+            throw new ArgumentException ("Invalid XML node");
+    }
+
+    public void ToXml (System.Xml.XmlTextWriter writer)
+    {
+        // FIXME: if (this.IsOr) rc_package_dep_or_slist_to_xml_node ()
+
+        writer.WriteStartElement ("dep");
+
+        writer.WriteAttributeString ("name", this.Spec.Name);
+
+        if (this.Relation != PackageRelation.Any) {
+            writer.WriteAttributeString ("op", Package.RelationToString (this.Relation, 0));
+
+            if (this.Spec.HasEpoch)
+                writer.WriteAttributeString ("epoch", System.Xml.XmlConvert.ToString (this.Spec.Epoch));
+
+            if (this.Spec.Version != null)
+                writer.WriteAttributeString ("version", this.Spec.Version);
+
+            if (this.Spec.Release != null)
+                writer.WriteAttributeString ("release", this.Spec.Release);
+        }
+
+        writer.WriteEndElement ();
+    }
+    

@@ -1,0 +1,38 @@
+/* -*- Mode: csharp; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+
+//namespace {
+    public void ToXml (System.Xml.XmlTextWriter writer)
+    {
+        writer.WriteStartElement ("update");
+
+        if (this.Spec.HasEpoch)
+            writer.WriteElementString ("epoch", System.Xml.XmlConvert.ToString (this.Spec.Epoch));
+
+        writer.WriteElementString ("version", this.Spec.Version);
+        writer.WriteElementString ("release", this.Spec.Release);
+
+        if (this.PackageUrl != null)
+            writer.WriteElementString ("filename", System.IO.Path.GetFileName (this.PackageUrl));
+
+        writer.WriteElementString ("filesize", System.Xml.XmlConvert.ToString (this.PackageSize));
+        writer.WriteElementString ("installedsize", System.Xml.XmlConvert.ToString (this.InstalledSize));
+
+        if (this.SignatureUrl != null) {
+            writer.WriteElementString ("signaturename", this.SignatureUrl);
+            writer.WriteElementString ("signaturesize", System.Xml.XmlConvert.ToString (this.SignatureSize));
+        }
+
+        if (this.Md5sum != null)
+            writer.WriteElementString ("md5sum", this.Md5sum);
+
+        writer.WriteElementString ("importance", Global.ImportanceToString (this.Importance));
+        writer.WriteElementString ("description", this.Description);
+
+        if (this.Hid != 0)
+            writer.WriteElementString ("hid", System.Xml.XmlConvert.ToString (this.Hid));
+
+        if (this.License != null)
+            writer.WriteElementString ("license", this.License);
+
+        writer.WriteEndElement ();
+    }

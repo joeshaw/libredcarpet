@@ -2,6 +2,8 @@
 <metadata>
   <attr path="/api/namespace/object[@cname='RCWorld']" name="parent">GObject</attr>
   <attr path="/api/namespace/object[@cname='RCPending']/signal[@name='Update']" name="name">Updated</attr>
+  <attr path="/api/namespace/callback[@name='WorldMembershipToXmlFn']" name="hidden">1</attr>
+  <attr path="/api/namespace/callback[@name='WorldSpewFn']" name="hidden">1</attr>
   <attr path="/api/namespace/callback[@name='WorldForeachChannelFn']" name="hidden">1</attr>
   <attr path="/api/namespace/callback[@name='WorldForeachLockFn']" name="hidden">1</attr>
   <attr path="/api/namespace/callback[@name='WorldForeachPackageDepFn']" name="hidden">1</attr>
@@ -26,6 +28,10 @@
   <attr path="/api/namespace/object[@cname='RCWorld']/method[@cname='rc_world_refresh']" name="hidden">1</attr>
   -->
   <attr path="/api/namespace/object[@cname='RCWorld']/method[@cname='rc_world_set_refresh_function']" name="hidden">1</attr>
+  <attr path="/api/namespace/object[@cname='RCWorld']/method[@cname='rc_world_spew']" name="hidden">1</attr>
+  <attr path="/api/namespace/object[@cname='RCWorld']/method[@cname='rc_world_membership_to_xml']" name="hidden">1</attr>
+  <attr path="/api/namespace/object[@cname='RCWorld']/method[@cname='rc_world_dump_to_xml']" name="hidden">1</attr>
+  <attr path="/api/namespace/object[@cname='RCWorld']/method[@cname='rc_world_dump']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='RCWorldService']/method[@cname='rc_world_service_set_assemble_function']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='RCWorldService']/method[@name='Mount']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='RCWorldService']/method[@name='Register']" name="hidden">1</attr>
@@ -60,8 +66,54 @@
    <attr path="/api/namespace/struct[@cname='RCPackageUpdate']/method[@cname='rc_package_update_to_xml_node']" name="hidden">1</attr>
    <attr path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_parse_xml_from_buffer']" name="hidden">1</attr>
    <attr path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_parse_xml_from_file']" name="hidden">1</attr>
-   <attr path="/api/namespace/class[@cname='RcDebug_']" name="hidden">1</attr>
    <attr path="/api/namespace/class[@cname='RcExtract_']/method[@cname='rc_extract_packages_from_xml_node']" name="hidden">1</attr>
-   <attr path="/api/namespace/class[@cname='RcXml_']" name="hidden">1</attr>
+   <attr path="/api/namespace/struct[@cname='RCPackageMatch']/method[@cname='rc_package_match_to_xml_node']" name="hidden">1</attr>
+   <attr path="/api/namespace/struct[@cname='RCPackageMatch']/method[@cname='rc_package_match_from_xml_node']" name="hidden">1</attr>
+
+   <attr path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_gunzip_memory']" name="hidden">1</attr>
+   <attr path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_gzip_memory']" name="hidden">1</attr>
+   <attr path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_string_to_guint32_with_default']" name="hidden">1</attr>
+   <attr path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_file_exists']" name="hidden">1</attr>
+   <attr path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_error_quark']" name="hidden">1</attr>
+   <attr path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_uncompress_memory']" name="hidden">1</attr>
+
+   <attr path="/api/namespace/callback[@cname='RCChannelFn']" name="name">ChannelDelegate</attr>
+   <attr path="/api/namespace/callback[@cname='RCMarkedPackageFn']" name="name">MarkedPackageDelegate</attr>
+   <attr path="/api/namespace/callback[@cname='RCMarkedPackagePairFn']" name="name">MarkedPackagePairDelegate</attr>
+   <attr path="/api/namespace/callback[@cname='RCPackageAndDepFn']" name="name">PackageAndDepDelegate</attr>
+   <attr path="/api/namespace/callback[@cname='RCPackageAndSpecFn']" name="name">PackageAndSpecDelegate</attr>
+   <attr path="/api/namespace/callback[@cname='RCPackageFn']" name="name">PackageDelegate</attr>
+   <attr path="/api/namespace/callback[@cname='RCPackageMatchFn']" name="name">PackageMatchDelegate</attr>
+   <attr path="/api/namespace/callback[@cname='RCPackagePairFn']" name="name">PackagePairDelegate</attr>
+   <attr path="/api/namespace/callback[@cname='RCResolverContextFn']" name="name">ResolverContextDelegate</attr>
+   <attr path="/api/namespace/callback[@cname='RCResolverInfoFn']" name="name">ResolverInfoDelegate</attr>
+   <attr path="/api/namespace/callback[@cname='RCWorldAddLockFn']" name="name">WorldAddLockDelegate</attr>
+   <attr path="/api/namespace/callback[@cname='RCWorldCanTransactPackageFn']" name="name">WorldCanTransactPackageDelegate</attr>
+   <attr path="/api/namespace/callback[@cname='RCWorldClearLockFn']" name="name">WorldClearLockDelegate</attr>
+   <attr path="/api/namespace/callback[@cname='RCWorldDupFn']" name="name">WorldDupDelegate</attr>
+   <attr path="/api/namespace/callback[@cname='RCWorldFn']" name="name">WorldDelegate</attr>
+   <attr path="/api/namespace/callback[@cname='RCWorldForeachChannelFn']" name="name">WorldForeachChannelDelegate</attr>
+   <attr path="/api/namespace/callback[@cname='RCWorldForeachLockFn']" name="name">WorldForeachLockDelegate</attr>
+   <attr path="/api/namespace/callback[@cname='RCWorldForeachPackageDepFn']" name="name">WorldForeachPackageDepDelegate</attr>
+   <attr path="/api/namespace/callback[@cname='RCWorldForeachPackageFn']" name="name">WorldForeachPackageDelegate</attr>
+   <attr path="/api/namespace/callback[@cname='RCWorldForeachPackageSpecFn']" name="name">WorldForeachPackageSpecDelegate</attr>
+   <attr path="/api/namespace/callback[@cname='RCWorldGetSubscribedFn']" name="name">WorldGetSubscribedDelegate</attr>
+   <attr path="/api/namespace/callback[@cname='RCWorldRefreshFn']" name="name">WorldRefreshDelegate</attr>
+   <attr path="/api/namespace/callback[@cname='RCWorldRemoveLockFn']" name="name">WorldRemoveLockDelegate</attr>
+   <attr path="/api/namespace/callback[@cname='RCWorldSetSubscribedFn']" name="name">WorldSetSubscribedDelegate</attr>
+   <attr path="/api/namespace/callback[@cname='RCWorldSyncFn']" name="name">WorldSyncDelegate</attr>
+   <attr path="/api/namespace/callback[@cname='RCWorldTransactFn']" name="name">WorldTransactDelegate</attr>
+   
+   <attr path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_string_to_package_importance']" name="name">PackageImportanceFromString</attr>
+   <attr path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_get_world']" name="name">GetGlobal</attr>
+   <attr path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_set_world']" name="name">SetGlobal</attr>
+   <attr path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_distman_new']" name="name">Distman</attr>
+
+   
+   <move-node path="/api/namespace/boxed[@cname='RCPackage']/method[@cname='rc_package_importance_to_string']">/api/namespace/class[@cname='RCGlobal']</move-node>
+   <move-node path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_get_world']">/api/namespace/object[@cname='RCWorld']</move-node>
+   <move-node path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_set_world']">/api/namespace/object[@cname='RCWorld']</move-node>
+   <move-node path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_distman_new']">/api/namespace/object[@cname='RCPackman']</move-node>
+
    
 </metadata>

@@ -1,10 +1,85 @@
-		[DllImport("libredcarpet")]
-		static extern void rc_world_set_refresh_function(IntPtr raw, RCSharp.WorldRefreshFnNative refresh_fn);
+/* -*- Mode: csharp; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 
-		public RC.WorldRefreshFn RefreshDelegate { 
-			set {
-				RCSharp.WorldRefreshFnWrapper value_wrapper = null;
-				value_wrapper = new RCSharp.WorldRefreshFnWrapper (value, this);
-				rc_world_set_refresh_function(Handle, value_wrapper.NativeDelegate);
-			}
-		}
+//namespace {
+    [DllImport("libredcarpet")]
+    static extern void rc_world_set_refresh_function(IntPtr raw, RCSharp.WorldRefreshDelegateNative refresh_fn);
+
+    public RC.WorldRefreshDelegate RefreshDelegate { 
+        set {
+            RCSharp.WorldRefreshDelegateWrapper value_wrapper = null;
+            value_wrapper = new RCSharp.WorldRefreshDelegateWrapper (value, this);
+            rc_world_set_refresh_function(Handle, value_wrapper.NativeDelegate);
+        }
+    }
+
+    private class ToXmlHelper
+    {
+        private System.Xml.XmlTextWriter writer;
+        private World world;
+
+        public ToXmlHelper (World world, System.Xml.XmlTextWriter writer)
+        {
+            this.writer = writer;
+        }
+
+        public bool ForeachPackage (Package package)
+        {
+            package.ToXml (this.writer);
+
+            return true;
+        }
+
+        public bool ForeachChannel (Channel channel)
+        {
+            /* These are handled by the "system_packages" section */
+            if (channel.IsSystem)
+                return true;
+
+            channel.ToXml (this.writer);
+            this.world.ForeachPackage (channel, new PackageDelegate (ForeachPackage));
+
+            return true;
+        }
+
+        public bool ForeachLock (PackageMatch match)
+        {
+            match.ToXml (this.writer);
+            return true;
+        }
+    }
+
+    public void ToXml (System.Xml.XmlTextWriter writer)
+    {
+        ToXmlHelper helper = new ToXmlHelper (this, writer);
+
+        writer.WriteStartElement ("system_packages");
+        this.ForeachPackage (Channel.SYSTEM, new PackageDelegate (helper.ForeachPackage));
+        writer.WriteEndElement ();
+
+        this.ForeachChannel (new ChannelDelegate (helper.ForeachChannel));
+    }
+
+    public void ToXml (System.IO.Stream stream)
+    {
+        System.Xml.XmlTextWriter writer = new System.Xml.XmlTextWriter (stream, null);
+        writer.WriteStartDocument ();
+        writer.WriteStartElement ("world");
+
+        writer.WriteStartElement ("locks");
+        ToXmlHelper helper = new ToXmlHelper (this, writer);
+        this.ForeachLock (new PackageMatchDelegate (helper.ForeachLock));
+        writer.WriteEndElement ();
+
+        this.ToXml (writer);
+
+        writer.WriteEndElement ();
+        writer.WriteEndDocument ();
+        writer.Close ();
+    }
+
+    public void ToXml (string filename)
+    {
+        System.IO.Stream s = System.IO.File.Open (filename, System.IO.FileMode.OpenOrCreate);
+        this.ToXml (s);
+        s.Close ();
+    }

@@ -1,19 +1,59 @@
-public static Channel SYSTEM = new Channel (new IntPtr (1));
-public static Channel ANY = new Channel (new IntPtr (2));
-public static Channel NON_SYSTEM = new Channel (new IntPtr (3));
+/* -*- Mode: csharp; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 
-		[DllImport("libredcarpet")]
-                static extern IntPtr rc_channel_get_world(IntPtr raw);
+//namespace {
+    public static Channel SYSTEM = new Channel (new IntPtr (1));
+    public static Channel ANY = new Channel (new IntPtr (2));
+    public static Channel NON_SYSTEM = new Channel (new IntPtr (3));
+
+    [DllImport("libredcarpet")]
+    static extern IntPtr rc_channel_get_world(IntPtr raw);
                                                                                 
-                public RC.World World {
-                        get {
-                                 IntPtr raw_ret = rc_channel_get_world(Handle);
-				RC.World ret;
-				 if (raw_ret == IntPtr.Zero)
-                                        ret = null;
-                                else
-                                        ret = (RC.World) GLib.Object.GetObject(raw_ret);
-                                return ret;
-                        }
-                }
+    public RC.World World {
+        get {
+            IntPtr raw_ret = rc_channel_get_world(Handle);
+            RC.World ret;
+            if (raw_ret == IntPtr.Zero)
+                ret = null;
+            else
+                ret = (RC.World) GLib.Object.GetObject(raw_ret);
+            return ret;
+        }
+    }
 
+    public void ToXml (System.Xml.XmlTextWriter writer)
+    {
+        writer.WriteStartElement ("channel");
+
+        writer.WriteAttributeString ("id", this.Id);
+        writer.WriteAttributeString ("name", this.Name);
+
+        if (this.Alias != null)
+            writer.WriteAttributeString ("alias", this.Alias);
+
+        writer.WriteAttributeString ("subscribed", this.IsSubscribed ? "1" : "0");
+        writer.WriteAttributeString ("priority_base", System.Xml.XmlConvert.ToString (this.GetPriority (true)));
+        writer.WriteAttributeString ("priority_unsubd", System.Xml.XmlConvert.ToString (this.GetPriority (false)));
+
+        writer.WriteEndElement ();
+    }
+
+    public static void ToXml (Channel[] channels, System.IO.Stream stream)
+    {
+        System.Xml.XmlTextWriter writer = new System.Xml.XmlTextWriter (stream, null);
+        writer.WriteStartDocument ();
+        writer.WriteStartElement ("channellist");
+
+        foreach (Channel c in channels)
+            c.ToXml (writer);
+
+        writer.WriteEndElement ();
+        writer.WriteEndDocument ();
+        writer.Close ();
+    }
+
+    public static void ToXml (Channel[] channels, string filename)
+    {
+        System.IO.Stream s = System.IO.File.Open (filename, System.IO.FileMode.OpenOrCreate);
+        Channel.ToXml (channels, s);
+        s.Close ();
+    }
