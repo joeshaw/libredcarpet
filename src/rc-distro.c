@@ -91,7 +91,7 @@ RCDistroChunk distro_figurers[] = {
       func_string_in_file, "/etc/redhat-release", "7.0", NULL, CHECK_OP_OR,
       func_string_in_file, "/etc/redhat-release", "Rawhide", NULL },
     { "redhat-71-i386", RC_ARCH_IA32,
-      func_string_in_file, "/etc/redhat-release", "7.0.9", NULL, CHECK_OP_OR,
+      func_string_in_file, "/etc/redhat-release", "7.1", NULL, CHECK_OP_OR,
       func_string_in_file, "/etc/redhat-release", "Fisher", NULL },
 
     { "turbolinux-60-i386", RC_ARCH_IA32,
