@@ -30,9 +30,13 @@ rc_distman_new (void)
     env = getenv("RC_PACKMAN_TYPE");
     if (env && g_strcasecmp(env, "dpkg") == 0)
         packman = RC_PACKMAN(rc_debman_new());
-    else if (env && g_strcasecmp(env, "rpm") == 0)
+    else if (env && g_strcasecmp(env, "rpm") == 0) {
+#ifdef HAVE_LIBRPM
         packman = RC_PACKMAN(rc_rpmman_new());
-    else {
+#else
+        g_warning ("RPM support not enabled.");
+#endif
+    } else {
         switch (distro.type) {
         case DISTRO_UNSUPPORTED:
         case DISTRO_UNKNOWN:
