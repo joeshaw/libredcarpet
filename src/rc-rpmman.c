@@ -849,13 +849,13 @@ parse_versions (gchar **inputs, guint32 **epochs, gchar ***versions,
             break;
         }
 
-        t1 = g_strsplit (inputs[i], ":", 2);
+        t1 = g_strsplit (inputs[i], ":", 1);
 
         if (t1[1]) {
             (*epochs)[i] = strtoul (t1[0], NULL, 10);
-            t2 = g_strsplit (t1[1], "-", 2);
+            t2 = g_strsplit (t1[1], "-", 1);
         } else {
-            t2 = g_strsplit (t1[0], "-", 2);
+            t2 = g_strsplit (t1[0], "-", 1);
         }
 
         (*versions)[i] = g_strdup (t2[0]);
