@@ -79,7 +79,8 @@ EXTRA_DIST =				\
 	Package.custom			\
 	PackageUpdate.custom		\
 	PackageDep.custom		\
-	Packman.custom
+	Packman.custom			\
+	generated/*.cs
 
 dist-hook:
 	mkdir -p $(distdir)/en/RC
