@@ -1,3 +1,10 @@
+2002-03-08  Ian Peters  <itp@ximian.com>
+
+	* rc-deps-util.c (free_package_hash_helper): not needed
+	(rc_dep_or_process_system_and_channels): i knew there had to be a
+	function to destroy our unique hash tables, just couldn't find it;
+	now uses rc_hash_table_slist_free
+
 2002-03-07  Ian Peters  <itp@ximian.com>
 
 	* rc-debman.c (rc_debman_init): the extension was only being set
