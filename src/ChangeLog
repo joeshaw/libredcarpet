@@ -1,3 +1,9 @@
+2003-03-04  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-rpmman.c (rc_rpmman_depends_fill): Don't filter file
+	dependencies if the RC_PLEASE_DONT_FILTER_FILE_DEPS env variable
+	is set.
+
 2003-02-21  Joe Shaw  <joe@ximian.com>
 
 	* rc-world.c (rc_world_touch_channel_sequence_number): Fix a

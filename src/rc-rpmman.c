@@ -1587,6 +1587,9 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
         gchar **basenames, **dirnames;
         guint32 *dirindexes;
         int count, i;
+        gboolean dont_filter;
+        
+        dont_filter = getenv ("RC_PLEASE_DONT_FILTER_FILE_DEPS") != NULL;
 
         rpmman->headerGetEntry (header, RPMTAG_BASENAMES, NULL,
                                 (void **)&basenames, &count);
@@ -1599,7 +1602,7 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
             gchar *tmp = g_strconcat (dirnames[dirindexes[i]], basenames[i],
                                       NULL);
 
-            if (in_set (tmp, file_dep_set)) {
+            if (dont_filter || in_set (tmp, file_dep_set)) {
                 dep = rc_package_dep_new (tmp, 0, 0, NULL, NULL,
                                           RC_RELATION_ANY, FALSE, FALSE);
 
