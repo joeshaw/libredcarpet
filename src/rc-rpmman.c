@@ -46,10 +46,6 @@ static void rc_rpmman_init       (RCRpmman *obj);
 
 static GtkObjectClass *parent_class;
 
-/* rpmlib sucks */
-gint rpm_error;
-const gchar *rpm_reason;
-
 guint
 rc_rpmman_get_type (void)
 {
@@ -569,9 +565,6 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         rc_package_free (package);
     }
 
-    rpm_error = 0;
-    rpm_reason = NULL;
-
     /* If we're installing any packages at all, expect to get the
        configure steps first.  Otherwise, you'll go directly to
        transacts for the removed packages. */
@@ -586,15 +579,31 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     rc = rpmRunTransactions (transaction, transact_cb, (void *) &state,
                              NULL, &probs, transaction_flags, problem_filter);
 
-    if (rc) {
+    if (rc < 0) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              "%d -- %s", rpm_error, rpm_reason);
+                              "install payload failed");
 
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              "RPM transaction failed");
+        goto ERROR;
+    } else if (rc > 0) {
+        guint count;
+        rpmProblem *problem = probs->probs;
+        GString *report = g_string_new ("");
+
+        for (count = 0; count < probs->numProblems; count++) {
+            g_string_sprintfa ("\n%s", rpmProblemString (*problem));
+            problem++;
+        }
+
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT, report->str);
+
+        g_string_free (report, TRUE);
+
+        rpmProblemSetFree (probs);
 
         goto ERROR;
     }
+
+    rpmProblemSetFree (probs);
 
     gtk_signal_emit_by_name (GTK_OBJECT (packman), "transact_done");
     GTKFLUSH;
@@ -1943,13 +1952,6 @@ rc_rpmman_class_init (RCRpmmanClass *klass)
 } /* rc_rpmman_class_init */
 
 static void
-rc_rpmman_error_cb ()
-{
-    rpm_error = rpmErrorCode ();
-    rpm_reason = rpmErrorString ();
-}
-
-static void
 rc_rpmman_init (RCRpmman *obj)
 {
     RCPackman *packman = RC_PACKMAN (obj);
@@ -1977,8 +1979,6 @@ rc_rpmman_init (RCRpmman *obj)
         RC_PACKMAN_FEATURE_PKG_PROGRESS;
 
     rc_package_dep_system_is_rpmish (TRUE);
-
-    rpmErrorSetCallback ((rpmErrorCallBackType) rc_rpmman_error_cb);
 } /* rc_rpmman_init */
 
 RCRpmman *
