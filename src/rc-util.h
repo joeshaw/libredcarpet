@@ -31,7 +31,7 @@
 
    Returns 0 on success, -1 on error
 */
-gint rc_rmdir (gchar *dir);
+gint rc_rmdir (const char *dir);
 
 /* Create the directory specified and all of the child directories. Whee. */
 gint rc_mkdir(const char *dir, guint mode);

@@ -1854,7 +1854,9 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
                             (void **)&buf, &count);
 
     if (count > 0) {
-        if ((signature_fd = mkstemp (*signature_filename)) == -1) {
+        if ((signature_fd = g_file_open_tmp ("rpm-sig-XXXXXX",
+                                             signature_filename,
+                                             NULL)) == -1) {
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "failed to create temporary signature file");
 
@@ -1883,7 +1885,8 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
         *signature_filename = NULL;
     }
 
-    if ((payload_fd = mkstemp (*payload_filename)) == -1) {
+    if ((payload_fd = g_file_open_tmp ("rpm-data-XXXXXX",
+                                       payload_filename, NULL)) == -1) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "failed to create temporary payload file");
 
@@ -1948,8 +1951,8 @@ rc_rpmman_verify (RCPackman *packman, RCPackage *package, guint32 type)
 {
     RCVerificationSList *ret = NULL;
     RCVerification *verification = NULL;
-    gchar *signature_filename = g_strdup ("/tmp/rpm-sig-XXXXXX");
-    gchar *payload_filename = g_strdup ("/tmp/rpm-data-XXXXXX");
+    gchar *signature_filename;
+    gchar *payload_filename;
     guint8 *md5sum = NULL;
     guint32 size;
 

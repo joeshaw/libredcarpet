@@ -1,3 +1,14 @@
+2002-06-14  Joe Shaw  <joe@ximian.com>
+
+	* rc-rpmman.c (split_rpm): Use g_file_open_tmp () instead of
+	mkstemp () things like TMPDIR are obeyed.
+	(rc_rpmman_verify): Don't need to bother passing in templates to
+	split_rpm ().
+
+2002-06-13  Joe Shaw  <joe@ximian.com>
+
+	* rc-util.c (rc_rmdir): Argument should be const.
+
 2002-06-12  Joe Shaw  <joe@ximian.com>
 
 	* rc-rpmman.c (GTKFLUSH): Reenable this macro so we can get decent

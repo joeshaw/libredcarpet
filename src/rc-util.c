@@ -70,7 +70,7 @@ rc_mkdir(const char *dir, guint mode)
 } /* rc_mkdir */
 
 gint
-rc_rmdir (gchar *dir)
+rc_rmdir (const char *dir)
 {
     DIR *dp;
     struct dirent *entry;
