@@ -41,6 +41,11 @@ static void rc_debman_init       (RCDebman *obj);
 
 static GtkObjectClass *rc_debman_parent;
 
+#define DEBMAN_DEFAULT_STATUS_FILE	"/var/lib/dpkg/status"
+
+static char *status_file = NULL;
+static char *rc_status_file = NULL;
+
 guint
 rc_debman_get_type (void)
 {
@@ -111,14 +116,14 @@ mark_purge (RCPackman *p, RCPackageSList *remove_pkgs)
 
     g_return_val_if_fail (g_slist_length (remove_pkgs) > 0, TRUE);
 
-    if (!(in_fp = fopen ("/var/lib/dpkg/status", "r"))) {
+    if (!(in_fp = fopen (status_file, "r"))) {
         rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
                               "Unable to open /var/lib/dpkg/status for "
                               "reading");
         return (FALSE);
     }
 
-    if (!(out_fp = fopen ("/var/lib/dpkg/status.redcarpet", "w"))) {
+    if (!(out_fp = fopen (rc_status_file, "w"))) {
         rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
                               "Unable to open /var/lib/dpkg/status.redcarpet "
                               "for writing");
@@ -164,11 +169,11 @@ mark_purge (RCPackman *p, RCPackageSList *remove_pkgs)
     fclose (out_fp);
     fclose (in_fp);
 
-    if (rename ("/var/lib/dpkg/status.redcarpet", "/var/lib/dpkg/status")) {
-        unlink ("/var/lib/dpkg/status.redcarpet");
+    if (rename (rc_status_file, status_file)) {
+        unlink (rc_status_file);
         rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
                               "Unable to rename "
-                              "/var/lib/dpkg/status.redcarpet");
+                              "RC status file");
         return (FALSE);
     }
 
@@ -718,9 +723,6 @@ rc_debman_fill_depends (gchar *input, RCPackageDepSList *list)
 
             if (!deprel) {
                 /* There's no version in this dependency, just a name. */
-#if DEBUG > 10
-                fprintf (stderr, "debian_dephelper: Adding dep '%s'\n", depname);
-#endif
                 depi = rc_package_dep_item_new (depname, 0, NULL, NULL,
                                                 RC_RELATION_ANY);
             } else {
@@ -757,7 +759,6 @@ rc_debman_fill_depends (gchar *input, RCPackageDepSList *list)
 
                 depi = rc_package_dep_item_new (depname, epoch, version,
                                                 release, relation);
-
                 g_free (version);
                 g_free (release);
             }
@@ -1035,7 +1036,7 @@ rc_debman_query_real (RCPackman *p, RCPackage *pkg)
     gchar *target;
     RCLineBuf *lb;
 
-    if (!(fp = fopen ("/var/lib/dpkg/status", "r"))) {
+    if (!(fp = fopen (status_file, "r"))) {
         rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
                               "Unable to open /var/lib/dpkg/status");
         return (pkg);
@@ -1213,6 +1214,16 @@ rc_debman_new (void)
 {
     RCDebman *new =
         RC_DEBMAN (gtk_type_new (rc_debman_get_type ()));
+
+    if (status_file == NULL) {
+        if (getenv ("RC_DEBMAN_STATUS_FILE")) {
+            status_file = getenv ("RC_DEBMAN_STATUS_FILE");
+            rc_status_file = g_strconcat (status_file, ".redcarpet", NULL);
+        } else {
+            status_file = DEBMAN_DEFAULT_STATUS_FILE;
+            rc_status_file = DEBMAN_DEFAULT_STATUS_FILE ".redcarpet";
+        }
+    }
 
     return new;
 } /* rc_debman_new */
