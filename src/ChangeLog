@@ -1,3 +1,7 @@
+2003-03-27  Jose Mercado <jose@ximian.com>
+    * distributions.xml: Change detect string for SuSE 8.1 to something
+    more unique.
+
 2003-03-27  Joe Shaw  <joe@ximian.com>
 
 	* rc-world.c (rc_world_foreach_system_upgrade): Add a

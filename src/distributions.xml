@@ -396,7 +396,7 @@
 		<target>suse-81-i386</target>
 		<status>supported</status>
 		<detect>
-			<file source="/etc/SuSE-release" substring="8.1"/>
+			<file source="/etc/SuSE-release" substring="SuSE Linux 8.1"/>
 		</detect>
 	</distro>
 
