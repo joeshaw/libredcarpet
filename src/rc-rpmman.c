@@ -983,6 +983,7 @@ rc_rpmman_query_all (RCPackman *p)
                                &pkg->spec.section,
                                &pkg->spec.installed_size, &pkg->summary,
                                &pkg->description);
+	pkg->spec.installed = TRUE;
 
         rc_rpmman_depends_fill (hdr, pkg);
 
@@ -1033,6 +1034,7 @@ rc_rpmman_query_all (RCPackman *p)
                                &pkg->spec.section,
                                &pkg->spec.installed_size, &pkg->summary,
                                &pkg->description);
+	pkg->spec.installed = TRUE;
 
         rc_rpmman_depends_fill (hdr, pkg);
 
