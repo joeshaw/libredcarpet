@@ -895,7 +895,7 @@ rc_rpmman_depends_fill (RCPackage *pkg, Header hdr)
             /* Add the dependency to the list of dependencies */
 
             dep = rc_package_dep_item_new (names[i], 0, versions[i],
-                                           releases[i], relations[i]);
+                                           releases[i], relation);
 
             depl = g_slist_append (NULL, dep);
 
