@@ -83,6 +83,8 @@ rc_package_unref (RCPackage *package)
             rc_package_dep_array_free (package->conflicts_a);
             rc_package_dep_array_free (package->obsoletes_a);
 
+            rc_package_dep_array_free (package->contains_a);
+
             rc_package_dep_array_free (package->suggests_a);
             rc_package_dep_array_free (package->recommends_a);
 
@@ -164,6 +166,14 @@ rc_package_is_installed (RCPackage *package)
         return FALSE;
     else
         return package->channel == NULL || package->installed;
+}
+
+gboolean
+rc_package_is_package_set (RCPackage *package)
+{
+    g_return_val_if_fail (package != NULL, FALSE);
+
+    return package->contains_a != NULL;
 }
 
 RCPackage *

@@ -413,12 +413,10 @@ rc_resolver_queue_split_first_branch (RCResolverQueue *queue,
                 int priority, priority2;
 
                 priority = rc_channel_get_priority (pkg->channel,
-                                                    rc_channel_subscribed (pkg->channel),
-                                                    FALSE /* ignore curr channel */);
+                                                    rc_channel_subscribed (pkg->channel));
 
                 priority2 = rc_channel_get_priority (pkg2->channel,
-                                                     rc_channel_subscribed (pkg2->channel),
-                                                     FALSE /* ditto */);
+                                                     rc_channel_subscribed (pkg2->channel));
 
                 if (priority != priority2 && spec->nameq == spec2->nameq) {
                     RCPackman *packman;

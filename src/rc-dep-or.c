@@ -81,7 +81,8 @@ rc_dep_or_new_provide (RCDepOr *dor)
     RCPackageDep *new_dep;
 
     new_dep = rc_package_dep_new (dor->or_dep, 0, 0, NULL, NULL,
-                                  RC_RELATION_ANY, FALSE, TRUE);
+                                  RC_RELATION_ANY, RC_CHANNEL_ANY,
+                                  FALSE, TRUE);
     dor->created_provides = g_slist_prepend (dor->created_provides, new_dep);
 
     return new_dep;
@@ -256,7 +257,8 @@ rc_dep_string_to_or_dep_slist (const gchar *munged)
         }
 
         cur_item = rc_package_dep_new (name, 1, epoch, version, release,
-                                       relation, FALSE, FALSE);
+                                       relation, RC_CHANNEL_ANY,
+                                       FALSE, FALSE);
         out_dep = g_slist_append (out_dep, cur_item);
         s = z + 1;
 

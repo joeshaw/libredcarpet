@@ -92,6 +92,7 @@ rc_package_relation_to_string (RCPackageRelation relation, gint words)
 /* THE SPEC MUST BE FIRST */
 struct _RCPackageDep {
     RCPackageSpec spec;
+    RCChannel    *channel;
     gint          refs     : 20;
     gint          relation : 5;
     guint         is_or    : 1;
@@ -140,6 +141,7 @@ rc_package_dep_unref (RCPackageDep *dep)
                                      GINT_TO_POINTER (dep->spec.nameq));
 
             /* Free the dep */
+            rc_channel_unref (dep->channel);
             rc_package_spec_free_members (RC_PACKAGE_SPEC (dep));
             g_free (dep);
         }
@@ -154,6 +156,7 @@ dep_new (const gchar       *name,
          const gchar       *version,
          const gchar       *release,
          RCPackageRelation  relation,
+         RCChannel         *channel,
          gboolean           is_pre,
          gboolean           is_or)
 {
@@ -163,6 +166,7 @@ dep_new (const gchar       *name,
                           version, release);
 
     dep->relation = relation;
+    dep->channel  = rc_channel_ref (channel);
     dep->is_pre   = is_pre;
     dep->is_or    = is_or;
 
@@ -183,12 +187,15 @@ dep_equal (RCPackageDep      *dep,
            const gchar       *version,
            const gchar       *release,
            RCPackageRelation  relation,
+           RCChannel         *channel,
            gboolean           is_pre,
            gboolean           is_or)
 {
     if (dep->spec.has_epoch != has_epoch)
         return FALSE;
     if (dep->spec.epoch != epoch)
+        return FALSE;
+    if (dep->channel != channel)
         return FALSE;
     if ((dep->spec.version && !version) ||
         (!dep->spec.version && version))
@@ -217,6 +224,7 @@ rc_package_dep_new (const gchar       *name,
                     const gchar       *version,
                     const gchar       *release,
                     RCPackageRelation  relation,
+                    RCChannel         *channel,
                     gboolean           is_pre,
                     gboolean           is_or)
 {
@@ -235,7 +243,7 @@ rc_package_dep_new (const gchar       *name,
         RCPackageDep *dep;
 
         dep = dep_new (name, has_epoch, epoch, version, release, relation,
-                       is_pre, is_or);
+                       channel, is_pre, is_or);
         list = g_slist_append (NULL, dep);
         g_hash_table_insert (global_deps, GINT_TO_POINTER (dep->spec.nameq),
                              list);
@@ -251,7 +259,7 @@ rc_package_dep_new (const gchar       *name,
         while (iter) {
             dep = iter->data;
             if (dep_equal (dep, has_epoch, epoch, version, release,
-                           relation, is_pre, is_or))
+                           relation, channel, is_pre, is_or))
             {
                 /* This is the exact dep we were looking for! */
                 rc_package_dep_ref (dep);
@@ -264,7 +272,7 @@ rc_package_dep_new (const gchar       *name,
          * to our name's list, and stuff it back into the hash
          * table. */
         dep = dep_new (name, has_epoch, epoch, version, release, relation,
-                       is_pre, is_or);
+                       channel, is_pre, is_or);
         list = g_slist_prepend (list, dep);
         g_hash_table_replace (global_deps, GINT_TO_POINTER (dep->spec.nameq),
                               list);
@@ -276,18 +284,25 @@ rc_package_dep_new (const gchar       *name,
 RCPackageDep *
 rc_package_dep_new_from_spec (RCPackageSpec     *spec,
                               RCPackageRelation  relation,
+                              RCChannel         *channel,
                               gboolean           is_pre,
                               gboolean           is_or)
 {
     return rc_package_dep_new (
         g_quark_to_string (spec->nameq), spec->has_epoch, spec->epoch,
-        spec->version, spec->release, relation, is_pre, is_or);
+        spec->version, spec->release, relation, channel, is_pre, is_or);
 }
 
 RCPackageRelation
 rc_package_dep_get_relation (RCPackageDep *dep)
 {
     return dep->relation;
+}
+
+RCChannel *
+rc_package_dep_get_channel (RCPackageDep *dep)
+{
+    return dep->channel;
 }
 
 gboolean
@@ -312,7 +327,11 @@ rc_package_dep_to_string (RCPackageDep *dep)
 
     spec_str = rc_package_spec_to_str (&dep->spec);
     str = g_strconcat (rc_package_relation_to_string (dep->relation, 0),
-                       spec_str, NULL);
+                       spec_str,
+                       dep->channel ? "[" : NULL,
+                       dep->channel ? rc_channel_get_name (dep->channel) : "",
+                       "]",
+                       NULL);
     g_free (spec_str);
 
     return str;
@@ -467,6 +486,9 @@ rc_package_dep_verify_relation (RCPackman    *packman,
             return FALSE;
         }
     }
+
+    if (! rc_channel_equal (dep->channel, prov->channel))
+        return FALSE;
     
     if (dep->spec.has_epoch && prov->spec.has_epoch) {
         /* HACK: This sucks, but I don't know a better way to compare 

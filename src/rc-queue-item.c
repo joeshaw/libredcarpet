@@ -476,14 +476,14 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
             *new_items = g_slist_prepend (*new_items, conflict_item);
         }
 
-    /* Constuct uninstall items for things that conflict with us. */
+    /* Constuct uninstall items for system packages that conflict with us. */
     conflicts = NULL;
     pkg_dep = rc_package_dep_new_from_spec (&package->spec,
                                             RC_RELATION_EQUAL,
+                                            RC_CHANNEL_SYSTEM,
                                             FALSE, FALSE);
     rc_world_foreach_conflicting_package (rc_queue_item_get_world (item),
                                           pkg_dep,
-                                          NULL,
                                           build_conflict_list, &conflicts);
 
     for (iter = conflicts; iter != NULL; iter = iter->next) {
@@ -842,7 +842,6 @@ require_item_process (RCQueueItem *item,
     if (! require->remove_only) {
         
         rc_world_foreach_providing_package (world, require->dep,
-                                            RC_WORLD_ANY_CHANNEL,
                                             require_process_cb, &info);
         
         num_providers = g_slist_length (info.providers);
@@ -874,7 +873,6 @@ require_item_process (RCQueueItem *item,
             /* Maybe we can add some extra info on why none of the providers
                are suitable. */
             rc_world_foreach_providing_package (world, require->dep,
-                                                RC_WORLD_ANY_CHANNEL,
                                                 no_installable_providers_info_cb, &info);
         }
         
@@ -885,7 +883,7 @@ require_item_process (RCQueueItem *item,
 
             rc_world_foreach_upgrade (rc_queue_item_get_world (item),
                                       require->requiring_package,
-                                      RC_WORLD_ANY_CHANNEL,
+                                      RC_CHANNEL_ANY,
                                       look_for_upgrades_cb,
                                       &upgrade_list);
 
@@ -1740,7 +1738,6 @@ conflict_item_process (RCQueueItem *item,
 
 
     rc_world_foreach_providing_package (world, conflict->dep,
-                                        RC_WORLD_ANY_CHANNEL,
                                         conflict_process_cb,
                                         &info);
                                         
@@ -1935,8 +1932,7 @@ uninstall_item_process (RCQueueItem *item,
                 info.require_items = new_items;
                 info.remove_only = uninstall->remove_only;
             
-                rc_world_foreach_requiring_package (world, dep,
-                                                    RC_WORLD_ANY_CHANNEL,
+                rc_world_foreach_requiring_package (world, dep, 
                                                     uninstall_process_cb, &info);
             }
     }

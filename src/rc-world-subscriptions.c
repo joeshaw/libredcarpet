@@ -59,23 +59,22 @@ rc_world_import_subscriptions_from_xml (RCWorld *world,
     while (node) {
         if (! strcmp (node->name, "channel")) {
             gchar *id_str = xml_get_prop (node, "channel_id");
-            char *endptr;
-            long id;
 
-            id = strtol (id_str, &endptr, 10);
-            if (endptr && *endptr == '\0' && id > 0) {
+            if (id_str) {
 
                 RCChannel *channel;
-                channel = rc_world_get_channel_by_id (world, (guint32)id);
+                channel = rc_world_get_channel_by_id (world, id_str);
                 
                 if (channel == NULL) {
                     rc_debug (RC_DEBUG_LEVEL_WARNING,
                               "Can't subscribe to non-existent channel '%s'",
                               id_str);
 
-                    if (!g_slist_find (old_subs, GINT_TO_POINTER (id))) {
+                    if (!g_slist_find_custom (old_subs, id_str,
+                                              (GCompareFunc)strcmp)) {
+                                              
                         old_subs = g_slist_append (old_subs,
-                                                   GINT_TO_POINTER (id));
+                                                   g_strdup (id_str));
                     }
                 } else {
                     rc_channel_set_subscription (channel, TRUE);
@@ -100,7 +99,6 @@ void
 to_xml_cb (RCChannel *channel,
            gpointer   user_data)
 {
-    char buf[16];
     xmlNode *root = user_data;
     xmlNode *node;
 
@@ -112,8 +110,7 @@ to_xml_cb (RCChannel *channel,
     
     node = xmlNewChild (root, NULL, "channel", NULL);
 
-    g_snprintf (buf, 16, "%d", rc_channel_get_id (channel));
-    xmlNewProp (node, "channel_id", buf);
+    xmlNewProp (node, "channel_id", rc_channel_get_id (channel));
 
     /* For backwards compatibility */
     xmlNewProp (node, "last_updated", "0");
@@ -133,15 +130,14 @@ rc_world_export_subcriptions_to_xml (RCWorld *world)
     /* Write out old subscriptions */
     for (iter = old_subs; iter; iter = iter->next) {
         xmlNode *node;
-        char buf[16];
+        const char *id_str = iter->data;
 
-        if (rc_world_get_channel_by_id (world, GPOINTER_TO_INT (iter->data)))
+        if (rc_world_get_channel_by_id (world, id_str))
             continue;
 
         node = xmlNewChild (root, NULL, "channel", NULL);
 
-        g_snprintf (buf, 16, "%d", GPOINTER_TO_INT (iter->data));
-        xmlNewProp (node, "channel_id", buf);
+        xmlNewProp (node, "channel_id", id_str);
 
         /* For backwards compatibility */
         xmlNewProp (node, "last_updated", "0");

@@ -33,10 +33,6 @@
 
 typedef struct _RCWorld RCWorld;
 
-#define RC_WORLD_SYSTEM_PACKAGES (NULL)
-#define RC_WORLD_ANY_CHANNEL     ((RCChannel *) 0x1)
-#define RC_WORLD_ANY_NON_SYSTEM  ((RCChannel *) 0x2)
-
 void       rc_set_world (RCWorld *world);
 RCWorld   *rc_get_world (void);
 
@@ -62,20 +58,17 @@ gboolean   rc_world_get_system_packages         (RCWorld *world);
 RCChannel *rc_world_add_channel                 (RCWorld      *world,
                                                  const char   *channel_name,
                                                  const char   *alias,
-                                                 guint32       channel_id,
-                                                 guint32       base_id,
+                                                 const char   *channel_id,
                                                  RCChannelType type);
 
 RCChannel *rc_world_add_channel_with_priorities (RCWorld      *world,
                                                  const char   *channel_name,
                                                  const char   *alias,
-                                                 guint32       channel_id,
-                                                 guint32       base_id,
+                                                 const char   *channel_id,
                                                  gboolean      hidden,
                                                  RCChannelType type,
                                                  int           subd_priority,
-                                                 int           unsubd_priority,
-                                                 int           current_priority);
+                                                 int           unsubd_priority);
 
 /* Migrates a channel to this world */
 void       rc_world_migrate_channel             (RCWorld      *world,
@@ -95,10 +88,7 @@ RCChannel *rc_world_get_channel_by_alias        (RCWorld     *world,
                                                  const char  *alias);
 
 RCChannel *rc_world_get_channel_by_id           (RCWorld      *world,
-                                                 guint32       channel_id);
-
-RCChannel *rc_world_get_channel_by_base_id      (RCWorld   *world,
-                                                 guint32    base_id);
+                                                 const char   *channel_id);
 
 
 /* Package Locks */
@@ -193,26 +183,22 @@ int        rc_world_foreach_system_upgrade  (RCWorld *world,
 
 int        rc_world_foreach_providing_package (RCWorld *world,
                                                RCPackageDep *dep, 
-                                               RCChannel *channel,
                                                RCPackageAndSpecFn fn,
                                                gpointer user_data);
 
 gboolean   rc_world_check_providing_package   (RCWorld *world,
                                                RCPackageDep *dep, 
-                                               RCChannel *channel,
                                                gboolean filter_dups_of_installed,
                                                RCPackageAndSpecCheckFn fn, 
                                                gpointer user_data);
 
 int        rc_world_foreach_requiring_package (RCWorld *world, 
                                                RCPackageDep *dep,
-                                               RCChannel *channel,
                                                RCPackageAndDepFn fn, 
                                                gpointer user_data);
 
 int        rc_world_foreach_conflicting_package (RCWorld *world, 
                                                  RCPackageDep *dep,
-                                                 RCChannel *channel,
                                                  RCPackageAndDepFn fn, 
                                                  gpointer user_data);
 

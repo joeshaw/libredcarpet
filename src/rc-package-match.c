@@ -232,6 +232,7 @@ rc_package_match_test (RCPackageMatch *match,
     gboolean check;
     pkg_dep = rc_package_dep_new_from_spec (RC_PACKAGE_SPEC (pkg),
 					    RC_RELATION_EQUAL,
+					    pkg->channel,
 					    FALSE, FALSE);
     check = rc_package_dep_verify_relation (rc_world_get_packman (world),
 					    match->dep, pkg_dep);
@@ -254,9 +255,8 @@ rc_package_match_to_xml_node (RCPackageMatch *match)
   node = xmlNewNode (NULL, "match");
 
   if (match->channel) {
-    char buff[16];
-    g_snprintf (buff, 16, "%d", rc_channel_get_id (match->channel));
-    xmlNewTextChild (node, NULL, "channel", buff);
+    xmlNewTextChild (node, NULL, "channel",
+		     rc_channel_get_id (match->channel));
   }
 
   if (match->dep) {
@@ -296,11 +296,10 @@ rc_package_match_from_xml_node (xmlNode *node,
 
     if (! g_strcasecmp (node->name, "channel")) {
 
-      gchar *tmp = xml_get_content (node);
-      gint id = atoi (tmp);
-      RCChannel *channel = rc_world_get_channel_by_id (world, id);
+      gchar *id_str = xml_get_content (node);
+      RCChannel *channel = rc_world_get_channel_by_id (world, id_str);
       rc_package_match_set_channel (match, channel);
-      g_free (tmp);
+      g_free (id_str);
 
     } else if (! g_strcasecmp (node->name, "dep")) {
 

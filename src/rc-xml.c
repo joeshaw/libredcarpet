@@ -49,6 +49,7 @@ struct _RCPackageSAXContext {
     RCPackageDepSList *current_requires;
     RCPackageDepSList *current_provides;
     RCPackageDepSList *current_conflicts;
+    RCPackageDepSList *current_contains;
     RCPackageDepSList *current_recommends;
     RCPackageDepSList *current_suggests;
     RCPackageDepSList *current_obsoletes;
@@ -117,6 +118,7 @@ parser_toplevel_start(RCPackageSAXContext *ctx,
         ctx->current_requires = NULL;
         ctx->current_provides = NULL;
         ctx->current_conflicts = NULL;
+        ctx->current_contains = NULL;
         ctx->current_recommends = NULL;
         ctx->current_suggests = NULL;
         ctx->current_obsoletes = NULL;
@@ -193,6 +195,11 @@ parser_package_start(RCPackageSAXContext *ctx,
         ctx->current_dep_list = ctx->toplevel_dep_list =
             &ctx->current_provides;
     }
+    else if (!strcmp(name, "contains")) {
+        ctx->state = PARSER_DEP;
+        ctx->current_dep_list = ctx->toplevel_dep_list =
+            &ctx->current_contains;
+    } 
     else {
         if (getenv ("RC_SPEW_XML"))
             rc_debug (RC_DEBUG_LEVEL_ALWAYS, "! Not handling %s", name);
@@ -260,8 +267,10 @@ parse_dep_attrs(RCPackageDep **dep, const xmlChar **attrs)
 
     }
 
+    /* FIXME: should get channel from XML */
     *dep = rc_package_dep_new (tmp_name, has_epoch, tmp_epoch, tmp_version,
-                               tmp_release, relation, FALSE, FALSE);
+                               tmp_release, relation, 
+                               RC_CHANNEL_ANY, FALSE, FALSE);
 
     return is_obsolete;
 } /* parse_dep_attrs */
@@ -395,6 +404,11 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
         ctx->current_package->obsoletes_a =
             rc_package_dep_array_from_slist (
                 &ctx->current_obsoletes);
+
+        ctx->current_package->contains_a =
+            rc_package_dep_array_from_slist (
+                &ctx->current_contains);
+
         ctx->current_package->suggests_a =
             rc_package_dep_array_from_slist (
                 &ctx->current_suggests);
@@ -749,6 +763,7 @@ struct DepTable {
     RCPackageDepSList *provides;
     RCPackageDepSList *conflicts;
     RCPackageDepSList *obsoletes;
+    RCPackageDepSList *contains;
     RCPackageDepSList *suggests;
     RCPackageDepSList *recommends;
 };
@@ -894,6 +909,25 @@ extract_dep_info (const xmlNode *iter, struct DepTable *dep_table)
         }
 
         dep_table->provides = g_slist_reverse (dep_table->provides);
+
+    } else if (!g_strcasecmp (iter->name, "contains")) {
+        const xmlNode *iter2;
+
+        iter2 = iter->xmlChildrenNode;
+
+        while (iter2) {
+            if (iter2->type != XML_ELEMENT_NODE) {
+                iter2 = iter2->next;
+                continue;
+            }
+
+            dep_table->contains = 
+                g_slist_prepend (dep_table->contains,
+                                 rc_xml_node_to_package_dep (iter2));
+            iter2 = iter2->next;
+        }
+
+        dep_table->contains = g_slist_reverse (dep_table->contains);
     }
 }
 
@@ -914,6 +948,7 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
     dep_table.requires = NULL;
     dep_table.provides = NULL;
     dep_table.conflicts = NULL;
+    dep_table.contains = NULL;
     dep_table.obsoletes = NULL;
     dep_table.suggests = NULL;
     dep_table.recommends = NULL;
@@ -1006,6 +1041,8 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
         rc_package_dep_array_from_slist (&dep_table.conflicts);
     package->obsoletes_a =
         rc_package_dep_array_from_slist (&dep_table.obsoletes);
+    package->contains_a = 
+        rc_package_dep_array_from_slist (&dep_table.contains);
     package->suggests_a =
         rc_package_dep_array_from_slist (&dep_table.suggests);
     package->recommends_a =
@@ -1103,8 +1140,9 @@ rc_xml_node_to_package_dep_internal (const xmlNode *node)
         relation = RC_RELATION_ANY;
     }
 
+    /* FIXME: should get channel from XML */
     dep = rc_package_dep_new (name, has_epoch, epoch, version, release,
-                              relation, FALSE, FALSE);
+                              relation, RC_CHANNEL_ANY, FALSE, FALSE);
 
     g_free (tmp);
     g_free (name);
@@ -1241,11 +1279,7 @@ rc_channel_to_xml_node (RCChannel *channel)
 
     node = xmlNewNode (NULL, "channel");
 
-    sprintf (tmp, "%d", rc_channel_get_id (channel));
-    xmlNewProp (node, "id", tmp);
-
-    sprintf (tmp, "%d", rc_channel_get_base_id (channel));
-    xmlNewProp (node, "bid", tmp);
+    xmlNewProp (node, "id", rc_channel_get_id (channel));
 
     xmlNewProp (node, "name", rc_channel_get_name (channel));
 
@@ -1255,14 +1289,11 @@ rc_channel_to_xml_node (RCChannel *channel)
     sprintf (tmp, "%d", rc_channel_subscribed (channel) ? 1 : 0);
     xmlNewProp (node, "subscribed", tmp);
 
-    sprintf (tmp, "%d", rc_channel_get_priority (channel, FALSE, FALSE));
+    sprintf (tmp, "%d", rc_channel_get_priority (channel, TRUE));
     xmlNewProp (node, "priority_base", tmp);
 
-    sprintf (tmp, "%d", rc_channel_get_priority (channel, TRUE, FALSE));
+    sprintf (tmp, "%d", rc_channel_get_priority (channel, FALSE));
     xmlNewProp (node, "priority_unsubd", tmp);
-
-    sprintf (tmp, "%d", rc_channel_get_priority (channel, TRUE, TRUE));
-    xmlNewProp (node, "priority_current", tmp);
 
     return node;
 }
@@ -1386,6 +1417,15 @@ rc_package_to_xml_node (RCPackage *package)
         tmp_node = xmlNewChild (deps_node, NULL, "obsoletes", NULL);
         for (i = 0; i < package->obsoletes_a->len; i++) {
             RCPackageDep *dep = package->obsoletes_a->data[i];
+
+            xmlAddChild (tmp_node, rc_package_dep_to_xml_node (dep));
+        }
+    }
+
+    if (package->contains_a) {
+        tmp_node = xmlNewChild (deps_node, NULL, "contains", NULL);
+        for (i = 0; i < package->contains_a->len; i++) {
+            RCPackageDep *dep = package->contains_a->data[i];
 
             xmlAddChild (tmp_node, rc_package_dep_to_xml_node (dep));
         }

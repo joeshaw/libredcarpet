@@ -39,7 +39,6 @@ rc_channel_new (void)
 
     channel->priority = -1;
     channel->priority_unsubd = -1;
-    channel->priority_current = -1;
 
     return (channel);
 } /* rc_channel_new */

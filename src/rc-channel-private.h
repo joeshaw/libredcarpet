@@ -35,17 +35,14 @@ struct _RCChannel {
 
     struct _RCWorld *world;
 
-    guint32 id;
-    guint32 base_id;
+    gchar *id;
 
     gchar *name;
     gchar *alias;
     gchar *description;
-    guint32 tier;
                            /* priority if channel is... */
     gint priority;         /* subscribed */
     gint priority_unsubd;  /* unsubscribed */
-    gint priority_current; /* the current channel */
 
     RCChannelType type;
 
@@ -55,9 +52,6 @@ struct _RCChannel {
     gchar *file_path;
 
     gchar *icon_file;
-
-    gchar *subs_file;
-    gchar *unsubs_file;
 
     gchar *pkginfo_file;
     gboolean pkginfo_compressed;
@@ -69,8 +63,6 @@ struct _RCChannel {
 
     void (*refresh_magic) (RCChannel *);
 
-    gboolean mirrored   : 1;
-    gboolean featured   : 1;
     gboolean subscribed : 1;
     gboolean transient  : 1;
     gboolean silent     : 1;

@@ -1081,7 +1081,7 @@ requirement_met_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data)
     struct RequirementMetInfo *info = user_data;
 
     if (rc_resolver_context_package_is_present (info->context, package)) {
-            info->flag = TRUE;
+        info->flag = TRUE;
     }
 
     return ! info->flag;
@@ -1100,7 +1100,7 @@ rc_resolver_context_requirement_is_met (RCResolverContext *context,
     info.flag = FALSE;
 
     rc_world_check_providing_package (rc_resolver_context_get_world (context),
-                                      dep, RC_WORLD_ANY_CHANNEL, FALSE,
+                                      dep, FALSE,
                                       requirement_met_cb, &info);
     
     return info.flag;
@@ -1132,7 +1132,7 @@ rc_resolver_context_requirement_is_possible (RCResolverContext *context,
     info.flag = FALSE;
 
     rc_world_check_providing_package (rc_resolver_context_get_world (context),
-                                      dep, RC_WORLD_ANY_CHANNEL, FALSE, 
+                                      dep, FALSE, 
                                       requirement_possible_cb, &info);
     
     return info.flag;
@@ -1196,25 +1196,14 @@ gint
 rc_resolver_context_get_channel_priority (RCResolverContext *context,
                                           const RCChannel *channel)
 {
-    RCResolverContext *c;
-    gboolean is_current = FALSE, is_subscribed = FALSE;
+    gboolean is_subscribed;
     int priority;
 
     g_return_val_if_fail (context != NULL, 0);
     g_return_val_if_fail (channel != NULL, 0);
 
-    for (c = context; c != NULL; c = c->parent) {
-        if (c->current_channel) {
-            is_current = (c->current_channel == channel);
-            break;
-        }
-    }
-
-    if (! is_current) {
-        is_subscribed = rc_channel_subscribed (channel);
-    }
-
-    priority = rc_channel_get_priority (channel, is_subscribed, is_current);
+    is_subscribed = rc_channel_subscribed (channel);
+    priority = rc_channel_get_priority (channel, is_subscribed);
 
     return priority;
 }

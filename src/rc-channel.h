@@ -42,6 +42,10 @@ typedef enum {
     RC_CHANNEL_TYPE_LAST
 } RCChannelType;
 
+#define RC_CHANNEL_SYSTEM     (NULL)
+#define RC_CHANNEL_ANY        ((RCChannel *) 0x1)
+#define RC_CHANNEL_NON_SYSTEM ((RCChannel *) 0x2)
+
 int rc_channel_priority_parse (const char *);
 
 RCChannel *rc_channel_ref   (RCChannel *channel);
@@ -49,9 +53,7 @@ void       rc_channel_unref (RCChannel *channel);
 
 /* Accessors */
  
-guint32       rc_channel_get_id          (const RCChannel *channel);
-
-guint32       rc_channel_get_base_id     (const RCChannel *channel);
+const char   *rc_channel_get_id          (const RCChannel *channel);
 
 const char   *rc_channel_get_name        (const RCChannel *channel);
 
@@ -60,8 +62,7 @@ const char   *rc_channel_get_alias       (const RCChannel *channel);
 const char   *rc_channel_get_description (const RCChannel *channel);
 
 int           rc_channel_get_priority    (const RCChannel *channel,
-                                          gboolean         is_subscribed,
-                                          gboolean         is_current);
+                                          gboolean         is_subscribed);
 
 RCChannelType rc_channel_get_type        (const RCChannel *channel);
 
@@ -73,10 +74,6 @@ gboolean      rc_channel_get_pkginfo_compressed (const RCChannel *channel);
 time_t        rc_channel_get_last_update        (const RCChannel *channel);
 
 const char   *rc_channel_get_path               (const RCChannel *channel);
-
-const char   *rc_channel_get_subs_file          (const RCChannel *channel);
-
-const char   *rc_channel_get_unsubs_file        (const RCChannel *channel);
 
 const char   *rc_channel_get_icon_file          (const RCChannel *channel);
 
@@ -105,12 +102,14 @@ gboolean rc_channel_use_refresh_magic (RCChannel *);
 gboolean rc_channel_get_transient (RCChannel *);
 gboolean rc_channel_get_silent    (RCChannel *);
 
-int rc_channel_get_id_by_name (RCChannelSList *channels, char *name);
+const char *rc_channel_get_id_by_name (RCChannelSList *channels, char *name);
 
-RCChannel *rc_channel_get_by_id (RCChannelSList *channels, int id);
+RCChannel *rc_channel_get_by_id (RCChannelSList *channels, const char *id);
 
 RCChannel *rc_channel_get_by_name (RCChannelSList *channels, char *name);
 
-gint rc_channel_compare_func (gconstpointer a, gconstpointer b);
+gboolean rc_channel_is_wildcard (RCChannel *a);
+gboolean rc_channel_equal       (RCChannel *a, RCChannel *b);
+gboolean rc_channel_equal_id    (RCChannel *a, const char *id);
 
 #endif /* _RC_CHANNEL_H */

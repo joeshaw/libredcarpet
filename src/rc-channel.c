@@ -34,7 +34,6 @@
 #include "xml-util.h"
 
 #define DEFAULT_CHANNEL_PRIORITY 1600
-#define DEFAULT_CURRENT_CHANNEL_PRIORITY 12800
 #define UNSUBSCRIBED_CHANNEL_ADJUSTMENT(x) ((x)/2)
 #define BAD_CHANNEL_PRIORITY     0 
 
@@ -83,7 +82,8 @@ rc_channel_priority_parse (const char *priority_str)
 RCChannel *
 rc_channel_ref (RCChannel *channel)
 {
-    if (channel != NULL) {
+    /* it is safe to ref a wildcard channel pointer */
+    if (channel != NULL && ! rc_channel_is_wildcard (channel)) {
         g_assert (channel->refs > 0);
         ++channel->refs;
     }
@@ -94,7 +94,8 @@ rc_channel_ref (RCChannel *channel)
 void
 rc_channel_unref (RCChannel *channel)
 {
-    if (channel != NULL) {
+    /* it is safe to unref a wildcard channel pointer */
+    if (channel != NULL && ! rc_channel_is_wildcard (channel)) {
         g_assert (channel->refs > 0);
         --channel->refs;
 
@@ -112,9 +113,6 @@ rc_channel_unref (RCChannel *channel)
             g_free (channel->pkginfo_file);
             g_free (channel->pkgset_file);
 
-            g_free (channel->subs_file);
-            g_free (channel->unsubs_file);
-
             g_free (channel->icon_file);
             
             g_free (channel);
@@ -124,26 +122,26 @@ rc_channel_unref (RCChannel *channel)
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
-guint32
+const char *
 rc_channel_get_id (const RCChannel *channel)
 {
-    g_return_val_if_fail (channel != NULL, 0);
+    if (channel == RC_CHANNEL_SYSTEM)
+        return "system";
+
+    g_return_val_if_fail (channel != NULL, NULL);
     
     return channel->id;
-}
-
-guint32
-rc_channel_get_base_id (const RCChannel *channel)
-{
-    g_return_val_if_fail (channel != NULL, 0);
-
-    return channel->base_id;
 }
 
 const char *
 rc_channel_get_name (const RCChannel *channel)
 {
-    g_return_val_if_fail (channel != NULL, NULL);
+    if (channel == RC_CHANNEL_ANY)
+        return "[Any]";
+    if (channel == RC_CHANNEL_SYSTEM)
+        return "[System]";
+    if (channel == RC_CHANNEL_NON_SYSTEM)
+        return "[NonSystem]";
 
     return channel->name ? channel->name : "Unnamed Channel";
 }
@@ -167,28 +165,21 @@ rc_channel_get_description (const RCChannel *channel)
 
 int
 rc_channel_get_priority (const RCChannel *channel,
-                         gboolean is_subscribed,
-                         gboolean is_current)
+                         gboolean is_subscribed)
 {
     int priority;
 
     g_return_val_if_fail (channel != NULL, BAD_CHANNEL_PRIORITY);
 
-    if (is_current) {
-        priority = channel->priority_current;
-        if (priority < 0)
-            priority = DEFAULT_CURRENT_CHANNEL_PRIORITY;
-    } else {
-        priority = channel->priority;
-        if (priority < 0)
-            priority = DEFAULT_CHANNEL_PRIORITY;
+    priority = channel->priority;
+    if (priority < 0)
+        priority = DEFAULT_CHANNEL_PRIORITY;
 
-        if (!is_subscribed) {
-            if (channel->priority_unsubd > 0) {
-                priority = channel->priority_unsubd;
-            } else {
-                priority = UNSUBSCRIBED_CHANNEL_ADJUSTMENT (priority);
-            }
+    if (!is_subscribed) {
+        if (channel->priority_unsubd > 0) {
+            priority = channel->priority_unsubd;
+        } else {
+            priority = UNSUBSCRIBED_CHANNEL_ADJUSTMENT (priority);
         }
     }
 
@@ -231,20 +222,6 @@ rc_channel_get_path (const RCChannel *channel)
 {
     g_return_val_if_fail (channel != NULL, NULL);
     return channel->path;
-}
-
-const char *
-rc_channel_get_subs_file (const RCChannel *channel)
-{
-    g_return_val_if_fail (channel != NULL, NULL);
-    return channel->subs_file;
-}
-
-const char *
-rc_channel_get_unsubs_file (const RCChannel *channel)
-{
-    g_return_val_if_fail (channel != NULL, NULL);
-    return channel->unsubs_file;
 }
 
 const char *
@@ -416,7 +393,7 @@ rc_channel_get_silent (RCChannel *channel)
     return channel->silent;
 }
 
-int
+const char *
 rc_channel_get_id_by_name (RCChannelSList *channels, char *name)
 {
     RCChannelSList *iter;
@@ -432,11 +409,11 @@ rc_channel_get_id_by_name (RCChannelSList *channels, char *name)
         iter = iter->next;
     }
 
-    return (-1);
+    return NULL;
 } /* rc_channel_get_id_by_name */
 
 RCChannel *
-rc_channel_get_by_id (RCChannelSList *channels, int id)
+rc_channel_get_by_id (RCChannelSList *channels, const char *id)
 {
     RCChannelSList *iter;
     
@@ -445,7 +422,7 @@ rc_channel_get_by_id (RCChannelSList *channels, int id)
     while (iter) {
         RCChannel *channel = iter->data;
 
-        if (channel->id == id)
+        if (! strcmp (channel->id, id))
             return (channel);
 
         iter = iter->next;
@@ -457,7 +434,7 @@ rc_channel_get_by_id (RCChannelSList *channels, int id)
 RCChannel *
 rc_channel_get_by_name(RCChannelSList *channels, char *name)
 {
-    int id;
+    const char *id;
     RCChannel *channel;
     
     id = rc_channel_get_id_by_name(channels, name);
@@ -466,16 +443,34 @@ rc_channel_get_by_name(RCChannelSList *channels, char *name)
     return channel;
 } /* rc_channel_get_by_name */
 
-gint
-rc_channel_compare_func (gconstpointer a, gconstpointer b)
+gboolean
+rc_channel_is_wildcard (RCChannel *a)
 {
-    RCChannel *one = (RCChannel *)a;
-    RCChannel *two = (RCChannel *)b;
-
-    if (one->id == two->id) {
-        return (TRUE);
-    }
-
-    return (FALSE);
+    return a == RC_CHANNEL_SYSTEM 
+        || a == RC_CHANNEL_NON_SYSTEM
+        || a == RC_CHANNEL_ANY;
 }
 
+gboolean
+rc_channel_equal (RCChannel *a, RCChannel *b)
+{
+    if (a == RC_CHANNEL_ANY || b == RC_CHANNEL_ANY)
+        return TRUE;
+
+    if (a == RC_CHANNEL_SYSTEM || b == RC_CHANNEL_SYSTEM)
+        return a == b;
+
+    if (a == RC_CHANNEL_NON_SYSTEM)
+        return b != RC_CHANNEL_SYSTEM;
+
+    if (b == RC_CHANNEL_NON_SYSTEM)
+        return a != RC_CHANNEL_SYSTEM;
+
+    return rc_channel_equal_id (a, rc_channel_get_id (b));
+}
+
+gboolean
+rc_channel_equal_id (RCChannel *a, const char *id)
+{
+    return ! strcmp (rc_channel_get_id (a), id);
+}

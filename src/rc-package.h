@@ -67,6 +67,9 @@ struct _RCPackage {
     RCPackageDepArray *conflicts_a;
     RCPackageDepArray *obsoletes_a;
 
+    /* For package sets */
+    RCPackageDepArray *contains_a;
+
     /* These are here to make the debian folks happy */
     RCPackageDepArray *suggests_a;
     RCPackageDepArray *recommends_a;
@@ -98,6 +101,7 @@ char       *rc_package_to_str        (RCPackage *package);
 const char *rc_package_to_str_static (RCPackage *package);
 
 gboolean   rc_package_is_installed     (RCPackage *package);
+gboolean   rc_package_is_package_set   (RCPackage *package);
 RCPackage *rc_package_get_best_upgrade (RCPackage *package,
                                         gboolean subscribed_only);
 

@@ -221,7 +221,7 @@ rc_resolver_verify_system (RCResolver *resolver)
     g_return_if_fail (resolver != NULL);
 
     rc_world_foreach_package (rc_resolver_get_world (resolver),
-                              RC_WORLD_SYSTEM_PACKAGES,
+                              RC_CHANNEL_SYSTEM,
                               verify_system_cb,
                               resolver);
 
@@ -312,11 +312,11 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
         rc_world_add_channel_with_priorities (world,
                                               "Local Packages",
                                               "local-pkg-alias-blah-blah-blah",
-                                              0, 0,
+                                              NULL,
                                               TRUE, /* a silent channel */
                                               RC_CHANNEL_TYPE_UNKNOWN,
-                                              -1, -1, -1 /* default
-                                                            priorities */
+                                              -1, -1 /* default
+                                                        priorities */
                                               );
 
     initial_queue = rc_resolver_queue_new ();

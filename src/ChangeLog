@@ -1,3 +1,12 @@
+2003-04-17  Jon Trowbridge  <trow@ximian.com>
+
+	* Lots of small changes throughout lots of files, implementing two
+	  changes:
+	  (1) An RCPackageDep can now specify a channel or a channel
+	      wildcard.
+	  (2) Channel IDs are now arbitrary strings, not unsigned
+	      integers.
+
 2003-04-16  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-package-set.h: Removed.  None of this code was being used by

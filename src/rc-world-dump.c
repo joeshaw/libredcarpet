@@ -98,7 +98,7 @@ rc_world_dump_to_xml (RCWorld *world,
     xmlAddChild (parent, system_packages);
 
     rc_world_foreach_package (world,
-                              RC_WORLD_SYSTEM_PACKAGES,
+                              RC_CHANNEL_SYSTEM,
                               add_package_xml_cb,
                               system_packages);
 
@@ -173,41 +173,37 @@ rc_world_undump_from_xml (RCWorld *world,
 
             char *name;
             char *alias;
-            char *id_str, *bid_str;
-            guint32 id, bid;
+            char *id_str;
             static guint32 dummy_id = 0xdeadbeef;
             char *subd_str;
             int subd;
             char *priority_str;
             char *priority_unsubd_str;
-            char *priority_current_str;
             
             name = xml_get_prop (channel_node, "name");
             alias = xml_get_prop (channel_node, "alias");
             
             id_str = xml_get_prop (channel_node, "id");
-            id = id_str ? atoi (id_str) : (dummy_id++);
+            if (id_str == NULL) {
+                id_str = g_strdup_printf ("dummy:%d", dummy_id);
+                ++dummy_id;
+            }
 
-            bid_str = xml_get_prop (channel_node, "bid");
-            bid = bid_str ? atoi (bid_str) : (dummy_id++);
-                        
             subd_str = xml_get_prop (channel_node, "subscribed");
             subd = subd_str ? atoi (subd_str) : 0;
 
             priority_str = xml_get_prop (channel_node, "priority_base");
             priority_unsubd_str = xml_get_prop (channel_node, "priority_unsubd");
-            priority_current_str = xml_get_prop (channel_node, "priority_current");
             current_channel = rc_world_add_channel (world,
                                                     name,
                                                     alias ? alias : "foo",
-                                                    id, bid,
+                                                    id_str,
                                                     RC_CHANNEL_TYPE_HELIX);
 
             if (current_channel) {
 
                 current_channel->priority         = priority_str ? atoi (priority_str) : 0;
                 current_channel->priority_unsubd  = priority_unsubd_str ? atoi (priority_unsubd_str) : 0;
-                current_channel->priority_current = priority_current_str ? atoi (priority_current_str) : 0;
 
                 rc_channel_set_subscription (current_channel, subd);
                 rc_world_add_packages_from_xml (world, current_channel,
@@ -221,7 +217,6 @@ rc_world_undump_from_xml (RCWorld *world,
 
             g_free (priority_str);
             g_free (priority_unsubd_str);
-            g_free (priority_current_str);
         }
 
         channel_node = channel_node->next;

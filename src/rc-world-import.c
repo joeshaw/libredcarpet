@@ -67,8 +67,7 @@ rc_world_add_channels_from_xml (RCWorld *world,
     while (node) {
         char *tmp;
         GSList *distro_target;
-        gchar *name, *alias;
-        guint32 id, bid;
+        gchar *name, *alias, *id_str;
         RCChannelType type = RC_CHANNEL_TYPE_HELIX;
         gchar **targets;
         gchar **iter;
@@ -111,13 +110,7 @@ rc_world_add_channels_from_xml (RCWorld *world,
             if (alias == NULL)
                 alias = g_strdup ("");
 
-            tmp = xml_get_prop(node, "id");
-            id = tmp ? atoi(tmp) : 0;
-            g_free(tmp);
-
-            tmp = xml_get_prop(node, "bid");
-            bid = tmp ? atoi(tmp) : 0;
-            g_free(tmp);
+            id_str = xml_get_prop(node, "id");
 
             tmp = xml_get_prop(node, "type");
             if (tmp) {
@@ -133,9 +126,10 @@ rc_world_add_channels_from_xml (RCWorld *world,
             }
 
             channel = rc_world_add_channel (world, name, alias, 
-                                            id, bid, type);
+                                            id_str, type);
             g_free (name);
             g_free (alias);
+            g_free (id_str);
 
             channel->path = xml_get_prop(node, "path");
 
@@ -150,23 +144,6 @@ rc_world_add_channels_from_xml (RCWorld *world,
             channel->description = xml_get_prop(node, "description");
 
             channel->distro_target = distro_target;
-
-            tmp = xml_get_prop(node, "subs_url");
-            channel->subs_file = rc_maybe_merge_paths(channel->path, tmp);
-            g_free(tmp);
-
-            tmp = xml_get_prop(node, "unsubs_url");
-            channel->unsubs_file = rc_maybe_merge_paths(channel->path, tmp);
-            g_free(tmp);
-        
-            tmp = xml_get_prop(node, "mirrored");
-            if (tmp) {
-                channel->mirrored = TRUE;
-                g_free(tmp);
-            }
-            else {
-                channel->mirrored = FALSE;
-            }
 
             tmp = xml_get_prop(node, "pkginfo_compressed");
             if (tmp) {
@@ -203,24 +180,11 @@ rc_world_add_channels_from_xml (RCWorld *world,
             g_free(tmp);
             
             
-            /* Tiers determine how channels are ordered in the client. */
-            tmp = xml_get_prop(node, "tier");
-            if (tmp) {
-                channel->tier = atoi(tmp);
-                g_free(tmp);
-            }
-            
             /* Priorities determine affinity amongst channels in dependency
                resolution. */
             tmp = xml_get_prop(node, "priority");
             if (tmp) {
                 channel->priority = rc_channel_priority_parse(tmp);
-                g_free(tmp);
-            }
-            
-            tmp = xml_get_prop(node, "priority_when_current");
-            if (tmp) {
-                channel->priority_current = rc_channel_priority_parse(tmp);
                 g_free(tmp);
             }
             
@@ -296,8 +260,7 @@ RCChannel *
 rc_world_add_channel_from_buffer (RCWorld *world,
                                   const char *channel_name,
                                   const char *alias,
-                                  guint32 channel_id,
-                                  guint32 base_id,
+                                  const char *id,
                                   RCChannelType type,
                                   const char *tbuf,
                                   gint compressed_length)
@@ -312,8 +275,7 @@ rc_world_add_channel_from_buffer (RCWorld *world,
     channel = rc_world_add_channel (world,
                                     channel_name,
                                     alias,
-                                    channel_id,
-                                    base_id,
+                                    id,
                                     type);
 
     rc_world_add_packages_from_buffer (world, 
@@ -570,7 +532,8 @@ fill_debian_package (RCPackage  *pkg,
     /* Make sure to provide myself, for the dep code! */
     provides =
         g_slist_append (provides, rc_package_dep_new_from_spec (
-                            &pkg->spec, RC_RELATION_EQUAL, FALSE, FALSE));
+                            &pkg->spec, RC_RELATION_EQUAL,
+                            pkg->channel, FALSE, FALSE));
 
     pkg->requires_a = rc_package_dep_array_from_slist (&requires);
     pkg->provides_a = rc_package_dep_array_from_slist (&provides);
@@ -775,18 +738,22 @@ rc_world_add_channel_from_directory (RCWorld *world,
                                      const char *directory)
 {
     RCChannel *channel;
+    char *id_str;
 
     g_return_val_if_fail (world != NULL, NULL);
     g_return_val_if_fail (channel_name && *channel_name, NULL);
     g_return_val_if_fail (alias != NULL, NULL);
     g_return_val_if_fail (directory != NULL, NULL);
 
+    id_str = g_strdup_printf("mounted:%s", directory);
 
     channel = rc_world_add_channel (world,
                                     channel_name,
                                     alias,
-                                    0, 0,
+                                    id_str,
                                     RC_CHANNEL_TYPE_UNKNOWN);
+
+    g_free (id_str);
 
     channel->description = g_strdup (directory);
     channel->refresh_magic = refresh_channel_from_dir;

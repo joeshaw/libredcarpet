@@ -172,7 +172,9 @@ rc_debman_fill_depends (gchar *input, gboolean pre)
             if (!deprel) {
                 /* There's no version in this dependency, just a name. */
                 depi = rc_package_dep_new (depname, 0, 0, NULL, NULL,
-                                           RC_RELATION_ANY, pre, FALSE);
+                                           RC_RELATION_ANY, 
+                                           RC_CHANNEL_ANY,
+                                           pre, FALSE);
             } else {
                 /* We've got to parse the rest of this mess. */
                 guint relation = RC_RELATION_ANY;
@@ -206,7 +208,9 @@ rc_debman_fill_depends (gchar *input, gboolean pre)
                 g_free (depvers);
 
                 depi = rc_package_dep_new (depname, 1, epoch, version,
-                                           release, relation, FALSE, FALSE);
+                                           release, relation, 
+                                           RC_CHANNEL_ANY,
+                                           FALSE, FALSE);
                 g_free (version);
                 g_free (release);
             }

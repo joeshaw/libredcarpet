@@ -81,6 +81,7 @@ struct _RCPackageDepArray {
 #include "rc-package.h"
 #include "rc-package-spec.h"
 #include "rc-packman.h"
+#include "rc-channel.h"
 
 typedef void (*RCPackageAndDepFn) (RCPackage *, RCPackageDep *, gpointer);
 
@@ -104,17 +105,22 @@ rc_package_dep_new (const char        *name,
                     const char        *version,
                     const char        *release,
                     RCPackageRelation  relation,
+                    RCChannel         *channel,
                     gboolean           pre,
                     gboolean           is_or);
 
 RCPackageDep *
 rc_package_dep_new_from_spec (RCPackageSpec     *spec,
                               RCPackageRelation  relation,
+                              RCChannel         *channel,
                               gboolean           pre,
                               gboolean           is_or);
 
 RCPackageRelation
 rc_package_dep_get_relation (RCPackageDep *dep);
+
+RCChannel *
+rc_package_dep_get_channel (RCPackageDep *dep);
 
 gboolean
 rc_package_dep_is_or (RCPackageDep *dep);

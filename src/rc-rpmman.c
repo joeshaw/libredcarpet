@@ -974,7 +974,8 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
                             remove_package->spec.epoch,
                             remove_package->spec.version,
                             remove_package->spec.release,
-                            RC_RELATION_EQUAL, FALSE, FALSE);
+                            RC_RELATION_EQUAL, RC_CHANNEL_ANY,
+                            FALSE, FALSE);
 
                         if (rc_package_dep_verify_relation (
                                 packman, obsolete, prov)) {
@@ -1736,10 +1737,10 @@ depends_fill_helper (RCRpmman *rpmman, Header header, int names_tag,
             }
             dep = rc_package_dep_new (names[i], has_epochs[i], epochs[i],
                                       versions[i], releases[i], relation,
-                                      FALSE, FALSE);
+                                      RC_CHANNEL_ANY, FALSE, FALSE);
         } else {
             dep = rc_package_dep_new (names[i], 0, 0, NULL, NULL, relation,
-                                      FALSE, FALSE);
+                                      RC_CHANNEL_ANY, FALSE, FALSE);
         }
 
         *deps = g_slist_prepend (*deps, dep);
@@ -1791,7 +1792,7 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
             g_quark_to_string (package->spec.nameq),
             package->spec.has_epoch, package->spec.epoch,
             package->spec.version, package->spec.release, RC_RELATION_EQUAL,
-            FALSE, FALSE);
+            package->channel, FALSE, FALSE);
         provides = g_slist_prepend (provides, dep);
     }
 
@@ -1837,7 +1838,8 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
 
             if (dont_filter || in_set (tmp, file_dep_set)) {
                 dep = rc_package_dep_new (tmp, 0, 0, NULL, NULL,
-                                          RC_RELATION_ANY, FALSE, FALSE);
+                                          RC_RELATION_ANY, RC_CHANNEL_ANY,
+                                          FALSE, FALSE);
 
                 provides = g_slist_prepend (provides, dep);
             }
@@ -1854,7 +1856,8 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
         for (i = 0; i < count; i++) {
             if (in_set (basenames[i], file_dep_set)) {
                 dep = rc_package_dep_new (basenames[i], 0, 0, NULL, NULL,
-                                          RC_RELATION_ANY, FALSE, FALSE);
+                                          RC_RELATION_ANY, RC_CHANNEL_ANY,
+                                          FALSE, FALSE);
 
                 provides = g_slist_prepend (provides, dep);
             }
