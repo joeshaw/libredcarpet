@@ -1,3 +1,12 @@
+2002-12-18  Joe Shaw  <joe@ximian.com>
+
+	* rc-verification.c (rc_verify_gpg): When the $HOME environment
+	variable isn't set, gnupg will have a fit when trying to create
+	the $HOME/.gnupg directory and bail out.  So we create a temporary
+	directory in /tmp and create a temporary environment setting that
+	as $HOME and pass it into our g_spawn function calls.  Clean up
+	after we're done.
+
 2002-12-16  Joe Shaw  <joe@ximian.com>
 
 	* rc-distro.c: Get rid of <command> tags and replace them with

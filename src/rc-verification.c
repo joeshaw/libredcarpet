@@ -138,8 +138,10 @@ RCVerification *
 rc_verify_gpg (gchar *file, gchar *sig)
 {
     RCVerification *verification;
+    gchar *tmpdir;
+    gchar **env;
+    gchar *gpgdir;
     static gchar *gpg_command = NULL;
-    static gchar *gpgdir = NULL;
     static char *list_argv[] =
         { "%%GPG%%", "--list-keys", NULL };
 
@@ -170,7 +172,7 @@ rc_verify_gpg (gchar *file, gchar *sig)
         list_argv[0] = gpg_command;
     }
 
-    /* There's a chance that the ~root/.gnupg directory doesn't exist
+    /* There's a chance that the $HOME/.gnupg directory doesn't exist
      * yet, and stupidly enough, gnupg creates this directory the
      * first time it is run but doesn't then do what it was called to
      * do.  This causes spurious signature failures on first time
@@ -180,24 +182,48 @@ rc_verify_gpg (gchar *file, gchar *sig)
      * the off chance that we're wrong, as gpg by itself just blocks
      * waiting for input in normal operation. */
 
-    if (!gpgdir)
-        gpgdir = g_strconcat (g_get_home_dir (), "/.gnupg", NULL);
+    /* But wait, there's more!  If the $HOME environment variable isn't
+     * set (for instance if rcd was started from an init script), then
+     * gnupg will barf all over itself.  We'll create an environment
+     * with a temporary home directory which we'll pass into the g_spawn
+     * functions and remove it when we're finished.
+     */
+
+    tmpdir = rc_mkdtemp (g_strdup ("/tmp/.gpg-home-XXXXXX"));
+
+    if (!tmpdir) {
+        verification->status = RC_VERIFICATION_STATUS_UNDEF;
+        verification->info =
+            g_strdup ("unable to create temporary gpg homedir");
+
+        return verification;
+    }
+
+    env = g_new0 (char *, 2);
+    env[0] = g_strconcat ("HOME=", tmpdir, NULL);
+
+    /* Create the .gnupg directory in our temporary home directory.
+     * We don't care about errors, or anything, really, since
+     * we're just going to check for the directory again
+     * afterwards */
+    g_spawn_sync (NULL, list_argv, env, 0, NULL, NULL, NULL, NULL,
+                  NULL, NULL);
+
+    gpgdir = g_strconcat (tmpdir, "/.gnupg", NULL);
 
     if (!rc_file_exists (gpgdir)) {
-        /* We don't care about errors, or anything, really, since
-         * we're just going to check for the directory again
-         * afterwards */
-        g_spawn_sync (NULL, list_argv, NULL, 0, NULL, NULL, NULL, NULL,
-                      NULL, NULL);
+        verification->status = RC_VERIFICATION_STATUS_UNDEF;
+        verification->info = g_strdup_printf (
+            "gpg was unable to create %s", gpgdir);
+        rc_rmdir (tmpdir);
+        g_free (tmpdir);
+        g_strfreev (env);
+        g_free (gpgdir);
 
-        if (!rc_file_exists (gpgdir)) {
-            verification->status = RC_VERIFICATION_STATUS_UNDEF;
-            verification->info = g_strdup (
-                "gpg was unable to create ~/.gnupg");
-
-            return verification;
-        }
+        return verification;
     }
+    
+    g_free (gpgdir);
 
     { /* I suppose this could be its own function, but... */
         RCLineBuf *line_buf;
@@ -212,7 +238,7 @@ rc_verify_gpg (gchar *file, gchar *sig)
 
         error = NULL;
         if (!g_spawn_async_with_pipes (
-                NULL, verify_argv, NULL, 0, child_setup_func,
+                NULL, verify_argv, env, 0, child_setup_func,
                 NULL, NULL, NULL, &stdout_fd, NULL, &error))
         {
             rc_debug (RC_DEBUG_LEVEL_ERROR,
@@ -222,6 +248,9 @@ rc_verify_gpg (gchar *file, gchar *sig)
                 "unable to verify signature: ", error->message, NULL);
 
             g_error_free (error);
+            rc_rmdir (tmpdir);
+            g_free (tmpdir);
+            g_strfreev (env);
 
             return verification;
         }
@@ -240,6 +269,10 @@ rc_verify_gpg (gchar *file, gchar *sig)
 
         g_object_unref (line_buf);
         g_main_destroy (loop);
+
+        rc_rmdir (tmpdir);
+        g_free (tmpdir);
+        g_strfreev (env);
 
         return verification;
     }
