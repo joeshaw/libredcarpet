@@ -69,6 +69,12 @@ void rc_channel_set_priorities (RCChannel *channel,
                                 gint subd_priority,
                                 gint unsubd_priority);
 
+void rc_channel_set_name (RCChannel  *channel,
+                          const char *path);
+
+void rc_channel_set_alias (RCChannel  *channel,
+                           const char *path);
+
 void rc_channel_set_path (RCChannel  *channel,
                           const char *path);
 

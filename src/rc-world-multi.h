@@ -28,6 +28,7 @@
 #define __RC_WORLD_MULTI_H__
 
 #include "rc-world.h"
+#include "rc-world-service.h"
 
 #define RC_TYPE_WORLD_MULTI            (rc_world_multi_get_type ())
 #define RC_WORLD_MULTI(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), \
@@ -46,6 +47,7 @@ typedef struct _RCWorldMultiClass RCWorldMultiClass;
 struct _RCWorldMulti {
     RCWorld parent;
 
+    GHashTable *mounts;
     GSList *subworlds;
 
     GSList *subworld_pendings;
@@ -65,6 +67,17 @@ void     rc_world_multi_remove_subworld (RCWorldMulti *, RCWorld *);
 gint     rc_world_multi_foreach_subworld (RCWorldMulti *,
                                           RCWorldFn callback,
                                           gpointer user_data);
+
+gint     rc_world_multi_foreach_subworld_by_type (RCWorldMulti *,
+                                                  GType type,
+                                                  RCWorldFn callback,
+                                                  gpointer user_data);
+
+RCWorldService *rc_world_multi_lookup_service (RCWorldMulti *,
+                                               const char *url);
+
+gboolean rc_world_multi_mount_service (RCWorldMulti *,
+                                       const char *url);
 
 #endif /* __RC_WORLD_MULTI_MULTI_H__ */
 

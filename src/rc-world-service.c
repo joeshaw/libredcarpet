@@ -51,14 +51,40 @@ rc_world_service_finalize (GObject *obj)
         G_OBJECT_CLASS (parent_class)->finalize (obj);
 }
 
+static RCWorld *
+rc_world_service_dup (RCWorld *old_world)
+{
+    RCWorld *new_world;
+    RCWorldService *old_service, *new_service;
+
+    new_world = RC_WORLD_CLASS (parent_class)->dup_fn (old_world);
+
+    old_service = RC_WORLD_SERVICE (old_world);
+    new_service = RC_WORLD_SERVICE (new_world);
+
+    new_service->url = g_strdup (old_service->url);
+    new_service->name = g_strdup (old_service->name);
+    new_service->unique_id = g_strdup (old_service->unique_id);
+
+    new_service->is_sticky = old_service->is_sticky;
+    new_service->is_invisible = old_service->is_invisible;
+    new_service->is_unsaved = old_service->is_unsaved;
+    new_service->is_singleton = old_service->is_singleton;
+
+    return new_world;
+}
+
 static void
 rc_world_service_class_init (RCWorldServiceClass *klass)
 {
     GObjectClass *object_class = (GObjectClass *) klass;
+    RCWorldClass *world_class = (RCWorldClass *) klass;
 
     parent_class = g_type_class_peek_parent (klass);
 
     object_class->finalize = rc_world_service_finalize;
+
+    world_class->dup_fn = rc_world_service_dup;
 }
 
 static void
@@ -144,8 +170,6 @@ rc_world_service_lookup (const char *scheme)
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
-GHashTable *mounts = NULL;
-
 RCWorld *
 rc_world_service_mount (const char *url)
 {
@@ -156,10 +180,6 @@ rc_world_service_mount (const char *url)
     RCWorldServiceClass *klass;
 
     g_return_val_if_fail (url && *url, NULL);
-
-    /* Check to see if this service is already mounted */
-    if (mounts && g_hash_table_lookup (mounts, url))
-        return NULL;
 
     endptr = strchr (url, ':');
 
@@ -186,74 +206,5 @@ rc_world_service_mount (const char *url)
         }
     }
 
-    if (!mounts) {
-        mounts = g_hash_table_new_full (g_str_hash, g_str_equal,
-                                        g_free, g_object_unref);
-    }
-
-    g_hash_table_insert (mounts, g_strdup (url), g_object_ref (worldserv));
-
     return RC_WORLD (worldserv);
-}
-
-RCWorld *
-rc_world_service_lookup_mount (const char *url)
-{
-    RCWorldService *worldserv;
-
-    if (!mounts)
-        return NULL;
-
-    worldserv = g_hash_table_lookup (mounts, url);
-
-    return RC_WORLD (worldserv);
-}
-
-gboolean
-rc_world_service_unmount_by_url (const char *url)
-{
-    RCWorldService *worldserv;
-
-    g_return_val_if_fail (url && *url, FALSE);
-
-    if (!mounts)
-        return FALSE;
-
-    worldserv = RC_WORLD_SERVICE (g_hash_table_lookup (mounts, url));
-
-    if (worldserv && worldserv->is_sticky)
-        return FALSE;
-
-    return g_hash_table_remove (mounts, url);
-}
-
-gboolean
-rc_world_service_unmount (RCWorldService *worldserv)
-{
-    g_return_val_if_fail (RC_IS_WORLD_SERVICE (worldserv), FALSE);
-
-    return rc_world_service_unmount_by_url (worldserv->url);
-}
-
-typedef struct {
-    RCWorldServiceForeachFn callback;
-    gpointer user_data;
-} ForeachInfo;
-
-static void
-foreach_mount_cb (gpointer key, gpointer value, gpointer user_data)
-{
-    RCWorldService *worldserv = RC_WORLD_SERVICE (value);
-    ForeachInfo *info = user_data;
-
-    info->callback (worldserv, info->user_data);
-}
-
-void
-rc_world_service_foreach_mount (RCWorldServiceForeachFn callback,
-                                gpointer                user_data)
-{
-    ForeachInfo info = { callback, user_data };
-
-    g_hash_table_foreach (mounts, foreach_mount_cb, &info);
 }

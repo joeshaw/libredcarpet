@@ -62,5 +62,8 @@ RCWorld *rc_world_local_dir_new (const char *path);
 
 void rc_world_local_dir_register_service (void);
 
+void rc_world_local_dir_set_name  (RCWorldLocalDir *ldir, const char *name);
+void rc_world_local_dir_set_alias (RCWorldLocalDir *ldir, const char *alias);
+
 #endif /* __RC_WORLD_LOCAL_DIR_H__ */
 

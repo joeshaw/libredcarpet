@@ -115,6 +115,9 @@ rc_world_system_assemble (RCWorldService *service)
 {
     RCWorldSystem *system = RC_WORLD_SYSTEM (service);
 
+    /* Load the system packages */
+    system->error_flag = ! rc_world_system_load_packages (system);
+
     if (system->error_flag)
         return FALSE;
 
@@ -161,9 +164,6 @@ rc_world_system_init (RCWorldSystem *system)
 
     rc_world_store_add_channel (RC_WORLD_STORE (system),
                                 system->system_channel);
-
-    /* Load the system packages */
-    system->error_flag = ! rc_world_system_load_packages (system);
 }
 
 GType
@@ -196,6 +196,8 @@ rc_world_system_new (void)
 {
     RCWorldSystem *system;
     system = g_object_new (RC_TYPE_WORLD_SYSTEM, NULL);
+
+    rc_world_system_assemble ((RCWorldService *) system);
 
     if (system->error_flag) {
         g_object_unref (system);

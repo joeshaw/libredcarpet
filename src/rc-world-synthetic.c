@@ -208,7 +208,7 @@ rc_world_synthetic_assemble (RCWorldService *service)
     service->is_sticky = TRUE;
     service->is_invisible = TRUE;
     service->is_singleton = TRUE;
-
+    
     rc_world_synthetic_load_packages (synth);
 
     return TRUE;
@@ -295,6 +295,8 @@ rc_world_synthetic_new (void)
 {
     RCWorldSynthetic *synth;
     synth = g_object_new (RC_TYPE_WORLD_SYNTHETIC, NULL);
+
+    rc_world_synthetic_assemble ((RCWorldService *) synth);
 
     if (synth->error_flag) {
         g_object_unref (synth);

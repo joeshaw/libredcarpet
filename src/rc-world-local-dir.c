@@ -159,6 +159,55 @@ rc_world_local_dir_assemble_fn (RCWorldService *service)
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
+static gboolean
+set_name_cb (RCChannel *channel, gpointer user_data)
+{
+    const char *name = user_data;
+
+    rc_channel_set_name (channel, name);
+
+    return TRUE;
+}
+
+void
+rc_world_local_dir_set_name (RCWorldLocalDir *ldir, const char *name)
+{
+    g_return_if_fail (RC_IS_WORLD_LOCAL_DIR (ldir));
+    g_return_if_fail (name != NULL);
+
+    g_free (RC_WORLD_SERVICE (ldir)->name);
+
+    RC_WORLD_SERVICE (ldir)->name = g_strdup (name);
+
+    rc_world_foreach_channel (RC_WORLD (ldir), set_name_cb, (gpointer) name);
+}
+
+static gboolean
+set_alias_cb (RCChannel *channel, gpointer user_data)
+{
+    const char *alias = user_data;
+
+    rc_channel_set_alias (channel, alias);
+
+    return TRUE;
+}
+
+void
+rc_world_local_dir_set_alias (RCWorldLocalDir *ldir, const char *alias)
+{
+    g_return_if_fail (RC_IS_WORLD_LOCAL_DIR (ldir));
+    g_return_if_fail (alias != NULL);
+
+    g_free (ldir->alias);
+
+    ldir->alias = g_strdup (alias);
+
+    rc_world_foreach_channel (RC_WORLD (ldir), set_alias_cb, (gpointer) alias);
+}
+       
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
 static void
 rc_world_local_dir_class_init (RCWorldLocalDirClass *klass)
 {

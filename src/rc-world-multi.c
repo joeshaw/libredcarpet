@@ -829,10 +829,125 @@ rc_world_multi_foreach_subworld (RCWorldMulti *multi,
             if (! callback (info->subworld, user_data)) {
                 count = -1;
                 break;
-            }
+            } else
+                ++count;
         }
     }
     
     return count;
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+typedef struct {
+    GType type;
+    RCWorldFn callback;
+    gpointer user_data;
+
+    int count;
+} ForeachByTypeInfo;
+
+static gboolean
+foreach_by_type_cb (RCWorld *subworld, gpointer user_data)
+{
+    ForeachByTypeInfo *info = user_data;
+
+    if (g_type_is_a (G_TYPE_FROM_INSTANCE (subworld), info->type)
+        && info->callback)
+    {
+        if (! info->callback (subworld, info->user_data)) {
+            info->count = -1;
+            return FALSE;
+        } else {
+            ++info->count;
+            return TRUE;
+        }
+    } else
+        return TRUE;
+}
+
+gint
+rc_world_multi_foreach_subworld_by_type (RCWorldMulti *multi,
+                                         GType type,
+                                         RCWorldFn callback,
+                                         gpointer user_data)
+{
+    ForeachByTypeInfo info;
+
+    info.type = type;
+    info.callback = callback;
+    info.user_data = user_data;
+    info.count = 0;
+
+    rc_world_multi_foreach_subworld (multi, foreach_by_type_cb, &info);
+
+    return info.count;
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+typedef struct {
+    const char *url;
+
+    RCWorldService *matching_service;
+} ForeachServiceLookupInfo;
+
+static gboolean
+foreach_service_lookup_cb (RCWorld *world, gpointer user_data)
+{
+    RCWorldService *service = RC_WORLD_SERVICE (world);
+    ForeachServiceLookupInfo *info = user_data;
+
+    if (g_strcasecmp (service->url, info->url) == 0) {
+        info->matching_service = service;
+        return FALSE; /* short-circuit foreach */
+    }
+
+    return TRUE;
+}
+
+RCWorldService *
+rc_world_multi_lookup_service (RCWorldMulti *multi, const char *url)
+{
+    ForeachServiceLookupInfo info;
+
+    g_return_val_if_fail (RC_IS_WORLD_MULTI (multi), NULL);
+
+    info.url = url;
+    info.matching_service = NULL;
+
+    rc_world_multi_foreach_subworld_by_type (multi,
+                                             RC_TYPE_WORLD_SERVICE,
+                                             foreach_service_lookup_cb,
+                                             &info);
+
+    if (info.matching_service)
+        return info.matching_service;
+    else
+        return NULL;
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+    
+gboolean
+rc_world_multi_mount_service (RCWorldMulti *multi, const char *url)
+{
+    RCWorld *world;
+
+    g_return_val_if_fail (RC_IS_WORLD_MULTI (multi), FALSE);
+    g_return_val_if_fail (url && *url, FALSE);
+
+    /* Check to see if this service is already mounted */
+    if (rc_world_multi_lookup_service (multi, url))
+        return FALSE;
+
+    world = rc_world_service_mount (url);
+
+    if (world) {
+        rc_world_multi_add_subworld (multi, world);
+        g_object_unref (world);
+        return TRUE;
+    } else
+        return FALSE;
 }
 

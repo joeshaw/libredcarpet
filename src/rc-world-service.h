@@ -76,18 +76,7 @@ GType rc_world_service_lookup     (const char *scheme);
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
-typedef void (*RCWorldServiceForeachFn) (RCWorldService *worldserv,
-                                         gpointer        user_data);
-
-RCWorld  *rc_world_service_mount          (const char *url);
-
-gboolean  rc_world_service_unmount        (RCWorldService *worldserv);
-gboolean  rc_world_service_unmount_by_url (const char *url);
-
-void      rc_world_service_foreach_mount  (RCWorldServiceForeachFn callback,
-                                           gpointer                user_data);
-
-RCWorld  *rc_world_service_lookup_mount   (const char *url);
+RCWorld  *rc_world_service_mount (const char *url);
 
 #endif /* __RC_WORLD_SERVICE_H__ */
 

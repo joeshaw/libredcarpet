@@ -240,6 +240,32 @@ rc_channel_set_priorities (RCChannel *channel,
 }
 
 void
+rc_channel_set_name (RCChannel *channel, const char *name)
+{
+    g_return_if_fail (channel != NULL);
+    g_return_if_fail (!rc_channel_is_immutable (channel));
+    g_return_if_fail (name != NULL);
+
+    if (channel->name)
+        g_free (channel->name);
+
+    channel->name = g_strdup (name);
+}
+
+void
+rc_channel_set_alias (RCChannel *channel, const char *alias)
+{
+    g_return_if_fail (channel != NULL);
+    g_return_if_fail (!rc_channel_is_immutable (channel));
+    g_return_if_fail (alias != NULL);
+
+    if (channel->alias)
+        g_free (channel->alias);
+
+    channel->alias = g_strdup (alias);
+}
+
+void
 rc_channel_set_path (RCChannel *channel, const char *path)
 {
     g_return_if_fail (channel != NULL);

@@ -1,3 +1,16 @@
+2003-08-18  Joe Shaw  <joe@ximian.com>
+
+	* rc-world-multi.c: Move the service mounts here from being
+	global.  Fixes a big leak.
+
+	* rc-world-service.c (rc_world_service_dup): Dup the service's
+	attributes.  Nuke the global mount stuff.
+
+	* rc-world-system.c (rc_world_system_assemble): Load the system
+	packages here.
+	(rc_world_system_init): Not here.  Fixes the double loading during
+	a refresh.
+
 2003-08-16  Joe Shaw  <joe@ximian.com>
 
 	* rc-channel.c (rc_channel_set_hidden): Added.
