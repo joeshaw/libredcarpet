@@ -79,8 +79,7 @@ gboolean        rc_package_match_test (RCPackageMatch  *package_match,
 
 xmlNode        *rc_package_match_to_xml_node   (RCPackageMatch *match);
 
-RCPackageMatch *rc_package_match_from_xml_node (xmlNode         *node,
-						struct _RCWorld *world);
+RCPackageMatch *rc_package_match_from_xml_node (xmlNode         *node);
 
 #endif /* __RC_PACKAGE_MATCH_H__ */
 

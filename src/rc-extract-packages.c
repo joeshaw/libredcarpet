@@ -531,11 +531,13 @@ gint
 rc_extract_packages_from_undump_buffer (const guint8 *data, int len,
                                         RCChannelAndSubdFn channel_callback,
                                         RCPackageFn package_callback,
+                                        RCPackageMatchFn lock_callback,
                                         gpointer user_data)
 {
 
     xmlDoc *doc;
     xmlNode *dump_node;
+    RCChannel *system_channel = NULL;
     RCChannel *current_channel = NULL;
     xmlNode *channel_node;
     int count = 0;
@@ -560,24 +562,34 @@ rc_extract_packages_from_undump_buffer (const guint8 *data, int len,
     while (channel_node != NULL) {
 
         if (! g_strcasecmp (channel_node->name, "locks")) {
-
-#if 0 /* FIXME! */
             xmlNode *lock_node = channel_node->xmlChildrenNode;
+
             while (lock_node) {
                 RCPackageMatch *lock;
 
-                lock = rc_package_match_from_xml_node (lock_node, world);
-                if (lock)
-                    rc_world_store_add_lock (store, lock);
+                lock = rc_package_match_from_xml_node (lock_node);
+
+                if (lock_callback)
+                    lock_callback (lock, user_data);
+
                 lock_node = lock_node->next;
             }
-#endif
 
         } else if (! g_strcasecmp (channel_node->name, "system_packages")) {
 
             int subcount;
+
+            if (!system_channel) {
+                system_channel = rc_channel_new ("@system",
+                                                 "System Packages",
+                                                 "@system",
+                                                 "System Packages");
+                rc_channel_set_system (system_channel);
+                rc_channel_set_hidden (system_channel);
+            }
             
-            subcount = rc_extract_packages_from_xml_node (channel_node, NULL,
+            subcount = rc_extract_packages_from_xml_node (channel_node,
+                                                          system_channel,
                                                           package_callback,
                                                           user_data);
 
@@ -617,13 +629,14 @@ rc_extract_packages_from_undump_buffer (const guint8 *data, int len,
             current_channel = rc_channel_new (id_str, name, alias, NULL);
 
             if (current_channel) {
-                
-                int unsubd, subd;
+                int subd_priority, unsubd_priority;
 
-                subd = priority_str ? atoi (priority_str) : 0;
-                unsubd = priority_unsubd_str ? atoi (priority_unsubd_str) : 0;
+                subd_priority = priority_str ? atoi (priority_str) : 0;
+                unsubd_priority = priority_unsubd_str ?
+                    atoi (priority_unsubd_str) : 0;
                 
-                rc_channel_set_priorities (current_channel, subd, unsubd);
+                rc_channel_set_priorities (current_channel,
+                                           subd_priority, unsubd_priority);
 
                 if (channel_callback)
                     channel_callback (current_channel, subd, user_data);
@@ -663,6 +676,7 @@ gint
 rc_extract_packages_from_undump_file (const char *filename,
                                       RCChannelAndSubdFn channel_callback,
                                       RCPackageFn package_callback,
+                                      RCPackageMatchFn lock_callback,
                                       gpointer user_data)
 {
     RCBuffer *buf;
@@ -677,6 +691,7 @@ rc_extract_packages_from_undump_file (const char *filename,
     count = rc_extract_packages_from_undump_buffer (buf->data, buf->size,
                                                     channel_callback,
                                                     package_callback,
+                                                    lock_callback,
                                                     user_data);
     rc_buffer_unmap_file (buf);
 

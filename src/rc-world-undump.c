@@ -83,8 +83,15 @@ rc_world_undump_get_type (void)
 RCWorld *
 rc_world_undump_new (const char *filename)
 {
-    RCWorld *world = g_object_new (RC_TYPE_WORLD_UNDUMP, NULL);
+    RCWorld *world;
+
+    if (!g_file_test (filename, G_FILE_TEST_EXISTS))
+        return NULL;
+
+    world = g_object_new (RC_TYPE_WORLD_UNDUMP, NULL);
+
     rc_world_undump_load ((RCWorldUndump *) world, filename);
+
     return world;
 }
 
@@ -101,7 +108,19 @@ static gboolean
 add_package_cb (RCPackage *pkg, gpointer user_data)
 {
     RCWorldStore *store = user_data;
+
     rc_world_store_add_package (store, pkg);
+
+    return TRUE;
+}
+
+static gboolean
+add_lock_cb (RCPackageMatch *lock, gpointer user_data)
+{
+    RCWorldStore *store = user_data;
+
+    rc_world_store_add_lock (store, lock);
+    
     return TRUE;
 }
 
@@ -116,6 +135,7 @@ rc_world_undump_load (RCWorldUndump *undump, const char *filename)
         rc_extract_packages_from_undump_file (filename,
                                               add_channel_cb,
                                               add_package_cb,
+                                              add_lock_cb,
                                               undump);
     }
 }

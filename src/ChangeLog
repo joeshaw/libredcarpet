@@ -1,5 +1,27 @@
 2003-10-03  Joe Shaw  <joe@ximian.com>
 
+	* rc-extract-packages.c (rc_extract_packages_from_undump_buffer,
+	rc_extract_packages_from_undump_file): Take another callback for
+	each lock in an undumped world, and remove the #if 0 and FIXME for
+	dealing with locks saved to a dump.  For the system packages,
+	create a system packages channel and add the packages into it.  In
+	the general channel case, fix some overloading of local variables
+	and some misuse.
+
+	* rc-package-match.c (rc_package_match_from_xml_node): We don't
+	need to take an RCWorld anymore, so drop that argument.
+
+	* rc-world-undump.c (rc_world_undump_new): Check to make sure the
+	file exists and return NULL if it doesn't.
+	(add_lock_cb): Added, gets passed in as the callback to
+	rc_extract_packages_from_undump_file().
+
+	* rc-world.c (add_channel_packages_cb): Skip over system packages
+	when creating a dump, since those go into the "system_packages"
+	section.
+
+2003-10-03  Joe Shaw  <joe@ximian.com>
+
 	* rc-package.c (rc_package_unref): If the RC_DEBUG_PACKAGE_UNREF
 	environment variable is set, don't free the package elements, but
 	do decrement (and assert) on the refcount.  Helps debugging

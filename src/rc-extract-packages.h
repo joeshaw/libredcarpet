@@ -26,8 +26,9 @@
 #ifndef __RC_EXTRACT_PACKAGES_H__
 #define __RC_EXTRACT_PACKAGES_H__
 
-#include "rc-package.h"
 #include "rc-channel.h"
+#include "rc-package.h"
+#include "rc-package-match.h"
 
 gint rc_extract_packages_from_xml_node (xmlNode *node,
                                         RCChannel *channel,
@@ -71,11 +72,13 @@ gint rc_extract_packages_from_aptrpm_file   (const char *filename,
 gint rc_extract_packages_from_undump_buffer (const guint8 *data, int len,
                                              RCChannelAndSubdFn channel_callback,
                                              RCPackageFn package_callback,
+                                             RCPackageMatchFn lock_callback,
                                              gpointer user_data);
 
 gint rc_extract_packages_from_undump_file   (const char *filename,
                                              RCChannelAndSubdFn channel_callback,
                                              RCPackageFn package_callback,
+                                             RCPackageMatchFn lock_callback,
                                              gpointer user_data);
 
 gint rc_extract_packages_from_directory (const char *path,

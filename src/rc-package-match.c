@@ -292,13 +292,11 @@ rc_package_match_to_xml_node (RCPackageMatch *match)
 }
 
 RCPackageMatch *
-rc_package_match_from_xml_node (xmlNode *node,
-				RCWorld *world)
+rc_package_match_from_xml_node (xmlNode *node)
 {
   RCPackageMatch *match;
 
   g_return_val_if_fail (node != NULL, NULL);
-  g_return_val_if_fail (world != NULL, NULL);
 
   if (strcasecmp (node->name, "match"))
     return NULL;

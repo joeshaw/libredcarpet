@@ -1570,6 +1570,10 @@ add_channel_packages_cb (RCChannel *channel,
     AddChannelClosure *closure = user_data;
     xmlNode *node;
 
+    /* These are handled by the "system_packages" section */
+    if (rc_channel_is_system (channel))
+        return TRUE;
+
     node = rc_channel_to_xml_node (channel);
     rc_world_foreach_package (closure->world,
                               channel,
