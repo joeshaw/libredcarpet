@@ -262,17 +262,6 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_package_get_updates(IntPtr raw);
-
-		public GLib.SList Updates { 
-			get {
-				IntPtr raw_ret = rc_package_get_updates(Handle);
-				GLib.SList ret = new GLib.SList(raw_ret);
-				return ret;
-			}
-		}
-
-		[DllImport("libredcarpet")]
 		static extern void rc_package_spew_leaks();
 
 		public static void SpewLeaks() {
@@ -389,7 +378,27 @@ namespace RC {
 #region Customized extensions
 #line 1 "Package.custom"
     [DllImport("libredcarpet")]
-    static extern IntPtr rc_package_ref(IntPtr raw);
+    static extern IntPtr rc_package_get_updates(IntPtr raw);
+
+    public RC.PackageUpdate[] Updates {
+        get {
+            IntPtr raw_ret = rc_package_get_updates(Handle);
+            RC.PackageUpdate[] ret;
+            if (raw_ret != IntPtr.Zero) {
+                GLib.SList slist = new GLib.SList(raw_ret, typeof (RC.PackageUpdate));
+                ret = new RC.PackageUpdate[slist.Count];
+                int i = 0;
+                foreach (RC.PackageUpdate u in slist)
+                    ret[i++] = u;
+            } else
+                ret = new RC.PackageUpdate[0];
+
+            return ret;
+        }
+    }
+
+    [DllImport("libredcarpet")]
+        static extern IntPtr rc_package_ref(IntPtr raw);
 
     protected Package (IntPtr raw, bool owned_ref) : base (raw) {
         if (!owned_ref)

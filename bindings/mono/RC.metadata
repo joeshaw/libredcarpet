@@ -54,6 +54,7 @@
   <attr path="/api/namespace/boxed[@cname='RCPackage']/method[@cname='rc_package_copy']" name="hidden">1</attr>
   <attr path="/api/namespace/boxed[@cname='RCPackage']/method[@cname='rc_package_get_name']" name="hidden">1</attr>
   <attr path="/api/namespace/boxed[@cname='RCPackage']/method[@cname='rc_package_get_spec']" name="hidden">1</attr>
+  <attr path="/api/namespace/boxed[@cname='RCPackage']/method[@cname='rc_package_get_updates']" name="hidden">1</attr>
   <attr path="/api/namespace/boxed[@cname='RCPackage']/method[@cname='rc_package_get_children']" name="hidden">1</attr>
   <attr path="/api/namespace/boxed[@cname='RCPackage']/method[@cname='rc_package_set_children']" name="hidden">1</attr>
   <attr path="/api/namespace/boxed[@cname='RCPackage']/method[@cname='rc_package_get_conflicts']" name="hidden">1</attr>

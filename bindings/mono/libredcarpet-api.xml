@@ -1761,7 +1761,7 @@
       <method name="GetType" cname="rc_package_get_type" shared="true">
         <return-type type="GType" />
       </method>
-      <method name="GetUpdates" cname="rc_package_get_updates">
+      <method name="GetUpdates" cname="rc_package_get_updates" hidden="1">
         <return-type type="RCPackageUpdateSList*" />
       </method>
       <method name="HashTableBySpecToList" cname="rc_package_hash_table_by_spec_to_list" shared="true">
