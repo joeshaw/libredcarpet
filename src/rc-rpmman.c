@@ -1355,11 +1355,18 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
                                          (rpmCallbackFunction) transact_cb,
                                          (void *) &state, NULL, &probs,
                                          transaction_flags, problem_filter);
-        if (rc > 0) {
-            render_problems (packman, probs);
-        
-            rpmman->rpmProblemSetFree (probs);
 
+        switch (rc) {
+        case 0:
+            /* Success */
+            break;
+        case -1:
+            /* Error, but no idea why. */
+            goto ERROR;
+        default:
+            /* Error, with probs */
+            render_problems (packman, probs);
+            rpmman->rpmProblemSetFree (probs);
             goto ERROR;
         }
 

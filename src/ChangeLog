@@ -1,5 +1,11 @@
 2003-05-02  Joe Shaw  <joe@ximian.com>
 
+	* rc-rpmman.c (rc_rpmman_transact): For RPM < 4.1, check for -1
+	from rpmRunTransactions() which means that the transaction failed
+	but we don't have a problem set to show for it.
+
+2003-05-02  Joe Shaw  <joe@ximian.com>
+
 	* rc-verification.c (rc_verification_type_to_string): I got sick
 	of doing this all by hand everywhere, so I added this function.
 
