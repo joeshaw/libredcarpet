@@ -24,13 +24,15 @@
 #ifndef __SOFTMGR_XML_UTIL_H
 #define __SOFTMGR_XML_UTIL_H
 
+#include <glib.h>
+
 #include <parser.h>
 #include <tree.h>
 
 /* The former will get either a property or a tag, whereas the latter will
    get only a property */
 
-char *xml_get_value(xmlNode *node, const char *name);
-char *xml_get_prop(xmlNode *node, const char *name);
+gchar *xml_get_value(xmlNode *node, const gchar *name);
+gchar *xml_get_prop(xmlNode *node, const gchar *name);
 
 #endif /* __SOFTMGR_XML_UTIL_H */

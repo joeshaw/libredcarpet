@@ -21,41 +21,56 @@
  *
  */
 
+#include <stdlib.h>
+#include <gnome-xml/xmlmemory.h>
+
 #include "softmgr.h"
 #include "xml-util.h"
 
-char *
-xml_get_value(xmlNode *node, const char *name)
+gchar *
+xml_get_value(xmlNode *node, const gchar *name)
 {
-	char *ret;
-	xmlNode *child;
+    gchar *ret;
+    xmlChar *xml_s;
+    xmlNode *child;
 
-	ret = xmlGetProp(node, name);
-	if (ret)
-		return ret;
+    xml_s = xmlGetProp(node, name);
+    if (xml_s) {
+        ret = g_strdup (xml_s);
+        xmlFree (xml_s);
+        return ret;
+    }
 
-	child = node->childs;
-	while (child) {
-		if (g_strcasecmp(child->name, name) == 0) {
-			ret = xmlNodeGetContent(child);
-			if (ret)
-				return ret;
-		}
-		child = child->next;
+
+    child = node->childs;
+    while (child) {
+        if (g_strcasecmp(child->name, name) == 0) {
+            xml_s = xmlNodeGetContent(child);
+            if (xml_s) {
+                ret = g_strdup (xml_s);
+                xmlFree (xml_s);
+                return ret;
+            }
+            child = child->next;
 	}
+    }
 
-	return NULL;
+    return NULL;
 } /* xml_get_value */
 
-char *
-xml_get_prop(xmlNode *node, const char *name)
+gchar *
+xml_get_prop(xmlNode *node, const gchar *name)
 {
-	char *ret;
+    xmlChar *ret;
+    gchar *gs;
 
-	ret = xmlGetProp(node, name);
-	if (ret)
-		return ret;
-	else
-		return NULL;
+    ret = xmlGetProp(node, name);
+    if (ret) {
+        gs = g_strdup (ret);
+        xmlFree (ret);
+        return gs;
+    } else {
+        return NULL;
+    }
 } /* xml_get_prop */
 	       
