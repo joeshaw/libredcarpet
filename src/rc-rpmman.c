@@ -2299,7 +2299,8 @@ rc_rpmman_init (RCRpmman *obj)
     g_free (so_file);
 
     if (!obj->rpm_lib) {
-        so_file = g_strdup_printf ("%s/rc-rpm-helper.so", rc_libdir);
+        so_file = g_strdup_printf ("%s/rc-rpm-helper-with-rpmio.so",
+                                   rc_libdir);
 
         obj->rpm_lib = g_module_open (so_file, 0);
 

@@ -1,3 +1,8 @@
+2001-04-09  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c: if we can't open rc-rpm-helper.so, try
+	rc-rpm-helper-with-rpmio.so, not rc-rpm-helper.so again.  I suck.
+
 2001-04-05  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c, rc-rpmman.h: rename fd* to rc_fd*, because jbj is
