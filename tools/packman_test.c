@@ -5,6 +5,7 @@
 
 #include <rc-packman.h>
 #include <rc-rpmman.h>
+#include <rc-debman.h>
 
 void pkg_installed_cb (RCPackman *, gchar *, gpointer);
 void install_done_cb (RCPackman *, RCPackmanOperationStatus);
@@ -55,9 +56,11 @@ int main (int argc, char **argv)
 
     gtk_type_init ();
 
-    p = RC_PACKMAN (rc_rpmman_new ());
+    p = RC_PACKMAN (rc_debman_new ());
 
-    if ((argc == 1) || !strcmp (argv[1], "-qa")) {
+    if ((argc == 3) && !strcmp (argv[1], "-initdb")) {
+        rpmdbInit (argv[2], 0644);
+    } else if ((argc == 1) || !strcmp (argv[1], "-qa")) {
         RCPackageSList *query = NULL, *iter;
 
         query = rc_packman_query_all (p);
@@ -78,6 +81,8 @@ int main (int argc, char **argv)
             printf ("%-25s%-10d%-20s%-20s\n", data->spec.name,
                     data->spec.epoch, data->spec.version, data->spec.release);
         }
+
+        rc_package_slist_free (query);
     } else if (!strcmp (argv[1], "-q")) {
         RCPackage *pkg = rc_package_new ();
 
@@ -101,10 +106,13 @@ int main (int argc, char **argv)
         if (pkg->spec.installed) {
             printf ("Installed version is %s-%s-%s\n", pkg->spec.name,
                     pkg->spec.version, pkg->spec.release);
+            printf ("Installed size is %u\n", pkg->spec.installed_size);
         } else {
             printf ("%s-%s-%s is not installed\n", pkg->spec.name,
                     pkg->spec.version, pkg->spec.release);
         }
+
+        rc_package_free (pkg);
     } else if (!strcmp (argv[1], "-qf")) {
         RCPackage *pkg;
 
@@ -117,142 +125,30 @@ int main (int argc, char **argv)
 
         printf ("Package is %s-%s-%s\n", pkg->spec.name, pkg->spec.version,
                 pkg->spec.release);
-    } else if (!strcmp (argv[1], "-d")) {
-        RCPackage *pkg = rc_package_new ();
-        RCPackageSList *list = NULL, *iter;
-
-        if (argc < 3) {
-            printf ("Usage: %s -d <name> [<version> <release>]\n", argv[0]);
-            exit (-1);
-        }
-
-        pkg->spec.name = g_strdup (argv[2]);
-
-        if (argc >= 4) {
-            pkg->spec.version = g_strdup (argv[3]);
-        }
-
-        if (argc >= 5) {
-            pkg->spec.release = g_strdup (argv[4]);
-        }
-
-        list = g_slist_append (list, pkg);
-
-        list = rc_packman_depends (p, list);
-
-        for (iter = list; iter; iter = iter->next) {
-            RCPackage *d = (RCPackage *)(iter->data);
-            RCPackageDepSList *iter;
-
-            if (!d->spec.installed) {
-                printf ("%s-%s-%s is not installed\n", d->spec.name,
-                        d->spec.version, d->spec.release);
-                break;
-            }
-
-            printf ("Package: %s\n", d->spec.name);
-            printf ("Version: %s\n", d->spec.version);
-            printf ("Release: %s\n", d->spec.release);
-
-            for (iter = d->requires; iter; iter = iter->next) {
-                RCPackageDepItem *item;
-
-                item = (RCPackageDepItem *)(((GSList *)(iter->data))->data);
-
-                printf ("Requires: %d %s-%s-%s\n", item->relation,
-                        item->spec.name, item->spec.version,
-                        item->spec.release);
-            }
-            for (iter = d->provides; iter; iter = iter->next) {
-                RCPackageDepItem *item;
-
-                item = (RCPackageDepItem *)(((GSList *)(iter->data))->data);
-
-                printf ("Provides: %d %s-%s-%s\n", item->relation,
-                        item->spec.name, item->spec.version,
-                        item->spec.release);
-            }
-            for (iter = d->conflicts; iter; iter = iter->next) {
-                RCPackageDepItem *item;
-
-                item = (RCPackageDepItem *)(((GSList *)(iter->data))->data);
-
-                printf ("Conflicts: %d %s-%s-%s\n", item->relation,
-                        item->spec.name, item->spec.version,
-                        item->spec.release);
-            }
-        }
-    } else if (!strcmp (argv[1], "-df")) {
-        GSList *filenames = NULL;
-        RCPackageSList *list = NULL, *iter;
-        gchar *filename;
-
-        filename = g_strdup (argv[2]);
-        printf ("%s\n", filename);
-
-        filenames = g_slist_append (filenames, filename);
-
-        list = rc_packman_depends_files (p, filenames);
-
-        for (iter = list; iter; iter = iter->next) {
-            RCPackage *d = (RCPackage *)(iter->data);
-            RCPackageDepSList *iter;
-
-            printf ("Package: %s\n", d->spec.name);
-            printf ("Version: %s\n", d->spec.version);
-            printf ("Release: %s\n", d->spec.release);
-
-            for (iter = d->requires; iter; iter = iter->next) {
-                RCPackageDepItem *item;
-
-                item = (RCPackageDepItem *)(((GSList *)(iter->data))->data);
-
-                printf ("Requires: %d %s-%s-%s\n", item->relation,
-                        item->spec.name, item->spec.version,
-                        item->spec.release);
-            }
-            for (iter = d->provides; iter; iter = iter->next) {
-                RCPackageDepItem *item;
-
-                item = (RCPackageDepItem *)(((GSList *)(iter->data))->data);
-
-                printf ("Provides: %d %s-%s-%s\n", item->relation,
-                        item->spec.name, item->spec.version,
-                        item->spec.release);
-            }
-            for (iter = d->conflicts; iter; iter = iter->next) {
-                RCPackageDepItem *item;
-
-                item = (RCPackageDepItem *)(((GSList *)(iter->data))->data);
-
-                printf ("Conflicts: %d %s-%s-%s\n", item->relation,
-                        item->spec.name, item->spec.version,
-                        item->spec.release);
-            }
-        }
-    }
-
-#if 0
-    if (!strncmp (argv[1], "-r", 2)) {
+    } else if (!strncmp (argv[1], "-r", 2)) {
         static guint do_remove (void) {
             guint i;
-            HP_PACKAGE_LIST *rlist = NULL;
+            RCPackageSList *rlist = NULL;
 
             for (i = 2; i < argc; i++) {
-                HP_ADD_PACKAGE (rlist, argv[i], NULL, NULL, 0);
+                RCPackage *pkg = rc_package_new ();
+
+                pkg->spec.name = g_strdup (argv[i]);
+
+                rlist = g_slist_append (rlist, pkg);
             }
 
             if (!rlist) {
                 if (!strcmp (argv[1], "-ra")) {
                     printf ("Removing all packages...\n");
-                    rlist = rc_packman_query (hp, NULL);
+                    rlist = rc_packman_query (p, NULL);
                 } else {
                     printf ("%s: -r must provide package name(s)\n", argv[0]);
                     exit (-1);
                 }
             }
 
-            rc_packman_remove (hp, rlist);
+            rc_packman_remove (p, rlist);
 
             exit (0);
 
@@ -260,7 +156,7 @@ int main (int argc, char **argv)
             return (FALSE);
         }
 
-        gtk_signal_connect (GTK_OBJECT (hp), "remove_done",
+        gtk_signal_connect (GTK_OBJECT (p), "remove_done",
                             GTK_SIGNAL_FUNC (remove_done_cb), NULL);
 
         gtk_timeout_add (0, (GtkFunction) do_remove, NULL);
@@ -269,10 +165,10 @@ int main (int argc, char **argv)
     } else if (!strcmp (argv[1], "-i")) {
         static guint do_install (void) {
             guint i;
-            HP_FILE_LIST *ilist = NULL;
+            GSList *ilist = NULL;
 
             for (i = 2; i < argc; i++) {
-                HP_ADD_FILE (ilist, argv[i]);
+                ilist = g_slist_append (ilist, argv[i]);
             }
 
             if (!ilist) {
@@ -280,7 +176,7 @@ int main (int argc, char **argv)
                 exit (-1);
             }
 
-            rc_packman_install (hp, ilist);
+            rc_packman_install (p, ilist);
 
             exit (0);
 
@@ -288,101 +184,17 @@ int main (int argc, char **argv)
             return (FALSE);
         }
 
-        gtk_signal_connect (GTK_OBJECT (hp), "pkg_installed",
+        gtk_signal_connect (GTK_OBJECT (p), "pkg_installed",
                             GTK_SIGNAL_FUNC (pkg_installed_cb), NULL);
-        gtk_signal_connect (GTK_OBJECT (hp), "install_done",
+        gtk_signal_connect (GTK_OBJECT (p), "install_done",
                             GTK_SIGNAL_FUNC (install_done_cb), NULL);
 
         gtk_timeout_add (0, (GtkFunction) do_install, NULL);
 
         gtk_main ();
-    } else if (!strncmp (argv[1], "-d", 2)) {
-        HP_PACKAGE_LIST *dlist = NULL;
-        RCPackmanPackage *d;
-        HP_DEP_LIST *iter;
-
-        if ((argc < 3) || (argc > 5)) {
-            printf ("%s: -d name [version, release]", argv[0]);
-            exit (-1);
-        }
-
-        if (argc == 3) {
-            HP_ADD_PACKAGE (dlist, argv[2], NULL, NULL, 0);
-        } else if (argc == 4) {
-            HP_ADD_PACKAGE (dlist, argv[2], argv[3], NULL, 0);
-        } else {
-            HP_ADD_PACKAGE (dlist, argv[2], argv[3], argv[4], 0);
-        }
-
-        dlist = rc_packman_depends (hp, dlist);
-
-        if (!dlist) {
-            printf ("Package %s doesn't exist\n", argv[2]);
-            return (0);
-        }
-
-        d = (RCPackmanPackage *)(dlist->data);
-
-        printf ("Package: %s-%s-%s\n", d->spec.name, d->spec.version,
-                d->spec.release);
-
-        printf ("\nRequires:\n");
-
-        for (iter = d->requires; iter; iter = iter->next) {
-            RCPackmanDep *dep = (RCPackmanDep *)(iter->data);
-
-            printf ("    %-40s%-10s%-20s\n", dep->spec.name, dep->spec.version,
-                    dep->spec.release);
-        }
- 
-        printf ("\nProvides:\n");
-
-        for (iter = d->provides; iter; iter = iter->next) {
-            RCPackmanDep *dep = (RCPackmanDep *)(iter->data);
-
-            printf ("    %-40s%-10s%-20s\n", dep->spec.name, dep->spec.version,
-                    dep->spec.release);
-        }
-
-        printf ("\nConflicts:\n");
-
-        for (iter = d->conflicts; iter; iter = iter->next) {
-            RCPackmanDep *dep = (RCPackmanDep *)(iter->data);
-
-            printf ("    %-40s%-10s%-20s\n", dep->spec.name, dep->spec.version,
-                    dep->spec.release);
-        }
-
-        HP_PACKAGE_LIST_FREE (dlist);
-    } else if (!strncmp (argv[1], "-t", 2)) {
-        HP_PACKAGE_LIST *list = NULL;
-
-        HP_ADD_PACKAGE (list, "joe-testpkg", "3.0", "1", 0);
-
-        list = rc_packman_depends (hp, list);
-
-        list = rc_packman_query (hp, list);
-
-        list = rc_packman_depends (hp, list);
-
-        debug_rc_packman_package_dump (list->data);
-
-        HP_PACKAGE_LIST_FREE (list);
-    } else if (!strncmp (argv[1], "-fd", 3)) {
-        HP_FILE_LIST *flist = NULL;
-        HP_PACKAGE_LIST *dlist = NULL;
-
-        HP_ADD_FILE (flist, argv[2]);
-
-        dlist = rc_packman_depends_files (hp, flist);
-
-        debug_rc_packman_package_dump (dlist->data);
-
-        HP_FILE_LIST_FREE (flist);
-        HP_PACKAGE_LIST_FREE (dlist);
     }
 
-#endif
+    gtk_object_destroy (p);
 
     return (0);
 }
