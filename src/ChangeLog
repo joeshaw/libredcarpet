@@ -1,3 +1,9 @@
+2004-02-19  Joe Shaw  <joe@ximian.com>
+
+	* rc-arch.c (arch_table): Detect "ix86" as RC_ARCH_I386.  OpenPKG
+	uses that convention.  Patch from Christopher Chan
+	<cchan@spikesource.com>
+
 2004-02-04  Vladimir Vukicevic  <vladimir@pobox.com>
 
        * rc-util.c: check if avail_in is 0 in loop in bunzip2_memory;
