@@ -1,3 +1,8 @@
+2003-13-20  Joe Shaw  <joe@ximian.com>
+
+	* rc-rpmman.c (load_fake_syms): Fix a typo on gnameToGid() in the
+	static linking case.
+
 2003-10-20  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-world-multi.c (rc_world_multi_add_subworld): Emit signal only

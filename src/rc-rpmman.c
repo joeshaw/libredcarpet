@@ -3036,7 +3036,7 @@ load_fake_syms (RCRpmman *rpmman)
     rpmman->rpmDefineMacro = &rpmDefineMacro;
     rpmman->rpmGetPath = &rpmGetPath;
     rpmman->unameToUid = &unameToUid;
-    rpmman->gnameToUid = &gnameToGid;
+    rpmman->gnameToGid = &gnameToGid;
 
 #if RPM_VERSION >= 40100
     rpmman->rpmReadPackageFile = &rpmReadPackageFile;
