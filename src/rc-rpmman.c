@@ -211,19 +211,61 @@ rc_package_to_rpm_name (RCPackage *pkg)
     return (ret);
 } /* rc_package_to_rpm_name */
 
+#ifdef HAVE_RPM_4_0
+
+static gboolean
+transaction_add_remove_pkgs (RCPackman *p, rpmTransactionSet transaction,
+                             rpmdb db, RCPackageSList *remove_pkgs)
+{
+    RCPackageSList *iter;
+
+    for (iter = remove_pkgs; iter; iter = iter->next) {
+        RCPackage *pkg = (RCPackage *)(iter->data);
+        gchar *pkg_name = rc_package_to_rpm_name (pkg);
+        rpmdbMatchIterator *mi;
+        Header hdr;
+        unsigned int offset;
+
+        mi = rpmdbInitIterator (db, RPMDBI_LABEL, pkg_name, 0);
+        count = rpmdbGetIteratorCount (mi);
+
+        if (count <= 0) {
+            /* FIXME: package is not installed */
+            rpmdbFreeIterator (mi);
+            return (FALSE);
+        }
+
+        if (count > 1) {
+            /* FIXME: we've specified multiple packages? */
+            rpmdbFreeIterator (mi);
+            return (FALSE);
+        }
+
+        hdr = rpmdbNextIterator (mi);
+        offset = rpmdbGetIteratorOffset (mi);
+
+        rpmtransRemovePackage (transaction, offset);
+        rpmdbFreeIterator (mi);
+    }
+
+    return (TRUE);
+}
+
+#else /* !HAVE_RPM_4_0 */
+
 static gboolean
 transaction_add_remove_pkgs (RCPackman *p, rpmTransactionSet transaction,
                              rpmdb db, RCPackageSList *remove_pkgs)
 {
     int rc;
     RCPackageSList *iter;
-    dbiIndexSet matches;
     int i;
     int count;
 
     for (iter = remove_pkgs; iter; iter = iter->next) {
         RCPackage *pkg = (RCPackage *)(iter->data);
         gchar *pkg_name = rc_package_to_rpm_name (pkg);
+        dbiIndexSet matches;
 
         rc = rpmdbFindByLabel (db, pkg_name, &matches);
 
@@ -268,6 +310,8 @@ transaction_add_remove_pkgs (RCPackman *p, rpmTransactionSet transaction,
 
     return (TRUE);
 } /* transaction_add_remove_pkgs */
+
+#endif /* !HAVE_RPM_4_0 */
 
 static void
 rc_rpmman_transact (RCPackman *p, GSList *install_pkgs,
