@@ -47,8 +47,6 @@
 #include "rc-packman.h"
 #include "rc-distman.h"
 
-#include "rc-pretty-name.h"
-
 #include "rc-resolver.h"
 #include "rc-resolver-queue.h"
 

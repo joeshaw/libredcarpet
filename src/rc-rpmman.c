@@ -2978,7 +2978,7 @@ write_objects (void)
     }
     g_free (file);
     file = NULL;
-    if (rc_uncompress_memory ((char *)rc_rpm_so_0, rc_rpm_so_0_len, &buf)) {
+    if (rc_uncompress_memory ((char *)rc_rpm_0_dylib, rc_rpm_0_dylib_len, &buf)) {
         goto ERROR;
     }
     if (!rc_write (fd, buf->data, buf->len)) {
@@ -2995,7 +2995,7 @@ write_objects (void)
     }
     g_free (file);
     file = NULL;
-    if (rc_uncompress_memory ((char *)rc_rpm_rpmio_so_0, rc_rpm_rpmio_so_0_len,
+    if (rc_uncompress_memory ((char *)rc_rpm_rpmio_0_dylib, rc_rpm_rpmio_0_dylib_len,
                               &buf))
     {
         goto ERROR;
@@ -3014,8 +3014,8 @@ write_objects (void)
     }
     g_free (file);
     file = NULL;
-    if (rc_uncompress_memory ((char *)rc_rpm_rpmio_rpmdb_4_0_3_so,
-                              rc_rpm_rpmio_rpmdb_4_0_3_so_len, &buf))
+    if (rc_uncompress_memory ((char *)rc_rpm_rpmio_rpmdb_4_0_3_dylib,
+                              rc_rpm_rpmio_rpmdb_4_0_3_dylib_len, &buf))
     {
         goto ERROR;
     }
@@ -3033,8 +3033,8 @@ write_objects (void)
     }
     g_free (file);
     file = NULL;
-    if (rc_uncompress_memory ((char *)rc_rpm_rpmio_rpmdb_4_0_4_so,
-                              rc_rpm_rpmio_rpmdb_4_0_4_so_len, &buf))
+    if (rc_uncompress_memory ((char *)rc_rpm_rpmio_rpmdb_4_0_4_dylib,
+                              rc_rpm_rpmio_rpmdb_4_0_4_dylib_len, &buf))
     {
         goto ERROR;
     }

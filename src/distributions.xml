@@ -425,4 +425,17 @@
 			<os_release substring="5.8"/>
 		</detect>
 	</distro>
+	<distro>
+		<name>Darwin</name>
+		<version>6.3</version>
+                <arch>ppc</arch>
+		<type>rpm</type>
+		<target>darwin-63-ppc</target>
+		<status>supported</status>
+		<enddate>0</enddate>
+		<detect>
+			<os_name    substring="Darwin"/>
+			<os_release substring="6.3"/>
+		</detect>
+	</distro>
 </distros>
