@@ -518,195 +518,231 @@ static RCPackageSection
 rc_rpmman_section_to_package_section (const gchar *rpmsection)
 {
     gchar **sections;
+    RCPackageSection ret = RC_SECTION_MISC;
 
     sections = g_strsplit (rpmsection, "/", 1);
 
     if (!sections[0] || !sections[0][0]) {
-        return (RC_SECTION_MISC);
+        goto DONE;
     }
 
     switch (sections[0][0]) {
     case 'A':
         if (!g_strcasecmp (sections[0], "Amusements")) {
-            return (RC_SECTION_GAME);
+            ret = RC_SECTION_GAME;
+            goto DONE;
         }
         if (!g_strcasecmp (sections[0], "Applications")) {
             if (!sections[1] || !sections[1][0]) {
-                return (RC_SECTION_MISC);
+                goto DONE;
             }
 
             switch (sections[1][0]) {
             case 'A':
                 if (!g_strcasecmp (sections[1], "Archiving")) {
-                    return (RC_SECTION_UTIL);
+                    ret = RC_SECTION_UTIL;
+                    goto DONE;
                 }
-                return (RC_SECTION_MISC);
+                goto DONE;
 
             case 'C':
                 if (!g_strcasecmp (sections[1], "Communications")) {
-                    return (RC_SECTION_INTERNET);
+                    ret = RC_SECTION_INTERNET;
+                    goto DONE;
                 }
                 if (!g_strcasecmp (sections[1], "Cryptography")) {
-                    return (RC_SECTION_UTIL);
+                    ret = RC_SECTION_UTIL;
+                    goto DONE;
                 }
-                return (RC_SECTION_MISC);
+                goto DONE;
 
             case 'E':
                 if (!g_strcasecmp (sections[1], "Editors")) {
-                    return (RC_SECTION_UTIL);
+                    ret = RC_SECTION_UTIL;
+                    goto DONE;
                 }
                 if (!g_strcasecmp (sections[1], "Engineering")) {
-                    return (RC_SECTION_UTIL);
+                    ret = RC_SECTION_UTIL;
+                    goto DONE;
                 }
-                return (RC_SECTION_MISC);
+                goto DONE;
 
             case 'F':
                 if (!g_strcasecmp (sections[1], "File")) {
-                    return (RC_SECTION_SYSTEM);
+                    ret = RC_SECTION_SYSTEM;
+                    goto DONE;
                 }
                 if (!g_strcasecmp (sections[1], "Finance")) {
-                    return (RC_SECTION_OFFICE);
+                    ret = RC_SECTION_OFFICE;
+                    goto DONE;
                 }
-                return (RC_SECTION_MISC);
+                goto DONE;
 
             case 'G':
                 if (!g_strcasecmp (sections[1], "Graphics")) {
-                    return (RC_SECTION_IMAGING);
+                    ret = RC_SECTION_IMAGING;
+                    goto DONE;
                 }
-                return (RC_SECTION_MISC);
+                goto DONE;
 
             case 'I':
                 if (!g_strcasecmp (sections[1], "Internet")) {
-                    return (RC_SECTION_INTERNET);
+                    ret = RC_SECTION_INTERNET;
+                    goto DONE;
                 }
-                return (RC_SECTION_MISC);
+                goto DONE;
 
             case 'M':
                 if (!g_strcasecmp (sections[1], "Multimedia")) {
-                    return (RC_SECTION_MULTIMEDIA);
+                    ret = RC_SECTION_MULTIMEDIA;
+                    goto DONE;
                 }
-                return (RC_SECTION_MISC);
+                goto DONE;
 
             case 'O':
                 if (!g_strcasecmp (sections[1], "Office")) {
-                    return (RC_SECTION_OFFICE);
+                    ret = RC_SECTION_OFFICE;
+                    goto DONE;
                 }
-                return (RC_SECTION_MISC);
+                goto DONE;
 
             case 'P':
                 if (!g_strcasecmp (sections[1], "Productivity")) {
-                    return (RC_SECTION_PIM);
+                    ret = RC_SECTION_PIM;
+                    goto DONE;
                 }
                 if (!g_strcasecmp (sections[1], "Publishing")) {
-                    return (RC_SECTION_OFFICE);
+                    ret = RC_SECTION_OFFICE;
+                    goto DONE;
                 }
-                return (RC_SECTION_MISC);
+                goto DONE;
 
             case 'S':
                 if (!g_strcasecmp (sections[1], "Sound")) {
-                    return (RC_SECTION_MULTIMEDIA);
+                    ret = RC_SECTION_MULTIMEDIA;
+                    goto DONE;
                 }
                 if (!g_strcasecmp (sections[1], "System")) {
-                    return (RC_SECTION_SYSTEM);
+                    ret = RC_SECTION_SYSTEM;
+                    goto DONE;
                 }
-                return (RC_SECTION_MISC);
+                goto DONE;
 
             case 'T':
                 if (!g_strcasecmp (sections[1], "Text")) {
-                    return (RC_SECTION_UTIL);
+                    ret = RC_SECTION_UTIL;
+                    goto DONE;
                 }
-                return (RC_SECTION_MISC);
+                goto DONE;
 
             default:
-                return (RC_SECTION_MISC);
+                goto DONE;
             }
         }
 
     case 'D':
         if (!g_strcasecmp (sections[0], "Documentation")) {
-            return (RC_SECTION_DOC);
+            ret = RC_SECTION_DOC;
+            goto DONE;
         }
         if (!g_strcasecmp (sections[0], "Development")) {
             if (!sections[1] || !sections[1][0]) {
-                return (RC_SECTION_MISC);
+                goto DONE;
             }
 
             switch (sections[1][0]) {
             case 'D':
                 if (!g_strcasecmp (sections[1], "Debuggers")) {
-                    return (RC_SECTION_DEVELUTIL);
+                    ret = RC_SECTION_DEVELUTIL;
+                    goto DONE;
                 }
-                return (RC_SECTION_MISC);
+                goto DONE;
 
             case 'L':
                 if (!g_strcasecmp (sections[1], "Languages")) {
-                    return (RC_SECTION_DEVELUTIL);
+                    ret = RC_SECTION_DEVELUTIL;
+                    goto DONE;
                 }
                 if (!g_strcasecmp (sections[1], "Libraries")) {
-                    return (RC_SECTION_DEVEL);
+                    ret = RC_SECTION_DEVEL;
+                    goto DONE;
                 }
-                return (RC_SECTION_MISC);
+                goto DONE;
 
             case 'S':
                 if (!g_strcasecmp (sections[1], "System")) {
-                    return (RC_SECTION_DEVEL);
+                    ret = RC_SECTION_DEVEL;
+                    goto DONE;
                 }
-                return (RC_SECTION_MISC);
+                goto DONE;
 
             case 'T':
                 if (!g_strcasecmp (sections[1], "Tools")) {
-                    return (RC_SECTION_DEVELUTIL);
+                    ret = RC_SECTION_DEVELUTIL;
+                    goto DONE;
                 }
-                return (RC_SECTION_MISC);
+                goto DONE;
 
             default:
-                return (RC_SECTION_MISC);
+                goto DONE;
             }
         }
 
     case 'L':
         if (!g_strcasecmp (sections[0], "Libraries")) {
-            return (RC_SECTION_LIBRARY);
+            ret = RC_SECTION_LIBRARY;
+            goto DONE;
         }
-        return (RC_SECTION_MISC);
+        goto DONE;
 
     case 'S':
         if (!g_strcasecmp (sections[0], "System Environment")) {
-            return (RC_SECTION_SYSTEM);
+            ret = RC_SECTION_SYSTEM;
+            goto DONE;
         }
-        return (RC_SECTION_MISC);
+        goto DONE;
 
     case 'U':
         if (!g_strncasecmp (sections[0], "User Interface",
                             strlen ("User Interface"))) {
-            return (RC_SECTION_XAPP);
+            ret = RC_SECTION_XAPP;
+            goto DONE;
         }
-        return (RC_SECTION_MISC);
+        goto DONE;
 
     case 'X':
         if (!g_strcasecmp (sections[0], "X11")) {
             if (!sections[1] || !sections[1][0]) {
-                return (RC_SECTION_XAPP);
+                ret = RC_SECTION_XAPP;
+                goto DONE;
             }
 
             switch (sections[1][0]) {
             case 'G':
                 if (!g_strcasecmp (sections[1], "Graphics")) {
-                    return (RC_SECTION_IMAGING);
+                    ret = RC_SECTION_IMAGING;
+                    goto DONE;
                 }
-                return (RC_SECTION_XAPP);
+                ret = RC_SECTION_XAPP;
+                goto DONE;
 
             case 'U':
                 if (!g_strcasecmp (sections[1], "Utilities")) {
-                    return (RC_SECTION_UTIL);
+                    ret = RC_SECTION_UTIL;
+                    goto DONE;
                 }
-                return (RC_SECTION_XAPP);
+                ret = RC_SECTION_XAPP;
+                goto DONE;
 
             default:
-                return (RC_SECTION_MISC);
+                goto DONE;
             }
         }
     }
+
+  DONE:
+    g_strfreev (sections);
+    return (ret);
 }
 
 /* Helper function to read values out of an rpm header safely.  If any of the
