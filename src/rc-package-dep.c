@@ -154,7 +154,7 @@ rc_package_dep_verify_relation (RCPackageDep *dep,
 {
     RCPackageSpec newdepspec;
     RCPackageSpec newprovspec;
-    gint compare_ret;
+    gint compare_ret = 0;
 
     gint unweak_deprel = dep->relation & ~RC_RELATION_WEAK;
     gint unweak_provrel = prov->relation & ~RC_RELATION_WEAK;
@@ -191,7 +191,6 @@ rc_package_dep_verify_relation (RCPackageDep *dep,
      * be a test for > 0.  Right now these are the same, but
      * please leave the code as-is. */
     
-    compare_ret = 0;
     if (dep->spec.epoch && prov->spec.epoch) {
         /* HACK: This sucks, but I don't know a better way to compare 
          * elements one at a time */
@@ -222,7 +221,7 @@ rc_package_dep_verify_relation (RCPackageDep *dep,
         } else {
             newdepspec.release = newprovspec.release = NULL;
         }
-        newprovspec.release = newprovspec.name = NULL;
+        newdepspec.name = newprovspec.name = NULL;
         compare_ret = rc_packman_version_compare (das_global_packman,
                                                   &newprovspec, &newdepspec);
     }

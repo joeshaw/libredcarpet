@@ -1,5 +1,11 @@
 2002-03-10  Peter Bowen  <pzb@ximian.com>
 
+	* rc-package-dep.c: (rc_package_dep_verify_relation): Fix dumb typo 
+				that was causing a segfault.  Also initialize 
+				compare_ret at function start.
+
+2002-03-10  Peter Bowen  <pzb@ximian.com>
+
 	* rc-debman.c: (rc_debman_init): set capabilities instead of rpmish
 	* rc-package-dep.c: remove rpmish
 			    (rc_package_dep_verify_relation): rewrite to 
