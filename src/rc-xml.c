@@ -1337,7 +1337,7 @@ rc_package_to_xml_node (RCPackage *package)
     xmlNewTextChild (package_node, NULL, "summary", tmp_str);
     g_free (tmp_str);
 
-    tmp_str = sanitize_string (package->summary);
+    tmp_str = sanitize_string (package->description);
     xmlNewTextChild (package_node, NULL, "description", tmp_str);
     g_free (tmp_str);
 

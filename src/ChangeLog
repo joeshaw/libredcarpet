@@ -1,3 +1,8 @@
+2002-11-18  Joe Shaw  <joe@ximian.com>
+
+	* rc-xml.c (rc_package_to_xml_node): Write the description out to
+	the description field, not the summary.
+
 2002-11-14  Joe Shaw  <joe@ximian.com>
 
 	* rc-dep-or.c (rc_dep_string_to_or_dep_slist): Return NULL if
