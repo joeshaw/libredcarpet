@@ -5,7 +5,9 @@
 
 #include <glib.h>
 
-#include "rc-package-spec.h"
+#include <gnome-xml/tree.h>
+
+#include <libredcarpet/rc-package-spec.h>
 
 typedef enum _RCPackageImportance RCPackageImportance;
 
@@ -18,6 +20,8 @@ enum _RCPackageImportance {
     RC_IMPORTANCE_FEATURE,
     RC_IMPORTANCE_MINOR,
 
+    RC_IMPORTANCE_NEW,
+
     RC_IMPORTANCE_MAX
 };
 
@@ -26,18 +30,17 @@ typedef struct _RCPackageUpdate RCPackageUpdate;
 struct _RCPackageUpdate {
     RCPackageSpec spec;
 
-    RCPackageImportance importance;
-    gchar *url;                 /* URL for the filename of this pkg */
+    gchar *package_url;
     guint32 package_size;
-
-    gchar *md5sum;
 
     gchar *signature_url;
     guint32 signature_size;
 
+    gchar *md5sum;
+
+    RCPackageImportance importance;
+
     gchar *description;
-    guint32 installed_size;
-    time_t time;
 };
 
 RCPackageUpdate *rc_package_update_new (void);
@@ -53,5 +56,13 @@ RCPackageUpdateSList *rc_package_update_slist_copy (RCPackageUpdateSList *old);
 void rc_package_update_slist_free (RCPackageUpdateSList *rcpusl);
 
 RCPackageUpdateSList *rc_package_update_slist_sort (RCPackageUpdateSList *l);
+
+RCPackageImportance rc_string_to_package_importance (gchar *importance);
+
+const gchar *rc_package_importance_to_string (RCPackageImportance importance);
+
+xmlNode *rc_package_update_to_xml_node (RCPackageUpdate *);
+
+RCPackageUpdate *rc_xml_node_to_package_update (xmlNode *);
 
 #endif /* _RC_PACKAGE_UPDATE_H */

@@ -25,7 +25,7 @@
 #define _RC_PACKAGE_SET_H
 
 #include <glib.h>
-#include "rc-package.h"
+#include <libredcarpet/rc-package.h>
 
 typedef struct _RCPackageSet RCPackageSet;
 
@@ -36,6 +36,12 @@ struct _RCPackageSet {
 };
 
 typedef GSList RCPackageSetSList;
+
+RCPackageSet *rc_package_set_new (void);
+
+void rc_package_set_free (RCPackageSet *set);
+
+void rc_package_set_slist_free (RCPackageSetSList *set_list);
 
 RCPackageSetSList *rc_package_set_parse (char *buf, int compressed_length);
 

@@ -18,14 +18,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include "rc-verification.h"
-#include "rc-util.h"
-#include "rc-line-buf.h"
+#include <libredcarpet/rc-verification.h>
+#include <libredcarpet/rc-util.h>
+#include <libredcarpet/rc-line-buf.h>
+#include <libredcarpet/rc-md5.h>
+
 #include <unistd.h>
+#include <string.h>
+
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <string.h>
-#include "rc-md5.h"
 #include <sys/stat.h>
 
 #ifndef SHAREDIR
@@ -146,8 +148,9 @@ rc_verify_gpg (gchar *file, gchar *sig)
         close (fds[1]);
 
         execlp ("gpg", "gpg", "--batch", "--quiet", "--no-secmem-warning",
-                "--no-default-keyring", "--keyring", keyring, "--status-fd",
-                "1", "--logger-fd", "2", "--verify", sig, file, NULL);
+                "--no-default-keyring", "--no-auto-key-retrieve", "--keyring",
+                keyring, "--status-fd", "1", "--logger-fd", "2", "--verify",
+                sig, file, NULL);
         return (NULL);
         break;
 

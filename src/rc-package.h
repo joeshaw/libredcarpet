@@ -21,9 +21,11 @@
 #ifndef _RC_PACKAGE_H
 #define _RC_PACKAGE_H
 
-#include "rc-package-spec.h"
-#include "rc-package-dep.h"
-#include "rc-package-update.h"
+#include <libredcarpet/rc-package-spec.h>
+#include <libredcarpet/rc-package-dep.h>
+#include <libredcarpet/rc-package-update.h>
+
+#include <gnome-xml/tree.h>
 
 typedef struct _RCPackage RCPackage;
 
@@ -52,8 +54,8 @@ struct _RCPackage {
 
     /* After downloading this package, fill in the local file name, and
        signature, if appropriate */
-    gchar *filename;
-    gchar *signature;
+    gchar *package_filename;
+    gchar *signature_filename;
 };
 
 /* Used if key is a string, i.e. name */
@@ -83,5 +85,9 @@ gint rc_package_compare_func (gconstpointer a, gconstpointer b);
 
 RCPackageSList *rc_package_hash_table_by_spec_to_list (RCPackageHashTableBySpec *ht);
 RCPackageSList *rc_package_hash_table_by_string_to_list (RCPackageHashTableBySpec *ht);
+
+xmlNode *rc_package_to_xml_node (RCPackage *);
+
+RCPackage *rc_xml_node_to_package (xmlNode *);
 
 #endif /* _RC_PACKAGE_H */

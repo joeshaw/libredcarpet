@@ -22,8 +22,10 @@
 #ifndef _RC_CHANNEL_H
 #define _RC_CHANNEL_H
 
-#include "rc-package.h"
-#include "rc-package-set.h"
+#include <gnome-xml/tree.h>
+
+#include <libredcarpet/rc-package.h>
+#include <libredcarpet/rc-package-set.h>
 
 typedef struct _RCSubchannel RCSubchannel;
 
@@ -32,6 +34,8 @@ struct _RCSubchannel {
     guint32 preference;
 
     RCPackageHashTableByString *packages;
+
+    RCPackageHashTableBySpec *dep_table;
 };
 
 RCSubchannel *rc_subchannel_new (void);
@@ -74,8 +78,8 @@ struct _RCChannel {
     gchar *unsubs_url;
 
     /* for use as pixbufs in gui.h */
-    char *icon_file;
-    char *title_file;
+    gchar *icon_file;
+    gchar *title_file;
 
     time_t last_update;
 
@@ -104,5 +108,9 @@ RCChannel *rc_channel_get_by_name(RCChannelSList *channels, char *name);
 gint rc_channel_compare_func (gconstpointer a, gconstpointer b);
 
 RCPackage *rc_find_best_package (RCPackageDepItem *pdep, RCChannelSList *chs, gint user_pref);
+
+xmlNode *rc_channel_to_xml_node (RCChannel *);
+
+guint rc_xml_node_to_channel (RCChannel *, xmlNode *);
 
 #endif /* _RC_CHANNEL_H */

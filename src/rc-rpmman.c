@@ -20,9 +20,9 @@
 
 #include <config.h>
 
-#include "rc-packman-private.h"
-#include "rc-rpmman.h"
-#include "rc-util.h"
+#include <libredcarpet/rc-packman-private.h>
+#include <libredcarpet/rc-rpmman.h>
+#include <libredcarpet/rc-util.h>
 
 #include <fcntl.h>
 #include <string.h>
@@ -34,11 +34,11 @@
 #include <rpm/rpmlib.h>
 
 #ifdef HAVE_RPM_4_0
-#include "rpmlead-4-0-x.h"
-#include "signature-4-0-x.h"
+#include <libredcarpet/rpmlead-4-0-x.h>
+#include <libredcarpet/signature-4-0-x.h>
 #else
-#include "rpmlead-3-0-x.h"
-#include "signature-3-0-x.h"
+#include <libredcarpet/rpmlead-3-0-x.h>
+#include <libredcarpet/signature-3-0-x.h>
 #endif
 
 static void rc_rpmman_class_init (RCRpmmanClass *klass);
@@ -1131,11 +1131,11 @@ rc_rpmman_verify (RCPackman *p, RCPackage *pkg)
     guint32 size = 0;
     gchar *buf;
 
-    if (!pkg->filename) {
+    if (!pkg->package_filename) {
         goto END;
     }
 
-    in_fd = Fopen (pkg->filename, "r.ufdio");
+    in_fd = Fopen (pkg->package_filename, "r.ufdio");
     if (in_fd == NULL || Ferror (in_fd)) {
         rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
                               "Unable to open the RPM for verification");

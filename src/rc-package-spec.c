@@ -3,24 +3,7 @@
 
 /* #define DEBUG 50 */
 
-#include "rc-package-spec.h"
-
-SecTable sectable[] = {
-    { "SECTION_OFFICE",     SECTION_OFFICE },
-    { "SECTION_IMAGING",    SECTION_IMAGING },
-    { "SECTION_PIM",        SECTION_PIM }, 
-    { "SECTION_GAME",       SECTION_GAME }, 
-    { "SECTION_MULTIMEDIA", SECTION_MULTIMEDIA },
-    { "SECTION_INTERNET",   SECTION_INTERNET },
-    { "SECTION_UTIL",       SECTION_UTIL },
-    { "SECTION_SYSTEM",     SECTION_SYSTEM },
-    { "SECTION_DOC",        SECTION_DOC },
-    { "SECTION_DEVEL",      SECTION_DEVEL },
-    { "SECTION_DEVELUTIL",  SECTION_DEVELUTIL },
-    { "SECTION_LIBRARY",    SECTION_LIBRARY },
-    { "SECTION_XAPP",       SECTION_XAPP },
-    { "SECTION_MISC",       SECTION_MISC }
-};
+#include <libredcarpet/rc-package-spec.h>
 
 void
 rc_package_spec_init (RCPackageSpec *rcps,
@@ -324,3 +307,85 @@ vercmp(char * a, char * b)
     if (!*one) return -1; else return 1;
 }
 
+const gchar *
+rc_package_section_to_string (RCPackageSection section)
+{
+    switch (section) {
+    case SECTION_OFFICE:
+        return ("SECTION_OFFICE");
+        break;
+    case SECTION_IMAGING:
+        return ("SECTION_IMAGINE");
+        break;
+    case SECTION_PIM:
+        return ("SECTION_PIM");
+        break;
+    case SECTION_GAME:
+        return ("SECTION_GAME");
+        break;
+    case SECTION_MULTIMEDIA:
+        return ("SECTION_MULTIMEDIA");
+        break;
+    case SECTION_INTERNET:
+        return ("SECTION_INTERNET");
+        break;
+    case SECTION_UTIL:
+        return ("SECTION_UTIL");
+        break;
+    case SECTION_SYSTEM:
+        return ("SECTION_SYSTEM");
+        break;
+    case SECTION_DOC:
+        return ("SECTION_DOC");
+        break;
+    case SECTION_DEVEL:
+        return ("SECTION_DEVEL");
+        break;
+    case SECTION_DEVELUTIL:
+        return ("SECTION_DEVELUTIL");
+        break;
+    case SECTION_LIBRARY:
+        return ("SECTION_LIBRARY");
+        break;
+    case SECTION_XAPP:
+        return ("SECTION_XAPP");
+        break;
+    default:
+        return ("SECTION_MISC");
+        break;
+    }
+}
+
+RCPackageSection
+rc_string_to_package_section (gchar *section)
+{
+    if (!strcmp (section, "SECTION_OFFICE")) {
+        return (SECTION_OFFICE);
+    } else if (!strcmp (section, "SECTION_IMAGING")) {
+        return (SECTION_IMAGING);
+    } else if (!strcmp (section, "SECTION_PIM")) {
+        return (SECTION_PIM);
+    } else if (!strcmp (section, "SECTION_GAME")) {
+        return (SECTION_GAME);
+    } else if (!strcmp (section, "SECTION_MULTIMEDIA")) {
+        return (SECTION_MULTIMEDIA);
+    } else if (!strcmp (section, "SECTION_INTERNET")) {
+        return (SECTION_INTERNET);
+    } else if (!strcmp (section, "SECTION_UTIL")) {
+        return (SECTION_UTIL);
+    } else if (!strcmp (section, "SECTION_SYSTEM")) {
+        return (SECTION_SYSTEM);
+    } else if (!strcmp (section, "SECTION_DOC")) {
+        return (SECTION_DOC);
+    } else if (!strcmp (section, "SECTION_DEVEL")) {
+        return (SECTION_DEVEL);
+    } else if (!strcmp (section, "SECTION_DEVELUTIL")) {
+        return (SECTION_DEVELUTIL);
+    } else if (!strcmp (section, "SECTION_LIBRARY")) {
+        return (SECTION_LIBRARY);
+    } else if (!strcmp (section, "SECTION_XAPP")) {
+        return (SECTION_XAPP);
+    } else {
+        return (SECTION_MISC);
+    }
+}

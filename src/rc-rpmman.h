@@ -25,7 +25,7 @@
 
 #include <rpm/rpmlib.h>
 
-#include "rc-packman.h"
+#include <libredcarpet/rc-packman.h>
 
 #define GTK_TYPE_RC_RPMMAN        (rc_rpmman_get_type ())
 #define RC_RPMMAN(obj)            (GTK_CHECK_CAST ((obj), \

@@ -1,19 +1,19 @@
 #ifndef _LIBREDCARPET_H
 #define _LIBREDCARPET_H
 
-#include "deps.h"
-#include "rc-distro.h"
-#include "pkginfo.h"
-#include "rc-channel.h"
-#include "rc-common.h"
-#include "rc-distman.h"
-#include "rc-md5.h"
-#include "rc-package-dep.h"
-#include "rc-package-spec.h"
-#include "rc-package-update.h"
-#include "rc-package.h"
-#include "rc-packman.h"
-#include "rc-util.h"
-#include "xml-util.h"
+#include <libredcarpet/deps.h>
+#include <libredcarpet/rc-distro.h>
+#include <libredcarpet/rc-package-info.h>
+#include <libredcarpet/rc-channel.h>
+#include <libredcarpet/rc-common.h>
+#include <libredcarpet/rc-distman.h>
+#include <libredcarpet/rc-md5.h>
+#include <libredcarpet/rc-package-dep.h>
+#include <libredcarpet/rc-package-spec.h>
+#include <libredcarpet/rc-package-update.h>
+#include <libredcarpet/rc-package.h>
+#include <libredcarpet/rc-packman.h>
+#include <libredcarpet/rc-util.h>
+#include <libredcarpet/xml-util.h>
 
 #endif

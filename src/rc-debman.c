@@ -18,10 +18,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include "rc-packman-private.h"
-
-#include "rc-debman.h"
-#include "rc-common.h"
+#include <libredcarpet/rc-packman-private.h>
+#include <libredcarpet/rc-debman.h>
+#include <libredcarpet/rc-common.h>
+#include <libredcarpet/rc-util.h>
+#include <libredcarpet/rc-line-buf.h>
+#include <libredcarpet/deps.h>
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -40,10 +42,6 @@
 #include <sys/stat.h>
 
 #include <gdk/gdkkeysyms.h>
-
-#include "rc-util.h"
-#include "rc-line-buf.h"
-#include "deps.h"
 
 static void rc_debman_class_init (RCDebmanClass *klass);
 static void rc_debman_init       (RCDebman *obj);
@@ -1602,6 +1600,8 @@ rc_debman_query_file (RCPackman *p, gchar *filename)
     RCLineBuf *lb;
     DebmanQueryInfo dqi;
     GMainLoop *loop;
+    RCPackageDepItem *dep_item;
+    RCPackageDep *dep = NULL;
 
     pipe (rfds);
     fcntl (rfds[0], F_SETFL, O_NONBLOCK);
@@ -1682,6 +1682,14 @@ rc_debman_query_file (RCPackman *p, gchar *filename)
             dqi.buf_pkg->description = get_description (dqi.desc_buf);
             dqi.desc_buf = NULL;
         }
+
+        /* Make the package provide itself (that's what we like to do,
+           anyway) */
+        dep_item =
+            rc_package_dep_item_new_from_spec ((RCPackageSpec *)dqi.buf_pkg,
+                                               RC_RELATION_EQUAL);
+        dep = g_slist_append (dep, dep_item);
+        dqi.buf_pkg->provides = g_slist_append (dqi.buf_pkg->provides, dep);
 
         return (dqi.buf_pkg);
     }
@@ -1910,27 +1918,27 @@ verify_status (RCPackman *p)
 static RCVerificationSList *
 rc_debman_verify (RCPackman *p, RCPackage *pkg)
 {
-    RCPackageUpdate *update;
     RCVerificationSList *ret = NULL;
+    RCPackageUpdate *update = (RCPackageUpdate *)pkg->history->data;
 
     g_assert (p);
     g_assert (pkg);
-    g_assert (pkg->filename);
-
-    update = (RCPackageUpdate *)pkg->history->data;
+    g_assert (pkg->package_filename);
 
     if (update->md5sum) {
         RCVerification *verification;
 
-        verification = rc_verify_md5_string (pkg->filename, update->md5sum);
+        verification = rc_verify_md5_string (pkg->package_filename,
+                                             update->md5sum);
 
         ret = g_slist_append (ret, verification);
     }
 
-    if (pkg->signature) {
+    if (pkg->signature_filename) {
         RCVerification *verification;
 
-        verification = rc_verify_gpg (pkg->filename, pkg->signature);
+        verification = rc_verify_gpg (pkg->package_filename,
+                                      pkg->signature_filename);
 
         ret = g_slist_append (ret, verification);
     }

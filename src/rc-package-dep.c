@@ -1,6 +1,9 @@
 #include <stdio.h>
 
-#include "rc-package-dep.h"
+#include <libredcarpet/rc-package-dep.h>
+#include <libredcarpet/xml-util.h>
+
+#include <gnome-xml/tree.h>
 
 /* #define DEBUG 50 */
 
@@ -259,27 +262,56 @@ rc_package_dep_item_verify_relation (RCPackageDepItem *dep, RCPackageSpec *spec)
     return FALSE;
 }
 
-const gchar *
-rc_relation_string (gint rel, gboolean words)
+RCPackageRelation
+rc_string_to_package_relation (const gchar *relation)
 {
-    if (rel == RC_RELATION_ANY)
-        return "(any)";
-    if (rel == RC_RELATION_EQUAL)
-        return (words ? "equal to" : "==");
-    if (rel == RC_RELATION_GREATER)
-        return (words ? "greater than" : ">");
-    if (rel == (RC_RELATION_GREATER | RC_RELATION_EQUAL))
-        return (words ? "greater than or equal to" : ">=");
-    if (rel == RC_RELATION_LESS)
-        return (words ? "less than" : "<");
-    if (rel == (RC_RELATION_LESS | RC_RELATION_EQUAL))
-        return (words ? "less than or equal to" : "<=");
-    if (rel == (RC_RELATION_LESS | RC_RELATION_GREATER))
-        return (words ? "not equal to" : "!=");
-
-    return "(?)";
+    if (!strcmp (relation, "(any)")) {
+        return (RC_RELATION_ANY);
+    } else if (!strcmp (relation, "=")) {
+        return (RC_RELATION_EQUAL);
+    } else if (!strcmp (relation, "<")) {
+        return (RC_RELATION_LESS);
+    } else if (!strcmp (relation, "<=")) {
+        return (RC_RELATION_LESS_EQUAL);
+    } else if (!strcmp (relation, ">")) {
+        return (RC_RELATION_GREATER);
+    } else if (!strcmp (relation, ">=")) {
+        return (RC_RELATION_GREATER_EQUAL);
+    } else {
+        return (RC_RELATION_INVALID);
+    }
 }
 
+const gchar *
+rc_package_relation_to_string (RCPackageRelation relation, gboolean words)
+{
+    switch (relation) {
+    case RC_RELATION_ANY:
+        return ("(any)");
+        break;
+    case RC_RELATION_EQUAL:
+        return (words ? "equal to" : "=");
+        break;
+    case RC_RELATION_LESS:
+        return (words ? "less than" : "<");
+        break;
+    case RC_RELATION_LESS_EQUAL:
+        return (words ? "less than or equal to" : "<=");
+        break;
+    case RC_RELATION_GREATER:
+        return (words ? "greater than" : ">");
+        break;
+    case RC_RELATION_GREATER_EQUAL:
+        return (words ? "greater than or equal to" : ">=");
+        break;
+    case RC_RELATION_NOT_EQUAL:
+        return (words ? "not equal to" : "!=");
+        break;
+    default:
+        return ("(invalid)");
+        break;
+    }
+}
 
 /* Returns:
  *  1 if b is a more restrictive version of a
@@ -450,4 +482,115 @@ rc_package_dep_item_is_subset (RCPackageDepItem *a, RCPackageDepItem *b)
     }
 
     return -1;                  /* always safe -- means we won't guarantee anything about these 2 */
+}
+
+static xmlNode *
+rc_package_dep_item_to_xml_node (RCPackageDepItem *dep_item)
+{
+    xmlNode *dep_node;
+
+    dep_node = xmlNewNode (NULL, "dep");
+
+    xmlSetProp (dep_node, "name", dep_item->spec.name);
+
+    if (dep_item->relation != RC_RELATION_ANY) {
+        xmlSetProp (dep_node, "op",
+                    rc_package_relation_to_string (dep_item->relation, FALSE));
+
+        if (dep_item->spec.epoch > 0) {
+            gchar *tmp;
+
+            tmp = g_strdup_printf ("%d", dep_item->spec.epoch);
+            xmlSetProp (dep_node, "epoch", tmp);
+            g_free (tmp);
+        }
+
+        if (dep_item->spec.version) {
+            xmlSetProp (dep_node, "version", dep_item->spec.version);
+        }
+
+        if (dep_item->spec.release) {
+            xmlSetProp (dep_node, "release", dep_item->spec.release);
+        }
+    }
+
+    return (dep_node);
+}
+
+xmlNode *
+rc_package_dep_to_xml_node (RCPackageDep *dep)
+{
+    if (!dep->next) {
+        /* The simple case, a single non-OR dependency */
+
+        return (rc_package_dep_item_to_xml_node
+                ((RCPackageDepItem *)dep->data));
+    } else {
+        xmlNode *or_node;
+        RCPackageDep *dep_iter;
+
+        or_node = xmlNewNode (NULL, "or");
+
+        for (dep_iter = dep; dep_iter; dep_iter = dep_iter->next) {
+            RCPackageDepItem *dep_item = (RCPackageDepItem *)(dep_iter->data);
+            xmlAddChild (or_node, rc_package_dep_item_to_xml_node (dep_item));
+        }
+
+        return (or_node);
+    }
+}
+
+static RCPackageDepItem *
+rc_xml_node_to_package_dep_item (xmlNode *node)
+{
+    RCPackageDepItem *dep_item;
+    gchar *tmp;
+
+    if (g_strcasecmp (node->name, "dep")) {
+        return (NULL);
+    }
+
+    /* FIXME: this sucks */
+    dep_item = g_new0 (RCPackageDepItem, 1);
+
+    dep_item->spec.name = xml_get_prop (node, "name");
+    tmp = xml_get_prop (node, "op");
+    if (tmp) {
+        dep_item->relation = rc_string_to_package_relation (tmp);
+        dep_item->spec.epoch =
+            xml_get_guint32_value_default (node, "epoch", 0);
+        dep_item->spec.version =
+            xml_get_prop (node, "version");
+        dep_item->spec.release =
+            xml_get_prop (node, "release");
+        g_free (tmp);
+    } else {
+        dep_item->relation = RC_RELATION_ANY;
+    }
+
+    return (dep_item);
+}
+
+RCPackageDep *
+rc_xml_node_to_package_dep (xmlNode *node)
+{
+    RCPackageDep *dep = NULL;
+
+    if (!g_strcasecmp (node->name, "dep")) {
+        dep = g_slist_append (dep, rc_xml_node_to_package_dep_item (node));
+        return (dep);
+    } else if (!g_strcasecmp (node->name, "or")) {
+#if LIBXML_VERSION < 20000
+        xmlNode *iter = node->childs;
+#else
+        xmlNode *iter = node->children;
+#endif
+
+        while (iter) {
+            dep = g_slist_append (dep, rc_xml_node_to_package_dep_item (iter));
+            iter = iter->next;
+        }
+    }
+
+    return (dep);
 }

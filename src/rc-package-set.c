@@ -24,10 +24,39 @@
 #include <glib.h>
 #include <string.h>
 
-#include "rc-package-set.h"
+#include <libredcarpet/rc-package-set.h>
+#include <libredcarpet/rc-util.h>
+#include <libredcarpet/xml-util.h>
 
-#include "rc-util.h"
-#include "xml-util.h"
+RCPackageSet *
+rc_package_set_new ()
+{
+    RCPackageSet *set;
+
+    set = g_new0 (RCPackageSet, 1);
+
+    return (set);
+}
+
+void
+rc_package_set_free (RCPackageSet *set)
+{
+    g_free (set->name);
+
+    g_free (set->description);
+
+    g_slist_foreach (set->packages, (GFunc)g_free, NULL);
+
+    g_free (set);
+}
+
+void
+rc_package_set_slist_free (RCPackageSetSList *set_list)
+{
+    g_slist_foreach (set_list, (GFunc)rc_package_set_free, NULL);
+
+    g_slist_free (set_list);
+}
 
 RCPackageSetSList *
 rc_package_set_parse (char *buf,
@@ -133,4 +162,3 @@ rc_package_set_parse (char *buf,
 
     return psetl;
 }
-

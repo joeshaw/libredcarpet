@@ -23,6 +23,8 @@ libredcarpet_a_SOURCES =		\
 	rc-package-spec.h		\
 	rc-package-dep.c		\
 	rc-package-dep.h		\
+	rc-package-info.c		\
+	rc-package-info.h		\
 	rc-package-update.c		\
 	rc-package-update.h		\
 	rc-package-set.c		\
@@ -40,8 +42,6 @@ libredcarpet_a_SOURCES =		\
         deps.c                          \
         deps.h                          \
         deps-private.h                  \
-        pkginfo.c                       \
-        pkginfo.h                       \
 	rc-common.h			\
         rc-distman.c                    \
         rc-distman.h                    \

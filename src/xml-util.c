@@ -60,22 +60,6 @@ xml_get_value(xmlNode *node, const gchar *name)
     return NULL;
 } /* xml_get_value */
 
-gchar *
-xml_get_prop(xmlNode *node, const gchar *name)
-{
-    xmlChar *ret;
-    gchar *gs;
-
-    ret = xmlGetProp(node, name);
-    if (ret) {
-        gs = g_strdup (ret);
-        xmlFree (ret);
-        return gs;
-    } else {
-        return NULL;
-    }
-} /* xml_get_prop */
-
 gint32 xml_get_gint32_value_default (xmlNode *node, const gchar *name, gint32 def)
 {
     gint32 z;
@@ -136,4 +120,69 @@ xml_get_guint32_value(xmlNode *node, const gchar *name, guint32 *value)
     g_free (strval);
     *value = z;
     return TRUE;
+}
+
+gchar *
+xml_get_prop(xmlNode *node, const gchar *name)
+{
+    xmlChar *ret;
+    gchar *gs;
+
+    ret = xmlGetProp(node, name);
+    if (ret) {
+        gs = g_strdup (ret);
+        xmlFree (ret);
+        return gs;
+    } else {
+        return NULL;
+    }
+} /* xml_get_prop */
+
+guint32
+xml_get_guint32_prop_default (xmlNode *node, const gchar *name, guint32 def)
+{
+    xmlChar *buf;
+    guint32 ret;
+
+    buf = xmlGetProp (node, name);
+
+    if (buf) {
+        ret = strtol (buf, NULL, 10);
+        xmlFree (buf);
+        return (ret);
+    } else {
+        return (def);
+    }
+} /* xml_get_guint32_prop_default */
+
+gchar *
+xml_get_content (xmlNode *node)
+{
+    xmlChar *buf;
+    gchar *ret;
+
+    buf = xmlNodeGetContent (node);
+
+    ret = g_strdup (buf);
+
+    xmlFree (buf);
+
+    return (ret);
+}
+
+guint32
+xml_get_guint32_content_default (xmlNode *node, guint32 def)
+{
+    xmlChar *buf;
+    guint32 ret;
+
+    buf = xmlNodeGetContent (node);
+
+    if (buf) {
+        ret = strtol (buf, NULL, 10);
+        xmlFree (buf);
+        return (ret);
+    } else {
+        return (def);
+    }
 }

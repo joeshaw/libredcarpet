@@ -23,13 +23,6 @@ enum _RCPackageSection {
     SECTION_LAST
 };
 
-typedef struct {
-    char *name;
-    RCPackageSection sec;
-} SecTable;
-
-extern SecTable sectable[];
-
 typedef struct _RCPackageSpec RCPackageSpec;
 
 struct _RCPackageSpec {
@@ -70,5 +63,9 @@ gint rc_package_spec_compare (gconstpointer ptra, gconstpointer ptrb);
 gint rc_package_spec_equal (gconstpointer ptra, gconstpointer ptrb);
 
 gchar *rc_package_spec_to_str (RCPackageSpec *spec);
+
+const gchar *rc_package_section_to_string (RCPackageSection section);
+
+RCPackageSection rc_string_to_package_section (gchar *section);
 
 #endif /* _RC_PACKAGE_SPEC_H */

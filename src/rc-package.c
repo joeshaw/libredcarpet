@@ -18,7 +18,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include "rc-package.h"
+#include <libredcarpet/rc-package.h>
+#include <libredcarpet/xml-util.h>
+
+#include <gnome-xml/tree.h>
 
 RCPackage *
 rc_package_new (void)
@@ -42,6 +45,7 @@ rc_package_copy (RCPackage *old_pkg)
     pkg->requires = rc_package_dep_slist_copy (old_pkg->requires);
     pkg->provides = rc_package_dep_slist_copy (old_pkg->provides);
     pkg->conflicts = rc_package_dep_slist_copy (old_pkg->conflicts);
+
     pkg->suggests = rc_package_dep_slist_copy (old_pkg->suggests);
     pkg->recommends = rc_package_dep_slist_copy (old_pkg->recommends);
 
@@ -52,8 +56,8 @@ rc_package_copy (RCPackage *old_pkg)
 
     pkg->hold = old_pkg->hold;
 
-    pkg->filename = g_strdup (old_pkg->filename);
-    pkg->signature = g_strdup (old_pkg->signature);
+    pkg->package_filename = g_strdup (old_pkg->package_filename);
+    pkg->signature_filename = g_strdup (old_pkg->signature_filename);
 
     return (pkg);
 }
@@ -68,6 +72,7 @@ rc_package_free (RCPackage *rcp)
     rc_package_dep_slist_free (rcp->requires);
     rc_package_dep_slist_free (rcp->provides);
     rc_package_dep_slist_free (rcp->conflicts);
+
     rc_package_dep_slist_free (rcp->suggests);
     rc_package_dep_slist_free (rcp->recommends);
 
@@ -76,8 +81,8 @@ rc_package_free (RCPackage *rcp)
 
     rc_package_update_slist_free (rcp->history);
 
-    g_free (rcp->filename);
-    g_free (rcp->signature);
+    g_free (rcp->package_filename);
+    g_free (rcp->signature_filename);
 
     g_free (rcp);
 } /* rc_package_free */
@@ -204,3 +209,222 @@ rc_package_hash_table_by_string_to_list (RCPackageHashTableByString *ht)
     return l;
 }
 
+xmlNode *
+rc_package_to_xml_node (RCPackage *package)
+{
+    xmlNode *package_node;
+    xmlNode *tmp_node;
+    RCPackageUpdateSList *history_iter;
+    RCPackageDepSList *dep_iter;
+
+    package_node = xmlNewNode (NULL, "package");
+
+    xmlNewTextChild (package_node, NULL, "name", package->spec.name);
+
+    xmlNewTextChild (package_node, NULL, "summary", package->summary);
+
+    xmlNewTextChild (package_node, NULL, "description", package->description);
+
+    xmlNewTextChild (package_node, NULL, "section",
+                     rc_package_section_to_string (package->spec.section));
+
+    if (package->history) {
+        tmp_node = xmlNewChild (package_node, NULL, "history", NULL);
+        for (history_iter = package->history; history_iter;
+             history_iter = history_iter->next)
+        {
+            RCPackageUpdate *update = (RCPackageUpdate *)(history_iter->data);
+            xmlAddChild (tmp_node, rc_package_update_to_xml_node (update));
+        }
+    }
+
+    if (package->requires) {
+        tmp_node = xmlNewChild (package_node, NULL, "requires", NULL);
+        for (dep_iter = package->requires; dep_iter;
+             dep_iter = dep_iter->next)
+        {
+            RCPackageDep *dep = (RCPackageDep *)(dep_iter->data);
+
+            xmlAddChild (tmp_node, rc_package_dep_to_xml_node (dep));
+        }
+    }
+
+    if (package->recommends) {
+        tmp_node = xmlNewChild (package_node, NULL, "recommends", NULL);
+        for (dep_iter = package->recommends; dep_iter;
+             dep_iter = dep_iter->next)
+        {
+            RCPackageDep *dep = (RCPackageDep *)(dep_iter->data);
+
+            xmlAddChild (tmp_node, rc_package_dep_to_xml_node (dep));
+        }
+    }
+
+    if (package->suggests) {
+        tmp_node = xmlNewChild (package_node, NULL, "suggests", NULL);
+        for (dep_iter = package->suggests; dep_iter;
+             dep_iter = dep_iter->next)
+        {
+            RCPackageDep *dep = (RCPackageDep *)(dep_iter->data);
+
+            xmlAddChild (tmp_node, rc_package_dep_to_xml_node (dep));
+        }
+    }
+
+    if (package->conflicts) {
+        tmp_node = xmlNewChild (package_node, NULL, "conflicts", NULL);
+        for (dep_iter = package->conflicts; dep_iter;
+             dep_iter = dep_iter->next)
+        {
+            RCPackageDep *dep = (RCPackageDep *)(dep_iter->data);
+
+            xmlAddChild (tmp_node, rc_package_dep_to_xml_node (dep));
+        }
+    }
+
+    if (package->provides) {
+        tmp_node = xmlNewChild (package_node, NULL, "provides", NULL);
+        for (dep_iter = package->provides; dep_iter;
+             dep_iter = dep_iter->next)
+        {
+            RCPackageDep *dep = (RCPackageDep *)(dep_iter->data);
+
+            xmlAddChild (tmp_node, rc_package_dep_to_xml_node (dep));
+        }
+    }
+
+    return (package_node);
+}
+
+RCPackage *
+rc_xml_node_to_package (xmlNode *node)
+{
+    RCPackage *package;
+    xmlNode *iter;
+    RCPackageUpdateSList *update_iter;
+
+    if (g_strcasecmp (node->name, "package")) {
+        return (NULL);
+    }
+
+    package = rc_package_new ();
+
+#if LIBXML_VERSION < 20000
+    iter = node->childs;
+#else
+    iter = node->children;
+#endif
+
+    while (iter) {
+        if (!g_strcasecmp (iter->name, "name")) {
+            package->spec.name = xml_get_content (iter);
+        } else if (!g_strcasecmp (iter->name, "summary")) {
+            package->summary = xml_get_content (iter);
+        } else if (!g_strcasecmp (iter->name, "description")) {
+            package->description = xml_get_content (iter);
+        } else if (!g_strcasecmp (iter->name, "section")) {
+            gchar *tmp = xml_get_content (iter);
+            package->spec.section =
+                rc_string_to_package_section (tmp);
+            g_free (tmp);
+        } else if (!g_strcasecmp (iter->name, "history")) {
+            xmlNode *iter2;
+#if LIBXML_VERSION < 20000
+            iter2 = iter->childs;
+#else
+            iter2 = iter->children;
+#endif
+            while (iter2) {
+                package->history =
+                    g_slist_append (package->history,
+                                    rc_xml_node_to_package_update (iter2));
+                iter2 = iter2->next;
+            }
+        } else if (!g_strcasecmp (iter->name, "requires")) {
+            xmlNode *iter2;
+#if LIBXML_VERSION < 20000
+            iter2 = iter->childs;
+#else
+            iter2 = iter->children;
+#endif
+            while (iter2) {
+                package->requires =
+                    g_slist_append (package->requires,
+                                    rc_xml_node_to_package_dep (iter2));
+                iter2 = iter2->next;
+            }
+        } else if (!g_strcasecmp (iter->name, "recommends")) {
+            xmlNode *iter2;
+#if LIBXML_VERSION < 20000
+            iter2 = iter->childs;
+#else
+            iter2 = iter->children;
+#endif
+            while (iter2) {
+                package->recommends =
+                    g_slist_append (package->recommends,
+                                    rc_xml_node_to_package_dep (iter2));
+                iter2 = iter2->next;
+            }
+        } else if (!g_strcasecmp (iter->name, "suggests")) {
+            xmlNode *iter2;
+#if LIBXML_VERSION < 20000
+            iter2 = iter->childs;
+#else
+            iter2 = iter->children;
+#endif
+            while (iter2) {
+                package->suggests =
+                    g_slist_append (package->suggests,
+                                    rc_xml_node_to_package_dep (iter2));
+                iter2 = iter2->next;
+            }
+        } else if (!g_strcasecmp (iter->name, "conflicts")) {
+            xmlNode *iter2;
+#if LIBXML_VERSION < 20000
+            iter2 = iter->childs;
+#else
+            iter2 = iter->children;
+#endif
+            while (iter2) {
+                package->conflicts =
+                    g_slist_append (package->conflicts,
+                                    rc_xml_node_to_package_dep (iter2));
+                iter2 = iter2->next;
+            }
+        } else if (!g_strcasecmp (iter->name, "provides")) {
+            xmlNode *iter2;
+#if LIBXML_VERSION < 20000
+            iter2 = iter->childs;
+#else
+            iter2 = iter->children;
+#endif
+            while (iter2) {
+                package->provides =
+                    g_slist_append (package->provides,
+                                    rc_xml_node_to_package_dep (iter2));
+                iter2 = iter2->next;
+            }
+        } else {
+            /* FIXME: do we want to bitch to the user here? */
+        }
+
+        iter = iter->next;
+    }
+
+    package->spec.epoch =
+        ((RCPackageUpdate *)package->history->data)->spec.epoch;
+    package->spec.version = g_strdup (
+        ((RCPackageUpdate *)package->history->data)->spec.version);
+    package->spec.release = g_strdup (
+        ((RCPackageUpdate *)package->history->data)->spec.release);
+
+    for (update_iter = package->history; update_iter;
+         update_iter = update_iter->next)
+    {
+        RCPackageUpdate *update = (RCPackageUpdate *)(update_iter->data);
+        update->spec.name = g_strdup (package->spec.name);
+    }
+
+    return (package);
+}

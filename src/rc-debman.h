@@ -23,7 +23,7 @@
 
 #include <gtk/gtk.h>
 
-#include "rc-packman.h"
+#include <libredcarpet/rc-packman.h>
 
 #define GTK_TYPE_RC_DEBMAN        (rc_debman_get_type ())
 #define RC_DEBMAN(obj)            (GTK_CHECK_CAST ((obj), \
