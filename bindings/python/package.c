@@ -381,10 +381,11 @@ static int
 PyPackage_init (PyObject *self, PyObject *args, PyObject *kwds)
 {
 	char *xml = NULL;
-	static char *kwlist[] = {"xml", NULL};
+	static char *kwlist[] = {"xml", "channel", NULL};
 	PyPackage *py_package = (PyPackage *) self;
+	PyObject *py_channel = NULL;
 
-	if (! PyArg_ParseTupleAndKeywords (args, kwds, "|s", kwlist, &xml)) {
+	if (! PyArg_ParseTupleAndKeywords (args, kwds, "|sO", kwlist, &xml, &py_channel)) {
 		PyErr_SetString (PyExc_RuntimeError, "Can't parse arguments");
 		return -1;
 	}
@@ -394,12 +395,19 @@ PyPackage_init (PyObject *self, PyObject *args, PyObject *kwds)
 	} else {
 		xmlNode *node;
 		xmlDoc *doc;
+		RCChannel *channel;
 
 		doc = rc_parse_xml_from_buffer (xml, strlen (xml));
 
 		node = xmlDocGetRootElement (doc);
+
+		if (py_channel != NULL) {
+			channel = PyChannel_get_channel(py_channel);
+		} else {
+			channel = NULL;
+		}
 		
-		py_package->package = rc_xml_node_to_package (node, NULL);
+		py_package->package = rc_xml_node_to_package (node, channel);
 
 		xmlFreeDoc (doc);
 	}

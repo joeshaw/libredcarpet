@@ -105,7 +105,7 @@ PyWorld_add_channel (PyObject *self, PyObject *args, PyObject *kwds)
 	gboolean hidden = FALSE;
 	int subd_priority = -1;
 	int unsubd_priority = -1;
-	static char *kwlist[] = { "hidden", "subd_priority", "unsubd_priority", NULL };
+	static char *kwlist[] = { "channel_name", "alias", "channel_id", "type" ,"hidden", "subd_priority", "unsubd_priority", NULL };
 
 	if (! PyArg_ParseTupleAndKeywords (args, kwds, "sssi|iii", kwlist,
 					   &channel_name, &alias,

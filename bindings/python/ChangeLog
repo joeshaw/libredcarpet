@@ -1,0 +1,6 @@
+2003-08-24  James Willcox  <james@ximian.com>
+
+	* package.c: (PyPackage_init):  allow pkg xml and a channel to be passed
+	* world.c: (PyWorld_add_channel):  add keywords for all the args
+
+	Start keeping a ChangeLog
