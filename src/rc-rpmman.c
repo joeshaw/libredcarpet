@@ -1550,13 +1550,6 @@ vercmp(const char * a, const char * b)
         str1 = one;
         str2 = two;
 
-        /* A number vs. word comparison always goes in favor of the word. Ie:
-           helix1 beats 1. */
-        if (!isdigit(*str1) && isdigit(*str2))
-            return 1;
-        else if (isdigit(*str1) && !isdigit(*str2))
-            return -1;
-
         /* grab first completely alpha or completely numeric segment */
         /* leave one and two pointing to the start of the alpha or numeric */
         /* segment and walk str1 and str2 to end of segment */
@@ -1579,16 +1572,8 @@ vercmp(const char * a, const char * b)
 
         /* take care of the case where the two version segments are */
         /* different types: one numeric and one alpha */
-        if (one == str1) {
-            *str1 = oldch1;
-            *str2 = oldch2;
-            return -1;        /* arbitrary */
-        }
-        if (two == str2) {
-            *str1 = oldch1;
-            *str2 = oldch2;
-            return -1;
-        }
+        if (one == str1) return -1;     /* arbitrary */
+        if (two == str2) return -1;
 
         if (isnum) {
             /* this used to be done by converting the digit segments */
@@ -1600,16 +1585,8 @@ vercmp(const char * a, const char * b)
             while (*two == '0') two++;
 
             /* whichever number has more digits wins */
-            if (strlen(one) > strlen(two)) {
-                *str1 = oldch1;
-                *str2 = oldch2;
-                return 1;
-            }
-            if (strlen(two) > strlen(one)) {
-                *str1 = oldch1;
-                *str2 = oldch2;
-                return -1;
-            }
+            if (strlen(one) > strlen(two)) return 1;
+            if (strlen(two) > strlen(one)) return -1;
         }
 
         /* strcmp will return which one is greater - even if the two */
@@ -1617,11 +1594,7 @@ vercmp(const char * a, const char * b)
         /* if they are equal because there might be more segments to */
         /* compare */
         rc = strcmp(one, two);
-        if (rc) {
-            *str1 = oldch1;
-            *str2 = oldch2;
-            return rc;
-        }
+        if (rc) return rc;
 
         /* restore character that was replaced by null above */
         *str1 = oldch1;
@@ -1636,7 +1609,7 @@ vercmp(const char * a, const char * b)
     if ((!*one) && (!*two)) return 0;
 
     /* whichever version still has characters left over wins */
- if (!*one) return -1; else return 1;
+    if (!*one) return -1; else return 1;
 }
 
 static gint

@@ -1,3 +1,8 @@
+2001-01-30  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c (vercmp): fixed to be more like the one in rpm4,
+	fixes the xinetd bug on rh7
+
 2001-01-30  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c: Tasty treats for debian users. Less crash, more happy!
