@@ -70,8 +70,7 @@ rc_resolver_context_new_child (RCResolverContext *parent)
     RCResolverContext *context = g_new0 (RCResolverContext, 1);
 
     context->refs = 1;
-    context->status = g_hash_table_new (rc_package_spec_hash,
-                                        rc_package_spec_equal);
+    context->status = g_hash_table_new (NULL, NULL);
     context->parent = rc_resolver_context_ref (parent);
     
     if (parent) {
@@ -175,11 +174,11 @@ rc_resolver_context_get_status (RCResolverContext *context,
     g_return_val_if_fail (context != NULL, RC_PACKAGE_STATUS_UNKNOWN);
     g_return_val_if_fail (package != NULL, RC_PACKAGE_STATUS_UNKNOWN);
 
-    /* We often end up getting the status of the same package several times in a row.
-       By caching the status of the last checked package, we can in practice eliminate
-       the need for any hash table lookups in about 50% of our calls to get_status. */
+    /* We often end up getting the status of the same package several times
+       in a row.  By caching the status of the last checked package, we can
+       in practice eliminate the need for any hash table lookups in about
+       50% of our calls to get_status. */
     if (context->last_checked_package
-        && rc_package_spec_equal (&package->spec, &context->last_checked_package->spec)
         && package == context->last_checked_package) {
         return context->last_checked_status;
     }

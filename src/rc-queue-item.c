@@ -497,6 +497,7 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
         RCQueueItem *uninstall_item = rc_queue_item_new_uninstall (rc_queue_item_get_world (item),
                                                                    conflicting_package,
                                                                    "conflict");
+        rc_queue_item_uninstall_set_due_to_conflict (uninstall_item);
         log_info = rc_resolver_info_conflicts_with_new (conflicting_package, package);
         rc_queue_item_add_info (uninstall_item, log_info);
         *new_items = g_slist_prepend (*new_items, uninstall_item);
@@ -1643,12 +1644,13 @@ conflict_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data
         uninstall = rc_queue_item_new_uninstall (info->world, package, "conflict");
         rc_queue_item_uninstall_set_dep (uninstall, info->dep);
 
-        ((RCQueueItem_Uninstall *)uninstall)->due_to_obsolete = info->actually_an_obsolete;
-        
-        if (info->actually_an_obsolete)
+        if (info->actually_an_obsolete) {
+            rc_queue_item_uninstall_set_due_to_obsolete (uninstall);
             log_info = rc_resolver_info_obsoletes_new (package, info->conflicting_package);
-        else
+        } else {
+            rc_queue_item_uninstall_set_due_to_conflict (uninstall);
             log_info = rc_resolver_info_conflicts_with_new (package, info->conflicting_package);
+        }
 
         rc_queue_item_add_info (uninstall, log_info);
         
@@ -1997,7 +1999,10 @@ uninstall_item_process (RCQueueItem *item,
 
         rc_queue_item_log_info (item, context);
 
-        if (uninstall->dep_leading_to_uninstall) {
+        if (uninstall->dep_leading_to_uninstall &&
+            !uninstall->due_to_conflict &&
+            !uninstall->due_to_obsolete)
+        {
             RCResolverInfo *info;
             
             info = rc_resolver_info_missing_req_new (uninstall->package,
@@ -2090,8 +2095,13 @@ uninstall_item_copy (const RCQueueItem *src, RCQueueItem *dest)
     dest_uninstall->package                   = rc_package_ref (src_uninstall->package);
     dest_uninstall->reason                    = g_strdup (src_uninstall->reason);
     dest_uninstall->dep_leading_to_uninstall  = rc_package_dep_ref (src_uninstall->dep_leading_to_uninstall);
-    dest_uninstall->remove_only               = src_uninstall->remove_only;
     dest_uninstall->upgraded_to               = src_uninstall->upgraded_to;
+
+    dest_uninstall->explicitly_requested      = src_uninstall->explicitly_requested;
+    dest_uninstall->remove_only               = src_uninstall->remove_only;
+    dest_uninstall->due_to_conflict           = src_uninstall->due_to_conflict;
+    dest_uninstall->due_to_obsolete           = src_uninstall->due_to_obsolete;
+    dest_uninstall->unlink                    = src_uninstall->unlink;
 }
 
 static int
@@ -2210,4 +2220,26 @@ rc_queue_item_uninstall_set_unlink (RCQueueItem *item)
        processed later.  We want to process unlinks as late as possible...
        this will make our "is this item in use" check more accurate. */
     item->priority = 0;
+}
+
+void
+rc_queue_item_uninstall_set_due_to_conflict (RCQueueItem *item)
+{
+    RCQueueItem_Uninstall *uninstall = (RCQueueItem_Uninstall *) item;
+
+    g_return_if_fail (item != NULL);
+    g_return_if_fail (rc_queue_item_type (item) == RC_QUEUE_ITEM_TYPE_UNINSTALL);
+
+    uninstall->due_to_conflict = TRUE;
+}
+
+void
+rc_queue_item_uninstall_set_due_to_obsolete (RCQueueItem *item)
+{
+    RCQueueItem_Uninstall *uninstall = (RCQueueItem_Uninstall *) item;
+
+    g_return_if_fail (item != NULL);
+    g_return_if_fail (rc_queue_item_type (item) == RC_QUEUE_ITEM_TYPE_UNINSTALL);
+
+    uninstall->due_to_obsolete = TRUE;
 }

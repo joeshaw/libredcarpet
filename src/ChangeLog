@@ -1,3 +1,37 @@
+2003-10-10  Joe Shaw  <joe@ximian.com>
+
+	* rc-queue-item.c (install_item_process): When creating uninstall
+	items due to conflicts, call
+	rc_queue_item_uninstall_set_due_to_conflict().
+	(conflict_process_cb): Call
+	rc_queue_item_uninstall_set_due_to_obsolete() or
+	_due_to_conflict() depending on the info's actually_an_obsolete
+	flag.
+	(uninstall_item_process): If we're uninstalling due to conflict or
+	obsolete, don't display the missing requirement, since it doesn't
+	make any sense.
+	(uninstall_item_copy): Also copy the explicitly_requested,
+	due_to_conflict, due_to_obsolete, and unlink flags.
+	(rc_queue_item_uninstall_set_due_to_conflict,
+	rc_queue_item_uninstall_set_due_to_obsolete): Added these, just
+	sets the appropriate bits.
+
+	* rc-queue-item.h (RCQueueItem_Uninstall): Add a due_to_conflict
+	bit.
+
+	* rc-resolver-context.c (rc_resolver_context_new_child): Create
+	the status hash with NULL, NULL as the parameters so that packages
+	in the hash are compared by pointer value instead of their
+	RCPackageSpecs.  Comparing package specs isn't sufficient since it
+	is common for a package that is installed to have the same spec as
+	a package in a channel.  But since these two packages are not the
+	same package, their statuses could be different and we shouldn't
+	treat them as equal.  This was fixed in the more specific,
+	optimized case by Jon in his commit on 2003-06-17.
+	(rc_resolver_context_get_status): Remove a redundant spec
+	comparison; if the pointers are equal, we can assume that the
+	specs are also equal.
+
 2003-10-08  Joe Shaw  <joe@ximian.com>
 
 	* rpm-ugid.h: "Borrow" a header from RPM in the spirit of
