@@ -28,6 +28,7 @@
 #ifndef __RC_WORLD_H__
 #define __RC_WORLD_H__
 
+#include "rc-packman.h"
 #include "rc-package.h"
 #include "rc-channel.h"
 
@@ -41,6 +42,13 @@ RCWorld   *rc_get_world (void);
 
 RCWorld   *rc_world_new  (void);
 void       rc_world_free (RCWorld *world);
+
+/* Packmanish operations */
+
+void       rc_world_register_packman    (RCWorld   *world,
+                                         RCPackman *packman);
+
+void       rc_world_get_system_packages (RCWorld *world);
 
 /* Channel operations */
 

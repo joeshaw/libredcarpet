@@ -1,3 +1,10 @@
+2002-05-23  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-world.c (rc_world_register_packman): The beginnings of
+	our RCWorld/RCPackman integration...
+	(rc_world_get_system_packages): Use the packman to find all of
+	the packages installed on the system and store them in the world.
+
 2002-05-23  Joe Shaw  <joe@ximian.com>
 
 	* rc-util.c (rc_buffer_map_file): Added, mmap()s a file into an

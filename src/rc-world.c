@@ -27,6 +27,7 @@
 
 #include <config.h>
 #include "rc-world.h"
+#include "rc-world-import.h"
 
 #include "rc-channel-private.h"
 #include "rc-util.h"
@@ -42,6 +43,8 @@ struct _RCWorld {
     int freeze_count;
 
     GSList *channels;
+
+    RCPackman *packman;
 };
 
 typedef struct _RCPackageAndDep RCPackageAndDep;
@@ -312,6 +315,56 @@ rc_world_free (RCWorld *world)
 
 	}
 }
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+/* Packmanish operations */
+
+void
+rc_world_register_packman (RCWorld *world,
+                           RCPackman *packman)
+{
+    g_return_if_fail (world != NULL);
+    g_return_if_fail (RC_IS_PACKMAN (packman));
+    
+    if (world->packman) {
+        g_warning ("Multiple packman registry is not allowed!");
+        return;
+    }
+
+    world->packman = packman;
+}
+
+void
+rc_world_get_system_packages (RCWorld *world)
+{
+    RCPackmanError err;
+    GSList *system_packages;
+
+    g_return_if_fail (world != NULL);
+    g_return_if_fail (world->packman != NULL);
+
+    do {
+
+        system_packages = rc_packman_query_all (world->packman);
+        err = rc_packman_get_error (world->packman);
+
+        if (err) {
+            gchar *reason = rc_packman_get_reason (world->packman);
+            g_warning ("Packman error: %s", reason);
+            g_free (reason);
+            
+            g_assert (err != RC_PACKMAN_ERROR_FATAL);
+        }
+    } while (err);
+        
+    rc_world_remove_packages (world, RC_WORLD_SYSTEM_PACKAGES);
+    rc_world_add_packages_from_slist (world, system_packages);
+        
+    g_slist_free (system_packages);
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 RCChannel *
 rc_world_add_channel (RCWorld *world,
