@@ -690,9 +690,6 @@ rc_rpmman_find_system_headers_v3 (RCRpmman *rpmman, const char *name)
         if (matches.recs[i].recOffset == 0)
             continue;
 
-        if (matches.recs[i].recOffset == 0)
-            continue;
-
         if (!(header = rpmman->rpmdbGetRecord (rpmman->db,
                                                matches.recs[i].recOffset))) {
             rc_packman_set_error (RC_PACKMAN (rpmman), RC_PACKMAN_ERROR_ABORT,

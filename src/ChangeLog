@@ -1,3 +1,8 @@
+2004-12-21  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-rpmman.c (rc_rpmman_find_system_headers_v3): Checking for 0
+	once is quiet enough.
+
 2004-12-09  James Willcox  <james@ximian.com>
 
 	* rc-resolver-context.c: (context_package_collector),
