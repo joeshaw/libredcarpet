@@ -1,3 +1,7 @@
+2003-04-17  Jon Trowbridge  <trow@ximian.com>
+
+	* configure.in: 1.5.0.  Welcome to the bleeding edge.
+
 2003-04-08  Frank Belew  <frb@ximian.com>
 
 	* configure.in: added requirement for autoconf 2.52 or greater

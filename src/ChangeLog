@@ -1,5 +1,10 @@
 2003-04-17  Jon Trowbridge  <trow@ximian.com>
 
+	* rc-debman.c (query_all_read_line_cb): Initialize the provides
+	deps as RC_CHANNEL_ANY.
+	(rc_debman_query_file): Initialize the package's self-provide
+	as RC_CHANNEL_ANY.
+
 	* Lots of small changes throughout lots of files, implementing two
 	  changes:
 	  (1) An RCPackageDep can now specify a channel or a channel
