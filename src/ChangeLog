@@ -1,3 +1,7 @@
+2001-08-01  Ian Peters  <itp@ximian.com>
+
+	* rc-distro.c: s/sun4/sun4u/
+
 2001-08-01  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* libredcarpet/src/rc-package-dep.c: Don't return TRUE
