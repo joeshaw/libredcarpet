@@ -1,3 +1,18 @@
+2002-03-05  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c: renamed configuring to installing in the
+	InstallState struct
+	(transact_cb): since we're doing installs and removes in separate
+	transactions, some of the hairy logic here gets a lot cleaner.
+	still have to count to get configures and removes right,
+	though... :(
+	(render_problems): added.  takes an rpmProblemSet, and adds it,
+	formatted, to the RCPackman error string.
+	(rc_rpmman_transact): massive rewriting.  now assembles an
+	install/remove transaction set, tests it, but then constructs two
+	more, an install only and remove only, to actually run them
+	separately.  please test heavily.
+
 2002-03-05  Joe Shaw  <joe@ximian.com>
 
 	* rc-channel.c (rc_xml_node_to_channel): Move the priority stuff
