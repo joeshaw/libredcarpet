@@ -34,6 +34,7 @@ struct {
     { RC_RESOLVER_INFO_TYPE_CONFLICTS_WITH, "conflicts_with" },
     { RC_RESOLVER_INFO_TYPE_OBSOLETES,      "obsoletes" },
     { RC_RESOLVER_INFO_TYPE_DEPENDS_ON,     "depended_on" },
+    { RC_RESOLVER_INFO_TYPE_CHILD_OF,       "child_of" },
     { RC_RESOLVER_INFO_TYPE_MISC,           "misc" },
     { RC_RESOLVER_INFO_TYPE_INVALID,        "invalid" },
     { RC_RESOLVER_INFO_TYPE_INVALID,        NULL }
@@ -191,6 +192,12 @@ rc_resolver_info_to_string (RCResolverInfo *info)
     case RC_RESOLVER_INFO_TYPE_DEPENDS_ON:
         pkgs = rc_resolver_info_packages_to_string (info, FALSE);
         msg = g_strdup_printf ("depended on %s", pkgs);
+        g_free (pkgs);
+        break;
+
+    case RC_RESOLVER_INFO_TYPE_CHILD_OF:
+        pkgs = rc_resolver_info_packages_to_string (info, FALSE);
+        msg = g_strdup_printf ("part of %s", pkgs);
         g_free (pkgs);
         break;
 
@@ -482,6 +489,27 @@ rc_resolver_info_depends_on_new (RCPackage *package,
     info = g_new0 (RCResolverInfo, 1);
     
     info->type     = RC_RESOLVER_INFO_TYPE_DEPENDS_ON;
+    info->package  = rc_package_ref (package);
+    info->priority = RC_RESOLVER_INFO_PRIORITY_USER;
+
+    info->package_list = g_slist_prepend (info->package_list,
+                                          rc_package_ref (dependency));
+
+    return info;
+}
+
+RCResolverInfo *
+rc_resolver_info_child_of_new (RCPackage *package,
+                               RCPackage *dependency)
+{
+    RCResolverInfo *info;
+
+    g_return_val_if_fail (package != NULL, NULL);
+    g_return_val_if_fail (dependency != NULL, NULL);
+
+    info = g_new0 (RCResolverInfo, 1);
+    
+    info->type     = RC_RESOLVER_INFO_TYPE_CHILD_OF;
     info->package  = rc_package_ref (package);
     info->priority = RC_RESOLVER_INFO_PRIORITY_USER;
 

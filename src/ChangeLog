@@ -1,3 +1,49 @@
+2003-04-21  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-queue-item.c (install_item_process): Do the right thing if we
+	are asked to 'install' and unlinked package.  Removed some dead
+	code.
+	(uninstall_item_process): If this is an unlink, try to determine
+	if the package is required by other installed software.  When
+	uninstalling a package, uninstall its parents.  Do a better job
+	unlinking a package set's children.
+	(uninstall_item_destroy): Unref dep_leading_to_uninstall.
+	(uninstall_item_copy): Ref dep_leading_to_uninstall.
+	(rc_queue_item_uninstall_set_dep): Ref dep_leading_to_uninstall.
+	(rc_queue_item_uninstall_set_unlink): When flagging an uninstall
+	as an unlink, reduce the priority.
+
+	* rc-resolver-context.c: Added handling for a new state,
+	RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_UNLINK.
+	(rc_package_status_to_string): Handle _UNINSTALLED_DUE_TO_UNLINK.
+	(rc_resolver_context_set_status): Ditto.
+	(rc_resolver_context_install_package): Ditto.
+	(rc_resolver_context_uninstall_package): Ditto.
+	(requirement_possible_cb): Ditto.
+	(rc_resolver_context_package_is_possible): Check that
+	children can be installed when trying to pre-determine if it
+	is possible to install a package.
+
+	* rc-resolver-info.c: Added a new 'child of' info type, which we
+	used when we pull in package sets.  This is analogous to the
+	'depends on' type for when we pull in requirements.
+
+	* rc-world.c: Add a 'children_by_name' GHashTable to the RCWorld
+	struct.
+	(rc_world_new): Allocate children_by_name.
+	(rc_world_free): Free children_by_name.
+	(rc_world_freeze): Freeze children_by_name.
+	(rc_world_thaw): Thaw children_by_name.
+	(rc_world_add_package): Store the package's child info in
+	children_by_name.
+	(rc_world_remove_package): Remove from children_by_name.
+	(rc_world_remove_packages): Remove from children_by_name.
+	(rc_world_foreach_parent_package): Added.  Find all parents of a
+	given dep.
+	(rc_world_spew): Spew child info.
+
+	* rc-xml.c (rc_xml_strip): Do the right thing with NULL strings.
+
 2003-04-18  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-world.c (rc_world_get_system_packages): Load the installed

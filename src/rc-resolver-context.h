@@ -37,13 +37,14 @@ typedef enum {
     RC_PACKAGE_STATUS_TO_BE_INSTALLED,
     RC_PACKAGE_STATUS_TO_BE_INSTALLED_SOFT,
     RC_PACKAGE_STATUS_TO_BE_UNINSTALLED,
-    RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE
+    RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE,
+    RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_UNLINK
 } RCPackageStatus;
 
 #define rc_package_status_is_to_be_installed(x) \
 (((x) == RC_PACKAGE_STATUS_TO_BE_INSTALLED) || ((x) == RC_PACKAGE_STATUS_TO_BE_INSTALLED_SOFT))
 #define rc_package_status_is_to_be_uninstalled(x) \
-(((x) == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED) || ((x) == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE))
+(((x) == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED) || ((x) == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE) || ((x) == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_UNLINK))
 
 typedef struct _RCResolverContext RCResolverContext;
 
@@ -109,7 +110,8 @@ gboolean           rc_resolver_context_upgrade_package (RCResolverContext *conte
 gboolean           rc_resolver_context_uninstall_package (RCResolverContext *context,
                                                           RCPackage         *package,
                                                           gboolean           part_of_upgrade,
-                                                          gboolean           due_to_obsolete);
+                                                          gboolean           due_to_obsolete,
+                                                          gboolean           due_to_unlink);
 
 gboolean           rc_resolver_context_package_is_present (RCResolverContext *, RCPackage *);
 gboolean           rc_resolver_context_package_is_absent  (RCResolverContext *, RCPackage *);

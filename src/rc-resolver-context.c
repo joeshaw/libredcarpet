@@ -47,6 +47,8 @@ rc_package_status_to_string (RCPackageStatus status)
         return "to be uninstalled";
     case RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE:
         return "to be uninstalled due to obsolete";
+    case RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_UNLINK:
+        return "to be uninstalled due to unlink";
 
     default:
         return "Huh?";
@@ -148,19 +150,10 @@ rc_resolver_context_set_status (RCResolverContext *context,
 
     old_status = rc_resolver_context_get_status (context, package);
 
-    if (rc_package_status_is_to_be_installed (status)
-        || rc_package_status_is_to_be_uninstalled (status)) {
-        
-        if (status != old_status) {
-            g_hash_table_insert (context->status,
-                                 package,
-                                 GINT_TO_POINTER (status));
-        }
-
-    } else {
-
-        g_assert_not_reached ();
-    
+    if (status != old_status) {
+        g_hash_table_insert (context->status,
+                             package,
+                             GINT_TO_POINTER (status));
     }
 
     /* Update our cache if we changed the status of the last
@@ -212,7 +205,7 @@ rc_resolver_context_install_package (RCResolverContext *context,
                                      gboolean is_soft,
                                      int other_penalty)
 {
-    RCPackageStatus status;
+    RCPackageStatus status, new_status;
     int priority;
     char *msg;
 
@@ -221,7 +214,8 @@ rc_resolver_context_install_package (RCResolverContext *context,
 
     status = rc_resolver_context_get_status (context, package);
 
-    if (rc_package_status_is_to_be_uninstalled (status)) {
+    if (rc_package_status_is_to_be_uninstalled (status)
+        && status != RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_UNLINK) {
         msg = g_strconcat ("Can't install ",
                            rc_package_spec_to_str_static (& package->spec),
                            " since it is already marked as needing to be uninstalled",
@@ -249,10 +243,14 @@ rc_resolver_context_install_package (RCResolverContext *context,
         return FALSE;
     }
 
-    rc_resolver_context_set_status (context, package,
-                                    is_soft ? 
-                                    RC_PACKAGE_STATUS_TO_BE_INSTALLED_SOFT : 
-                                    RC_PACKAGE_STATUS_TO_BE_INSTALLED);
+    if (is_soft)
+        new_status = RC_PACKAGE_STATUS_TO_BE_INSTALLED_SOFT;
+    else if (status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_UNLINK)
+        new_status = RC_PACKAGE_STATUS_INSTALLED;
+    else
+        new_status = RC_PACKAGE_STATUS_TO_BE_INSTALLED;
+
+    rc_resolver_context_set_status (context, package, new_status);
 
     if (status == RC_PACKAGE_STATUS_UNINSTALLED) {
         /* FIXME: Incomplete */
@@ -338,13 +336,16 @@ gboolean
 rc_resolver_context_uninstall_package (RCResolverContext *context,
                                        RCPackage *package,
                                        gboolean part_of_upgrade,
-                                       gboolean due_to_obsolete)
+                                       gboolean due_to_obsolete,
+                                       gboolean due_to_unlink)
 {
     RCPackageStatus status, new_status;
     char *msg;
 
     g_return_val_if_fail (context != NULL, FALSE);
     g_return_val_if_fail (package != NULL, FALSE);
+
+    g_assert (! (due_to_obsolete && due_to_unlink));
 
     status = rc_resolver_context_get_status (context, package);
 
@@ -360,11 +361,13 @@ rc_resolver_context_uninstall_package (RCResolverContext *context,
         return FALSE;
     }
 
-    if (rc_package_status_is_to_be_uninstalled (status)) {
+    if (rc_package_status_is_to_be_uninstalled (status)
+        && status != RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_UNLINK) {
         return TRUE;
     }
     
-    if (status == RC_PACKAGE_STATUS_UNINSTALLED) {
+    if (status == RC_PACKAGE_STATUS_UNINSTALLED
+        || status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_UNLINK) {
         msg = g_strconcat ("Marking package ",
                            rc_package_spec_to_str_static (& package->spec),
                            " as uninstallable",
@@ -378,6 +381,8 @@ rc_resolver_context_uninstall_package (RCResolverContext *context,
 
     if (due_to_obsolete)
         new_status = RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE;
+    else if (due_to_unlink)
+        new_status = RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_UNLINK;
     else
         new_status = RC_PACKAGE_STATUS_TO_BE_UNINSTALLED;
 
@@ -1112,7 +1117,8 @@ requirement_possible_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_
     struct RequirementMetInfo *info = user_data;
     RCPackageStatus status = rc_resolver_context_get_status (info->context, package);
 
-    if (! rc_package_status_is_to_be_uninstalled (status)) {
+    if (! rc_package_status_is_to_be_uninstalled (status)
+        || status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_UNLINK) {
         info->flag = TRUE;
     }
 
@@ -1150,6 +1156,14 @@ rc_resolver_context_package_is_possible (RCResolverContext *context,
     if (package->requires_a)
         for (i = 0; i < package->requires_a->len; i++) {
             RCPackageDep *dep = package->requires_a->data[i];
+            if (! rc_resolver_context_requirement_is_possible (context, dep)) {
+                return FALSE;
+            }
+        }
+
+    if (package->children_a)
+        for (i = 0; i < package->children_a->len; i++) {
+            RCPackageDep *dep = package->children_a->data[i];
             if (! rc_resolver_context_requirement_is_possible (context, dep)) {
                 return FALSE;
             }

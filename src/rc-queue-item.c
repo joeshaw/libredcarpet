@@ -411,7 +411,8 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
         rc_resolver_context_add_info (context, info);
     }
 
-    if (status != RC_PACKAGE_STATUS_UNINSTALLED)
+    if (! (status == RC_PACKAGE_STATUS_UNINSTALLED
+           || status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_UNLINK))
         goto finished;
     
     if (install->upgrades) {
@@ -424,16 +425,6 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
         msg = g_strconcat ("Installing ", pkg_name, NULL);
     }
     
-#if 0
-    if (install->deps_satisfied_by_this_install) {
-        char *deps_str = dep_slist_to_string (install->deps_satisfied_by_this_install);
-        char *new_msg = g_strconcat (msg, " to satisfy ", deps_str, NULL);
-        g_free (deps_str);
-        g_free (msg);
-        msg = new_msg;
-    }
-#endif
-
     rc_resolver_context_add_info_str (context,
                                       package,
                                       RC_RESOLVER_INFO_PRIORITY_VERBOSE,
@@ -1849,13 +1840,35 @@ rc_queue_item_new_conflict (RCWorld *world, RCPackageDep *dep, RCPackage *packag
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
+struct UnlinkCheckInfo {
+    RCResolverContext *context;
+    guint cancel_unlink : 1;
+};
+
+static void
+unlink_check_cb (RCPackage *package, RCPackageDep *dep, gpointer user_data)
+{
+    struct UnlinkCheckInfo *info = user_data;
+
+    if (info->cancel_unlink)
+        return;
+
+    if (! rc_resolver_context_package_is_present (info->context, package))
+        return;
+
+    if (rc_resolver_context_requirement_is_met (info->context, dep))
+        return;
+
+    info->cancel_unlink = TRUE;
+}
+
 struct UninstallProcessInfo {
     RCWorld *world;
     RCResolverContext *context;
     RCPackage *uninstalled_package;
     RCPackage *upgraded_package;
     GSList **require_items;
-    guint remove_only : 1;
+    guint remove_only   : 1;
 };
 
 static void
@@ -1900,10 +1913,66 @@ uninstall_item_process (RCQueueItem *item,
     
     status = rc_resolver_context_get_status (context, uninstall->package);
 
+    /* In the case of an unlink, we only want to uninstall the package if it is
+       being used by something else.  We can't really determine this with 100%
+       accuracy, since some later queue item could cause something that requires
+       the package to be uninstalled.  The alternative is to try to do something
+       really clever... but I'm not clever enough to think of an algorithm that
+         (1) Would do the right thing.
+         (2) Is guaranteed to terminate. (!)
+       so this will have to do.  In practice, I don't think that this is a serious
+       problem. */
+    
+    if (uninstall->unlink) {
+        gboolean unlink_cancelled = FALSE;
+
+        /* If the package is to-be-installed, obviously it is being use! */
+        if (status == RC_PACKAGE_STATUS_TO_BE_INSTALLED) {
+
+            unlink_cancelled = TRUE;
+
+        } else if (status == RC_PACKAGE_STATUS_INSTALLED) {
+            struct UnlinkCheckInfo info;
+
+            /* Flag the package as to-be-uninstalled so that it won't
+               satisfy any other package's deps during this check. */
+            rc_resolver_context_set_status (context, uninstall->package, 
+                                            RC_PACKAGE_STATUS_TO_BE_UNINSTALLED);
+
+            info.context = context;
+            info.cancel_unlink = FALSE;
+
+            for (i=0; i < uninstall->package->provides_a->len && ! info.cancel_unlink; ++i) {
+                RCPackageDep *dep = uninstall->package->provides_a->data[i];
+                rc_world_foreach_requiring_package (world, dep, unlink_check_cb, &info);
+                if (! info.cancel_unlink)
+                    rc_world_foreach_parent_package (world, dep, unlink_check_cb, &info);
+            }
+
+            /* Set the status back to normal. */
+            rc_resolver_context_set_status (context, uninstall->package, status);
+
+            if (info.cancel_unlink)
+                unlink_cancelled = TRUE;
+        }
+
+        if (unlink_cancelled) {
+            gchar *msg;
+            msg = g_strconcat (pkg_str, " is required by other installed packages, "
+                               "so it won't be unlinked.", NULL);
+            rc_resolver_context_add_info_str (context, 
+                                              uninstall->package,
+                                              RC_RESOLVER_INFO_PRIORITY_VERBOSE,
+                                              msg);
+            goto finished;
+        }
+    }
+
     rc_resolver_context_uninstall_package (context,
                                            uninstall->package,
                                            uninstall->upgraded_to != NULL,
-                                           uninstall->due_to_obsolete);
+                                           uninstall->due_to_obsolete,
+                                           uninstall->unlink);
         
     if (status == RC_PACKAGE_STATUS_INSTALLED) {
 
@@ -1915,26 +1984,9 @@ uninstall_item_process (RCQueueItem *item,
             return TRUE;
         }
 
-        rc_resolver_context_set_status (context, uninstall->package,
-                                        RC_PACKAGE_STATUS_TO_BE_UNINSTALLED);
-
         rc_queue_item_log_info (item, context);
 
-#if 0
-        msg = g_strconcat ("Uninstalling ",
-                           pkg_str,
-                           " due to ",
-                           uninstall->reason, 
-                           ": ", 
-                           dep_str, 
-                           NULL);
-        rc_resolver_context_add_info_str (context,  
-                                          uninstall->package, 
-                                          RC_RESOLVER_INFO_PRIORITY_USER,
-                                          msg);
-#endif
-
-        if (uninstall->package->provides_a)
+        if (uninstall->package->provides_a) {
             for (i = 0; i < uninstall->package->provides_a->len; i++) {
                 RCPackageDep *dep = uninstall->package->provides_a->data[i];
                 struct UninstallProcessInfo info;
@@ -1948,22 +2000,41 @@ uninstall_item_process (RCQueueItem *item,
             
                 rc_world_foreach_requiring_package (world, dep, 
                                                     uninstall_process_cb, &info);
+
+                /* When a package is removed, we also remove its parent(s)
+                   in an attempt to avoid broken package sets. */
+                rc_world_foreach_parent_package (world, dep,
+                                                 uninstall_process_cb, &info);
             }
+        }
 
         /* unlink any children */
-        if (uninstall->package->children_a)
+        if (uninstall->package->children_a) {
+            RCPackageDep *parent_dep;
+
+            parent_dep = rc_package_dep_new_from_spec (RC_PACKAGE_SPEC (uninstall->package),
+                                                       RC_RELATION_EQUAL,
+                                                       RC_CHANNEL_ANY,
+                                                       FALSE, FALSE);
+
             for (i = 0; i < uninstall->package->children_a->len; ++i) {
                 RCPackageDep *dep = uninstall->package->children_a->data[i];
                 RCPackage *child;
                 RCQueueItem *uninstall_item;
+                RCResolverInfo *log_info;
+
 
                 if (rc_world_get_single_provider (world, dep,
                                                   RC_CHANNEL_SYSTEM,
                                                   &child)) {
+
                     
                     uninstall_item = rc_queue_item_new_uninstall (world, child,
                                                                   "package-set-fu");
                     rc_queue_item_uninstall_set_unlink (uninstall_item);
+                    rc_queue_item_uninstall_set_dep (uninstall_item, parent_dep);
+                    log_info = rc_resolver_info_child_of_new (child, uninstall->package);
+                    rc_queue_item_add_info (uninstall_item, log_info);
 
                     *new_items = g_slist_prepend (*new_items, uninstall_item);
 
@@ -1971,8 +2042,12 @@ uninstall_item_process (RCQueueItem *item,
                     g_assert_not_reached (); /* FIXME! */
                 }
             }
+
+            rc_package_dep_unref (parent_dep);
+        }
     }
-    
+
+ finished:
     g_free (pkg_str);
     g_free (dep_str);
     rc_queue_item_free (item);
@@ -1984,6 +2059,7 @@ static void
 uninstall_item_destroy (RCQueueItem *item)
 {
     RCQueueItem_Uninstall *uninstall = (RCQueueItem_Uninstall *) item;
+    rc_package_dep_unref (uninstall->dep_leading_to_uninstall);
     g_free (uninstall->reason);
 }
 
@@ -1995,7 +2071,7 @@ uninstall_item_copy (const RCQueueItem *src, RCQueueItem *dest)
 
     dest_uninstall->package                   = src_uninstall->package;
     dest_uninstall->reason                    = g_strdup (src_uninstall->reason);
-    dest_uninstall->dep_leading_to_uninstall  = src_uninstall->dep_leading_to_uninstall;
+    dest_uninstall->dep_leading_to_uninstall  = rc_package_dep_ref (src_uninstall->dep_leading_to_uninstall);
     dest_uninstall->remove_only               = src_uninstall->remove_only;
     dest_uninstall->upgraded_to               = src_uninstall->upgraded_to;
 }
@@ -2064,7 +2140,7 @@ rc_queue_item_uninstall_set_dep (RCQueueItem *item, RCPackageDep *dep)
     g_return_if_fail (rc_queue_item_type (item) == RC_QUEUE_ITEM_TYPE_UNINSTALL);
     g_return_if_fail (dep != NULL);
 
-    uninstall->dep_leading_to_uninstall = dep;
+    uninstall->dep_leading_to_uninstall = rc_package_dep_ref (dep);
 }
 
 void
@@ -2111,4 +2187,9 @@ rc_queue_item_uninstall_set_unlink (RCQueueItem *item)
     g_return_if_fail (rc_queue_item_type (item) == RC_QUEUE_ITEM_TYPE_UNINSTALL);
 
     uninstall->unlink = TRUE;
+
+    /* Reduce the priority so that unlink items will tend to get
+       processed later.  We want to process unlinks as late as possible...
+       this will make our "is this item in use" check more accurate. */
+    item->priority = 0;
 }

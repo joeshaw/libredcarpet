@@ -41,6 +41,7 @@ struct _RCWorld {
     GHashTable *packages_by_name;
     GHashTable *provides_by_name;
     GHashTable *requires_by_name;
+    GHashTable *children_by_name;
     GHashTable *conflicts_by_name;
 
     int freeze_count;
@@ -448,6 +449,7 @@ rc_world_new (RCPackman *packman)
 	world->packages_by_name = hashed_slist_new ();
     world->provides_by_name = hashed_slist_new ();
     world->requires_by_name = hashed_slist_new ();
+    world->children_by_name = hashed_slist_new ();
     world->conflicts_by_name = hashed_slist_new ();
 
     world->packman = packman;
@@ -478,6 +480,7 @@ rc_world_free (RCWorld *world)
         hashed_slist_destroy (world->packages_by_name);
         hashed_slist_destroy (world->provides_by_name);
         hashed_slist_destroy (world->requires_by_name);
+        hashed_slist_destroy (world->children_by_name);
         hashed_slist_destroy (world->conflicts_by_name);
 
         /* Free our channels */
@@ -823,6 +826,7 @@ rc_world_freeze (RCWorld *world)
         g_hash_table_freeze (world->packages_by_name);
         g_hash_table_freeze (world->provides_by_name);
         g_hash_table_freeze (world->requires_by_name);
+        g_hash_table_freeze (world->children_by_name);
         g_hash_table_freeze (world->conflicts_by_name);
 
     }
@@ -850,6 +854,7 @@ rc_world_thaw (RCWorld *world)
         g_hash_table_thaw (world->packages_by_name);
         g_hash_table_thaw (world->provides_by_name);
         g_hash_table_thaw (world->requires_by_name);
+        g_hash_table_thaw (world->children_by_name);
         g_hash_table_thaw (world->conflicts_by_name);
 
     }
@@ -1076,6 +1081,18 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
                               pad);
         }
 
+    /* Store all of the package's children in a hash by name. */
+
+    if (package->children_a)
+        for (i = 0; i < package->children_a->len; i++) {
+            pad = rc_package_and_dep_new_pair (
+                package, package->children_a->data[i]);
+
+            hashed_slist_add (world->children_by_name,
+                              RC_PACKAGE_SPEC (pad->dep)->nameq,
+                              pad);
+        }
+
     /* "Recommends" are treated as requirements. */
 
     if (package->recommends_a)
@@ -1172,6 +1189,10 @@ rc_world_remove_package (RCWorld *world,
                                  remove_package_struct_cb,
                                  package);
 
+    hashed_slist_foreach_remove (world->children_by_name,
+                                 remove_package_struct_cb,
+                                 package);
+
     hashed_slist_foreach_remove (world->conflicts_by_name,
                                  remove_package_struct_cb,
                                  package);
@@ -1241,6 +1262,10 @@ rc_world_remove_packages (RCWorld *world,
                                  channel);
     
     hashed_slist_foreach_remove (world->requires_by_name,
+                                 remove_package_struct_by_channel_cb,
+                                 channel);
+
+    hashed_slist_foreach_remove (world->children_by_name,
                                  remove_package_struct_by_channel_cb,
                                  channel);
 
@@ -2167,6 +2192,56 @@ rc_world_foreach_requiring_package (RCWorld          *world,
     return count;
 }
 
+/* cut&pasted from above: ugh */
+int
+rc_world_foreach_parent_package (RCWorld          *world,
+                                 RCPackageDep     *dep,
+                                 RCPackageAndDepFn fn,
+                                 gpointer          user_data)
+{
+    GSList *slist, *iter;
+    GHashTable *installed;
+    int count = 0;
+
+    g_return_val_if_fail (world != NULL, -1);
+    g_return_val_if_fail (dep != NULL, -1);
+
+    rc_world_conditional_sync (world, rc_package_dep_get_channel (dep));
+
+    slist = hashed_slist_get (world->children_by_name,
+                              RC_PACKAGE_SPEC (dep)->nameq);
+
+    installed = g_hash_table_new (rc_package_spec_hash,
+                                  rc_package_spec_equal);
+
+    for (iter = slist; iter != NULL; iter = iter->next) {
+        RCPackageAndDep *pad = iter->data;
+        if (pad && pad->package && rc_package_is_installed (pad->package))
+            g_hash_table_insert (installed, & pad->package->spec, pad);
+    }
+
+    for (iter = slist; iter != NULL; iter = iter->next) {
+        RCPackageAndDep *pad = iter->data;
+
+        if (pad && rc_package_dep_verify_relation (
+                rc_world_get_packman (world), pad->dep, dep)) {
+
+            /* Skip dups if one of them in installed. */
+            if (rc_package_is_installed (pad->package)
+                || g_hash_table_lookup (installed, & pad->package->spec) == NULL) {
+
+                if (fn)
+                    fn (pad->package, pad->dep, user_data);
+                ++count;
+            }
+        }
+    }
+
+    g_hash_table_destroy (installed);
+
+    return count;
+}
+
 int
 rc_world_foreach_conflicting_package (RCWorld          *world,
                                       RCPackageDep     *dep,
@@ -2431,6 +2506,31 @@ foreach_requires_by_name_cb (gpointer key, gpointer val, gpointer user_data)
 }
 
 static void
+foreach_child_by_name_cb (gpointer key, gpointer val, gpointer user_data)
+{
+    FILE *out = user_data;
+    char *name = key;
+    SListAnchor *anchor = val;
+    GSList *iter = anchor->slist;
+
+    fprintf (out, "CHI %s: ", name);
+    while (iter) {
+        RCPackageAndDep *pad = iter->data;
+        if (pad) {
+            fprintf (out, rc_package_to_str_static (pad->package));
+            fprintf (out, "::");
+            fprintf (out, rc_package_spec_to_str_static (
+                         RC_PACKAGE_SPEC (pad->dep)));
+            fprintf (out, " ");
+        } else {
+            fprintf (out, "(null) ");
+        }
+        iter = iter->next;
+    }
+    fprintf (out, "\n");
+}
+
+static void
 foreach_conflicts_by_name_cb (gpointer key, gpointer val, gpointer user_data)
 {
     FILE *out = user_data;
@@ -2480,6 +2580,10 @@ rc_world_spew (RCWorld *world, FILE *out)
 
     g_hash_table_foreach (world->requires_by_name,
                           foreach_requires_by_name_cb,
+                          out);
+
+    g_hash_table_foreach (world->children_by_name,
+                          foreach_child_by_name_cb,
                           out);
 
     g_hash_table_foreach (world->conflicts_by_name,

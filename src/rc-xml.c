@@ -66,6 +66,9 @@ rc_xml_strip (char *str)
 {
     char *s;
 
+    if (str == NULL)
+        return NULL;
+
     s = g_strstrip (str);
 
     if (s && *s)

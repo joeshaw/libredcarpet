@@ -208,6 +208,11 @@ int        rc_world_foreach_requiring_package (RCWorld *world,
                                                RCPackageAndDepFn fn, 
                                                gpointer user_data);
 
+int        rc_world_foreach_parent_package    (RCWorld *world, 
+                                               RCPackageDep *dep,
+                                               RCPackageAndDepFn fn, 
+                                               gpointer user_data);
+
 int        rc_world_foreach_conflicting_package (RCWorld *world, 
                                                  RCPackageDep *dep,
                                                  RCPackageAndDepFn fn, 

@@ -34,6 +34,7 @@ typedef enum {
     RC_RESOLVER_INFO_TYPE_CONFLICTS_WITH,
     RC_RESOLVER_INFO_TYPE_OBSOLETES,
     RC_RESOLVER_INFO_TYPE_DEPENDS_ON,
+    RC_RESOLVER_INFO_TYPE_CHILD_OF,
     RC_RESOLVER_INFO_TYPE_MISC
 } RCResolverInfoType;
 
@@ -93,7 +94,9 @@ RCResolverInfo    *rc_resolver_info_conflicts_with_new (RCPackage *package, RCPa
 
 RCResolverInfo    *rc_resolver_info_obsoletes_new (RCPackage *package, RCPackage *obsoletes);
 
-RCResolverInfo    *rc_resolver_info_depends_on_new     (RCPackage *package, RCPackage *dependency);
+RCResolverInfo    *rc_resolver_info_depends_on_new (RCPackage *package, RCPackage *dependency);
+
+RCResolverInfo    *rc_resolver_info_child_of_new (RCPackage *package, RCPackage *dependency);
 
 #endif /* __RC_RESOLVER_INFO_H__ */
 
