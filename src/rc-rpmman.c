@@ -2073,7 +2073,18 @@ rc_rpmman_verify (RCPackman *packman, RCPackage *package, guint32 type)
 
         g_free (md5sum);
 
-        goto ERROR;
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "Couldn't verify signatures");
+
+        verification = rc_verification_new ();
+
+        verification->type = RC_VERIFICATION_TYPE_SANITY;
+        verification->status = RC_VERIFICATION_STATUS_FAIL;
+        verification->info = g_strdup ("Invalid RPM file");
+
+        ret = g_slist_append (ret, verification);
+
+        return ret;
     }
 
     if (signature_filename && (type & RC_VERIFICATION_TYPE_GPG)) {
@@ -2108,12 +2119,6 @@ rc_rpmman_verify (RCPackman *packman, RCPackage *package, guint32 type)
     g_free (md5sum);
 
     return (ret);
-
-  ERROR:
-    rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                          "Couldn't verify signatures");
-
-    return (NULL);
 } /* rc_rpmman_verify */
 
 /* This was stolen from RPM */
