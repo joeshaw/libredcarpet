@@ -66,15 +66,12 @@ RCPackageDep *
 rc_package_dep_new_from_spec (RCPackageSpec *spec,
                               RCPackageRelation relation)
 {
-    RCPackageDep *dep =
-        rc_package_dep_new (
-            g_quark_to_string (spec->nameq),
-            spec->epoch,
-            spec->version,
-            spec->release,
-            relation);
+    RCPackageDep *rcpd = rc_package_dep_new (spec->name, spec->epoch,
+                                             spec->version,
+                                             spec->release,
+                                             relation);
 
-    return (dep);
+    return (rcpd);
 } /* rc_package_dep_new_from_spec */
 
 RCPackageDep *
@@ -140,7 +137,7 @@ rc_package_dep_slist_verify_relation (RCPackageDepSList *depl,
         /* this should be some sort of if (debianish) { .. } */
         if (!rpmish) {
             if (is_virtual && (unweak_rel != RC_RELATION_ANY && unweak_rel != RC_RELATION_NONE)) {
-                if (d->spec.nameq == spec->nameq) {
+                if (!strcmp (d->spec.name, spec->name)) {
                     if (fail_out && !g_slist_find (*fail_out, d))
                         *fail_out = g_slist_prepend (*fail_out, d);
                     ret = FALSE;
@@ -198,7 +195,7 @@ rc_package_dep_verify_relation (RCPackageDep *dep,
  * operation.
  */
 
-    if (dep->spec.nameq != spec->nameq) {
+    if (strcmp (dep->spec.name, spec->name)) {
         if (unweak_rel == RC_RELATION_NONE) {
             return TRUE;
 #if DEBUG > 10
@@ -251,7 +248,7 @@ rc_package_dep_verify_relation (RCPackageDep *dep,
     if (rpmish) {
         if ((dep->spec.release == NULL || dep->spec.epoch == 0)) {
             /* it's not depending on any particular release */
-            newspecspec.nameq = spec->nameq;
+            newspecspec.name = spec->name;
             newspecspec.epoch = dep->spec.epoch ? spec->epoch : 0;
             newspecspec.version = spec->version;
             newspecspec.release = dep->spec.release ? spec->release : NULL;
@@ -305,7 +302,7 @@ rc_package_dep_verify_package_relation (RCPackageDep *dep, RCPackage *pkg)
     RCPackageDepSList *prov_iter;
 
     /* if the package is the same name as the dep, then we use it to verify */
-    if (dep->spec.nameq == pkg->spec.nameq) {
+    if (strcmp (dep->spec.name, pkg->spec.name) == 0) {
         return rc_package_dep_verify_relation (dep, &pkg->spec);
     }
 
@@ -314,7 +311,7 @@ rc_package_dep_verify_package_relation (RCPackageDep *dep, RCPackage *pkg)
     while (prov_iter) {
         RCPackageDep *prov = (RCPackageDep *) prov_iter->data;
 
-        if (dep->spec.nameq == prov->spec.nameq) {
+        if (strcmp (dep->spec.name, prov->spec.name) == 0) {
             return rc_package_dep_verify_relation (dep, &prov->spec);
         }
 
@@ -731,15 +728,15 @@ rc_package_dep_slist_remove_duplicates (RCPackageDepSList *deps)
 {
     RCPackageDepSList *out = NULL;
     RCPackageDepSList *it;
-    GQuark last_name = 0;
+    gchar *last_name = NULL;
 
     deps = g_slist_sort (deps, (GCompareFunc) rc_package_spec_compare_name);
 
     it = deps;
     while (it) {
         RCPackageDep *dep = (RCPackageDep *) it->data;
-        if (!last_name || last_name != dep->spec.nameq) {
-            last_name = dep->spec.nameq;
+        if (!last_name || strcmp (last_name, dep->spec.name)) {
+            last_name = dep->spec.name;
             out = g_slist_prepend (out, dep);
         }
         it = it->next;
@@ -762,7 +759,7 @@ rc_xml_node_to_package_dep_internal (const xmlNode *node)
     /* FIXME: this sucks */
     dep_item = g_new0 (RCPackageDep, 1);
 
-    dep_item->spec.nameq = g_string_to_quark (xml_get_prop (node, "name"));
+    dep_item->spec.name = xml_get_prop (node, "name");
     tmp = xml_get_prop (node, "op");
     if (tmp) {
         dep_item->relation = rc_string_to_package_relation (tmp);

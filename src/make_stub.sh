@@ -3,32 +3,17 @@
 stub=$1
 shift
 
-line="ld -T ld_script -shared -o $stub"
+line="ld -L. -shared -o $stub"
 
-while [ $# -gt 1 ]
+while [ $# -gt 0 ]
 do
-    ld -soname $1 -shared -o lib$2.so -lc
-    remove="$remove lib$2.so"
-    line="$line -l$2"
-    shift
+    lib=`mktemp -u XXXXXXXX`
+    ld -soname $1 -shared -o lib$lib.so -lc
+    remove="$remove lib$lib.so"
+    line="$line -l$lib"
     shift
 done
-
-cat << 'EOF' >munge_ld_script
-$in_script = 0;
-while (<>) {
-  exit if (/^====/ && $in_script);
-  $_ = "SEARCH_DIR(.);\n" if (/^SEARCH_DIR/);
-  print if ($in_script);
-  $in_script = 1 if (/^====/);
-}
-EOF
-ld --verbose | perl munge_ld_script > ld_script
-remove="$remove ld_script munge_ld_script"
 
 $line
 
-for file in $remove
-do
-    rm $file
-done
+rm $remove

@@ -1,3 +1,12 @@
+2001-10-04  Ian Peters  <itp@ximian.com>
+
+	* make_stub.sh: simplified
+
+	* Makefile.am: new calling convention for make_stub.sh
+
+	* rc-package-dep.c, rc-package-info.c, rc-package-spec.c,
+	rc-package-spec.h: revert accidental commit
+
 2001-09-30  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c: don't try to add packages if all we're doing is

@@ -26,38 +26,31 @@
 
 typedef struct _RCPackageSpec RCPackageSpec;
 
+/* Make sure name is always the first element of this struct */
 struct _RCPackageSpec {
-    GQuark   nameq;
-    guint32  epoch;
-    gchar   *version;
-    gchar   *release;
+    gchar *name;
+    guint32 epoch;
+    gchar *version;
+    gchar *release;
 };
 
 #define RC_PACKAGE_SPEC(item) ((RCPackageSpec *)(item))
 
-void rc_package_spec_init (RCPackageSpec *spec,
-                           gchar         *name,
-                           guint32        epoch,
-                           gchar         *version,
-                           gchar         *release);
+void rc_package_spec_init (RCPackageSpec *rcps,
+                           gchar *name,
+                           guint32 epoch,
+                           gchar *version,
+                           gchar *release);
 
-void rc_package_spec_copy (RCPackageSpec *dest, RCPackageSpec *src);
+void rc_package_spec_copy (RCPackageSpec *new, RCPackageSpec *old);
 
-void rc_package_spec_free_members (RCPackageSpec *spec);
+void rc_package_spec_free_members (RCPackageSpec *rcps);
 
-/* FIXME: any use of this function is fundamentally broken and should
- * be fixed ASAP.  There can be no concept of comparing RCPackageSpec
- * objects without knowing what the backend package manager is;
- * therefore, you should use the rc_packman_version_compare function,
- * with an appropriate reference to an RCPackman object. */
+gint rc_package_spec_compare_name (void *a, void *b);
 gint rc_package_spec_compare (void *a, void *b);
 
-/* Don't use this function if you can help it, since it's slow; if all
- * you want to know is if two RCPackageSpec's are the same or
- * different, use rc_package_spec_[not_]equal instead. */
-gint rc_package_spec_compare_name (void *a, void *b);
+guint rc_package_spec_hash (gconstpointer ptr);
 
-gint rc_package_spec_equal (gconstpointer a, gconstpointer b);
 gint rc_package_spec_not_equal (gconstpointer a, gconstpointer b);
 
 gchar *rc_package_spec_to_str (RCPackageSpec *spec);
@@ -65,8 +58,49 @@ gchar *rc_package_spec_version_to_str (RCPackageSpec *spec);
 const gchar *rc_package_spec_to_str_static (RCPackageSpec *spec);
 const gchar *rc_package_spec_version_to_str_static (RCPackageSpec *spec);
 
-guint rc_package_spec_hash (gconstpointer ptr);
-
 gpointer rc_package_spec_slist_find_name (GSList *specs, gchar *name);
+
+#ifdef __GNUC__
+__inline__ static
+gint rc_package_spec_equal (gconstpointer a, gconstpointer b) {
+    RCPackageSpec *one = RC_PACKAGE_SPEC (a);
+    RCPackageSpec *two = RC_PACKAGE_SPEC (b);
+
+    g_assert (one);
+    g_assert (two);
+
+    if (one->epoch != two->epoch) {
+        return (FALSE);
+    }
+
+    if (one->name && two->name) {
+        if (strcmp (one->name, two->name)) {
+            return (FALSE);
+        }
+    } else if (one->name || two->name) {
+        return (FALSE);
+    }
+
+    if (one->version && two->version) {
+        if (strcmp (one->version, two->version)) {
+            return (FALSE);
+        }
+    } else if (one->version || two->version) {
+        return (FALSE);
+    }
+
+    if (one->release && two->release) {
+        if (strcmp (one->release, two->release)) {
+            return (FALSE);
+        }
+    } else if (one->release || two->release) {
+        return (FALSE);
+    }
+
+    return (TRUE);
+}
+#else
+gint rc_package_spec_equal (gconstpointer ptra, gconstpointer ptrb);
+#endif
 
 #endif /* _RC_PACKAGE_SPEC_H */
