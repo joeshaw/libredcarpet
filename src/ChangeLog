@@ -1,5 +1,10 @@
 2002-07-10  Joe Shaw  <joe@ximian.com>
 
+	* rc-xml.c (rc_package_to_xml_node): Add back in writing out the
+	epoch, version, and release to the XML file.
+
+2002-07-10  Joe Shaw  <joe@ximian.com>
+
 	* rc-util.c (rc_compress_memory): Added.  Returns a zlib
 	compressed byte array, like rc_uncompress_memory().
 

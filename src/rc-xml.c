@@ -1004,6 +1004,20 @@ rc_package_to_xml_node (RCPackage *package)
 
     xmlNewTextChild (package_node, NULL, "name", package->spec.name);
 
+    if (package->spec.has_epoch) {
+        char *tmp_string;
+
+        tmp_string = g_strdup_printf ("%d", package->spec.epoch);
+        xmlNewTextChild (package_node, NULL, "epoch", tmp_string);
+        g_free (tmp_string);
+    }
+
+    xmlNewTextChild (package_node, NULL, "version", package->spec.version);
+
+    if (package->spec.release) {
+        xmlNewTextChild (package_node, NULL, "release", package->spec.release);
+    }
+
     xmlNewTextChild (package_node, NULL, "summary", package->summary);
 
     xmlNewTextChild (package_node, NULL, "description", package->description);
