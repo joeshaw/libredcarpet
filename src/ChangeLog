@@ -1,5 +1,12 @@
 2001-09-21  Ian Peters  <itp@ximian.com>
 
+	pulled in from red-carpet-1-1 branch
+
+	* rc-rpmman.c: fix a typo that resulted in memory corruption after
+	each install
+
+2001-09-21  Ian Peters  <itp@ximian.com>
+
 	* rc-rpmman.c: caught one of the odd counting cases -- in the case
 	of an install of an already installed package, we'll get a
 	configure, remove, and install callback event -- unless the

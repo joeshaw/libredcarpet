@@ -604,9 +604,9 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         inst_package = rc_package_copy (file_package);
 
         inst_package->spec.epoch = 0;
-        g_free (package->spec.version);
+        g_free (inst_package->spec.version);
         inst_package->spec.version = NULL;
-        g_free (package->spec.release);
+        g_free (inst_package->spec.release);
         inst_package->spec.release = NULL;
 
         inst_package = rc_packman_query (packman, inst_package);
