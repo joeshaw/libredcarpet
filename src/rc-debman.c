@@ -79,6 +79,8 @@ hash_destroy (RCDebman *d)
 {
     g_hash_table_foreach (d->pkg_hash, (GHFunc) hash_destroy_pair, NULL);
     g_hash_table_destroy (d->pkg_hash);
+    d->pkg_hash = g_hash_table_new (g_str_hash, g_str_equal);
+    d->hash_valid = FALSE;
 }
 
 /* Since I only want to scan through /var/lib/dpkg/status once, I need a
@@ -603,7 +605,6 @@ rc_debman_transact (RCPackman *p, GSList *install_pkgs,
 
   END:
     g_free (state);
-    RC_DEBMAN (p)->hash_valid = FALSE;
     hash_destroy (RC_DEBMAN (p));
 }
 
@@ -1014,14 +1015,13 @@ pkg_list_append (gchar *name, RCPackage *pkg, RCPackageSList **pkg_list)
 static RCPackageSList *
 rc_debman_query_all (RCPackman *p)
 {
-    GHashTable *hash_table = RC_DEBMAN (p)->pkg_hash;
     RCPackageSList *pkgs = NULL;
 
     if (!(RC_DEBMAN (p)->hash_valid)) {
         rc_debman_query_all_real (p);
     }
 
-    g_hash_table_foreach (hash_table, (GHFunc) pkg_list_append,
+    g_hash_table_foreach (RC_DEBMAN (p)->pkg_hash, (GHFunc) pkg_list_append,
                           &pkgs);
 
     return pkgs;
