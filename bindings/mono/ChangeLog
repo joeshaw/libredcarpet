@@ -1,3 +1,7 @@
+2005-01-11  Tambet Ingo  <tambet@ximian.com>
+
+	* PackageMatch.custom (ToXml): Fix importance tag.
+
 2005-01-03  Tambet Ingo  <tambet@ximian.com>
 
 	* libredcarpet-api.xml:

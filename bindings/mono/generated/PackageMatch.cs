@@ -138,8 +138,10 @@ namespace RC {
         bool gteq;
         PackageImportance imp = this.GetImportance (out gteq);
         if (imp != PackageImportance.Invalid) {
-            writer.WriteStartElement ("importance", Global.ImportanceToString (imp));
+            writer.WriteStartElement ("importance");
             writer.WriteAttributeString ("gteq", gteq ? "1" : "0");
+            writer.WriteString (Global.ImportanceToString (imp));
+            writer.WriteEndElement ();
         }
 
         writer.WriteEndElement ();
