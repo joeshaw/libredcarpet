@@ -914,7 +914,7 @@ parse_versions (gchar **inputs, guint32 **epochs, gchar ***versions,
         gchar **t1, **t2;
 
         if (!inputs[i] || !inputs[i][0]) {
-            break;
+            continue;
         }
 
         t1 = g_strsplit (inputs[i], ":", 1);
@@ -1896,9 +1896,11 @@ rc_rpmman_init (RCRpmman *obj)
         obj->rpmroot = g_strdup ("/");
     }
 
-    if (rpmdbOpen (obj->rpmroot, &obj->read_db, O_RDONLY, 0644)) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
-                              "unable to open RPM database");
+    if (!getenv ("RC_NO_RPM_DB")) {
+        if (rpmdbOpen (obj->rpmroot, &obj->read_db, O_RDONLY, 0644)) {
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
+                                  "unable to open RPM database");
+        }
     }
 
     packman->priv->features =

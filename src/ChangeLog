@@ -1,3 +1,8 @@
+2001-02-26  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-rpmman.c: Changed a break to a continue to make the
+	verrev-string splitting thing work.
+
 2001-02-25  Ian Peters  <itp@ximian.com>
 
 	* Makefile.am: add -DLIBDIR=... to the INCLUDES line, and install
