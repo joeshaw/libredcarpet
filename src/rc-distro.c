@@ -18,7 +18,6 @@
  * 02111-1307, USA.
  */
 
-#include <glib.h>
 #include <string.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -28,6 +27,24 @@
 #include <stdio.h>
 
 #include "rc-distro.h"
+
+#ifdef RC_DISTRO_NO_GLIB
+typedef int gboolean;
+typedef int gint;
+typedef void * gpointer;
+typedef char gchar;
+
+#define g_malloc malloc
+#define g_free free
+#define g_realloc realloc
+#define g_warning(x...) fprintf(stderr, x)
+#define g_error(x...) do { fprintf(stderr, x); exit(-1); } while (0)
+#ifndef FALSE
+#define FALSE 0
+#define TRUE 1
+#endif
+
+#endif
 
 typedef gboolean (*distro_check_function) (gpointer param1, gpointer param2, gpointer param3);
 
@@ -335,7 +352,11 @@ determine_arch ()
 const char *
 rc_distro_option_lookup(RCDistroType *distro, const char *key)
 {
+#ifndef RC_DISTRO_NO_GLIB
     return g_hash_table_lookup(distro->extra_hash, key);
+#else
+    return NULL;
+#endif
 } /* rc_distro_option_lookup */
 
 RCDistroType *
@@ -418,6 +439,7 @@ rc_figure_distro (void)
         }
     }
 
+#ifndef RC_DISTRO_NO_GLIB
     dtype->extra_hash = g_hash_table_new(g_str_hash, g_str_equal);
     if (dtype->extra_stuff) {
         options = g_strsplit(dtype->extra_stuff, ",", 0);
@@ -435,6 +457,9 @@ rc_figure_distro (void)
         }
         g_strfreev(options);
     }
+#else
+    dtype->extra_hash = NULL;
+#endif
 
     return dtype;
 }

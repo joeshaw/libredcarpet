@@ -1,5 +1,8 @@
 2001-04-20  Vladimir Vukicevic  <vladimir@ximian.com>
 
+	* rc-distro.c, rc-distro.h: add a RC_DISTRO_NO_GLIB conditional
+	section, for compiling rc-distro without a glib dependency.
+
 	* rc-distro.c: Mandrake uses -i586, debian potato is
 	debian-potato-i386, not -22-.
 
