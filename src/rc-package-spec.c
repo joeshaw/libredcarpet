@@ -2,6 +2,23 @@
 
 #include "rc-package-spec.h"
 
+SecTable sectable[] = {
+    { "SECTION_OFFICE",     SECTION_OFFICE },
+    { "SECTION_IMAGING",    SECTION_IMAGING },
+    { "SECTION_PIM",        SECTION_PIM }, 
+    { "SECTION_GAME",       SECTION_GAME }, 
+    { "SECTION_MULTIMEDIA", SECTION_MULTIMEDIA },
+    { "SECTION_INTERNET",   SECTION_INTERNET },
+    { "SECTION_UTIL",       SECTION_UTIL },
+    { "SECTION_SYSTEM",     SECTION_SYSTEM },
+    { "SECTION_DOC",        SECTION_DOC },
+    { "SECTION_DEVEL",      SECTION_DEVEL },
+    { "SECTION_DEVELUTIL",  SECTION_DEVELUTIL },
+    { "SECTION_LIBRARY",    SECTION_LIBRARY },
+    { "SECTION_XAPP",       SECTION_XAPP },
+    { "SECTION_MISC",       SECTION_MISC }
+};
+
 void
 rc_package_spec_init (RCPackageSpec *rcps,
                       gchar *name,

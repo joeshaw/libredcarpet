@@ -23,6 +23,13 @@ enum _RCPackageSection {
     SECTION_LAST
 };
 
+typedef struct {
+    char *name;
+    RCPackageSection sec;
+} SecTable;
+
+extern SecTable sectable[];
+
 typedef struct _RCPackageSpec RCPackageSpec;
 
 struct _RCPackageSpec {
