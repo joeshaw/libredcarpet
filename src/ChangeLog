@@ -1,3 +1,9 @@
+2002-09-27  Joe Shaw  <joe@ximian.com>
+
+	* rc-rpmman.c (split_rpm): Don't free the buffer we get back from
+	headerGetEntry() for the md5 signature.  It causes a double free
+	and a crash on SuSE.
+
 2002-09-23  Ian Peters  <itp@ximian.com>
 
 	* rc-arch.c (rc_arch_get_system_arch): handle a wider range of

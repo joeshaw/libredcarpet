@@ -2002,7 +2002,6 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
     if (count > 0) {
         *md5sum = g_new (guint8, count);
         memcpy (*md5sum, buf, count);
-        free (buf);
     } else
         *md5sum = NULL;
 
