@@ -157,13 +157,13 @@ rc_xml_node_to_package_update (const xmlNode *node, const RCPackage *package)
         } else if (!g_strcasecmp (iter->name, "release")) {
             update->spec.release = xml_get_content (iter);
         } else if (!g_strcasecmp (iter->name, "filename")) {
+            gchar *tmp = xml_get_content (iter);
             if (url_prefix) {
-                gchar *tmp = xml_get_content (iter);
                 update->package_url =
-                    g_strconcat (url_prefix, "/", tmp, NULL);
+                    rc_maybe_merge_paths (url_prefix, tmp);
                 g_free (tmp);
             } else {
-                update->package_url = xml_get_content (iter);
+                update->package_url = tmp;
             }
         } else if (!g_strcasecmp (iter->name, "filesize")) {
             update->package_size =
@@ -172,13 +172,13 @@ rc_xml_node_to_package_update (const xmlNode *node, const RCPackage *package)
             update->installed_size =
                 xml_get_guint32_content_default (iter, 0);
         } else if (!g_strcasecmp (iter->name, "signaturename")) {
+            gchar *tmp = xml_get_content (iter);
             if (url_prefix) {
-                gchar *tmp = xml_get_content (iter);
                 update->signature_url =
-                    g_strconcat (url_prefix, "/", tmp, NULL);
+                    rc_maybe_merge_paths (url_prefix, tmp);
                 g_free (tmp);
             } else {
-                update->signature_url = xml_get_content (iter);
+                update->signature_url = tmp;
             }
         } else if (!g_strcasecmp (iter->name, "signaturesize")) {
             update->signature_size =

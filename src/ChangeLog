@@ -1,3 +1,9 @@
+2002-02-23  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-package-update.c (rc_xml_node_to_package_update): use
+	rc_maybe_merge_paths instead of g_strconcat, so that we can
+	handle absolute URLs in history file paths.
+
 2002-02-06  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c: only look in unsubscribed channels if and only if
