@@ -265,15 +265,6 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
             channel->mirrored = FALSE;
         }
 
-        tmp = xml_get_prop(node, "available_select");
-        if (tmp) {
-            channel->available_select = TRUE;
-            g_free(tmp);
-        }
-        else {
-            channel->available_select = FALSE;
-        }
-
         tmp = xml_get_prop(node, "pkginfo_compressed");
         if (tmp) {
             channel->pkginfo_compressed = TRUE;

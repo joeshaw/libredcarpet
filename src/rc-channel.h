@@ -71,7 +71,6 @@ struct _RCChannel {
     guint32 tier;
 
     gboolean mirrored;
-    gboolean available_select;
     gboolean featured;
 
     RCChannelType type;

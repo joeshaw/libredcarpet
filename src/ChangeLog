@@ -1,3 +1,8 @@
+2001-11-06  Joe Shaw  <joe@ximian.com>
+
+	* rc-channel.[ch]: Remove the channel_select field from the
+	RCChannel struct.  Mmmm, bitrot.
+
 2001-10-30    <itp@ximian.com>
 
 	* rc-distro.c: add ydl 2.1 and suse 7.3
