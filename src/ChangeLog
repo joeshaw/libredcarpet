@@ -1,3 +1,10 @@
+2002-05-30  Joe Shaw  <joe@ximian.com>
+
+	* rc-world.c (rc_world_get_packman): Get the packman associated
+	with the RCWorld.
+	(rc_world_get_system_packages): rc_packman_get_reason() returns a
+	const gchar *, so declare reason const and don't free it afterward.
+
 2002-05-29  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-world-subscriptions.c: Added.  Functions for

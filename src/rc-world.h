@@ -48,6 +48,8 @@ void       rc_world_free (RCWorld *world);
 void       rc_world_register_packman    (RCWorld   *world,
                                          RCPackman *packman);
 
+RCPackman *rc_world_get_packman         (RCWorld *world);
+
 void       rc_world_get_system_packages (RCWorld *world);
 
 /* Channel operations */

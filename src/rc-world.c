@@ -36,8 +36,8 @@
 
 struct _RCWorld {
 
-	GHashTable *packages_by_name;
-	GHashTable *provides_by_name;
+    GHashTable *packages_by_name;
+    GHashTable *provides_by_name;
     GHashTable *requires_by_name;
     GHashTable *conflicts_by_name;
 
@@ -336,6 +336,14 @@ rc_world_register_packman (RCWorld *world,
     world->packman = packman;
 }
 
+RCPackman *
+rc_world_get_packman (RCWorld *world)
+{
+    g_return_val_if_fail (world != NULL, NULL);
+
+    return world->packman;
+} /* rc_world_get_packman */
+
 void
 rc_world_get_system_packages (RCWorld *world)
 {
@@ -351,9 +359,8 @@ rc_world_get_system_packages (RCWorld *world)
         err = rc_packman_get_error (world->packman);
 
         if (err) {
-            gchar *reason = rc_packman_get_reason (world->packman);
+            const gchar *reason = rc_packman_get_reason (world->packman);
             g_warning ("Packman error: %s", reason);
-            g_free (reason);
             
             g_assert (err != RC_PACKMAN_ERROR_FATAL);
         }
