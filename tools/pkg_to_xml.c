@@ -38,6 +38,7 @@ main (int argc, char *argv[])
     xmlDoc *doc = NULL;
     xmlNode *root;
     gboolean failed = FALSE;
+    gboolean patches_enabled = FALSE;
     int i;
     
     g_type_init ();
@@ -62,6 +63,9 @@ main (int argc, char *argv[])
         failed = TRUE;
         goto out;
     }
+
+    if (rc_packman_get_capabilities (packman) & RC_PACKMAN_CAP_PATCHES)
+        patches_enabled = TRUE;
 
     doc = xmlNewDoc ("1.0");
     root = xmlNewNode (NULL, "packages");
@@ -93,6 +97,28 @@ main (int argc, char *argv[])
             } else {
 
                 node = rc_package_to_xml_node (pkg);
+                if (patches_enabled) {
+                    GSList *parents = rc_packman_patch_parents (packman, pkg);
+
+                    if (parents != NULL) {
+                        GSList *iter;
+                        xmlNode *parents_node = xmlNewChild (node, NULL,
+                                                             "parents", NULL);
+
+                        parents = g_slist_sort (parents,
+                                                rc_package_spec_not_equal);
+
+                        for (iter = parents; iter; iter = iter->next) {
+                            RCPackageSpec *spec = RC_PACKAGE_SPEC (iter->data);
+                            xmlAddChild (parents_node,
+                                         rc_package_spec_to_xml_node (spec));
+                            rc_package_spec_free (spec);
+                        }
+
+                        g_slist_free (parents);
+                    }
+                }
+
                 rc_package_unref (pkg);
 
                 if (! node) {
