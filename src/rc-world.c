@@ -527,12 +527,15 @@ have_bid (RCWorld *world, guint32 bid)
 }
 
 RCChannel *
-rc_world_add_channel (RCWorld *world,
-                      const char *channel_name,
-                      const char *alias,
-                      guint32 channel_id,
-                      guint32 base_id,
-                      RCChannelType type)
+rc_world_add_channel_with_priorities (RCWorld *world,
+                                      const char *channel_name,
+                                      const char *alias,
+                                      guint32 channel_id,
+                                      guint32 base_id,
+                                      RCChannelType type,
+                                      int subd_priority,
+                                      int unsubd_priority,
+                                      int current_priority)
 {
     static guint32 assigned_cid = 0x70000000;
     static guint32 assigned_bid = 0x70000000;
@@ -563,13 +566,16 @@ rc_world_add_channel (RCWorld *world,
 
     channel = rc_channel_new ();
 
-    channel->world     = world;
-    channel->id        = channel_id;
-    channel->base_id   = base_id;
-    channel->name      = g_strdup (channel_name);
-    channel->alias     = g_strdup (alias);
-    channel->type      = type;
-    channel->transient = is_transient;
+    channel->world            = world;
+    channel->id               = channel_id;
+    channel->base_id          = base_id;
+    channel->name             = g_strdup (channel_name);
+    channel->alias            = g_strdup (alias);
+    channel->type             = type;
+    channel->transient        = is_transient;
+    channel->priority         = subd_priority;
+    channel->priority_unsubd  = unsubd_priority;
+    channel->priority_current = current_priority;
     
     world->channels = g_slist_prepend (world->channels,
                                        channel);
@@ -579,6 +585,23 @@ rc_world_add_channel (RCWorld *world,
               channel_name, channel_id, base_id);
 
     return channel;
+}
+
+RCChannel *
+rc_world_add_channel (RCWorld *world,
+                      const char *channel_name,
+                      const char *alias,
+                      guint32 channel_id,
+                      guint32 base_id,
+                      RCChannelType type)
+{
+    return rc_world_add_channel_with_priorities (world,
+                                                 channel_name,
+                                                 alias,
+                                                 channel_id,
+                                                 base_id,
+                                                 type,
+                                                 -1, -1, -1);
 }
 
 void

@@ -53,37 +53,47 @@ void       rc_world_touch_subscription_sequence_number (RCWorld *world);
 
 /* Packmanish operations */
 
-RCPackman *rc_world_get_packman         (RCWorld *world);
+RCPackman *rc_world_get_packman                 (RCWorld *world);
 
-gboolean   rc_world_get_system_packages (RCWorld *world);
+gboolean   rc_world_get_system_packages         (RCWorld *world);
 
 /* Channel operations */
 
-RCChannel *rc_world_add_channel         (RCWorld      *world,
-                                         const char   *channel_name,
-                                         const char   *alias,
-                                         guint32       channel_id,
-                                         guint32       base_id,
-                                         RCChannelType type);
+RCChannel *rc_world_add_channel                 (RCWorld      *world,
+                                                 const char   *channel_name,
+                                                 const char   *alias,
+                                                 guint32       channel_id,
+                                                 guint32       base_id,
+                                                 RCChannelType type);
 
-void       rc_world_remove_channel      (RCWorld      *world,
-                                         RCChannel    *channel);
+RCChannel *rc_world_add_channel_with_priorities (RCWorld      *world,
+                                                 const char   *channel_name,
+                                                 const char   *alias,
+                                                 guint32       channel_id,
+                                                 guint32       base_id,
+                                                 RCChannelType type,
+                                                 int           subd_priority,
+                                                 int           unsubd_priority,
+                                                 int           current_priority);
 
-void       rc_world_foreach_channel     (RCWorld      *world,
-                                         RCChannelFn   fn,
-                                         gpointer      user_data);
+void       rc_world_remove_channel              (RCWorld      *world,
+                                                 RCChannel    *channel);
 
-RCChannel *rc_world_get_channel_by_name (RCWorld      *world,
-                                         const char   *channel_name);
+void       rc_world_foreach_channel             (RCWorld      *world,
+                                                 RCChannelFn   fn,
+                                                 gpointer      user_data);
 
-RCChannel *rc_world_get_channel_by_alias (RCWorld     *world,
-                                          const char  *alias);
+RCChannel *rc_world_get_channel_by_name         (RCWorld      *world,
+                                                 const char   *channel_name);
 
-RCChannel *rc_world_get_channel_by_id   (RCWorld      *world,
-                                         guint32       channel_id);
+RCChannel *rc_world_get_channel_by_alias        (RCWorld     *world,
+                                                 const char  *alias);
 
-RCChannel *rc_world_get_channel_by_base_id (RCWorld   *world,
-                                            guint32    base_id);
+RCChannel *rc_world_get_channel_by_id           (RCWorld      *world,
+                                                 guint32       channel_id);
+
+RCChannel *rc_world_get_channel_by_base_id      (RCWorld   *world,
+                                                 guint32    base_id);
 
 
 /* Package Locks */

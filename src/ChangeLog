@@ -1,3 +1,9 @@
+2002-12-05  Joe Shaw  <joe@ximian.com>
+
+	* rc-world.c (rc_world_add_channel_with_priorities): Added.
+	Allows the channel creator to set priorities for dependency
+	resolution.
+
 2002-12-03  Joe Shaw  <joe@ximian.com>
 
 	* distributions.xml: Change Woody to supported.
