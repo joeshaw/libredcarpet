@@ -1,0 +1,12 @@
+
+		[DllImport("libredcarpet")]
+		static extern int rc_extract_packages_from_helix_buffer(byte[] data, int len, IntPtr channel, RCSharp.PackageDelegateNative cb, IntPtr user_data);
+
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.Synchronized)] 
+		public static int PackagesFromHelixBuffer(byte[] data, int len, RC.Channel channel, RC.PackageDelegate cb) {
+			RCSharp.PackageDelegateWrapper cb_wrapper = null;
+			cb_wrapper = new RCSharp.PackageDelegateWrapper (cb, null);
+			int raw_ret = rc_extract_packages_from_helix_buffer(data, len, channel.Handle, cb_wrapper.NativeDelegate, IntPtr.Zero);
+			int ret = raw_ret;
+			return ret;
+		}

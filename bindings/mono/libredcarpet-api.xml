@@ -3368,7 +3368,7 @@
           <parameter type="gpointer" name="user_data" />
         </parameters>
       </method>
-      <method name="PackagesFromHelixBuffer" cname="rc_extract_packages_from_helix_buffer" shared="true">
+      <method name="PackagesFromHelixBuffer" cname="rc_extract_packages_from_helix_buffer" shared="true" hidden="true">
         <return-type type="gint" />
         <parameters>
           <parameter type="const-guint8" array="true" name="data" />
