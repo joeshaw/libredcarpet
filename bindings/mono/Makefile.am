@@ -60,5 +60,17 @@ doc_DATA =				\
 	libredcarpet-sharp-docs.tree	\
 	libredcarpet-sharp-docs.source
 
-EXTRA_DIST = libredcarpet-sharp.pc.in libredcarpet-sources.xml RC.metadata libredcarpet-sharp-docs.source
+EXTRA_DIST =				\
+	libredcarpet-sharp.pc.in	\
+	libredcarpet-sources.xml 	\
+	RC.metadata			\
+	libredcarpet-sharp-docs.source	\
+	Channel.custom			\
+	Global.custom			\
+	World.custom			\
+	WorldService.custom
+
+Distro.custom   PackageSpec.custom  WorldMulti.custom
+
+
 CLEANFILES = $(ASSEMBLY)
