@@ -325,7 +325,7 @@ rc_uncompress_memory (guint8 *input_buffer, guint32 input_length,
 gboolean rc_write (int fd, const void *buf, size_t count)
 {
     size_t bytes_remaining = count;
-    void *ptr = buf;
+    const void *ptr = buf;
 
     while (bytes_remaining) {
         size_t bytes_written;

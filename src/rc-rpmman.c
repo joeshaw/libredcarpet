@@ -1125,8 +1125,8 @@ rc_rpmman_verify (RCPackman *p, gchar *filename)
     guchar buffer[128];
     ssize_t num_bytes;
     gboolean gpg_sig = FALSE, md5_sig = FALSE, size_sig = FALSE;
-    guint8 *md5;
-    guint32 size;
+    guint8 *md5 = NULL;
+    guint32 size = 0;
     gchar *buf;
 
     in_fd = Fopen (filename, "r.ufdio");
