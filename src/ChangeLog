@@ -1,3 +1,7 @@
+2001-02-27  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c: Fix typo causing segfault due to a variable being NULL
+
 2001-02-26  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c: Made remove and install work correctly. Removes are
