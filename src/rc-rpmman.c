@@ -589,19 +589,21 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
             rc_packman_query_file (packman, package->package_filename);
 
         packages = rc_packman_query (packman, file_package->spec.name);
-        inst_package = packages->data;
+        if (packages) {
+            inst_package = packages->data;
 
-        if (inst_package->installed &&
-            rc_packman_version_compare (
-                packman,
-                RC_PACKAGE_SPEC (file_package),
-                RC_PACKAGE_SPEC (inst_package)))
-        {
-            state.install_extra++;
+            if (inst_package->installed &&
+                rc_packman_version_compare (
+                    packman,
+                    RC_PACKAGE_SPEC (file_package),
+                    RC_PACKAGE_SPEC (inst_package)))
+            {
+                state.install_extra++;
+            }
+
+            rc_package_unref (file_package);
+            rc_package_slist_unref (packages);
         }
-
-        rc_package_unref (file_package);
-        rc_package_slist_unref (packages);
     }
 
     /* trust me */

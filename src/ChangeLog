@@ -1,5 +1,10 @@
 2002-07-25  Ian Peters  <itp@ximian.com>
 
+	* rc-rpmman.c: whoops, fix _transact in the case where the
+	to-be-installed package is not an upgrade
+
+2002-07-25  Ian Peters  <itp@ximian.com>
+
 	* rc-packman.h, rc-packman.c: rc_packman_transact takes a final
 	gboolean, if set to TRUE, the transaction is actually run, if
 	FALSE, equivalent to settting RC_JUST_KIDDING.
