@@ -215,17 +215,32 @@ remove_head (GSList *slist)
 void
 rc_resolver_resolve_dependencies (RCResolver *resolver)
 {
+    RCWorld *world;
     RCResolverQueue *initial_queue;
+    RCChannel *local_pkg_channel;
     GSList *iter;
     gboolean extremely_noisy = getenv ("RC_SPEW") != NULL;
 
     g_return_if_fail (resolver != NULL);
 
+    world = resolver->world;
+    if (world == NULL)
+        world = rc_get_world ();
+
+    /* Create a dummy channel for our local packages, so that the
+       RCWorld can see than and take their dependencies into
+       account.*/
+    local_pkg_channel = rc_world_add_channel (world,
+                                              "Local Packages",
+                                              "local-pkg-alias-blah-blah-blah",
+                                              0,
+                                              RC_CHANNEL_TYPE_UNKNOWN);
+
     initial_queue = rc_resolver_queue_new ();
     
     /* Stick the current/subscribed channel and world info into the context */
 
-    initial_queue->context->world = resolver->world;
+    initial_queue->context->world = world;
     
     initial_queue->context->current_channel = resolver->current_channel;
     
@@ -233,8 +248,15 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
         resolver->allow_conflicts_with_virtual_provides;
 
     for (iter = resolver->packages_to_install; iter != NULL; iter = iter->next) {
-        rc_resolver_queue_add_package_to_install (initial_queue,
-                                                  (RCPackage *) iter->data);
+        RCPackage *pkg = iter->data;
+        
+        /* Add local packages to our dummy channel. */
+        if (pkg->local_package) {
+            pkg->channel = rc_channel_ref (local_pkg_channel);
+            rc_world_add_package (world, pkg);
+        }
+        
+        rc_resolver_queue_add_package_to_install (initial_queue, pkg);
     }
 
     for (iter = resolver->packages_to_remove; iter != NULL; iter = iter->next) {
@@ -313,9 +335,9 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
             rc_resolver_queue_free (queue);
             
         }
-
-
-        
     }
+
+    /* Clean up our local package channel. */
+    rc_world_remove_channel (world, local_pkg_channel);
 }
 

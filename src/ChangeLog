@@ -1,3 +1,12 @@
+2002-08-07  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-resolver.c (rc_resolver_resolve_dependencies): At the
+	beginning of the resolution, create a temporary channel for the
+	local packages that we are installing.  This allows the RCWorld to
+	see the local packages, and we can take their provides into
+	account when resolving.  When the resolution is finished, 
+	we destroy the channel.
+	
 2002-08-07  Joe Shaw  <joe@ximian.com>
 
 	* rc-distro.c (sax_end_element): If RC_DISTRO_TARGET is set, use
