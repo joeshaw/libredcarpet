@@ -5,7 +5,7 @@
 void
 pkg_installed_cb (HelixPackman *hp, gchar *file, gpointer data)
 {
-    printf ("pkg_installed_cb installed %s\n", file);
+    printf ("Installed %s\n", file);
 }
 
 void
@@ -44,22 +44,28 @@ int main (int argc, char **argv)
 {
     HelixPackman *hp;
 
+    /*
     fclose (stderr);
 
     stderr = fopen ("/dev/null", "a+");
+    */
 
     gtk_type_init ();
 
     hp = HELIX_PACKMAN (helix_rpmman_new ());
 
     if ((argc == 1) || !strncmp (argv[1], "-q", 2)) {
-        HP_DATA_LIST *query = NULL, *iter;
+        HP_PACKAGE_LIST *query = NULL, *iter;
 
         if ((argc > 1) && strcmp (argv[1], "-qa")) {
             guint i;
 
-            for (i = 2; i < argc; i++) {
-                HP_ADD_PACKAGE (query, argv[i], NULL, NULL);
+            if (argc == 5) {
+                HP_ADD_PACKAGE (query, argv[2], argv[3], argv[4]);
+            } else if (argc == 4) {
+                HP_ADD_PACKAGE (query, argv[2], argv[3], NULL);
+            } else {
+                HP_ADD_PACKAGE (query, argv[2], NULL, NULL);
             }
 
             if (!query) {
@@ -74,17 +80,17 @@ int main (int argc, char **argv)
         query = helix_packman_query (hp, query);
 
         for (iter = query; iter; iter = iter->next) {
-            HelixPackmanData *d = (HelixPackmanData *)(iter->data);
+            HelixPackmanPackage *d = (HelixPackmanPackage *)(iter->data);
 
             printf ("%-20s%-20s%-20s\n", d->spec.name, d->spec.version,
                     d->spec.release);
         }
 
-        HP_DATA_LIST_FREE (query);
+        HP_PACKAGE_LIST_FREE (query);
     } else if (!strncmp (argv[1], "-r", 2)) {
         guint do_remove () {
             guint i;
-            HP_DATA_LIST *rlist = NULL;
+            HP_PACKAGE_LIST *rlist = NULL;
 
             for (i = 2; i < argc; i++) {
                 HP_ADD_PACKAGE (rlist, argv[i], NULL, NULL);
@@ -117,7 +123,7 @@ int main (int argc, char **argv)
     } else if (!strcmp (argv[1], "-i")) {
         guint do_install () {
             guint i;
-            HP_DATA_LIST *ilist = NULL;
+            HP_FILE_LIST *ilist = NULL;
 
             for (i = 2; i < argc; i++) {
                 HP_ADD_FILE (ilist, argv[i]);
@@ -145,8 +151,8 @@ int main (int argc, char **argv)
 
         gtk_main ();
     } else if (!strncmp (argv[1], "-d", 2)) {
-        HP_DATA_LIST *dlist = NULL;
-        HelixPackmanData *d;
+        HP_PACKAGE_LIST *dlist = NULL;
+        HelixPackmanPackage *d;
         HP_DEP_LIST *iter;
 
         if ((argc < 3) || (argc > 5)) {
@@ -164,7 +170,7 @@ int main (int argc, char **argv)
 
         dlist = helix_packman_depends (hp, dlist);
 
-        d = (HelixPackmanData *)(dlist->data);
+        d = (HelixPackmanPackage *)(dlist->data);
 
         printf ("Package: %s-%s-%s\n", d->spec.name, d->spec.version,
                 d->spec.release);
@@ -196,7 +202,7 @@ int main (int argc, char **argv)
                     dep->spec.release);
         }
 
-        HP_DATA_LIST_FREE (dlist);
+        HP_PACKAGE_LIST_FREE (dlist);
     }
 
     return (0);
