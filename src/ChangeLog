@@ -1,3 +1,8 @@
+2003-06-12  Joe Shaw  <joe@ximian.com>
+
+	* distributions.xml: Change "SuSE Linux Enterprise Client" to
+	"SuSE Linux Desktop" and change the target.  Again.
+
 2003-06-10  Joe Shaw  <joe@ximian.com>
 
 	* rc-util.c (rc_parse_xml_from_file): Only unmap the buffer if we
