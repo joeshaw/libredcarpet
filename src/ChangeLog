@@ -1,5 +1,12 @@
 2001-04-10  Ian Peters  <itp@ximian.com>
 
+	* rc-rpmman.c, rc-rpmman.h: introduce rc_rpm_open, rc_rpm_close,
+	and rc_rpm_read to wrap fdOpen, fdClose, fdRead, Fopen, Fclose,
+	and Fread.  jbj makes me upset sometimes.  Also get those symbols
+	from rpmlib when necessary.
+
+2001-04-10  Ian Peters  <itp@ximian.com>
+
 	* rc-rpmman-types.h: the borrowed FDIO struct from rpmio.h
 
 	* rc-rpmman.c: if we can't get fdOpen, maybe that's because fdOpen

@@ -79,6 +79,37 @@ rc_rpmman_get_type (void)
     return type;
 } /* rc_rpmman_get_type */
 
+static FD_t
+rc_rpm_open (RCRpmman *rpmman, const char *path, const char *fmode,
+             int flags, mode_t mode)
+{
+    if (rpmman->Fopen) {
+        return (rpmman->Fopen (path, fmode));
+    } else {
+        return (rpmman->rc_fdOpen (path, flags, mode));
+    }
+}
+
+static void
+rc_rpm_close (RCRpmman *rpmman, FD_t fd)
+{
+    if (rpmman->Fclose) {
+        rpmman->Fclose (fd);
+    } else {
+        rpmman->rc_fdClose (fd);
+    }
+}
+
+static size_t
+rc_rpm_read (RCRpmman *rpmman, void *buf, size_t size, size_t nmemb, FD_t fd)
+{
+    if (rpmman->Fread) {
+        return (rpmman->Fread (buf, size, nmemb, fd));
+    } else {
+        return (rpmman->rc_fdRead (fd, buf, nmemb));
+    }
+}
+
 typedef struct _InstallState InstallState;
 
 struct _InstallState {
@@ -105,11 +136,12 @@ transact_cb (const Header h, const rpmCallbackType what,
 
     switch (what) {
     case RPMCALLBACK_INST_OPEN_FILE:
-        fd = RC_RPMMAN (state->packman)->rc_fdOpen (filename, O_RDONLY, 0);
+        fd = rc_rpm_open (RC_RPMMAN (state->packman), filename, "r.fdio",
+                          O_RDONLY, 0);
         return fd;
 
     case RPMCALLBACK_INST_CLOSE_FILE:
-        RC_RPMMAN (state->packman)->rc_fdClose (fd);
+        rc_rpm_close (RC_RPMMAN (state->packman), fd);
         break;
 
     case RPMCALLBACK_INST_PROGRESS:
@@ -182,7 +214,7 @@ transaction_add_install_packages (RCPackman *packman,
     for (iter = install_packages; iter; iter = iter->next) {
         gchar *filename = ((RCPackage *)(iter->data))->package_filename;
 
-        fd = rpmman->rc_fdOpen (filename, O_RDONLY, 0);
+        fd = rc_rpm_open (rpmman, filename, "r.fdio", O_RDONLY, 0);
 
         /* if (fd == NULL || rpmman->Ferror (fd)) { */
         if (fd == NULL) {
@@ -196,7 +228,7 @@ transaction_add_install_packages (RCPackman *packman,
 
         switch (rc) {
         case 1:
-            rpmman->rc_fdClose (fd);
+            rc_rpm_close (rpmman, fd);
 
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "can't read RPM header in %s", filename);
@@ -204,7 +236,7 @@ transaction_add_install_packages (RCPackman *packman,
             return (0);
 
         default:
-            rpmman->rc_fdClose (fd);
+            rc_rpm_close (rpmman, fd);
 
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "%s is not installable", filename);
@@ -216,7 +248,7 @@ transaction_add_install_packages (RCPackman *packman,
                 transaction, header, NULL, filename, 1, NULL);
             count++;
             rpmman->headerFree (header);
-            rpmman->rc_fdClose (fd);
+            rc_rpm_close (rpmman, fd);
 
             switch (rc) {
             case 0:
@@ -1362,7 +1394,7 @@ rc_rpmman_query_file (RCPackman *packman, const gchar *filename)
     RCPackage *package;
     RCRpmman *rpmman = RC_RPMMAN (packman);
 
-    fd = rpmman->rc_fdOpen (filename, O_RDONLY, 0444);
+    fd = rc_rpm_open (rpmman, filename, "r.fdio", O_RDONLY, 0444);
 
     if (rpmman->rpmReadPackageHeader (fd, &header, NULL, NULL, NULL)) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
@@ -1382,7 +1414,7 @@ rc_rpmman_query_file (RCPackman *packman, const gchar *filename)
     rc_rpmman_depends_fill (rpmman, header, package);
 
     rpmman->headerFree (header);
-    rpmman->rc_fdClose (fd);
+    rc_rpm_close (rpmman, fd);
 
     return (package);
 
@@ -1525,7 +1557,8 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
         return (FALSE);
     }
 
-    rpm_fd = rpmman->rc_fdOpen (package->package_filename, O_RDONLY, 0);
+    rpm_fd = rc_rpm_open (rpmman, package->package_filename, "r.fdio",
+                          O_RDONLY, 0);
 
     /* if (!rpm_fd || rpmman->Ferror (rpm_fd)) { */
     if (rpm_fd == NULL) {
@@ -1540,7 +1573,7 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
                               "unable to read from %s",
                               package->package_filename);
 
-        rpmman->rc_fdClose (rpm_fd);
+        rc_rpm_close (rpmman, rpm_fd);
 
         return (FALSE);
     }
@@ -1565,7 +1598,7 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
 
             rpmman->headerFree (signature_header);
 
-            rpmman->rc_fdClose (rpm_fd);
+            rc_rpm_close (rpmman, rpm_fd);
 
             return (FALSE);
         }
@@ -1576,7 +1609,7 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
 
             rpmman->headerFree (signature_header);
 
-            rpmman->rc_fdClose (rpm_fd);
+            rc_rpm_close (rpmman, rpm_fd);
 
             return (FALSE);
         }
@@ -1598,8 +1631,8 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
 
         *payload_filename = NULL;
     } else {
-        while ((num_bytes = rpmman->rc_fdRead (
-                    rpm_fd, buffer, sizeof (buffer))) > 0)
+        while ((num_bytes = rc_rpm_read (rpmman, buffer, sizeof (buffer[0]),
+                                         sizeof (buffer), rpm_fd)) > 0)
         {
             if (!rc_write (payload_fd, buffer, num_bytes)) {
                 rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
@@ -1610,14 +1643,14 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
 
                 rpmman->headerFree (signature_header);
 
-                rpmman->rc_fdClose (rpm_fd);
+                rc_rpm_close (rpmman, rpm_fd);
 
                 return (FALSE);
             }
         }
     }
 
-    rpmman->rc_fdClose (rpm_fd);
+    rc_rpm_close (rpmman, rpm_fd);
 
     count = 0;
 
@@ -2075,29 +2108,35 @@ load_fake_syms (RCRpmman *rpmman)
 static gboolean
 load_rpm_syms (RCRpmman *rpmman)
 {
-    if (!g_module_symbol (rpmman->rpm_lib, "fdOpen",
-                          ((gpointer)&rpmman->rc_fdOpen)))
-    {
-        rc_FDIO_t *fdio;
-
-        if (!g_module_symbol (rpmman->rpm_lib, "fdio",
-                              ((gpointer)&fdio))) {
+    if (!g_module_symbol (rpmman->rpm_lib, "Fopen",
+                          ((gpointer)&rpmman->Fopen))) {
+        if (!g_module_symbol (rpmman->rpm_lib, "fdOpen",
+                              ((gpointer)&rpmman->rc_fdOpen))) {
             return (FALSE);
         }
-
-        rpmman->rc_fdOpen = fdio->_open;
-        rpmman->rc_fdRead = fdio->read;
-        rpmman->rc_fdClose = fdio->close;
-    } else {
         if (!g_module_symbol (rpmman->rpm_lib, "fdRead",
-                              ((gpointer)&rpmman->rc_fdRead)))
-        {
+                              ((gpointer)&rpmman->rc_fdRead))) {
             return (FALSE);
         }
         if (!g_module_symbol (rpmman->rpm_lib, "fdClose",
                               ((gpointer)&rpmman->rc_fdClose))) {
             return (FALSE);
         }
+        rpmman->Fopen = NULL;
+        rpmman->Fclose = NULL;
+        rpmman->Fread = NULL;
+    } else {
+        if (!g_module_symbol (rpmman->rpm_lib, "Fread",
+                              ((gpointer)&rpmman->Fread))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "Fclose",
+                              ((gpointer)&rpmman->Fclose))) {
+            return (FALSE);
+        }
+        rpmman->rc_fdOpen = NULL;
+        rpmman->rc_fdRead = NULL;
+        rpmman->rc_fdClose = NULL;
     }
     /*
     if (!g_module_symbol (rpmman->rpm_lib, "Ferror",
