@@ -246,6 +246,8 @@ rc_relation_string (gint rel, gboolean words)
 {
     if (rel == RC_RELATION_ANY)
         return "(any)";
+    if (rel == RC_RELATION_EQUAL)
+        return (words ? "equal to" : "==");
     if (rel == RC_RELATION_GREATER)
         return (words ? "greater than" : ">");
     if (rel == (RC_RELATION_GREATER | RC_RELATION_EQUAL))
