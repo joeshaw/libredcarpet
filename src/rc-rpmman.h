@@ -126,6 +126,7 @@ struct _RCRpmman {
     int (*rpmGetRpmlibProvides)(char ***, int **, char ***);
     int (*rpmExpandNumeric)(const char *);
     int (*rpmDefineMacro)(MacroContext *, const char *, int);
+    const char * (*rpmGetPath)(const char *, ...);
 
     /*
      * RPMv3 only functions

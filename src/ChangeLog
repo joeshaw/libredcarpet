@@ -1,3 +1,15 @@
+2002-10-23  Joe Shaw  <joe@ximian.com>
+
+	* rc-rpmman.c (rc_rpmman_database_filename): Added.  Returns the
+	filename of the RPM database, based on rpmman->rpmroot, the
+	%{_dbpath} macro, and which version of RPM is being run (v3 or
+	v4).
+	(rc_rpmman_is_database_changed, open_database): Use new function.
+	(open_database): Look for the __db.0xx files in the right location,
+	as well.
+
+	* rc-rpmman.h: Add rpmGetPath().
+
 2002-10-24  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-world-dump.c (rc_world_dump_to_xml): Write the world's locks

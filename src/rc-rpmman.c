@@ -136,16 +136,41 @@ rc_rpm_read (RCRpmman *rpmman, void *buf, size_t size, size_t nmemb, FD_t fd)
     }
 }
 
+static gchar *
+rc_rpmman_database_filename (RCRpmman *rpmman)
+{
+    const char *dbpath;
+    const char *dbfile;
+    int lasti;
+    gchar *path;
+
+    dbpath = rpmman->rpmGetPath ("%{_dbpath}", NULL);
+
+    if (rpmman->version < 40000)
+        dbfile = "packages.rpm";
+    else
+        dbfile = "Packages";
+
+    lasti = strlen (rpmman->rpmroot) - 1;
+
+    if (rpmman->rpmroot[lasti] == '/' && dbpath[0] == '/')
+        dbpath++;
+
+    path = g_strconcat (rpmman->rpmroot, dbpath, "/", dbfile, NULL);
+
+    return path;
+}
+        
 static gboolean
 rc_rpmman_is_database_changed (RCPackman *packman)
 {
     struct stat buf;
     RCRpmman *rpmman = RC_RPMMAN (packman);
+    gchar *path;
 
-    if (rpmman->version < 40000)
-        stat ("/var/lib/rpm/packages.rpm", &buf);
-    else
-        stat ("/var/lib/rpm/Packages", &buf);
+    path = rc_rpmman_database_filename (rpmman);
+    stat (path, &buf);
+    g_free (path);
 
     if (buf.st_mtime != rpmman->db_mtime) {
         rpmman->db_mtime = buf.st_mtime;
@@ -220,12 +245,7 @@ open_database (RCRpmman *rpmman, gboolean write)
         ((flags = O_RDWR) && (rpmman->db_status = RC_RPMMAN_DB_RDWR)) :
         ((flags = O_RDONLY) && (rpmman->db_status = RC_RPMMAN_DB_RDONLY));
 
-    if (rpmman->version < 40000)
-        db_filename = g_strconcat (rpmman->rpmroot,
-                                   "/var/lib/rpm/packages.rpm", NULL);
-    else
-        db_filename = g_strconcat (rpmman->rpmroot,
-                                   "/var/lib/rpm/Packages", NULL);
+    db_filename = rc_rpmman_database_filename (rpmman);
 
     if (!(db_fd = open (db_filename, O_RDONLY))) {
         rc_packman_set_error (RC_PACKMAN (rpmman), RC_PACKMAN_ERROR_ABORT,
@@ -285,7 +305,8 @@ open_database (RCRpmman *rpmman, gboolean write)
 
             for (i = 0; i < 16; i++) {
                 gchar *filename = g_strdup_printf (
-                    "%s/var/lib/rpm/__db.0%02d", rpmman->rpmroot, i);
+                    "%s%s/__db.0%02d", rpmman->rpmroot,
+                    rpmman->rpmGetPath ("%{_dbpath}", NULL), i);
                 unlink (filename);
                 g_free (filename);
             }
@@ -2545,6 +2566,7 @@ load_fake_syms (RCRpmman *rpmman)
 #endif
     rpmman->rpmExpandNumeric = &rpmExpandNumeric;
     rpmman->rpmDefineMacro = &rpmDefineMacro;
+    rpmman->rpmGetPath = &rpmGetPath;
 
 #if RPM_VERSION >= 40000
 
@@ -2720,6 +2742,11 @@ load_rpm_syms (RCRpmman *rpmman)
 
     if (!g_module_symbol (rpmman->rpm_lib, "rpmDefineMacro",
                           ((gpointer) &rpmman->rpmDefineMacro))) {
+        return (FALSE);
+    }
+
+    if (!g_module_symbol (rpmman->rpm_lib, "rpmGetPath",
+                          ((gpointer) &rpmman->rpmGetPath))) {
         return (FALSE);
     }
 
