@@ -176,7 +176,8 @@ rc_resolver_context_get_status (RCResolverContext *context,
        By caching the status of the last checked package, we can in practice eliminate
        the need for any hash table lookups in about 50% of our calls to get_status. */
     if (context->last_checked_package
-        && rc_package_spec_equal (&package->spec, &context->last_checked_package->spec)) {
+        && rc_package_spec_equal (&package->spec, &context->last_checked_package->spec)
+        && package == context->last_checked_package) {
         return context->last_checked_status;
     }
 

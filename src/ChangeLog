@@ -1,3 +1,12 @@
+2003-06-17  Jon Trowbridge  <jon@trowbridge.org>
+
+	* rc-resolver-context.c (rc_resolver_context_get_status): When we
+	check whether or not we can use the cached status, it isn't
+	sufficient to just compare the package specs: the last checked
+	status might be the in-channel package (for example), while the
+	current check might be for the system version of the package.  To
+	fix this, we compare the pointers as well as the specs.
+
 2003-06-15  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-channel.h: For some reason, a bunch of the rc_channel
