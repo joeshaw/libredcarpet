@@ -54,5 +54,6 @@ gint rc_package_spec_equal (gconstpointer ptra, gconstpointer ptrb);
 gint rc_package_spec_not_equal (gconstpointer a, gconstpointer b);
 
 gchar *rc_package_spec_to_str (RCPackageSpec *spec);
+gchar *rc_package_spec_version_to_str (RCPackageSpec *spec);
 
 #endif /* _RC_PACKAGE_SPEC_H */

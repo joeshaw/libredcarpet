@@ -51,6 +51,8 @@ enum _RCPackageRelation {
  * it should never add new packages)
  */
     RC_RELATION_WEAK               = RELATION_WEAK,
+    /* Note that WEAK_ANY doesn't really make sense, since to get this, it would require
+     * an original dep of none, which no packaging system can express as a dependency */
     RC_RELATION_WEAK_ANY           = RELATION_WEAK | RELATION_ANY,
     RC_RELATION_WEAK_EQUAL         = RELATION_WEAK | RELATION_EQUAL,
     RC_RELATION_WEAK_LESS          = RELATION_WEAK | RELATION_LESS,

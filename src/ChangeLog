@@ -1,3 +1,13 @@
+2001-03-07  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps-util.c, rc-deps-util.h: Some code for getting nice
+	user-style error strings about missing packages and conflicts.
+
+	* rc-package-spec.c, rc-package-spec.h: Created
+	rc_package_spec_version_to_str.
+
+	* rc-package-dep.h: Minor comment.
+
 2001-03-07  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c (transaction_add_install_packages): guint instead of

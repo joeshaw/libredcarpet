@@ -92,6 +92,25 @@ rc_package_spec_to_str (RCPackageSpec *spec)
     return buf;
 }
 
+gchar *
+rc_package_spec_version_to_str (RCPackageSpec *spec)
+{
+    gchar *buf;
+    if (spec->epoch) {
+        buf = g_strdup_printf ("%d:%s%s%s",
+                               spec->epoch,
+                               (spec->version ? spec->version : ""),
+                               (spec->release ? "-" : ""),
+                               (spec->release ? spec->release : ""));
+    } else {
+        buf = g_strdup_printf ("%s%s%s",
+                               (spec->version ? spec->version : ""),
+                               (spec->release ? "-" : ""),
+                               (spec->release ? spec->release : ""));
+    }
+    return buf;
+}
+
     
 guint rc_package_spec_hash (gconstpointer ptr)
 {
