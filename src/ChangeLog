@@ -1,3 +1,8 @@
+2003-05-01  Ian Peters  <itp@ximian.com>
+
+	* rc-util.c, rc-util.h: fix to use the correct mkdtemp, optimize
+	some behavior in our implementation of mkdtemp
+
 2003-04-30  Joe Shaw  <joe@ximian.com>
 
 	* make_stub.sh: Make this so it doesn't clobber files when run

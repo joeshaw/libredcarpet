@@ -17,6 +17,8 @@
  * 02111-1307, USA.
  */
 
+#include <config.h>
+
 #include <unistd.h>
 #include <dirent.h>
 #include <stdlib.h>
@@ -26,6 +28,7 @@
 #include <string.h>
 
 #include <sys/mman.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -74,6 +77,7 @@ rc_mkdtemp (char *template)
 {
     unsigned int len;
     char *replace;
+    struct timeval tv;
 
     len = strlen (template);
 
@@ -89,7 +93,8 @@ rc_mkdtemp (char *template)
         return NULL;
     }
 
-    srand (time (NULL));
+    gettimeofday (&tv, NULL);
+    srand ((unsigned int)tv.tv_usec);
 
     do {
         int i;

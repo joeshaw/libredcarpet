@@ -20,6 +20,8 @@
 #ifndef _RC_UTIL_H
 #define _RC_UTIL_H
 
+#include <config.h>
+
 #include <glib.h>
 #include <time.h>
 #include <stdio.h>
