@@ -178,6 +178,7 @@ rc_verify_gpg (gchar *file, gchar *sig)
     GMainLoop *loop;
     gchar *gpg_command;
     RCVerification *verification;
+    gchar *homedir, *gpgdir;
 
     RC_ENTRY;
 
@@ -195,6 +196,74 @@ rc_verify_gpg (gchar *file, gchar *sig)
 
         return (verification);
     }
+
+    /* There's a chance that the ~root/.gnupg directory doesn't exist
+     * yet, and stupidly enough, gnupg creates this directory the
+     * first time it is run but doesn't then do what it was called to
+     * do.  This causes spurious signature failures on first time
+     * runs.  To fix it, if the directory is missing we'll run a
+     * harmless command, gpg --list-keys, to ensure that the directory
+     * exists.  We use --list-keys instead of just gpg by itself in
+     * the off chance that we're wrong, as gpg by itself just blocks
+     * waiting for input in normal operation. */
+
+    homedir = g_get_home_dir ();
+    gpgdir = g_strconcat (homedir, "/.gnupg");
+    g_free (homedir);
+
+    if (!rc_file_exists (gpgdir)) {
+        child = fork ();
+
+        switch (child) {
+        case -1:
+            rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ ": fork() failed\n");
+
+            verification->status = RC_VERIFICATION_STATUS_UNDEF;
+            verification->info =
+                g_strdup ("unable to exec gpg to verify signature");
+
+            g_free (gpgdir);
+
+            return (verification);
+
+        case 0:
+            execl (gpg_command, gpg_command, "--list-keys", NULL);
+
+        default:
+            break;
+        }
+    }
+
+    waitpid (child, &status, 0);
+
+    if (!(WIFEXITED (status)) || (WEXITSTATUS (status) != 0)) {
+        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+                  ": gpg exited abnormally while creating ~/.gnupg\n");
+
+        verification->status = RC_VERIFICATION_STATUS_UNDEF;
+        verification->info = g_strdup (
+            "gpg returned an unknown error code while creating ~/.gnupg");
+
+        g_free (gpgdir);
+
+        RC_EXIT;
+
+        return (verification);
+    }
+
+    if (!rc_file_exists (gpgdir)) {
+        verification->status = RC_VERIFICATION_STATUS_UNDEF;
+        verification->info = g_strdup (
+            "gpg was unable to create ~/.gnupg");
+
+        g_free (gpgdir);
+
+        RC_EXIT;
+
+        return (verification);
+    }
+
+    g_free (gpgdir);
 
     if (pipe (fds)) {
         verification->status = RC_VERIFICATION_STATUS_UNDEF;
@@ -220,7 +289,7 @@ rc_verify_gpg (gchar *file, gchar *sig)
 
         verification->status = RC_VERIFICATION_STATUS_UNDEF;
         verification->info =
-            g_strdup ("unable to fork gpg to verify signature");
+            g_strdup ("unable to exec gpg to verify signature");
 
         return (verification);
 
@@ -235,10 +304,10 @@ rc_verify_gpg (gchar *file, gchar *sig)
         /* I wish I could add --no-auto-key-retrieve, but it's not in
          * gpg 1.0.1, and is in 1.0.4.  Maybe we can require a
          * specific version of gpg... */
-        execlp (gpg_command, gpg_command, "--batch", "--quiet",
-                "--no-secmem-warning", "--no-default-keyring",
-                "--keyring", keyring, "--status-fd",
-                "1", "--logger-fd", "1", "--verify", sig, file, NULL);
+        execl (gpg_command, gpg_command, "--batch", "--quiet",
+               "--no-secmem-warning", "--no-default-keyring",
+               "--keyring", keyring, "--status-fd",
+               "1", "--logger-fd", "1", "--verify", sig, file, NULL);
 
         _exit (-1);
 

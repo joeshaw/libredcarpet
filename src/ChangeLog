@@ -1,5 +1,17 @@
 2001-09-19  Ian Peters  <itp@ximian.com>
 
+	* rc-deps.c: bug fix to multiple install problem as dictated by
+	vlad over a cell phone from europe
+
+	* rc-distro.c: mandrake 81 strings added
+
+	* rc-verification.c: check for ~/.gnupg, and if it doesn't exist,
+	attempt to run gpg --list-keys before verifying the signature.  If
+	gpg is unable to find ~/.gnupg, it creates it, and then aborts,
+	giving a spurious signature failure.
+
+2001-09-19  Ian Peters  <itp@ximian.com>
+
 	* rc-rpmman.c: lame hacks to avoid over/under counts during
 	transactions
 
