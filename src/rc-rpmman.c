@@ -483,8 +483,6 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
                     RCPackageSList *remove_packages, gboolean perform)
 {
     rpmTransactionSet transaction;
-    rpmTransactionSet install_transaction;
-    rpmTransactionSet remove_transaction;
     int rc;
     rpmProblemSet probs = NULL;
     InstallState state;
@@ -496,6 +494,8 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
 #endif
     int transaction_flags, problem_filter;
     RCRpmman *rpmman = RC_RPMMAN (packman);
+    RCPackageSList *real_remove_packages = NULL;
+    RCPackageSList *obsoleted = NULL;
 
     if (getenv ("RC_JUST_KIDDING") || !perform)
         transaction_flags = RPMTRANS_FLAG_TEST;
@@ -515,27 +515,6 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         /* This isn't really a problem, and we'll trust RC to do the
            right thing here */
         RPMPROB_FILTER_OLDPACKAGE;
-
-    /* jeff tells me that we can't currently reliably create a
-     * transaction that both installs/upgrades packages and removes
-     * (other) packages, and that by doing so, we run the risk of
-     * triggering database corruption.  but, i'm unwilling to run or
-     * force unverified transactions -- we have to do an rpmdepCheck
-     * on our transaction set, because the rpm dependency semantics
-     * are so hairy that i'm not sure our dependency resolution layer
-     * will ever always get them right.
-     *
-     * so, the approach i'm going with is to assemble a complete
-     * transactions with package installs and removes (which the api
-     * permits and seems to encourage), run it through rpmdepCheck,
-     * then destroy it and assemble two new transactions, one to
-     * remove packages and the other to install them.  i'm more than a
-     * little concerned by this approach, because of the potential to
-     * have something go wrong in the middle of this process (witness
-     * the debian world, for instance), but...
-     *
-     * -- itp, 3/5/2002
-     */
 
     state.packman = packman;
     state.seqno = 0;
@@ -560,9 +539,64 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         goto ERROR;
     }
 
-    if (remove_packages &&
+    /* If any of the remove packages are obsoleted by any of the
+     * install packages, we want to filter them out */
+    real_remove_packages = rc_package_slist_copy (remove_packages);
+
+    if (real_remove_packages && install_packages) {
+        GSList *install_iter;
+
+        for (install_iter = install_packages; install_iter;
+             install_iter = install_iter->next)
+        {
+            RCPackage *install_package = (RCPackage *)(install_iter->data);
+            GSList *obsolete_iter;
+
+            for (obsolete_iter = install_package->obsoletes; obsolete_iter;
+                 obsolete_iter = obsolete_iter->next)
+            {
+                RCPackageDep *obsolete = (RCPackageDep *)(obsolete_iter->data);
+                GSList *remove_iter;
+
+                for (remove_iter = real_remove_packages; remove_iter;
+                     remove_iter = remove_iter->next)
+                {
+                    RCPackage *remove_package =
+                        (RCPackage *)(remove_iter->data);
+                    RCPackageDep *prov;
+
+                    prov = rc_package_dep_new (
+                        remove_package->spec.name,
+                        remove_package->spec.has_epoch,
+                        remove_package->spec.epoch,
+                        remove_package->spec.version,
+                        remove_package->spec.release,
+                        RC_RELATION_EQUAL);
+
+                    if (rc_package_dep_verify_relation (obsolete, prov)) {
+                        obsoleted =
+                            g_slist_prepend (obsoleted, remove_package);
+                    }
+
+                    rc_package_dep_free (prov);
+                }
+            }
+        }
+    }
+
+    for (iter = obsoleted; iter; iter = iter->next) {
+        RCPackage *obsolete = (RCPackage *)(iter->data);
+
+        real_remove_packages = g_slist_remove (real_remove_packages, obsolete);
+
+        rc_package_unref (obsolete);
+    }
+
+    g_slist_free (obsoleted);
+
+    if (real_remove_packages &&
         !(state.remove_total = transaction_add_remove_packages (
-              packman, transaction, remove_packages)))
+              packman, transaction, real_remove_packages)))
     {
         rc_packman_set_error (
             packman, RC_PACKMAN_ERROR_ABORT,
@@ -609,6 +643,12 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     /* trust me */
     state.true_total = state.install_total * 2 + state.install_extra +
         state.remove_total;
+
+    /* If there are no packages to be removed, we go right to
+     * installing */
+
+    if (!real_remove_packages)
+        state.installing = TRUE;
 
     if (rpmman->rpmdepCheck (transaction, &conflicts, &rc) || rc) {
 #if RPM_VERSION >= 40003
@@ -676,21 +716,6 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         goto ERROR;
     }
 
-    /* this makes me a little nervous, but once we've ensured that we
-     * pass rpmdepCheck and rpmdepOrder with the single large
-     * transaction, we should be ok even with two transactions, as
-     * long as one is strictly install, and the other strictly remove.
-     * rpmdepOrder is a topological sort, using only dependencies
-     * expressed in the transaction set, and more importantly, the
-     * relevant passage from rpmlib.h:
-     *
-     *    The final order ends up as installed packages followed by
-     *    removed packages, with packages removed for upgrades
-     *    immediately following the new package be installed.
-     *
-     * -- itp, 3/5/2002
-     */
-
     if (rpmman->rpmdepOrder (transaction)) {
         rc_packman_set_error (
             packman, RC_PACKMAN_ERROR_ABORT,
@@ -701,85 +726,25 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         goto ERROR;
     }
 
-    rpmman->rpmtransFree (transaction);
-
     g_signal_emit_by_name (packman, "transact_start", state.true_total);
     GTKFLUSH;
 
-    if (remove_packages) {
-        remove_transaction = rpmman->rpmtransCreateSet (
-            rpmman->db, rpmman->rpmroot);
+    rc = rpmman->rpmRunTransactions (transaction,
+                                     (rpmCallbackFunction) transact_cb,
+                                     (void *) &state, NULL, &probs,
+                                     transaction_flags, problem_filter);
 
-        if (remove_packages && !transaction_add_remove_packages (
-                packman, remove_transaction, remove_packages))
-        {
-            rc_packman_set_error (
-                packman, RC_PACKMAN_ERROR_ABORT,
-                "error processing to-be-removed packages");
-
-            rpmman->rpmtransFree (remove_transaction);
-
-            goto ERROR;
-        }
-
-        state.installing = FALSE;
-
-        rc = rpmman->rpmRunTransactions (remove_transaction,
-                                         (rpmCallbackFunction) transact_cb,
-                                         (void *) &state, NULL, &probs,
-                                         transaction_flags, problem_filter);
-
-        if (rc > 0) {
-            render_problems (packman, probs);
-
-            rpmman->rpmProblemSetFree (probs);
-
-            goto ERROR;
-        }
+    if (rc > 0) {
+        render_problems (packman, probs);
 
         rpmman->rpmProblemSetFree (probs);
 
-        rpmman->rpmtransFree (remove_transaction);
+        goto ERROR;
     }
 
-    if (install_packages) {
-        install_transaction = rpmman->rpmtransCreateSet (
-            rpmman->db, rpmman->rpmroot);
+    rpmman->rpmProblemSetFree (probs);
 
-        if (install_packages && !transaction_add_install_packages (
-                packman, install_transaction, install_packages))
-        {
-            rc_packman_set_error (
-                packman, RC_PACKMAN_ERROR_FATAL,
-                "error processing to-be-installed packages");
-
-            rpmman->rpmtransFree (install_transaction);
-
-            goto ERROR;
-        }
-
-        state.installing = TRUE;
-
-        /* first we're going to install new packages.  no rpmdepCheck on
-         * this ahead of time because the check would probably fail, and i
-         * know it.  we'll fix it in a second, right? */
-        rc = rpmman->rpmRunTransactions (install_transaction, 
-                                         (rpmCallbackFunction) transact_cb,
-                                         (void *) &state, NULL, &probs,
-                                         transaction_flags, problem_filter);
-
-        if (rc > 0) {
-            render_problems (packman, probs);
-
-            rpmman->rpmProblemSetFree (probs);
-
-            goto ERROR;
-        }
-
-        rpmman->rpmProblemSetFree (probs);
-
-        rpmman->rpmtransFree (install_transaction);
-    }
+    rpmman->rpmtransFree (transaction);
 
     while (state.seqno < state.true_total) {
         g_signal_emit_by_name (packman, "transact_step",
@@ -792,9 +757,13 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
 
     return;
 
+    rc_package_slist_unref (real_remove_packages);
+
   ERROR:
     rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                           "Unable to complete RPM transaction");
+
+    rc_package_slist_unref (real_remove_packages);
 } /* rc_rpmman_transact */
 
 static RCPackageSection

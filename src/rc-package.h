@@ -100,6 +100,7 @@ RCPackage *rc_package_get_best_upgrade (RCPackage *package);
 
 RCPackageSList *rc_package_slist_ref   (RCPackageSList *packages);
 void            rc_package_slist_unref (RCPackageSList *packages);
+RCPackageSList *rc_package_slist_copy  (RCPackageSList *packages);
 
 RCPackageSList *rc_package_slist_sort_by_name (RCPackageSList *packages);
 RCPackageSList *rc_package_slist_sort_by_spec (RCPackageSList *packages);

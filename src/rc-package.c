@@ -228,6 +228,20 @@ rc_package_slist_unref (RCPackageSList *packages)
     g_slist_foreach (packages, (GFunc) rc_package_unref, NULL);
 } /* rc_package_slist_unref */
 
+RCPackageSList *
+rc_package_slist_copy (RCPackageSList *packages)
+{
+    RCPackageSList *iter, *ret = NULL;
+
+    for (iter = packages; iter; iter = iter->next) {
+        ret = g_slist_prepend (ret, (RCPackage *)(iter->data));
+    }
+
+    ret = g_slist_reverse (ret);
+
+    return ret;
+}
+
 RCPackageUpdateSList *
 rc_package_slist_sort_by_name (RCPackageSList *packages)
 {
