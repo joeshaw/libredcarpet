@@ -612,6 +612,38 @@ rc_world_add_channel (RCWorld *world,
                                                  -1, -1, -1);
 }
 
+static void
+add_package_cb (RCPackage *package, gpointer user_data)
+{
+    GSList **packages = user_data;
+
+    *packages = g_slist_prepend (*packages, rc_package_ref (package));
+}
+
+void
+rc_world_migrate_channel (RCWorld *world,
+                          RCChannel *channel)
+{
+    RCPackageSList *packages = NULL;
+
+    g_return_if_fail (world != NULL);
+    g_return_if_fail (channel != NULL);
+    g_return_if_fail (channel->world != NULL);
+
+    rc_channel_foreach_package (channel, add_package_cb, &packages);
+    rc_world_remove_packages (channel->world, channel);
+    channel->world->channels = g_slist_remove (channel->world->channels,
+                                               channel);
+
+    channel->world = world;
+
+    world->channels = g_slist_prepend (world->channels, channel);
+
+    rc_world_add_packages_from_slist (world, packages);
+    rc_package_slist_unref (packages);
+    g_slist_free (packages);
+}
+
 void
 rc_world_remove_channel (RCWorld *world,
                          RCChannel *channel)

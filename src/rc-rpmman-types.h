@@ -33,7 +33,11 @@
  * Here is an attempt to support all three.
  */
 
-/* This one is from RPM 4.1 to the present */
+/* This one is from RPM 4.0.4 to the present */
+#if RPM_VERSION < 40004
+typedef const void *fnpyKey;
+#endif
+
 typedef struct {
     char *pkgNEVR;
     char *altNEVR;

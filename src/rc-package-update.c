@@ -33,35 +33,6 @@ rc_package_update_new ()
     return (update);
 } /* rc_package_update_new */
 
-RCPackageUpdate *
-rc_package_update_copy (RCPackageUpdate *old_update)
-{
-    RCPackageUpdate *new_update;
-
-    g_return_val_if_fail (old_update, NULL);
-
-    new_update = rc_package_update_new ();
-
-    rc_package_spec_copy ((RCPackageSpec *) new_update,
-                          (RCPackageSpec *) old_update);
-
-    new_update->package_url = g_strdup (old_update->package_url);
-    new_update->package_size = old_update->package_size;
-
-    new_update->installed_size = old_update->installed_size;
-
-    new_update->signature_url = g_strdup (old_update->signature_url);
-    new_update->signature_size = old_update->signature_size;
-
-    new_update->md5sum = g_strdup (old_update->md5sum);
-
-    new_update->importance = old_update->importance;
-
-    new_update->description = g_strdup (old_update->description);
-
-    return (new_update);
-}
-
 void
 rc_package_update_free (RCPackageUpdate *update)
 {
@@ -77,24 +48,10 @@ rc_package_update_free (RCPackageUpdate *update)
 
     g_free (update->description);
 
+    g_free (update->license);
+
     g_free (update);
 } /* rc_package_update_free */
-
-RCPackageUpdateSList *
-rc_package_update_slist_copy (RCPackageUpdateSList *old_slist)
-{
-    RCPackageUpdateSList *iter;
-    RCPackageUpdateSList *new_slist = NULL;
-
-    for (iter = old_slist; iter; iter = iter->next) {
-        RCPackageUpdate *old_update = (RCPackageUpdate *)(iter->data);
-        RCPackageUpdate *new_update = rc_package_update_copy (old_update);
-
-        new_slist = g_slist_append (new_slist, new_update);
-    }
-
-    return (new_slist);
-}
 
 void
 rc_package_update_slist_free (RCPackageUpdateSList *update_slist)

@@ -520,8 +520,8 @@ parser_update_end(RCPackageSAXContext *ctx, const xmlChar *name)
             rc_string_to_guint32_with_default(ctx->text_buffer, 0);
     }
     else if (!strcmp(name, "md5sum")) {
-        ctx->current_update->md5sum =
-            g_strdup (rc_xml_strip (ctx->text_buffer));
+        ctx->current_update->md5sum = rc_xml_strip (ctx->text_buffer);
+        ctx->text_buffer = NULL;
     } else if (!strcmp(name, "importance")) {
         ctx->current_update->importance =
             rc_string_to_package_importance (rc_xml_strip (ctx->text_buffer));
@@ -534,6 +534,11 @@ parser_update_end(RCPackageSAXContext *ctx, const xmlChar *name)
         ctx->current_update->hid = 
             rc_string_to_guint32_with_default(ctx->text_buffer, 0);
     }
+    else if (!strcmp (name, "license")) {
+        ctx->current_update->license = rc_xml_strip (ctx->text_buffer);
+        ctx->text_buffer = NULL;
+    }
+
 } /* parser_update_end */
 
 static void
@@ -1209,9 +1214,8 @@ rc_xml_node_to_package_update (const xmlNode *node, const RCPackage *package)
         } else if (!g_strcasecmp (iter->name, "hid")) {
             update->hid =
                 xml_get_guint32_content_default (iter, 0);
-        } else {
-            /* FIXME: should we complain to the user at this point?  This
-               should really never happen. */
+        } else if (!g_strcasecmp (iter->name, "license")) {
+            update->license = xml_get_content (iter);
         }
 
         iter = iter->next;
@@ -1508,6 +1512,15 @@ rc_package_update_to_xml_node (RCPackageUpdate *update)
                      rc_package_importance_to_string (update->importance));
 
     xmlNewTextChild (update_node, NULL, "description", update->description);
+
+    if (update->hid) {
+        tmp_string = g_strdup_printf ("%d", update->hid);
+        xmlNewTextChild (update_node, NULL, "hid", update->hid);
+        g_free (tmp_string);
+    }
+
+    if (update->license)
+        xmlNewTextChild (update_node, NULL, "license", update->license);
 
     return (update_node);
 }

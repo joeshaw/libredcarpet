@@ -77,6 +77,10 @@ RCChannel *rc_world_add_channel_with_priorities (RCWorld      *world,
                                                  int           unsubd_priority,
                                                  int           current_priority);
 
+/* Migrates a channel to this world */
+void       rc_world_migrate_channel             (RCWorld      *world,
+                                                 RCChannel    *channel);
+
 void       rc_world_remove_channel              (RCWorld      *world,
                                                  RCChannel    *channel);
 

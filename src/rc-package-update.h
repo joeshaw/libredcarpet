@@ -54,6 +54,8 @@ struct _RCPackageUpdate {
     gchar *description;
 
     guint hid;
+
+    gchar *license;
 };
 
 RCPackageUpdate *rc_package_update_new (void);

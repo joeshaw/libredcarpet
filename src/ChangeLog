@@ -1,9 +1,34 @@
+2003-04-08  Joe Shaw  <joe@ximian.com>
+
+	* rc-package-update.c (rc_package_update_copy): Nuke this.
+	(rc_package_update_slist_copy): Ditto.
+	(rc_package_update_free): Free the license string.
+
+	* rc-rpmman.h: Add a define for "fnpyKey" if our RPM is older than
+	4.0.4.
+
+	* rc-world.c (rc_world_migrate_channel): Added.  Migrates a
+	channel from one RCWorld to another.
+
+	* rc-xml.c (parser_update_end): Don't free/realloc the md5sum for
+	the package... must have been missed before.  Read the "license"
+	tag out of the packageinfo.xml file and feed it into the update's
+	license field.
+	(rc_xml_node_to_package_update): Ditto here, for the DOM parser.
+	(rc_package_update_to_xml_node): Serialize the HID and the license
+	string to XML for dumps and pkg_to_xml and the like.
+
 2003-04-08  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman-types.h: add a missing field to RCrpmProblemOlder
 
 	* rc-rpmman.h: rpmdbMatchIterator needs to be
 	rc_rpmdbMatchIterator
+
+2003-04-04  Joe Shaw  <joe@ximian.com>
+
+	* rc-rpmman.h: Missed a place where rpmdbMatchIterator should have
+	been changed to rc_rpmdbMatchIterator.
 
 2003-04-04  Joe Shaw  <joe@ximian.com>
 
