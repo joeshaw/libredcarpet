@@ -188,7 +188,7 @@ rc_packman_query_interface (RCPackman *p, gboolean *pre_config,
 /* Wrappers around all of the virtual functions */
 
 void
-rc_packman_transact (RCPackman *p, RCPackageSList *install_pkgs,
+rc_packman_transact (RCPackman *p, GSList *install_pkgs,
                      RCPackageSList *remove_pkgs)
 {
     g_return_if_fail (p);

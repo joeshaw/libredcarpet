@@ -120,7 +120,7 @@ RCPackman *rc_packman_new (void);
 void rc_packman_query_interface (RCPackman *p, gboolean *config, gboolean *pkg,
                                  gboolean *post);
 
-void rc_packman_transact (RCPackman *p, RCPackageSList *install_pkgs,
+void rc_packman_transact (RCPackman *p, GSList *install_pkgs,
                           RCPackageSList *remove_pkgs);
 
 /* Queries the system package database for a given RCPackage.  Fills in any
