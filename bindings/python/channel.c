@@ -134,6 +134,16 @@ PyChannel_set_subscription (PyObject *self, PyObject *args)
 	return Py_None;
 }
 
+static PyObject *
+PyChannel_set_system (PyObject *self, PyObject *args)
+{
+	RCChannel *channel = PyChannel_get_channel (self);
+
+	rc_channel_set_system (channel);
+
+	Py_INCREF (Py_None);
+	return Py_None;
+}
 
 static PyObject *
 PyChannel_is_wildcard (PyObject *self, PyObject *args)
@@ -173,6 +183,7 @@ static PyMethodDef PyChannel_methods[] = {
 	{ "get_icon_file",          PyChannel_get_icon_file,          METH_NOARGS  },
 	{ "subscribed",             PyChannel_subscribed,             METH_NOARGS  },
 	{ "set_subscription",       PyChannel_set_subscription,       METH_VARARGS },
+	{ "set_system",             PyChannel_set_system,             METH_VARARGS },
 
 	{ "is_wildcard",            PyChannel_is_wildcard,            METH_NOARGS  },
 

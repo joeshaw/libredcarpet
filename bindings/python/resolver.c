@@ -31,6 +31,7 @@
 #include "package.h"
 #include "channel.h"
 #include "world.h"
+#include "world-store.h"
 #include "pyutil.h"
 
 typedef struct {
@@ -71,15 +72,15 @@ PyResolver_set_world (PyObject *self, PyObject *args)
 	PyResolver *py_resolver = (PyResolver *) self;
 	RCResolver *resolver = PyResolver_get_resolver (self);
 	PyObject *obj;
-	RCWorld *world;
+	RCWorldStore *store;
 
 	if (! PyArg_ParseTuple (args, "O", &obj))
 		return NULL;
-	world = PyWorld_get_world (obj);
-	if (world == NULL)
+	store = PyWorldStore_get_store (obj);
+	if (store == NULL)
 		return NULL;
 
-	rc_resolver_set_world (resolver, world);
+	rc_resolver_set_world (resolver, RC_WORLD(store));
 
 	if (py_resolver->py_world) {
 		Py_DECREF (py_resolver->py_world);
@@ -306,6 +307,7 @@ PyResolver_init (PyObject *self, PyObject *args, PyObject *kwds)
 	PyResolver *py_resolver = (PyResolver *) self;
 
 	py_resolver->resolver = rc_resolver_new ();
+	py_resolver->py_world = NULL;
 
 	if (py_resolver->resolver == NULL) {
 		PyErr_SetString (PyExc_RuntimeError, "Can't create resolver");

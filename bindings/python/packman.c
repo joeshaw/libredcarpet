@@ -285,27 +285,6 @@ PyPackman_get_reason (PyObject *self, PyObject *args)
 }
 
 static PyObject *
-PyPackman_get_repackage_dir (PyObject *self, PyObject *args)
-{
-	RCPackman *packman = PyPackman_get_packman (self);
-	return Py_BuildValue ("s", rc_packman_get_repackage_dir (packman));
-}
-
-static PyObject *
-PyPackman_set_repackage_dir (PyObject *self, PyObject *args)
-{
-	RCPackman *packman = PyPackman_get_packman (self);
-	char *str;
-
-	if (! PyArg_ParseTuple (args, "s", &str))
-		return NULL;
-
-	rc_packman_set_repackage_dir (packman, str);
-	Py_INCREF (Py_None);
-	return Py_None;
-}
-
-static PyObject *
 PyPackman_file_list (PyObject *self, PyObject *args)
 {
 	PyObject *obj;
@@ -342,8 +321,6 @@ static PyMethodDef PyPackman_methods[] = {
   { "get_capabilities",    PyPackman_get_capabilities,    METH_NOARGS  },
   { "get_error",           PyPackman_get_error,           METH_NOARGS  },
   { "get_reason",          PyPackman_get_reason,          METH_NOARGS  },
-  { "get_repackage_dir",   PyPackman_get_repackage_dir,   METH_NOARGS  },
-  { "set_repackage_dir",   PyPackman_set_repackage_dir,   METH_VARARGS },
   { "file_list",           PyPackman_file_list,           METH_VARARGS },
   { NULL, NULL }
 };
@@ -403,8 +380,6 @@ PyPackman_register (PyObject *dict)
 						  RC_TRANSACT_FLAG_NONE);
   pyutil_register_int_constant (dict, "TRANSACT_FLAG_NO_ACT",
 						  RC_TRANSACT_FLAG_NO_ACT);
-  pyutil_register_int_constant (dict, "TRANSACT_FLAG_REPACKAGE",
-						  RC_TRANSACT_FLAG_REPACKAGE);
 }
 
 int

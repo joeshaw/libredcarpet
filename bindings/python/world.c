@@ -637,6 +637,17 @@ PyWorld_get_all_conflicting_pkgs (PyObject *self, PyObject *args)
 }
 
 static PyObject *
+PyWorld_spew (PyObject *self, PyObject *args)
+{
+	RCWorld *world = PyWorld_get_world (self);
+
+	rc_world_spew (world, stdout);
+
+	Py_INCREF (Py_None);
+	return Py_None;
+}
+
+static PyObject *
 PyWorld_transact (PyObject *self, PyObject *args)
 {
 	RCWorld *world = PyWorld_get_world (self);
@@ -727,6 +738,7 @@ static PyMethodDef PyWorld_methods[] = {
 	{ "get_all_parent_packages",            PyWorld_get_all_parent_pkgs,   METH_VARARGS },
 	/* rc_world_foreach_conflicting_package */
 	{ "get_all_conflicting_pkgs",           PyWorld_get_all_conflicting_pkgs,METH_VARARGS },
+	{ "spew",                               PyWorld_spew,                  METH_VARARGS },
 
 	{ "transact",                           PyWorld_transact,              METH_VARARGS },
 
