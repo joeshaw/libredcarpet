@@ -160,29 +160,6 @@ rc_file_exists (const char *filename)
     return (access (filename, F_OK) == 0); 
 } 
 
-gchar *
-rc_is_program_in_path (const gchar *program)
-{
-    static gchar **paths = NULL;
-    gchar **path_iter;
-    gchar *file;
-        
-    if (!paths)
-        paths = g_strsplit (g_getenv ("PATH"), ":", -1);
-
-    for (path_iter = paths; *path_iter; path_iter++) {
-        file = g_strconcat (*path_iter, "/", program, NULL);
-
-        if (rc_file_exists (file)) {
-            return (file);
-        }
-
-        g_free (file);
-    }
-
-    return (NULL);
-}
-
 gboolean
 rc_url_is_absolute (const char *url)
 {

@@ -1,5 +1,14 @@
 2002-08-14  Ian Peters  <itp@ximian.com>
 
+	* rc-util.h (rc_is_program_in_path): removed
+
+	* rc-util.c (rc_is_program_in_path): removed
+
+	* rc-verification.c (rc_verify_gpg): use g_find_program_in_path
+	instead of rc_is_program_in_path
+
+2002-08-14  Ian Peters  <itp@ximian.com>
+
 	* rc-world.c (rc_package_and_dep_new_package): removed
 	(rc_world_add_package): every package doesn't implicitly provide
 	itself, it explicitly provides itself, which means we don't have

@@ -158,7 +158,7 @@ rc_verify_gpg (gchar *file, gchar *sig)
     /* If we haven't found gpg in the path yet, we'd better look for
      * it */
     if (!gpg_command) {
-        gpg_command = rc_is_program_in_path ("gpg");
+        gpg_command = g_find_program_in_path ("gpg");
 
         /* Without gpg, we can't verify these signatures at all */
         if (!gpg_command) {

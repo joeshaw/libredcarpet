@@ -43,8 +43,6 @@ char *rc_mkdtemp (char *template);
 
 gboolean rc_file_exists (const char *filename);
 
-gchar *rc_is_program_in_path (const gchar *program);
-
 /* Check if the URL is relative or absolute */
 gboolean rc_url_is_absolute (const char *url);
 
