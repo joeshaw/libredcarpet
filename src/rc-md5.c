@@ -356,6 +356,8 @@ rc_md5_digest (const gchar *filename)
         result[i * 2 + 1] = nibble_to_hex (buf[i] & 0xf);
     }
 
+    g_free (buf);
+
     return (result);
 }
 
@@ -398,6 +400,8 @@ rc_md5_digest_from_string (const gchar *str)
         result[i * 2] = nibble_to_hex ((buf[i] & 0xf0) >> 4);
         result[i * 2 + 1] = nibble_to_hex (buf[i] & 0xf);
     }
+
+    g_free (buf);
 
     return (result);
 }

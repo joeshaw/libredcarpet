@@ -1,5 +1,7 @@
 2002-10-11  Joe Shaw  <joe@ximian.com>
 
+	* rc-md5.c (rc_md5_digest, rc_md5_digest_from_string): Plug a leak.
+
 	* rc-md5.c (rc_md5_string): Renamed to rc_md5_digest().
 	(rc_md5_from_string, rc_md5_digest_from_string): Added.
 
