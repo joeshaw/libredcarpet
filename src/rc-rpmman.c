@@ -2120,9 +2120,7 @@ rc_rpmman_version_compare (RCPackman *packman,
     if (spec1->epoch && spec2->epoch) {
         rc = spec1->epoch - spec2->epoch;
     } else if (spec1->epoch && spec1->epoch > 0) {
-	    /* legacy epoch-less requires/conflicts compatibility */
-	    /* this is so we match rpmlib */
-	    rc = 0;
+	    rc = 1;
     } else if (spec2->epoch && spec2->epoch > 0) {
 	    rc = -1;
     }

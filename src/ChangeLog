@@ -1,3 +1,8 @@
+2002-03-29  Peter Bowen  <pzb@ximian.com>
+
+	* rc-rpmman.c (rc_rpmman_version_compare): always use epochs in
+	version comparisions
+
 2002-03-27  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-queue-item.c (install_item_process): Add support for
