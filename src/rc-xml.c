@@ -62,6 +62,20 @@ struct _RCPackageSAXContext {
     char *text_buffer;
 };
 
+/* Like g_strstrip(), only returns NULL on an empty string */
+static char *
+rc_xml_strip (char *str)
+{
+    char *s;
+
+    s = g_strstrip (str);
+
+    if (s && *s)
+        return s;
+    else
+        return NULL;
+}
+
 static void
 sax_start_document(void *data)
 {
@@ -435,21 +449,21 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
     }
     else if (!strcmp(name, "name")) {
         ctx->current_package->spec.nameq =
-            g_quark_from_string (g_strstrip (ctx->text_buffer));
+            g_quark_from_string (rc_xml_strip (ctx->text_buffer));
         g_free (ctx->text_buffer);
         ctx->text_buffer = NULL;
     } else if (!strcmp(name, "summary")) {
-        ctx->current_package->summary = g_strstrip (ctx->text_buffer);
+        ctx->current_package->summary = rc_xml_strip (ctx->text_buffer);
         ctx->text_buffer = NULL;
     } else if (!strcmp(name, "description")) {
         ctx->current_package->description = ctx->text_buffer;
         ctx->text_buffer = NULL;
     } else if (!strcmp(name, "section")) {
         ctx->current_package->section =
-            rc_string_to_package_section (g_strstrip (ctx->text_buffer));
+            rc_string_to_package_section (rc_xml_strip (ctx->text_buffer));
     } else if (!strcmp(name, "arch")) {
         ctx->current_package->arch =
-            rc_arch_from_string (g_strstrip (ctx->text_buffer));
+            rc_arch_from_string (rc_xml_strip (ctx->text_buffer));
     }
     else if (!strcmp(name, "filesize")) {
         ctx->current_package->file_size = 
@@ -498,13 +512,13 @@ parser_update_end(RCPackageSAXContext *ctx, const xmlChar *name)
         ctx->current_update->spec.has_epoch = 1;
     }
     else if (!strcmp(name, "version")) {
-        ctx->current_update->spec.version = g_strstrip (ctx->text_buffer);
+        ctx->current_update->spec.version = rc_xml_strip (ctx->text_buffer);
         ctx->text_buffer = NULL;
     } else if (!strcmp(name, "release")) {
-        ctx->current_update->spec.release = g_strstrip (ctx->text_buffer);
+        ctx->current_update->spec.release = rc_xml_strip (ctx->text_buffer);
         ctx->text_buffer = NULL;
     } else if (!strcmp(name, "filename")) {
-        g_strstrip (ctx->text_buffer);
+        rc_xml_strip (ctx->text_buffer);
         if (url_prefix) {
             ctx->current_update->package_url =
                 rc_maybe_merge_paths(url_prefix, ctx->text_buffer);
@@ -523,7 +537,7 @@ parser_update_end(RCPackageSAXContext *ctx, const xmlChar *name)
             rc_string_to_guint32_with_default(ctx->text_buffer, 0);
     }
     else if (!strcmp(name, "signaturename")) {
-        g_strstrip (ctx->text_buffer);
+        rc_xml_strip (ctx->text_buffer);
         if (url_prefix) {
             ctx->current_update->signature_url =
                 rc_maybe_merge_paths(url_prefix, ctx->text_buffer);
@@ -538,15 +552,14 @@ parser_update_end(RCPackageSAXContext *ctx, const xmlChar *name)
             rc_string_to_guint32_with_default(ctx->text_buffer, 0);
     }
     else if (!strcmp(name, "md5sum")) {
-        char *stripped = g_strstrip (ctx->text_buffer);
-        ctx->current_update->md5sum = g_strdup(stripped);
+        ctx->current_update->md5sum =
+            g_strdup (rc_xml_strip (ctx->text_buffer));
     } else if (!strcmp(name, "importance")) {
-        char *stripped = g_strstrip (ctx->text_buffer);
         ctx->current_update->importance =
-            rc_string_to_package_importance(stripped);
+            rc_string_to_package_importance (rc_xml_strip (ctx->text_buffer));
     }
     else if (!strcmp(name, "description")) {
-        ctx->current_update->description = g_strstrip (ctx->text_buffer);
+        ctx->current_update->description = rc_xml_strip (ctx->text_buffer);
         ctx->text_buffer = NULL;
     }
     else if (!strcmp(name, "hid")) {

@@ -48,9 +48,7 @@ rc_package_importance_to_string (RCPackageImportance importance)
 RCPackageImportance
 rc_string_to_package_importance (const gchar *importance)
 {
-    if (!importance) {
-        goto INVALID;
-    }
+    g_return_val_if_fail (importance, RC_IMPORTANCE_INVALID);
 
     switch (*importance) {
     case 'f':

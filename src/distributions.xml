@@ -393,7 +393,7 @@
 		<arch>i386</arch>
 		<type>dpkg</type>
 		<target>debian-woody-i386</target>
-		<status>presupported</status>
+		<status>supported</status>
 		<detect>
 			<file source="/etc/debian_version" substring="3.0"/>
 		</detect>

@@ -103,9 +103,7 @@ rc_package_section_to_user_string (RCPackageSection section)
 RCPackageSection
 rc_string_to_package_section (const gchar *section)
 {
-    if (!section) {
-        goto INVALID;
-    }
+    g_return_val_if_fail (section, RC_SECTION_MISC);
 
     switch (*section) {
     case 'd':

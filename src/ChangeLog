@@ -1,3 +1,14 @@
+2002-12-03  Joe Shaw  <joe@ximian.com>
+
+	* distributions.xml: Change Woody to supported.
+
+	* rc-arch.c (rc_arch_from_string): Handle NULL argument.
+
+	* rc-xml.c (rc_xml_strip): Added.  Returns NULL if g_strstrip()
+	returns an empty string.
+	(parser_package_end, parser_update_end): Use rc_xml_strip()
+	instead of g_strstrip().
+
 2002-12-02  Joe Shaw  <joe@ximian.com>
 
 	* rc-rpmman.c: Added a #define for RPMTAG_REMOVETID

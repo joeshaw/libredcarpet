@@ -85,6 +85,8 @@ rc_arch_from_string (const char *arch_name)
 {
     RCArchAndName *iter;
 
+    g_return_val_if_fail (arch_name, RC_ARCH_UNKNOWN);
+
     iter = arch_table;
     while (iter->name) {
         if (!strcmp (iter->name, arch_name))
