@@ -1,3 +1,8 @@
+2002-06-07  Joe Shaw  <joe@ximian.com>
+
+	* rc-world.c (rc_world_foreach_channel): Protect against removing
+	a channel from inside a foreach function.
+
 2002-06-06  Ian Peters  <itp@ximian.com>
 
 	* rc-debman.c (mark_status_read_line_cb): remove an unused

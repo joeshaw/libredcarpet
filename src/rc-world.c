@@ -439,12 +439,18 @@ rc_world_foreach_channel (RCWorld *world,
                           gpointer user_data)
 {
     GSList *iter;
+    GSList *next;
 
     g_return_if_fail (world != NULL);
     g_return_if_fail (fn != NULL);
 
-    for (iter = world->channels; iter != NULL; iter = iter->next) {
+    iter = world->channels;
+    while (iter) {
+        next = iter->next;
+
         fn (iter->data, user_data);
+
+        iter = next;
     }
 }
 
