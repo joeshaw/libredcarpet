@@ -1,3 +1,7 @@
+2001-02-06  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c: Fixed a few debian issues...
+
 2001-02-06  Joe Shaw  <joe@ximian.com>
 
 	* rc-distro.c: Add Caldera to distro_figurers and distro_types.
