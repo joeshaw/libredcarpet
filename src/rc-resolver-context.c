@@ -349,8 +349,10 @@ rc_resolver_context_uninstall_package (RCResolverContext *context,
     status = rc_resolver_context_get_status (context, package);
 
     if (status == RC_PACKAGE_STATUS_TO_BE_INSTALLED) {
-        msg = g_strconcat ("Can't uninstall the to-be-installed package ",
-                           rc_package_spec_to_str_static (& package->spec),
+        msg = g_strconcat (rc_package_spec_to_str_static (& package->spec),
+                           " is scheduled to be installed, "
+                           "but this is not possible because of dependency "
+                           "problems.",
                            NULL);
         rc_resolver_context_add_error_str (context,
                                            package,

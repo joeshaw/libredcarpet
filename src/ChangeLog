@@ -1,3 +1,14 @@
+2002-09-04  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-package-spec.c (rc_package_spec_to_str): Produce nice-looking
+	output if the spec's version is empty. (Bug #29736)
+	(rc_package_spec_version_to_str): Be careful to not print a "-" in
+	the spec version string if it isn't needed.  (Also bug #29736)
+
+	* rc-resolver-context.c (rc_resolver_context_uninstall_package):
+	Make the "can't uninstall to-be-installed" error message a bit
+	more sane. (Also bug #29736)
+	
 2002-09-03  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-xml.c (parser_package_end): We need to get the file_size and

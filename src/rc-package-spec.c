@@ -85,7 +85,7 @@ rc_package_spec_version_to_str (RCPackageSpec *spec)
                 "%s%s%s%s",
                 epoch_buf,
                 (spec->version ? spec->version : ""),
-                (spec->release ? "-" : ""),
+                (spec->release && *spec->release ? "-" : ""),
                 (spec->release ? spec->release : "")));
 }
 
@@ -105,9 +105,13 @@ rc_package_spec_version_to_str_static (RCPackageSpec *spec)
 gchar *
 rc_package_spec_to_str (RCPackageSpec *spec)
 {
-    return (g_strdup_printf (
-                "%s-%s", g_quark_to_string (spec->nameq),
-                rc_package_spec_version_to_str_static (spec)));
+    const char *name_str = g_quark_to_string (spec->nameq);
+    const char *vers_str = rc_package_spec_version_to_str_static (spec);
+    
+    if (vers_str && *vers_str)
+        return g_strdup_printf ("%s-%s", name_str, vers_str);
+    else
+        return g_strdup_printf (name_str);
 }
 
 const gchar *
