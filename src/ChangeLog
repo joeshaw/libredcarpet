@@ -1,3 +1,11 @@
+2002-03-12  Joe Shaw  <joe@ximian.com>
+
+	* rc-packman-private.h: Move RC_PACKMAN_CAP_* out of here, move
+	rc_packman_set_capabilities() into here.
+
+	* rc-packman.h: Move RC_PACKMAN_CAP_* into here, move
+	rc_packman_set_capabilities() out of here.
+
 2002-03-12  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-world.c (channel_match): Added.  A small function to do our

@@ -54,6 +54,12 @@ typedef enum {
     RC_PACKMAN_STEP_REMOVE,
 } RCPackmanStep;
 
+#define RC_PACKMAN_CAP_NONE                  (0)
+#define RC_PACKMAN_CAP_VIRTUAL_CONFLICTS     (1 << 0)
+#define RC_PACKMAN_CAP_PROVIDE_ALL_VERSIONS  (1 << 1)
+#define RC_PACKMAN_CAP_SELF_CONFLICT         (1 << 2)
+#define RC_PACKMAN_CAP_LEGACY_EPOCH_HANDLING (1 << 3)
+
 #include "rc-packman-private.h"
 #include "rc-package.h"
 #include "rc-verification.h"
@@ -128,8 +134,6 @@ RCVerificationSList *rc_packman_verify (RCPackman *packman,
 RCPackage *rc_packman_find_file (RCPackman *packman, const gchar *filename);
 
 const gchar *rc_packman_get_file_extension(RCPackman *packman);
-
-void rc_packman_set_capabilities(RCPackman *packman, const guint32 caps);
 
 guint32 rc_packman_get_capabilities(RCPackman *packman);
 

@@ -29,12 +29,6 @@ typedef struct _RCPackmanPrivate RCPackmanPrivate;
 #include "rc-package-spec.h"
 #include "rc-packman.h"
 
-#define RC_PACKMAN_CAP_NONE 				(0)
-#define RC_PACKMAN_CAP_VIRTUAL_CONFLICTS	(1 << 0)
-#define RC_PACKMAN_CAP_PROVIDE_ALL_VERSIONS	(1 << 1)
-#define RC_PACKMAN_CAP_SELF_CONFLICT        (1 << 2)
-#define RC_PACKMAN_CAP_LEGACY_EPOCH_HANDLING (1 << 3)
-
 struct _RCPackmanPrivate {
     guint error;
     gchar *reason;
@@ -49,6 +43,8 @@ struct _RCPackmanPrivate {
 
 void rc_packman_set_file_extension (RCPackman *packman,
                                     const gchar *extension);
+
+void rc_packman_set_capabilities(RCPackman *packman, const guint32 caps);
 
 void rc_packman_clear_error (RCPackman *packman);
 
