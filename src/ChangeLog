@@ -1,5 +1,7 @@
 2001-02-07  Vladimir Vukicevic  <vladimir@ximian.com>
 
+	* rc-deps.h: oops, this one too
+
 	* rc-deps.c: More fixications for debian. All known breakage cases don't
 	break now.
 
