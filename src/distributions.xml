@@ -242,6 +242,17 @@
 			<file source="/etc/redhat-release" substring="Red Hat Enterprise Linux ES release 3"/>
 		</detect>
 	</distro>
+        <distro>
+                <name>Red Hat Enterprise Linux WS</name>
+                <version>3</version>
+                <arch>x86_64</arch>
+                <type>rpm</type>
+                <target>rhel-3ws-x86_64</target>
+                <status>supported</status>
+                <detect>
+                        <file source="/etc/redhat-release" substring="Red Hat Enterprise Linux WS release 3"/>
+                </detect>
+        </distro>
 	<distro>
    		<name>Red Hat Enterprise Linux WS</name>
    		<version>3</version>
@@ -253,7 +264,6 @@
 			<file source="/etc/redhat-release" substring="Red Hat Enterprise Linux WS release 3"/>
 		</detect>
 	</distro>
-
 	<distro>
 		<name>Red Hat Linux</name>
 		<version>6.0</version>

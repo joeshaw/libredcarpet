@@ -424,11 +424,19 @@ static gchar *
 rc_package_to_rpm_name (RCPackage *package)
 {
     gchar *ret = NULL;
+    gchar *suffix;
 
     g_assert (package);
     g_assert (package->spec.nameq);
 
     ret = g_strdup (g_quark_to_string (package->spec.nameq));
+
+#ifdef REDHAT_OPTERON
+    if ((suffix = g_strrstr (ret, "-32bit")) != NULL)
+        suffix[0] = '\0';
+#else
+    suffix = NULL;
+#endif
 
     if (package->spec.version) {
         gchar *tmp = g_strconcat (ret, "-", package->spec.version, NULL);
@@ -1648,12 +1656,6 @@ rc_rpmman_read_header (RCRpmman *rpmman, Header header, RCPackage *package)
     char *tmpc;
     guint32 *tmpi;
 
-    rpmman->headerGetEntry (header, RPMTAG_NAME, &type, (void **)&tmpc,
-                            &count);
-    if (count && (type == RPM_STRING_TYPE) && tmpc && tmpc[0])
-        package->spec.nameq = g_quark_from_string (tmpc);
-    else
-        package->spec.nameq = 0;
 
     rpmman->headerGetEntry (header, RPMTAG_EPOCH, &type, (void **)&tmpi,
                             &count);
@@ -1685,6 +1687,22 @@ rc_rpmman_read_header (RCRpmman *rpmman, Header header, RCPackage *package)
         package->arch = rc_arch_from_string (tmpc);
     else
         package->arch = RC_ARCH_UNKNOWN;
+
+    rpmman->headerGetEntry (header, RPMTAG_NAME, &type, (void **)&tmpc,
+                            &count);
+    if (count && (type == RPM_STRING_TYPE) && tmpc && tmpc[0]) {
+#ifdef REDHAT_OPTERON
+        if (package->arch != RC_ARCH_X86_64) {
+            char *new_name = g_strdup_printf ("%s-32bit", tmpc);
+            package->spec.nameq = g_quark_from_string (new_name);
+            g_free (new_name);
+        } else
+            package->spec.nameq = g_quark_from_string (tmpc);
+#else
+        package->spec.nameq = g_quark_from_string (tmpc);
+#endif
+    } else
+        package->spec.nameq = 0;
 
     rpmman->headerGetEntry (header, RPMTAG_GROUP, &type, (void **)&tmpc,
                             &count);

@@ -55,6 +55,12 @@ fi
 dnl not everyone has mkdtemp
 AC_CHECK_FUNCS(mkdtemp)
 
+if grep -q "Red Hat" /etc/redhat-release and \
+   `uname -m` = "x86_64"; then
+  AC_DEFINE_UNQUOTED(REDHAT_OPTERON, 1,
+                     [Enable some hacks for Red Hat on Opteron])
+fi
+
 dnl Check for readline and ncurses for packman_test
 save_LIBS=$LIBS
 AM_CONDITIONAL(ENABLE_PACKMAN_TEST, false)

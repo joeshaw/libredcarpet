@@ -1,3 +1,13 @@
+2004-05-13  James Willcox  <james@ximian.com>
+
+	* distributions.xml: Add rhel-3ws-x86_64
+	* rc-arch.c:  Add compat stuff for x86)64
+	* rc-distro.c: (sax_end_element): Pick the best distro, not just the
+	first one we see that happens to be compatible.
+	* rc-rpmman.c: (rc_package_to_rpm_name), (rc_rpmman_read_header):
+	Munge the package names coming out of the rpm database to have
+	"-32bit" appended to the non-64bit packages on Red Hat opteron systems.
+
 2004-05-06  James Willcox  <james@ximian.com>
 
 	* distributions.xml:

@@ -565,14 +565,29 @@ sax_end_element (void *data, const xmlChar *name)
                 rc_distro_free (state->cur_distro);
         }
         else {
-            if (rc_arch_get_compat_score (
-                    state->compat_arch_list, state->cur_distro->arch) > -1 &&
+            int arch_score = rc_arch_get_compat_score (
+                    state->compat_arch_list, state->cur_distro->arch);
+
+            if (arch_score > -1 &&
                 distro_check_eval_list (state->cur_checks))
             {
-                state->our_distro = state->cur_distro;
-                sax_parser_disable (state);
-            } else
+                if (state->our_distro) {
+                    int previous_score;
+
+                    previous_score = rc_arch_get_compat_score (
+                        state->compat_arch_list, state->our_distro->arch);
+                    if (previous_score > arch_score) {
+                        rc_distro_free (state->our_distro);
+                        state->our_distro = state->cur_distro;
+                    } else {
+                        rc_distro_free (state->cur_distro);
+                    }
+                } else {
+                    state->our_distro = state->cur_distro;
+                }
+            } else {
                 rc_distro_free (state->cur_distro);
+            }
         }
         g_slist_foreach (state->cur_checks, (GFunc) distro_check_free, NULL);
         g_slist_free (state->cur_checks);

@@ -18,6 +18,7 @@
  * 02111-1307, USA.
  */
 
+#include <config.h>
 #include "rc-xml.h"
 #include "rc-debug.h"
 #include "rc-dep-or.h"
