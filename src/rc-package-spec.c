@@ -122,6 +122,7 @@ guint rc_package_spec_hash (gconstpointer ptr)
     return ret;
 }
 
+#ifndef __GNUC__
 gint rc_package_spec_equal (gconstpointer a, gconstpointer b)
 {
     RCPackageSpec *one = RC_PACKAGE_SPEC (a);
@@ -160,6 +161,7 @@ gint rc_package_spec_equal (gconstpointer a, gconstpointer b)
 
     return (TRUE);
 }
+#endif
 
 gint rc_package_spec_not_equal (gconstpointer a, gconstpointer b)
 {

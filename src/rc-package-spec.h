@@ -49,7 +49,6 @@ gint rc_package_spec_compare_name (void *a, void *b);
 gint rc_package_spec_compare (void *a, void *b);
 
 guint rc_package_spec_hash (gconstpointer ptr);
-gint rc_package_spec_equal (gconstpointer ptra, gconstpointer ptrb);
 
 gint rc_package_spec_not_equal (gconstpointer a, gconstpointer b);
 
@@ -57,5 +56,48 @@ gchar *rc_package_spec_to_str (RCPackageSpec *spec);
 gchar *rc_package_spec_version_to_str (RCPackageSpec *spec);
 
 gpointer rc_package_spec_slist_find_name (GSList *specs, gchar *name);
+
+#ifdef __GNUC__
+__inline__ static
+gint rc_package_spec_equal (gconstpointer a, gconstpointer b) {
+    RCPackageSpec *one = RC_PACKAGE_SPEC (a);
+    RCPackageSpec *two = RC_PACKAGE_SPEC (b);
+
+    g_assert (one);
+    g_assert (two);
+
+    if (one->epoch != two->epoch) {
+        return (FALSE);
+    }
+
+    if (one->name && two->name) {
+        if (strcmp (one->name, two->name)) {
+            return (FALSE);
+        }
+    } else if (one->name || two->name) {
+        return (FALSE);
+    }
+
+    if (one->version && two->version) {
+        if (strcmp (one->version, two->version)) {
+            return (FALSE);
+        }
+    } else if (one->version || two->version) {
+        return (FALSE);
+    }
+
+    if (one->release && two->release) {
+        if (strcmp (one->release, two->release)) {
+            return (FALSE);
+        }
+    } else if (one->release || two->release) {
+        return (FALSE);
+    }
+
+    return (TRUE);
+}
+#else
+gint rc_package_spec_equal (gconstpointer ptra, gconstpointer ptrb);
+#endif
 
 #endif /* _RC_PACKAGE_SPEC_H */

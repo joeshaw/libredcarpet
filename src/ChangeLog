@@ -1,3 +1,8 @@
+2001-07-11  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c, rc-package-dep.c, rc-package-spec.c, rc-package-spec.h:
+	Some speed optimizations
+
 2001-07-11  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c: #if 0 the rpmGetRpmlibProvides for now, as this
