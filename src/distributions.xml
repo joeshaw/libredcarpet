@@ -175,7 +175,17 @@
 			<file source="/etc/mandrake-release" substring="9.1"/>
 		</detect>
 	</distro>
-
+        <distro>
+                <name>Linux Mandrake</name>
+                <version>9.2</version>
+                <arch>i586</arch>
+                <type>rpm</type>
+                <target>mandrake-92-i586</target>
+                <status>supported</status>
+                <detect>
+                        <file source="/etc/mandrake-release" substring="9.2"/>
+                </detect>
+        </distro>
         <distro>
                 <name>Red Hat Enterprise Linux AS</name>
                 <version>2.1</version>
@@ -183,7 +193,6 @@
                 <type>rpm</type>
                 <target>rhel-21as-i386</target>
                 <status>supported</status>
-                <enddate>0</enddate>
                 <detect>
                         <file source="/etc/redhat-release" substring="2.1AS"/>
                 </detect>
@@ -217,7 +226,6 @@
 		<type>rpm</type>
 		<target>rhel-3as-i386</target>
 		<status>supported</status>
-		<enddate>0</enddate>
 		<detect>
 			<file source="/etc/redhat-release" substring="Red Hat Enterprise Linux AS release 3 (Taroon)"/>
 		</detect>
@@ -229,7 +237,6 @@
 		<type>rpm</type>
 		<target>rhel-3es-i386</target>
 		<status>supported</status>
-		<enddate>0</enddate>
 		<detect>
 			<file source="/etc/redhat-release" substring="Red Hat Enterprise Linux ES release 3 (Taroon)"/>
 		</detect>
@@ -241,7 +248,6 @@
    		<type>rpm</type>
    		<target>rhel-3ws-i386</target>
    		<status>supported</status>
-   		<enddate>0</enddate>
    		<detect>
 			<file source="/etc/redhat-release" substring="Red Hat Enterprise Linux WS release 3 (Taroon)"/>
 		</detect>
@@ -254,7 +260,6 @@
 		<type>rpm</type>
 		<target>redhat-60-i386</target>
 		<status>retired</status>
-		<enddate>0</enddate>
 		<detect>
 			<file source="/etc/redhat-release" substring="6.0"/>
 		</detect>
@@ -266,7 +271,6 @@
 		<type>rpm</type>
 		<target>redhat-61-i386</target>
 		<status>retired</status>
-		<enddate>0</enddate>
 		<detect>
 			<file source="/etc/redhat-release" substring="6.1"/>
 		</detect>
@@ -394,7 +398,6 @@
                 <type>rpm</type>
                 <target>sles-8-i386</target>
                 <status>supported</status>
-                <enddate>0</enddate>
                 <detect>
                         <file source="/etc/SuSE-release" substring="SLES-8"/>
                 </detect>
@@ -559,7 +562,6 @@
 		<type>rpm</type>
 		<target>solaris-8-sun4</target>
 		<status>supported</status>
-		<enddate>0</enddate>
 		<detect>
 			<os_name    substring="SunOS"/>
 			<os_release substring="5.8"/>

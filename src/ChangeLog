@@ -1,3 +1,7 @@
+2003-10-28  Joe Shaw  <joe@ximian.com>
+
+	* distributions.xml: Add support for Mandrake 9.2.
+
 2003-10-24  Joe Shaw  <joe@ximian.com>
 
 	* distributions.xml: Add support for RHEL 3 AS, ES, and WS and
