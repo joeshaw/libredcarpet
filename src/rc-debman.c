@@ -21,6 +21,7 @@
 #include "rc-packman-private.h"
 
 #include "rc-debman.h"
+#include "rc-common.h"
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -278,6 +279,10 @@ do_purge (RCPackman *p, InstallState *state)
 
         fclose (stderr);
 
+#ifdef DEBUG
+        fprintf (stderr, "rc-debman: /usr/bin/dpkg --purge --pending\n--- log ---\n");
+#endif
+
         execl ("/usr/bin/dpkg", "/usr/bin/dpkg", "--purge", "--pending", NULL);
         break;
 
@@ -286,7 +291,10 @@ do_purge (RCPackman *p, InstallState *state)
         single[1] = '\000';
         while ((status = read (fds[0], single, 1))) {
             if (status == 1) {
-                if (single[0] == '\n') {
+#ifdef DEBUG
+                fputc (single[0], stderr);
+#endif
+                if (single[0] == '\n' && buf) {
                     if (!strncmp (buf, "Removing", strlen ("Removing"))) {
                         rc_packman_transaction_step (p, ++state->seqno,
                                                      state->total);
@@ -316,6 +324,11 @@ do_purge (RCPackman *p, InstallState *state)
     if (!(lock_database (RC_DEBMAN (p)))) {
         /* FIXME: need to handle this */
     }
+
+#ifdef DEBUG
+    fprintf (stderr, "--- end ---\n");
+#endif
+
 
     close (fds[0]);
     g_free (buf);
@@ -354,6 +367,10 @@ do_unpack (RCPackman *p, GSList *pkgs, InstallState *state)
 
     argv = g_new0 (gchar *, num_pkgs + 3);
 
+#ifdef DEBUG
+    fprintf (stderr, "rc-debman: /usr/bin/dpkg --unpack ");
+#endif
+
     argv[0] = g_strdup ("/usr/bin/dpkg");
     argv[1] = g_strdup ("--unpack");
 
@@ -361,7 +378,14 @@ do_unpack (RCPackman *p, GSList *pkgs, InstallState *state)
 
     for (iter = pkgs; iter; iter = iter->next) {
         argv[i++] = g_strdup ((gchar *)(iter->data));
+#ifdef DEBUG
+        fprintf (stderr, "%s ", argv[i-1]);
+#endif
     }
+
+#ifdef DEBUG
+    fprintf (stderr, "\n--- log ---\n");
+#endif
 
     pipe (fds);
     fcntl (fds[0], F_SETFL, O_NONBLOCK);
@@ -399,6 +423,9 @@ do_unpack (RCPackman *p, GSList *pkgs, InstallState *state)
         single[1] = '\000';
         while ((status = read (fds[0], single, 1))) {
             if (status == 1) {
+#ifdef DEBUG
+                fputc (single[0], stderr);
+#endif
                 if (single[0] == '\n') {
                     if ((!strncmp (buf, "Unpacking", strlen ("Unpacking"))) ||
                         (!strncmp (buf, "Purging ", strlen ("Purging")))) {
@@ -431,6 +458,10 @@ do_unpack (RCPackman *p, GSList *pkgs, InstallState *state)
     if (!(lock_database (RC_DEBMAN (p)))) {
         /* FIXME: need to handle this */
     }
+
+#ifdef DEBUG
+    fprintf (stderr, "--- end ---\n");
+#endif
 
     close (fds[0]);
     g_free (buf);
@@ -478,6 +509,10 @@ do_configure (RCPackman *p, InstallState *state)
 
     unlock_database (RC_DEBMAN (p));
 
+#ifdef DEBUG
+    fprintf (stderr, "rc-debman: /usr/bin/dpkg --configure --pending\n--- log ---\n");
+#endif
+
     child = fork ();
 
     switch (child) {
@@ -510,6 +545,9 @@ do_configure (RCPackman *p, InstallState *state)
         single[1] = '\000';
         while ((status = read (fds[0], single, 1))) {
             if (status == 1) {
+#ifdef DEBUG
+                fputc (single[0], stderr);
+#endif
                 if (single[0] == '\n') {
                     if (buf && (!strncmp (buf, "Setting up ",
                                    strlen ("Setting up ")))) {
@@ -541,6 +579,10 @@ do_configure (RCPackman *p, InstallState *state)
     if (!(lock_database (RC_DEBMAN (p)))) {
         /* FIXME: need to handle this */
     }
+
+#ifdef DEBUG
+    fprintf (stderr, "--- end ---\n");
+#endif
 
     close (fds[0]);
     g_free (buf);
