@@ -1,4 +1,8 @@
+#include <stdio.h>
+
 #include "rc-package-dep.h"
+
+/* #define DEBUG 50 */
 
 RCPackageDepItem *
 rc_package_dep_item_new (gchar *name,

@@ -1269,7 +1269,7 @@ rc_debman_query_all_real (RCPackman *p)
     RCPackageSList *iter;
     GMainLoop *loop;
 
-    if (!(fd = open ("/var/lib/dpkg/status", O_RDONLY))) {
+    if ((fd = open (status_file, O_RDONLY)) < 0) {
         rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
                               "Unable to open /var/lib/dpkg/status");
         return;

@@ -1,6 +1,8 @@
 #include <ctype.h>
 #include <stdio.h>
 
+/* #define DEBUG 50 */
+
 #include "rc-package-spec.h"
 
 SecTable sectable[] = {
