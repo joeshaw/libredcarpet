@@ -1,3 +1,20 @@
+2001-01-21  Ian Peters  <itp@helixcode.com>
+
+	* rc-verification.c (gpg_read_line_cb): don't create the
+	verification in several places, it was already created and passed
+	in initialized
+	(rc_verify_gpg): create the RCVerification, initialize it
+	correctly, return an RC_VERIFICATION_STATUS_UNDEF instead of NULL
+	if we fail for some reason.  Fucking check if gpg is in the PATH
+	before we blindly exec it like the dumbass I am.  Closes mothra
+	#something or other.  execlp the gpg_command instead of "gpg".  If
+	exec fails, _exit instead of returning
+
+	* rc-util.c (rc_is_program_in_path): added rc_file_exists, which I
+	shamelessly stole from gnome-libs
+
+	* rc-util.h: added rc_file_exists
+
 2001-01-19  Ian Peters  <itp@helixcode.com>
 
 	* rc-package-info.c (debian_packages_helper): replace strcmp mess

@@ -102,8 +102,6 @@ gpg_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
     if (!strncmp (ptr, "GOODSIG ", strlen ("GOODSIG "))) {
         rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ": good GPG signature\n");
 
-        gpg_info->verification = rc_verification_new ();
-        gpg_info->verification->type = RC_VERIFICATION_TYPE_GPG;
         gpg_info->verification->status = RC_VERIFICATION_STATUS_PASS;
 
         ptr = strstr (ptr + strlen ("GOODSIG "), " ");
@@ -122,8 +120,6 @@ gpg_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
     if (!strncmp (ptr, "BADSIG ", strlen ("BADSIG "))) {
         rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ": bad GPG signature\n");
 
-        gpg_info->verification = rc_verification_new ();
-        gpg_info->verification->type = RC_VERIFICATION_TYPE_GPG;
         gpg_info->verification->status = RC_VERIFICATION_STATUS_FAIL;
 
         ptr = strstr (ptr + strlen ("BADSIG "), " ");
@@ -143,8 +139,6 @@ gpg_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
         rc_debug (RC_DEBUG_LEVEL_WARNING, __FUNCTION__ \
                   ": error checking GPG signature\n");
 
-        gpg_info->verification = rc_verification_new ();
-        gpg_info->verification->type = RC_VERIFICATION_TYPE_GPG;
         gpg_info->verification->status = RC_VERIFICATION_STATUS_UNDEF;
 
         RC_EXIT;
@@ -178,11 +172,31 @@ rc_verify_gpg (gchar *file, gchar *sig)
     GPGInfo gpg_info;
     RCLineBuf *line_buf;
     GMainLoop *loop;
+    gchar *gpg_command;
+    RCVerification *verification;
 
     RC_ENTRY;
 
+    verification = rc_verification_new ();
+
+    verification->type = RC_VERIFICATION_TYPE_GPG;
+
+    gpg_command = rc_is_program_in_path ("gpg");
+
+    if (!gpg_command) {
+        verification->status = RC_VERIFICATION_STATUS_UNDEF;
+        verification->info =
+            g_strdup ("gpg does not appear to be on your PATH");
+
+        return (verification);
+    }
+
     if (pipe (fds)) {
-        return (NULL);
+        verification->status = RC_VERIFICATION_STATUS_UNDEF;
+        verification->info =
+            g_strdup ("unable to create a pipe to communicate with gpg");
+
+        return (verification);
     }
 
     fcntl (fds[0], F_SETFL, O_NONBLOCK);
@@ -199,7 +213,11 @@ rc_verify_gpg (gchar *file, gchar *sig)
         close (fds[0]);
         close (fds[1]);
 
-        return (NULL);
+        verification->status = RC_VERIFICATION_STATUS_UNDEF;
+        verification->info =
+            g_strdup ("unable to fork gpg to verify signature");
+
+        return (verification);
 
     case 0:
         close (fds[0]);
@@ -209,12 +227,12 @@ rc_verify_gpg (gchar *file, gchar *sig)
 
         close (fds[1]);
 
-        execlp ("gpg", "gpg", "--batch", "--quiet", "--no-secmem-warning",
-                "--no-default-keyring", "--no-auto-key-retrieve", "--keyring",
-                keyring, "--status-fd", "1", "--logger-fd", "2", "--verify",
-                sig, file, NULL);
+        execlp (gpg_command, gpg_command, "--batch", "--quiet",
+                "--no-secmem-warning", "--no-default-keyring",
+                "--no-auto-key-retrieve", "--keyring", keyring, "--status-fd",
+                "1", "--logger-fd", "2", "--verify", sig, file, NULL);
 
-        return (NULL);
+        _exit (-1);
 
     default:
         break;
@@ -226,7 +244,9 @@ rc_verify_gpg (gchar *file, gchar *sig)
     rc_line_buf_set_fd (line_buf, fds[0]);
 
     loop = g_main_new (FALSE);
+
     gpg_info.loop = loop;
+    gpg_info.verification = verification;
 
     gpg_info.read_line_id =
         gtk_signal_connect (GTK_OBJECT (line_buf), "read_line",
@@ -251,9 +271,12 @@ rc_verify_gpg (gchar *file, gchar *sig)
         rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
                   ": gpg exited abnormally\n");
 
+        verification->status = RC_VERIFICATION_STATUS_UNDEF;
+        verification->info = g_strdup ("gpg returned an unknown error code");
+
         RC_EXIT;
 
-        return (NULL);
+        return (verification);
     }
 
     RC_EXIT;
