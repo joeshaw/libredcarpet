@@ -1,5 +1,7 @@
 2001-04-18  Vladimir Vukicevic  <vladimir@ximian.com>
 
+	* rc-deps.c: oops, get rid of some fprintfs
+
 	* rc-deps.c: Make sure that the require is added with the joined
 	name before we start adding other things, so that we don't get into
 	a nasty loop.  Also break out of a loop of daps after we
