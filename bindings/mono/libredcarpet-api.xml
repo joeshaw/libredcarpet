@@ -435,6 +435,7 @@
         <parameters>
           <parameter type="RCPackman*" name="packman" />
           <parameter type="const-gchar*" name="filename" />
+          <parameter type="gboolean" name="filter_file_deps" />
         </parameters>
       </virtual_method>
       <virtual_method name="RcPackmanRealVersionCompare" cname="rc_packman_real_version_compare">
@@ -531,12 +532,14 @@
         <return-type type="RCPackage*" />
         <parameters>
           <parameter type="const-gchar*" name="filename" />
+          <parameter type="gboolean" name="filter_file_deps" />
         </parameters>
       </method>
       <method name="QueryFileList" cname="rc_packman_query_file_list">
         <return-type type="RCPackageSList*" />
         <parameters>
           <parameter type="GSList*" name="filenames" />
+          <parameter type="gboolean" name="filter_file_deps" />
         </parameters>
       </method>
       <method name="SetGlobal" cname="rc_packman_set_global" hidden="1">

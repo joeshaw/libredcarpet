@@ -1,3 +1,8 @@
+2004-11-30  Tambet Ingo  <tambet@ximian.com>
+
+	* libredcarpet-api.xml: Regenerated.
+	generated/*.cs Regenerated.
+
 2004-11-19  James Willcox  <james@ximian.com>
 
 	* libredcarpet-api.xml: regenerated
