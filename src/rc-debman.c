@@ -2218,7 +2218,9 @@ struct _DebmanQueryInfo {
 
     RCPackage *package_buf;
     GString *desc_buf;
+#if 0
     RCPackageDepSList *replaces;
+#endif
 
     gboolean error;
 };
@@ -2249,7 +2251,9 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
        /var/lib/dpkg/status, so save out our current buffer */
     if (!line[0]) {
         if (query_info->package_buf) {
+#if 0
             RCPackageDepSList *iter;
+#endif
 
             if (query_info->desc_buf && query_info->desc_buf->len) {
                 query_info->package_buf->description =
@@ -2257,6 +2261,7 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
                 query_info->desc_buf = NULL;
             }
 
+#if 0
             for (iter = query_info->replaces; iter; iter = iter->next) {
                 RCPackageDep *dep = (RCPackageDep *)(iter->data);
 
@@ -2272,6 +2277,7 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
 
             g_slist_free (query_info->replaces);
             query_info->replaces = NULL;
+#endif
 
             query_info->packages = g_slist_prepend (query_info->packages,
                                                     query_info->package_buf);
@@ -2510,6 +2516,7 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
         return;
     }
 
+#if 0
     if (!strncmp (line, "replaces:", strlen ("replaces:"))) {
         ptr = line + strlen ("replaces:");
         while (*ptr && isspace (*ptr)) {
@@ -2518,6 +2525,7 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
         query_info->replaces = rc_debman_fill_depends (ptr);
         return;
     }
+#endif
 }
 
 static void
@@ -2562,7 +2570,9 @@ rc_debman_query_all_real (RCPackman *packman)
     query_info.packages = NULL;
     query_info.package_buf = NULL;
     query_info.desc_buf = NULL;
+#if 0
     query_info.replaces = NULL;
+#endif
     query_info.error = FALSE;
     query_info.loop = loop;
 

@@ -1,5 +1,10 @@
 2001-07-12  Ian Peters  <itp@ximian.com>
 
+	* rc-debman.c: #if 0 out the last commit until Vlad and I work
+	through some issues
+
+2001-07-12  Ian Peters  <itp@ximian.com>
+
 	* rc-debman.c (query_all_read_line_cb): some code to handle
 	Conflicts: + Replaces: == Provides:
 
