@@ -1,3 +1,8 @@
+2004-11-30  Tambet Ingo  <tambet@ximian.com>
+
+	* pkg_to_xml.c (main): Update call to rc_packman_query_file call.
+	Fix a memory leak while we're at it.
+
 2003-09-17  Joe Shaw  <joe@ximian.com>
 
 	* packman_test.c (packman_test_find_file): Update this for the

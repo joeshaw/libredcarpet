@@ -83,7 +83,7 @@ main (int argc, char *argv[])
 
         } else {
                 
-            pkg = rc_packman_query_file (packman, argv[i]);
+            pkg = rc_packman_query_file (packman, argv[i], FALSE);
             
             if (! pkg) {
 
@@ -93,6 +93,7 @@ main (int argc, char *argv[])
             } else {
 
                 node = rc_package_to_xml_node (pkg);
+                rc_package_unref (pkg);
 
                 if (! node) {
 
