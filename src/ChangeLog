@@ -1,3 +1,8 @@
+2001-01-29  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c: ewpz. don't get stuck in an infinite iteration
+	when removing a require at some point.
+
 2001-01-29  Ian Peters  <itp@ximian.com>
 
 	* rc-debman.c (make_unpack_commands): correctly sysconf for
