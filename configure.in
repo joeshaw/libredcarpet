@@ -119,7 +119,9 @@ if test "x$enable_backend_rpm4" = "xyes"; then
     AC_CHECK_HEADERS(rpm/rpmlib.h,, AC_MSG_ERROR(couldn't find rpmlib.h)),
       AC_MSG_ERROR(couldn't find librpm), -lz -lbz2 -lpopt -lrpmio)
   if grep -q ugid.h "$RPM_PREFIX/include/rpm/misc.h"; then
-    AC_MSG_ERROR(broken misc.h, see README-ugid)
+    if test \! -r /usr/include/rpm/ugid.h ; then
+      AC_MSG_ERROR(broken misc.h, see README-ugid)
+    fi
   fi
   AC_CHECK_LIB(db-3.1, db_version,,, -ldb1) dnl what?
   RPMLIB_LIBS="-L$RPM_PREFIX/lib -Wl,-Bstatic -lrpm -lrpmio -Wl,-Bdynamic -lpopt -lz -lbz2"

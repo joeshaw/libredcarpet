@@ -1,3 +1,8 @@
+2001-02-08  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* configure.in: for rpm4 misc.h check, make sure that
+	ugid.h really doesn't exist (it got put back in 7.0.90)
+
 2001-01-29  Ian Peters  <itp@ximian.com>
 
 	* configure.in: add some bz2 autoloving magic
