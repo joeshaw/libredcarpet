@@ -576,8 +576,9 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
                                  state.remove_total);
     }
 
-    rc = rpmRunTransactions (transaction, transact_cb, (void *) &state,
-                             NULL, &probs, transaction_flags, problem_filter);
+    rc = rpmRunTransactions (transaction, (rpmCallbackFunction) transact_cb,
+                             (void *) &state, NULL, &probs, transaction_flags,
+                             problem_filter);
 
     if (rc < 0) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
