@@ -1,3 +1,13 @@
+2004-11-30  James Willcox  <james@ximian.com>
+
+	* RC.metadata:
+	* generated/ResolverContext.cs:
+	* generated/ResolverQueue.cs: 
+	* libredcarpet-api.xml:
+
+	Set the element type for rc_resolver_context_get_info(), and make
+	ResolverQueue opaque.
+
 2004-11-30  Tambet Ingo  <tambet@ximian.com>
 
 	* libredcarpet-api.xml: Regenerated.

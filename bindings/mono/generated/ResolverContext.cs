@@ -337,10 +337,10 @@ namespace RC {
 		[DllImport("libredcarpet")]
 		static extern IntPtr rc_resolver_context_get_info(IntPtr raw);
 
-		public string Info { 
+		public GLib.SList Info { 
 			get {
 				IntPtr raw_ret = rc_resolver_context_get_info(Handle);
-				string ret = GLib.Marshaller.PtrToStringGFree(raw_ret);
+				GLib.SList ret = new GLib.SList(raw_ret, typeof (string));
 				return ret;
 			}
 		}

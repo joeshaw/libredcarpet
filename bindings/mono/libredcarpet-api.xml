@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <api
-><!--
+>
+  <!--
 
         This file was automatically generated.
         Please DO NOT MODIFY THIS FILE, modify .metadata files instead.
@@ -2898,7 +2899,7 @@
         </parameters>
       </method>
       <method name="GetInfo" cname="rc_resolver_context_get_info">
-        <return-type type="char*" />
+        <return-type type="GSList*" element_type="string" />
       </method>
       <method name="GetInstalls" cname="rc_resolver_context_get_installs">
         <return-type type="GSList*" element_type="RC.Package" />
@@ -3185,7 +3186,7 @@
         </parameters>
       </method>
     </struct>
-    <struct name="ResolverQueue" cname="RCResolverQueue">
+    <struct name="ResolverQueue" cname="RCResolverQueue" opaque="1">
       <field cname="context" type="RCResolverContext*" />
       <field cname="items" type="GSList*" />
       <method name="AddExtraConflict" cname="rc_resolver_queue_add_extra_conflict">
@@ -3230,6 +3231,9 @@
       </method>
       <method name="Free" cname="rc_resolver_queue_free">
         <return-type type="void" />
+      </method>
+      <method name="GetContext" cname="rc_resolver_queue_get_context">
+        <return-type type="RCResolverContext*" />
       </method>
       <method name="IsEmpty" cname="rc_resolver_queue_is_empty">
         <return-type type="gboolean" />
