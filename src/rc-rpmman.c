@@ -1963,7 +1963,7 @@ vercmp(const char * a, const char * b)
 #if 0
         /* take care of the case where the two version segments are */
         /* different types: one numeric and one alpha */
-        if (one == str1) return -1;	/* arbitrary */
+        if (one == str1) return -1; /* arbitrary */
         if (two == str2) return -1;
 #endif
 
@@ -2452,11 +2452,11 @@ rc_rpmman_init (RCRpmman *obj)
     gchar **rpm_version;
     gchar *so_file;
     const char *objects[] = {
-	"{rpm}.so.0",
-	"{rpm_rpmio}.so.0",
-	"{rpm_rpmio_rpmdb}-4.0.3.so",
-	"{rpm_rpmio_rpmdb}.so",
-        NULL };
+    "(rpm).so.0",
+    "(rpm_rpmio).so.0",
+    "(rpm_rpmio_rpmdb)-4.0.3.so",
+    "(rpm_rpmio_rpmdb).so",
+    NULL };
     const char **iter;
 
 #ifdef STATIC_RPM
