@@ -1,3 +1,8 @@
+2001-02-19  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps-util.c: Oops. Remove all but the /newest/ duplicate,
+	not all but the oldest (doh!)
+
 2001-02-16  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps-util.c, rc-deps-util.h: New files that have some verification
