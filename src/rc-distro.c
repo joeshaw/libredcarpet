@@ -606,6 +606,8 @@ sax_parser_enable (DistroParseState *state)
     state->ctxt->sax->warning = sax_warning;
     state->ctxt->sax->error = sax_warning;
     state->ctxt->sax->fatalError = sax_warning;
+
+    state->ctxt->sax->initialized = 1;
 }
 
 static void

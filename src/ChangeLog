@@ -1,3 +1,8 @@
+2003-11-03  Joe Shaw  <joe@ximian.com>
+
+	* rc-distro.c (sax_parser_enable): Set ctxt->sax->initialized to 1
+	to avoid a crash against libxml 2.6.1.
+
 2003-10-30  Joe Shaw  <joe@ximian.com>
 
 	* rc-rpmman.c (rc_rpmman_find_file_v3): Any non-zero return from
