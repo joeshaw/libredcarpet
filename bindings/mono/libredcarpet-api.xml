@@ -515,8 +515,8 @@
           <parameter type="const-gchar*" name="input" />
           <parameter type="gboolean*" name="has_epoch" />
           <parameter type="guint32*" name="epoch" />
-          <parameter type="gchar**" name="version" />
-          <parameter type="gchar**" name="release" />
+          <parameter type="gchar**" name="version" pass_as="out" />
+          <parameter type="gchar**" name="release" pass_as="out" />
         </parameters>
       </method>
       <method name="Query" cname="rc_packman_query">

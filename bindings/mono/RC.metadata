@@ -92,6 +92,8 @@
   <attr path="/api/namespace/object[@cname='RCPackman']/method[@cname='rc_packman_get_global']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='RCPackman']/method[@cname='rc_packman_set_global']" name="hidden">1</attr>
 
+  <attr path="/api/namespace/object[@cname='RCPackman']/method[@name='ParseVersion']/*/*[@type='gchar**']" name="pass_as">out</attr>
+
    <!-- Hide methods. These are not required and make reading of gapi-fixup hard -->
 
    <attr path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_parse_xml_from_buffer']" name="hidden">1</attr>

@@ -36,7 +36,7 @@ namespace RC {
 		[DllImport("libredcarpet")]
 		static extern void rc_package_spec_set_name(IntPtr raw, string value);
 
-		public string Name {
+		public string Name { 
 			get {
 				IntPtr raw_ret = rc_package_spec_get_name(Handle);
 				string ret = Marshal.PtrToStringAnsi(raw_ret);

@@ -642,10 +642,10 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern bool rc_packman_parse_version(IntPtr raw, string input, out bool has_epoch, out uint epoch, string version, string release);
+		static extern bool rc_packman_parse_version(IntPtr raw, string input, out bool has_epoch, out uint epoch, out string version, out string release);
 
-		public bool ParseVersion(string input, out bool has_epoch, out uint epoch, string version, string release) {
-			bool raw_ret = rc_packman_parse_version(Handle, input, out has_epoch, out epoch, version, release);
+		public bool ParseVersion(string input, out bool has_epoch, out uint epoch, out string version, out string release) {
+			bool raw_ret = rc_packman_parse_version(Handle, input, out has_epoch, out epoch, out version, out release);
 			bool ret = raw_ret;
 			return ret;
 		}

@@ -1,3 +1,10 @@
+2004-12-07  Tambet Ingo  <tambet@ximian.com>
+
+	* RC.metadata: Pass all arguments as "out" to
+	rc_packman_parse_version().
+
+	* libredcarpet-api.xml: Regenerate.
+
 2004-12-03  Tambet Ingo  <tambet@ximian.com>
 
 	* PackageSpec.custom: Remove default (non-working) constructor, it's
