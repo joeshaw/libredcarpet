@@ -1,3 +1,37 @@
+2004-10-29  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-package.c (rc_package_set_arch, rc_package_set_section) 
+	(rc_package_set_file_size, rc_package_set_installed_size) 
+	(rc_package_set_summary, rc_package_set_description): Add setters.
+	(rc_package_set_signature_filename): Fix memory leak.
+	(rc_package_get_requires, rc_package_set_requires) 
+	(rc_package_get_provides, rc_package_set_provides) 
+	(rc_package_get_conflicts, rc_package_set_conflicts) 
+	(rc_package_get_obsoletes, rc_package_set_obsoletes) 
+	(rc_package_get_children, rc_package_set_children) 
+	(rc_package_get_suggests, rc_package_set_suggests) 
+	(rc_package_get_recommends, rc_package_set_recommends):
+	Add setters, rewrite getters. Don't expose PackageDepArrays.
+
+	* rc-package-update.c (rc_package_update_set_importance) 
+	(rc_package_update_set_package_url) 
+	(rc_package_update_set_signature_url) 
+	(rc_package_update_set_md5sum, rc_package_update_set_description) 
+	(rc_package_update_set_license) 
+	(rc_package_update_set_package_size) 
+	(rc_package_update_set_installed_size) 
+	(rc_package_update_set_signature_size, rc_package_update_set_hid):
+	Add setters.
+
+	* rc-package-spec.c (rc_package_spec_set_name) 
+	(rc_package_spec_get_version, rc_package_spec_set_version) 
+	(rc_package_spec_get_release, rc_package_spec_set_release) 
+	(rc_package_spec_has_epoch, rc_package_spec_get_epoch) 
+	(rc_package_spec_set_epoch): Add getters and setters.
+
+	* rc-package-dep.c (rc_package_dep_array_to_slist): Implement.
+	(rc_package_dep_array_nth): Remove.
+
 2004-10-08  Peter Teichman  <peter@ximian.com>
 
 	* rc-distro.c: make the distro detect string comparison

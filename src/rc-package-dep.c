@@ -413,6 +413,26 @@ rc_package_dep_array_from_slist (RCPackageDepSList **list)
     return array;
 }
 
+RCPackageDepSList *
+rc_package_dep_array_to_slist (RCPackageDepArray *array)
+{
+    int i;
+    RCPackageDepSList *new = NULL;
+
+    if (array == NULL)
+        return NULL;
+
+    for (i = 0; i < array->len; i++) {
+        RCPackageDep *dep = array->data[i];
+        rc_package_dep_ref (dep);
+        new = g_slist_prepend (new, dep);
+    }
+
+    new = g_slist_reverse (new);
+
+    return new;
+}
+
 RCPackageDepArray *
 rc_package_dep_array_copy (RCPackageDepArray *array)
 {
@@ -448,15 +468,6 @@ rc_package_dep_array_free (RCPackageDepArray *array)
     g_free (array->data);
 
     g_free (array);
-}
-
-RCPackageDep *
-rc_package_dep_array_nth (RCPackageDepArray *array, guint n)
-{
-    g_return_val_if_fail (array != NULL, NULL);
-    g_return_val_if_fail (n < array->len, NULL);
-
-    return array->data[n];
 }
 
 gboolean

@@ -128,14 +128,14 @@ rc_package_dep_slist_free (RCPackageDepSList *list);
 RCPackageDepArray *
 rc_package_dep_array_from_slist (RCPackageDepSList **list);
 
+RCPackageDepSList *
+rc_package_dep_array_to_slist (RCPackageDepArray *array);
+
 RCPackageDepArray *
 rc_package_dep_array_copy (RCPackageDepArray *array);
 
 void
 rc_package_dep_array_free (RCPackageDepArray *array);
-
-RCPackageDep *
-rc_package_dep_array_nth (RCPackageDepArray *array, guint n);
 
 gboolean
 rc_package_dep_verify_relation (RCPackman    *packman,

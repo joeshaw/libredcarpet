@@ -65,6 +65,74 @@ rc_package_spec_get_name (RCPackageSpec *rcps)
     return g_quark_to_string (rcps->nameq);
 }
 
+void
+rc_package_spec_set_name (RCPackageSpec *rcps, const char *value)
+{
+    g_return_if_fail (rcps != NULL);
+
+    rcps->nameq = g_quark_from_string (value);
+}
+
+const gchar *
+rc_package_spec_get_version (RCPackageSpec *rcps)
+{
+    g_return_val_if_fail (rcps != NULL, NULL);
+    return rcps->version;
+}
+
+void
+rc_package_spec_set_version (RCPackageSpec *rcps, const gchar *value)
+{
+    g_return_if_fail (rcps != NULL);
+
+    g_free (rcps->version);
+    rcps->version = g_strdup (value);
+}
+
+const gchar *
+rc_package_spec_get_release (RCPackageSpec *rcps)
+{
+    g_return_val_if_fail (rcps != NULL, NULL);
+    return rcps->release;
+}
+
+void
+rc_package_spec_set_release (RCPackageSpec *rcps, const gchar *value)
+{
+    g_return_if_fail (rcps != NULL);
+
+    g_free (rcps->release);
+    rcps->release = g_strdup (value);
+}
+
+gboolean
+rc_package_spec_has_epoch (RCPackageSpec *rcps)
+{
+    g_return_val_if_fail (rcps != NULL, FALSE);
+    return rcps->has_epoch;
+}
+
+gint
+rc_package_spec_get_epoch (RCPackageSpec *rcps)
+{
+    g_return_val_if_fail (rcps != NULL, 0);
+    return rcps->epoch;
+}
+
+void
+rc_package_spec_set_epoch (RCPackageSpec *rcps, gint value)
+{
+    g_return_if_fail (rcps != NULL);
+
+    if (value < 0) {
+        rcps->has_epoch = FALSE;
+        rcps->epoch = 0;
+    } else {
+        rcps->has_epoch = TRUE;
+        rcps->epoch = value;
+    }
+}
+
 gint
 rc_package_spec_compare_name (void *a, void *b)
 {

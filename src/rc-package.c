@@ -425,12 +425,28 @@ rc_package_get_arch (RCPackage *package)
     return package->arch;
 }
 
+void
+rc_package_set_arch (RCPackage  *package, RCArch value)
+{
+    g_return_if_fail (package != NULL);
+
+    package->arch = value;
+}
+
 RCPackageSection
 rc_package_get_section (RCPackage *package)
 {
     g_return_val_if_fail (package != NULL, RC_SECTION_MISC);
 
     return package->section;
+}
+
+void
+rc_package_set_section (RCPackage  *package, RCPackageSection value)
+{
+    g_return_if_fail (package != NULL);
+
+    package->section = value;
 }
 
 guint32
@@ -441,12 +457,28 @@ rc_package_get_file_size (RCPackage  *package)
     return package->file_size;
 }
 
+void
+rc_package_set_file_size (RCPackage  *package, guint32 value)
+{
+    g_return_if_fail (package != NULL);
+
+    package->file_size = value;
+}
+
 guint32
 rc_package_get_installed_size (RCPackage *package)
 {
     g_return_val_if_fail (package != NULL, 0);
 
     return package->installed_size;
+}
+
+void
+rc_package_set_installed_size (RCPackage *package, guint32 value)
+{
+    g_return_if_fail (package != NULL);
+
+    package->installed_size = value;
 }
 
 const gchar *
@@ -457,12 +489,30 @@ rc_package_get_summary (RCPackage *package)
     return package->summary;
 }
 
+void
+rc_package_set_summary (RCPackage  *package, const gchar *value)
+{
+    g_return_if_fail (package != NULL);
+
+    g_free (package->summary);
+    package->summary = g_strdup (value);
+}
+
 const gchar *
 rc_package_get_description (RCPackage *package)
 {
     g_return_val_if_fail (package != NULL, NULL);
 
     return package->description;
+}
+
+void
+rc_package_set_description (RCPackage  *package, const gchar *value)
+{
+    g_return_if_fail (package != NULL);
+
+    g_free (package->description);
+    package->description = g_strdup (value);
 }
 
 const gchar *
@@ -479,61 +529,132 @@ rc_package_set_signature_filename (RCPackage *package,
 {
     g_return_if_fail (package != NULL);
 
+    g_free (package->signature_filename);
     package->signature_filename = g_strdup (filename);
 }
 
-RCPackageDepArray *
+RCPackageDepSList *
 rc_package_get_requires (RCPackage *package)
 {
     g_return_val_if_fail (package != NULL, NULL);
 
-    return package->requires_a;
+    return rc_package_dep_array_to_slist (package->requires_a);
 }
 
-RCPackageDepArray *
+void
+rc_package_set_requires (RCPackage *package, RCPackageDepSList *value)
+{
+    g_return_if_fail (package != NULL);
+
+    rc_package_dep_array_free (package->requires_a);
+    RCPackageDepSList *copy = rc_package_dep_slist_copy (value);
+    package->requires_a = rc_package_dep_array_from_slist (&copy);
+}
+
+RCPackageDepSList *
 rc_package_get_provides (RCPackage *package)
 {
     g_return_val_if_fail (package != NULL, NULL);
 
-    return package->provides_a;
+    return rc_package_dep_array_to_slist (package->provides_a);
 }
 
-RCPackageDepArray *
+void
+rc_package_set_provides (RCPackage *package, RCPackageDepSList *value)
+{
+    g_return_if_fail (package != NULL);
+
+    rc_package_dep_array_free (package->provides_a);
+    RCPackageDepSList *copy = rc_package_dep_slist_copy (value);
+    package->provides_a = rc_package_dep_array_from_slist (&copy);
+}
+
+RCPackageDepSList *
 rc_package_get_conflicts (RCPackage *package)
 {
     g_return_val_if_fail (package != NULL, NULL);
 
-    return package->conflicts_a;
+    return rc_package_dep_array_to_slist (package->conflicts_a);
 }
 
-RCPackageDepArray *
+void
+rc_package_set_conflicts (RCPackage *package, RCPackageDepSList *value)
+{
+    g_return_if_fail (package != NULL);
+
+    rc_package_dep_array_free (package->conflicts_a);
+    RCPackageDepSList *copy = rc_package_dep_slist_copy (value);
+    package->conflicts_a = rc_package_dep_array_from_slist (&copy);
+}
+
+RCPackageDepSList *
 rc_package_get_obsoletes (RCPackage *package)
 {
     g_return_val_if_fail (package != NULL, NULL);
 
-    return package->obsoletes_a;
+    return rc_package_dep_array_to_slist (package->obsoletes_a);
 }
 
-RCPackageDepArray *
+void
+rc_package_set_obsoletes (RCPackage *package, RCPackageDepSList *value)
+{
+    g_return_if_fail (package != NULL);
+
+    rc_package_dep_array_free (package->obsoletes_a);
+    RCPackageDepSList *copy = rc_package_dep_slist_copy (value);
+    package->obsoletes_a = rc_package_dep_array_from_slist (&copy);
+}
+
+RCPackageDepSList *
 rc_package_get_children (RCPackage *package)
 {
     g_return_val_if_fail (package != NULL, NULL);
 
-    return package->children_a;
+    return rc_package_dep_array_to_slist (package->children_a);
 }
 
-RCPackageDepArray *
+void
+rc_package_set_children (RCPackage *package, RCPackageDepSList *value)
+{
+    g_return_if_fail (package != NULL);
+
+    rc_package_dep_array_free (package->children_a);
+    RCPackageDepSList *copy = rc_package_dep_slist_copy (value);
+    package->children_a = rc_package_dep_array_from_slist (&copy);
+}
+
+RCPackageDepSList *
 rc_package_get_suggests (RCPackage *package)
 {
     g_return_val_if_fail (package != NULL, NULL);
 
-    return package->suggests_a;
+    return rc_package_dep_array_to_slist (package->suggests_a);
 }
 
-RCPackageDepArray *
+void
+rc_package_set_suggests (RCPackage *package, RCPackageDepSList *value)
+{
+    g_return_if_fail (package != NULL);
+
+    rc_package_dep_array_free (package->suggests_a);
+    RCPackageDepSList *copy = rc_package_dep_slist_copy (value);
+    package->suggests_a = rc_package_dep_array_from_slist (&copy);
+}
+
+RCPackageDepSList *
 rc_package_get_recommends (RCPackage *package)
 {
     g_return_val_if_fail (package != NULL, NULL);
 
-    return package->recommends_a;
+    return rc_package_dep_array_to_slist (package->recommends_a);
+}
+
+void
+rc_package_set_recommends (RCPackage *package, RCPackageDepSList *value)
+{
+    g_return_if_fail (package != NULL);
+
+    rc_package_dep_array_free (package->recommends_a);
+    RCPackageDepSList *copy = rc_package_dep_slist_copy (value);
+    package->recommends_a = rc_package_dep_array_from_slist (&copy);
 }

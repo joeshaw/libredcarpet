@@ -50,7 +50,23 @@ void rc_package_spec_copy (RCPackageSpec *new, RCPackageSpec *old);
 
 void rc_package_spec_free_members (RCPackageSpec *rcps);
 
-const char *rc_package_spec_get_name (RCPackageSpec *rcps);
+const char *rc_package_spec_get_name     (RCPackageSpec *rcps);
+void        rc_package_spec_set_name     (RCPackageSpec *rcps,
+                                          const char *value);
+   
+const gchar *rc_package_spec_get_version (RCPackageSpec *rcps);
+void         rc_package_spec_set_version (RCPackageSpec *rcps,
+                                          const gchar *value);
+
+const gchar *rc_package_spec_get_release (RCPackageSpec *rcps);
+void         rc_package_spec_set_release (RCPackageSpec *rcps,
+                                          const gchar *value);
+
+gboolean     rc_package_spec_has_epoch   (RCPackageSpec *rcps);
+
+gint         rc_package_spec_get_epoch   (RCPackageSpec *rcps);
+void         rc_package_spec_set_epoch   (RCPackageSpec *rcps,
+                                          gint value);
 
 gint rc_package_spec_compare_name (void *a, void *b);
 

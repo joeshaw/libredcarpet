@@ -141,23 +141,62 @@ void             rc_package_set_filename      (RCPackage  *package,
                                                const char *filename);
 
 RCPackageSpec   *rc_package_get_spec          (RCPackage  *package);
+
 RCArch           rc_package_get_arch          (RCPackage  *package);
+void             rc_package_set_arch          (RCPackage  *package,
+                                               RCArch value);
+
 RCPackageSection rc_package_get_section       (RCPackage  *package);
+void             rc_package_set_section       (RCPackage  *package,
+                                               RCPackageSection value);
+
 guint32          rc_package_get_file_size     (RCPackage  *package);
+void             rc_package_set_file_size     (RCPackage  *package,
+                                               guint32 value);
+
 guint32          rc_package_get_installed_size (RCPackage *package);
+void             rc_package_set_installed_size (RCPackage *package,
+                                                guint32 value);
+
 const gchar     *rc_package_get_summary       (RCPackage  *package);
+void             rc_package_set_summary       (RCPackage  *package,
+                                               const gchar *value);
+
 const gchar     *rc_package_get_description   (RCPackage  *package);
-const gchar     *rc_package_get_signature_filename (RCPackage *package);
-void             rc_package_set_signature_filename (RCPackage  *package,
-                                                    const char *filename);
+void             rc_package_set_description   (RCPackage  *package,
+                                               const gchar *value);
+
+const gchar *rc_package_get_signature_filename (RCPackage *package);
+void         rc_package_set_signature_filename (RCPackage  *package,
+                                                const char *filename);
 
 
-RCPackageDepArray *rc_package_get_requires     (RCPackage *package);
-RCPackageDepArray *rc_package_get_provides     (RCPackage *package);
-RCPackageDepArray *rc_package_get_conflicts    (RCPackage *package);
-RCPackageDepArray *rc_package_get_obsoletes    (RCPackage *package);
-RCPackageDepArray *rc_package_get_children     (RCPackage *package);
-RCPackageDepArray *rc_package_get_suggests     (RCPackage *package);
-RCPackageDepArray *rc_package_get_recommends   (RCPackage *package);
+RCPackageDepSList *rc_package_get_requires     (RCPackage *package);
+void               rc_package_set_requires     (RCPackage *package,
+                                                RCPackageDepSList *value);
+
+RCPackageDepSList *rc_package_get_provides     (RCPackage *package);
+void               rc_package_set_provides     (RCPackage *package,
+                                                RCPackageDepSList *value);
+
+RCPackageDepSList *rc_package_get_conflicts    (RCPackage *package);
+void               rc_package_set_conflicts    (RCPackage *package,
+                                                RCPackageDepSList *value);
+
+RCPackageDepSList *rc_package_get_obsoletes    (RCPackage *package);
+void               rc_package_set_obsoletes    (RCPackage *package,
+                                                RCPackageDepSList *value);
+
+RCPackageDepSList *rc_package_get_children     (RCPackage *package);
+void               rc_package_set_children     (RCPackage *package,
+                                                RCPackageDepSList *value);
+
+RCPackageDepSList *rc_package_get_suggests     (RCPackage *package);
+void               rc_package_set_suggests     (RCPackage *package,
+                                                RCPackageDepSList *value);
+
+RCPackageDepSList *rc_package_get_recommends   (RCPackage *package);
+void               rc_package_set_recommends   (RCPackage *package,
+                                                RCPackageDepSList *value);
 
 #endif /* _RC_PACKAGE_H */

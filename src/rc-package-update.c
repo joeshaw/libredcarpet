@@ -98,12 +98,30 @@ rc_package_update_get_importance (RCPackageUpdate *update)
     return update->importance;
 }
 
+void
+rc_package_update_set_importance (RCPackageUpdate *update,
+                                  RCPackageImportance value)
+{
+    g_return_if_fail (update != NULL);
+
+    update->importance = value;
+}
+
 const gchar *
 rc_package_update_get_package_url (RCPackageUpdate *update)
 {
     g_return_val_if_fail (update != NULL, NULL);
 
     return update->package_url;
+}
+
+void
+rc_package_update_set_package_url (RCPackageUpdate *update, const gchar *value)
+{
+    g_return_if_fail (update != NULL);
+
+    g_free (update->package_url);
+    update->package_url = g_strdup (value);
 }
 
 const gchar *
@@ -114,12 +132,30 @@ rc_package_update_get_signature_url (RCPackageUpdate *update)
     return update->signature_url;
 }
 
+void
+rc_package_update_set_signature_url (RCPackageUpdate *update, const gchar *value)
+{
+    g_return_if_fail (update != NULL);
+
+    g_free (update->signature_url);
+    update->signature_url = g_strdup (value);
+}
+
 const gchar *
 rc_package_update_get_md5sum (RCPackageUpdate *update)
 {
     g_return_val_if_fail (update != NULL, NULL);
 
     return update->md5sum;
+}
+
+void
+rc_package_update_set_md5sum (RCPackageUpdate *update, const gchar *value)
+{
+    g_return_if_fail (update != NULL);
+
+    g_free (update->md5sum);
+    update->md5sum = g_strdup (value);
 }
 
 const gchar *
@@ -130,12 +166,30 @@ rc_package_update_get_description (RCPackageUpdate *update)
     return update->description;
 }
 
+void
+rc_package_update_set_description (RCPackageUpdate *update, const gchar *value)
+{
+    g_return_if_fail (update != NULL);
+
+    g_free (update->description);
+    update->description = g_strdup (value);
+}
+
 const gchar *
 rc_package_update_get_license (RCPackageUpdate *update)
 {
     g_return_val_if_fail (update != NULL, NULL);
 
     return update->license;
+}
+
+void
+rc_package_update_set_license (RCPackageUpdate *update, const gchar *value)
+{
+    g_return_if_fail (update != NULL);
+
+    g_free (update->license);
+    update->license = g_strdup (value);
 }
 
 guint32
@@ -146,12 +200,28 @@ rc_package_update_get_package_size (RCPackageUpdate *update)
     return update->package_size;
 }
 
+void
+rc_package_update_set_package_size (RCPackageUpdate *update, guint32 value)
+{
+    g_return_if_fail (update != NULL);
+
+    update->package_size = value;
+}
+
 guint32
 rc_package_update_get_installed_size (RCPackageUpdate *update)
 {
     g_return_val_if_fail (update != NULL, 0);
 
     return update->installed_size;
+}
+
+void
+rc_package_update_set_installed_size (RCPackageUpdate *update, guint32 value)
+{
+    g_return_if_fail (update != NULL);
+
+    update->installed_size = value;
 }
 
 guint32
@@ -162,12 +232,28 @@ rc_package_update_get_signature_size (RCPackageUpdate *update)
     return update->signature_size;
 }
 
+void
+rc_package_update_set_signature_size (RCPackageUpdate *update, guint32 value)
+{
+    g_return_if_fail (update != NULL);
+
+    update->signature_size = value;
+}
+
 guint
 rc_package_update_get_hid (RCPackageUpdate *update)
 {
     g_return_val_if_fail (update != NULL, 0);
 
     return update->hid;
+}
+
+void
+rc_package_update_set_hid (RCPackageUpdate *update, guint value)
+{
+    g_return_if_fail (update != NULL);
+
+    update->hid = value;
 }
 
 void
