@@ -36,7 +36,7 @@ namespace RC {
 		[DllImport("libredcarpet")]
 		static extern void rc_package_spec_set_name(IntPtr raw, string value);
 
-		public string Name { 
+		public string Name {
 			get {
 				IntPtr raw_ret = rc_package_spec_get_name(Handle);
 				string ret = Marshal.PtrToStringAnsi(raw_ret);
@@ -165,19 +165,16 @@ namespace RC {
 		public PackageSpec(IntPtr raw) : base(raw) {}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_package_spec_new(string name, bool has_epoch, uint epoch, string version, string release);
+		static extern IntPtr rc_package_spec_new();
 
-		public PackageSpec (string name, bool has_epoch, uint epoch, string version, string release) 
+		public PackageSpec () 
 		{
-			Raw = rc_package_spec_new(name, has_epoch, epoch, version, release);
+			Raw = rc_package_spec_new();
 		}
 
 #endregion
 #region Customized extensions
 #line 1 "PackageSpec.custom"
-
-      public PackageSpec () {}
-
       [DllImport("libredcarpet")]
 	  static extern int rc_package_spec_equal(IntPtr a, IntPtr b);
 

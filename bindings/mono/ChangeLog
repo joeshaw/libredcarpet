@@ -1,3 +1,10 @@
+2004-12-03  Tambet Ingo  <tambet@ximian.com>
+
+	* PackageSpec.custom: Remove default (non-working) constructor, it's
+	provided from libredcarpet now.
+
+	* libredcarpet-api.xml: Regenerate.
+
 2004-12-01  James Willcox  <james@ximian.com>
 
 	* PackageSpec.custom:

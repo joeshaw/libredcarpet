@@ -1,6 +1,3 @@
-
-      public PackageSpec () {}
-
       [DllImport("libredcarpet")]
 	  static extern int rc_package_spec_equal(IntPtr a, IntPtr b);
 

@@ -1,7 +1,6 @@
 <?xml version="1.0"?>
 <api
->
-  <!--
+><!--
 
         This file was automatically generated.
         Please DO NOT MODIFY THIS FILE, modify .metadata files instead.
@@ -2218,15 +2217,7 @@
           <parameter type="const-gchar*" name="release" />
         </parameters>
       </method>
-      <constructor cname="rc_package_spec_new">
-        <parameters>
-          <parameter type="const-gchar*" name="name" />
-          <parameter type="gboolean" name="has_epoch" />
-          <parameter type="guint32" name="epoch" />
-          <parameter type="const-char*" name="version" />
-          <parameter type="const-char*" name="release" />
-        </parameters>
-      </constructor>
+      <constructor cname="rc_package_spec_new" />
       <method name="NotEqual" cname="rc_package_spec_not_equal" shared="true" hidden="1">
         <return-type type="gint" />
         <parameters>
