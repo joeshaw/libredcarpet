@@ -1,3 +1,16 @@
+2001-01-23  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* rc-debug-misc.c, rc-debug-misc.h: Add an optional debug level
+	to printing routines.
+
+	* rc-deps.c, rc-deps.h: Revert to a little older version which works
+	well for redhat, has some issues for debian.
+
+	* rc-package-dep.c: Change verify_and_relation to take an is_virtual
+	parameter, for debian.  Also some epoch/release hacks for RPM.
+
+	* rc-package-info.c: Add the is_virtual stuff to find_package.
+
 2001-01-23  Ian Peters  <itp@helixcode.com>
 
 	* rc-rpmman.c: replaced some tabs with the correct number of

@@ -24,10 +24,11 @@
 #include "rc-debug-misc.h"
 #include "rc-packman.h"
 #include "xml-util.h"
+#include "rc-debug.h"
 
 #include <gnome-xml/tree.h>
 
-/* #define DEBUG 50 */
+#define DEBUG 50 
 
 extern RCPackman *das_global_packman;
 
@@ -156,18 +157,32 @@ rc_package_dep_verify_relation (RCPackageDep *dep, RCPackageSpec *spec)
 gboolean
 rc_package_dep_verify_and_relation (RCPackageDep *depl,
                                     RCPackageSpec *spec,
-                                    RCPackageDepItem **fail_out)
+                                    RCPackageDep **fail_out,
+                                    gboolean is_virtual)
 {
+    gboolean ret = TRUE;
+
     while (depl) {
         RCPackageDepItem *di = (RCPackageDepItem *) depl->data;
+        RCPackageRelation unweak_rel = di->relation & ~RC_RELATION_WEAK;
+
+        /* HACK-2: debian can't have versioned deps fulfilled by virtual provides. */
+        /* this should be some sort of if (debianish) { .. } */
+        if (is_virtual && (unweak_rel != RC_RELATION_ANY && unweak_rel != RC_RELATION_NONE)) {
+            if (!strcmp (di->spec.name, spec->name)) {
+                if (fail_out) *fail_out = g_slist_append (*fail_out, di);
+                ret = FALSE;
+            }
+        }
+
         if (!rc_package_dep_item_verify_relation (di, spec)) {
-            if (fail_out) *fail_out = di;
-            return FALSE;
+            if (fail_out) *fail_out = g_slist_append (*fail_out, di);
+            ret = FALSE;
         }
         depl = depl->next;
     }
 
-    return TRUE;
+    return ret;
 }
 
 
@@ -254,29 +269,27 @@ rc_package_dep_item_verify_relation (RCPackageDepItem *dep,
         }
     }
 
-/*
- * HACK --
- *
- * There are cases where a RPM will require an exact version = (i.e. for the -devel)
- * but will not include the release in that requirement. We ship such packages --
- * our packages always use helix as the release, but our dependencies don't
- * reflect that. So, if we're looking for an exact match, we ignore the release when
- * comparing.
- *
- */
-    
-    if (unweak_rel == RC_RELATION_EQUAL && dep->spec.release == NULL) {
+    /*
+     * HACK --
+     *
+     * There are cases where a RPM will require an exact version = (i.e. for the -devel)
+     * but will not include the release in that requirement. We ship such packages --
+     * our packages always use helix as the release, but our dependencies don't
+     * reflect that. So, if we're looking for an exact match, we ignore the release when
+     * comparing.
+     */
+    if (unweak_rel == RC_RELATION_EQUAL && (dep->spec.release == NULL || dep->spec.epoch == 0)) {
         /* it's not depending on any particular release */
         newspecspec.name = spec->name;
-        newspecspec.epoch = spec->epoch;
+        newspecspec.epoch = dep->spec.epoch ? spec->epoch : 0;
         newspecspec.version = spec->version;
-        newspecspec.release = NULL;
+        newspecspec.release = dep->spec.release ? spec->release : NULL;
 
         use_newspecspec = TRUE;
     }
 
     compare_ret = rc_packman_version_compare (das_global_packman, &dep->spec,
-                                           use_newspecspec ? &newspecspec : spec);
+                                              use_newspecspec ? &newspecspec : spec);
     
     /* Note that we make the assumption that if we're in this function,
      * we're checking a dep on the same package (so this function won't
@@ -675,6 +688,29 @@ rc_package_dep_slist_is_fully_weak (RCPackageDepSList *deps)
     }
     return TRUE;
 }
+
+gboolean
+rc_package_dep_slist_has_item (RCPackageDepSList *deps, RCPackageDepItem *di)
+{
+    while (deps) {
+        RCPackageDep *dep = (RCPackageDep *) deps->data;
+        while (dep) {
+            RCPackageDepItem *depi = (RCPackageDepItem *) dep->data;
+
+            if (depi->relation == di->relation &&
+                rc_package_spec_equal (&depi->spec, &di->spec))
+            {
+                return TRUE;
+            }
+
+            dep = dep->next;
+        }
+        deps = deps->next;
+    }
+
+    return FALSE;
+}
+
 
 /**
  ** XML conversion functions

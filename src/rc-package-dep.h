@@ -112,7 +112,8 @@ gboolean rc_package_dep_verify_and_slist_relation (RCPackageDepSList *depl,
                                                    RCPackageDep **fail_out);
 gboolean rc_package_dep_verify_and_relation (RCPackageDep *depl,
                                              RCPackageSpec *spec,
-                                             RCPackageDepItem **fail_out);
+                                             RCPackageDep **fail_out,
+                                             gboolean is_virtual);
 gboolean rc_package_dep_item_verify_relation (RCPackageDepItem *dep, RCPackageSpec *spec);
 
 gint rc_package_dep_is_item_subset (RCPackageDep *a, RCPackageDepItem *b);
@@ -125,6 +126,7 @@ void rc_package_dep_weaken (RCPackageDep *dep);
 gboolean rc_package_dep_is_fully_weak (RCPackageDep *dep);
 gboolean rc_package_dep_slist_is_fully_weak (RCPackageDepSList *deps);
 
+gboolean rc_package_dep_slist_has_item (RCPackageDepSList *deps, RCPackageDepItem *di);
 
 
 RCPackageRelation rc_string_to_package_relation (const gchar *relation);
