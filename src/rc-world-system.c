@@ -157,6 +157,7 @@ rc_world_system_init (RCWorldSystem *system)
                                              "@system",
                                              "System Packages");
     rc_channel_set_system (system->system_channel);
+    rc_channel_set_hidden (system->system_channel);
 
     rc_world_store_add_channel (RC_WORLD_STORE (system),
                                 system->system_channel);

@@ -289,6 +289,15 @@ rc_channel_set_pkginfo_file (RCChannel *channel, const char *pkginfo_file)
 }
 
 void
+rc_channel_set_hidden (RCChannel *channel)
+{
+    g_return_if_fail (channel != NULL);
+    g_return_if_fail (!rc_channel_is_immutable (channel));
+
+    channel->hidden = TRUE;
+}
+
+void
 rc_channel_set_system (RCChannel *channel)
 {
     g_return_if_fail (channel != NULL);

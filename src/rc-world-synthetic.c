@@ -256,6 +256,7 @@ rc_world_synthetic_init (RCWorldSynthetic *synth)
                                                "@synthetic",
                                                "Synthetic Packages");
     rc_channel_set_system (synth->synthetic_channel);
+    rc_channel_set_hidden (synth->synthetic_channel);
 
     rc_world_store_add_channel (RC_WORLD_STORE (synth),
                                 synth->synthetic_channel);

@@ -81,6 +81,8 @@ void rc_channel_set_icon_file (RCChannel  *channel,
 void rc_channel_set_pkginfo_file (RCChannel  *channel,
                                   const char *pkginfo_file);
 
+void rc_channel_set_hidden (RCChannel *channel);
+
 void rc_channel_set_system (RCChannel *channel);
 
 void     rc_channel_make_immutable (RCChannel *channel);
@@ -132,7 +134,7 @@ void     rc_channel_set_subscription (RCChannel *channel,
 
 gboolean rc_channel_is_system (RCChannel *);
 
-gboolean rc_channel_is_hidden (RCChannel *);
+gboolean rc_channel_is_hidden  (RCChannel *);
 
 gboolean rc_channel_is_wildcard (RCChannel *a);
 gboolean rc_channel_equal       (RCChannel *a, RCChannel *b);
