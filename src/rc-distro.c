@@ -131,6 +131,8 @@ RCDistroChunk distro_figurers[] = {
       func_string_in_file, "/etc/SuSE-release", "7.0", NULL, 0 },
     { "suse-71-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/SuSE-release", "7.1", NULL, 0 },
+    { "suse-72-i386", RC_ARCH_IA32,
+      func_string_in_file, "/etc/SuSE-release", "7.2", NULL, 0 },
 
     { "debian-potato-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/debian_version", "2.2", NULL, 0},
@@ -163,6 +165,7 @@ RCDistroType distro_types[] = {
     { "suse-64-i386", NULL, "SuSE", "6.4", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=3, non-gdm-runlevel=2" },
     { "suse-70-i386", NULL, "SuSE", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=3, non-gdm-runlevel=2" },
     { "suse-71-i386", NULL, "SuSE", "7.1", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "suse-72-i386", NULL, "SuSE", "7.2", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
 
     { "mandrake-70-i586", NULL, "Linux Mandrake", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
     { "mandrake-71-i586", NULL, "Linux Mandrake", "7.1", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },

@@ -159,6 +159,10 @@ rc_package_dep_slist_verify_relation (RCPackageDepSList *depl,
     return ret;
 }
 
+/* Note that we make the assumption that if we're in this function,
+ * we're checking a dep on the same package (so this function won't
+ * check whether they're the same name for an ANY relation
+ */
 gboolean
 rc_package_dep_verify_relation (RCPackageDep *dep,
                                 RCPackageSpec *spec)
@@ -191,28 +195,31 @@ rc_package_dep_verify_relation (RCPackageDep *dep,
  * operation.
  */
 
-    if (unweak_rel == RC_RELATION_NONE &&
-        strcmp (dep->spec.name, spec->name) == 0)
-    {
+    if (strcmp (dep->spec.name, spec->name)) {
+        if (unweak_rel == RC_RELATION_NONE) {
+            return TRUE;
 #if DEBUG > 10
-        rc_debug (RC_DEBUG_LEVEL_DEBUG, "FAIL (pass) NONE relation\n");
+            rc_debug (RC_DEBUG_LEVEL_DEBUG, "PASS (diffname) NONE relation\n");
 #endif
-        return FALSE;
+        } else {
+            return FALSE;
+#if DEBUG > 10
+            rc_debug (RC_DEBUG_LEVEL_DEBUG, "FAIL (samename) NONE relation\n");
+#endif
+        }
     }
 
     if (dep->spec.version == NULL && dep->spec.release == NULL) {
-        if (strcmp (dep->spec.name, spec->name) == 0) {
 #if DEBUG > 10
-            rc_debug (RC_DEBUG_LEVEL_DEBUG, "PASS (nullrv)\n");
+        rc_debug (RC_DEBUG_LEVEL_DEBUG, "PASS (nullrv)\n");
 #endif
-            return TRUE;
-        }
+        return TRUE;
     }
 
     if (spec->version == NULL && spec->release == NULL)
     {
         /* If it's the same name and the relation isn't looking for a version less than blah */
-        if ((strcmp (dep->spec.name, spec->name) == 0) && !(unweak_rel & RC_RELATION_LESS)) {
+        if (!(unweak_rel & RC_RELATION_LESS)) {
 #if DEBUG > 10
             rc_debug (RC_DEBUG_LEVEL_DEBUG, "PASS (nullrv)\n");
 #endif
@@ -246,10 +253,6 @@ rc_package_dep_verify_relation (RCPackageDep *dep,
     compare_ret = rc_packman_version_compare (das_global_packman, &dep->spec,
                                               use_newspecspec ? &newspecspec : spec);
     
-    /* Note that we make the assumption that if we're in this function,
-     * we're checking a dep on the same package (so this function won't
-     * check whether they're the same name for an ANY relation
-     */
     if (unweak_rel == RC_RELATION_ANY) {
 #if DEBUG > 10
             rc_debug (RC_DEBUG_LEVEL_DEBUG, "PASS\n");
@@ -282,6 +285,33 @@ rc_package_dep_verify_relation (RCPackageDep *dep,
 #if DEBUG > 10
             rc_debug (RC_DEBUG_LEVEL_DEBUG, "FAIL\n");
 #endif
+    return FALSE;
+}
+
+
+gboolean
+rc_package_dep_verify_package_relation (RCPackageDep *dep, RCPackage *pkg)
+{
+    RCPackageDepSList *prov_iter;
+
+    /* if the package is the same name as the dep, then we use it to verify */
+    if (strcmp (dep->spec.name, pkg->spec.name) == 0) {
+        return rc_package_dep_verify_relation (dep, &pkg->spec);
+    }
+
+    /* otherwise, we hunt for a provide with the same name */
+    prov_iter = pkg->provides;
+    while (prov_iter) {
+        RCPackageDep *prov = (RCPackageDep *) prov_iter->data;
+
+        if (strcmp (dep->spec.name, prov->spec.name) == 0) {
+            return rc_package_dep_verify_relation (dep, &prov->spec);
+        }
+
+        prov_iter = prov_iter->next;
+    }
+
+    /* nothing provided with this name, can't be true */
     return FALSE;
 }
 

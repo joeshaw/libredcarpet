@@ -1,3 +1,14 @@
+2001-07-20  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-distro.c: added suse 7.2 string
+
+	* rc-deps.c: Got rid of fix_missing, needs testing; changed
+	rc_package_dep_verify_relation to use new
+	rc_package_dep_verify_package_relation
+
+	* rc-package-dep.c, rc-package-dep.h: Added new
+	rc_package_dep_verify_package_relation call.
+
 2001-07-19  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c (transact_cb): send the basename of the package

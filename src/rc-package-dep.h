@@ -72,6 +72,7 @@ typedef GSList RCPackageDepSList;
 #include <gnome-xml/tree.h>
 
 #include "rc-package-spec.h"
+#include "rc-package.h"
 
 /* THE SPEC MUST BE FIRST */
 struct _RCPackageDep {
@@ -104,6 +105,9 @@ void rc_package_dep_slist_free (RCPackageDepSList *rcpdsl);
 /* Dep verification */
 gboolean rc_package_dep_verify_relation (RCPackageDep *dep,
                                          RCPackageSpec *spec);
+gboolean rc_package_dep_verify_package_relation (RCPackageDep *dep,
+                                                 RCPackage *pkg);
+
 gboolean rc_package_dep_slist_verify_relation (RCPackageDepSList *depl,
                                                RCPackageSpec *spec,
                                                RCPackageDepSList **fail_out,
