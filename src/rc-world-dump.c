@@ -28,6 +28,8 @@
 #include <config.h>
 #include "rc-world-dump.h"
 
+#include "rc-channel-private.h"
+
 #include "rc-debug.h"
 #include "rc-world-import.h"
 #include "rc-xml.h"
@@ -152,14 +154,22 @@ rc_world_undump_from_xml (RCWorld *world,
             static guint32 dummy_id = 0xdeadbeef;
             char *subd_str;
             int subd;
-
+            char *priority_str;
+            char *priority_unsubd_str;
+            char *priority_current_str;
+            
             name = xmlGetProp (channel_node, "name");
             alias = xmlGetProp (channel_node, "alias");
+            
             id_str = xmlGetProp (channel_node, "id");
             id = id_str ? atoi (id_str) : (dummy_id++);
+            
             subd_str = xmlGetProp (channel_node, "subscribed");
             subd = subd_str ? atoi (subd_str) : 0;
-            
+
+            priority_str = xmlGetProp (channel_node, "priority_base");
+            priority_unsubd_str = xmlGetProp (channel_node, "priority_unsubd");
+            priority_current_str = xmlGetProp (channel_node, "priority_current");
             current_channel = rc_world_add_channel (world,
                                                     name,
                                                     alias ? alias : "foo",
@@ -167,6 +177,11 @@ rc_world_undump_from_xml (RCWorld *world,
                                                     RC_CHANNEL_TYPE_HELIX);
 
             if (current_channel) {
+
+                current_channel->priority         = priority_str ? atoi (priority_str) : 0;
+                current_channel->priority_unsubd  = priority_unsubd_str ? atoi (priority_unsubd_str) : 0;
+                current_channel->priority_current = priority_current_str ? atoi (priority_current_str) : 0;
+
                 rc_channel_set_subscription (current_channel, subd);
                 rc_world_add_packages_from_xml (world, current_channel,
                                                 channel_node);

@@ -1188,6 +1188,21 @@ rc_channel_to_xml_node (RCChannel *channel)
     xmlNewProp (node, "subscribed", tmp);
     g_free (tmp);
 
+    tmp = g_strdup_printf ("%d",
+                           rc_channel_get_priority (channel, FALSE, FALSE));
+    xmlNewProp (node, "priority_base", tmp);
+    g_free (tmp);
+
+    tmp = g_strdup_printf ("%d",
+                           rc_channel_get_priority (channel, TRUE, FALSE));
+    xmlNewProp (node, "priority_unsubd", tmp);
+    g_free (tmp);
+
+    tmp = g_strdup_printf ("%d",
+                           rc_channel_get_priority (channel, TRUE, TRUE));
+    xmlNewProp (node, "priority_current", tmp);
+    g_free (tmp);
+
     return node;
 }
 

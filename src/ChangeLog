@@ -1,3 +1,10 @@
+2002-08-04  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-world-dump.c (rc_world_undump_from_xml): Extract the
+	priorities from the XML and put them in our channel.
+
+	* rc-xml.c (rc_channel_to_xml_node): Store priorities in the XML.
+
 2002-08-03  Ian Peters  <itp@ximian.com>
 
 	* Makefile.am: list distributions-xml.h in
