@@ -9,12 +9,25 @@ INCLUDES =				\
 
 noinst_LIBRARIES = libredcarpet.a
 
-rpm_sources = 		\
-	rc-rpmman.c	\
-	rc-rpmman.h
+rpm_sources = 			\
+	rc-rpmman.c		\
+	rc-rpmman.h		\
+	rpmlead-4-0-x.h		\
+	rpmlead-3-0-x.h		\
+	signature-4-0-x.h	\
+	signature-3-0-x.h
+
+dpkg_sources =			\
+	rc-debman.c		\
+	rc-debman.h		\
+	rc-debman-private.h
 
 if HAVE_LIBRPM
 rpm_sources2 = $(rpm_sources)
+endif
+
+if HAVE_DPKG
+dpkg_sources2 = $(dpkg_sources)
 endif
 
 libredcarpet_a_SOURCES =		\
@@ -48,9 +61,6 @@ libredcarpet_a_SOURCES =		\
         rc-packman.c                    \
         rc-packman.h                    \
         rc-packman-private.h            \
-        rc-debman.c                     \
-        rc-debman.h                     \
-	rc-debman-private.h		\
         rc-md5.c                        \
         rc-md5.h                        \
         rc-md5-private.h                \
@@ -61,16 +71,15 @@ libredcarpet_a_SOURCES =		\
 	rc-line-buf.c			\
 	rc-line-buf.h			\
 	rc-line-buf-private.h		\
-	rpmlead-4-0-x.h			\
-	rpmlead-3-0-x.h			\
-	signature-4-0-x.h		\
-	signature-3-0-x.h		\
+	rc-debman-general.c		\
+	rc-debman.general.h		\
+	$(dpkg_sources2			\
         $(rpm_sources2)
 
 #	rc-crypto.c			\
 #	rc-crypto.h			\
 
-EXTRA_DIST = $(rpm_sources) dpkg-helper.c
+EXTRA_DIST = $(rpm_sources) $(dpkg_sources) dpkg-helper.c
 
 helperdir = $(datadir)/redcarpet
 helper_DATA = \
