@@ -158,15 +158,10 @@ parser_package_start(RCPackageSAXContext *ctx,
 
         ctx->state = PARSER_DEP;
 
-        for (i = 0; attrs && attrs[i]; i += 2) {
-            char *attr = g_strdup (attrs[i]);
+        for (i = 0; attrs && attrs[i] && !is_obsolete; i += 2) {
 
-            g_strdown (attr);
-
-            if (!strcmp (attr, "obsoletes"))
+            if (!g_strcasecmp (attrs[i], "obsoletes"))
                 is_obsolete = TRUE;
-
-            g_free (attr);
         }
 
         if (is_obsolete)
@@ -223,47 +218,40 @@ parse_dep_attrs(RCPackageDep **dep, const xmlChar **attrs)
     /* Temporary variables dependent upon the presense of an 'op' attribute */
     guint32 tmp_epoch = 0;
     gboolean has_epoch = 0;
-    char *tmp_version = NULL;
-    char *tmp_release = NULL;
+    const char *tmp_version = NULL;
+    const char *tmp_release = NULL;
     gboolean is_obsolete = FALSE;
     RCPackageRelation relation = RC_RELATION_ANY;
-    char *tmp_name = NULL;
+    const char *tmp_name = NULL;
 
     for (i = 0; attrs[i]; i++) {
-        char *attr = g_strdup(attrs[i++]);
+        const char *attr = attrs[i++];
         const char *value = attrs[i];
 
-        g_strdown(attr);
-
-        if (!strcmp(attr, "name"))
-            tmp_name = g_strdup(value);
-        else if (!strcmp(attr, "op")) {
+        if (!g_strcasecmp(attr, "name"))
+            tmp_name = value;
+        else if (!g_strcasecmp(attr, "op")) {
             op_present = TRUE;
             relation = rc_string_to_package_relation(value);
         }
-        else if (!strcmp(attr, "epoch")) {
+        else if (!g_strcasecmp(attr, "epoch")) {
             tmp_epoch = rc_string_to_guint32_with_default(value, 0);
             has_epoch = 1;
-        } else if (!strcmp(attr, "version"))
-            tmp_version = g_strdup(value);
-        else if (!strcmp(attr, "release"))
-            tmp_release = g_strdup(value);
-        else if (!strcmp (attr, "obsoletes"))
+        } else if (!g_strcasecmp(attr, "version"))
+            tmp_version = value;
+        else if (!g_strcasecmp(attr, "release"))
+            tmp_release = value;
+        else if (!g_strcasecmp (attr, "obsoletes"))
             is_obsolete = TRUE;
         else {
             if (getenv ("RC_SPEW_XML"))
                 rc_debug (RC_DEBUG_LEVEL_ALWAYS, "! Unknown attribute: %s = %s", attr, value);
         }
 
-        g_free(attr);
     }
 
     *dep = rc_package_dep_new (tmp_name, has_epoch, tmp_epoch, tmp_version,
                                tmp_release, relation, FALSE, FALSE);
-
-    g_free (tmp_name);
-    g_free (tmp_version);
-    g_free (tmp_release);
 
     return is_obsolete;
 } /* parse_dep_attrs */
@@ -436,19 +424,20 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
         ctx->state = PARSER_TOPLEVEL;
     }
     else if (!strcmp(name, "name")) {
-        char *stripped = g_strstrip (ctx->text_buffer);
-        ctx->current_package->spec.name = g_strdup (stripped);
+        ctx->current_package->spec.name = g_strstrip (ctx->text_buffer);
+        ctx->text_buffer = NULL;
     } else if (!strcmp(name, "summary")) {
-        char *stripped = g_strstrip (ctx->text_buffer);
-        ctx->current_package->summary = g_strdup (stripped);
+        ctx->current_package->summary = g_strstrip (ctx->text_buffer);
+        ctx->text_buffer = NULL;
     } else if (!strcmp(name, "description")) {
-        ctx->current_package->description = g_strdup(ctx->text_buffer);
+        ctx->current_package->description = ctx->text_buffer;
+        ctx->text_buffer = NULL;
     } else if (!strcmp(name, "section")) {
-        char *stripped = g_strstrip (ctx->text_buffer);
-        ctx->current_package->section = rc_string_to_package_section (stripped);
+        ctx->current_package->section =
+            rc_string_to_package_section (g_strstrip (ctx->text_buffer));
     } else if (!strcmp(name, "arch")) {
-        char *stripped = g_strstrip (ctx->text_buffer);
-        ctx->current_package->arch = rc_arch_from_string (stripped);
+        ctx->current_package->arch =
+            rc_arch_from_string (g_strstrip (ctx->text_buffer));
     }
     else if (!strcmp(name, "filesize")) {
         ctx->current_package->file_size = 
@@ -497,19 +486,21 @@ parser_update_end(RCPackageSAXContext *ctx, const xmlChar *name)
         ctx->current_update->spec.has_epoch = 1;
     }
     else if (!strcmp(name, "version")) {
-        char *stripped = g_strstrip (ctx->text_buffer);
-        ctx->current_update->spec.version = g_strdup (stripped);
+        ctx->current_update->spec.version = g_strstrip (ctx->text_buffer);
+        ctx->text_buffer = NULL;
     } else if (!strcmp(name, "release")) {
-        char *stripped = g_strstrip (ctx->text_buffer);
-        ctx->current_update->spec.release = g_strdup (stripped);
+        ctx->current_update->spec.release = g_strstrip (ctx->text_buffer);
+        ctx->text_buffer = NULL;
     } else if (!strcmp(name, "filename")) {
-        char *stripped = g_strstrip (ctx->text_buffer);
+        g_strstrip (ctx->text_buffer);
         if (url_prefix) {
             ctx->current_update->package_url =
-                rc_maybe_merge_paths(url_prefix, stripped);
+                rc_maybe_merge_paths(url_prefix, ctx->text_buffer);
         }
-        else
-            ctx->current_update->package_url = g_strdup(stripped);
+        else {
+            ctx->current_update->package_url = ctx->text_buffer;
+            ctx->text_buffer = NULL;
+        }
     }
     else if (!strcmp(name, "filesize")) {
         ctx->current_update->package_size =
@@ -520,13 +511,15 @@ parser_update_end(RCPackageSAXContext *ctx, const xmlChar *name)
             rc_string_to_guint32_with_default(ctx->text_buffer, 0);
     }
     else if (!strcmp(name, "signaturename")) {
-        char *stripped = g_strstrip (ctx->text_buffer);
+        g_strstrip (ctx->text_buffer);
         if (url_prefix) {
             ctx->current_update->signature_url =
-                rc_maybe_merge_paths(url_prefix, stripped);
+                rc_maybe_merge_paths(url_prefix, ctx->text_buffer);
         }
-        else
-            ctx->current_update->signature_url = g_strdup(stripped);
+        else {
+            ctx->current_update->signature_url = ctx->text_buffer;
+            ctx->text_buffer = NULL;
+        }
     }
     else if (!strcmp(name, "signaturesize")) {
         ctx->current_update->signature_size =
@@ -541,8 +534,8 @@ parser_update_end(RCPackageSAXContext *ctx, const xmlChar *name)
             rc_string_to_package_importance(stripped);
     }
     else if (!strcmp(name, "description")) {
-        char *stripped = g_strstrip (ctx->text_buffer);
-        ctx->current_update->description = g_strdup(stripped);
+        ctx->current_update->description = g_strstrip (ctx->text_buffer);
+        ctx->text_buffer = NULL;
     }
     else if (!strcmp(name, "hid")) {
         ctx->current_update->hid = 
@@ -1089,7 +1082,6 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
 static RCPackageDep *
 rc_xml_node_to_package_dep_internal (const xmlNode *node)
 {
-//    RCPackageDep *dep_item;
     gchar *name = NULL, *version = NULL, *release = NULL;
     gboolean has_epoch = FALSE;
     guint32 epoch = 0;
@@ -1119,8 +1111,8 @@ rc_xml_node_to_package_dep_internal (const xmlNode *node)
         relation = RC_RELATION_ANY;
     }
 
-    return rc_package_dep_new (
-        name, has_epoch, epoch, version, release, relation, FALSE, FALSE);
+    return rc_package_dep_new (name, has_epoch, epoch, version, release,
+                               relation, FALSE, FALSE);
 } /* rc_xml_node_to_package_dep_internal */
 
 RCPackageDep *
@@ -1245,39 +1237,31 @@ xmlNode *
 rc_channel_to_xml_node (RCChannel *channel)
 {
     xmlNode *node;
-    char *tmp;
+    char tmp[128];
 
     g_return_val_if_fail (channel != NULL, NULL);
 
     node = xmlNewNode (NULL, "channel");
 
-    tmp = g_strdup_printf ("%d", rc_channel_get_id (channel));
+    sprintf (tmp, "%d", rc_channel_get_id (channel));
     xmlNewProp (node, "id", tmp);
-    g_free (tmp);
 
     xmlNewProp (node, "name", rc_channel_get_name (channel));
 
     if (rc_channel_get_alias (channel))
         xmlNewProp (node, "alias", rc_channel_get_alias (channel));
 
-    tmp = g_strdup_printf ("%d", rc_channel_subscribed (channel) ? 1 : 0);
+    sprintf (tmp, "%d", rc_channel_subscribed (channel) ? 1 : 0);
     xmlNewProp (node, "subscribed", tmp);
-    g_free (tmp);
 
-    tmp = g_strdup_printf ("%d",
-                           rc_channel_get_priority (channel, FALSE, FALSE));
+    sprintf (tmp, "%d", rc_channel_get_priority (channel, FALSE, FALSE));
     xmlNewProp (node, "priority_base", tmp);
-    g_free (tmp);
 
-    tmp = g_strdup_printf ("%d",
-                           rc_channel_get_priority (channel, TRUE, FALSE));
+    sprintf (tmp, "%d", rc_channel_get_priority (channel, TRUE, FALSE));
     xmlNewProp (node, "priority_unsubd", tmp);
-    g_free (tmp);
 
-    tmp = g_strdup_printf ("%d",
-                           rc_channel_get_priority (channel, TRUE, TRUE));
+    sprintf (tmp, "%d", rc_channel_get_priority (channel, TRUE, TRUE));
     xmlNewProp (node, "priority_current", tmp);
-    g_free (tmp);
 
     return node;
 }
