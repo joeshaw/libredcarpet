@@ -44,7 +44,6 @@ rc_package_spec_init (RCPackageSpec *rcps,
     rcps->epoch = epoch;
     rcps->version = g_strdup (version);
     rcps->release = g_strdup (release);
-    rcps->type = RC_PACKAGE_SPEC_TYPE_UNKNOWN;
 } /* rc_package_spec_init */
 
 void
@@ -52,7 +51,6 @@ rc_package_spec_copy (RCPackageSpec *new, RCPackageSpec *old)
 {
     rc_package_spec_init (new, g_quark_to_string (old->nameq), old->has_epoch,
                           old->epoch, old->version, old->release);
-    new->type = old->type;
 }
 
 void
@@ -61,58 +59,6 @@ rc_package_spec_free_members (RCPackageSpec *rcps)
     g_free (rcps->version);
     g_free (rcps->release);
 } /* rc_package_spec_free_members */
-
-struct SpecTypeInfo {
-    RCPackageSpec *spec;
-    gboolean flag;
-};
-
-static void
-spec_type_cb (RCPackage *package, gpointer user_data)
-{
-    struct SpecTypeInfo *info = user_data;
-
-    if (! info->flag
-        && rc_package_spec_equal (info->spec, &package->spec))
-        info->flag = TRUE;
-}
-
-RCPackageSpecType
-rc_package_spec_get_type (RCWorld *world, RCPackageSpec *spec)
-{
-    g_return_val_if_fail (spec != NULL, RC_PACKAGE_SPEC_TYPE_UNKNOWN);
-
-    if (world == NULL)
-        world = rc_get_world ();
-
-    if (spec->type == RC_PACKAGE_SPEC_TYPE_UNKNOWN) {
-
-        if (*g_quark_to_string (spec->nameq) == '/') {
-
-            spec->type = RC_PACKAGE_SPEC_TYPE_FILE;
-
-        } else {
-
-            struct SpecTypeInfo info;
-            info.spec = spec;
-            info.flag = FALSE;
-
-            rc_world_foreach_package_by_name (world,
-                                              g_quark_to_string (spec->nameq),
-                                              RC_WORLD_ANY_CHANNEL,
-                                              spec_type_cb, &info);
-
-            if (info.flag)
-                spec->type = RC_PACKAGE_SPEC_TYPE_PACKAGE;
-        }
-
-        if (spec->type == RC_PACKAGE_SPEC_TYPE_UNKNOWN)
-            spec->type = RC_PACKAGE_SPEC_TYPE_VIRTUAL;
-
-    }
-
-    return (RCPackageSpecType) spec->type;
-}
 
 gint
 rc_package_spec_compare_name (void *a, void *b)

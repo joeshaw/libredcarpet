@@ -75,7 +75,6 @@ struct _RCResolverContext {
 
     RCResolverContext *parent;
 
-    guint allow_conflicts_with_virtual_provides : 1;
     guint invalid : 1;
 };
 

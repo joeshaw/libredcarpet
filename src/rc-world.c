@@ -66,7 +66,6 @@ rc_package_and_dep_new_package (RCPackage *package)
     pad->dep = rc_package_dep_new_from_spec (&package->spec,
                                              RC_RELATION_EQUAL,
                                              FALSE, FALSE);
-    RC_PACKAGE_SPEC (pad->dep)->type = RC_PACKAGE_SPEC_TYPE_PACKAGE;
 
     return pad;
 }

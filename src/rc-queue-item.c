@@ -1159,8 +1159,14 @@ conflict_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data
     if (rc_package_spec_equal (& package->spec, & info->conflicting_package->spec))
         return;
 
-    if (! info->context->allow_conflicts_with_virtual_provides
-        && rc_package_spec_get_type (info->world, spec) == RC_PACKAGE_SPEC_TYPE_VIRTUAL) {
+    /* Obsoletes don't apply to virtual provides, only the packages
+     * themselves.  A provide is "virtual" if it's not the same spec
+     * as the package that's providing it.  This, of course, only
+     * applies to RPM, since it's the only one with obsoletes right
+     * now. */
+    if (info->actually_an_obsolete
+        && !rc_package_spec_equal (RC_PACKAGE_SPEC (package), spec))
+    {
         return;
     }
 

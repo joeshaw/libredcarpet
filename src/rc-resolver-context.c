@@ -81,10 +81,6 @@ rc_resolver_context_new_child (RCResolverContext *parent)
         context->max_priority    = parent->max_priority;
         context->min_priority    = parent->min_priority;
         context->other_penalties = parent->other_penalties;
-
-        context->allow_conflicts_with_virtual_provides =
-            parent->allow_conflicts_with_virtual_provides;
-
     } else {
         context->min_priority = G_MAXINT;
     }

@@ -1,3 +1,50 @@
+2002-08-14  Ian Peters  <itp@ximian.com>
+
+	* rc-debman.c (rc_debman_class_init): remove some very old
+	commented out code
+	(rc_debman_init): remove RC_PACKMAN_CAP_VIRTUAL_CONFLICTS from our
+	capabilities list, since it doesn't exist anymore
+
+	* rc-packman.h: remove RC_PACKMAN_CAP_VIRTUAL_CONFLICTS
+
+	* rc-resolver-context.h (struct _RCResolverContext): get rid of
+	the allow_conflicts_with_virtual_provides field
+
+	* rc-resolver-context.c (rc_resolver_context_new_child): no more
+	allow_conflicts_with_virtual_provides
+
+	* rc-resolver.h (struct _RCResolver): bye bye
+	allow_conflicts_with_virtual_provides
+	(rc_resolver_allow_virtual_conflicts): removed
+
+	* rc-resolver.c (rc_resolver_new): adios
+	allow_conflicts_with_virtual_provides
+	(rc_resolver_allow_virtual_conflicts): removed
+	(rc_resolver_resolve_dependencies): l8r
+	allow_conflicts_with_virtual_provides
+
+	* rc-queue-item.c (conflict_process_cb): altered the virtual
+	provide / conflict logic to match what we now believe is the
+	actual rpm behavior.  Conflicts apply to any provide, regardless
+	of whether it's "virtual" or not.  An obsolete only applies to the
+	package itself, not just a provide -- so check to make sure that a
+	provide spec matches the package spec that provides it before we
+	process the "obsolete" conflict.
+
+	* rc-package-spec.h: no more RCWorld needed, get rid of the
+	RCPackageSpecType enum
+	(struct _RCPackageSpec): no more type field
+	(rc_package_spec_get_type): removed
+
+	* rc-package-spec.c (rc_package_spec_init): no more type field
+	(rc_package_spec_copy): no more type field
+	(struct SpecTypeInfo): removed
+	(spec_type_cb): removed
+	(rc_package_spec_get_type): removed
+
+	* rc-world.c (rc_package_and_dep_new_package): no more type field
+	in RCPackageSpecs
+
 2002-08-10  Ian Peters  <itp@ximian.com>
 
 	* rc-util.h: if HAVE_MKDTEMP is defined, then rc_mkdtemp is just

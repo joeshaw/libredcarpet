@@ -3213,9 +3213,6 @@ rc_debman_class_init (RCDebmanClass *klass)
         rc_debman_is_database_changed;
 
     putenv ("DEBIAN_FRONTEND=noninteractive");
-
-//    deps_conflicts_use_virtual_packages (FALSE);
-//    g_warning ("vlad, fix deps_conflict_use_virtual_pakages");
 }
 
 static void
@@ -3267,7 +3264,7 @@ rc_debman_init (RCDebman *debman)
 
     rc_packman_set_file_extension(packman, "deb");
 
-    rc_packman_set_capabilities(packman, RC_PACKMAN_CAP_VIRTUAL_CONFLICTS|RC_PACKMAN_CAP_SELF_CONFLICT);
+    rc_packman_set_capabilities(packman, RC_PACKMAN_CAP_SELF_CONFLICT);
 
     debman->priv->db_mtime = 0;
     rc_debman_is_database_changed (packman);

@@ -47,8 +47,6 @@ struct _RCResolver {
     
     int valid_solution_count;
 
-    gboolean allow_conflicts_with_virtual_provides;
-
     RCResolverContext *best_context;
 };
 
@@ -57,8 +55,6 @@ void        rc_resolver_free (RCResolver *);
 
 void        rc_resolver_set_world (RCResolver *, RCWorld *);
 RCWorld    *rc_resolver_get_world (RCResolver *);
-
-void        rc_resolver_allow_virtual_conflicts (RCResolver *, gboolean);
 
 void        rc_resolver_set_current_channel                (RCResolver *, RCChannel *);
 void        rc_resolver_add_subscribed_channel             (RCResolver *, RCChannel *);

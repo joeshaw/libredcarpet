@@ -56,10 +56,9 @@ typedef enum {
 } RCPackmanStep;
 
 #define RC_PACKMAN_CAP_NONE                  (0)
-#define RC_PACKMAN_CAP_VIRTUAL_CONFLICTS     (1 << 0)
-#define RC_PACKMAN_CAP_PROVIDE_ALL_VERSIONS  (1 << 1)
-#define RC_PACKMAN_CAP_SELF_CONFLICT         (1 << 2)
-#define RC_PACKMAN_CAP_LEGACY_EPOCH_HANDLING (1 << 3)
+#define RC_PACKMAN_CAP_PROVIDE_ALL_VERSIONS  (1 << 0)
+#define RC_PACKMAN_CAP_SELF_CONFLICT         (1 << 1)
+#define RC_PACKMAN_CAP_LEGACY_EPOCH_HANDLING (1 << 2)
 
 #include "rc-package.h"
 #include "rc-verification.h"

@@ -40,8 +40,6 @@ static RCPackman *packman = NULL;
 
 static RCWorld *world = NULL;
 
-static gboolean allow_virtual_conflicts;
-
 static void
 mark_as_system_cb (RCPackage *package, gpointer user_data)
 {
@@ -420,8 +418,6 @@ parse_xml_trial (xmlNode *node)
     resolver = rc_resolver_new ();
     rc_resolver_set_world (resolver, world);
 
-    rc_resolver_allow_virtual_conflicts (resolver, allow_virtual_conflicts);
-
     node = node->xmlChildrenNode;
     while (node) {
         if (node->type != XML_ELEMENT_NODE) {
@@ -532,13 +528,7 @@ parse_xml_trial (xmlNode *node)
 static void
 parse_xml_test (xmlNode *node)
 {
-    xmlChar *virtual_str;
-
     g_assert (! g_strcasecmp (node->name, "test"));
-
-    virtual_str = xml_get_prop (node, "allow_virtual_conflicts");
-    allow_virtual_conflicts = virtual_str != NULL;
-    g_free (virtual_str);
 
     node = node->xmlChildrenNode;
 

@@ -38,8 +38,6 @@ rc_resolver_new (void)
 
     resolver = g_new0 (RCResolver, 1);
     
-    resolver->allow_conflicts_with_virtual_provides = FALSE;
-
     return resolver;
 }
 
@@ -96,15 +94,6 @@ rc_resolver_get_world (RCResolver *resolver)
         return resolver->world;
 
     return rc_get_world ();
-}
-
-void
-rc_resolver_allow_virtual_conflicts (RCResolver *resolver,
-                                     gboolean x)
-{
-    g_return_if_fail (resolver != NULL);
-
-    resolver->allow_conflicts_with_virtual_provides = x;
 }
 
 void
@@ -243,9 +232,6 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
     initial_queue->context->world = world;
     
     initial_queue->context->current_channel = resolver->current_channel;
-    
-    initial_queue->context->allow_conflicts_with_virtual_provides =
-        resolver->allow_conflicts_with_virtual_provides;
 
     for (iter = resolver->packages_to_install; iter != NULL; iter = iter->next) {
         RCPackage *pkg = iter->data;
