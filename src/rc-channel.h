@@ -75,4 +75,6 @@ RCChannel *rc_channel_get_by_id(RCChannelSList *channels, int id);
 
 RCChannel *rc_channel_get_by_name(RCChannelSList *channels, char *name);
 
+gint rc_channel_compare_func (gconstpointer a, gconstpointer b);
+
 #endif /* _RC_CHANNEL_H */

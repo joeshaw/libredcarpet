@@ -51,4 +51,6 @@ RCPackageImportance rc_package_get_highest_importance(RCPackage *package);
 RCPackageImportance rc_package_get_highest_importance_from_current (
     RCPackage *package, RCPackageSList *system_pkgs);
 
+gint rc_package_compare_func (gconstpointer a, gconstpointer b);
+
 #endif /* _RC_PACKAGE_H */

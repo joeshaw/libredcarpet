@@ -318,3 +318,16 @@ rc_channel_get_by_name(RCChannelSList *channels, char *name)
     RC_EXIT;
     return c;
 } /* rc_channel_get_by_name */
+
+gint
+rc_channel_compare_func (gconstpointer a, gconstpointer b)
+{
+    RCChannel *one = (RCChannel *)a;
+    RCChannel *two = (RCChannel *)b;
+
+    if (one->id == two->id) {
+        return (TRUE);
+    }
+
+    return (FALSE);
+}
