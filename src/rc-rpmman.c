@@ -161,33 +161,24 @@ transact_cb (const Header h, const rpmCallbackType what,
     case RPMCALLBACK_TRANS_PROGRESS:
         if (state->configuring) {
             gtk_signal_emit_by_name (GTK_OBJECT (state->packman),
-                                     "configure_step", NULL, ++state->seqno);
+                                     "transact_step", ++state->seqno,
+                                     RC_PACKMAN_STEP_CONFIGURE, NULL);
             GTKFLUSH;
             if (state->seqno == state->install_total) {
                 state->configuring = FALSE;
-                state->seqno = 0;
-                gtk_signal_emit_by_name (GTK_OBJECT (state->packman),
-                                         "configure_done");
-                GTKFLUSH;
-                gtk_signal_emit_by_name (GTK_OBJECT (state->packman),
-                                         "transact_start",
-                                         state->install_total +
-                                         state->install_extra +
-                                         state->remove_total);
-                GTKFLUSH;
             }
         } else {
             gtk_signal_emit_by_name (GTK_OBJECT (state->packman),
-                                     "transact_step", FALSE, NULL,
-                                     ++state->seqno);
+                                     "transact_step", ++state->seqno,
+                                     RC_PACKMAN_STEP_REMOVE, NULL);
             GTKFLUSH;
         }
         break;
 
     case RPMCALLBACK_INST_START:
         gtk_signal_emit_by_name (GTK_OBJECT (state->packman),
-                                 "transact_step", TRUE, pkgKey,
-                                 ++state->seqno);
+                                 "transact_step", ++state->seqno,
+                                 RC_PACKMAN_STEP_INSTALL, pkgKey);
         break;
 
     case RPMCALLBACK_TRANS_START:
@@ -602,16 +593,10 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         rc_package_free (package);
     }
 
-    /* If we're installing any packages at all, expect to get the
-       configure steps first.  Otherwise, you'll go directly to
-       transacts for the removed packages. */
-    if (state.install_total) {
-        gtk_signal_emit_by_name (GTK_OBJECT (packman), "configure_start",
-                                 state.install_total);
-    } else {
-        gtk_signal_emit_by_name (GTK_OBJECT (packman), "transact_start",
-                                 state.remove_total);
-    }
+    gtk_signal_emit_by_name (GTK_OBJECT (packman), "transact_start",
+                             state.install_total + state.install_total +
+                             state.remove_total);
+    GTKFLUSH;
 
     rc = rpmman->rpmRunTransactions (transaction,
                                      (rpmCallbackFunction) transact_cb,
@@ -664,119 +649,134 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
 static RCPackageSection
 rc_rpmman_section_to_package_section (const gchar *rpmsection)
 {
-    gchar **sections;
+    char *major_section, *minor_section, *ptr;
     RCPackageSection ret = RC_SECTION_MISC;
 
-    sections = g_strsplit (rpmsection, "/", 1);
+    if ((ptr = strchr (rpmsection, '/'))) {
+        major_section = g_strndup (rpmsection, ptr - rpmsection);
+        minor_section = g_strdup (ptr + 1);
+    } else {
+        major_section = g_strdup (rpmsection);
+        minor_section = NULL;
+    }
 
-    if (!sections[0] || !sections[0][0]) {
+    ptr = major_section;
+    while (*ptr) {
+        *ptr++ = tolower (*ptr);
+    }
+    ptr = minor_section;
+    while (*ptr) {
+        *ptr++ = tolower (*ptr);
+    }
+
+    if (!major_section || !major_section[0]) {
         goto DONE;
     }
 
-    switch (sections[0][0]) {
-    case 'A':
-        if (!g_strcasecmp (sections[0], "Amusements")) {
+    switch (major_section[0]) {
+    case 'a':
+        if (!strcmp (major_section, "amusements")) {
             ret = RC_SECTION_GAME;
             goto DONE;
         }
-        if (!g_strcasecmp (sections[0], "Applications")) {
-            if (!sections[1] || !sections[1][0]) {
+        if (!strcmp (major_section, "applications")) {
+            if (!minor_section || !minor_section[0]) {
                 goto DONE;
             }
 
-            switch (sections[1][0]) {
-            case 'A':
-                if (!g_strcasecmp (sections[1], "Archiving")) {
+            switch (minor_section[0]) {
+            case 'a':
+                if (!strcmp (minor_section, "archiving")) {
                     ret = RC_SECTION_UTIL;
                     goto DONE;
                 }
                 goto DONE;
 
-            case 'C':
-                if (!g_strcasecmp (sections[1], "Communications")) {
+            case 'c':
+                if (!strcmp (minor_section, "communications")) {
                     ret = RC_SECTION_INTERNET;
                     goto DONE;
                 }
-                if (!g_strcasecmp (sections[1], "Cryptography")) {
+                if (!strcmp (minor_section, "cryptography")) {
                     ret = RC_SECTION_UTIL;
                     goto DONE;
                 }
                 goto DONE;
 
-            case 'E':
-                if (!g_strcasecmp (sections[1], "Editors")) {
+            case 'e':
+                if (!strcmp (minor_section, "editors")) {
                     ret = RC_SECTION_UTIL;
                     goto DONE;
                 }
-                if (!g_strcasecmp (sections[1], "Engineering")) {
+                if (!strcmp (minor_section, "engineering")) {
                     ret = RC_SECTION_UTIL;
                     goto DONE;
                 }
                 goto DONE;
 
-            case 'F':
-                if (!g_strcasecmp (sections[1], "File")) {
+            case 'f':
+                if (!strcmp (minor_section, "file")) {
                     ret = RC_SECTION_SYSTEM;
                     goto DONE;
                 }
-                if (!g_strcasecmp (sections[1], "Finance")) {
+                if (!strcmp (minor_section, "finance")) {
                     ret = RC_SECTION_OFFICE;
                     goto DONE;
                 }
                 goto DONE;
 
-            case 'G':
-                if (!g_strcasecmp (sections[1], "Graphics")) {
+            case 'g':
+                if (!strcmp (minor_section, "graphics")) {
                     ret = RC_SECTION_IMAGING;
                     goto DONE;
                 }
                 goto DONE;
 
-            case 'I':
-                if (!g_strcasecmp (sections[1], "Internet")) {
+            case 'i':
+                if (!strcmp (minor_section, "internet")) {
                     ret = RC_SECTION_INTERNET;
                     goto DONE;
                 }
                 goto DONE;
 
-            case 'M':
-                if (!g_strcasecmp (sections[1], "Multimedia")) {
+            case 'm':
+                if (!strcmp (minor_section, "multimedia")) {
                     ret = RC_SECTION_MULTIMEDIA;
                     goto DONE;
                 }
                 goto DONE;
 
-            case 'O':
-                if (!g_strcasecmp (sections[1], "Office")) {
+            case 'o':
+                if (!strcmp (minor_section, "office")) {
                     ret = RC_SECTION_OFFICE;
                     goto DONE;
                 }
                 goto DONE;
 
-            case 'P':
-                if (!g_strcasecmp (sections[1], "Productivity")) {
+            case 'p':
+                if (!strcmp (minor_section, "productivity")) {
                     ret = RC_SECTION_PIM;
                     goto DONE;
                 }
-                if (!g_strcasecmp (sections[1], "Publishing")) {
+                if (!strcmp (minor_section, "publishing")) {
                     ret = RC_SECTION_OFFICE;
                     goto DONE;
                 }
                 goto DONE;
 
-            case 'S':
-                if (!g_strcasecmp (sections[1], "Sound")) {
+            case 's':
+                if (!strcmp (minor_section, "sound")) {
                     ret = RC_SECTION_MULTIMEDIA;
                     goto DONE;
                 }
-                if (!g_strcasecmp (sections[1], "System")) {
+                if (!strcmp (minor_section, "system")) {
                     ret = RC_SECTION_SYSTEM;
                     goto DONE;
                 }
                 goto DONE;
 
-            case 'T':
-                if (!g_strcasecmp (sections[1], "Text")) {
+            case 't':
+                if (!strcmp (minor_section, "text")) {
                     ret = RC_SECTION_UTIL;
                     goto DONE;
                 }
@@ -787,44 +787,44 @@ rc_rpmman_section_to_package_section (const gchar *rpmsection)
             }
         }
 
-    case 'D':
-        if (!g_strcasecmp (sections[0], "Documentation")) {
+    case 'd':
+        if (!strcmp (major_section, "documentation")) {
             ret = RC_SECTION_DOC;
             goto DONE;
         }
-        if (!g_strcasecmp (sections[0], "Development")) {
-            if (!sections[1] || !sections[1][0]) {
+        if (!strcmp (major_section, "development")) {
+            if (!minor_section || !minor_section[0]) {
                 goto DONE;
             }
 
-            switch (sections[1][0]) {
-            case 'D':
-                if (!g_strcasecmp (sections[1], "Debuggers")) {
+            switch (minor_section[0]) {
+            case 'd':
+                if (!strcmp (minor_section, "debuggers")) {
                     ret = RC_SECTION_DEVELUTIL;
                     goto DONE;
                 }
                 goto DONE;
 
-            case 'L':
-                if (!g_strcasecmp (sections[1], "Languages")) {
+            case 'l':
+                if (!strcmp (minor_section, "languages")) {
                     ret = RC_SECTION_DEVELUTIL;
                     goto DONE;
                 }
-                if (!g_strcasecmp (sections[1], "Libraries")) {
+                if (!strcmp (minor_section, "libraries")) {
                     ret = RC_SECTION_DEVEL;
                     goto DONE;
                 }
                 goto DONE;
 
-            case 'S':
-                if (!g_strcasecmp (sections[1], "System")) {
+            case 's':
+                if (!strcmp (minor_section, "system")) {
                     ret = RC_SECTION_DEVEL;
                     goto DONE;
                 }
                 goto DONE;
 
-            case 'T':
-                if (!g_strcasecmp (sections[1], "Tools")) {
+            case 't':
+                if (!strcmp (minor_section, "tools")) {
                     ret = RC_SECTION_DEVELUTIL;
                     goto DONE;
                 }
@@ -835,46 +835,46 @@ rc_rpmman_section_to_package_section (const gchar *rpmsection)
             }
         }
 
-    case 'L':
-        if (!g_strcasecmp (sections[0], "Libraries")) {
+    case 'l':
+        if (!strcmp (major_section, "libraries")) {
             ret = RC_SECTION_LIBRARY;
             goto DONE;
         }
         goto DONE;
 
-    case 'S':
-        if (!g_strcasecmp (sections[0], "System Environment")) {
+    case 's':
+        if (!strcmp (major_section, "system environment")) {
             ret = RC_SECTION_SYSTEM;
             goto DONE;
         }
         goto DONE;
 
-    case 'U':
-        if (!g_strncasecmp (sections[0], "User Interface",
-                            strlen ("User Interface"))) {
+    case 'u':
+        if (!strncmp (major_section, "user interface",
+                      strlen ("user interface"))) {
             ret = RC_SECTION_XAPP;
             goto DONE;
         }
         goto DONE;
 
-    case 'X':
-        if (!g_strcasecmp (sections[0], "X11")) {
-            if (!sections[1] || !sections[1][0]) {
+    case 'x':
+        if (!strcmp (major_section, "x11")) {
+            if (!minor_section || !minor_section[0]) {
                 ret = RC_SECTION_XAPP;
                 goto DONE;
             }
 
-            switch (sections[1][0]) {
-            case 'G':
-                if (!g_strcasecmp (sections[1], "Graphics")) {
+            switch (minor_section[0]) {
+            case 'g':
+                if (!strcmp (minor_section, "graphics")) {
                     ret = RC_SECTION_IMAGING;
                     goto DONE;
                 }
                 ret = RC_SECTION_XAPP;
                 goto DONE;
 
-            case 'U':
-                if (!g_strcasecmp (sections[1], "Utilities")) {
+            case 'u':
+                if (!strcmp (minor_section, "utilities")) {
                     ret = RC_SECTION_UTIL;
                     goto DONE;
                 }
@@ -888,7 +888,8 @@ rc_rpmman_section_to_package_section (const gchar *rpmsection)
     }
 
   DONE:
-    g_strfreev (sections);
+    g_free (major_section);
+    g_free (minor_section);
     return (ret);
 }
 
@@ -1024,40 +1025,38 @@ rc_rpmman_read_header (RCRpmman *rpmman, Header header, gchar **name,
    and does the right thing, breaking them into the right parts and returning
    the parts in the arrays epochs, versions, and releases. */
 
-/* FIXME: I can make this faster with str[r]chr when I have more
- * time */
-
 static void
-parse_versions (gchar **inputs, guint32 **epochs, gchar ***versions,
-                gchar ***releases, guint count)
+parse_versions (char **inputs, guint32 **epochs, char ***versions,
+                char ***releases, guint count)
 {
     guint i;
 
-    *versions = g_new0 (gchar *, count + 1);
-    *releases = g_new0 (gchar *, count + 1);
+    *versions = g_new0 (char *, count + 1);
+    *releases = g_new0 (char *, count + 1);
     *epochs = g_new0 (guint32, count);
 
     for (i = 0; i < count; i++) {
-        gchar **t1, **t2;
+        char *vptr = NULL, *rptr = NULL;
 
         if (!inputs[i] || !inputs[i][0]) {
             continue;
         }
 
-        t1 = g_strsplit (inputs[i], ":", 1);
-
-        if (t1[1]) {
-            (*epochs)[i] = strtoul (t1[0], NULL, 10);
-            t2 = g_strsplit (t1[1], "-", 1);
+        if ((vptr = strchr (inputs[i], ':'))) {
+            char *endptr;
+            (*epochs)[i] = strtoul (inputs[i], &endptr, 10);
+            g_assert (endptr == vptr);
+            vptr++;
         } else {
-            t2 = g_strsplit (t1[0], "-", 1);
+            vptr = inputs[i];
         }
 
-        (*versions)[i] = g_strdup (t2[0]);
-        (*releases)[i] = g_strdup (t2[1]);
-
-        g_strfreev (t1);
-        g_strfreev (t2);
+        if ((rptr = strchr (vptr, '-'))) {
+            (*versions)[i] = g_strndup (vptr, rptr - vptr);
+            (*releases)[i] = g_strdup (rptr + 1);
+        } else {
+            (*versions)[i] = g_strdup (vptr);
+        }
     }
 }
 
@@ -1065,7 +1064,7 @@ static gboolean
 in_set (gchar *item, const gchar **set) {
     const gchar **iter;
 
-    for (iter = set; *iter; *iter++) {
+    for (iter = set; *iter; iter++) {
         if (strncmp (*iter, item, strlen (*iter)) == 0) {
             return (TRUE);
         }
@@ -1075,117 +1074,100 @@ in_set (gchar *item, const gchar **set) {
 }
 
 static void
-rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
+depends_fill_helper (RCRpmman *rpmman, Header header, int names_tag,
+                     int versions_tag, int flags_tag, RCPackageDepSList **deps)
 {
-    gchar **names, **verrels, **versions, **releases;
+    char **names = NULL, **verrels = NULL, **versions, **releases;
     guint32 *epochs;
-    gint *relations;
-    guint32 count;
-    guint i;
-    RCPackageDep *dep;
+    int *relations = NULL;
+    guint32 names_count = 0, versions_count = 0, flags_count = 0;
+    int i;
 
-    /* Shouldn't ever ask for dependencies unless you know what you really
-       want (name, version, release) */
-
-    g_assert (package->spec.name);
-    g_assert (package->spec.version);
-    g_assert (package->spec.release);
-
-    /* Better safe than sorry, eh? */
-
-    rc_package_dep_slist_free (package->requires);
-    package->requires = NULL;
-    rc_package_dep_slist_free (package->conflicts);
-    package->conflicts = NULL;
-    rc_package_dep_slist_free (package->provides);
-    package->provides = NULL;
-
-    /* Query the RPM database for the packages required by this package, and
-       all associated information */
-
-    rpmman->headerGetEntry (header, RPMTAG_REQUIREFLAGS, NULL,
-                            (void **)&relations, &count);
-    rpmman->headerGetEntry (header, RPMTAG_REQUIRENAME, NULL,
-                            (void **)&names, NULL);
-    rpmman->headerGetEntry (header, RPMTAG_REQUIREVERSION, NULL,
-                            (void **)&verrels, NULL);
-
-    /* Some packages, such as setup and termcap, store a NULL in the
-       RPMTAG_REQUIREVERSION, yet set the count to 1. That's pretty damned
-       broken, so if that's the case, we'll set the count to zero, as we
-       should. *sigh* */
-
-    if (verrels == NULL) {
-        count = 0;
+    rpmman->headerGetEntry (header, names_tag, NULL, (void **)&names,
+                            &names_count);
+    if (versions_tag) {
+        rpmman->headerGetEntry (header, versions_tag, NULL, (void **)&verrels,
+                                &versions_count);
+        if (flags_tag) {
+            rpmman->headerGetEntry (header, flags_tag, NULL,
+                                    (void **)&relations, &flags_count);
+        }
     }
 
-    parse_versions (verrels, &epochs, &versions, &releases, count);
+    if (names_count == 0) {
+        return;
+    }
 
-    for (i = 0; i < count; i++) {
-        RCPackageRelation relation = 0;
+    parse_versions (verrels, &epochs, &versions, &releases, versions_count);
 
-        if (relations[i] & RPMSENSE_LESS) {
-            relation |= RC_RELATION_LESS;
-        }
-        if (relations[i] & RPMSENSE_GREATER) {
-            relation |= RC_RELATION_GREATER;
-        }
-        if (relations[i] & RPMSENSE_EQUAL) {
-            relation |= RC_RELATION_EQUAL;
-        }
+    for (i = 0; i < names_count; i++) {
+        RCPackageDep *dep;
+        RCPackageRelation relation = RC_RELATION_ANY;
 
-        if (versions[i] && !versions[i][0]) {
-            g_free (versions[i]);
-            versions[i] = NULL;
-        }
-
-        if (releases[i] && !releases[i][0]) {
-            g_free (releases[i]);
-            releases[i] = NULL;
-        }
-
-        if (strncmp (names[i], "rpmlib(", strlen ("rpmlib(")) == 0) {
-            /* This is a "seekret" message for rpmlib only */
-#if 0
-        } else if (names[i][0] == '/') {
-            /* This is a broken RPM file dependency.  I hate it, I don't know
-               how I want to support it, but I don't intend to drop to the
-               filesystem and verify it, or ask vlad to do so.  For now I'm
-               just going to ignore it. */
-#endif
-        } else {
-            /* Add the dependency to the list of dependencies */
+        if (versions_tag && versions_count) {
+            if (flags_tag && flags_count) {
+                if (relations[i] & RPMSENSE_LESS) {
+                    relation |= RC_RELATION_LESS;
+                }
+                if (relations[i] & RPMSENSE_GREATER) {
+                    relation |= RC_RELATION_GREATER;
+                }
+                if (relations[i] & RPMSENSE_EQUAL) {
+                    relation |= RC_RELATION_EQUAL;
+                }
+            }
             dep = rc_package_dep_new (names[i], epochs[i], versions[i],
                                       releases[i], relation);
-
-            package->requires = g_slist_append (package->requires, dep);
+        } else {
+            dep = rc_package_dep_new (names[i], 0, NULL, NULL, relation);
         }
 
-        g_free (versions[i]);
-        g_free (releases[i]);
+        *deps = g_slist_prepend (*deps, dep);
     }
 
     free (names);
     free (verrels);
 
-    g_free (versions);
-    g_free (releases);
+    g_strfreev (versions);
+    g_strfreev (releases);
     g_free (epochs);
+}
 
-    names = NULL;
-    verrels = NULL;
+static void
+rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
+{
+    RCPackageDep *dep;
 
-    /* Provide myself */
+    /* Shouldn't ever ask for dependencies unless you know what you really
+       want (name, version, release) */
+    g_assert (package->spec.name);
+    g_assert (package->spec.version);
+    g_assert (package->spec.release);
 
+    depends_fill_helper (rpmman, header, RPMTAG_REQUIRENAME,
+                         RPMTAG_REQUIREVERSION, RPMTAG_REQUIREFLAGS,
+                         &package->requires);
+
+    depends_fill_helper (rpmman, header, RPMTAG_PROVIDENAME,
+                         RPMTAG_PROVIDEVERSION, RPMTAG_PROVIDEFLAGS,
+                         &package->provides);
+
+    depends_fill_helper (rpmman, header, RPMTAG_CONFLICTNAME,
+                         RPMTAG_CONFLICTVERSION, RPMTAG_CONFLICTFLAGS,
+                         &package->conflicts);
+
+    depends_fill_helper (rpmman, header, RPMTAG_OBSOLETENAME,
+                         RPMTAG_OBSOLETEVERSION, RPMTAG_OBSOLETEFLAGS,
+                         &package->conflicts);
+
+    /* Provide myself for the benefit of the dependency code */
     dep = rc_package_dep_new (package->spec.name, package->spec.epoch,
                               package->spec.version,
                               package->spec.release, RC_RELATION_EQUAL);
+    package->provides = g_slist_prepend (package->provides, dep);
 
-    package->provides = g_slist_append (package->provides, dep);
-
+    /* First stab at handling the pesky file dependencies */
     {
-        /* First stab at handling the pesky file dependencies */
-
         const gchar *file_dep_set[] = {
             "/bin/",
             "/usr/bin/",
@@ -1205,6 +1187,7 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
 
         gchar **basenames, **dirnames;
         guint32 *dirindexes;
+        int count, i;
 
         rpmman->headerGetEntry (header, RPMTAG_BASENAMES, NULL,
                                 (void **)&basenames, &count);
@@ -1223,100 +1206,27 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
 
                 g_free (tmp);
 
-                package->provides = g_slist_append (package->provides, dep);
+                package->provides = g_slist_prepend (package->provides, dep);
             }
         }
 
         free (basenames);
-        names = NULL;
         free (dirnames);
-        versions = NULL;
 
         rpmman->headerGetEntry (header, RPMTAG_FILENAMES, NULL,
-                                (void **)&names, &count);
+                                (void **)&basenames, &count);
 
         for (i = 0; i < count; i++) {
-            if (in_set (names[i], file_dep_set)) {
-                dep = rc_package_dep_new (names[i], 0, NULL, NULL,
+            if (in_set (basenames[i], file_dep_set)) {
+                dep = rc_package_dep_new (basenames[i], 0, NULL, NULL,
                                           RC_RELATION_ANY);
 
-                package->provides = g_slist_append (package->provides, dep);
+                package->provides = g_slist_prepend (package->provides, dep);
             }
         }
 
-        free (names);
-        names = NULL;
+        free (basenames);
     }
-
-    /* RPM doesn't do versioned provides (as of 3.0.4), so we only need to find
-       out the name of things that this package provides */
-
-    rpmman->headerGetEntry (header, RPMTAG_PROVIDENAME, NULL,
-                            (void **)&names, &count);
-
-    for (i = 0; i < count; i++) {
-        if (strcmp (names[i], package->spec.name) != 0) {
-            dep = rc_package_dep_new (names[i], 0, NULL, NULL,
-                                           RC_RELATION_ANY);
-
-            package->provides = g_slist_append (package->provides, dep);
-        }
-    }
-
-    /* Only have to free the char** ones */
-
-    free (names);
-    names = NULL;
-
-    /* Find full information on anything that this package conflicts with */
-
-    rpmman->headerGetEntry (header, RPMTAG_CONFLICTFLAGS, NULL,
-                            (void **)&relations, &count);
-    rpmman->headerGetEntry (header, RPMTAG_CONFLICTNAME, NULL,
-                            (void **)&names, &count);
-    rpmman->headerGetEntry (header, RPMTAG_CONFLICTVERSION, NULL,
-                            (void **)&verrels, &count);
-
-    parse_versions (verrels, &epochs, &versions, &releases, count);
-
-    for (i = 0; i < count; i++) {
-        RCPackageRelation relation = 0;
-
-        if (relations[i] & RPMSENSE_LESS) {
-            relation |= RC_RELATION_LESS;
-        }
-        if (relations[i] & RPMSENSE_GREATER) {
-            relation |= RC_RELATION_GREATER;
-        }
-        if (relations[i] & RPMSENSE_EQUAL) {
-            relation |= RC_RELATION_EQUAL;
-        }
-
-        if (versions[i] && !versions[i][0]) {
-            versions[i] = NULL;
-        }
-
-        if (releases[i] && !releases[i][0]) {
-            releases[i] = NULL;
-        }
-
-        dep = rc_package_dep_new (names[i], epochs[i], versions[i],
-                                       releases[i], relation);
-
-        package->conflicts = g_slist_append (package->conflicts, dep);
-
-        g_free (versions[i]);
-        g_free (releases[i]);
-    }
-
-    /* Only have to free the char** ones */
-
-    free (names);
-    free (verrels);
-
-    g_free (versions);
-    g_free (releases);
-    g_free (epochs);
 } /* rc_rpmman_depends_fill */
 
 /* Query for information about a package (version, release, installed status,
@@ -1334,11 +1244,6 @@ rc_rpmman_check_match (RCRpmman *rpmman, Header header, RCPackage *package)
     rc_rpmman_read_header (rpmman, header, NULL, &epoch, &version, &release,
                            &section, &size, &summary, &description);
 
-    /* FIXME: this could potentially be a big problem if an rpm can have
-       just an epoch (serial), and no version/release.  I'm choosing to
-       ignore that for now, because I need to get this stuff done and it
-       doesn't seem very likely, but... */
-
     if ((!package->spec.version || !strcmp (package->spec.version, version)) &&
         (!package->spec.release || !strcmp (package->spec.release, release)) &&
         (!package->spec.epoch || package->spec.epoch == epoch)) {
@@ -1349,6 +1254,7 @@ rc_rpmman_check_match (RCRpmman *rpmman, Header header, RCPackage *package)
         package->spec.epoch = epoch;
         package->spec.version = version;
         package->spec.release = release;
+        package->section = section;
         package->summary = summary;
         package->description = description;
         package->installed = TRUE;
@@ -1543,7 +1449,7 @@ rc_rpmman_query_all_v4 (RCPackman *packman)
 
         rc_rpmman_depends_fill (rpmman, header, package);
 
-        list = g_slist_append (list, package);
+        list = g_slist_prepend (list, package);
     }
 
     rpmman->rpmdbFreeIterator(mi);
@@ -1596,7 +1502,7 @@ rc_rpmman_query_all_v3 (RCPackman *packman)
 
         rc_rpmman_depends_fill (rpmman, header, package);
 
-        list = g_slist_append (list, package);
+        list = g_slist_prepend (list, package);
 
         rpmman->headerFree(header);
     }
@@ -1613,11 +1519,60 @@ rc_rpmman_query_all_v3 (RCPackman *packman)
 static RCPackageSList *
 rc_rpmman_query_all (RCPackman *packman)
 {
+    RCPackageSList *packages;
+    RCPackage *internal;
+    int *relations;
+    char **verrels, **names;
+    char **versions, **releases;
+    guint32 *epochs;
+    int i;
+    int count;
+
     if (RC_RPMMAN (packman)->major_version == 4) {
-        return (rc_rpmman_query_all_v4 (packman));
+        packages = rc_rpmman_query_all_v4 (packman);
     } else {
-        return (rc_rpmman_query_all_v3 (packman));
+        packages = rc_rpmman_query_all_v3 (packman);
     }
+
+    internal = rc_package_new ();
+
+    internal->spec.name = g_strdup ("rpmlib-internal");
+
+    count = RC_RPMMAN (packman)->rpmGetRpmlibProvides (
+        &names, &relations, &verrels);
+
+    parse_versions (verrels, &epochs, &versions, &releases, count);
+
+    for (i = 0; i < count; i++) {
+        RCPackageDep *dep;
+        RCPackageRelation relation = RC_RELATION_ANY;
+
+        if (relations[i] & RPMSENSE_LESS) {
+            relation |= RC_RELATION_LESS;
+        }
+        if (relations[i] & RPMSENSE_GREATER) {
+            relation |= RC_RELATION_GREATER;
+        }
+        if (relations[i] & RPMSENSE_EQUAL) {
+            relation |= RC_RELATION_EQUAL;
+        }
+
+        dep = rc_package_dep_new (names[i], epochs[i], versions[i],
+                                  releases[i], relation);
+
+        internal->provides = g_slist_prepend (internal->provides, dep);
+    }
+
+    free (names);
+    free (verrels);
+
+    g_free (epochs);
+    g_strfreev (versions);
+    g_strfreev (releases);
+
+    packages = g_slist_prepend (packages, internal);
+
+    return packages;
 }
 
 static gboolean
@@ -2166,6 +2121,7 @@ load_fake_syms (RCRpmman *rpmman)
     rpmman->rpmdbOpen = &rpmdbOpen;
     rpmman->rpmdbClose = &rpmdbClose;
     rpmman->rpmProblemString = &rpmProblemString;
+    rpmman->rpmGetRpmlibProvides = &rpmGetRpmlibProvides;
 
 #ifdef RC_RPM4
 
@@ -2304,6 +2260,10 @@ load_rpm_syms (RCRpmman *rpmman)
     }
     if (!g_module_symbol (rpmman->rpm_lib, "rpmProblemString",
                           ((gpointer)&rpmman->rpmProblemString))) {
+        return (FALSE);
+    }
+    if (!g_module_symbol (rpmman->rpm_lib, "rpmGetRpmlibProvides",
+                          ((gpointer)&rpmman->rpmGetRpmlibProvides))) {
         return (FALSE);
     }
 
@@ -2492,10 +2452,6 @@ rc_rpmman_init (RCRpmman *obj)
     }
 
     rc_packman_set_file_extension(packman, "rpm");
-
-    packman->priv->features =
-        RC_PACKMAN_FEATURE_PRE_CONFIG |
-        RC_PACKMAN_FEATURE_PKG_PROGRESS;
 
     rc_package_dep_system_is_rpmish (TRUE);
 } /* rc_rpmman_init */

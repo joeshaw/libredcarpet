@@ -96,8 +96,9 @@ rc_debman_parse_version (gchar *input, guint32 *epoch, gchar **version,
  */
 
 RCPackageDepSList *
-rc_debman_fill_depends (gchar *input, RCPackageDepSList *list)
+rc_debman_fill_depends (gchar *input)
 {
+    RCPackageDepSList *list = NULL;
     gchar **deps;
     guint i;
 

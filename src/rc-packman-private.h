@@ -36,11 +36,10 @@ struct _RCPackmanPrivate {
     gchar *extension;
 
     gboolean busy;
-
-    RCPackmanFeatures features;
 };
 
-void rc_packman_set_file_extension(RCPackman *packman, const gchar *extension);
+void rc_packman_set_file_extension (RCPackman *packman,
+                                    const gchar *extension);
 
 void rc_packman_clear_error (RCPackman *packman);
 
@@ -50,6 +49,5 @@ void rc_packman_set_error (RCPackman *packman, RCPackmanError error,
 gint rc_packman_generic_version_compare (
     RCPackageSpec *spec1, RCPackageSpec *spec2,
     int (*vercmp)(const char *, const char *));
-                                         
 
 #endif

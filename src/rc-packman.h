@@ -49,13 +49,13 @@ enum _RCPackmanError {
     RC_PACKMAN_ERROR_FATAL,
 };
 
-typedef enum _RCPackmanFeatures RCPackmanFeatures;
+typedef enum _RCPackmanStep RCPackmanStep;
 
-enum _RCPackmanFeatures {
-    RC_PACKMAN_FEATURE_PRE_CONFIG      = 1 << 0,
-    RC_PACKMAN_FEATURE_POST_CONFIG     = 1 << 1,
-    RC_PACKMAN_FEATURE_CONFIG_PROGRESS = 1 << 2,
-    RC_PACKMAN_FEATURE_PKG_PROGRESS    = 1 << 3,
+enum _RCPackmanStep {
+    RC_PACKMAN_STEP_UNKNOWN,
+    RC_PACKMAN_STEP_CONFIGURE,
+    RC_PACKMAN_STEP_INSTALL,
+    RC_PACKMAN_STEP_REMOVE,
 };
 
 #include "rc-packman-private.h"
@@ -71,33 +71,12 @@ struct _RCPackman {
 struct _RCPackmanClass {
     GtkObjectClass parent_class;
 
-    /* Signals */
-
-    /* The basic idea for these is:
-     *
-     * _start
-     *   total is the number of expected steps for the phase
-     * _step
-     *   tells you which step it's about to begin, and the name of the
-     *   package being mangled
-     * _progress
-     *   for a given step, tells you some measure of the percentage
-     *   complete (for example, amount bytes of total)
-     * _done
-     *   the phase is complete
-     */
-
-    void (*configure_start)(RCPackman *packman, gint total);
-    void (*configure_step)(RCPackman *packman, gchar *name, gint seqno);
-    void (*configure_progress)(RCPackman *packman, gint amount, gint total);
-    void (*configure_done)(RCPackman *packman);
-
     /* In _step install is TRUE for a package being installed, FALSE
      * for a package being removed */
 
-    void (*transact_start)(RCPackman *packman, gint total);
-    void (*transact_step)(RCPackman *packman, gboolean install, gchar *name,
-                         gint seqno);
+    void (*transact_start)(RCPackman *packman, gint total_steps);
+    void (*transact_step)(RCPackman *packman, gint seqno, RCPackmanStep step,
+                          gchar *name);
     void (*transact_progress)(RCPackman *packman, gint amount, gint total);
     void (*transact_done)(RCPackman *packman);
 
@@ -129,8 +108,6 @@ struct _RCPackmanClass {
 guint rc_packman_get_type (void);
 
 RCPackman *rc_packman_new (void);
-
-RCPackmanFeatures rc_packman_get_features (RCPackman *packman);
 
 void rc_packman_transact (RCPackman *packman,
                           RCPackageSList *install_packages,

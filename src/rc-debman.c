@@ -75,8 +75,6 @@ rc_debman_get_type (void)
 {
     static guint type = 0;
 
-    RC_ENTRY;
-
     if (!type) {
         GtkTypeInfo type_info = {
             "RCDebman",
@@ -90,8 +88,6 @@ rc_debman_get_type (void)
 
         type = gtk_type_unique (rc_packman_get_type (), &type_info);
     }
-
-    RC_EXIT;
 
     return type;
 } /* rc_debman_get_type */
@@ -138,8 +134,6 @@ hash_destroy_pair (gchar *key, RCPackage *package)
 static void
 hash_destroy (RCDebman *debman)
 {
-    RC_ENTRY;
-
     g_hash_table_freeze (debman->priv->package_hash);
     g_hash_table_foreach (debman->priv->package_hash,
                           (GHFunc) hash_destroy_pair, NULL);
@@ -147,8 +141,6 @@ hash_destroy (RCDebman *debman)
 
     debman->priv->package_hash = g_hash_table_new (g_str_hash, g_str_equal);
     debman->priv->hash_valid = FALSE;
-
-    RC_EXIT;
 }
 
 /*
@@ -165,14 +157,10 @@ lock_database (RCDebman *debman)
     struct flock fl;
     RCPackman *packman = RC_PACKMAN (debman);
 
-    RC_ENTRY;
-
     /* Developer hack */
     if (getenv ("RC_ME_EVEN_HARDER") || getenv ("RC_DEBMAN_STATUS_FILE")) {
         rc_debug (RC_DEBUG_LEVEL_WARNING,
                   __FUNCTION__ ": not checking lock file\n");
-
-        RC_EXIT;
 
         return (TRUE);
     }
@@ -186,8 +174,6 @@ lock_database (RCDebman *debman)
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "already holding lock");
 
-        RC_EXIT;
-
         return (FALSE);
     }
 
@@ -199,8 +185,6 @@ lock_database (RCDebman *debman)
 
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "couldn't open lock file");
-
-        RC_EXIT;
 
         return (FALSE);
     }
@@ -226,8 +210,6 @@ lock_database (RCDebman *debman)
             rc_debug (RC_DEBUG_LEVEL_ERROR,
                       __FUNCTION__ ": failed to acquire lock file\n");
 
-            RC_EXIT;
-
             return (FALSE);
         }
     }
@@ -236,16 +218,12 @@ lock_database (RCDebman *debman)
 
     rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ": acquired lock file\n");
 
-    RC_EXIT;
-
     return (TRUE);
 }
 
 static void
 unlock_database (RCDebman *debman)
 {
-    RC_ENTRY;
-
     if (getenv ("RC_ME_EVEN_HARDER") || getenv ("RC_DEBMAN_STATUS_FILE")) {
         return;
     }
@@ -258,8 +236,6 @@ unlock_database (RCDebman *debman)
     debman->priv->lock_fd = -1;
 
     rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ": released lock file\n");
-
-    RC_EXIT;
 }
 
 typedef struct _DebmanVerifyStatusInfo DebmanVerifyStatusInfo;
@@ -277,18 +253,54 @@ struct _DebmanVerifyStatusInfo {
     guint error_line_number;
 };
 
+static char **
+split_status (char *line)
+{
+    char **ret = g_new (char *, 4);
+    char *head, *tail;
+    int i;
+
+    ret[0] = NULL;
+    ret[1] = NULL;
+    ret[2] = NULL;
+    ret[3] = NULL;
+
+    head = line;
+
+    for (i = 0; i < 3; i++) {
+        while (*head && isspace (*head)) {
+            head++;
+        }
+
+        tail = head;
+
+        while (*tail && !isspace (*tail)) {
+            tail++;
+        }
+
+        ret[i] = g_strndup (head, tail - head);
+
+        head = tail;
+    }
+
+    if (*head) {
+        g_strfreev (ret);
+        ret = NULL;
+    }
+
+    return ret;
+}
+
 static void
 verify_status_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
 {
-    gchar **tokens = NULL;
-    gchar *tmp = NULL;
+    char **status = NULL;
     DebmanVerifyStatusInfo *verify_status_info =
         (DebmanVerifyStatusInfo *)data;
     int out_fd = verify_status_info->out_fd; /* Just for sanity */
+    char *ptr;
 
-    RC_ENTRY;
-
-    if (strncmp (line, "Status:", strlen ("Status:"))) {
+    if (g_strncasecmp (line, "status:", strlen ("status:"))) {
         /* This isn't a status line, so we don't need to do anything other than
            to write it to the new file */
         if (!rc_write (out_fd, line, strlen (line)) ||
@@ -296,38 +308,39 @@ verify_status_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
         {
             goto BROKEN;
         }
-        RC_EXIT;
         return;
     }
 
-    tmp = g_strdup (line + strlen ("Status:"));
-    tmp = g_strchug (tmp);
+    ptr = line + strlen ("status:");
+    while (*ptr && isspace (*ptr)) {
+        ptr++;
+    }
 
-    tokens = g_strsplit (tmp, " ", 3);
+    status = split_status (ptr);
 
-    if (tokens[3] || !tokens[2] || !tokens[1] || !tokens[0]) {
+    if (!(status && status[0] && status[1] && status[2])) {
         /* There aren't exactly 3 tokens here */
         goto BROKEN;
     }
 
     /* we want the status to be ok */
-    if (strcmp (tokens[1], "ok")) {
+    if (strcmp (status[1], "ok")) {
         goto BROKEN;
     }
 
     /* installed, not-installed, and config-files are ok, everything else I
        consider problematic */
-    if (strcmp (tokens[2], "installed") &&
-        strcmp (tokens[2], "not-installed") &&
-        strcmp (tokens[2], "config-files"))
+    if (strcmp (status[2], "installed") &&
+        strcmp (status[2], "not-installed") &&
+        strcmp (status[2], "config-files"))
     {
         goto BROKEN;
     }
 
     /* If the package is installed, set the selection to install, and use
        whatever middle token the user had */
-    if (!strcmp (tokens[2], "installed")) {
-        if (!strcmp (tokens[0], "install") || !strcmp (tokens[0], "hold")) {
+    if (!strcmp (status[2], "installed")) {
+        if (!strcmp (status[0], "install") || !strcmp (status[0], "hold")) {
             if (!rc_write (out_fd, line, strlen (line)) ||
                 !rc_write (out_fd, "\n", 1))
             {
@@ -337,7 +350,7 @@ verify_status_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
         }
         if (!rc_write (out_fd, "Status: install ",
                        strlen ("Status: install ")) ||
-            !rc_write (out_fd, tokens[1], strlen (tokens[1])) ||
+            !rc_write (out_fd, status[1], strlen (status[1])) ||
             !rc_write (out_fd, " installed\n", strlen (" installed\n")))
         {
             goto BROKEN;
@@ -348,8 +361,8 @@ verify_status_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
     /* If the package is not-installed, just write the normal line if the
        selection was purge or deinstall, otherwise set the seletion to purge.
        Of course, use whatever middle token the user had. */
-    if (!strcmp (tokens[2], "not-installed")) {
-        if (!strcmp (tokens[0], "purge")) {
+    if (!strcmp (status[2], "not-installed")) {
+        if (!strcmp (status[0], "purge")) {
             if (!rc_write (out_fd, line, strlen (line)) ||
                 !rc_write (out_fd, "\n", 1))
             {
@@ -357,7 +370,7 @@ verify_status_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
             }
             goto END;
         }
-        if (!strcmp (tokens[0], "deinstall")) {
+        if (!strcmp (status[0], "deinstall")) {
             if (!rc_write (out_fd, line, strlen (line)) ||
                 !rc_write (out_fd, "\n", 1))
             {
@@ -366,7 +379,7 @@ verify_status_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
             goto END;
         }
         if (!rc_write (out_fd, "Status: purge ", strlen ("Status: purge ")) ||
-            !rc_write (out_fd, tokens[1], strlen (tokens[1])) ||
+            !rc_write (out_fd, status[1], strlen (status[1])) ||
             !rc_write (out_fd, " not-installed\n",
                        strlen (" not-installed\n")))
         {
@@ -377,10 +390,10 @@ verify_status_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
 
     /* If the package is config-files only, set the selection to deinstall,
        middle token as the user had it. */
-    if (!strcmp (tokens[2], "config-files")) {
+    if (!strcmp (status[2], "config-files")) {
         if (!rc_write (out_fd, "Status: deinstall ",
                        strlen ("Status: deinstall ")) ||
-            !rc_write (out_fd, tokens[1], strlen (tokens[1])) ||
+            !rc_write (out_fd, status[1], strlen (status[1])) ||
             !rc_write (out_fd, " config-files\n", strlen (" config-files\n")))
         {
             goto BROKEN;
@@ -397,10 +410,7 @@ verify_status_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
     g_main_quit (verify_status_info->loop);
 
   END:
-    g_strfreev (tokens);
-    g_free (tmp);
-
-    RC_EXIT;
+    g_strfreev (status);
 }
 
 static void
@@ -427,8 +437,6 @@ verify_status (RCPackman *packman)
     RCLineBuf *line_buf;
     RCDebman *debman = RC_DEBMAN (packman);
 
-    RC_ENTRY;
-
     if ((in_fd = open (debman->priv->status_file, O_RDONLY)) == -1) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
                               "couldn't open %s for reading",
@@ -437,8 +445,6 @@ verify_status (RCPackman *packman)
         rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
                   ": failed to open %s for reading\n",
                   debman->priv->status_file);
-
-        RC_EXIT;
 
         return (FALSE);
     }
@@ -453,8 +459,6 @@ verify_status (RCPackman *packman)
                   debman->priv->rc_status_file);
 
         close (in_fd);
-
-        RC_EXIT;
 
         return (FALSE);
     }
@@ -497,8 +501,6 @@ verify_status (RCPackman *packman)
                   ": couldn't parse %s\n",
                   debman->priv->status_file);
 
-        RC_EXIT;
-
         return (FALSE);
     }
 
@@ -514,12 +516,8 @@ verify_status (RCPackman *packman)
                   ": couldn't rename %s\n",
                   debman->priv->rc_status_file);
 
-        RC_EXIT;
-
         return (FALSE);
     }
-
-    RC_EXIT;
 
     return (TRUE);
 }
@@ -543,14 +541,12 @@ package_accept (gchar *line, RCPackageSList *packages)
     RCPackageSList *iter;
     gchar *name;
 
-    RC_ENTRY;
-
     if (strncmp (line, "Package:", strlen ("Package:")) != 0) {
         return NULL;
     }
 
     name = line + strlen ("Package:");
-    while (*name == ' ') {
+    while (isspace (*name)) {
         name++;
     }
 
@@ -561,13 +557,9 @@ package_accept (gchar *line, RCPackageSList *packages)
             rc_debug (RC_DEBUG_LEVEL_DEBUG,
                       __FUNCTION__ ": found package %s\n", package->spec.name);
 
-            RC_EXIT;
-
             return (package->spec.name);
         }
     }
-
-    RC_EXIT;
 
     return (NULL);
 }
@@ -594,8 +586,6 @@ static void
 mark_purge_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
 {
     DebmanMarkPurgeInfo *mark_purge_info = (DebmanMarkPurgeInfo *)data;
-
-    RC_ENTRY;
 
     /* If rewrite is set (we encountered a package we want to rewrite)
      * and this is a status line, write out our new status line */
@@ -662,8 +652,6 @@ mark_purge_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
         mark_purge_info->rewrite = TRUE;
     }
 
-    RC_EXIT;
-
     return;
 
   BROKEN:
@@ -675,8 +663,6 @@ mark_purge_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
                            mark_purge_info->read_done_id);
 
     g_main_quit (mark_purge_info->loop);
-
-    RC_EXIT;
 }
 
 static void
@@ -685,16 +671,12 @@ mark_purge_read_done_cb (RCLineBuf *line_buf, RCLineBufStatus status,
 {
     DebmanMarkPurgeInfo *mark_purge_info = (DebmanMarkPurgeInfo *)data;
 
-    RC_ENTRY;
-
     gtk_signal_disconnect (GTK_OBJECT (line_buf),
                            mark_purge_info->read_line_id);
     gtk_signal_disconnect (GTK_OBJECT (line_buf),
                            mark_purge_info->read_done_id);
 
     g_main_quit (mark_purge_info->loop);
-
-    RC_EXIT;
 }
 
 static gboolean
@@ -705,8 +687,6 @@ mark_purge (RCPackman *packman, RCPackageSList *remove_packages)
     GMainLoop *loop;
     int in_fd, out_fd;
     RCLineBuf *line_buf;
-
-    RC_ENTRY;
 
     g_return_val_if_fail (remove_packages, TRUE);
 
@@ -769,8 +749,6 @@ mark_purge (RCPackman *packman, RCPackageSList *remove_packages)
     if (mark_purge_info.error) {
         unlink (debman->priv->rc_status_file);
 
-        RC_EXIT;
-
         goto FAILED;
     }
 
@@ -785,15 +763,11 @@ mark_purge (RCPackman *packman, RCPackageSList *remove_packages)
         goto FAILED;
     }
 
-    RC_EXIT;
-
     return (TRUE);
 
   FAILED:
     rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                           "Unable to mark packages for removal");
-
-    RC_EXIT;
 
     return (FALSE);
 }
@@ -830,29 +804,19 @@ struct _DebmanHackInfo {
 static void
 debman_sigusr2_cb (int signum)
 {
-    RC_ENTRY;
-
     child_wants_input = TRUE;
 
     fflush (stdout);
-
-    RC_EXIT;
 }
 
 static gboolean
 key_press_cb (GtkWidget *widget, GdkEventKey *event, gpointer data)
 {
-    RC_ENTRY;
-
     if (event->keyval == GDK_Return) {
         g_main_quit ((GMainLoop *)data);
 
-        RC_EXIT;
-
         return (FALSE);
     }
-
-    RC_EXIT;
 
     return (TRUE);
 }
@@ -878,11 +842,7 @@ debman_poll_write_cb (gpointer data)
     GtkStyle *style;
     GdkFont *font;
 
-    RC_ENTRY;
-
     if (!child_wants_input) {
-        RC_EXIT;
-
         return (TRUE);
     }
 
@@ -890,8 +850,6 @@ debman_poll_write_cb (gpointer data)
     check.events = POLLIN;
 
     if (poll (&check, 1, 0)) {
-        RC_EXIT;
-
         return (TRUE);
     }
 
@@ -959,8 +917,6 @@ debman_poll_write_cb (gpointer data)
 
     child_wants_input = FALSE;
 
-    RC_EXIT;
-
     return (TRUE);
 }
 
@@ -1005,8 +961,9 @@ do_purge_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
         name = g_strndup (line + length, ptr - (line + length));
 
         gtk_signal_emit_by_name (GTK_OBJECT (do_purge_info->packman),
-                                 "transact_step", FALSE, name,
-                                 ++do_purge_info->install_state->seqno);
+                                 "transact_step",
+                                 ++do_purge_info->install_state->seqno,
+                                 RC_PACKMAN_STEP_REMOVE, name);
 
         g_free (name);
 
@@ -1043,8 +1000,6 @@ do_purge (RCPackman *packman, DebmanInstallState *install_state)
     DebmanDoPurgeInfo do_purge_info;
     GMainLoop *loop;
 
-    RC_ENTRY;
-
     if (!rc_file_exists ("/usr/bin/dpkg")) {
         rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ ": /usr/bin/dpkg does "
                   "not exist\n");
@@ -1053,8 +1008,6 @@ do_purge (RCPackman *packman, DebmanInstallState *install_state)
                               "/usr/bin/dpkg does not exist (suggest "
                               "'/usr/bin/dpkg --purge --pending' once dpkg "
                               "is installed)");
-
-        RC_EXIT;
 
         return (FALSE);
     }
@@ -1081,8 +1034,6 @@ do_purge (RCPackman *packman, DebmanInstallState *install_state)
 
         close (master);
         close (slave);
-
-        RC_EXIT;
 
         return (FALSE);
 
@@ -1171,8 +1122,6 @@ do_purge (RCPackman *packman, DebmanInstallState *install_state)
         rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
                   ": lost database lock!\n");
 
-        RC_EXIT;
-
         return (FALSE);
     }
 
@@ -1183,12 +1132,8 @@ do_purge (RCPackman *packman, DebmanInstallState *install_state)
         rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
                   ": dpkg exited abnormally\n");
 
-        RC_EXIT;
-
         return (FALSE);
     }
-
-    RC_EXIT;
 
     return (TRUE);
 }
@@ -1212,8 +1157,6 @@ make_unpack_commands (gchar **command, RCPackageSList *packages)
     glong arg_max;
 
     GSList *ret = NULL;
-
-    RC_ENTRY;
 
 #if 0
     arg_max = sysconf (_SC_ARG_MAX);
@@ -1279,8 +1222,6 @@ make_unpack_commands (gchar **command, RCPackageSList *packages)
 
     g_slist_free (lines);
 
-    RC_EXIT;
-
     return (ret);
 }
 
@@ -1290,8 +1231,6 @@ static void
 do_unpack_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
 {
     DebmanDoUnpackInfo *do_unpack_info = (DebmanDoUnpackInfo *)data;
-
-    RC_ENTRY;
 
     rc_debug (RC_DEBUG_LEVEL_DEBUG, __FUNCTION__ ": got \"%s\"\n", line);
 
@@ -1304,7 +1243,7 @@ do_unpack_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
         !strncmp (line, "Purging", strlen ("Purging")))
     {
         guint length;
-        gboolean install;
+        RCPackmanStep step_type;
         gchar *ptr;
         gchar *name;
 
@@ -1314,18 +1253,19 @@ do_unpack_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
                           strlen ("replacement "))) {
                 length += strlen ("replacement ");
             }
-            install = TRUE;
+            step_type = RC_PACKMAN_STEP_INSTALL;
         } else {
             length = strlen ("Purging configuration files for ");
-            install = FALSE;
+            step_type = RC_PACKMAN_STEP_REMOVE;
         }
 
         ptr = strchr (line + length, ' ');
         name = g_strndup (line + length, ptr - (line + length));
 
         gtk_signal_emit_by_name (GTK_OBJECT (do_unpack_info->packman),
-                                 "transact_step", install, name,
-                                 ++do_unpack_info->install_state->seqno);
+                                 "transact_step",
+                                 ++do_unpack_info->install_state->seqno,
+                                 step_type, name);
 
         g_free (name);
 
@@ -1343,8 +1283,6 @@ do_unpack_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
         do_unpack_info->hack_info.buf =
             g_string_truncate (do_unpack_info->hack_info.buf, 0);
     }
-
-    RC_EXIT;
 }
 
 static void
@@ -1352,8 +1290,6 @@ do_unpack_read_done_cb (RCLineBuf *line_buf, RCLineBufStatus status,
                         gpointer data)
 {
     DebmanDoUnpackInfo *do_unpack_info = (DebmanDoUnpackInfo *)data;
-
-    RC_ENTRY;
 
     if (do_unpack_info->read_line_id) {
         gtk_signal_disconnect (GTK_OBJECT (line_buf),
@@ -1365,8 +1301,6 @@ do_unpack_read_done_cb (RCLineBuf *line_buf, RCLineBufStatus status,
     }
 
     g_main_quit (do_unpack_info->loop);
-
-    RC_EXIT;
 }
 
 static gboolean
@@ -1383,8 +1317,6 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
     RCLineBuf *line_buf;
     GMainLoop *loop;
     DebmanDoUnpackInfo do_unpack_info;
-
-    RC_ENTRY;
 
     g_return_val_if_fail (g_slist_length (packages) > 0, TRUE);
 
@@ -1407,8 +1339,6 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
             g_slist_foreach (argvl, (GFunc) g_free, NULL);
             g_slist_free (argvl);
 
-            RC_EXIT;
-
             return (FALSE);
         }
 
@@ -1426,8 +1356,6 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
 
             close (fds[0]);
             close (fds[1]);
-
-            RC_EXIT;
 
             return (FALSE);
 
@@ -1484,8 +1412,6 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
             g_slist_foreach (argvl, (GFunc) g_free, NULL);
             g_slist_free (argvl);
 
-            RC_EXIT;
-
             return (FALSE);
         }
     }
@@ -1511,8 +1437,6 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
                                   "/usr/bin/dpkg does not exist (suggest "
                                   "'apt-get -f install')");
-
-            RC_EXIT;
 
             return (FALSE);
         }
@@ -1540,8 +1464,6 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
 
             g_slist_foreach (argvl, (GFunc) g_free, NULL);
             g_slist_free (argvl);
-
-            RC_EXIT;
 
             return (FALSE);
 
@@ -1629,8 +1551,6 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
             g_slist_foreach (argvl, (GFunc) g_free, NULL);
             g_slist_free (argvl);
 
-            RC_EXIT;
-
             return (FALSE);
         }
 
@@ -1643,8 +1563,6 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
 
             g_slist_foreach (argvl, (GFunc) g_free, NULL);
             g_slist_free (argvl);
-
-            RC_EXIT;
 
             return (FALSE);
         }
@@ -1681,8 +1599,6 @@ do_configure_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
 {
     DebmanDoConfigureInfo *do_configure_info = (DebmanDoConfigureInfo *)data;
 
-    RC_ENTRY;
-
     rc_debug (RC_DEBUG_LEVEL_DEBUG, __FUNCTION__ ": got \"%s\"\n", line);
 
     do_configure_info->hack_info.buf =
@@ -1699,16 +1615,15 @@ do_configure_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
         name = g_strndup (line + length, ptr - (line + length));
 
         gtk_signal_emit_by_name (GTK_OBJECT (do_configure_info->packman),
-                                 "configure_step", name,
-                                 ++do_configure_info->install_state->seqno);
+                                 "transact_step",
+                                 ++do_configure_info->install_state->seqno,
+                                 RC_PACKMAN_STEP_CONFIGURE, name);
 
         g_free (name);
 
         do_configure_info->hack_info.buf =
             g_string_truncate (do_configure_info->hack_info.buf, 0);
     }
-
-    RC_EXIT;
 }
 
 static void
@@ -1716,8 +1631,6 @@ do_configure_read_done_cb (RCLineBuf *line_buf, RCLineBufStatus status,
                            gpointer data)
 {
     DebmanDoConfigureInfo *do_configure_info = (DebmanDoConfigureInfo *)data;
-
-    RC_ENTRY;
 
     gtk_signal_disconnect_by_func (GTK_OBJECT (line_buf),
                                    GTK_SIGNAL_FUNC (do_configure_read_line_cb),
@@ -1727,8 +1640,6 @@ do_configure_read_done_cb (RCLineBuf *line_buf, RCLineBufStatus status,
                                    data);
 
     g_main_quit (do_configure_info->loop);
-
-    RC_EXIT;
 }
 
 static gboolean
@@ -1742,8 +1653,6 @@ do_configure (RCPackman *packman, DebmanInstallState *install_state)
     DebmanDoConfigureInfo do_configure_info;
     GMainLoop *loop;
 
-    RC_ENTRY;
-
     if (!rc_file_exists ("/usr/bin/dpkg")) {
         rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ ": /usr/bin/dpkg "
                   "does not exist\n");
@@ -1751,8 +1660,6 @@ do_configure (RCPackman *packman, DebmanInstallState *install_state)
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
                               "/usr/bin/dpkg does not exist (suggest "
                               "'dpkg --configure --pending')");
-
-        RC_EXIT;
 
         return (FALSE);
     }
@@ -1778,8 +1685,6 @@ do_configure (RCPackman *packman, DebmanInstallState *install_state)
         close (slave);
 
         rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ ": fork failed\n");
-
-        RC_EXIT;
 
         return (FALSE);
 
@@ -1870,8 +1775,6 @@ do_configure (RCPackman *packman, DebmanInstallState *install_state)
         rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
                   ": lost database lock!\n");
 
-        RC_EXIT;
-
         return (FALSE);
     }
 
@@ -1882,14 +1785,279 @@ do_configure (RCPackman *packman, DebmanInstallState *install_state)
         rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
                   ": dpkg exited abnormally\n");
 
-        RC_EXIT;
-
         return (FALSE);
     }
 
-    RC_EXIT;
-
     return (TRUE);
+}
+
+typedef struct _Node Node;
+
+struct _Node {
+    /* The actual package represented in the node */
+    RCPackage *package;
+
+    /* The packages that pre-depend on me -- once this package is
+     * installed, then these packages may be considered for
+     * installation */
+    Node **prereqs;
+    int prereq_capacity;
+    int prereq_count;
+
+    /* How many things do I depend on?  (We don't need the actual
+     * association here, just a count, so that we can quickly seed the
+     * initial queue with unattached nodes) */
+    int attachments;
+
+    /* My eventual (lowest, where 0 is max height) depth in the
+     * tree */
+    int depth;
+};
+
+static Node *
+node_new (RCPackage *package)
+{
+    Node *node;
+
+    node = g_new (Node, 1);
+
+    node->package = package;
+
+    /* Begin with the capacity to store 5 prereq nodes (we can
+     * expand this as necessary) */
+    node->prereqs = g_new (Node *, 5);
+    node->prereq_capacity = 5;
+    node->prereq_count = 0;
+
+    /* All nodes are initially unattached */
+    node->attachments = 0;
+
+    /* All nodes begin life at depth 0 */
+    node->depth = 0;
+
+    return node;
+}
+
+static void
+node_free (Node *node)
+{
+    g_free (node->prereqs);
+    g_free (node);
+}
+
+static void
+node_add_prereq (Node *required_node, Node *prereq_node)
+{
+    /* The prereq_node is now attached to the dependend_node */
+    prereq_node->attachments++;
+
+    /* The required_node needs a pointer back to the prereq_node,
+     * so make sure we have space */
+    if (required_node->prereq_count == required_node->prereq_capacity) {
+        required_node->prereq_capacity += 5;
+        required_node->prereqs = g_renew (
+            Node *, required_node->prereqs,
+            required_node->prereq_capacity);
+    }
+
+    /* Add the back pointer and increment the prereq_count */
+    required_node->prereqs[required_node->prereq_count++] =
+        prereq_node;
+}
+
+static GHashTable *
+construct_graph (RCPackageSList *packages)
+{
+    GHashTable *graph;
+    GSList *iter;
+
+    graph = g_hash_table_new (g_str_hash, g_str_equal);
+
+    /* Initial population of the graph */
+    for (iter = packages; iter; iter = iter->next) {
+        Node *node;
+        GSList *piter;
+
+        /* Create a new node for this package */
+        node = node_new ((RCPackage *)iter->data);
+
+        /* Enter this node for each of the spec names that the
+         * package provides */
+        for (piter = node->package->provides; piter; piter = piter->next) {
+            g_hash_table_insert (
+                graph, ((RCPackageDep *)piter->data)->spec.name, node);
+        }
+    }
+
+    return graph;
+}
+
+static void
+process_predeps (GHashTable *graph, RCPackageSList *packages)
+{
+    GSList *iter;
+
+    /* For every package, identify if any packages we pre-depend on
+     * are also in the graph, and if so, add the reference from them
+     * to us */
+    for (iter = packages; iter; iter = iter->next) {
+        Node *prereq_node;
+        GSList *riter;
+
+        prereq_node = g_hash_table_lookup (
+            graph, ((RCPackage *)iter->data)->spec.name);
+
+        /* This node had better be in the graph -- we just added it */
+        g_assert (prereq_node != NULL);
+
+        /* Walk our requirements looking for pre-deps also in the
+         * graph */
+        for (riter = prereq_node->package->requires; riter;
+             riter = riter->next)
+        {
+            Node *required_node;
+
+            /* Make sure this is a pre-dep and not just a normal
+             * dependency */
+            if (((RCPackageDep *)riter->data)->pre == 0) {
+                continue;
+            }
+
+            required_node = g_hash_table_lookup (
+                graph, ((RCPackageDep *)riter->data)->spec.name);
+
+            /* It's ok if we don't find it, since not all of my
+             * pre-deps are necessarily getting installed right now.
+             * Some may already be installed */
+            if (!required_node) {
+                continue;
+            }
+
+            /* Make sure this isn't us!  (Some packages, oddly enough,
+             * depend on themselves...) */
+            if (required_node == prereq_node) {
+                continue;
+            }
+
+            /* In an optimal case, we could check the system to make
+             * sure we don't already have this pre-dep satisfied -- if
+             * we did, we wouldn't need to pay attention to the
+             * relationship.  That's harder, though, and not really
+             * worth the trouble */
+
+            node_add_prereq (required_node, prereq_node);
+        }
+    }
+}
+
+static RCPackageSList *
+resolve_graph (GHashTable *graph, RCPackageSList *packages)
+{
+    GSList *queue = NULL;
+    GSList *iter;
+
+    /* Walk the nodes of the graph looking for unattached nodes
+     * (attachments == 0) */
+    for (iter = packages; iter; iter = iter->next) {
+        Node *node;
+
+        node = g_hash_table_lookup (
+            graph, ((RCPackage *)iter->data)->spec.name);
+
+        /* This must be found */
+        g_assert (node != NULL);
+
+        /* If this node is unattached, put it in our initial queue for
+         * processing; if we've done everything right before now, the
+         * order at this point shouldn't matter */
+        if (node->attachments == 0) {
+            queue = g_slist_prepend (queue, node);
+        }
+    }
+
+    /* Now, process the queue, mutating it as we go.  Note that the
+     * following walk will break if any node has a dependency on
+     * itself, something we must be careful not to violate when adding
+     * ordering criteria */
+
+    for (iter = queue; iter; iter = iter->next) {
+        Node *required_node;
+        int i;
+
+        required_node = (Node *)iter->data;
+
+        /* Walk all of the prereq nodes */
+        for (i = 0; i < required_node->prereq_count; i++) {
+            Node *prereq_node;
+
+            prereq_node = required_node->prereqs[i];
+
+            /* First, ensure that this node hasn't been prematurely
+             * handled already and isn't already scheduled to be
+             * addressed */
+            queue = g_slist_remove (queue, prereq_node);
+
+            /* Now, set the depth of this node to be one below
+             * (higher) than the depth of the node it depends on */
+            prereq_node->depth = required_node->depth + 1;
+
+            /* Finally, add the prereq_node to the queue of nodes
+             * to be processed */
+            queue = g_slist_append (queue, prereq_node);
+        }
+    }
+
+    return queue;
+}
+
+static GSList *
+order_packages (RCPackageSList *packages)
+{
+    GHashTable *graph;
+    GSList *iter;
+    GSList *ordered;
+    GSList *ret = NULL;
+
+    graph = construct_graph (packages);
+
+    process_predeps (graph, packages);
+
+    ordered = resolve_graph (graph, packages);
+
+    g_hash_table_destroy (graph);
+
+    iter = ordered;
+    while (iter) {
+        int depth;
+        RCPackageSList *accum = NULL;
+
+        depth = ((Node *)iter->data)->depth;
+        accum = g_slist_append (accum, ((Node *)iter->data)->package);
+        node_free ((Node *)iter->data);
+
+        iter = iter->next;
+
+        while (iter && ((Node *)iter->data)->depth == depth) {
+            accum = g_slist_append (accum, ((Node *)iter->data)->package);
+            node_free ((Node *)iter->data);
+            iter = iter->next;
+        }
+
+        ret = g_slist_append (ret, accum);
+    }
+
+    g_slist_free (ordered);
+
+    /* Debugging only */
+    for (iter = ret; iter; iter = iter->next) {
+        GSList *tmp;
+        fprintf (stderr, "In a group:\n");
+        for (tmp = (RCPackageSList *)iter->data; tmp; tmp = tmp->next) {
+            fprintf (stderr, "  %s\n", ((RCPackage *)tmp->data)->spec.name);
+        }
+    }
+
+    return ret;
 }
 
 /*
@@ -1902,10 +2070,14 @@ rc_debman_transact (RCPackman *packman, RCPackageSList *install_packages,
 {
     DebmanInstallState *install_state = g_new0 (DebmanInstallState, 1);
 
-    RC_ENTRY;
+/*    order_packages (install_packages); */
 
-    install_state->total = g_slist_length (install_packages) +
+    install_state->total = (g_slist_length (install_packages) * 2) +
         g_slist_length (remove_packages);
+    install_state->seqno = 0;
+
+    gtk_signal_emit_by_name (GTK_OBJECT (packman), "transact_start",
+                             install_state->total);
 
     if (remove_packages) {
         rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ \
@@ -1918,14 +2090,9 @@ rc_debman_transact (RCPackman *packman, RCPackageSList *install_packages,
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "Unable to mark packages for removal");
 
-            RC_EXIT;
-
             goto END;
         }
     }
-
-    gtk_signal_emit_by_name (GTK_OBJECT (packman), "transact_start",
-                             install_state->total);
 
     if (install_packages) {
         rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ": about to unpack\n");
@@ -1942,8 +2109,6 @@ rc_debman_transact (RCPackman *packman, RCPackageSList *install_packages,
                                       "Unable to unpack selected packages");
             }
 
-            RC_EXIT;
-
             goto END;
         }
     }
@@ -1958,22 +2123,12 @@ rc_debman_transact (RCPackman *packman, RCPackageSList *install_packages,
                                   "Unable to remove selected packages " \
                                   "(suggest 'dpkg --purge --pending')");
 
-            RC_EXIT;
-
             goto END;
         }
     }
 
-    gtk_signal_emit_by_name (GTK_OBJECT (packman), "transact_done");
-
     if (install_packages) {
         rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ": about to configure\n");
-
-        install_state->total = g_slist_length (install_packages);
-        install_state->seqno = 0;
-
-        gtk_signal_emit_by_name (GTK_OBJECT (packman), "configure_start",
-                                 install_state->total);
 
         if (!(do_configure (packman, install_state))) {
             rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
@@ -1983,20 +2138,16 @@ rc_debman_transact (RCPackman *packman, RCPackageSList *install_packages,
                                   "Unable to configure unpacked packages " \
                                   "(suggest 'dpkg --configure --pending')");
 
-            RC_EXIT;
-
             goto END;
         }
-
-        gtk_signal_emit_by_name (GTK_OBJECT (packman), "configure_done");
     }
 
-    RC_EXIT;
+    gtk_signal_emit_by_name (GTK_OBJECT (packman), "transact_done");
 
   END:
     g_free (install_state);
     hash_destroy (RC_DEBMAN (packman));
-    /* If we screwed up the status file let's fix it */
+    /* If we screwed up the status file let's "fix" it */
     verify_status (packman);
 }
 
@@ -2025,110 +2176,136 @@ get_description (GString *str)
 {
     gchar *ret;
 
-    RC_ENTRY;
-
     str = g_string_truncate (str, str->len - 1);
     ret = str->str;
     g_string_free (str, FALSE);
-
-    RC_EXIT;
 
     return (ret);
 }
 
 static void
-query_all_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
+query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
 {
     DebmanQueryInfo *query_info = (DebmanQueryInfo *)data;
+    char *ptr;
+    char *line;
 
-    RC_ENTRY;
+    line = alloca (strlen (status_line) + 1);
+    strcpy (line, status_line);
 
     /* This is a blank line which terminates a package section in
        /var/lib/dpkg/status, so save out our current buffer */
     if (!line[0]) {
-        if (query_info->desc_buf && query_info->desc_buf->len) {
-            query_info->package_buf->description =
-                get_description (query_info->desc_buf);
-            query_info->desc_buf = NULL;
+        if (query_info->package_buf) {
+            if (query_info->desc_buf && query_info->desc_buf->len) {
+                query_info->package_buf->description =
+                    get_description (query_info->desc_buf);
+                query_info->desc_buf = NULL;
+            }
+
+            query_info->packages = g_slist_append (query_info->packages,
+                                                   query_info->package_buf);
+            query_info->package_buf = NULL;
+
+            return;
         }
+    }
 
-        query_info->packages = g_slist_append (query_info->packages,
-                                           query_info->package_buf);
-        query_info->package_buf = NULL;
-
-        RC_EXIT;
-
-        return;
+    ptr = line;
+    if (*ptr != ' ') { /* These lines must begin with a space */
+        while (*ptr != ':') {
+            *ptr++ = tolower (*ptr);
+        }
     }
 
     /* This is the beginning of a package section, so start up a new buffer
        and set the package name */
-    if (!strncmp (line, "Package:", strlen ("Package:"))) {
+    if (!strncmp (line, "package:", strlen ("package:"))) {
         /* Better make sure this isn't a malformed /var/lib/dpkg/status file,
            so check to make sure we cleanly finished the last package */
         if (query_info->package_buf) {
             query_info->error = TRUE;
-
-            RC_EXIT;
 
             /* FIXME: must do something smart here */
             return;
         }
 
         query_info->package_buf = rc_package_new ();
-        query_info->package_buf->spec.name =
-            g_strdup (line + strlen ("Package:"));
-        query_info->package_buf->spec.name =
-            g_strchug (query_info->package_buf->spec.name);
 
-        RC_EXIT;
-
-        return;
-    }
-
-    /* Check if this is a Status: line -- the only status we recognize is
-       "install ok installed".  RCDebman should reset any selections at
-       initialization, so that we don't have to worry about things like
-       "purge ok installed". */
-    if (!strcmp (line, "Status: install ok installed")) {
-        query_info->package_buf->installed = TRUE;
-
-        RC_EXIT;
+        ptr = line + strlen ("package:");
+        while (isspace (*ptr)) {
+            ptr++;
+        }
+        query_info->package_buf->spec.name = g_strdup (ptr);
 
         return;
     }
 
-    /* We now also recognize "hold ok installed", and we set the hold bit
-       appropriately.  Yay for us! */
-    if (!strcmp (line, "Status: hold ok installed")) {
-        query_info->package_buf->installed = TRUE;
-        query_info->package_buf->hold = TRUE;
-
-        RC_EXIT;
-
+    /* This isn't a blank line, and this isn't a package: line, so
+     * we'd better have a package started by this point */
+    if (!query_info->package_buf) {
+        query_info->error = TRUE;
         return;
     }
 
-    if (!strncmp (line, "Installed-Size:", strlen ("Installed-Size:"))) {
+    if (!strncmp (line, "status:", strlen ("status:"))) {
+        char **status;
+
+        status = split_status (line + strlen ("status:"));
+
+        if (!(status && status[0] && status[1] && status[2])) {
+            /* This should never have gotten through verify
+             * status, and indicates something is seriously wrong */
+            query_info->error = TRUE;
+            goto DONE;
+        }
+
+        if (strcmp (status[0], "reinst-required") == 0) {
+            /* Yet another condition that must never get through
+             * verify status, as there's not much RC can do about
+             * this.  Debian packaging blows. */
+            query_info->error = TRUE;
+            goto DONE;
+        }
+
+        if (strcmp (status[1], "ok") != 0) {
+            /* Anything other than ok is a problem we don't know how
+             * to deal with (no, I'm not interested in making RC yet
+             * another tool to clean up the Debian mess) */
+            query_info->error = TRUE;
+            goto DONE;
+        }
+
+        if (strcmp (status[2], "installed") == 0) {
+            query_info->package_buf->installed = TRUE;
+            goto DONE;
+        }
+
+      DONE:
+        g_strfreev (status);
+        return;
+    }
+
+    if (!strncmp (line, "installed-size:", strlen ("installed-size:"))) {
         query_info->package_buf->installed_size =
-            strtoul (line + strlen ("Installed-Size:"), NULL, 10) * 1024;
-
-        RC_EXIT;
+            strtoul (line + strlen ("installed-size:"), NULL, 10) * 1024;
 
         return;
     }
 
-    if (!strncmp (line, "Description:", strlen ("Description:"))) {
+    if (!strncmp (line, "description:", strlen ("description:"))) {
+        ptr = line + strlen ("description:");
+
+        while (*ptr && isspace (*ptr)) {
+            ptr++;
+        }
+
         query_info->package_buf->summary =
-            g_strdup (line + strlen ("Description:"));
-        query_info->package_buf->summary =
-            g_strchug (query_info->package_buf->summary);
+            g_strdup (ptr);
 
         /* After Description: comes the long description, so prepare
          * to suck that in */
         query_info->desc_buf = g_string_new (NULL);
-
-        RC_EXIT;
 
         return;
     }
@@ -2141,89 +2318,125 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
 
         query_info->desc_buf = g_string_append (query_info->desc_buf, "\n");
 
-        RC_EXIT;
-
         return;
     }
 
-    if (!strncmp (line, "Version:", strlen ("Version:"))) {
-        gchar *tmp = g_strchug (g_strdup (line + strlen ("Version:")));
+    if (!strncmp (line, "version:", strlen ("version:"))) {
+        ptr = line + strlen ("version:");
+        while (*ptr && isspace (*ptr)) {
+            ptr++;
+        }
 
-        rc_debman_parse_version (tmp, &query_info->package_buf->spec.epoch,
+        rc_debman_parse_version (ptr, &query_info->package_buf->spec.epoch,
                                  &query_info->package_buf->spec.version,
                                  &query_info->package_buf->spec.release);
 
-        g_free (tmp);
-
-        RC_EXIT;
-
         return;
     }
 
-    if (!strncmp (line, "Section:", strlen ("Section:"))) {
-        gchar *tmp = g_strchug (g_strdup (line + strlen ("Section:")));
-        gchar *section = strstr (tmp, "/");
+    if (!strncmp (line, "section:", strlen ("section:"))) {
+        char *section;
+
+        ptr = line + strlen ("section:");
+        section = strchr (ptr, '/');
 
         if (!section) {
-            section = tmp;
-        } else {
-            while (*section == ' ') {
-                section++;
-            }
+            section = ptr;
+        }
+
+        while (*section && isspace (*section)) {
+            section++;
         }
 
         query_info->package_buf->section =
-            rc_debman_section_to_package_section (tmp);
+            rc_debman_section_to_package_section (section);
 
-        g_free (tmp);
         return;
     }
 
-    if (!strncmp (line, "Depends:", strlen ("Depends:"))) {
-        gchar *tmp = g_strchug (g_strdup (line + strlen ("Depends:")));
-        query_info->package_buf->requires =
-            rc_debman_fill_depends (tmp, query_info->package_buf->requires);
-        g_free (tmp);
+    if (!strncmp (line, "depends:", strlen ("depends:"))) {
+        GSList *list, *tmp;
+
+        ptr = line + strlen ("depends:");
+        while (*ptr && isspace (*ptr)) {
+            ptr++;
+        }
+
+        list = rc_debman_fill_depends (ptr);
+
+        while ((tmp = g_slist_find_custom (
+                    list, query_info->package_buf,
+                    (GCompareFunc) rc_package_spec_compare_name)))
+        {
+            list = g_slist_remove_link (list, tmp);
+            rc_package_dep_slist_free (tmp);
+        }
+
+        query_info->package_buf->requires = g_slist_concat (
+            query_info->package_buf->requires, list);
+
         return;
     }
 
-    if (!strncmp (line, "Recommends:", strlen ("Recommends:"))) {
-        gchar *tmp = g_strchug (g_strdup (line + strlen ("Recommends:")));
-        query_info->package_buf->recommends =
-            rc_debman_fill_depends (tmp, query_info->package_buf->recommends);
-        g_free (tmp);
+    if (!strncmp (line, "recommends:", strlen ("recommends:"))) {
+        ptr = line + strlen ("recommends:");
+        while (*ptr && isspace (*ptr)) {
+            ptr++;
+        }
+
+        query_info->package_buf->recommends = g_slist_concat (
+            query_info->package_buf->recommends, rc_debman_fill_depends (ptr));
+
         return;
     }
 
-    if (!strncmp (line, "Suggests:", strlen ("Suggests:"))) {
-        gchar *tmp = g_strchug (g_strdup (line + strlen ("Suggests:")));
-        query_info->package_buf->suggests =
-            rc_debman_fill_depends (tmp, query_info->package_buf->suggests);
-        g_free (tmp);
+    if (!strncmp (line, "suggests:", strlen ("suggests:"))) {
+        ptr = line + strlen ("suggests:");
+        while (*ptr && isspace (*ptr)) {
+            ptr++;
+        }
+        query_info->package_buf->suggests = g_slist_concat (
+            query_info->package_buf->suggests, rc_debman_fill_depends (ptr));
         return;
     }
 
-    if (!strncmp (line, "Pre-Depends:", strlen ("Pre-Depends:"))) {
-        gchar *tmp = g_strchug (g_strdup (line + strlen ("Pre-Depends:")));
-        query_info->package_buf->requires =
-            rc_debman_fill_depends (tmp, query_info->package_buf->requires);
-        g_free (tmp);
+    if (!strncmp (line, "pre-depends:", strlen ("pre-depends:"))) {
+        RCPackageDepSList *tmp = NULL, *iter;
+
+        ptr = line + strlen ("pre-depends:");
+        while (*ptr && isspace (*ptr)) {
+            ptr++;
+        }
+
+        tmp = rc_debman_fill_depends (ptr);
+
+        for (iter = tmp; iter; iter = iter->next) {
+            ((RCPackageDep *)(iter->data))->pre = 1;
+        }
+
+        query_info->package_buf->requires = g_slist_concat (
+            query_info->package_buf->requires, tmp);
+
         return;
     }
 
-    if (!strncmp (line, "Conflicts:", strlen ("Conflicts:"))) {
-        gchar *tmp = g_strchug (g_strdup (line + strlen ("Conflicts:")));
-        query_info->package_buf->conflicts =
-            rc_debman_fill_depends (tmp, query_info->package_buf->conflicts);
-        g_free (tmp);
+    if (!strncmp (line, "conflicts:", strlen ("conflicts:"))) {
+        ptr = line + strlen ("conflicts:");
+        while (*ptr && isspace (*ptr)) {
+            ptr++;
+        }
+        query_info->package_buf->conflicts = g_slist_concat (
+            query_info->package_buf->conflicts, rc_debman_fill_depends (ptr));
         return;
     }
 
-    if (!strncmp (line, "Provides:", strlen ("Provides:"))) {
-        gchar *tmp = g_strchug (g_strdup (line + strlen ("Provides:")));
-        query_info->package_buf->provides =
-            rc_debman_fill_depends (tmp, query_info->package_buf->provides);
-        g_free (tmp);
+    if (!strncmp (line, "provides:", strlen ("provides:"))) {
+        ptr = line + strlen ("provides:");
+        while (*ptr && isspace (*ptr)) {
+            ptr++;
+        }
+        query_info->package_buf->provides = g_slist_concat (
+            query_info->package_buf->provides, rc_debman_fill_depends (ptr));
         return;
     }
 }
@@ -2234,8 +2447,6 @@ query_all_read_done_cb (RCLineBuf *line_buf, RCLineBufStatus status,
 {
     DebmanQueryInfo *query_info = (DebmanQueryInfo *)data;
 
-    RC_ENTRY;
-
     gtk_signal_disconnect (GTK_OBJECT (line_buf),
                            query_info->read_line_id);
     gtk_signal_disconnect (GTK_OBJECT (line_buf),
@@ -2244,8 +2455,6 @@ query_all_read_done_cb (RCLineBuf *line_buf, RCLineBufStatus status,
     query_info->error = (status == RC_LINE_BUF_ERROR);
 
     g_main_quit (query_info->loop);
-
-    RC_EXIT;
 }
 
 static void
@@ -2258,8 +2467,6 @@ rc_debman_query_all_real (RCPackman *packman)
     RCPackageSList *iter;
     GMainLoop *loop;
 
-    RC_ENTRY;
-
     if ((fd = open (debman->priv->status_file, O_RDONLY)) < 0) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "couldn't open %s for reading",
@@ -2267,8 +2474,6 @@ rc_debman_query_all_real (RCPackman *packman)
 
         rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
                   ": failed to open /var/lib/dpkg/status\n");
-
-        RC_EXIT;
 
         return;
     }
@@ -2321,19 +2526,13 @@ rc_debman_query_all_real (RCPackman *packman)
     debman->priv->hash_valid = TRUE;
 
     close (fd);
-
-    RC_EXIT;
 }
 
 static void
 package_list_append (gchar *name, RCPackage *package,
                      RCPackageSList **package_list)
 {
-    RC_ENTRY;
-
     *package_list = g_slist_append (*package_list, rc_package_copy (package));
-
-    RC_EXIT;
 }
 
 static RCPackageSList *
@@ -2341,16 +2540,12 @@ rc_debman_query_all (RCPackman *packman)
 {
     RCPackageSList *packages = NULL;
 
-    RC_ENTRY;
-
     if (!(RC_DEBMAN (packman)->priv->hash_valid)) {
         rc_debman_query_all_real (packman);
     }
 
     g_hash_table_foreach (RC_DEBMAN (packman)->priv->package_hash,
                           (GHFunc) package_list_append, &packages);
-
-    RC_EXIT;
 
     return packages;
 }
@@ -2360,8 +2555,6 @@ rc_debman_query (RCPackman *packman, RCPackage *package)
 {
     RCDebman *debman = RC_DEBMAN (packman);
     RCPackage *lpackage;
-
-    RC_ENTRY;
 
     g_assert (package);
     g_assert (package->spec.name);
@@ -2381,12 +2574,8 @@ rc_debman_query (RCPackman *packman, RCPackage *package)
     {
         rc_package_free (package);
 
-        RC_EXIT;
-
         return (rc_package_copy (lpackage));
     } else {
-        RC_EXIT;
-
         return (package);
     }
 }
@@ -2402,15 +2591,11 @@ rc_debman_query_file (RCPackman *packman, const gchar *filename)
     GMainLoop *loop;
     RCPackageDep *dep = NULL;
 
-    RC_ENTRY;
-
     if (pipe (fds)) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "couldn't create pipe");
 
         rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ ": pipe failed\n");
-
-        RC_EXIT;
 
         return (FALSE);
     }
@@ -2432,8 +2617,6 @@ rc_debman_query_file (RCPackman *packman, const gchar *filename)
 
         close (fds[0]);
         close (fds[1]);
-
-        RC_EXIT;
 
         return (NULL);
 
@@ -2499,8 +2682,6 @@ rc_debman_query_file (RCPackman *packman, const gchar *filename)
         rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
                   ": dpkg exited abnormally\n");
 
-        RC_EXIT;
-
         return (NULL);
     }
 
@@ -2520,8 +2701,6 @@ rc_debman_query_file (RCPackman *packman, const gchar *filename)
     query_info.package_buf->provides =
         g_slist_append (query_info.package_buf->provides, dep);
 
-    RC_EXIT;
-
     return (query_info.package_buf);
 }
 
@@ -2530,8 +2709,6 @@ rc_debman_verify (RCPackman *packman, RCPackage *package)
 {
     RCVerificationSList *ret = NULL;
     RCPackageUpdate *update = NULL;
-
-    RC_ENTRY;
 
     g_assert (packman);
     g_assert (package);
@@ -2569,8 +2746,6 @@ rc_debman_verify (RCPackman *packman, RCPackage *package)
 
         ret = g_slist_append (ret, verification);
     }
-
-    RC_EXIT;
 
     return (ret);
 }
@@ -2635,8 +2810,6 @@ find_file_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
 {
     DebmanFindFileInfo *find_file_info = (DebmanFindFileInfo *)data;
 
-    RC_ENTRY;
-
     if (!strcmp (find_file_info->target, line)) {
         find_file_info->accept = TRUE;
 
@@ -2647,8 +2820,6 @@ find_file_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
 
         g_main_quit (find_file_info->loop);
     }
-
-    RC_EXIT;
 }
 
 static void
@@ -2657,16 +2828,12 @@ find_file_read_done_cb (RCLineBuf *line_buf, RCLineBufStatus status,
 {
     DebmanFindFileInfo *find_file_info = (DebmanFindFileInfo *)data;
 
-    RC_ENTRY;
-
     gtk_signal_disconnect (GTK_OBJECT (line_buf),
                            find_file_info->read_line_id);
     gtk_signal_disconnect (GTK_OBJECT (line_buf),
                            find_file_info->read_done_id);
 
     g_main_quit (find_file_info->loop);
-
-    RC_EXIT;
 }
 
 static RCPackage *
@@ -2676,16 +2843,12 @@ rc_debman_find_file (RCPackman *packman, const gchar *filename)
     struct dirent *info_file;
     gchar realname[PATH_MAX];
 
-    RC_ENTRY;
-
     if (!g_path_is_absolute (filename)) {
         rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
                   ": pathname is not absolute\n");
 
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "pathname is not absolute");
-
-        RC_EXIT;
 
         goto ERROR;
     }
@@ -2697,8 +2860,6 @@ rc_debman_find_file (RCPackman *packman, const gchar *filename)
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "realpath returned NULL");
 
-        RC_EXIT;
-
         goto ERROR;
     }
 
@@ -2708,8 +2869,6 @@ rc_debman_find_file (RCPackman *packman, const gchar *filename)
 
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "unable to scan /var/lib/dpkg/info");
-
-        RC_EXIT;
 
         goto ERROR;
     }
@@ -2736,8 +2895,6 @@ rc_debman_find_file (RCPackman *packman, const gchar *filename)
 
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "failed to open %s", fullname);
-
-            RC_EXIT;
 
             goto ERROR;
         }
@@ -2784,20 +2941,14 @@ rc_debman_find_file (RCPackman *packman, const gchar *filename)
             if (!package->installed) {
                 rc_package_free (package);
 
-                RC_EXIT;
-
                 return (NULL);
             } else {
-                RC_EXIT;
-
                 return (package);
             }
         }
     }
 
     closedir (info_dir);
-
-    RC_EXIT;
 
     return (NULL);
 
@@ -2813,8 +2964,6 @@ rc_debman_destroy (GtkObject *obj)
 {
     RCDebman *debman = RC_DEBMAN (obj);
 
-    RC_ENTRY;
-
     unlock_database (debman);
 
     hash_destroy (debman);
@@ -2824,8 +2973,6 @@ rc_debman_destroy (GtkObject *obj)
 
     if (GTK_OBJECT_CLASS (parent_class)->destroy)
         (* GTK_OBJECT_CLASS (parent_class)->destroy) (obj);
-
-    RC_EXIT;
 }
 
 static void
@@ -2833,8 +2980,6 @@ rc_debman_class_init (RCDebmanClass *klass)
 {
     GtkObjectClass *object_class =  (GtkObjectClass *) klass;
     RCPackmanClass *packman_class = (RCPackmanClass *) klass;
-
-    RC_ENTRY;
 
     object_class->destroy = rc_debman_destroy;
 
@@ -2852,17 +2997,12 @@ rc_debman_class_init (RCDebmanClass *klass)
 
 //    deps_conflicts_use_virtual_packages (FALSE);
 //    g_warning ("vlad, fix deps_conflict_use_virtual_pakages");
-
-    RC_EXIT;
 }
 
 static void
 rc_debman_init (RCDebman *debman)
 {
     RCPackman *packman = RC_PACKMAN (debman);
-
-    packman->priv->features =
-        RC_PACKMAN_FEATURE_POST_CONFIG;
 
     debman->priv = g_new0 (RCDebmanPrivate, 1);
 
@@ -2883,8 +3023,6 @@ rc_debman_init (RCDebman *debman)
 
     if (geteuid ()) {
         /* We can't really verify the status file or lock the database */
-        RC_EXIT;
-
         return;
     }
 
@@ -2902,8 +3040,6 @@ rc_debman_init (RCDebman *debman)
     rc_packman_set_file_extension(packman, "deb");
 
     rc_package_dep_system_is_rpmish (FALSE);
-
-    RC_EXIT;
 }
 
 RCDebman *
@@ -2911,11 +3047,7 @@ rc_debman_new (void)
 {
     RCDebman *debman;
 
-    RC_ENTRY;
-
     debman = RC_DEBMAN (gtk_type_new (rc_debman_get_type ()));
-
-    RC_EXIT;
 
     return debman;
 }

@@ -29,6 +29,8 @@ rc_package_new (void)
 {
     RCPackage *package = g_new0 (RCPackage, 1);
 
+    package->section = RC_SECTION_MISC;
+
     return (package);
 } /* rc_package_new */
 

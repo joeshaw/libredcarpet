@@ -39,10 +39,6 @@ static void rc_packman_init       (RCPackman *obj);
 static GtkObjectClass *rc_packman_parent;
 
 enum SIGNALS {
-    CONFIGURE_START,
-    CONFIGURE_STEP,
-    CONFIGURE_PROGRESS,
-    CONFIGURE_DONE,
     TRANSACT_START,
     TRANSACT_STEP,
     TRANSACT_PROGRESS,
@@ -119,43 +115,6 @@ rc_packman_class_init (RCPackmanClass *klass)
 
     rc_packman_parent = gtk_type_class (gtk_object_get_type ());
 
-    signals[CONFIGURE_START] =
-        gtk_signal_new ("configure_start",
-                        GTK_RUN_LAST,
-                        object_class->type,
-                        GTK_SIGNAL_OFFSET (RCPackmanClass, configure_start),
-                        gtk_marshal_NONE__INT,
-                        GTK_TYPE_NONE, 1,
-                        GTK_TYPE_INT);
-
-    signals[CONFIGURE_STEP] =
-        gtk_signal_new ("configure_step",
-                        GTK_RUN_LAST,
-                        object_class->type,
-                        GTK_SIGNAL_OFFSET (RCPackmanClass, configure_step),
-                        gtk_marshal_NONE__STRING_INT,
-                        GTK_TYPE_NONE, 2,
-                        GTK_TYPE_STRING,
-                        GTK_TYPE_INT);
-
-    signals[CONFIGURE_PROGRESS] =
-        gtk_signal_new ("configure_progress",
-                        GTK_RUN_LAST,
-                        object_class->type,
-                        GTK_SIGNAL_OFFSET (RCPackmanClass, configure_progress),
-                        gtk_marshal_NONE__INT_INT,
-                        GTK_TYPE_NONE, 2,
-                        GTK_TYPE_INT,
-                        GTK_TYPE_INT);
-
-    signals[CONFIGURE_DONE] =
-        gtk_signal_new ("configure_done",
-                        GTK_RUN_LAST | GTK_RUN_NO_RECURSE,
-                        object_class->type,
-                        GTK_SIGNAL_OFFSET (RCPackmanClass, configure_done),
-                        gtk_marshal_NONE__NONE,
-                        GTK_TYPE_NONE, 0);
-
     signals[TRANSACT_START] =
         gtk_signal_new ("transact_start",
                         GTK_RUN_LAST,
@@ -170,11 +129,11 @@ rc_packman_class_init (RCPackmanClass *klass)
                         GTK_RUN_LAST,
                         object_class->type,
                         GTK_SIGNAL_OFFSET (RCPackmanClass, transact_step),
-                        gtk_marshal_NONE__BOOL_STRING_INT,
+                        gtk_marshal_NONE__INT_INT_POINTER,
                         GTK_TYPE_NONE, 3,
-                        GTK_TYPE_BOOL,
-                        GTK_TYPE_STRING,
-                        GTK_TYPE_INT);
+                        GTK_TYPE_INT,
+                        GTK_TYPE_INT,
+                        GTK_TYPE_STRING);
 
     signals[TRANSACT_PROGRESS] =
         gtk_signal_new ("transact_progress",
@@ -217,8 +176,6 @@ rc_packman_init (RCPackman *packman)
     packman->priv->extension = NULL;
 
     packman->priv->busy = FALSE;
-
-    packman->priv->features = 0;
 }
 
 RCPackman *
@@ -228,12 +185,6 @@ rc_packman_new (void)
         RC_PACKMAN (gtk_type_new (rc_packman_get_type ()));
 
     return packman;
-}
-
-RCPackmanFeatures
-rc_packman_get_features (RCPackman *packman)
-{
-    return (packman->priv->features);
 }
 
 /* Wrappers around all of the virtual functions */

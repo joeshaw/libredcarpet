@@ -1,3 +1,81 @@
+2001-07-11  Ian Peters  <itp@ximian.com>
+
+	* rc-debman-general.h: rc_debman_fill_depends no longer takes a
+	list to append to, but instead returns a new list
+
+	* rc-debman-general.c: no more list paramater, instead declare and
+	return a new RCPackageSList *
+
+	* rc-package-dep.h: add the pre field to the RCPackageDep struct
+	-- when set, this is a Pre-Depends, only used in Debian
+
+	* rc-package-dep.c (rc_package_dep_new): set pre to FALSE by
+	default
+	(rc_package_dep_copy): copy the pre field
+
+	* rc-package-info.c (debian_packages_helper): call
+	rc_debman_fill_depends correctly, concatenate the returned list
+
+	* rc-packman-private.h: get rid of the features member
+
+	* rc-package.h: cosmetic fixes
+
+	* rc-package.c (rc_package_new): set package->section to MISC
+
+	* rc-packman.h: remove the RCPackmanFeatures enum, no longer used.
+	Add the RCPackmanStep enum, which describes what kind of step
+	occured during a transaction_step.  Ditch all of the configure_*
+	signals, and update/reorder the arguments to the transact_*
+	signals.
+	(rc_packman_get_features): removed
+
+	* rc-packman.c: remove CONFIGURE_* from the class signals.  Remove
+	reference to ->priv->features.
+	(rc_packman_get_features): removed
+
+	* rc-rpmman.h: add rpmGetRpmlibProvides to the RCRpmman struct
+
+	* rc-rpmman.c: s/g_slist_append/g_slist_prepend/ in lots of places
+	(transact_cb): fixes to emit the correct signals -- no more
+	configure_*, lots more transact_* with a few extra arguments.
+	(rc_rpmman_section_to_package_section): fixes to stop using
+	g_strsplit, stop using g_strcasecmp, stop being stupid.
+	(parse_versions): stop using g_strsplit, stop being so slow and
+	stupid.
+	(in_set): fix a warning
+	(depends_fill_helper): added, single code path to read a variety
+	of dependency information from the Header
+	(rc_rpmman_depends_fill): rewritten to use depends_fill_helper,
+	now much shorter and fewer bugs
+	(rc_rpmman_query_all): use rpmGetRpmlibProvides to create the
+	rpmlib-internal package, to provide all of the "rpmlib(...)" 
+	provides used for internal rpm package format versioning
+	(load_rpm_syms): grab rpmGetRpmlibProvides
+	(load_fake_syms): grab rpmGetRpmlibProvides
+	(rc_rpmman_init): no more features
+
+	* rc-debman.c (split_status): added, breaks a status line into
+	three words
+	(verify_status_read_line_cb): use split_status where possible,
+	downcase some words and stop using g_strcasecmp, rewrote the logic
+	to detect acceptable/unacceptable status lines
+	(do_purge_read_line_cb): updates to new signal prototype
+	(do_unpack_read_line_cb): emit new signal, including step_type
+	(do_configure_read_line_cb): emit new signal
+	(node_new): added
+	(node_free): added
+	(node_add_prereq): added
+	(construct_graph): added
+	(process_predeps): added
+	(resolve_graph): added
+	(order_packages): added.  uses the previous helper functions to
+	construct the dependency graph of the pre-deps and walk it using a
+	BFS to correctly order packages.  Not actually used yet, sigh.
+	(rc_debman_transact): new signals
+	(query_all_read_line_cb): speedups including getting rid of
+	g_strcasecmp, some small bug fixes, fixes to use
+	rc_debman_fill_depends correctly.
+
 2001-07-10  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-debman.c: get rid of warning

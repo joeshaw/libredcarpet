@@ -57,6 +57,8 @@ rc_package_dep_new (gchar *name,
 
     rcpd->relation = relation;
 
+    rcpd->pre = FALSE;
+
     return (rcpd);
 } /* rc_package_dep_new */
 
@@ -81,6 +83,7 @@ rc_package_dep_copy (RCPackageDep *rcpd)
 
     new->relation = rcpd->relation;
     new->is_or = rcpd->is_or;
+    new->pre = rcpd->pre;
 
     return (new);
 } /* rc_package_dep_copy */

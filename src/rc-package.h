@@ -60,7 +60,7 @@ struct _RCPackage {
     /* These are here to make the debian folks happy */
     RCPackageDepSList *suggests;
     RCPackageDepSList *recommends;
-    
+
     /* Filled in by package info XML */
     gchar *summary;
     gchar *description;

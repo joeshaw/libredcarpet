@@ -78,9 +78,8 @@ struct _RCPackageDep {
     RCPackageSpec spec;
     RCPackageRelation relation;
     gboolean is_or;
+    gboolean pre;
 };
-
-
 
 RCPackageDep *rc_package_dep_new (gchar *name,
                                   guint32 epoch,

@@ -98,6 +98,7 @@ struct _RCRpmman {
     int (*rpmdbOpen)(const char *, rpmdb *, int, int);
     void (*rpmdbClose)(rpmdb);
     const char * (*rpmProblemString)(rpmProblem);
+    int (*rpmGetRpmlibProvides)(char ***, int **, char ***);
 
     /*
      * RPMv3 only functions
