@@ -404,8 +404,10 @@ PyPackman_new (RCPackman *packman)
 RCPackman *
 PyPackman_get_packman (PyObject *obj)
 {
-  if (! PyPackman_check (obj))
-    return NULL;
+	if (! PyPackman_check (obj)) {
+		PyErr_SetString (PyExc_TypeError, "Given object is not a packman");
+		return NULL;
+	}
 
   return ((PyPackman *) obj)->packman;
 }

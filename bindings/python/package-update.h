@@ -36,4 +36,7 @@ PyObject  *PyPackageUpdate_new         (RCPackageUpdate *update);
 
 RCPackageUpdate *PyPackageUpdate_get_package_update (PyObject *obj);
 
+PyObject   *rc_package_update_slist_to_PyList (RCPackageUpdateSList *slist);
+RCPackageUpdateSList *PyList_to_rc_package_update_slist (PyObject *py_list);
+
 #endif /* __PACKAGE_UPDATE_H__ */

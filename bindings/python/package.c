@@ -26,6 +26,9 @@
 
 #include "package.h"
 #include "package-update.h"
+#include "package-spec.h"
+#include "package-dep.h"
+#include "channel.h"
 #include "pyutil.h"
 
 typedef struct {
@@ -90,8 +93,30 @@ PyPackage_get_latest_update (PyObject *self, PyObject *args)
 	RCPackageUpdate *update;
 
 	update = rc_package_get_latest_update (package);
+	if (update == NULL) {
+		Py_INCREF (Py_None);
+		return Py_None;
+	}
 
 	return PyPackageUpdate_new (update);
+}
+
+static PyObject *
+PyPackage_to_xml (PyObject *self, PyObject *args)
+{
+	RCPackage *package = PyPackage_get_package (self);
+	PyObject *obj;
+	xmlNode *node;
+	xmlBuffer *buf;
+
+	buf = xmlBufferCreate();
+
+	node = rc_package_to_xml_node (package);
+	xmlNodeDump (buf, NULL, node, 0, 0);
+	xmlFreeNode (node);
+	obj = Py_BuildValue ("s", buf->content);
+	xmlBufferFree (buf);
+	return obj;
 }
 
 static PyMethodDef PyPackage_methods[] = {
@@ -100,7 +125,234 @@ static PyMethodDef PyPackage_methods[] = {
 	{ "is_synthetic",       PyPackage_is_synthetic,       METH_NOARGS  },
 	{ "get_best_upgrade",   PyPackage_get_best_upgrade,   METH_VARARGS },
 	{ "get_latest_update",  PyPackage_get_latest_update,  METH_NOARGS  },
+
+	/* From rc-xml.h */
+	{ "to_xml",             PyPackage_to_xml,             METH_NOARGS  },
 	{ NULL, NULL }
+};
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+static PyObject *
+PyPackage_get_spec (PyObject *self, void *closure)
+{
+	RCPackage *pkg = PyPackage_get_package (self);
+	return PyPackageSpec_new (&pkg->spec);
+}
+
+static PyObject *
+PyPackage_get_file_size (PyObject *self, void *closure)
+{
+	RCPackage *pkg = PyPackage_get_package (self);
+	return PyInt_FromLong (pkg->file_size);
+}
+
+static PyObject *
+PyPackage_get_installed_size (PyObject *self, void *closure)
+{
+	RCPackage *pkg = PyPackage_get_package (self);
+	return PyInt_FromLong (pkg->installed_size);
+}
+
+static PyObject *
+PyPackage_get_channel (PyObject *self, void *closure)
+{
+	RCPackage *pkg = PyPackage_get_package (self);
+
+	if (pkg->channel == NULL) {
+		Py_INCREF (Py_None);
+		return Py_None;
+	}
+
+	return PyChannel_new (pkg->channel);
+}
+
+static PyObject *
+PyPackage_get_requires (PyObject *self, void *closure)
+{
+	RCPackage *pkg = PyPackage_get_package (self);
+	return rc_package_dep_array_to_PyList (pkg->requires_a);
+}
+
+static PyObject *
+PyPackage_get_provides (PyObject *self, void *closure)
+{
+	RCPackage *pkg = PyPackage_get_package (self);
+	return rc_package_dep_array_to_PyList (pkg->provides_a);
+}
+
+static PyObject *
+PyPackage_get_conflicts (PyObject *self, void *closure)
+{
+	RCPackage *pkg = PyPackage_get_package (self);
+	return rc_package_dep_array_to_PyList (pkg->conflicts_a);
+}
+
+static PyObject *
+PyPackage_get_obsoletes (PyObject *self, void *closure)
+{
+	RCPackage *pkg = PyPackage_get_package (self);
+	return rc_package_dep_array_to_PyList (pkg->obsoletes_a);
+}
+
+static PyObject *
+PyPackage_get_children (PyObject *self, void *closure)
+{
+	RCPackage *pkg = PyPackage_get_package (self);
+	return rc_package_dep_array_to_PyList (pkg->children_a);
+}
+
+static PyObject *
+PyPackage_get_suggests (PyObject *self, void *closure)
+{
+	RCPackage *pkg = PyPackage_get_package (self);
+	return rc_package_dep_array_to_PyList (pkg->suggests_a);
+}
+
+static PyObject *
+PyPackage_get_recommends (PyObject *self, void *closure)
+{
+	RCPackage *pkg = PyPackage_get_package (self);
+	return rc_package_dep_array_to_PyList (pkg->recommends_a);
+}
+
+static PyObject *
+PyPackage_get_pretty_name (PyObject *self, void *closure)
+{
+	RCPackage *pkg = PyPackage_get_package (self);
+
+	if (pkg->pretty_name == NULL) {
+		Py_INCREF (Py_None);
+		return Py_None;
+	}
+
+	return PyString_FromString (pkg->pretty_name);
+}
+
+static PyObject *
+PyPackage_get_summary (PyObject *self, void *closure)
+{
+	RCPackage *pkg = PyPackage_get_package (self);
+
+	if (pkg->summary == NULL) {
+		Py_INCREF (Py_None);
+		return Py_None;
+	}
+
+	return PyString_FromString (pkg->summary);
+}
+
+static PyObject *
+PyPackage_get_description (PyObject *self, void *closure)
+{
+	RCPackage *pkg = PyPackage_get_package (self);
+
+	if (pkg->description == NULL) {
+		Py_INCREF (Py_None);
+		return Py_None;
+	}
+
+	return PyString_FromString (pkg->description);
+}
+
+static PyObject *
+PyPackage_get_history (PyObject *self, void *closure)
+{
+	RCPackage *pkg = PyPackage_get_package (self);
+
+	if (pkg->history == NULL) {
+		Py_INCREF (Py_None);
+		return Py_None;
+	}
+
+	return rc_package_update_slist_to_PyList (pkg->history);
+}
+
+static PyObject *
+PyPackage_get_package_filename (PyObject *self, void *closure)
+{
+	RCPackage *pkg = PyPackage_get_package (self);
+
+	if (pkg->package_filename == NULL) {
+		Py_INCREF (Py_None);
+		return Py_None;
+	}
+
+	return PyString_FromString (pkg->package_filename);
+}
+
+static int
+PyPackage_set_package_filename (PyObject *self, PyObject *value, void *closure)
+{
+	RCPackage *pkg = PyPackage_get_package (self);
+	gchar *val;
+
+	val = PyString_AsString (value);
+	if (PyErr_Occurred ())
+		return -1;
+
+	if (pkg->package_filename)
+		g_free (pkg->package_filename);
+
+	pkg->package_filename = g_strdup (val);
+
+	return 0;
+}
+
+static PyObject *
+PyPackage_get_signature_filename (PyObject *self, void *closure)
+{
+	RCPackage *pkg = PyPackage_get_package (self);
+
+	if (pkg->signature_filename == NULL) {
+		Py_INCREF (Py_None);
+		return Py_None;
+	}
+
+	return PyString_FromString (pkg->signature_filename);
+}
+
+static int
+PyPackage_set_signature_filename (PyObject *self, PyObject *value, void *closure)
+{
+	RCPackage *pkg = PyPackage_get_package (self);
+	gchar *val;
+
+	val = PyString_AsString (value);
+	if (PyErr_Occurred ())
+		return -1;
+
+	if (pkg->signature_filename)
+		g_free (pkg->signature_filename);
+
+	pkg->signature_filename = g_strdup (val);
+
+	return 0;
+}
+
+static PyGetSetDef PyPackage_getsets[] = {
+	{ "spec",           (getter) PyPackage_get_spec,           (setter) 0 },
+	{ "file_size",      (getter) PyPackage_get_file_size,      (setter) 0 },
+	{ "installed_size", (getter) PyPackage_get_installed_size, (setter) 0 },
+	{ "channel",        (getter) PyPackage_get_channel,        (setter) 0 },
+	{ "requires",       (getter) PyPackage_get_requires,       (setter) 0 },
+	{ "provides",       (getter) PyPackage_get_provides,       (setter) 0 },
+	{ "conflicts",      (getter) PyPackage_get_conflicts,      (setter) 0 },
+	{ "obsoletes",      (getter) PyPackage_get_obsoletes,      (setter) 0 },
+	{ "children",       (getter) PyPackage_get_children,       (setter) 0 },
+	{ "suggests",       (getter) PyPackage_get_suggests,       (setter) 0 },
+	{ "recommends",     (getter) PyPackage_get_recommends,     (setter) 0 },
+	{ "pretty_name",    (getter) PyPackage_get_pretty_name,    (setter) 0 },
+	{ "summary",        (getter) PyPackage_get_summary,        (setter) 0 },
+	{ "description",    (getter) PyPackage_get_description,    (setter) 0 },
+	{ "history",        (getter) PyPackage_get_history,        (setter) 0 },
+	{ "package_filename", (getter) PyPackage_get_package_filename,
+	  (setter) PyPackage_set_package_filename },
+	{ "signature_filename", (getter) PyPackage_get_signature_filename,
+	  (setter) PyPackage_set_signature_filename },
+	
+	
+	{ NULL, (getter)0, (setter)0 },
 };
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
@@ -175,6 +427,7 @@ PyPackage_register (PyObject *dict)
 	PyPackage_type_info.tp_new     = PyPackage_tp_new;
 	PyPackage_type_info.tp_dealloc = PyPackage_tp_dealloc;
 	PyPackage_type_info.tp_methods = PyPackage_methods;
+	PyPackage_type_info.tp_getset  = PyPackage_getsets;
 	PyPackage_type_info.tp_str     = PyPackage_tp_str;
 
 	pyutil_register_type (dict, &PyPackage_type_info);
@@ -199,14 +452,15 @@ PyPackage_new (RCPackage *package)
 RCPackage *
 PyPackage_get_package (PyObject *obj)
 {
-	if (! PyPackage_check (obj))
+	if (! PyPackage_check (obj)) {
+		PyErr_SetString (PyExc_TypeError, "Given object is not a package");
 		return NULL;
+	}
 
 	return ((PyPackage *) obj)->package;
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
-/* Helpers */
 
 RCPackageSList *
 PyList_to_rc_package_slist (PyObject *py_list)

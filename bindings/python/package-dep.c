@@ -54,6 +54,36 @@ static PyMethodDef PyPackageDep_methods[] = {
 	{ NULL, NULL }
 };
 
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+static PyObject *
+package_relation_from_string (PyObject *self, PyObject *args)
+{
+	const gchar *buf;
+
+	if (! PyArg_ParseTuple (args, "s", &buf))
+		return NULL;
+
+	return Py_BuildValue ("i", rc_package_relation_from_string (buf));
+}
+
+static PyObject *
+package_relation_to_string (PyObject *self, PyObject *args)
+{
+	RCPackageRelation relation;
+	gint words;
+
+	if (! PyArg_ParseTuple (args, "ii", &relation, &words))
+		return NULL;
+
+	return Py_BuildValue ("s", rc_package_relation_to_string (relation, words));
+}
+
+static PyMethodDef PyPackageDep_unbound_methods[] = {
+	{ "package_relation_from_string", package_relation_from_string, METH_VARARGS },
+	{ "package_relation_to_string",   package_relation_to_string,   METH_VARARGS },
+	{ NULL, NULL }
+};
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
@@ -132,6 +162,7 @@ PyPackageDep_register (PyObject *dict)
 	PyPackageDep_type_info.tp_str     = PyPackageDep_tp_str;
 
 	pyutil_register_type (dict, &PyPackageDep_type_info);
+	pyutil_register_methods (dict, PyPackageDep_unbound_methods);
 
 	pyutil_register_int_constant (dict, "RELATION_INVALID",
 							RC_RELATION_INVALID);
@@ -163,7 +194,7 @@ PyObject *
 PyPackageDep_new (RCPackageDep *dep)
 {
 	PyObject *py_dep = PyPackageDep_tp_new (&PyPackageDep_type_info,
-									NULL, NULL);
+						NULL, NULL);
 	((PyPackageDep *) py_dep)->dep = rc_package_dep_ref (dep);
 
 	return py_dep;
@@ -172,8 +203,30 @@ PyPackageDep_new (RCPackageDep *dep)
 RCPackageDep *
 PyPackageDep_get_package_dep (PyObject *obj)
 {
-	if (! PyPackageDep_check (obj))
+	if (! PyPackageDep_check (obj)) {
+		PyErr_SetString (PyExc_TypeError, "Given object is not a PackageDep");
 		return NULL;
+	}
 
 	return ((PyPackageDep *) obj)->dep;
+}
+
+PyObject *
+rc_package_dep_array_to_PyList (RCPackageDepArray *array)
+{
+	PyObject *py_list;
+	int i;
+	int len = 0;
+
+	if (array != NULL)
+		len = array->len;
+
+	py_list = PyList_New (len);
+
+	for (i = 0; i < len; i++) {
+		RCPackageDep *dep = array->data[i];
+		PyList_SetItem (py_list, i, PyPackageDep_new (dep));
+	}
+
+	return py_list;
 }

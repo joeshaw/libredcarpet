@@ -50,36 +50,6 @@ static PyTypeObject PyResolver_type_info = {
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 static PyObject *
-PyResolver_get_best_context (PyObject *self, PyObject *args)
-{
-	RCResolver *resolver = PyResolver_get_resolver (self);
-
-	if (resolver->best_context == NULL) {
-		Py_INCREF (Py_None);
-		return Py_None;
-	}
-
-	return PyResolverContext_new (resolver->best_context);
-}
-
-static PyObject *
-PyResolver_get_invalid_queues (PyObject *self, PyObject *args)
-{
-	RCResolver *resolver = PyResolver_get_resolver (self);
-	PyObject *py_list;
-	GSList *iter;
-
-	py_list = PyList_New (0);
-
-	for (iter = resolver->invalid_queues; iter != NULL; iter = iter->next) {
-		RCResolverQueue *q = iter->data;
-		PyList_Append (py_list, PyResolverQueue_new (q));
-	}
-
-	return py_list;
-}
-
-static PyObject *
 PyResolver_set_timeout (PyObject *self, PyObject *args)
 {
 	RCResolver *resolver = PyResolver_get_resolver (self);
@@ -271,9 +241,6 @@ PyResolver_resolve_dependencies (PyObject *self, PyObject *args)
 }
 
 static PyMethodDef PyResolver_methods[] = {
-	{ "get_best_context",        PyResolver_get_best_context,        METH_NOARGS  },
-	{ "get_invalid_queues",      PyResolver_get_invalid_queues,      METH_NOARGS  },
-
 	{ "set_timeout",             PyResolver_set_timeout,             METH_VARARGS },
 	{ "set_world",               PyResolver_set_world,               METH_VARARGS },
 	{ "get_world",               PyResolver_get_world,               METH_NOARGS  },
@@ -286,6 +253,45 @@ static PyMethodDef PyResolver_methods[] = {
 	{ "verify_system",           PyResolver_verify_system,           METH_NOARGS  },
 	{ "resolve_dependencies",    PyResolver_resolve_dependencies,    METH_NOARGS  },
 	{ NULL, NULL }
+};
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+static PyObject *
+PyResolver_get_invalid_queues (PyObject *self, void *closure)
+{
+	RCResolver *resolver = PyResolver_get_resolver (self);
+	PyObject *py_list;
+	GSList *iter;
+
+	py_list = PyList_New (0);
+
+	for (iter = resolver->invalid_queues; iter != NULL; iter = iter->next) {
+		RCResolverQueue *q = iter->data;
+		PyList_Append (py_list, PyResolverQueue_new (q));
+	}
+
+	return py_list;
+}
+
+static PyObject *
+PyResolver_get_best_context (PyObject *self, void *closure)
+{
+	RCResolver *resolver = PyResolver_get_resolver (self);
+
+	if (resolver->best_context == NULL) {
+		Py_INCREF (Py_None);
+		return Py_None;
+	}
+
+	return PyResolverContext_new (resolver->best_context);
+}
+
+static PyGetSetDef PyResolver_getsets[] = {
+	{ "invalid_queues", (getter) PyResolver_get_invalid_queues, (setter) 0 },
+	{ "best_context",   (getter) PyResolver_get_best_context,   (setter) 0 },
+
+	{ NULL, (getter) 0, (setter) 0 },
 };
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
@@ -340,6 +346,7 @@ PyResolver_register (PyObject *dict)
 	PyResolver_type_info.tp_new     = PyResolver_tp_new;
 	PyResolver_type_info.tp_dealloc = PyResolver_tp_dealloc;
 	PyResolver_type_info.tp_methods = PyResolver_methods;
+	PyResolver_type_info.tp_getset  = PyResolver_getsets;
 
 	pyutil_register_type (dict, &PyResolver_type_info);
 }
@@ -364,8 +371,10 @@ PyResolver_new (RCResolver *resolver)
 RCResolver *
 PyResolver_get_resolver (PyObject *obj)
 {
-	if (! PyResolver_check (obj))
+	if (! PyResolver_check (obj)) {
+		PyErr_SetString (PyExc_TypeError, "Given object is not a resolver");
 		return NULL;
+	}
 
 	return ((PyResolver *) obj)->resolver;
 }

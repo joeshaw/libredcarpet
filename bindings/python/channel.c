@@ -202,6 +202,25 @@ PyChannel_is_wildcard (PyObject *self, PyObject *args)
 	return Py_BuildValue ("i", rc_channel_is_wildcard (channel));
 }
 
+static PyObject *
+PyChannel_to_xml (PyObject *self, PyObject *args)
+{
+	RCChannel *channel = PyChannel_get_channel (self);
+	PyObject *obj;
+	xmlNode *node;
+	xmlBuffer *buf;
+
+	buf = xmlBufferCreate();
+
+	node = rc_channel_to_xml_node (channel);
+	xmlNodeDump (buf, NULL, node, 0, 0);
+	xmlFreeNode (node);
+	obj = Py_BuildValue ("s", buf->content);
+	xmlBufferFree (buf);
+
+	return obj;
+}
+
 static PyMethodDef PyChannel_methods[] = {
 	{ "get_id",                 PyChannel_get_id,                 METH_NOARGS  },
 	{ "get_name",               PyChannel_get_name,               METH_NOARGS  },
@@ -223,6 +242,9 @@ static PyMethodDef PyChannel_methods[] = {
 	{ "get_silent",             PyChannel_get_silent,             METH_NOARGS  },
 
 	{ "is_wildcard",            PyChannel_is_wildcard,            METH_NOARGS  },
+
+	/* From rc-xml.h */
+	{ "to_xml",                 PyChannel_to_xml,                 METH_NOARGS  },
 	{ NULL, NULL }
 };
 
@@ -327,8 +349,10 @@ PyChannel_new (RCChannel *channel)
 RCChannel *
 PyChannel_get_channel (PyObject *obj)
 {
-	if (! PyChannel_check (obj))
+	if (! PyChannel_check (obj)) {
+		PyErr_SetString (PyExc_TypeError, "Given object is not a channel");
 		return NULL;
+	}
 
 	return ((PyChannel *) obj)->channel;
 }

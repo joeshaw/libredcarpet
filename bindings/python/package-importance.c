@@ -125,8 +125,10 @@ PyPackageImportance_new (RCPackageImportance importance)
 RCPackageImportance
 PyPackageImportance_get_package_importance (PyObject *obj)
 {
-	if (! PyPackageImportance_check (obj))
+	if (! PyPackageImportance_check (obj)) {
+		PyErr_SetString (PyExc_TypeError, "Given object is not a PackageImportance");
 		return RC_IMPORTANCE_INVALID;
+	}
 
 	return ((PyPackageImportance *) obj)->importance;
 }

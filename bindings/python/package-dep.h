@@ -36,4 +36,6 @@ PyObject  *PyPackageDep_new         (RCPackageDep *dep);
 
 RCPackageDep *PyPackageDep_get_package_dep (PyObject *obj);
 
+PyObject  *rc_package_dep_array_to_PyList (RCPackageDepArray *array);
+
 #endif /* __PACKAGE_DEP_H__ */

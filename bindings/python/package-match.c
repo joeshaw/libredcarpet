@@ -182,6 +182,26 @@ PyPackageMatch_get_importance (PyObject *self, PyObject *args)
 	return tuple;
 }
 
+static PyObject *
+PyPackageMatch_to_xml (PyObject *self, PyObject *args)
+{
+	RCPackageMatch *match = PyPackageMatch_get_package_match (self);
+	PyObject *obj;
+	xmlNode *node;
+	xmlBuffer *buf;
+
+	buf = xmlBufferCreate ();
+
+	node = rc_package_match_to_xml_node (match);
+	xmlNodeDump (buf, NULL, node, 0, 0);
+	xmlFreeNode (node);
+
+	obj = Py_BuildValue ("s", buf->content);
+	xmlBufferFree (buf);
+
+	return obj;
+}
+
 static PyMethodDef PyPackageMatch_methods[] = {
 	{ "set_channel",    PyPackageMatch_set_channel,    METH_VARARGS },
 	{ "get_channel",    PyPackageMatch_get_channel,    METH_NOARGS  },
@@ -191,6 +211,7 @@ static PyMethodDef PyPackageMatch_methods[] = {
 	{ "get_glob",       PyPackageMatch_get_glob,       METH_NOARGS  },
 	{ "set_importance", PyPackageMatch_set_importance, METH_VARARGS },
 	{ "get_importance", PyPackageMatch_get_importance, METH_NOARGS  },
+	{ "to_xml",         PyPackageMatch_to_xml,         METH_NOARGS  },
 	{ NULL, NULL }
 };
 
@@ -279,8 +300,10 @@ PyPackageMatch_new (RCPackageMatch *match)
 RCPackageMatch *
 PyPackageMatch_get_package_match (PyObject *obj)
 {
-	if (! PyPackageMatch_check (obj))
+	if (! PyPackageMatch_check (obj)) {
+		PyErr_SetString (PyExc_TypeError, "Given object is not a PackageMatch");
 		return NULL;
+	}
 
 	return ((PyPackageMatch *) obj)->match;
 }

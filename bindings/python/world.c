@@ -145,20 +145,20 @@ PyWorld_add_channel (PyObject *self, PyObject *args, PyObject *kwds)
 	static char *kwlist[] = { "hidden", "subd_priority", "unsubd_priority", NULL };
 
 	if (! PyArg_ParseTupleAndKeywords (args, kwds, "sssi|iii", kwlist,
-								&channel_name, &alias,
-								&channel_id, &type,
-								&hidden, &subd_priority,
-								&unsubd_priority))
+					   &channel_name, &alias,
+					   &channel_id, &type,
+					   &hidden, &subd_priority,
+					   &unsubd_priority))
 		return NULL;
 
 	channel = rc_world_add_channel_with_priorities (world,
-										   channel_name,
-										   alias,
-										   channel_id,
-										   hidden,
-										   type,
-										   subd_priority,
-										   unsubd_priority);
+							channel_name,
+							alias,
+							channel_id,
+							hidden,
+							type,
+							subd_priority,
+							unsubd_priority);
 	if (channel == NULL) {
 		Py_INCREF (Py_None);
 		return Py_None;
@@ -1037,8 +1037,10 @@ PyWorld_new (RCWorld *world)
 RCWorld *
 PyWorld_get_world (PyObject *obj)
 {
-	if (! PyWorld_check (obj))
+	if (! PyWorld_check (obj)) {
+		PyErr_SetString (PyExc_TypeError, "Given object is not a World");
 		return NULL;
+	}
 
 	return ((PyWorld *) obj)->world;
 }

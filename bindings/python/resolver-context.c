@@ -238,8 +238,10 @@ PyResolverContext_new (RCResolverContext *context)
 RCResolverContext *
 PyResolverContext_get_resolver_context (PyObject *obj)
 {
-	if (! PyResolverContext_check (obj))
+	if (! PyResolverContext_check (obj)) {
+		PyErr_SetString (PyExc_TypeError, "Given object is not a ResolverContext");
 		return NULL;
+	}
 
 	return ((PyResolverContext *) obj)->context;
 }

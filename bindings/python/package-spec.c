@@ -49,6 +49,64 @@ static PyMethodDef PyPackageSpec_methods[] = {
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
+static PyObject *
+PyPackageSpec_get_name (PyObject *self, void *closure)
+{
+	RCPackageSpec *spec = PyPackageSpec_get_package_spec (self);
+	return Py_BuildValue ("s", g_quark_to_string (spec->nameq));
+}
+
+static PyObject *
+PyPackageSpec_get_version (PyObject *self, void *closure)
+{
+	RCPackageSpec *spec = PyPackageSpec_get_package_spec (self);
+
+	if (spec->version == NULL) {
+		Py_INCREF (Py_None);
+		return Py_None;
+	}
+
+	return Py_BuildValue ("s", spec->version);
+}
+
+static PyObject *
+PyPackageSpec_get_release (PyObject *self, void *closure)
+{
+	RCPackageSpec *spec = PyPackageSpec_get_package_spec (self);
+
+	if (spec->release == NULL) {
+		Py_INCREF (Py_None);
+		return Py_None;
+	}
+
+	return Py_BuildValue ("s", spec->release);
+}
+
+static PyObject *
+PyPackageSpec_get_has_epoch (PyObject *self, void *closure)
+{
+	RCPackageSpec *spec = PyPackageSpec_get_package_spec (self);
+	return Py_BuildValue ("i", spec->has_epoch);
+}
+
+static PyObject *
+PyPackageSpec_get_epoch (PyObject *self, void *closure)
+{
+	RCPackageSpec *spec = PyPackageSpec_get_package_spec (self);
+	return Py_BuildValue ("i", spec->epoch);
+}
+
+static PyGetSetDef PyPackageSpec_getsets[] = {
+	{ "name",      (getter) PyPackageSpec_get_name,      (setter) 0 },
+	{ "version",   (getter) PyPackageSpec_get_version,   (setter) 0 },
+	{ "release",   (getter) PyPackageSpec_get_release,   (setter) 0 },
+	{ "has_epoch", (getter) PyPackageSpec_get_has_epoch, (setter) 0 },
+	{ "epoch",     (getter) PyPackageSpec_get_epoch,     (setter) 0 },
+	{ NULL, (getter) 0, (setter) 0 },
+};
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
 static int
 PyPackageSpec_init (PyObject *self, PyObject *args, PyObject *kwds)
 {
@@ -134,6 +192,7 @@ PyPackageSpec_register (PyObject *dict)
 	PyPackageSpec_type_info.tp_new     = PyPackageSpec_tp_new;
 	PyPackageSpec_type_info.tp_dealloc = PyPackageSpec_tp_dealloc;
 	PyPackageSpec_type_info.tp_methods = PyPackageSpec_methods;
+	PyPackageSpec_type_info.tp_getset  = PyPackageSpec_getsets;
 	PyPackageSpec_type_info.tp_str     = PyPackageSpec_tp_str;
 	PyPackageSpec_type_info.tp_compare = PyPackageSpec_tp_cmp;
 
@@ -160,8 +219,10 @@ PyPackageSpec_new (RCPackageSpec *spec)
 RCPackageSpec *
 PyPackageSpec_get_package_spec (PyObject *obj)
 {
-	if (! PyPackageSpec_check (obj))
+	if (! PyPackageSpec_check (obj)) {
+		PyErr_SetString (PyExc_TypeError, "Given object is not a PackageSpec");
 		return NULL;
+	}
 
 	return ((PyPackageSpec *) obj)->spec;
 }

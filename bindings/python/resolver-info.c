@@ -209,8 +209,10 @@ PyResolverInfo_new (RCResolverInfo *info)
 RCResolverInfo *
 PyResolverInfo_get_resolver_info (PyObject *obj)
 {
-	if (! PyResolverInfo_check (obj))
+	if (! PyResolverInfo_check (obj)) {
+		PyErr_SetString (PyExc_TypeError, "Given object is not a ResolverInfo");
 		return NULL;
+	}
 
 	return ((PyResolverInfo *) obj)->info;
 }

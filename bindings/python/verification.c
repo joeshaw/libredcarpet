@@ -161,8 +161,10 @@ PyVerification_new (RCVerification *verification)
 RCVerification *
 PyVerification_get_verification (PyObject *obj)
 {
-	if (! PyVerification_check (obj))
+	if (! PyVerification_check (obj)) {
+		PyErr_SetString (PyExc_TypeError, "Given object is not a verification");
 		return NULL;
+	}
 
 	return ((PyVerification *) obj)->verification;
 }

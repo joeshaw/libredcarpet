@@ -44,15 +44,20 @@ static PyTypeObject PyResolverQueue_type_info = {
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 static PyObject *
-PyResolverQueue_get_context (PyObject *self, PyObject *args)
+PyResolverQueue_get_context (PyObject *self, void *closure)
 {
 	RCResolverQueue *q = PyResolverQueue_get_resolver_queue (self);
+
+	if (q->context == NULL) {
+		Py_INCREF (Py_None);
+		return Py_None;
+	}
 
 	return PyResolverContext_new (q->context);
 }
 
-static PyMethodDef PyResolverQueue_methods[] = {
-	{ "get_context",  PyResolverQueue_get_context,  METH_NOARGS },
+static PyGetSetDef PyResolverQueue_getsets[] = {
+	{ "context",  (getter) PyResolverQueue_get_context, (setter) 0 },
 	{ NULL, NULL }
 };
 
@@ -106,7 +111,7 @@ PyResolverQueue_register (PyObject *dict)
 	PyResolverQueue_type_info.tp_init    = PyResolverQueue_init;
 	PyResolverQueue_type_info.tp_new     = PyResolverQueue_tp_new;
 	PyResolverQueue_type_info.tp_dealloc = PyResolverQueue_tp_dealloc;
-	PyResolverQueue_type_info.tp_methods = PyResolverQueue_methods;
+	PyResolverQueue_type_info.tp_getset  = PyResolverQueue_getsets;
 
 	pyutil_register_type (dict, &PyResolverQueue_type_info);
 }
@@ -130,8 +135,10 @@ PyResolverQueue_new (RCResolverQueue *queue)
 RCResolverQueue *
 PyResolverQueue_get_resolver_queue (PyObject *obj)
 {
-	if (! PyResolverQueue_check (obj))
+	if (! PyResolverQueue_check (obj)) {
+		PyErr_SetString (PyExc_TypeError, "Given object is not a ResolverQueue");
 		return NULL;
+	}
 
 	return ((PyResolverQueue *) obj)->queue;
 }
