@@ -2,10 +2,10 @@
 
 #include <string.h>
 #include <stdio.h>
-
-#include <rc-packman.h>
-#include <rc-rpmman.h>
-#include <rc-debman.h>
+#ifdef HAVE_LIBRPM
+#include <rpm/rpmlib.h>
+#endif
+#include <rc-distman.h>
 
 void pkg_installed_cb (RCPackman *, gchar *, gpointer);
 void install_done_cb (RCPackman *, RCPackmanOperationStatus);
@@ -56,10 +56,14 @@ int main (int argc, char **argv)
 
     gtk_type_init ();
 
-    p = RC_PACKMAN (rc_debman_new ());
+    p = rc_distman_new ();
 
     if ((argc == 3) && !strcmp (argv[1], "-initdb")) {
+#ifdef HAVE_LIBRPM
         rpmdbInit (argv[2], 0644);
+#else
+	printf ("RPM support was not compiled in.\n");
+#endif
     } else if ((argc == 1) || !strcmp (argv[1], "-qa")) {
         RCPackageSList *query = NULL, *iter;
 

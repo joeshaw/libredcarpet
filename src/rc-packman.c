@@ -274,6 +274,7 @@ rc_packman_query_list (RCPackman *p, RCPackageSList *pkgs)
             return (pkgs);
         }
     }
+    return pkgs;
 }
 
 RCPackage *
