@@ -484,11 +484,11 @@ rc_rpmman_install (RCPackman *p, GSList *pkgs)
        probably not, but... */
 
     if (ret) {
-        rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
                               "RPM installation failed.");
-        rc_packman_install_done (p, RC_PACKMAN_FAIL);
+        rc_packman_install_done (p);
     } else {
-        rc_packman_install_done (p, RC_PACKMAN_COMPLETE);
+        rc_packman_install_done (p);
     }
 } /* rc_rpmman_install */
 
@@ -547,11 +547,11 @@ rc_rpmman_remove (RCPackman *p, RCPackageSList *pkgs)
     /* I have no idea what error codes are possible... */
 
     if (ret) {
-        rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
                               "RPM removal failed");
-        rc_packman_remove_done (p, RC_PACKMAN_FAIL);
+        rc_packman_remove_done (p);
     } else {
-        rc_packman_remove_done (p, RC_PACKMAN_COMPLETE);
+        rc_packman_remove_done (p);
     }
 } /* rc_rpmman_remove */
 
@@ -575,7 +575,7 @@ rc_rpmman_read_header (Header hdr, gchar **name, guint32 *epoch,
         headerGetEntry (hdr, RPMTAG_NAME, &type, (void **)&tmpname, &count);
 
         if (count && (type == RPM_STRING_TYPE) && tmpname && tmpname[0]) {
-            *name = tmpname;
+            *name = g_strdup (tmpname);
         }
     }
 
@@ -600,7 +600,7 @@ rc_rpmman_read_header (Header hdr, gchar **name, guint32 *epoch,
         headerGetEntry (hdr, RPMTAG_VERSION, &type, (void **)&tmpver, &count);
 
         if (count && (type == RPM_STRING_TYPE) && tmpver && tmpver[0]) {
-            *version = tmpver;
+            *version = g_strdup (tmpver);
         }
     }
 
@@ -613,7 +613,7 @@ rc_rpmman_read_header (Header hdr, gchar **name, guint32 *epoch,
         headerGetEntry (hdr, RPMTAG_RELEASE, &type, (void **)&tmprel, &count);
 
         if (count && (type == RPM_STRING_TYPE) && tmprel && tmprel[0]) {
-            *release = tmprel;
+            *release = g_strdup (tmprel);
         }
     }
 
@@ -866,14 +866,14 @@ rc_rpmman_query (RCPackman *p, RCPackage *pkg)
     guint i;
 
     if (rpmdbOpen (rpmroot, &db, O_RDONLY, 0444)) {
-        rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
                               "Unable to open RPM database");
         return (pkg);
     }
 
     if (rpmdbFindPackage (db, pkg->spec.name, &matches)) {
         rpmdbClose (db);
-        rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
                               "Unable to perform RPM database search");
         return (pkg);
     }
@@ -885,7 +885,7 @@ rc_rpmman_query (RCPackman *p, RCPackage *pkg)
 
         if (!(hdr = rpmdbGetRecord (db, matches.recs[i].recOffset))) {
             rpmdbClose (db);
-            rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
+            rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
                                   "Unable to fetch RPM header from database");
             return (pkg);
         }
@@ -945,7 +945,7 @@ rc_rpmman_query_file (RCPackman *p, gchar *filename)
     fd = fdOpen (filename, O_RDONLY, 0444);
 
     if (rpmReadPackageHeader (fd, &hdr, NULL, NULL, NULL)) {
-        rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
                               "Unable to read package header");
         rc_package_free (pkg);
         return (NULL);
@@ -977,14 +977,14 @@ rc_rpmman_query_all (RCPackman *p)
     guint recno;
 
     if (rpmdbOpen (rpmroot, &db, O_RDONLY, 0444)) {
-        rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
                               "Unable to open RPM database");
         return (NULL);
     }
 
     if (!(recno = rpmdbFirstRecNum (db))) {
         rpmdbClose (db);
-        rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
                               "Unable to access RPM database");
         return (NULL);
     }
@@ -996,7 +996,7 @@ rc_rpmman_query_all (RCPackman *p)
         if (!(hdr = rpmdbGetRecord (db, recno))) {
             rpmdbClose (db);
             rc_package_slist_free (list);
-            rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
+            rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
                                   "Unable to read RPM database entry");
             return (NULL);
         }
@@ -1008,9 +1008,11 @@ rc_rpmman_query_all (RCPackman *p)
         rc_rpmman_depends_fill (hdr, pkg);
 
         list = g_slist_append (list, pkg);
-#if 0
+#if 1
 	/* So, this line seems to have issues. It frees data that the package
 	   needs, and doing so ends up corrupting the linked list. Ick. */
+        /* Ok, I think I've fixed this.  I need to test it, but can't, because
+           I don't have a convenient RPM-based machine.  Suck. */
         headerFree(hdr);
 #endif
     }

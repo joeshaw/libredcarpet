@@ -109,9 +109,8 @@ rc_packman_class_init (RCPackmanClass *klass)
                         GTK_RUN_LAST | GTK_RUN_NO_RECURSE,
                         object_class->type,
                         GTK_SIGNAL_OFFSET (RCPackmanClass, install_done),
-                        gtk_marshal_NONE__INT,
-                        GTK_TYPE_NONE, 1,
-                        GTK_TYPE_INT);
+                        gtk_marshal_NONE__NONE,
+                        GTK_TYPE_NONE, 0);
     
     signals[PKG_REMOVED] =
         gtk_signal_new ("pkg_removed",
@@ -128,9 +127,8 @@ rc_packman_class_init (RCPackmanClass *klass)
                         GTK_RUN_LAST,
                         object_class->type,
                         GTK_SIGNAL_OFFSET (RCPackmanClass, remove_done),
-                        gtk_marshal_NONE__INT,
-                        GTK_TYPE_NONE, 1,
-                        GTK_TYPE_INT);
+                        gtk_marshal_NONE__NONE,
+                        GTK_TYPE_NONE, 0);
     
     gtk_object_class_add_signals (object_class, signals, LAST_SIGNAL);
 
@@ -148,7 +146,7 @@ rc_packman_class_init (RCPackmanClass *klass)
 static void
 rc_packman_init (RCPackman *obj)
 {
-    obj->error = RC_PACKMAN_NONE;
+    obj->error = RC_PACKMAN_ERROR_NONE;
 
     obj->reason = NULL;
 
@@ -171,10 +169,10 @@ rc_packman_new (void)
 void
 rc_packman_install (RCPackman *p, GSList *files)
 {
-    rc_packman_set_error (p, RC_PACKMAN_NONE, NULL);
+    rc_packman_set_error (p, RC_PACKMAN_ERROR_NONE, NULL);
 
     if (p->busy) {
-        rc_packman_set_error (p, RC_PACKMAN_BUSY, NULL);
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_BUSY, NULL);
         return;
     }
 
@@ -190,10 +188,10 @@ rc_packman_install (RCPackman *p, GSList *files)
 void
 rc_packman_remove (RCPackman *p, RCPackageSList *pkgs)
 {
-    rc_packman_set_error (p, RC_PACKMAN_NONE, NULL);
+    rc_packman_set_error (p, RC_PACKMAN_ERROR_NONE, NULL);
 
     if (p->busy) {
-        rc_packman_set_error (p, RC_PACKMAN_BUSY, NULL);
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_BUSY, NULL);
         return;
     }
 
@@ -211,10 +209,10 @@ rc_packman_query (RCPackman *p, RCPackage *pkg)
 {
     RCPackage *ret = NULL;
 
-    rc_packman_set_error (p, RC_PACKMAN_NONE, NULL);
+    rc_packman_set_error (p, RC_PACKMAN_ERROR_NONE, NULL);
 
     if (p->busy) {
-        rc_packman_set_error (p, RC_PACKMAN_BUSY, NULL);
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_BUSY, NULL);
         return (pkg);
     }
 
@@ -235,7 +233,7 @@ rc_packman_query_list (RCPackman *p, RCPackageSList *pkgs)
     RCPackageSList *iter;
 
     g_free (p->reason);
-    p->error = RC_PACKMAN_NONE;
+    p->error = RC_PACKMAN_ERROR_NONE;
 
     for (iter = pkgs; iter; iter = iter->next) {
         RCPackage *pkg = (RCPackage *)(iter->data);
@@ -254,10 +252,10 @@ rc_packman_query_file (RCPackman *p, gchar *filename)
 {
     RCPackage *ret = NULL;
 
-    rc_packman_set_error (p, RC_PACKMAN_NONE, NULL);
+    rc_packman_set_error (p, RC_PACKMAN_ERROR_NONE, NULL);
 
     if (p->busy) {
-        rc_packman_set_error (p, RC_PACKMAN_BUSY, NULL);
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_BUSY, NULL);
         return (NULL);
     }
 
@@ -279,7 +277,7 @@ rc_packman_query_file_list (RCPackman *p, GSList *filenames)
     RCPackageSList *ret = NULL;
 
     g_free (p->reason);
-    p->error = RC_PACKMAN_NONE;
+    p->error = RC_PACKMAN_ERROR_NONE;
 
     for (iter = filenames; iter; iter = iter->next) {
         gchar *filename = (gchar *)(iter->data);
@@ -303,10 +301,10 @@ rc_packman_query_all (RCPackman *p)
 {
     RCPackageSList *ret = NULL;
 
-    rc_packman_set_error (p, RC_PACKMAN_NONE, NULL);
+    rc_packman_set_error (p, RC_PACKMAN_ERROR_NONE, NULL);
 
     if (p->busy) {
-        rc_packman_set_error (p, RC_PACKMAN_BUSY, NULL);
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_BUSY, NULL);
         return (NULL);
     }
 
@@ -328,7 +326,7 @@ rc_packman_version_compare (RCPackman *p,
 {
     g_assert (_CLASS (p)->rc_packman_real_version_compare);
 
-    rc_packman_set_error (p, RC_PACKMAN_NONE, NULL);
+    rc_packman_set_error (p, RC_PACKMAN_ERROR_NONE, NULL);
 
     return (_CLASS (p)->rc_packman_real_version_compare (p, s1, s2));
 }
@@ -338,10 +336,10 @@ rc_packman_verify (RCPackman *p, RCPackage *pkg)
 {
     gboolean ret = FALSE;
 
-    rc_packman_set_error (p, RC_PACKMAN_NONE, NULL);
+    rc_packman_set_error (p, RC_PACKMAN_ERROR_NONE, NULL);
 
     if (p->busy) {
-        rc_packman_set_error (p, RC_PACKMAN_BUSY, NULL);
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_BUSY, NULL);
         return (FALSE);
     }
 
@@ -379,9 +377,9 @@ rc_packman_package_installed (RCPackman *p,
 }
 
 void
-rc_packman_install_done (RCPackman *p, RCPackmanOperationStatus status)
+rc_packman_install_done (RCPackman *p)
 {
-    gtk_signal_emit ((GtkObject *)p, signals[INSTALL_DONE], status);
+    gtk_signal_emit ((GtkObject *)p, signals[INSTALL_DONE]);
 }
 
 void
@@ -393,9 +391,9 @@ rc_packman_package_removed (RCPackman *p,
 }
 
 void
-rc_packman_remove_done (RCPackman *p, RCPackmanOperationStatus status)
+rc_packman_remove_done (RCPackman *p)
 {
-    gtk_signal_emit ((GtkObject *)p, signals[REMOVE_DONE], status);
+    gtk_signal_emit ((GtkObject *)p, signals[REMOVE_DONE]);
 }
 
 /* Methods to access the error stuff */

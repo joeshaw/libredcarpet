@@ -136,7 +136,7 @@ rc_debman_install (RCPackman *p, GSList *pkgs)
     /* If the list of packages is empty, let's spare ourselves the trouble of
        doing anything */
     if (!pkgs) {
-        rc_packman_install_done (p, RC_PACKMAN_COMPLETE);
+        rc_packman_install_done (p);
     }
 
     iter = pkgs;
@@ -211,7 +211,7 @@ rc_debman_install (RCPackman *p, GSList *pkgs)
                    pointers to memory in the list of packages passed to us, and
                    so we're not responsible for it. */
                 g_slist_free (installed_list);
-                rc_packman_install_done (p, RC_PACKMAN_COMPLETE);
+                rc_packman_install_done (p);
                 return;
             }
         }
@@ -240,7 +240,9 @@ rc_debman_install (RCPackman *p, GSList *pkgs)
     if (!rc_debman_do_purge (remove_list)) {
         /* Looks like the purge went ok, so all we did was fail to install.
            Let the people know the truth and bow out gracefully. */
-        rc_packman_install_done (p, RC_PACKMAN_FAIL);
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT, "Error installing "
+                              "packages, all packages were purged.");
+        rc_packman_install_done (p);
     } else {
         /* Ok, if we got here, we're fucked.  Hard.  So grab the wife and kids
            and get the hell out of Dodge. */
@@ -252,11 +254,11 @@ rc_debman_install (RCPackman *p, GSList *pkgs)
             error = tmp;
         }
 
-        rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED, error);
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL, error);
 
         g_free (error);
 
-        rc_packman_install_done (p, RC_PACKMAN_FAIL);
+        rc_packman_install_done (p);
     }
 
     /* If you want to know why we don't free the elements of the list, read one
@@ -281,9 +283,12 @@ rc_debman_remove (RCPackman *p, RCPackageSList *pkgs)
     g_slist_free (names);
 
     if (!ret) {
-        rc_packman_remove_done (p, RC_PACKMAN_COMPLETE);
+        rc_packman_remove_done (p);
     } else {
-        rc_packman_remove_done (p, RC_PACKMAN_FAIL);
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL, "Package remove "
+                              "failed.  Some or all packages may have been "
+                              "left in an inconsistant state.");
+        rc_packman_remove_done (p);
     }
 } /* rc_debman_remove */
 
@@ -492,9 +497,9 @@ rc_debman_query (RCPackman *p, RCPackage *pkg)
     gchar *target;
 
     if (!(fp = fopen ("/var/lib/dpkg/status", "r"))) {
-        rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
                               "Unable to open /var/lib/dpkg/status");
-        return (NULL);
+        return (pkg);
     }
 
     pkg->spec.installed = FALSE;
@@ -550,8 +555,9 @@ rc_debman_query_file (RCPackman *p, gchar *filename)
     file = g_strconcat (path, "/control", NULL);
 
     if (!(fp = fopen (file, "r"))) {
-        rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
                               "Unable to open package control file");
+        rc_rmdir (path);
         g_free (path);
         g_free (file);
         return (NULL);
@@ -582,13 +588,17 @@ rc_debman_query_all (RCPackman *p)
     gchar *buf;
     RCPackageSList *pkgs = NULL;
 
-    fp = fopen ("/var/lib/dpkg/status", "r");
+    if (!(fp = fopen ("/var/lib/dpkg/status", "r"))) {
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+                              "Unable to open /var/lib/dpkg/status");
+        return (NULL);
+    }
 
     while ((buf = readline (fp))) {
         RCPackage *pkg = rc_package_new ();
 
         if (strncmp (buf, "Package: ", strlen ("Package: "))) {
-            rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
+            rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
                                   "Malformed /var/lib/dpkg/status file");
             g_free (buf);
             rc_package_free (pkg);

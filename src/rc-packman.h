@@ -41,18 +41,16 @@
 typedef struct _RCPackman      RCPackman;
 typedef struct _RCPackmanClass RCPackmanClass;
 
-typedef enum _RCPackmanOperationStatus {
-    RC_PACKMAN_COMPLETE = 0,  /* Operation(s) successfully carried out */
-    RC_PACKMAN_FAIL,          /* Lowlevel error occured, operation failed */
-    RC_PACKMAN_ABORT,         /* Error detected, operation aborted */
-} RCPackmanOperationStatus;
-
 typedef enum _RCPackmanError {
-    RC_PACKMAN_NONE = 0,         /* No error */
-    RC_PACKMAN_NO_BACKEND,       /* You're not using a subclass of RCPackman */
-    RC_PACKMAN_NOT_IMPLEMENTED,  /* Current object doesn't support operation */
-    RC_PACKMAN_OPERATION_FAILED, /* Package system specific failure */
-    RC_PACKMAN_BUSY,             /* Some other operation is in progress */
+    /* No error */
+    RC_PACKMAN_ERROR_NONE = 0,
+    /* Packman object is busy in another operation */
+    RC_PACKMAN_ERROR_BUSY,
+    /* The requested operation was aborted due to detected error */
+    RC_PACKMAN_ERROR_ABORT,
+    /* An error occured at the package manager level or lower, and the
+       requested operation was aborted */
+    RC_PACKMAN_ERROR_FAIL,
 } RCPackmanError;
 
 struct _RCPackman {
@@ -63,7 +61,7 @@ struct _RCPackman {
     guint error;
 
     /* If an operation (eg installation) fails, the reason for failure will be
-     * stored here */
+       stored here */
     gchar *reason;
 
     /* Current status of the object */
@@ -78,10 +76,10 @@ struct _RCPackmanClass {
     void (*pkg_progress)(RCPackman *, gchar *file, gint amount, gint total);
 
     void (*pkg_installed)(RCPackman *, gchar *file, gint sequence);
-    void (*install_done)(RCPackman *, RCPackmanOperationStatus status);
+    void (*install_done)(RCPackman *);
 
     void (*pkg_removed)(RCPackman *, gchar *name, gint sequence);
-    void (*remove_done)(RCPackman *, RCPackmanOperationStatus status);
+    void (*remove_done)(RCPackman *);
 
     /* Virtual functions */
 
@@ -172,15 +170,13 @@ void rc_packman_package_installed (RCPackman *p,
                                    const gchar *filename,
                                    gint seqno);
 
-void rc_packman_install_done (RCPackman *p,
-                              RCPackmanOperationStatus status);
+void rc_packman_install_done (RCPackman *p);
 
 void rc_packman_package_removed (RCPackman *p,
                                  const gchar *filename,
                                  gint seqno);
 
-void rc_packman_remove_done (RCPackman *p,
-                             RCPackmanOperationStatus status);
+void rc_packman_remove_done (RCPackman *p);
 
 /* Helper function to build RCPackageSList's easily */
 
