@@ -38,6 +38,7 @@ typedef struct {
 /* The "canonical" name we want to use for a given architecture should
  * be the first entry for that architecture in this table */
 static RCArchAndName arch_table[] = {
+    { "all",     RC_ARCH_NOARCH },
     { "noarch",  RC_ARCH_NOARCH },
     { "i386",    RC_ARCH_I386 },
     { "i486",    RC_ARCH_I486 },

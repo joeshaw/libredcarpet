@@ -1,7 +1,12 @@
 2003-01-22  Jon Trowbridge  <trow@ximian.com>
 
+	* rc-arch.c: Make "all" (which is what debian uses) a synonym for
+	"noarch".
+
 	* rc-world-import.c (rc_world_add_packages_from_xml): Removed
 	GHashTable *packages, which is no longer being used for anything.
+	(fill_debian_package): Set the architecture properly when
+	loading debian package files.
 
 2003-01-21  Joe Shaw  <joe@ximian.com>
 

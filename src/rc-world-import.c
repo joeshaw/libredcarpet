@@ -555,6 +555,8 @@ fill_debian_package (RCPackage  *pkg,
             }
         } else if (!strncmp (key, "md5sum", strlen ("md5sum"))) {
             up->md5sum = g_strdup (value->str);
+        } else if (!strncmp (key, "architecture", strlen ("architecture"))) {
+            pkg->arch = rc_arch_from_string (value->str);
         }
 
         g_string_free (value, TRUE);
