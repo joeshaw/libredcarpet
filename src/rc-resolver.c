@@ -252,7 +252,7 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
 
     for (iter = resolver->extra_deps; iter != NULL; iter = iter->next) {
         rc_resolver_queue_add_extra_dependency (initial_queue,
-                                                (RCPackage *) iter->data);
+                                                (RCPackageDep *) iter->data);
     }
 
     resolver->pending_queues = g_slist_prepend (resolver->pending_queues, initial_queue);
