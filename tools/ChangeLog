@@ -1,3 +1,8 @@
+2003-07-10  Joe Shaw  <joe@ximian.com>
+
+	* pkg_to_xml.c: Print out the packman error if
+	rc_packman_query_file() returns NULL.
+
 2003-05-21  Joe Shaw  <joe@ximian.com>
 
 	* pkg_to_xml.c: Add a rc_debug handler is RC_DEBUG is set

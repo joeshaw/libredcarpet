@@ -93,7 +93,7 @@ main (int argc, char *argv[])
             
             if (! pkg) {
 
-                g_printerr ("File '%s' does not appear to be a valid package.\n", argv[i]);
+                g_printerr ("File '%s' does not appear to be a valid package: %s\n", argv[i], rc_packman_get_reason (packman));
                 failed = TRUE;
 
             } else {
