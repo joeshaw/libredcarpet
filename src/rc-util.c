@@ -209,89 +209,6 @@ rc_maybe_merge_paths(const char *parent_path, const char *child_path)
         return g_strconcat(parent_path, "/", child_path, NULL);
 } /* rc_maybe_merge_paths */
 
-static void
-hash_copy_helper (gpointer a, gpointer b, gpointer data)
-{
-    GHashTable *ht = (GHashTable *) data;
-
-    g_hash_table_insert (ht, a, b);
-}
-
-GHashTable *
-rc_hash_table_copy (GHashTable *ht, GHashFunc hfunc, GCompareFunc cfunc)
-{
-    GHashTable *nhash;
-
-    nhash = g_hash_table_new (hfunc, cfunc);
-    g_hash_table_foreach (ht, hash_copy_helper, nhash);
-
-    return nhash;
-}
-
-void
-rc_hash_table_slist_insert (GHashTable *ht, gpointer key, gpointer value)
-{
-    GSList *sl = NULL;
-    gboolean found = FALSE;
-
-    sl = g_hash_table_lookup (ht, key);
-    if (sl) found = TRUE;
-    sl = g_slist_append (sl, value);
-
-    if (!found) {
-        g_hash_table_insert (ht, key, sl);
-    }
-}
-
-void
-rc_hash_table_slist_insert_unique (GHashTable *ht, gpointer key, gpointer value,
-                                   GCompareFunc eqfunc)
-{
-    GSList *sl = NULL;
-
-    sl = g_hash_table_lookup (ht, key);
-    if (sl) {
-        if ((eqfunc && !g_slist_find_custom (sl, value, eqfunc)) ||
-            (!eqfunc && !g_slist_find (sl, value)))
-        {
-            sl = g_slist_append (sl, value);
-        }
-    } else {
-        sl = g_slist_append (sl, value);
-        g_hash_table_insert (ht, key, sl);
-    }
-}
-
-GSList *
-rc_slist_unique (const GSList *sorted_list)
-{
-    GSList *out = NULL;
-    const GSList *iter = sorted_list;
-    gpointer last_thing = NULL;
-    while (iter) {
-        if (last_thing != iter->data) {
-            out = g_slist_prepend (out, iter->data);
-            last_thing = iter->data;
-        }
-        iter = iter->next;
-    }
-
-    return out;
-}
-
-/* Oh, how I wish I was using a real language and didn't have to do this tripe */
-static void
-hash_table_slist_free_helper (gpointer key, gpointer value, gpointer blah)
-{
-    g_slist_free ((GSList *) value);
-}
-
-void
-rc_hash_table_slist_free (GHashTable *ht)
-{
-    g_hash_table_foreach (ht, hash_table_slist_free_helper, NULL);
-}
-
 /*
  * Magic gunzipping goodness
  */
@@ -609,3 +526,25 @@ rc_buffer_unmap_file(RCBuffer *buf)
     g_free(buf);
 } /* rc_buffer_unmap_file */
     
+guint
+rc_str_case_hash (gconstpointer key)
+{
+    const char *p = key;
+    guint h = g_ascii_toupper (*p);
+
+    if (h) {
+        for (p += 1; *p != '\0'; p++)
+            h = (h << 5) - h + g_ascii_toupper (*p);
+    }
+
+    return h;
+}
+
+gboolean
+rc_str_case_equal (gconstpointer v1, gconstpointer v2)
+{
+    const char *string1 = v1;
+    const char *string2 = v2;
+
+    return g_ascii_strcasecmp (string1, string2) == 0;
+}

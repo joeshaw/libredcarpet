@@ -50,19 +50,6 @@ gboolean rc_url_is_absolute (const char *url);
    paths, etc. */
 gchar *rc_maybe_merge_paths(const char *parent_path, const char *child_path);
 
-/* ... */
-GHashTable *
-rc_hash_table_copy (GHashTable *ht, GHashFunc hfunc, GCompareFunc cfunc);
-
-/* assume key hashes to slist, append value to end of slist */
-void rc_hash_table_slist_insert (GHashTable *ht, gpointer key, gpointer value);
-/* assume key hashes to slist, append value to end of slist if it isn't present */
-void rc_hash_table_slist_insert_unique (GHashTable *ht, gpointer key, gpointer value,
-                                        GCompareFunc eqfunc);
-void rc_hash_table_slist_free (GHashTable *ht);
-
-GSList *rc_slist_unique (const GSList *sorted_list);
-
 /* uncompress memory */
 
 gint rc_uncompress_memory (const guint8 *input_buffer,
@@ -94,5 +81,8 @@ RCBuffer *rc_buffer_map_file(const char *filename);
 
 /* munmap()s the buffer */
 void rc_buffer_unmap_file(RCBuffer *buffer);
+
+guint rc_str_case_hash (gconstpointer key);
+gboolean rc_str_case_equal (gconstpointer v1, gconstpointer v2);
 
 #endif

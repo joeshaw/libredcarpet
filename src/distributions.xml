@@ -165,6 +165,18 @@
 		</detect>
 	</distro>
 
+        <distro>
+                <name>Red Hat Enterprise Linux AS</name>
+                <version>2.1</version>
+                <arch>i386</arch>
+                <type>rpm</type>
+                <target>rhel-21as-i386</target>
+                <status>supported</status>
+                <enddate>0</enddate>
+                <detect>
+                        <file source="/etc/redhat-release" substring="2.1AS"/>
+                </detect>
+        </distro>
 	<distro>
 		<name>Red Hat Linux</name>
 		<version>6.0</version>
@@ -282,6 +294,18 @@
 		</detect>
 	</distro>
 
+        <distro>
+                <name>SuSE Linux Enterprise Server</name>
+                <version>8</version>
+                <arch>i386</arch>
+                <type>rpm</type>
+                <target>sles-8-i386</target>
+                <status>supported</status>
+                <enddate>0</enddate>
+                <detect>
+                        <file source="/etc/SuSE-release" substring="SLES-8"/>
+                </detect>
+        </distro>
 	<distro>
 		<name>SuSE Linux</name>
 		<version>6.3</version>
@@ -353,18 +377,6 @@
 			<file source="/etc/SuSE-release" substring="7.3"/>
 		</detect>
 	</distro>
-    <distro>
-        <name>SuSE Linux Enterprise Server</name>
-        <version>8</version>
-        <arch>i386</arch>
-        <type>rpm</type>
-        <target>sles-8-i386</target>
-        <status>supported</status>
-        <enddate>0</enddate>
-        <detect>
-            <file source="/etc/SuSE-release" substring="SLES-8"/>
-        </detect>
-    </distro>
 	<distro>
 		<name>SuSE Linux</name>
 		<version>8.0</version>
@@ -437,16 +449,4 @@
 			<os_release substring="5.8"/>
 		</detect>
 	</distro>
-    <distro>
-        <name>Red Hat Enterprise Linux AS</name>
-        <version>2.1</version>
-        <arch>i386</arch>
-        <type>rpm</type>
-        <target>rhel-21as-i386</target>
-        <status>supported</status>
-        <enddate>0</enddate>
-        <detect>
-            <file source="/etc/redhat-release" substring="2.1AS"/>
-        </detect>
-    </distro>
 </distros>

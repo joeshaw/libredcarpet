@@ -1,11 +1,20 @@
+2003-03-18  Joe Shaw  <joe@ximian.com>
+
+	* distributions.xml: Make the indenting of the new distros
+	consistent with the rest of the file.
+
+	* rc-util.[ch]: Remove a bunch of dead, unused code related to
+	various hash tables of lists or whatever.  Add rc_str_case_hash()
+	and rc_str_case_equal() for case-insensitive hash tables.
+
 2003-03-17  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c (rc_rpmman_transact): account for packages that are
 	obsoleted when computing the total number of transaction steps
 
 2003-03-13  Jose Mercado    <jose@ximian.com>
-                                                                               
-    * distributions.xml: Added SLES8 and rhel 2.1AS support.
+
+	* distributions.xml: Added SLES8 and rhel 2.1AS support.
 
 2003-03-13  Joe Shaw  <joe@ximian.com>
 
