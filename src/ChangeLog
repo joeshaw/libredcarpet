@@ -1,3 +1,8 @@
+2003-11-13  Joe Shaw  <joe@ximian.com>
+
+	* rc-line-buf.c (rc_line_buf_cb): Make bytes_read a gsize from
+	a guint for 64-bit cleanliness.
+
 2003-11-12  Joe Shaw  <joe@ximian.com>
 
 	* distributions.xml: Add support for SLES 8 on s390 and s390x.

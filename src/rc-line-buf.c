@@ -194,7 +194,7 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
                 gpointer data)
 {
     RCLineBuf *line_buf = (RCLineBuf *)data;
-    guint bytes_read;
+    gsize bytes_read;
     guint count;
     guint base = 0;
     gchar buf[BUF_SIZE + 1];
