@@ -136,7 +136,7 @@ void rc_package_dep_system_is_rpmish (gboolean is_rpm);
 
 RCPackageRelation rc_string_to_package_relation (const gchar *relation);
 const gchar *rc_package_relation_to_string (RCPackageRelation relation,
-                                            gboolean words);
+                                            gint words);
 
 RCPackageDep *rc_xml_node_to_package_dep (const xmlNode *);
 

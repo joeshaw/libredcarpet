@@ -378,7 +378,7 @@ rc_package_dep_item_equal (RCPackageDepItem *a, RCPackageDepItem *b)
 }
 
 const gchar *
-rc_package_relation_to_string (RCPackageRelation relation, gboolean words)
+rc_package_relation_to_string (RCPackageRelation relation, gint words)
 {
     if (relation & RC_RELATION_WEAK)
         /* this should never get back to the user */
@@ -389,22 +389,22 @@ rc_package_relation_to_string (RCPackageRelation relation, gboolean words)
         return ("(any)");
         break;
     case RC_RELATION_EQUAL:
-        return (words ? "equal to" : "=");
+        return (words == 1 ? "equal to" : "=");
         break;
     case RC_RELATION_LESS:
-        return (words ? "less than" : "<");
+        return (words == 1 ? "less than" : words == 2 ? "&lt" : "<");
         break;
     case RC_RELATION_LESS_EQUAL:
-        return (words ? "less than or equal to" : "<=");
+        return (words == 1 ? "less than or equal to" : words == 2 ? "&lt;=" : "<=");
         break;
     case RC_RELATION_GREATER:
-        return (words ? "greater than" : ">");
+        return (words == 1 ? "greater than" : words == 2 ? "&gt;" : ">");
         break;
     case RC_RELATION_GREATER_EQUAL:
-        return (words ? "greater than or equal to" : ">=");
+        return (words == 1 ? "greater than or equal to" : words == 2 ? "&gt;=" : ">=");
         break;
     case RC_RELATION_NOT_EQUAL:
-        return (words ? "not equal to" : "!=");
+        return (words == 1 ? "not equal to" : "!=");
         break;
     default:
         return ("(invalid)");
