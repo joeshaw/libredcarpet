@@ -78,3 +78,5 @@ dpkg-helper.so: dpkg-helper.c
 	gcc -fPIC -c -o dpkg-helper.o dpkg-helper.c
 	ld -soname dpkg-helper -shared -o dpkg-helper.so dpkg-helper.o
 
+clean-local:
+	rm -f dpkg-helper.so
