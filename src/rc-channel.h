@@ -75,23 +75,21 @@ struct _RCChannel {
 
     RCChannelType type;
 
-//    gchar *distro_target;
     GSList *distro_target;
 
     gchar *path;
     gchar *file_path;
+
+    gchar *icon_file;
+
+    gchar *subs_file;
+    gchar *unsubs_file;
 
     gchar *pkginfo_file;
     gboolean pkginfo_compressed;
 
     gchar *pkgset_file;
     gboolean pkgset_compressed;
-
-    gchar *subs_url;
-    gchar *unsubs_url;
-
-    /* for use as pixbufs in gui.h */
-    gchar *icon_file;
 
     time_t last_update;
 

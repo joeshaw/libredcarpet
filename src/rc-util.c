@@ -143,6 +143,7 @@ gboolean
 rc_url_is_absolute (const char *url)
 {
     if (g_strncasecmp (url, "http:", 5) == 0 ||
+        g_strncasecmp (url, "https:", 6) == 0 ||
         g_strncasecmp (url, "ftp:", 4) == 0 ||
         g_strncasecmp (url, "file:", 5) == 0)
     {
@@ -153,41 +154,32 @@ rc_url_is_absolute (const char *url)
 }
 
 gchar *
-rc_build_url (const gchar *method, const gchar *host, const gchar *path, const gchar *rest_url)
+rc_maybe_merge_paths(const char *parent_path, const char *child_path)
 {
-    if (rest_url && rc_url_is_absolute (rest_url)) {
-        return g_strdup (rest_url);
-    }
+    /* Child path is NULL, so we return a dup of the parent path.
+       Ex: rc_maybe_merge_paths("/foo", NULL) => "/foo" */
+    if (!child_path)
+        return g_strdup(parent_path);
 
-    if (rest_url && *rest_url == '/') {
-        if (host) {
-            return g_strdup_printf ("%s://%s%s", method ? method : "http", host, rest_url);
-        } else {
-            return g_strdup_printf ("%s:%s", method ? method : "http", rest_url);
-        }
-    }
+    /* Child path is a fully qualified URL, so we return a dup of it.
+       Ex: rc_maybe_merge_paths("/foo", "http://www.ximian.com") =>
+       "http://www.ximian.com"
 
-    if (path && rc_url_is_absolute (path) && rest_url) {
-        return g_strdup_printf ("%s/%s", path, rest_url);
-    }
+       OR
 
-    if (host && path && rest_url) {
-        return g_strdup_printf ("%s://%s%s%s/%s", method ? method : "http", host,
-                                *path == '/' ? "" : "/", path, rest_url);
-    } else if (host && path) {
-        return g_strdup_printf ("%s://%s%s%s/", method ? method : "http", host,
-                                *path == '/' ? "" : "/", path);
-    } else if (path && rest_url) {
-        return g_strdup_printf ("%s:%s%s/%s", method ? method : "http",
-                                *path == '/' ? "" : "/", path, rest_url);
-    } else if (host && rest_url) {
-        return g_strdup_printf ("%s://%s/%s", method ? method : "http",
-                                host, rest_url);
-    }
+       Child path is an absolute path, so we just return a dup of it.
+       Ex: rc_maybe_merge_paths("/foo", "/bar/baz") => "/bar/baz" */
+    if (rc_url_is_absolute(child_path) || child_path[0] == '/')
+        return g_strdup(child_path);
 
-    g_assert_not_reached ();
-    return NULL;
-}
+    /* Child path is a relative path, so we tack child path onto the end of
+       parent path.
+       Ex: rc_maybe_merge_paths("/foo", "bar/baz") => "/foo/bar/baz" */
+    if (parent_path[strlen(parent_path) - 1] == '/')
+        return g_strdup_printf("%s%s", parent_path, child_path);
+    else
+        return g_strdup_printf("%s/%s", parent_path, child_path);
+} /* rc_maybe_merge_paths */
 
 static void
 hash_copy_helper (gpointer a, gpointer b, gpointer data)

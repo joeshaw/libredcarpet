@@ -42,9 +42,9 @@ gchar *rc_is_program_in_path (const gchar *program);
 /* Check if the URL is relative or absolute */
 gboolean rc_url_is_absolute (const char *url);
 
-/* Build a URL given the info, checking if rest_url is absolute */
-gchar *rc_build_url (const gchar *method, const gchar *host,
-                     const gchar *path, const gchar *rest_url);
+/* Merge two paths together, doing the Right Thing with FQURLs, absolute
+   paths, etc. */
+gchar *rc_maybe_merge_paths(const char *parent_path, const char *child_path);
 
 /* ... */
 GHashTable *

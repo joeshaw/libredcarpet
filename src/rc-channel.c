@@ -129,8 +129,8 @@ rc_channel_free (RCChannel *channel)
     g_free (channel->pkginfo_file);
     g_free (channel->pkgset_file);
 
-    g_free (channel->subs_url);
-    g_free (channel->unsubs_url);
+    g_free (channel->subs_file);
+    g_free (channel->unsubs_file);
 
     g_free (channel->icon_file);
 
@@ -222,8 +222,15 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
 
         channel->name = xml_get_prop(node, "name");
         channel->path = xml_get_prop(node, "path");
-        channel->file_path = xml_get_prop(node, "file_path");
-        channel->icon_file = xml_get_prop(node, "icon");
+
+        tmp = xml_get_prop(node, "file_path");
+        channel->file_path = rc_maybe_merge_paths(channel->path, tmp);
+        g_free(tmp);
+        
+        tmp = xml_get_prop(node, "icon");
+        channel->icon_file = rc_maybe_merge_paths(channel->path, tmp);
+        g_free(tmp);
+
         channel->description = xml_get_prop(node, "description");
 
         channel->distro_target = NULL;
@@ -239,8 +246,13 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
 
         g_free (targets);
 
-        channel->pkginfo_file = xml_get_prop(node, "pkginfo_file");
-        channel->pkgset_file = xml_get_prop(node, "pkgset_file");
+        tmp = xml_get_prop(node, "subs_url");
+        channel->subs_file = rc_maybe_merge_paths(channel->path, tmp);
+        g_free(tmp);
+
+        tmp = xml_get_prop(node, "unsubs_url");
+        channel->unsubs_file = rc_maybe_merge_paths(channel->path, tmp);
+        g_free(tmp);
 
         tmp = xml_get_prop(node, "mirrored");
         if (tmp) {
@@ -250,6 +262,7 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
         else {
             channel->mirrored = FALSE;
         }
+
         tmp = xml_get_prop(node, "available_select");
         if (tmp) {
             channel->available_select = TRUE;
@@ -258,6 +271,7 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
         else {
             channel->available_select = FALSE;
         }
+
         tmp = xml_get_prop(node, "pkginfo_compressed");
         if (tmp) {
             channel->pkginfo_compressed = TRUE;
@@ -265,6 +279,7 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
         } else {
             channel->pkginfo_compressed = FALSE;
         }
+
         tmp = xml_get_prop(node, "pkgset_compressed");
         if (tmp) {
             channel->pkgset_compressed = TRUE;
@@ -273,8 +288,24 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
             channel->pkgset_compressed = FALSE;
         }
             
-        channel->subs_url = xml_get_prop(node, "subs_url");
-        channel->unsubs_url = xml_get_prop(node, "unsubs_url");
+        tmp = xml_get_prop(node, "pkginfo_file");
+        if (!tmp) {
+            /* default */
+            tmp = g_strdup("packageinfo.xml.gz");
+            channel->pkginfo_compressed = TRUE;
+        }
+        channel->pkginfo_file = rc_maybe_merge_paths(channel->path, tmp);
+        g_free(tmp);
+
+        tmp = xml_get_prop(node, "pkgset_file");
+        if (!tmp) {
+            /* default */
+            tmp = g_strdup("packageset.xml.gz");
+            channel->pkgset_compressed = TRUE;
+        }
+        channel->pkgset_file = rc_maybe_merge_paths(channel->path, tmp);
+        g_free(tmp);
+
         tmp = xml_get_prop(node, "id");
         channel->id = atoi(tmp);
         g_free(tmp);
@@ -293,17 +324,6 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
             else
                 channel->type = RC_CHANNEL_TYPE_UNKNOWN;
             g_free (tmp);
-        }
-
-        if (channel->pkginfo_file == NULL) {
-            /* default */
-            channel->pkginfo_file = g_strdup ("packageinfo.xml.gz");
-            channel->pkginfo_compressed = TRUE;
-        }
-        if (channel->pkgset_file == NULL) {
-            /* default */
-            channel->pkgset_file = g_strdup ("packageset.xml.gz");
-            channel->pkgset_compressed = TRUE;
         }
 
         channel_slist = g_slist_append (channel_slist, channel);

@@ -1,3 +1,7 @@
+2001-08-15  Joe Shaw  <joe@ximian.com>
+
+	* Merge the redcarpet-parternet branch into HEAD.
+
 2001-08-04  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c: create the system packages hash tables even if
@@ -53,6 +57,24 @@
 	provide a missing dependency before removing packages
 	that depend on it.
 
+2001-07-25  Joe Shaw  <joe@ximian.com>
+
+	* rc-channel.h (RCChannel): Rename subs_url and unsubs_url to
+	subs_file and unsubs_file respectively, for consistency (and to
+	intentionally break compatibility).
+
+	* rc-channel.c (rc_channel_parse_xml): Build as much of a path
+	as possible for file_path, icon_file, pkginfo_file, pkgset_file,
+	subs_file and unsubs_file.
+	(rc_channel_free): (un)subs_url -> (un)subs_file
+
+	* rc-util.c (rc_build_url): Kill.
+	(rc_maybe_merge_paths): Takes a "parent path" and a "child path"
+	and merges them, depending on the semantics of the child path.
+	FQURLs and absolute child paths are left in tact, and relative child
+	paths are merged with the parent path.
+	(rc_url_is_absolute): Add https.
+	
 2001-07-25  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-package-spec.c, rc-package-spec.h: New
