@@ -221,7 +221,8 @@ rc_package_spec_to_str (RCPackageSpec *spec)
     const char *vers_str = rc_package_spec_version_to_str_static (spec);
     
     if (vers_str && *vers_str)
-        return g_strdup_printf ("%s-%s", name_str, vers_str);
+        return g_strdup_printf ("%s-%s.%s", name_str, vers_str,
+                                rc_arch_to_string (spec->arch));
     else
         return g_strdup_printf (name_str);
 }
@@ -284,6 +285,9 @@ gint rc_package_spec_equal (gconstpointer a, gconstpointer b)
     }
 
     if (one->nameq != two->nameq)
+        return FALSE;
+
+    if (one->arch != two->arch)
         return FALSE;
 
     if (one->version && two->version) {

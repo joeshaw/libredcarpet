@@ -1,3 +1,8 @@
+2005-01-31  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-package-spec.c (rc_package_spec_equal): Test archs too.
+	(rc_package_spec_to_str): Add arch to output string.
+
 2005-01-26  James Willcox  <james@ximian.com>
 
 	* rc-package.c: (rc_package_copy), (rc_package_get_id),
