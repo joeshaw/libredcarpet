@@ -1,3 +1,8 @@
+2001-07-12  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps-private.h, rc-deps.c: Add an extra parameter to
+	upgrade_or_remove so that we can create correct remove info.
+
 2001-07-12  Ian Peters  <itp@ximian.com>
 
 	* rc-debman.c: #if 0 out some more code for more testing later
