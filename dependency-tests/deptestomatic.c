@@ -39,11 +39,12 @@ static RCPackman *packman = NULL;
 
 static RCWorld *world = NULL;
 
-static void
+static gboolean
 mark_as_system_cb (RCPackage *package, gpointer user_data)
 {
     package->installed = TRUE;
     package->channel = NULL;
+    return TRUE;
 }
 
 static void
@@ -54,14 +55,12 @@ load_channel (const char *name,
 {
     RCChannel *channel;
     RCChannelType channel_type;
-    gboolean is_compressed;
     guint count;
-    char *buffer;
-    gsize file_size;
+    xmlDoc *doc;
 
-    is_compressed =  g_pattern_match_simple ("*.gz", filename);
+    doc = rc_parse_xml_from_file (filename);
 
-    if (! g_file_get_contents (filename, &buffer, &file_size, NULL)) {
+    if (doc == NULL) {
         g_warning ("Can't open file '%s'", filename);
         return;
     }
@@ -74,20 +73,16 @@ load_channel (const char *name,
         else if (g_strcasecmp(type, "debian") == 0)
             channel_type = RC_CHANNEL_TYPE_DEBIAN;
     }
+    
+    channel = rc_world_store_add_channel ((RCWorldStore *) world,
+                                          name, /* name */
+                                          name, /* alias */
+                                          "bogus id",
+                                          channel_type);
 
-    channel = rc_world_add_channel_from_buffer (world,
-                                                name, /* name */
-                                                name, /* alias */
-                                                "bogus id",
-                                                channel_type, buffer,
-                                                is_compressed ? file_size : 0);
-
-    g_free (buffer);
-
-    if (channel == NULL) {
-        g_print ("Couldn't load packages from %s\n", filename);
-        return;
-    }
+    rc_world_store_add_packages_from_xml ((RCWorldStore *) world,
+                                          channel,
+                                          xmlDocGetRootElement (doc));
     
     count = rc_channel_package_count (channel);
 
@@ -105,33 +100,16 @@ load_channel (const char *name,
 static void
 undump (const char *filename)
 {
-    char *buffer = NULL;
-    gsize len;
-    gboolean is_compressed;
+    RCWorld *undump_world;
 
-    is_compressed =  g_pattern_match_simple ("*.gz", filename);
-
-    if (g_file_get_contents (filename, &buffer, &len, NULL)) {
-        
-        if (is_compressed) {
-            GByteArray *un_z = NULL;
-            if (rc_uncompress_memory (buffer, len, &un_z)) {
-                rc_debug (RC_DEBUG_LEVEL_WARNING,
-                          "Uncompression of '%s' failed",
-                          filename);
-                return;
-            }
-
-            g_free (buffer);
-            buffer = un_z->data;
-            g_byte_array_free (un_z, FALSE);
-        }
-        
-        rc_world_undump (world, buffer);
-        g_free (buffer);
-    } else {
+    undump_world = rc_world_undump_new_from_file (filename);
+    if (undump_world == NULL) {
         g_warning ("Couldn't undump from file '%s'", filename);
+        return;
     }
+
+    g_object_unref (world);
+    world = undump_world;
 }
 
 static RCPackage *
@@ -240,7 +218,8 @@ parse_xml_setup (xmlNode *node)
                            package_name);
             } else {
                 g_print (">!> Force-uninstalling '%s'\n", package_name);
-                rc_world_remove_package (world, package);
+                g_warning ("force-install failed.");
+                /* rc_world_remove_package (world, package); */
             }
 
 
@@ -672,8 +651,9 @@ main (int argc, char *argv[])
     rc_distro_parse_xml (NULL, 0);
 
     packman = rc_distman_new ();
+    rc_packman_set_global (packman);
 
-    world = rc_world_new (packman);
+    world = rc_world_store_new ();
     rc_set_world (world);
 
     if (argc != 2) {
@@ -683,7 +663,7 @@ main (int argc, char *argv[])
 
     process_xml_test_file (argv[1]);
 
-    rc_world_free (world);
+    g_object_unref (world);
     rc_package_spew_leaks ();
 
     return 0;
