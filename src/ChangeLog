@@ -1,3 +1,8 @@
+2001-01-29  Ian Peters  <itp@ximian.com>
+
+	* rc-debman.c: pass some carefully chosen --force-foo options to
+	dpkg to avoid failures on fairly benign situations
+
 2001-01-29  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* Makefile.am, rc-pretty-name.c, rc-pretty-name.h, libredcarpet.h:

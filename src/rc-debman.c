@@ -818,7 +818,10 @@ do_purge (RCPackman *packman, DebmanInstallState *install_state)
         rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ \
                   ": /usr/bin/dpkg --purge --pending\n");
 
-        execl ("/usr/bin/dpkg", "/usr/bin/dpkg", "--purge", "--pending", NULL);
+        execl ("/usr/bin/dpkg", "/usr/bin/dpkg", "--purge", "--pending",
+               "--force-downgrade", "--force-configure-any",
+               "--force-remove-essential", "--force-overwrite",
+               "--force-overwrite-dir", NULL);
 
         exit (-1);
 
@@ -1052,7 +1055,10 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
     GSList *argvl = NULL;
     GSList *iter;
     gchar *command[] = { "/usr/bin/dpkg", "--no-act",
-                         "--auto-deconfigure", "--unpack", NULL };
+                         "--auto-deconfigure", "--unpack",
+                         "--force-downgrade", "--force-configure-any",
+                         "--force-remove-essential", "--force-overwrite",
+                         "--force-overwrite-dir", NULL };
     RCLineBuf *line_buf;
     GMainLoop *loop;
     DebmanDoUnpackInfo do_unpack_info;
@@ -1464,7 +1470,9 @@ do_configure (RCPackman *packman, DebmanInstallState *install_state)
                   ": /usr/bin/dpkg --configure --pending\n");
 
         execl ("/usr/bin/dpkg", "/usr/bin/dpkg", "--configure", "--pending",
-               NULL);
+               "--force-downgrade", "--force-configure-any",
+               "--force-remove-essential", "--force-overwrite",
+               "--force-overwrite-dir", NULL);
 
         exit (-1);
 
