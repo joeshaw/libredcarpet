@@ -344,7 +344,7 @@
                 <version>1</version>
                 <arch>i586</arch>
                 <type>rpm</type>
-                <target>sld-1-i586</target>
+                <target>sld-10-i586</target>
                 <status>supported</status>
                 <detect>
                         <file source="/etc/SuSE-release" substring="SuSE Linux Desktop 1.0"/>
