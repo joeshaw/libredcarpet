@@ -121,6 +121,7 @@ rc_channel_free (RCChannel *channel)
     g_free (channel->file_path);
 
     g_free (channel->pkginfo_file);
+    g_free (channel->pkgset_file);
 
     g_free (channel->subs_url);
     g_free (channel->unsubs_url);
@@ -233,6 +234,8 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
         g_free (targets);
 
         channel->pkginfo_file = xml_get_prop(node, "pkginfo_file");
+        channel->pkgset_file = xml_get_prop(node, "pkgset_file");
+
         tmp = xml_get_prop(node, "mirrored");
         if (tmp) {
             channel->mirrored = TRUE;
@@ -256,6 +259,14 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
         } else {
             channel->pkginfo_compressed = FALSE;
         }
+        tmp = xml_get_prop(node, "pkgset_compressed");
+        if (tmp) {
+            channel->pkgset_compressed = TRUE;
+            g_free (tmp);
+        } else {
+            channel->pkgset_compressed = FALSE;
+        }
+            
         channel->subs_url = xml_get_prop(node, "subs_url");
         channel->unsubs_url = xml_get_prop(node, "unsubs_url");
         tmp = xml_get_prop(node, "id");
@@ -282,6 +293,11 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
             /* default */
             channel->pkginfo_file = g_strdup ("packageinfo.xml.gz");
             channel->pkginfo_compressed = TRUE;
+        }
+        if (channel->pkgset_file == NULL) {
+            /* default */
+            channel->pkgset_file = g_strdup ("packageset.xml.gz");
+            channel->pkgset_compressed = TRUE;
         }
 
         if (channel->file_path == NULL) {

@@ -83,6 +83,9 @@ struct _RCChannel {
     gchar *pkginfo_file;
     gboolean pkginfo_compressed;
 
+    gchar *pkgset_file;
+    gboolean pkgset_compressed;
+
     gchar *subs_url;
     gchar *unsubs_url;
 

@@ -1,3 +1,14 @@
+2001-01-29  Joe Shaw  <joe@ximian.com>
+
+	* rc-channel.h: Added pkgset_file and pkgset_compressed.
+
+	* rc-channel.c (rc_channel_parse_xml): Parse pkgset_file and
+	pkgset_compressed.
+	(rc_channel_free): Free pkgset_file and pkgset_compressed.
+
+	* rc-pretty-name.c (rc_pretty_name_lookup): Handle the case if
+	the hash table is NULL.
+
 2001-01-29  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-package.c: do de de

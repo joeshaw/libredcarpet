@@ -31,6 +31,15 @@ rc_pretty_name_lookup (const gchar *package)
 {
     gchar *out_name;
 
+    g_return_val_if_fail(package, NULL);
+
+    if (!rc_pretty_name_hash) {
+        /* This isn't necessarily an error. If the server couldn't find the
+           file and the user chose to continue without it, then this wouldn't
+           be set. */
+        return package;
+    }
+
     out_name = (gchar *) g_hash_table_lookup (rc_pretty_name_hash, package);
     if (out_name)
         return (const char *) out_name;
