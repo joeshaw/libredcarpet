@@ -73,6 +73,7 @@ struct _RCChannel {
     gboolean featured   : 1;
     gboolean subscribed : 1;
     gboolean transient  : 1;
+    gboolean silent     : 1;
 };
 
 RCChannel *rc_channel_new  (void);

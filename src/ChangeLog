@@ -1,3 +1,28 @@
+2003-01-24  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-resolver.c (rc_resolver_resolve_dependencies): Flag the
+	temporary 'Local Packages' channel as silent.
+
+	* rc-world.c (rc_world_add_channel_with_priorities): Added a
+	'is_silent' argument, which (duh) causes the new channel to be
+	flagged as silent.
+	(rc_world_add_channel): Rather than add a new arg to this
+	function, just always make the created channel non-silent.
+	(rc_world_remove_channel): Don't touch the sequence numbers if the
+	channel is silent.
+	(rc_world_add_package): Ditto.
+	(rc_world_remove_package): Ditto.
+	(rc_world_remove_packages): Ditto.
+
+	* rc-channel.c (rc_channel_get_silent): Added.  Test if a channel
+	is flagged as silent.
+	(rc_channel_set_subscription): If a channel is marked as 'silent',
+	don't change the world sequence number if its subscription status
+	changes.
+
+	* rc-channel-private.h: Added "silent" flag to the
+	RCChannel struct.
+
 2003-01-22  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-arch.c: Make "all" (which is what debian uses) a synonym for

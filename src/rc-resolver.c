@@ -206,7 +206,9 @@ verify_system_cb (RCPackage *package, gpointer user_data)
 void
 rc_resolver_verify_system (RCResolver *resolver)
 {
+#if 0
     GSList *i0, *i1, *i, *j;
+#endif
 
     g_return_if_fail (resolver != NULL);
 
@@ -217,6 +219,7 @@ rc_resolver_verify_system (RCResolver *resolver)
 
     resolver->verifying = TRUE;
 
+#if 0
     /*
       Walk across the (sorted-by-name) list of installed packages and look for
       packages with the same name.  If they exist, construct a branch item
@@ -261,6 +264,7 @@ rc_resolver_verify_system (RCResolver *resolver)
 
         i0 = i1;
     }
+#endif
 
     /* OK, that was fun.  Now just resolve the dependencies. */
     rc_resolver_resolve_dependencies (resolver);
@@ -295,11 +299,16 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
     /* Create a dummy channel for our local packages, so that the
        RCWorld can see than and take their dependencies into
        account.*/
-    local_pkg_channel = rc_world_add_channel (world,
+    local_pkg_channel = 
+        rc_world_add_channel_with_priorities (world,
                                               "Local Packages",
                                               "local-pkg-alias-blah-blah-blah",
                                               0, 0,
-                                              RC_CHANNEL_TYPE_UNKNOWN);
+                                              TRUE, /* a silent channel */
+                                              RC_CHANNEL_TYPE_UNKNOWN,
+                                              -1, -1, -1 /* default
+                                                            priorities */
+                                              );
 
     initial_queue = rc_resolver_queue_new ();
     

@@ -532,6 +532,7 @@ rc_world_add_channel_with_priorities (RCWorld *world,
                                       const char *alias,
                                       guint32 channel_id,
                                       guint32 base_id,
+                                      gboolean is_silent,
                                       RCChannelType type,
                                       int subd_priority,
                                       int unsubd_priority,
@@ -548,7 +549,8 @@ rc_world_add_channel_with_priorities (RCWorld *world,
 
     is_transient = (type == RC_CHANNEL_TYPE_UNKNOWN);
 
-    rc_world_touch_channel_sequence_number (world);
+    if (! is_silent)
+        rc_world_touch_channel_sequence_number (world);
 
     if (channel_id == 0) {
         while (have_cid (world, assigned_cid))
@@ -573,6 +575,7 @@ rc_world_add_channel_with_priorities (RCWorld *world,
     channel->alias            = g_strdup (alias);
     channel->type             = type;
     channel->transient        = is_transient;
+    channel->silent           = is_silent;
     channel->priority         = subd_priority;
     channel->priority_unsubd  = unsubd_priority;
     channel->priority_current = current_priority;
@@ -581,7 +584,8 @@ rc_world_add_channel_with_priorities (RCWorld *world,
                                        channel);
 
     rc_debug (RC_DEBUG_LEVEL_DEBUG,
-              "Adding channel '%s' (cid=%d, bid=%d)",
+              "Adding %schannel '%s' (cid=%d, bid=%d)",
+              is_silent ? "silent " : "",
               channel_name, channel_id, base_id);
 
     return channel;
@@ -600,6 +604,7 @@ rc_world_add_channel (RCWorld *world,
                                                  alias,
                                                  channel_id,
                                                  base_id,
+                                                 FALSE,
                                                  type,
                                                  -1, -1, -1);
 }
@@ -613,14 +618,15 @@ rc_world_remove_channel (RCWorld *world,
     g_return_if_fail (world != NULL);
     g_return_if_fail (channel != NULL);
     
-    rc_world_touch_channel_sequence_number (world);
-
     for (iter = world->channels; iter != NULL; iter = iter->next) {
         if (iter->data == channel) {
 
             /* We we remove a channel, we also remove all of its
                packages. */
             rc_world_remove_packages (world, channel);
+
+            if (! rc_channel_get_silent (channel))
+                rc_world_touch_channel_sequence_number (world);
 
             /* Set the channel's world to NULL, so that there won't
                be a dangling pointer if someone else is holding a reference
@@ -1047,7 +1053,8 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
 
     actually_added_package = TRUE;
 
-    rc_world_touch_package_sequence_number (world);
+    if (! (package->channel && rc_channel_get_silent (package->channel)))
+        rc_world_touch_package_sequence_number (world);
 
     /* The world holds a reference to the package */
     rc_package_ref (package);
@@ -1164,7 +1171,8 @@ rc_world_remove_package (RCWorld *world,
     g_return_if_fail (world != NULL);
     g_return_if_fail (package != NULL);
 
-    rc_world_touch_package_sequence_number (world);
+    if (! (package->channel && rc_channel_get_silent (package->channel)))
+        rc_world_touch_package_sequence_number (world);
 
     /* FIXME: This is fairly inefficient */
 
@@ -1234,7 +1242,11 @@ rc_world_remove_packages (RCWorld *world,
 {
     g_return_if_fail (world != NULL);
 
-    rc_world_touch_package_sequence_number (world);
+    if (channel == RC_WORLD_SYSTEM_PACKAGES
+        || channel == RC_WORLD_ANY_CHANNEL
+        || channel == RC_WORLD_ANY_NON_SYSTEM
+        || ! rc_channel_get_silent (channel))
+        rc_world_touch_package_sequence_number (world);
 
     hashed_slist_foreach_remove (world->provides_by_name,
                                  remove_package_struct_by_channel_cb,

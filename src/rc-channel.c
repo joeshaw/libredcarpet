@@ -270,7 +270,9 @@ void
 rc_channel_set_subscription (RCChannel *channel,
                              gboolean   subscribed)
 {
-    if ((channel->subscribed ^ subscribed) && channel->world != NULL)
+    if ((channel->subscribed ^ subscribed)
+        && channel->world != NULL
+        && ! rc_channel_get_silent (channel))
         rc_world_touch_subscription_sequence_number (channel->world);
     channel->subscribed = subscribed;
 }
@@ -406,6 +408,14 @@ rc_channel_get_transient (RCChannel *channel)
     g_return_val_if_fail (channel != NULL, FALSE);
 
     return channel->transient;
+}
+
+gboolean
+rc_channel_get_silent (RCChannel *channel)
+{
+    g_return_val_if_fail (channel != NULL, FALSE);
+
+    return channel->silent;
 }
 
 int
