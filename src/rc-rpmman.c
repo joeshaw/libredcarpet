@@ -341,6 +341,8 @@ rc_rpmman_transact (RCPackman *p, RCPackageSList *install_packages,
     int rc;
     rpmProblemSet probs = NULL;
     InstallState *state;
+    guint extras = 0;
+    RCPackageSList *iter;
 
     if (rpmdbOpen (RC_RPMMAN (p)->rpmroot, &db, O_RDWR | O_CREAT, 0644)) {
         /* FIXME: Fatal error opening the database */
@@ -364,10 +366,18 @@ rc_rpmman_transact (RCPackman *p, RCPackageSList *install_packages,
         return;
     }
 
+    for (iter = install_packages; iter; iter = iter->next) {
+        RCPackage *package = (RCPackage *)(iter->data);
+
+        if (!(rc_packman_query (p, package))->installed) {
+            extras++;
+        }
+    }
+
     state = g_new0 (InstallState, 1);
     state->p = p;
     state->seqno = 0;
-    state->install_total = g_slist_length (install_packages);
+    state->install_total = g_slist_length (install_packages) + extras;
     state->remove_total = g_slist_length (remove_packages);
 
     gtk_signal_emit_by_name (GTK_OBJECT (p), 0, state->install_total);
