@@ -125,7 +125,7 @@ rc_channel_unref (RCChannel *channel)
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 const char *
-rc_channel_get_id (const RCChannel *channel)
+rc_channel_get_id (RCChannel *channel)
 {
     if (channel == RC_CHANNEL_SYSTEM)
         return "system";
@@ -136,7 +136,7 @@ rc_channel_get_id (const RCChannel *channel)
 }
 
 const char *
-rc_channel_get_name (const RCChannel *channel)
+rc_channel_get_name (RCChannel *channel)
 {
     if (channel == RC_CHANNEL_ANY)
         return "[Any]";
@@ -149,7 +149,7 @@ rc_channel_get_name (const RCChannel *channel)
 }
 
 const char *
-rc_channel_get_alias (const RCChannel *channel)
+rc_channel_get_alias (RCChannel *channel)
 {
     g_return_val_if_fail (channel != NULL, NULL);
 
@@ -157,7 +157,7 @@ rc_channel_get_alias (const RCChannel *channel)
 }
 
 const char *
-rc_channel_get_description (const RCChannel *channel)
+rc_channel_get_description (RCChannel *channel)
 {
     g_return_val_if_fail (channel != NULL, NULL);
 
@@ -166,7 +166,7 @@ rc_channel_get_description (const RCChannel *channel)
 }
 
 int
-rc_channel_get_priority (const RCChannel *channel,
+rc_channel_get_priority (RCChannel *channel,
                          gboolean is_subscribed)
 {
     int priority;
@@ -189,7 +189,7 @@ rc_channel_get_priority (const RCChannel *channel,
 }
 
 RCChannelType
-rc_channel_get_type (const RCChannel *channel)
+rc_channel_get_type (RCChannel *channel)
 {
     g_return_val_if_fail (channel != NULL, RC_CHANNEL_TYPE_UNKNOWN);
 
@@ -197,7 +197,7 @@ rc_channel_get_type (const RCChannel *channel)
 }
 
 const char *
-rc_channel_get_pkginfo_file (const RCChannel *channel)
+rc_channel_get_pkginfo_file (RCChannel *channel)
 {
     g_return_val_if_fail (channel != NULL, NULL);
 
@@ -205,7 +205,7 @@ rc_channel_get_pkginfo_file (const RCChannel *channel)
 }
 
 gboolean
-rc_channel_get_pkginfo_compressed (const RCChannel *channel)
+rc_channel_get_pkginfo_compressed (RCChannel *channel)
 {
     g_return_val_if_fail (channel != NULL, FALSE);
 
@@ -213,21 +213,21 @@ rc_channel_get_pkginfo_compressed (const RCChannel *channel)
 }
 
 time_t
-rc_channel_get_last_update (const RCChannel *channel)
+rc_channel_get_last_update (RCChannel *channel)
 {
     g_return_val_if_fail (channel != NULL, (time_t) 0);
     return channel->last_update;
 }
 
 const char *
-rc_channel_get_path (const RCChannel *channel)
+rc_channel_get_path (RCChannel *channel)
 {
     g_return_val_if_fail (channel != NULL, NULL);
     return channel->path;
 }
 
 const char *
-rc_channel_get_icon_file (const RCChannel *channel)
+rc_channel_get_icon_file (RCChannel *channel)
 {
     g_return_val_if_fail (channel != NULL, NULL);
     return channel->icon_file;
@@ -236,7 +236,7 @@ rc_channel_get_icon_file (const RCChannel *channel)
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 gboolean
-rc_channel_subscribed (const RCChannel *channel)
+rc_channel_subscribed (RCChannel *channel)
 {
     g_return_val_if_fail (channel != NULL, FALSE);
 
@@ -255,7 +255,7 @@ rc_channel_set_subscription (RCChannel *channel,
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 int
-rc_channel_foreach_package (const RCChannel *channel,
+rc_channel_foreach_package (RCChannel *channel,
                             RCPackageFn fn,
                             gpointer user_data)
 {
@@ -272,7 +272,7 @@ rc_channel_foreach_package (const RCChannel *channel,
 }
 
 int
-rc_channel_package_count (const RCChannel *channel)
+rc_channel_package_count (RCChannel *channel)
 {
     g_return_val_if_fail (channel != NULL, -1);
 

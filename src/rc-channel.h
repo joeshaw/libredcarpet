@@ -25,7 +25,7 @@
 
 typedef struct _RCChannel RCChannel;
 typedef GSList RCChannelSList;
-typedef void (*RCChannelFn) (RCChannel *, gpointer);
+typedef gboolean (*RCChannelFn) (RCChannel *, gpointer);
 
 #include "rc-package.h"
 
@@ -53,45 +53,45 @@ void       rc_channel_unref (RCChannel *channel);
 
 /* Accessors */
  
-const char   *rc_channel_get_id          (const RCChannel *channel);
+const char   *rc_channel_get_id          (RCChannel *channel);
 
-const char   *rc_channel_get_name        (const RCChannel *channel);
+const char   *rc_channel_get_name        (RCChannel *channel);
 
-const char   *rc_channel_get_alias       (const RCChannel *channel);
+const char   *rc_channel_get_alias       (RCChannel *channel);
 
-const char   *rc_channel_get_description (const RCChannel *channel);
+const char   *rc_channel_get_description (RCChannel *channel);
 
-int           rc_channel_get_priority    (const RCChannel *channel,
-                                          gboolean         is_subscribed);
+int           rc_channel_get_priority    (RCChannel *channel,
+                                          gboolean   is_subscribed);
 
-RCChannelType rc_channel_get_type        (const RCChannel *channel);
+RCChannelType rc_channel_get_type        (RCChannel *channel);
 
 
-const char   *rc_channel_get_pkginfo_file       (const RCChannel *channel);
+const char   *rc_channel_get_pkginfo_file       (RCChannel *channel);
 
-gboolean      rc_channel_get_pkginfo_compressed (const RCChannel *channel);
+gboolean      rc_channel_get_pkginfo_compressed (RCChannel *channel);
 
-time_t        rc_channel_get_last_update        (const RCChannel *channel);
+time_t        rc_channel_get_last_update        (RCChannel *channel);
 
-const char   *rc_channel_get_path               (const RCChannel *channel);
+const char   *rc_channel_get_path               (RCChannel *channel);
 
-const char   *rc_channel_get_icon_file          (const RCChannel *channel);
+const char   *rc_channel_get_icon_file          (RCChannel *channel);
 
 
 /* Subscription management */
 
-gboolean rc_channel_subscribed       (const RCChannel *channel);
+gboolean rc_channel_subscribed       (RCChannel *channel);
 
 void     rc_channel_set_subscription (RCChannel       *channel,
                                       gboolean         subscribed);
 
 /* Iterators/Accessors for channel packages */
 
-int rc_channel_foreach_package (const RCChannel *channel,
+int rc_channel_foreach_package (RCChannel *channel,
                                 RCPackageFn fn,
                                 gpointer user_data);
 
-int rc_channel_package_count (const RCChannel *channel);
+int rc_channel_package_count (RCChannel *channel);
 
 
 /* Other */

@@ -1,3 +1,12 @@
+2003-06-15  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-channel.h: For some reason, a bunch of the rc_channel
+	functions tooks const RCChannel pointers as args.  This was
+	a good thing to do in theory, but since we make no effort to
+	be const-correct anywhere else, I've removed the consts.
+
+	* rc-channel.c: Ditto.
+
 2003-06-12  Joe Shaw  <joe@ximian.com>
 
 	* distributions.xml: Change "SuSE Linux Enterprise Client" to
