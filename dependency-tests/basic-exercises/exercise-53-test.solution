@@ -1,4 +1,4 @@
->!> Locking foo-set from channel SYSTEM
+>!> Locking foo-set from channel @system
 >!> Checking for upgrades...
 >!> System is up-to-date, no upgrades required
 >!> Solution #1:

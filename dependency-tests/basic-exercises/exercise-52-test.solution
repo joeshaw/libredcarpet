@@ -1,15 +1,9 @@
 >!> Checking for upgrades...
->!> Upgrading gnome-spell-0.5-snap.ximian.200210250601 => gnome-spell-0.5-1.ximian.3[Ximian Desktop]
 >!> Upgrading foo-set-1:1.0-1-ximian.1 => foo-set-1:2.0-1-ximian.1[/home/trow/synth]
->!> Upgrading pspell-devel-2:0.12.2-ximian.7 => pspell-devel-2:0.12.2-8[Red Hat Linux 7.3]
->!> Upgrading pspell-2:0.12.2-ximian.7 => pspell-2:0.12.2-8[Red Hat Linux 7.3]
->!> Upgrading 4 packages
+>!> Upgrading 1 package
 >!> Solution #1:
 >!> install gtkglarea-0:1.2.2-10[Red Hat Linux 7.3]
 >!> install xtraceroute-0:0.9.0-6[Red Hat Linux 7.3]
 >!> remove  xtoolwait-1.3-1
 >!> upgrade foo-set-1:1.0-1-ximian.1 => foo-set-1:2.0-1-ximian.1[/home/trow/synth]
->!> upgrade gnome-spell-0.5-snap.ximian.200210250601 => gnome-spell-0.5-1.ximian.3[Ximian Desktop]
->!> upgrade pspell-2:0.12.2-ximian.7 => pspell-2:0.12.2-8[Red Hat Linux 7.3]
->!> upgrade pspell-devel-2:0.12.2-ximian.7 => pspell-devel-2:0.12.2-8[Red Hat Linux 7.3]
->!> installs=2, upgrades=4, uninstalls=1
+>!> installs=2, upgrades=1, uninstalls=1

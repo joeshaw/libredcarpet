@@ -1,4 +1,4 @@
->!> Locking xtoolwait from channel SYSTEM
+>!> Locking xtoolwait from channel @system
 >!> Checking for upgrades...
 >!> Upgrading foo-set-1:1.0-1-ximian.1 => foo-set-1:2.0-1-ximian.1[/home/trow/synth]
 >!> Upgrading 1 package
