@@ -322,7 +322,6 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
     RCPackageStatus status = rc_resolver_context_get_status (context, package);
 
     GSList *iter, *conflicts;
-    RCPackageDep *pkg_dep;
 
     int i;
 
@@ -483,13 +482,14 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
 
     /* Constuct uninstall items for system packages that conflict with us. */
     conflicts = NULL;
-    pkg_dep = rc_package_dep_new_from_spec (&package->spec,
-                                            RC_RELATION_EQUAL,
-                                            RC_CHANNEL_SYSTEM,
-                                            FALSE, FALSE);
-    rc_world_foreach_conflicting_package (rc_queue_item_get_world (item),
-                                          pkg_dep,
-                                          build_conflict_list, &conflicts);
+    for (i = 0; package->provides_a && i < package->provides_a->len; i++) {
+        RCPackageDep *dep = package->provides_a->data[i];
+
+        rc_world_foreach_conflicting_package (rc_queue_item_get_world (item),
+                                              dep,
+                                              build_conflict_list,
+                                              &conflicts);
+    }
 
     for (iter = conflicts; iter != NULL; iter = iter->next) {
         RCPackage *conflicting_package = iter->data;
@@ -502,7 +502,6 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
         *new_items = g_slist_prepend (*new_items, uninstall_item);
     }
     
-    rc_package_dep_unref (pkg_dep);
     g_slist_free (conflicts);
     
  finished:
