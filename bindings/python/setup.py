@@ -50,7 +50,7 @@ module_redcarpet = Extension("redcarpet",
                              libraries=pkg_libs+other_libs,
                              library_dirs=pkg_libdirs+other_libdirs)
 
-setup (name="xxx_redcarpet",
+setup (name="redcarpet",
        version="0.1",
        description="Red Carpet",
        ext_modules=[module_redcarpet])

@@ -94,43 +94,6 @@ PyWorld_touch_sub_seq_num (PyObject *self, PyObject *args)
 	return Py_None;
 }
 
-#if 0
-static PyObject *
-PyWorld_add_channel (PyObject *self, PyObject *args, PyObject *kwds)
-{
-	RCWorld *world = PyWorld_get_world (self);
-	RCChannel *channel;
-	char *channel_name, *alias, *channel_id;
-	RCChannelType type;
-	gboolean hidden = FALSE;
-	int subd_priority = -1;
-	int unsubd_priority = -1;
-	static char *kwlist[] = { "channel_name", "alias", "channel_id", "type" ,"hidden", "subd_priority", "unsubd_priority", NULL };
-
-	if (! PyArg_ParseTupleAndKeywords (args, kwds, "sssi|iii", kwlist,
-					   &channel_name, &alias,
-					   &channel_id, &type,
-					   &hidden, &subd_priority,
-					   &unsubd_priority))
-		return NULL;
-
-	channel = rc_world_add_channel_with_priorities (world,
-							channel_name,
-							alias,
-							channel_id,
-							hidden,
-							type,
-							subd_priority,
-							unsubd_priority);
-	if (channel == NULL) {
-		Py_INCREF (Py_None);
-		return Py_None;
-	}
-
-	return PyChannel_new (channel);
-}
-#endif
-
 static PyObject *
 PyWorld_set_subscription (PyObject *self, PyObject *args)
 {
@@ -167,27 +130,6 @@ PyWorld_is_subscribed (PyObject *self, PyObject *args)
 
 	return Py_BuildValue ("i", rc_world_is_subscribed (world, channel));
 }
-
-#if 0
-static PyObject *
-PyWorld_remove_channel (PyObject *self, PyObject *args)
-{
-	RCWorld *world = PyWorld_get_world (self);
-	PyObject *obj;
-	RCChannel *channel;
-
-	if (! PyArg_ParseTuple (args, "O", &obj))
-		return NULL;
-
-	channel = PyChannel_get_channel (obj);
-	if (channel == NULL)
-		return NULL;
-
-	rc_world_remove_channel (world, channel);
-	Py_INCREF (Py_None);
-	return Py_None;
-}
-#endif
 
 static void
 get_all_channels_cb (RCChannel *channel, PyObject *list)
@@ -354,61 +296,6 @@ PyWorld_pkg_is_locked (PyObject *self, PyObject *args)
 
 	return Py_BuildValue ("i", rc_world_package_is_locked (world, pkg));
 }
-
-#if 0
-static PyObject *
-PyWorld_add_package (PyObject *self, PyObject *args)
-{
-	RCWorld *world = PyWorld_get_world (self);
-	PyObject *obj;
-	RCPackage *pkg;
-
-	if (! PyArg_ParseTuple (args, "O", &obj))
-		return NULL;
-
-	pkg = PyPackage_get_package (obj);
-	if (pkg == NULL)
-		return NULL;
-
-	return Py_BuildValue ("i", rc_world_add_package (world, pkg));
-}
-
-static PyObject *
-PyWorld_remove_package (PyObject *self, PyObject *args)
-{
-	RCWorld *world = PyWorld_get_world (self);
-	PyObject *obj;
-	RCPackage *pkg;
-
-	if (! PyArg_ParseTuple (args, "O", &obj))
-		return NULL;
-
-	pkg = PyPackage_get_package (obj);
-	if (pkg == NULL)
-		return NULL;
-
-	rc_world_remove_package (world, pkg);
-	Py_INCREF (Py_None);
-	return Py_None;
-}
-
-static PyObject *
-PyWorld_remove_packages (PyObject *self, PyObject *args)
-{
-	RCWorld *world = PyWorld_get_world (self);
-	PyObject *obj;
-	RCChannel *channel;
-
-	if (! PyArg_ParseTuple (args, "O", &obj))
-		return NULL;
-
-	/* Channel or channel wildcard */
-	channel = PyChannel_get_channel (obj);
-	rc_world_remove_packages (world, channel);
-	Py_INCREF (Py_None);
-	return Py_None;
-}
-#endif
 
 static PyObject *
 PyWorld_find_installed_version (PyObject *self, PyObject *args)
@@ -805,14 +692,9 @@ static PyMethodDef PyWorld_methods[] = {
 	{ "touch_package_sequence_number",      PyWorld_touch_package_seq_num, METH_NOARGS  },
 	{ "touch_channel_sequence_number",      PyWorld_touch_channel_seq_num, METH_NOARGS  },
 	{ "touch_subscription_sequence_number", PyWorld_touch_sub_seq_num,     METH_NOARGS  },
-#if 0
-	{ "add_channel",          (PyCFunction) PyWorld_add_channel,           METH_VARARGS|METH_KEYWORDS },
-#endif
 	{ "set_subscription",                   PyWorld_set_subscription,      METH_VARARGS },
 	{ "is_subscribed",                      PyWorld_is_subscribed,         METH_VARARGS },
-#if 0
-	{ "remove_channel",                     PyWorld_remove_channel,        METH_VARARGS },
-#endif
+	{ "get_best_upgrade",                   PyWorld_get_best_upgrade,      METH_VARARGS },
 	/* rc_world_foreach_channel */
 	{ "get_all_channels",                   PyWorld_get_all_channels,      METH_NOARGS  },
 	{ "get_channel_by_name",                PyWorld_get_channel_by_name,   METH_VARARGS },
@@ -823,11 +705,6 @@ static PyMethodDef PyWorld_methods[] = {
 	{ "clear_locks",                        PyWorld_clear_locks,           METH_NOARGS  },
 	{ "get_all_locks",                      PyWorld_get_all_locks,         METH_NOARGS  },
 	{ "package_is_locked",                  PyWorld_pkg_is_locked,         METH_VARARGS },
-#if 0
-	{ "add_package",                        PyWorld_add_package,           METH_VARARGS },
-	{ "remove_package",                     PyWorld_remove_package,        METH_VARARGS },
-	{ "remove_packages",                    PyWorld_remove_packages,       METH_VARARGS },
-#endif
 	{ "find_installed_version",             PyWorld_find_installed_version,METH_VARARGS },
 	{ "get_package",                        PyWorld_get_package,           METH_VARARGS },
 	{ "guess_package_channel",              PyWorld_guess_package_channel, METH_VARARGS },

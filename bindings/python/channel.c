@@ -182,17 +182,31 @@ static PyMethodDef PyChannel_methods[] = {
 };
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
-#if 0
 static int
 PyChannel_init (PyObject *self, PyObject *args, PyObject *kwds)
 {
 	PyChannel *py_channel = (PyChannel *) self;
+	static char *kwlist[] = {"id", "name", "alias", "description", NULL };
+	char *id, *name, *alias, *description;
+	RCChannel *channel;
 
-	py_channel->channel = ;
+	if (!PyArg_ParseTupleAndKeywords (args, kwds, "ssss", kwlist,
+					  &id, &name, &alias, &description)) {
+		PyErr_SetString (PyExc_RuntimeError, "Can't parse arguments");
+		return -1;
+	}
+
+	channel = rc_channel_new (id, name, alias, description);
+
+	if (channel == NULL) {
+		PyErr_SetString (PyExc_RuntimeError, "Can't create Package");
+		return -1;
+	}
+
+	py_channel->channel = channel;
 
 	return 0;
 }
-#endif
 
 static PyObject *
 PyChannel_tp_new (PyTypeObject *type, PyObject *args, PyObject *kwds)
@@ -233,7 +247,7 @@ PyChannel_tp_cmp (PyObject *obj_x, PyObject *obj_y)
 void
 PyChannel_register (PyObject *dict)
 {
-	/* PyChannel_type_info.tp_init = PyChannel_init; */
+	PyChannel_type_info.tp_init    = PyChannel_init;
 	PyChannel_type_info.tp_new     = PyChannel_tp_new;
 	PyChannel_type_info.tp_dealloc = PyChannel_tp_dealloc;
 	PyChannel_type_info.tp_methods = PyChannel_methods;
