@@ -421,6 +421,9 @@ namespace RC {
         writer.WriteAttributeString ("priority_base", System.Xml.XmlConvert.ToString (this.GetPriority (true)));
         writer.WriteAttributeString ("priority_unsubd", System.Xml.XmlConvert.ToString (this.GetPriority (false)));
 
+        foreach (Package p in this.Packages)
+            p.ToXml (writer);
+
         writer.WriteEndElement ();
     }
 

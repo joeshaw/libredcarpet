@@ -912,8 +912,6 @@ namespace RC {
                 return true;
 
             channel.ToXml (this.writer);
-            this.world.ForeachPackage (channel, new PackageDelegate (ForeachPackage));
-
             return true;
         }
 
@@ -950,7 +948,7 @@ namespace RC {
 
         writer.WriteEndElement ();
         writer.WriteEndDocument ();
-        writer.Close ();
+        writer.Flush ();
     }
 
 #endregion

@@ -1,5 +1,10 @@
 2005-01-11  Tambet Ingo  <tambet@ximian.com>
 
+	* Channel.custom (ToXml): Serialize packages as well.
+
+	* World.custom (ToXml): Flush the stream at the end, don't close it.
+	Don't add channel packages here, they are part of channel data.
+
 	* PackageMatch.custom (ToXml): Fix importance tag.
 
 2005-01-03  Tambet Ingo  <tambet@ximian.com>
