@@ -1,5 +1,7 @@
 2004-10-29  Tambet Ingo  <tambet@ximian.com>
 
+	* PackageSpec.custom: Make default constructor public.
+
 	* generated/*.cs Add generated files to CVS.
 
 	* PackageDepArray.custom: Remove.
