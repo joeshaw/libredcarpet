@@ -220,4 +220,6 @@ void rc_packman_set_repackage_dir (RCPackman *packman,
 
 const gchar *rc_packman_get_repackage_dir (RCPackman *packman);
 
+void rc_packman_set_track_changes (RCPackman *packman, gboolean enabled);
+
 #endif /* _RC_PACKMAN_H */

@@ -1,5 +1,28 @@
 2003-04-30  Joe Shaw  <joe@ximian.com>
 
+	* make_stub.sh: Make this so it doesn't clobber files when run
+	with -j.
+
+	* rc-packman-private.h: Remove the "busy" flag, add a
+	"track_changes" flag.
+
+	* rc-packman.c (rc_packman_track_changes): Added.  Iterates
+	through the list of updates and removals and calls
+	rc_packman_track_change() on each.
+	(rc_packman_track_change): Pretty hairy function which iterates
+	the files in a package and checks to see if any have changed.  It
+	stores change info in an xmlNode and copies the modified file to a
+	safe location.
+	(rc_packman_transact): Remove the busy flag stuff, it wasn't
+	really being used.  Track file changes before running the
+	transaction.
+	(rc_packman_set_track_changes): Flag which turns on/off change
+	tracking.
+
+	* rc-util.c (rc_cp): Added.  Copies a file using mmap().
+
+2003-04-30  Joe Shaw  <joe@ximian.com>
+
 	* distributions.xml: Add support for Mandrake 9.1
 	(mandrake-91-i586) and SuSE 8.2 (suse-82-i586; yes, i586).  Fixes
 	#41870.

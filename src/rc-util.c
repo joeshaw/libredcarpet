@@ -476,6 +476,66 @@ rc_close (int fd)
     return (TRUE);
 }
 
+gint
+rc_cp (const char *fromfile, const char *tofile)
+{
+    int fdin = -1, fdout = -1;
+    char *src = NULL, *dest = NULL;
+    int ret = -1;
+    int mode;
+    struct stat st;
+
+    fdin = open (fromfile, O_RDONLY);
+    
+    if (fdin < 0)
+        goto out;
+
+    if (fstat (fdin, &st) < 0)
+        goto out;
+
+    mode = st.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
+    fdout = open (tofile, O_RDWR | O_CREAT | O_TRUNC, mode);
+
+    if (fdout < 0)
+        goto out;
+
+    if (lseek (fdout, st.st_size - 1, SEEK_SET) < 0)
+        goto out;
+
+    if (rc_write (fdout, "\0", 1) < 0)
+        goto out;
+
+    src = mmap (NULL, st.st_size, PROT_READ, MAP_SHARED, fdin, 0);
+
+    if (src == MAP_FAILED)
+        goto out;
+
+    dest = mmap (NULL, st.st_size, PROT_READ | PROT_WRITE,
+                 MAP_SHARED, fdout, 0);
+
+    if (dest == MAP_FAILED)
+        goto out;
+
+    memcpy (dest, src, st.st_size);
+
+    ret = 0;
+
+out:
+    if (fdin >= 0)
+        rc_close (fdin);
+
+    if (fdout >= 0)
+        rc_close (fdout);
+
+    if (src != NULL)
+        munmap (src, st.st_size);
+
+    if (dest != NULL)
+        munmap (dest, st.st_size);
+
+    return ret;
+}
+
 guint32
 rc_string_to_guint32_with_default(const char *n, guint32 def)
 {

@@ -69,6 +69,9 @@ gboolean rc_write (int fd, const void *buf, size_t count);
 /* Close a file descriptor (didn't know it was this hard, did you?) */
 gboolean rc_close (int fd);
 
+/* Copy a file */
+gint rc_cp (const char *fromfile, const char *tofile);
+
 guint32 rc_string_to_guint32_with_default(const char *n, guint32 def);
 
 typedef struct {

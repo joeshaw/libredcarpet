@@ -32,13 +32,13 @@ struct _RCPackmanPrivate {
     /* The file extension of this package format, for ease in searching. */
     gchar *extension;
 
-    gboolean busy;
-
     guint32 capabilities;
     
     gint lock_count;
 
     gchar *repackage_dir;
+
+    gboolean track_changes;
 };
 
 void rc_packman_set_file_extension (RCPackman *packman,

@@ -24,10 +24,11 @@
 #include <ctype.h>
 #include <sys/stat.h>
 #include <unistd.h>
-
-#include "rc-packman-private.h"
+#include <errno.h>
 
 #include "rc-marshal.h"
+#include "rc-md5.h"
+#include "rc-packman-private.h"
 
 static void rc_packman_class_init (RCPackmanClass *klass);
 static void rc_packman_init       (RCPackman *obj);
@@ -46,6 +47,9 @@ enum SIGNALS {
 };
 
 static guint signals[LAST_SIGNAL] = { 0 };
+
+#define RC_PACKMAN_CHANGES_FILE "/var/lib/rcd/changes/changes.xml"
+#define RC_PACKMAN_CHANGES_DIR  "/var/lib/rcd/changes/"
 
 GType
 rc_packman_get_type (void)
@@ -182,7 +186,7 @@ rc_packman_class_init (RCPackmanClass *klass)
 static void
 rc_packman_init (RCPackman *packman)
 {
-    packman->priv = g_new (RCPackmanPrivate, 1);
+    packman->priv = g_new0 (RCPackmanPrivate, 1);
 
     packman->priv->error = RC_PACKMAN_ERROR_NONE;
     packman->priv->reason = NULL;
@@ -190,11 +194,10 @@ rc_packman_init (RCPackman *packman)
     packman->priv->extension = NULL;
     packman->priv->repackage_dir = NULL;
 
-    packman->priv->busy = FALSE;
-
     packman->priv->capabilities = RC_PACKMAN_CAP_NONE;    
 
     packman->priv->lock_count = 0;
+    packman->priv->track_changes = FALSE;
 }
 
 RCPackman *
@@ -204,6 +207,247 @@ rc_packman_new (void)
         RC_PACKMAN (g_object_new (rc_packman_get_type (), NULL));
 
     return packman;
+}
+
+static xmlNode *
+rc_packman_track_change (RCPackman *packman, RCPackage *package)
+{
+    RCPackageFileSList *files, *iter;
+    xmlNode *package_node = NULL;
+    char *cur_time, *tmp;
+
+    g_return_val_if_fail (package->installed == TRUE, NULL);
+
+    package_node = xmlNewNode (NULL, "package");
+
+    cur_time = g_strdup_printf ("%ld", time (NULL));
+    xmlNewProp (package_node, "timestamp", cur_time);
+
+    xmlNewProp (package_node, "name", g_quark_to_string (package->spec.nameq));
+    xmlNewProp (package_node, "version", package->spec.version);
+    xmlNewProp (package_node, "release", package->spec.release);
+
+    files = rc_packman_file_list (packman, package);
+    for (iter = files; iter; iter = iter->next) {
+        RCPackageFile *file = iter->data;
+        struct stat st;
+        xmlNode *file_node;
+        gboolean was_removed = FALSE;
+
+        file_node = xmlNewNode (NULL, "file");
+        xmlNewProp (file_node, "filename", file->filename);
+
+        errno = 0;
+        if (stat (file->filename, &st) < 0) {
+            if (errno == ENOENT) {
+                xmlNewTextChild (file_node, NULL, "was_removed", "1");
+                was_removed = TRUE;
+            } else {
+                rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                      "Unable to stat '%s' in package '%s' "
+                                      "for change tracking",
+                                      file->filename,
+                                      g_quark_to_string (package->spec.nameq));
+                xmlFreeNode (package_node);
+                return NULL;
+            }
+        } else {
+            /* Only care about size of regular files */
+            if (S_ISREG (st.st_mode) && file->size != st.st_size) {
+                tmp = g_strdup_printf ("%ld", st.st_size);
+                xmlNewTextChild (file_node, NULL, "size", tmp);
+                g_free (tmp);
+            }
+
+            if (file->uid != st.st_uid) {
+                tmp = g_strdup_printf ("%d", st.st_uid);
+                xmlNewTextChild (file_node, NULL, "uid", tmp);
+                g_free (tmp);
+            }
+
+            if (file->gid != st.st_gid) {
+                tmp = g_strdup_printf ("%d", st.st_gid);
+                xmlNewTextChild (file_node, NULL, "gid", tmp);
+                g_free (tmp);
+            }
+
+            if (file->mode != st.st_mode) {
+                tmp = g_strdup_printf ("%d", st.st_mode);
+                xmlNewTextChild (file_node, NULL, "mode", tmp);
+                g_free (tmp);
+            }
+
+            /* Only care about mtime of regular files */
+            if (S_ISREG (st.st_mode) && file->mtime != st.st_mtime) {
+                tmp = g_strdup_printf ("%ld", st.st_mtime);
+                xmlNewTextChild (file_node, NULL, "mtime", tmp);
+                g_free (tmp);
+            }
+
+            /* Only md5sum regular files */
+            if (S_ISREG (st.st_mode)) {
+                tmp = rc_md5_digest (file->filename);
+                if (strcmp (file->md5sum, tmp) != 0)
+                    xmlNewTextChild (file_node, NULL, "md5sum", tmp);
+                g_free (tmp);
+            }
+        }
+
+        if (file_node->xmlChildrenNode) {
+            if (!was_removed) {
+                char *changedir;
+                char *basename;
+                char *newfile;
+
+                /* Move the old file someplace safe */
+                changedir = g_strdup_printf (RC_PACKMAN_CHANGES_DIR"%s",
+                                             cur_time);
+                if (!rc_file_exists (changedir)) {
+                    if (rc_mkdir (changedir, 0700) < 0) {
+                        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                              "Unable to create changedir "
+                                              "'%s'", changedir);
+                        xmlFreeNode (package_node);
+                        package_node = NULL;
+                        goto out;
+                    }
+                }
+
+                basename = g_path_get_basename (file->filename);
+                newfile = g_strconcat (changedir, "/", basename, NULL);
+                g_free (basename);
+
+                if (rc_cp (file->filename, newfile) < 0) {
+                    rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                          "Unable to copy '%s' to '%s' for "
+                                          "change tracking", 
+                                          file->filename, newfile);
+                    g_free (newfile);
+                    xmlFreeNode (package_node);
+                    package_node = NULL;
+                    goto out;
+                }
+
+                g_free (newfile);
+            }
+
+            xmlAddChild (package_node, file_node);
+        } else {
+            xmlFreeNode (file_node);
+        }
+    }
+
+out:
+    if (package_node && !package_node->xmlChildrenNode) {
+        xmlFreeNode (package_node);
+        package_node = NULL;
+    }
+
+    g_free (cur_time);
+    
+    return package_node;
+}
+
+static xmlDoc *
+load_or_create_changes_file (const char *filename)
+{
+    xmlDoc *doc;
+
+    if (!rc_file_exists (filename) || !(doc = xmlParseFile (filename))) {
+        xmlNode *root;
+
+        doc = xmlNewDoc ("1.0");
+        root = xmlNewNode (NULL, "change_history");
+        xmlDocSetRootElement (doc, root);
+    }
+
+    return doc;
+}
+
+static void
+rc_packman_track_changes (RCPackman      *packman,
+                          RCPackageSList *install_packages,
+                          RCPackageSList *remove_packages)
+{
+    RCPackageSList *iter;
+    xmlDoc *doc;
+    xmlNode *root, *node;
+
+    if (!rc_file_exists (RC_PACKMAN_CHANGES_DIR)) {
+        /*
+         * Make the dir restrictive; we don't know what kind of files
+         * will go in there.
+         */
+        if (rc_mkdir (RC_PACKMAN_CHANGES_DIR, 0700) < 0) {
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "Unable to create directory for "
+                                  "changes '"RC_PACKMAN_CHANGES_DIR"'");
+            return;
+        }
+    }
+
+    doc = load_or_create_changes_file (RC_PACKMAN_CHANGES_FILE);
+
+    if (!doc) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "Unable to open or create changes "
+                              "file '"RC_PACKMAN_CHANGES_DIR"'");
+        return;
+    }
+
+    root = xmlDocGetRootElement (doc);
+
+    /*
+     * First walk the list of packages to be installed, see if we're
+     * doing an upgrade, get the list of files in that package and check
+     * to see if the files have changed at all.
+     */
+    for (iter = install_packages; iter; iter = iter->next) {
+        RCPackage *package_to_install = iter->data;
+        RCPackageSList *system_packages;
+        RCPackage *system_package;
+
+        system_packages = rc_packman_query (
+            packman,
+            g_quark_to_string (package_to_install->spec.nameq));
+
+        if (!system_packages)
+            continue;
+
+        /*
+         * FIXME: What do we do in the case when multiple packages by the
+         * same name are installed?  Right now we just pick the first one,
+         * which is probably not the right thing to do.
+         *
+         * I think that we'd probably want to track all versions and then
+         * install all the versions when we rollback and apply the changes,
+         * but we currently don't have a way of doing an install (as opposed
+         * to an upgrade) to allow this.  (Obviously this is only a problem
+         * for RPM systems; dpkg doesn't allow it)
+         */
+        system_package = system_packages->data;
+
+        node = rc_packman_track_change (packman, system_package);
+
+        if (node)
+            xmlAddChild (root, node);
+    }
+
+    for (iter = remove_packages; iter; iter = iter->next) {
+        RCPackage *package_to_remove = iter->data;
+
+        node = rc_packman_track_change (packman, package_to_remove);
+
+        if (node)
+            xmlAddChild (root, node);
+    }
+
+    if (xmlSaveFormatFile (RC_PACKMAN_CHANGES_FILE, doc, 1) < 0) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "Unable to open '%s' for writing; changes "
+                              "cannot be tracked");
+        return;
+    }
 }
 
 /* Wrappers around all of the virtual functions */
@@ -220,11 +464,6 @@ rc_packman_transact (RCPackman       *packman,
     g_return_if_fail (packman);
 
     rc_packman_clear_error (packman);
-
-    if (packman->priv->busy) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL, NULL);
-        return;
-    }
 
     /* Make sure that no entry in install_packages appears more than
      * once, and that no entry in install_packages is also in
@@ -283,12 +522,16 @@ rc_packman_transact (RCPackman       *packman,
 
     g_assert (klass->rc_packman_real_transact);
 
-    packman->priv->busy = TRUE;
+    if (packman->priv->capabilities & RC_PACKMAN_CAP_REPACKAGING &&
+        packman->priv->track_changes)
+    {
+        rc_packman_track_changes (packman, install_packages, remove_packages);
+    }
 
-    klass->rc_packman_real_transact (packman, install_packages,
-                                     remove_packages, flags);
-
-    packman->priv->busy = FALSE;
+    if (!rc_packman_get_error (packman)) {
+        klass->rc_packman_real_transact (packman, install_packages,
+                                         remove_packages, flags);
+    }
 }
 
 RCPackageSList *
@@ -721,4 +964,12 @@ rc_packman_get_repackage_dir (RCPackman *packman)
     g_return_val_if_fail (packman, NULL);
 
     return packman->priv->repackage_dir;
+}
+
+void
+rc_packman_set_track_changes (RCPackman *packman, gboolean enabled)
+{
+    g_return_if_fail (packman);
+
+    packman->priv->track_changes = enabled;
 }
