@@ -26,6 +26,7 @@
 #include <config.h>
 #include "rc-world-subscriptions.h"
 
+#include "xml-util.h"
 #include "rc-debug.h"
 
 static GSList *old_subs = NULL;
@@ -55,7 +56,7 @@ rc_world_import_subscriptions_from_xml (RCWorld *world,
     node = node->xmlChildrenNode;
     while (node) {
         if (! strcmp (node->name, "channel")) {
-            xmlChar *id_str = xmlGetProp (node, "channel_id");
+            gchar *id_str = xml_get_prop (node, "channel_id");
             char *endptr;
             long id;
 
@@ -84,7 +85,7 @@ rc_world_import_subscriptions_from_xml (RCWorld *world,
                           id_str);
             }
 
-            xmlFree (id_str);
+            g_free (id_str);
         }
 
         node = node->next;

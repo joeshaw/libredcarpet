@@ -1,5 +1,11 @@
 2002-08-07  Jon Trowbridge  <trow@ximian.com>
 
+	* rc-world-dump.c: s/xmlGetProp/xml_get_prop/.
+
+	* rc-world-subscriptions.c
+	(rc_world_import_subscriptions_from_xml):
+	s/xmlGetProp/xml_get_prop/.
+
 	* rc-world-dump.c (rc_world_undump_from_xml): Fixed memory leak.
 
 	* rc-resolver.c (rc_resolver_resolve_dependencies): At the

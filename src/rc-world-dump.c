@@ -156,18 +156,18 @@ rc_world_undump_from_xml (RCWorld *world,
             char *priority_unsubd_str;
             char *priority_current_str;
             
-            name = xmlGetProp (channel_node, "name");
-            alias = xmlGetProp (channel_node, "alias");
+            name = xml_get_prop (channel_node, "name");
+            alias = xml_get_prop (channel_node, "alias");
             
-            id_str = xmlGetProp (channel_node, "id");
+            id_str = xml_get_prop (channel_node, "id");
             id = id_str ? atoi (id_str) : (dummy_id++);
             
-            subd_str = xmlGetProp (channel_node, "subscribed");
+            subd_str = xml_get_prop (channel_node, "subscribed");
             subd = subd_str ? atoi (subd_str) : 0;
 
-            priority_str = xmlGetProp (channel_node, "priority_base");
-            priority_unsubd_str = xmlGetProp (channel_node, "priority_unsubd");
-            priority_current_str = xmlGetProp (channel_node, "priority_current");
+            priority_str = xml_get_prop (channel_node, "priority_base");
+            priority_unsubd_str = xml_get_prop (channel_node, "priority_unsubd");
+            priority_current_str = xml_get_prop (channel_node, "priority_current");
             current_channel = rc_world_add_channel (world,
                                                     name,
                                                     alias ? alias : "foo",
