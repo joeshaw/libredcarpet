@@ -1,5 +1,14 @@
 2001-01-23  Ian Peters  <itp@helixcode.com>
 
+	* rc-rpmman.c: replaced some tabs with the correct number of
+	spaces
+	(rc_rpmman_query): back to using RPMDBI_LABEL, I guess
+	(rc_rpmman_find_file): nothing changed here; I just wanted to
+	point out that my first attempt at writing this for rpm4 worked.
+	;-)
+
+2001-01-23  Ian Peters  <itp@helixcode.com>
+
 	* rc-rpmman.c (rc_rpmman_query): s/RPMDBI_LABEL/RPMDBI_NAME/,
 	after conversation with msw
 	(rc_rpmman_find_file): rpm4 version initial pass, let's see if

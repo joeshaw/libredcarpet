@@ -243,7 +243,7 @@ transaction_add_remove_pkgs (RCPackman *p, rpmTransactionSet transaction,
         rpmdbMatchIterator mi;
         Header hdr;
         unsigned int offset;
-	int count;
+        int count;
 
         mi = rpmdbInitIterator (db, RPMDBI_LABEL, pkg_name, 0);
         count = rpmdbGetIteratorCount (mi);
@@ -653,8 +653,9 @@ rc_rpmman_depends_fill (Header hdr, RCPackage *pkg)
        broken, so if that's the case, we'll set the count to zero, as we
        should. *sigh* */
 
-    if (verrels == NULL)
-	count = 0;
+    if (verrels == NULL) {
+        count = 0;
+    }
 
     parse_versions (verrels, &epochs, &versions, &releases, count);
 
@@ -859,8 +860,7 @@ rc_rpmman_query (RCPackman *p, RCPackage *pkg)
         return (pkg);
     }
 
-//    mi = rpmdbInitIterator (db, RPMDBI_LABEL, pkg->spec.name, 0);
-    mi = rpmdbInitIterator (db, RPMDBI_NAME, pkg->spec.name, 0);
+    mi = rpmdbInitIterator (db, RPMDBI_LABEL, pkg->spec.name, 0);
 
     if (!mi) {
         pkg->installed = FALSE;
@@ -1000,7 +1000,7 @@ rc_rpmman_query_all (RCPackman *p)
                                &pkg->section,
                                &pkg->installed_size, &pkg->summary,
                                &pkg->description);
-	pkg->installed = TRUE;
+        pkg->installed = TRUE;
 
         rc_rpmman_depends_fill (hdr, pkg);
 
@@ -1050,14 +1050,14 @@ rc_rpmman_query_all (RCPackman *p)
                                &pkg->spec.version, &pkg->spec.release,
                                &pkg->section, &pkg->installed_size,
                                &pkg->summary, &pkg->description);
-	pkg->installed = TRUE;
+        pkg->installed = TRUE;
 
         rc_rpmman_depends_fill (hdr, pkg);
 
         list = g_slist_append (list, pkg);
 #if 1
-	/* So, this line seems to have issues. It frees data that the package
-	   needs, and doing so ends up corrupting the linked list. Ick. */
+        /* So, this line seems to have issues. It frees data that the package
+           needs, and doing so ends up corrupting the linked list. Ick. */
         /* Ok, I think I've fixed this.  I need to test it, but can't, because
            I don't have a convenient RPM-based machine.  Suck. */
         headerFree(hdr);
