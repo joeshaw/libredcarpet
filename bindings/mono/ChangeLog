@@ -1,5 +1,8 @@
 2004-10-29  Tambet Ingo  <tambet@ximian.com>
 
+	* generated/PackageSpec.cs: The change from PackageSpec.custom
+	didn't make it here.
+
 	* Makefile.am: Add generated/* to EXTRA_DIST.
 
 	* PackageSpec.custom: Make default constructor public.

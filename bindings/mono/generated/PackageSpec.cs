@@ -161,7 +161,7 @@ namespace RC {
 #region Customized extensions
 #line 1 "PackageSpec.custom"
 
-      protected PackageSpec () {}
+      public PackageSpec () {}
 
       [DllImport("libredcarpet")]
 	  static extern int rc_package_spec_equal(RC.PackageSpec a, RC.PackageSpec b);
