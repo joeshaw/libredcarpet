@@ -126,6 +126,9 @@ if test "x$enable_backend_dpkg" = "xyes"; then
 fi
 
 dnl libxml
+AC_SUBST(XML_LIBS)
+AC_SUBST(XML_CFLAGS)
+
 XML_LIBS=`xml-config --libs`
 XML_CFLAGS=`xml-config --cflags`
 
