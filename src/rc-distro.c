@@ -85,10 +85,16 @@ distro_check_eval_fd_read_line_cb (RCLineBuf *line_buf, const char *line,
 {
     DistroCheckEvalFDInfo *info = user_data;
 
-    if (strstr (line, info->target)) {
+    char *file_line = g_ascii_strdown(line, -1);
+    char *detect = g_ascii_strdown(info->target, -1);
+
+    if (strstr (file_line, detect)) {
         info->found = TRUE;
         g_main_quit (info->loop);
     }
+
+    g_free(file_line);
+    g_free(detect);
 }
 
 static void
