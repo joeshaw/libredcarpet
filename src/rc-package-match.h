@@ -35,7 +35,7 @@ struct _RCWorld; /* forward declaration */
 
 typedef struct _RCPackageMatch RCPackageMatch;
 
-typedef gboolean (*RCPackageMatchFn) (RCPackageMatch *, gpointer);
+typedef gboolean (*RCPackageMatchFn) (RCPackageMatch *match, gpointer data);
 
 RCPackageMatch *rc_package_match_new (void);
 

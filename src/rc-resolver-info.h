@@ -60,7 +60,7 @@ struct _RCResolverInfo {
     guint is_important : 1;
 };
 
-typedef void (*RCResolverInfoFn) (RCResolverInfo *, gpointer);
+typedef void (*RCResolverInfoFn) (RCResolverInfo *info, gpointer data);
 
 const char        *rc_resolver_info_type_to_string   (RCResolverInfoType);
 RCResolverInfoType rc_resolver_info_type_from_string (const char *);

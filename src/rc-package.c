@@ -248,6 +248,14 @@ rc_package_is_synthetic (RCPackage *package)
     return rc_package_is_package_set (package);
 }
 
+gboolean
+rc_package_is_install_only (RCPackage *package)
+{
+    g_return_val_if_fail (package != NULL, FALSE);
+
+    return package->install_only;
+}
+
 RCPackageSList *
 rc_package_slist_ref (RCPackageSList *packages)
 {
@@ -338,6 +346,14 @@ rc_package_get_latest_update(RCPackage *package)
 
     return (RCPackageUpdate *) package->history->data;
 } /* rc_package_get_latest_update */
+
+RCPackageUpdateSList *
+rc_package_get_updates (RCPackage *package)
+{
+    g_return_val_if_fail (package, NULL);
+
+    return package->history;
+}
 
 void
 rc_package_add_dummy_update (RCPackage  *package,
@@ -486,4 +502,20 @@ rc_package_get_children (RCPackage *package)
     g_return_val_if_fail (package != NULL, NULL);
 
     return package->children_a;
+}
+
+RCPackageDepArray *
+rc_package_get_suggests (RCPackage *package)
+{
+    g_return_val_if_fail (package != NULL, NULL);
+
+    return package->suggests_a;
+}
+
+RCPackageDepArray *
+rc_package_get_recommends (RCPackage *package)
+{
+    g_return_val_if_fail (package != NULL, NULL);
+
+    return package->recommends_a;
 }

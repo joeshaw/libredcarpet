@@ -32,7 +32,7 @@ struct _RCWorld;
 typedef struct _RCChannel RCChannel;
 typedef GSList RCChannelSList;
 // typedef enum _RCChannelType RCChannelType;
-typedef gboolean (*RCChannelFn) (RCChannel *, gpointer);
+typedef gboolean (*RCChannelFn) (RCChannel *channel, gpointer data);
 typedef gboolean (*RCChannelAndSubdFn) (RCChannel *, gboolean, gpointer);
 
 #include "rc-package.h"

@@ -1,3 +1,23 @@
+2004-09-10  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-resolver-info.h: Add argument names to virtual function
+	prototypes. This makes mono bindings' life easier.
+
+	* rc-resolver-context.h: Ditto.
+
+	* rc-package.h: Ditto.
+
+	* rc-package-match.h: Ditto.
+
+	* rc-package-dep.h: Ditto.
+
+	* rc-channel.h: Ditto.
+
+	* rc-package.c (rc_package_is_install_only): Add for bindings.
+	(rc_package_get_updates): Ditto.
+	(rc_package_get_suggests): Ditto.
+	(rc_package_get_recommends): Ditto.
+
 2004-09-02  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-package-match.h: Use typedef'ed RCPackageMatch everywhere,

@@ -27,7 +27,7 @@
 #define RC_PACKAGE_FIND_LEAKS
 
 typedef struct _RCPackage RCPackage;
-typedef gboolean (*RCPackageFn) (RCPackage *, gpointer);
+typedef gboolean (*RCPackageFn) (RCPackage *pkg, gpointer data);
 
 typedef GSList RCPackageSList;
 
@@ -44,8 +44,12 @@ typedef GHashTable RCPackageHashTableBySpec;
 #include "rc-channel.h"
 #include "rc-arch.h"
 
-typedef void     (*RCPackagePairFn) (RCPackage *, RCPackage *, gpointer);
-typedef gboolean (*RCPackageAndSpecFn) (RCPackage *, RCPackageSpec *, gpointer);
+typedef void     (*RCPackagePairFn) (RCPackage *pkg1,
+                                     RCPackage *pkg2,
+                                     gpointer data);
+typedef gboolean (*RCPackageAndSpecFn) (RCPackage *pkg,
+                                        RCPackageSpec *spec,
+                                        gpointer data);
 
 struct _RCPackage {
     RCPackageSpec spec;
@@ -107,6 +111,7 @@ const char *rc_package_get_name (RCPackage *package);
 gboolean   rc_package_is_installed     (RCPackage *package);
 gboolean   rc_package_is_package_set   (RCPackage *package);
 gboolean   rc_package_is_synthetic     (RCPackage *package);
+gboolean   rc_package_is_install_only  (RCPackage *package);
 
 RCPackageSList *rc_package_slist_ref   (RCPackageSList *packages);
 void            rc_package_slist_unref (RCPackageSList *packages);
@@ -118,9 +123,10 @@ RCPackageSList *rc_package_slist_sort_by_pretty_name (RCPackageSList *packages);
 RCPackageSList *rc_package_hash_table_by_spec_to_list (RCPackageHashTableBySpec *ht);
 RCPackageSList *rc_package_hash_table_by_string_to_list (RCPackageHashTableBySpec *ht);
 
-void             rc_package_add_update        (RCPackage *package,
-                                               RCPackageUpdate *update);
-RCPackageUpdate *rc_package_get_latest_update (RCPackage *package);
+void                  rc_package_add_update        (RCPackage *package,
+                                                    RCPackageUpdate *update);
+RCPackageUpdate      *rc_package_get_latest_update (RCPackage *package);
+RCPackageUpdateSList *rc_package_get_updates       (RCPackage *package);
 
 void             rc_package_add_dummy_update  (RCPackage  *package,
                                                const char *package_filename,
@@ -150,6 +156,8 @@ RCPackageDepArray *rc_package_get_requires     (RCPackage *package);
 RCPackageDepArray *rc_package_get_provides     (RCPackage *package);
 RCPackageDepArray *rc_package_get_conflicts    (RCPackage *package);
 RCPackageDepArray *rc_package_get_obsoletes    (RCPackage *package);
-RCPackageDepArray *rc_pakcage_get_children     (RCPackage *package);
+RCPackageDepArray *rc_package_get_children     (RCPackage *package);
+RCPackageDepArray *rc_package_get_suggests     (RCPackage *package);
+RCPackageDepArray *rc_package_get_recommends   (RCPackage *package);
 
 #endif /* _RC_PACKAGE_H */

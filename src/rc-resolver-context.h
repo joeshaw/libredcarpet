@@ -48,11 +48,15 @@ typedef enum {
 
 typedef struct _RCResolverContext RCResolverContext;
 
-typedef void (*RCResolverContextFn) (RCResolverContext *, gpointer);
-typedef void (*RCMarkedPackageFn) (RCPackage *, RCPackageStatus, gpointer);
-typedef void (*RCMarkedPackagePairFn) (RCPackage *, RCPackageStatus, 
-                                       RCPackage *, RCPackageStatus,
-                                       gpointer);
+typedef void (*RCResolverContextFn) (RCResolverContext *ctx, gpointer data);
+typedef void (*RCMarkedPackageFn) (RCPackage *pkg,
+                                   RCPackageStatus status,
+                                   gpointer data);
+typedef void (*RCMarkedPackagePairFn) (RCPackage *pkg1,
+                                       RCPackageStatus status1, 
+                                       RCPackage *pkg2,
+                                       RCPackageStatus status2,
+                                       gpointer data);
 
 struct _RCResolverContext {
     int refs;
