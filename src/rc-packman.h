@@ -73,13 +73,33 @@ struct _RCPackmanClass {
 
     /* Signals */
 
+    /* The basic idea for these is:
+     *
+     * _start
+     *   total is the number of expected steps for the phase
+     * _step
+     *   tells you which step it's about to begin, and the name of the
+     *   package being mangled
+     * _progress
+     *   for a given step, tells you some measure of the percentage
+     *   complete (for example, amount bytes of total)
+     * _done
+     *   the phase is complete
+     */
+
+    void (*configure_start)(RCPackman *packman, gint total);
+    void (*configure_step)(RCPackman *packman, gchar *name, gint seqno);
     void (*configure_progress)(RCPackman *packman, gint amount, gint total);
-    void (*configure_step)(RCPackman *packman, gint seqno, gint total);
     void (*configure_done)(RCPackman *packman);
 
-    void (*transaction_progress)(RCPackman *packman, gint amount, gint total);
-    void (*transaction_step)(RCPackman *packman, gint seqno, gint total);
-    void (*transaction_done)(RCPackman *packman);
+    /* In _step install is TRUE for a package being installed, FALSE
+     * for a package being removed */
+
+    void (*transact_start)(RCPackman *packman, gint total);
+    void (*transact_step)(RCPackman *packman, gboolean install, gchar *name,
+                         gint seqno);
+    void (*transact_progress)(RCPackman *packman, gint amount, gint total);
+    void (*transact_done)(RCPackman *packman);
 
     /* Virtual functions */
 

@@ -94,9 +94,7 @@ transact_cb (const Header h, const rpmCallbackType what,
     InstallState *state = (InstallState *)data;
 
     /* heh heh heh */
-    while (gtk_events_pending ()) {
-        gtk_main_iteration ();
-    }
+    GTKFLUSH;
 
     switch (what) {
     case RPMCALLBACK_INST_OPEN_FILE:
@@ -109,23 +107,14 @@ transact_cb (const Header h, const rpmCallbackType what,
 
     case RPMCALLBACK_INST_PROGRESS:
         gtk_signal_emit_by_name (GTK_OBJECT (state->packman),
-                                 "transaction_progress", amount, total);
+                                 "transact_progress", amount, total);
         GTKFLUSH;
-        if (amount == total) {
-            gtk_signal_emit_by_name (GTK_OBJECT (state->packman),
-                                     "transaction_step", ++state->seqno,
-                                     state->install_total +
-                                     state->remove_total +
-                                     state->install_extra);
-            GTKFLUSH;
-        }
         break;
 
     case RPMCALLBACK_TRANS_PROGRESS:
         if (state->configuring) {
             gtk_signal_emit_by_name (GTK_OBJECT (state->packman),
-                                     "configure_step", ++state->seqno,
-                                     state->install_total);
+                                     "configure_step", NULL, ++state->seqno);
             GTKFLUSH;
             if (state->seqno == state->install_total) {
                 state->configuring = FALSE;
@@ -134,7 +123,7 @@ transact_cb (const Header h, const rpmCallbackType what,
                                          "configure_done");
                 GTKFLUSH;
                 gtk_signal_emit_by_name (GTK_OBJECT (state->packman),
-                                         "transaction_step", 0,
+                                         "transact_start",
                                          state->install_total +
                                          state->install_extra +
                                          state->remove_total);
@@ -142,15 +131,16 @@ transact_cb (const Header h, const rpmCallbackType what,
             }
         } else {
             gtk_signal_emit_by_name (GTK_OBJECT (state->packman),
-                                     "transaction_step",
-                                     ++state->seqno, state->install_total +
-                                     state->remove_total +
-                                     state->install_extra);
+                                     "transact_step", FALSE, NULL,
+                                     ++state->seqno);
             GTKFLUSH;
         }
         break;
 
     case RPMCALLBACK_INST_START:
+        gtk_signal_emit_by_name (GTK_OBJECT (state->packman),
+                                 "transact_step", TRUE, pkgKey,
+                                 ++state->seqno);
         break;
 
     case RPMCALLBACK_TRANS_START:
@@ -281,7 +271,7 @@ transaction_add_remove_packages (RCPackman *packman,
         unsigned int offset;
         int count;
 
-        mi = rpmdbInitIterator (RC_RPMMAN (packman)->read_db, RPMDBI_LABEL,
+        mi = rpmdbInitIterator (RC_RPMMAN (packman)->db, RPMDBI_LABEL,
                                 package_name, 0);
         count = rpmdbGetIteratorCount (mi);
 
@@ -338,7 +328,7 @@ transaction_add_remove_packages (RCPackman *packman,
         gchar *package_name = rc_package_to_rpm_name (package);
         dbiIndexSet matches;
 
-        rc = rpmdbFindByLabel (RC_RPMMAN (packman)->read_db, package_name,
+        rc = rpmdbFindByLabel (RC_RPMMAN (packman)->db, package_name,
                                &matches);
 
         switch (rc) {
@@ -418,7 +408,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     RCPackageSList *iter;
     struct rpmDependencyConflict *conflicts;
     int transaction_flags, problem_filter;
-    rpmdb write_db = NULL;
+    RCRpmman *rpmman = RC_RPMMAN (packman);
 
     transaction_flags = 0; /* Nothing interesting to do here */
     problem_filter =
@@ -427,14 +417,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         RPMPROB_FILTER_REPLACENEWFILES |
         RPMPROB_FILTER_OLDPACKAGE;
 
-    if (rpmdbOpen (RC_RPMMAN (packman)->rpmroot, &write_db, O_RDWR, 0644)) {
-        rc_packman_set_error (RC_PACKMAN (packman), RC_PACKMAN_ERROR_ABORT,
-                              "unable to open RPM database for writing");
-
-        goto ERROR;
-    }
-
-    transaction = rpmtransCreateSet (write_db, RC_RPMMAN (packman)->rpmroot);
+    transaction = rpmtransCreateSet (rpmman->db, RC_RPMMAN (packman)->rpmroot);
 
     if (!(transaction_add_install_packages (packman, transaction,
                                             install_packages)))
@@ -491,7 +474,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         g_free (package->spec.release);
         package->spec.release = NULL;
 
-        if ((rc_packman_query (packman, package))->installed) {
+        if ((package = rc_packman_query (packman, package))->installed) {
             extras++;
         }
 
@@ -504,9 +487,21 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     state->install_total = g_slist_length (install_packages);
     state->install_extra = extras;
     state->remove_total = g_slist_length (remove_packages);
+    state->configuring = state->install_total ? TRUE : FALSE;
 
     rpm_error = 0;
     rpm_reason = NULL;
+
+    /* If we're installing any packages at all, expect to get the
+       configure steps first.  Otherwise, you'll go directly to
+       transacts for the removed packages. */
+    if (state->install_total) {
+        gtk_signal_emit_by_name (GTK_OBJECT (packman), "configure_start",
+                                 state->install_total);
+    } else {
+        gtk_signal_emit_by_name (GTK_OBJECT (packman), "transact_start",
+                                 state->remove_total);
+    }
 
     rc = rpmRunTransactions (transaction, transact_cb, (void *) state,
                              NULL, &probs, transaction_flags, problem_filter);
@@ -521,22 +516,16 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         goto ERROR;
     }
 
-    gtk_signal_emit_by_name (GTK_OBJECT (packman), "transaction_done");
+    gtk_signal_emit_by_name (GTK_OBJECT (packman), "transact_done");
     GTKFLUSH;
 
     rpmtransFree (transaction);
-
-    rpmdbClose (write_db);
 
     return;
 
   ERROR:
     rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                           "Unable to complete RPM transaction");
-
-    if (write_db) {
-        rpmdbClose (write_db);
-    }
 } /* rc_rpmman_transact */
 
 static RCPackageSection
@@ -1171,7 +1160,7 @@ rc_rpmman_query (RCPackman *packman, RCPackage *package)
     rpmdbMatchIterator mi = NULL;
     Header header;
 
-    mi = rpmdbInitIterator (RC_RPMMAN (packman)->read_db, RPMDBI_LABEL,
+    mi = rpmdbInitIterator (RC_RPMMAN (packman)->db, RPMDBI_LABEL,
                             package->spec.name, 0);
 
     /* I think this is an error? */
@@ -1223,7 +1212,7 @@ rc_rpmman_query (RCPackman *packman, RCPackage *package)
     dbiIndexSet matches;
     guint i;
 
-    switch (rpmdbFindPackage (RC_RPMMAN (packman)->read_db,
+    switch (rpmdbFindPackage (RC_RPMMAN (packman)->db,
                               package->spec.name, &matches)) {
     case -1:
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
@@ -1243,7 +1232,7 @@ rc_rpmman_query (RCPackman *packman, RCPackage *package)
     for (i = 0; i < matches.count; i++) {
         Header header;
 
-        if (!(header = rpmdbGetRecord (RC_RPMMAN (packman)->read_db,
+        if (!(header = rpmdbGetRecord (RC_RPMMAN (packman)->db,
                                        matches.recs[i].recOffset))) {
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "unable to fetch RPM header from database");
@@ -1327,7 +1316,7 @@ rc_rpmman_query_all (RCPackman *packman)
     rpmdbMatchIterator mi = NULL;
     Header header;
 
-    mi = rpmdbInitIterator (RC_RPMMAN (packman)->read_db, RPMDBI_PACKAGES,
+    mi = rpmdbInitIterator (RC_RPMMAN (packman)->db, RPMDBI_PACKAGES,
                             NULL, 0);
 
     if (!mi) {
@@ -1373,18 +1362,18 @@ rc_rpmman_query_all (RCPackman *packman)
     guint recno;
     RCRpmman *rpmman = RC_RPMMAN (packman);
 
-    if (!(recno = rpmdbFirstRecNum (rpmman->read_db))) {
+    if (!(recno = rpmdbFirstRecNum (rpmman->db))) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "unable to access RPM database");
 
         goto ERROR;
     }
 
-    for (; recno; recno = rpmdbNextRecNum (rpmman->read_db, recno)) {
+    for (; recno; recno = rpmdbNextRecNum (rpmman->db, recno)) {
         RCPackage *package;
         Header header;
         
-        if (!(header = rpmdbGetRecord (rpmman->read_db, recno))) {
+        if (!(header = rpmdbGetRecord (rpmman->db, recno))) {
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "Unable to read RPM database entry");
 
@@ -1751,7 +1740,7 @@ rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
     Header header;
     RCPackage *package;
 
-    mi = rpmdbInitIterator (RC_RPMMAN (packman)->read_db, RPMTAG_BASENAMES,
+    mi = rpmdbInitIterator (RC_RPMMAN (packman)->db, RPMTAG_BASENAMES,
                             filename, 0);
 
     if (!mi) {
@@ -1799,7 +1788,7 @@ rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
     Header header;
     RCPackage *package;
 
-    if (rpmdbFindByFile (RC_RPMMAN (packman)->read_db, filename, &matches) == -1) {
+    if (rpmdbFindByFile (RC_RPMMAN (packman)->db, filename, &matches) == -1) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "RPM database search failed");
 
@@ -1813,7 +1802,7 @@ rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
         goto ERROR;
     }
 
-    if (!(header = rpmdbGetRecord (RC_RPMMAN (packman)->read_db,
+    if (!(header = rpmdbGetRecord (RC_RPMMAN (packman)->db,
                                    matches.recs[0].recOffset))) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "read of RPM header failed");
@@ -1848,7 +1837,7 @@ rc_rpmman_destroy (GtkObject *obj)
 
     g_free (rpmman->rpmroot);
 
-    rpmdbClose (rpmman->read_db);
+    rpmdbClose (rpmman->db);
 
     if (GTK_OBJECT_CLASS (parent_class)->destroy)
         (* GTK_OBJECT_CLASS (parent_class)->destroy) (obj);
@@ -1897,7 +1886,7 @@ rc_rpmman_init (RCRpmman *obj)
     }
 
     if (!getenv ("RC_NO_RPM_DB")) {
-        if (rpmdbOpen (obj->rpmroot, &obj->read_db, O_RDONLY, 0644)) {
+        if (rpmdbOpen (obj->rpmroot, &obj->db, O_RDWR, 0644)) {
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
                                   "unable to open RPM database");
         }

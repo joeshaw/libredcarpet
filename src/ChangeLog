@@ -1,3 +1,13 @@
+2001-02-28  Ian Peters  <itp@ximian.com>
+
+	* rc-debman.c (i18n_fixer): added.  fixes the language issues with
+	dpkg I think.  Switch to new RCPackman signals
+
+	* rc-packman.c, rc-packman.h: make sane the signals RCPackman
+	emits
+
+	* rc-rpmman.c, rc-rpmman.h: use these new sane signals
+
 2001-02-27  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c: ewpz. don't get rid of old provides conflicts if the

@@ -105,6 +105,17 @@ dump_argv (int level, gchar **argv)
 } /* dump_argv */
 
 /*
+  Go Wichert, go Wichert
+*/
+
+static void
+i18n_fixer ()
+{
+    putenv ("LANG");
+    putenv ("LC_ALL");
+}
+
+/*
   These two functions are used to cleanly destroy the hash table in an
   RCDebman, either after an rc_packman_transact, when we need to
   invalidate the hash table, or at object destroy
@@ -716,10 +727,18 @@ do_purge_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
         g_string_append (do_purge_info->hack_info.buf, "\n");
 
     if (!strncmp (line, "Removing", strlen ("Removing"))) {
+        guint length = strlen ("Removing ");
+        gchar *ptr;
+        gchar *name;
+
+        ptr = strchr (line + length, ' ');
+        name = g_strndup (line + length, ptr - (line + length));
+
         gtk_signal_emit_by_name (GTK_OBJECT (do_purge_info->packman),
-                                 "transaction_step",
-                                 ++do_purge_info->install_state->seqno,
-                                 do_purge_info->install_state->total);
+                                 "transact_step", FALSE, name,
+                                 ++do_purge_info->install_state->seqno);
+
+        g_free (name);
 
         do_purge_info->hack_info.buf =
             g_string_truncate (do_purge_info->hack_info.buf, 0);
@@ -814,6 +833,8 @@ do_purge (RCPackman *packman, DebmanInstallState *install_state)
         putenv ("LD_PRELOAD=" LIBDIR "/rc-dpkg-helper.so");
         putenv (g_strdup_printf ("RC_READ_NOTIFY_PID=%d", parent));
         putenv ("PAGER=cat");
+
+        i18n_fixer ();
 
         rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ \
                   ": /usr/bin/dpkg --purge --pending\n");
@@ -1006,10 +1027,27 @@ do_unpack_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
     if (!strncmp (line, "Unpacking", strlen ("Unpacking")) ||
         !strncmp (line, "Purging", strlen ("Purging")))
     {
+        guint length;
+        gboolean install;
+        gchar *ptr;
+        gchar *name;
+
+        if (line[0] == 'U') {
+            length = strlen ("Unpacking ");
+            install = TRUE;
+        } else {
+            length = strlen ("Purging configuration files for ");
+            install = FALSE;
+        }
+
+        ptr = strchr (line + length, ' ');
+        name = g_strndup (line + length, ptr - (line + length));
+
         gtk_signal_emit_by_name (GTK_OBJECT (do_unpack_info->packman),
-                                 "transaction_step",
-                                 ++do_unpack_info->install_state->seqno,
-                                 do_unpack_info->install_state->total);
+                                 "transact_step", install, name,
+                                 ++do_unpack_info->install_state->seqno);
+
+        g_free (name);
 
         do_unpack_info->hack_info.buf =
             g_string_truncate (do_unpack_info->hack_info.buf, 0);
@@ -1116,14 +1154,16 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
         case 0:
             close (fds[0]);
 
-            rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ ":");
-            dump_argv (RC_DEBUG_LEVEL_ERROR, argv);
+            rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ":");
+            dump_argv (RC_DEBUG_LEVEL_INFO, argv);
 
             fflush (stdout);
             dup2 (fds[1], STDOUT_FILENO);
 
             fflush (stderr);
             dup2 (fds[1], STDERR_FILENO);
+
+            i18n_fixer ();
 
             execv ("/usr/bin/dpkg", argv);
             break;
@@ -1242,6 +1282,8 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
             putenv ("LD_PRELOAD=" LIBDIR "/rc-dpkg-helper.so");
             putenv (g_strdup_printf ("RC_READ_NOTIFY_PID=%d", parent));
             putenv ("PAGER=cat");
+
+            i18n_fixer ();
 
             rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ":");
             dump_argv (RC_DEBUG_LEVEL_INFO, argv);
@@ -1367,10 +1409,18 @@ do_configure_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
         g_string_append (do_configure_info->hack_info.buf, "\n");
 
     if (!strncmp (line, "Setting up ", strlen ("Setting up "))) {
+        guint length = strlen ("Setting up ");
+        gchar *ptr;
+        gchar *name;
+
+        ptr = strchr (line + length, ' ');
+        name = g_strndup (line + length, ptr - (line + length));
+
         gtk_signal_emit_by_name (GTK_OBJECT (do_configure_info->packman),
-                                 "configure_step",
-                                 ++do_configure_info->install_state->seqno,
-                                 do_configure_info->install_state->total);
+                                 "configure_step", name,
+                                 ++do_configure_info->install_state->seqno);
+
+        g_free (name);
 
         do_configure_info->hack_info.buf =
             g_string_truncate (do_configure_info->hack_info.buf, 0);
@@ -1468,6 +1518,8 @@ do_configure (RCPackman *packman, DebmanInstallState *install_state)
         putenv ("LD_PRELOAD=" LIBDIR "/rc-dpkg-helper.so");
         putenv (g_strdup_printf ("RC_READ_NOTIFY_PID=%d", parent));
         putenv ("PAGER=cat");
+
+        i18n_fixer ();
 
         rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ \
                   ": /usr/bin/dpkg --configure --pending\n");
@@ -1588,7 +1640,7 @@ rc_debman_transact (RCPackman *packman, RCPackageSList *install_packages,
         }
     }
 
-    gtk_signal_emit_by_name (GTK_OBJECT (packman), "transaction_step", 0,
+    gtk_signal_emit_by_name (GTK_OBJECT (packman), "transact_start",
                              install_state->total);
 
     if (install_packages) {
@@ -1628,7 +1680,7 @@ rc_debman_transact (RCPackman *packman, RCPackageSList *install_packages,
         }
     }
 
-    gtk_signal_emit_by_name (GTK_OBJECT (packman), "transaction_done");
+    gtk_signal_emit_by_name (GTK_OBJECT (packman), "transact_done");
 
     if (install_packages) {
         rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ": about to configure\n");
@@ -1636,7 +1688,7 @@ rc_debman_transact (RCPackman *packman, RCPackageSList *install_packages,
         install_state->total = g_slist_length (install_packages);
         install_state->seqno = 0;
 
-        gtk_signal_emit_by_name (GTK_OBJECT (packman), "configure_step", 0,
+        gtk_signal_emit_by_name (GTK_OBJECT (packman), "configure_start",
                                  install_state->total);
 
         if (!(do_configure (packman, install_state))) {
@@ -1660,6 +1712,8 @@ rc_debman_transact (RCPackman *packman, RCPackageSList *install_packages,
   END:
     g_free (install_state);
     hash_destroy (RC_DEBMAN (packman));
+    /* If we screwed up the status file let's fix it */
+    verify_status (packman);
 }
 
 /*
@@ -2107,6 +2161,8 @@ rc_debman_query_file (RCPackman *packman, const gchar *filename)
         fflush (stdout);
         dup2 (fds[1], STDOUT_FILENO);
         close (fds[1]);
+
+        i18n_fixer ();
 
         rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ \
                   ": /usr/bin/dpkg-deb -f %s\n", filename);
