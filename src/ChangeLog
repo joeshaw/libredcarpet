@@ -1,5 +1,7 @@
 2005-01-03  Tambet Ingo  <tambet@ximian.com>
 
+	* rc-package-spec.c (rc_package_spec_get_arch): Fix typo.
+
 	Move arch from RCPackage to RCPackageSpec.
 
 	* rc-xml.c (parser_package_end, rc_xml_node_to_package) 

@@ -155,7 +155,7 @@ rc_package_spec_set_epoch (RCPackageSpec *rcps, gint value)
 }
 
 RCArch
-rc_package_spec_spec_get_arch (RCPackageSpec *rcps)
+rc_package_spec_get_arch (RCPackageSpec *rcps)
 {
     g_return_val_if_fail (rcps != NULL, RC_ARCH_UNKNOWN);
 
