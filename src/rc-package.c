@@ -46,6 +46,8 @@ rc_package_copy (RCPackage *old_pkg)
 
     pkg->history = rc_package_update_slist_copy (old_pkg->history);
 
+    pkg->hold = old_pkg->hold;
+
     return (pkg);
 }
 
