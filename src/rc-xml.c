@@ -1113,12 +1113,10 @@ rc_xml_node_to_package_dep_internal (const xmlNode *node)
     name = xml_get_prop (node, "name");
     tmp = xml_get_prop (node, "op");
     if (tmp) {
-        guint epoch;
         relation = rc_package_relation_from_string (tmp);
-        if (xml_get_guint32_value (node, "epoch", &epoch)) {
-            has_epoch = 1;
-            epoch = epoch;
-        }
+        
+        has_epoch = xml_get_guint32_value (node, "epoch", &epoch);
+        
         version =
             xml_get_prop (node, "version");
         release =

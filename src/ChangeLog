@@ -1,5 +1,9 @@
 2002-08-16  Jon Trowbridge  <trow@ximian.com>
 
+	* rc-xml.c (rc_xml_node_to_package_dep_internal): Wow... the way
+	this code tried to extract the epoch from the dep tag was _really_
+	broken.  Fixed.
+
 	* rc-queue-item.c (require_item_process): When there are no
 	providers for the requirement, cause the resolution attempt to
 	fail if we can't come up with either something to uninstall or an
