@@ -78,8 +78,6 @@ int main (int argc, char *argv[])
                  rc_packman_get_reason (packman));
     }
 
-    rc_packman_set_packman (packman);
-
     if (!rc_packman_parse_version (packman, argv[1], &has_epoch, &epoch,
                                    &version, &release)) {
         g_error ("Couldn't parse version string: %s", argv[1]);
