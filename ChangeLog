@@ -1,3 +1,9 @@
+2004-10-29  James Willcox  <james@ximian.com>
+
+	* configure.in:
+
+	Look for gacutil when compiling mono bindings
+
 2004-10-12  James Willcox  <james@ximian.com>
 
 	* configure.in: set version to 6.7.0
