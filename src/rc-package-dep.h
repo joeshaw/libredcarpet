@@ -5,12 +5,21 @@
 
 #include "rc-package-spec.h"
 
-typedef guint RCPackageRelation;
+#define RELATION_ANY 0
+#define RELATION_EQUAL (1 << 0)
+#define RELATION_LESS (1 << 1)
+#define RELATION_GREATER (1 << 2)
 
-#define RC_RELATION_ANY 0
-#define RC_RELATION_EQUAL (1 << 0)
-#define RC_RELATION_LESS (1 << 1)
-#define RC_RELATION_GREATER (1 << 2)
+/* This enum is here so that gdb can give us pretty strings */
+typedef enum {
+    RC_RELATION_ANY = RELATION_ANY,
+    RC_RELATION_EQUAL = RELATION_EQUAL,
+    RC_RELATION_LESS = RELATION_LESS,
+    RC_RELATION_LESS_EQUAL = RELATION_LESS | RELATION_EQUAL,
+    RC_RELATION_GREATER = RELATION_GREATER,
+    RC_RELATION_GREATER_EQUAL = RELATION_GREATER | RELATION_EQUAL,
+    RC_RELATION_NOT_EQUAL = RELATION_LESS | RELATION_GREATER
+} RCPackageRelation;
 
 typedef struct _RCPackageDepItem RCPackageDepItem;
 
@@ -49,7 +58,11 @@ void rc_package_dep_slist_free (RCPackageDepSList *rcpdsl);
 
 /* Dep verification */
 gboolean rc_package_dep_verify_relation (RCPackageDep *dep, RCPackageSpec *spec);
+gboolean rc_package_dep_verify_and_relation (RCPackageDep *dep, RCPackageSpec *spec,
+                                             RCPackageDepItem **fail_out);
 gboolean rc_package_dep_item_verify_relation (RCPackageDepItem *dep, RCPackageSpec *spec);
+
+gint rc_package_dep_item_is_subset (RCPackageDepItem *a, RCPackageDepItem *b);
 
 /* Misc */
 const gchar *rc_relation_string (gint rel, gboolean words);
