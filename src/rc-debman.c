@@ -231,6 +231,8 @@ rc_debman_install (RCPackman *p, GSList *pkgs)
         return;
     }
 
+    rc_packman_install_done (p);
+
     child = fork ();
 
     switch (child) {
@@ -252,7 +254,7 @@ rc_debman_install (RCPackman *p, GSList *pkgs)
         break;
 
     default:
-        while (waitpid (child, &status, WNOHANG)) {
+        while (!waitpid (child, &status, WNOHANG)) {
             while (gtk_events_pending ()) {
                 gtk_main_iteration ();
             }
@@ -267,6 +269,8 @@ rc_debman_install (RCPackman *p, GSList *pkgs)
                               "to configure them by hand, by running the "
                               "command `dpkg --configure --pending` as root.");
     }
+
+    rc_packman_configure_done (p);
 }
 
 static void
@@ -687,6 +691,11 @@ rc_debman_class_init (RCDebmanClass *klass)
 static void
 rc_debman_init (RCDebman *obj)
 {
+    RCPackman *p = RC_PACKMAN (obj);
+
+    p->pre_config = FALSE;
+    p->pkg_progress = FALSE;
+    p->post_config = TRUE;
 } /* rc_debman_init */
 
 RCDebman *

@@ -27,9 +27,11 @@ static void rc_packman_init       (RCPackman *obj);
 static GtkObjectClass *rc_packman_parent;
 
 enum SIGNALS {
+    CONFIG_PROGRESS,
     PKG_PROGRESS,
     PKG_INSTALLED,
     INSTALL_DONE,
+    CONFIGURE_DONE,
     PKG_REMOVED,
     REMOVE_DONE,
     LAST_SIGNAL
@@ -83,6 +85,16 @@ rc_packman_class_init (RCPackmanClass *klass)
 
     rc_packman_parent = gtk_type_class (gtk_object_get_type ());
 
+    signals[CONFIG_PROGRESS] =
+        gtk_signal_new ("config_progress",
+                        GTK_RUN_LAST,
+                        object_class->type,
+                        GTK_SIGNAL_OFFSET (RCPackmanClass, config_progress),
+                        gtk_marshal_NONE__INT_INT,
+                        GTK_TYPE_NONE, 2,
+                        GTK_TYPE_INT,
+                        GTK_TYPE_INT);
+
     signals[PKG_PROGRESS] =
         gtk_signal_new("pkg_progress",
                        GTK_RUN_LAST,
@@ -107,6 +119,14 @@ rc_packman_class_init (RCPackmanClass *klass)
     
     signals[INSTALL_DONE] =
         gtk_signal_new ("install_done",
+                        GTK_RUN_LAST | GTK_RUN_NO_RECURSE,
+                        object_class->type,
+                        GTK_SIGNAL_OFFSET (RCPackmanClass, install_done),
+                        gtk_marshal_NONE__NONE,
+                        GTK_TYPE_NONE, 0);
+    
+    signals[CONFIGURE_DONE] =
+        gtk_signal_new ("configure_done",
                         GTK_RUN_LAST | GTK_RUN_NO_RECURSE,
                         object_class->type,
                         GTK_SIGNAL_OFFSET (RCPackmanClass, install_done),
@@ -163,6 +183,21 @@ rc_packman_new (void)
     new->busy = FALSE;
 
     return new;
+}
+
+void
+rc_packman_query_interface (RCPackman *p, gboolean *pre_config,
+                            gboolean *pkg_progress, gboolean *post_config)
+{
+    if (pre_config) {
+        *pre_config = p->pre_config;
+    }
+    if (pkg_progress) {
+        *pkg_progress = p->pkg_progress;
+    }
+    if (post_config) {
+        *post_config = p->post_config;
+    }
 }
 
 /* Wrappers around all of the virtual functions */
@@ -376,6 +411,18 @@ rc_packman_verify (RCPackman *p, RCPackage *pkg)
 /* Public functions to emit signals */
 
 void
+rc_packman_config_progress (RCPackman *p, gint amount, gint total)
+{
+    g_return_if_fail (p);
+
+    gtk_signal_emit (GTK_OBJECT (p), signals[CONFIG_PROGRESS], amount, total);
+
+    while (gtk_events_pending ()) {
+        gtk_main_iteration ();
+    }
+}
+
+void
 rc_packman_package_progress(RCPackman *p, const gchar *filename,
                             gint amount, gint total)
 {
@@ -383,6 +430,10 @@ rc_packman_package_progress(RCPackman *p, const gchar *filename,
 
     gtk_signal_emit(
         GTK_OBJECT(p), signals[PKG_PROGRESS], filename, amount, total);
+
+    while (gtk_events_pending ()) {
+        gtk_main_iteration ();
+    }
 } /* rc_packman_package_progress */
 
 void
@@ -407,6 +458,22 @@ rc_packman_install_done (RCPackman *p)
     g_return_if_fail(p);
 
     gtk_signal_emit ((GtkObject *)p, signals[INSTALL_DONE]);
+
+    while (gtk_events_pending ()) {
+	gtk_main_iteration ();
+    }
+}
+
+void
+rc_packman_configure_done (RCPackman *p)
+{
+    g_return_if_fail (p);
+
+    gtk_signal_emit ((GtkObject *)p, signals[CONFIGURE_DONE]);
+
+    while (gtk_events_pending ()) {
+	gtk_main_iteration ();
+    }
 }
 
 void

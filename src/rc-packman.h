@@ -66,6 +66,11 @@ struct _RCPackman {
 
     /* Current status of the object */
     gboolean busy;
+
+    /* Flags for the supported interface */
+    gboolean pre_config;
+    gboolean pkg_progress;
+    gboolean post_config;
 };
 
 struct _RCPackmanClass {
@@ -73,10 +78,12 @@ struct _RCPackmanClass {
 
     /* Signals */
 
+    void (*config_progress)(RCPackman *, gint amount, gint total);
     void (*pkg_progress)(RCPackman *, gchar *file, gint amount, gint total);
 
     void (*pkg_installed)(RCPackman *, gchar *file, gint sequence, gint total);
     void (*install_done)(RCPackman *);
+    void (*configure_done)(RCPackman *);
 
     void (*pkg_removed)(RCPackman *, gchar *name, gint sequence);
     void (*remove_done)(RCPackman *);
@@ -104,6 +111,14 @@ struct _RCPackmanClass {
 guint rc_packman_get_type (void);
 
 RCPackman *rc_packman_new (void);
+
+/* Query the supported interfaces of the backend.  First parameter, does the
+   packman give config_progress signals?  Second parameter, does the packman
+   give pkg_progress signals?  Thirdly, does the packman require a post-install
+   step? */
+
+void rc_packman_query_interface (RCPackman *p, gboolean *config, gboolean *pkg,
+                                 gboolean *post);
 
 /* Given a list of filenames of packages to install, use the system package
    manager to install them.  Sets the error code (and possibly reason field)
@@ -161,6 +176,8 @@ gchar *rc_packman_get_reason (RCPackman *p);
 
 /* Wrappers to emit signals */
 
+void rc_packman_config_progress (RCPackman *p, gint amount, gint total);
+
 void rc_packman_package_progress(RCPackman *p,
                                  const gchar *filename,
                                  gint amount,
@@ -172,6 +189,8 @@ void rc_packman_package_installed (RCPackman *p,
                                    gint total);
 
 void rc_packman_install_done (RCPackman *p);
+
+void rc_packman_configure_done (RCPackman *p);
 
 void rc_packman_package_removed (RCPackman *p,
                                  const gchar *filename,

@@ -96,10 +96,13 @@ static void * showProgress(const Header h, const rpmCallbackType what,
         }
         break;
 
+    case RPMCALLBACK_TRANS_PROGRESS:
+        rc_packman_config_progress (ghp, amount, total);
+        break;
+
     case RPMCALLBACK_INST_START:
     case RPMCALLBACK_UNINST_START:
     case RPMCALLBACK_UNINST_STOP:
-    case RPMCALLBACK_TRANS_PROGRESS:
     case RPMCALLBACK_UNINST_PROGRESS:
     case RPMCALLBACK_TRANS_START:
     case RPMCALLBACK_TRANS_STOP:
@@ -1125,9 +1128,7 @@ rc_rpmman_class_init (RCRpmmanClass *klass)
 static void
 rc_rpmman_init (RCRpmman *obj)
 {
-    /*
-      RCPackman *hp = RC_PACKMAN (obj);
-    */
+    RCPackman *p = RC_PACKMAN (obj);
     /*
     rpmdb db;
     */
@@ -1144,6 +1145,10 @@ rc_rpmman_init (RCRpmman *obj)
         rpmroot = g_strdup ("/");
     }
 
+    p->pre_config = TRUE;
+    p->pkg_progress = TRUE;
+    p->post_config = FALSE;
+
     /* FIXME: is this really what we want to do? */
 
     /* Probably not, at least not this simplistically */
@@ -1157,7 +1162,7 @@ rc_rpmman_init (RCRpmman *obj)
 
     rpmdbClose (db);
     */
-    
+
 } /* rc_rpmman_init */
 
 RCRpmman *
