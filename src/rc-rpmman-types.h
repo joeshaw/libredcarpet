@@ -26,7 +26,7 @@
 #ifndef _RC_RPMMAN_TYPES
 #define _RC_RPMMAN_TYPES
 
-#include <rpm/rpmlib.h>
+#include <rpmlib.h>
 
 /* rpmlib.h version 4.0 */
 

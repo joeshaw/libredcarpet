@@ -23,8 +23,8 @@
 #include <glib-object.h>
 #include <gmodule.h>
 
-#include <rpm/rpmlib.h>
-#include <rpm/rpmmacro.h>
+#include <rpmlib.h>
+#include <rpmmacro.h>
 
 #include "rc-packman.h"
 #include "rc-rpmman-types.h"

@@ -1,3 +1,9 @@
+2003-02-06  Joe Shaw  <joe@ximian.com>
+
+	* rc-rpmman-types.h, rc-rpmman.h: Change RPM includes to remove
+	the directory; our CFLAGS will be set to the actual include
+	directory for RPM.
+
 2003-02-04  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-xml.c (rc_xml_node_to_package_dep_internal): Free some

@@ -31,9 +31,6 @@
 
 #include <sys/stat.h>
 
-#include <rpm/rpmlib.h>
-#include <rpm/rpmmacro.h>
-
 #include "rc-packman-private.h"
 #include "rc-rpmman.h"
 #include "rc-rpmman-types.h"
