@@ -2282,10 +2282,11 @@ rc_rpmman_init (RCRpmman *obj)
         return;
     }
 
-    obj->rpm_lib = g_module_open (LIBDIR "/rc-rpm-helper-with-rpmio.so", 0);
+    obj->rpm_lib = g_module_open (LIBDIR "/rc-rpm-helper.so", 0);
 
     if (!obj->rpm_lib) {
-        obj->rpm_lib = g_module_open (LIBDIR "/rc-rpm-helper.so", 0);
+        obj->rpm_lib = g_module_open (
+            LIBDIR "/rc-rpm-helper-with-rpmio.so", 0);
     }
 
     if (!obj->rpm_lib) {

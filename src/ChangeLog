@@ -1,3 +1,10 @@
+2001-04-04  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c (rc_rpmman_init): reverse the order that we dlopen
+	the rc-rpm-helper files in.  this is a weak attempt to get around
+	a potential glibc bug, this shouldn't affect how anything else
+	goes.
+
 2001-04-03  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c (rc_rpmman_init): d'oh, it's rc-rpm-helper.so not
