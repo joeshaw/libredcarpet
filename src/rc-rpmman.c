@@ -1042,13 +1042,24 @@ rc_rpmman_query (RCPackman *packman, RCPackage *package)
         goto ERROR;
     }
 
-    if (rpmdbFindPackage (db, package->spec.name, &matches)) {
+    switch (rpmdbFindPackage (db, package->spec.name, &matches)) {
+    case -1:
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "unable to initialize database search");
 
         rpmdbClose (db);
 
         goto ERROR;
+
+    case 1:
+        rpmdbClose (db);
+
+        package->installed = FALSE;
+
+        return (package);
+
+    default:
+        break;
     }
 
     for (i = 0; i < matches.count; i++) {

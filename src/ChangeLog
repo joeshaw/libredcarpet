@@ -1,3 +1,9 @@
+2001-01-25  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c (rc_rpmman_query): fuck me.  I hate rpmlib.  Not
+	finding something in a database isn't a failure, it's a successful
+	search.
+
 2001-01-25  Vladimir Vukicevic  <vladimir@helixcode.com>
 
 	* rc-deps.c: oops. don't remove the list we're traversing
