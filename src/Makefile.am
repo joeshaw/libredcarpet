@@ -53,4 +53,7 @@ libredcarpet_a_SOURCES =		\
         xml-util.h                      \
         $(rpm_sources2)
 
+#	rc-crypto.c			\
+#	rc-crypto.h			\
+
 EXTRA_DIST = $(rpm_sources)

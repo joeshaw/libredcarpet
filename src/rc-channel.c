@@ -99,7 +99,11 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
         return NULL;
     }
 
+#if LIBXML_VERSION  < 20000
     root = doc->root;
+#else
+    root = xmlDocGetRootElement (doc);
+#endif
     if (!root) {
         /* Uh. Bad. */
         g_warning("channels.xml document has no root");
@@ -108,7 +112,11 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
         return NULL;
     }
 
+#if LIBXML_VERSION  < 20000
     node = root->childs;
+#else
+    node = root->children;
+#endif
     while (node) {
         char *tmp;
         RCChannel *channel;

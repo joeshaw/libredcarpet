@@ -40,7 +40,11 @@ xml_get_value(xmlNode *node, const gchar *name)
     }
 
 
+#if LIBXML_VERSION < 20000
     child = node->childs;
+#else
+    child = node->children;
+#endif
     while (child) {
         if (g_strcasecmp(child->name, name) == 0) {
             xml_s = xmlNodeGetContent(child);
