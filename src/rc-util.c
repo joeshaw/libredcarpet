@@ -129,7 +129,7 @@ rc_rmdir (const char *dir)
 
             gchar *filename = g_strconcat (dir, "/", entry->d_name, NULL);
 
-            if (stat (filename, &buf)) {
+            if (lstat (filename, &buf)) {
                 ret = -1;
             } else if (S_ISDIR (buf.st_mode)) {
                 rc_rmdir (filename);

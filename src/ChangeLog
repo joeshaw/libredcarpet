@@ -1,3 +1,8 @@
+2003-04-04  Ian Peters  <itp@ximian.com>
+
+	* rc-util.c (rc_rmdir): lstat not stat.  Also fixed Jose's
+	ChangeLog entry 3 below this.
+
 2003-04-03  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-world.c (rc_world_add_package): If a package is installed,
@@ -8,8 +13,9 @@
 	* rc-util.c (rc_rmdir): remove symlinks, too, if we can
 
 2003-03-27  Jose Mercado <jose@ximian.com>
-    * distributions.xml: Change detect string for SuSE 8.1 to something
-    more unique.
+	
+	* distributions.xml: Change detect string for SuSE 8.1 to
+	something more unique.
 
 2003-03-27  Joe Shaw  <joe@ximian.com>
 
