@@ -1,3 +1,12 @@
+2001-01-29  Ian Peters  <itp@ximian.com>
+
+	* rc-verification.c (rc_verify_gpg): set --logger-fd to 1 instead
+	of 2, which is the fd the RCLineBuf is listening on.  It's ok,
+	since it'll ignore hte lines that don't begin with [GNUPG:], and
+	this shuts up the
+	I'm-gpg-I-won't-shut-up-even-with-the-quiet-option-crap that
+	everyone has complained about.
+
 2001-01-29  Joe Shaw  <joe@ximian.com>
 
 	* rc-channel.h: Added pkgset_file and pkgset_compressed.

@@ -234,7 +234,7 @@ rc_verify_gpg (gchar *file, gchar *sig)
         execlp (gpg_command, gpg_command, "--batch", "--quiet",
                 "--no-secmem-warning", "--no-default-keyring",
                 "--keyring", keyring, "--status-fd",
-                "1", "--logger-fd", "2", "--verify", sig, file, NULL);
+                "1", "--logger-fd", "1", "--verify", sig, file, NULL);
 
         _exit (-1);
 
