@@ -1,3 +1,8 @@
+2001-01-29  Ian Peters  <itp@ximian.com>
+
+	* configure.in: AC_WARN instead of AC_ERROR on no backends
+	specified for the gimpy build system
+
 2001-01-28  Ian Peters  <itp@ximian.com>
 
 	* configure.in: removed bz2 check from the rpm3 section, this

@@ -40,7 +40,7 @@ AC_ARG_ENABLE(backend-dpkg, [  --enable-backend-dpkg   include DPKG backend],
 
 if test "x$enable_backend_rpm3" != "xyes" -a "x$enable_backend_rpm4" != "xyes" -a "x$enable_backend_dpkg" != "xyes";
 then
-  AC_ERROR([no backends were specified])
+  AC_WARN([no backends were specified])
 fi
 
 if test "x$enable_backend_rpm3" = "xyes" -a "x$enable_backend_rpm4" = "xyes";
