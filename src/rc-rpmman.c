@@ -415,6 +415,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     InstallState *state;
     guint extras = 0;
     RCPackageSList *iter;
+    struct rpmDependencyConflict *conflicts;
 
     if (rpmdbOpen (RC_RPMMAN (packman)->rpmroot, &db,
                    O_RDWR | O_CREAT, 0644))
@@ -445,6 +446,17 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "error adding packages to remove");
+
+        rpmtransFree (transaction);
+
+        rpmdbClose (db);
+
+        goto ERROR;
+    }
+
+    if (rpmdepCheck (transaction, &conflicts, &rc)) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "dependencies are not met");
 
         rpmtransFree (transaction);
 
@@ -488,13 +500,6 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     state->install_total = g_slist_length (install_packages);
     state->install_extra = extras;
     state->remove_total = g_slist_length (remove_packages);
-
-#if 0
-    gtk_signal_emit_by_name (GTK_OBJECT (packman), "transaction_step", 0,
-                             state->install_total + state->remove_total +
-                             state->install_extra);
-    GTKFLUSH;
-#endif
 
     rpm_error = 0;
     rpm_reason = NULL;
