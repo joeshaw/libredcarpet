@@ -1,3 +1,10 @@
+2001-01-23  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* rc-package-spec.c, rc-package-spec.h: I want
+	(g-slist-find-custom requestd_pkgs pkg
+		(lambda (a b) (not (package-spec-equal a b))))
+	(Added package_spec_not_equal)
+
 2001-01-23  Ian Peters  <itp@ximian.com>
 
 	* rc-packman.c (rc_packman_query): remove busy check

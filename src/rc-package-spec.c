@@ -140,3 +140,8 @@ gint rc_package_spec_equal (gconstpointer a, gconstpointer b)
 
     return (TRUE);
 }
+
+gint rc_package_spec_not_equal (gconstpointer a, gconstpointer b)
+{
+    return ! rc_package_spec_equal (a, b);
+}

@@ -47,9 +47,10 @@ void rc_package_spec_free_members (RCPackageSpec *rcps);
 
 gint rc_package_spec_compare_name (void *a, void *b);
 
-/* Hash functions: hash and compare */
 guint rc_package_spec_hash (gconstpointer ptr);
 gint rc_package_spec_equal (gconstpointer ptra, gconstpointer ptrb);
+
+gint rc_package_spec_not_equal (gconstpointer a, gconstpointer b);
 
 gchar *rc_package_spec_to_str (RCPackageSpec *spec);
 
