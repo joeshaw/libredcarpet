@@ -1,3 +1,9 @@
+2001-04-03  Ian Peters  <itp@ximian.com>
+
+	* acconfig.h: #undef WORDS_BIGENDIAN
+
+	* configure.in: call AC_C_BIGENDIAN
+
 2001-04-01  Ian Peters  <itp@ximian.com>
 
 	* acconfig.h: add RC_RPM4

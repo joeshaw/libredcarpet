@@ -24,6 +24,8 @@
  * Still in the public domain. All of them.
  */
 
+#include <config.h>
+
 #include <string.h>		/* for memcpy() */
 #include <sys/types.h>		/* for stupid systems */
 #include <netinet/in.h>		/* for ntohl() */

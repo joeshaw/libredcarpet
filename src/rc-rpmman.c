@@ -1960,7 +1960,12 @@ rc_rpmman_destroy (GtkObject *obj)
     }
 
 #ifndef STATIC_RPM
+#if 0
+    /* If we do this we just look bad, sigh.  I can't really blame
+     * rpmlib for not being designed to be dlopen'd.  Much as I like
+     * to blame rpmlib for things. */
     g_module_close (rpmman->rpm_lib);
+#endif
 #endif
 
     if (GTK_OBJECT_CLASS (parent_class)->destroy)
