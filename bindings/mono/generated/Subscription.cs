@@ -19,6 +19,15 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
+		static extern void rc_subscription_set_file(string file);
+
+		public static string File { 
+			set {
+				rc_subscription_set_file(value);
+			}
+		}
+
+		[DllImport("libredcarpet")]
 		static extern void rc_subscription_set_status(IntPtr channel, bool channel_is_subscribed);
 
 		public static void SetStatus(RC.Channel channel, bool channel_is_subscribed) {

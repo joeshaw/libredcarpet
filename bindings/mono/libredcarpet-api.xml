@@ -3654,6 +3654,12 @@
           <parameter type="RCChannel*" name="channel" />
         </parameters>
       </method>
+      <method name="SetFile" cname="rc_subscription_set_file" shared="true">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="file" />
+        </parameters>
+      </method>
       <method name="SetStatus" cname="rc_subscription_set_status" shared="true">
         <return-type type="void" />
         <parameters>
