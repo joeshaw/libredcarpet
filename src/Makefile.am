@@ -4,8 +4,6 @@ INCLUDES = 						\
 	$(LIBREDCARPET_CFLAGS)				\
 	-DG_LOG_DOMAIN=\"libredcarpet\"
 
-noinst_LIBRARIES = libredcarpettmp.a
-
 rpm_sources =			\
 	rc-rpmman.c		\
 	rc-rpmman.h		\
@@ -89,7 +87,8 @@ libredcarpet_public_headers = 		\
 	rc-xml.h			\
         xml-util.h
 
-libredcarpettmp_a_SOURCES =		\
+libredcarpet_la_SOURCES =		\
+	$(libredcarpet_public_headers)	\
 	distributions-xml.h		\
 	rc-arch.c			\
 	rc-channel.c			\
@@ -200,40 +199,12 @@ rc-{rpm_rpmio_rpmdb}-4.2.so:
 rc-{rpm_rpmio_rpmdb}-4.3.so:
 	$(srcdir)/make_stub.sh rc-{rpm_rpmio_rpmdb}-4.3.so librpm-4.3.so librpmio-4.3.so librpmdb-4.3.so libpopt.so.0
 
-all-local: libredcarpet.a
-
-lib_LIBRARIES = libredcarpet.a
-
-libredcarpet_a_SOURCES = $(libredcarpet_public_headers)
+lib_LTLIBRARIES = libredcarpet.la
 
 libredcarpetincludedir = $(includedir)/libredcarpet
 
 libredcarpetinclude_HEADERS = \
 	$(libredcarpet_public_headers)
-
-CLEANFILES += libredcarpet.a
-libredcarpet.a: libredcarpettmp.a
-if STATIC_RPM
-	rm -f libredcarpetbuild.a; \
-	cp libredcarpettmp.a libredcarpetbuild.a; \
-	for lib in $(RPM_STATIC_LIBS) ; do \
-		dir=`basename $$lib`; \
-		rm -rf $$dir; \
-		mkdir $$dir; \
-		cd $$dir; \
-		ar x $$lib; \
-		for object in `ls .` ; do \
-			mv $$object $$dir-$$object; \
-		done; \
-		cd ..; \
-		ar cru libredcarpetbuild.a $$dir/*; \
-		rm -rf $$dir; \
-	done; \
-	ranlib libredcarpetbuild.a; \
-	mv libredcarpetbuild.a libredcarpet.a;
-else
-	cp libredcarpettmp.a libredcarpet.a
-endif
 
 CLEANFILES += distributions-xml.h
 distributions-xml.h: distributions.xml packer.pl

@@ -1,3 +1,7 @@
+2004-07-20  James Willcox  <james@ximian.com>
+
+	* Makefile.am: generate a shared library instead of a static one
+
 2004-07-14  James Willcox  <james@ximian.com>
 
 	* rc-channel.c: (get_packages_foreach_fn),
