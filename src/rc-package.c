@@ -30,6 +30,20 @@
 static GHashTable *leaked_packages = NULL;
 #endif
 
+GType
+rc_package_get_type (void)
+{
+    static GType boxed_type = 0;
+
+    if (!boxed_type) {
+        boxed_type = g_boxed_type_register_static ("RCPackage",
+                                        (GBoxedCopyFunc)rc_package_ref,
+                                        (GBoxedFreeFunc)rc_package_unref);
+    }
+
+    return boxed_type;
+}
+
 RCPackage *
 rc_package_new (void)
 {
@@ -70,7 +84,6 @@ rc_package_unref (RCPackage *package)
         --package->refs;
 
         if (package->refs == 0) {
-
             if (!getenv ("RC_DEBUG_PACKAGE_UNREF")) {
                 rc_channel_unref ((RCChannel *) package->channel);
 
@@ -378,4 +391,53 @@ rc_package_set_filename (RCPackage *package, const char *filename)
 
     g_free (package->package_filename);
     package->package_filename = g_strdup (filename);
+}
+
+RCPackageSpec *
+rc_package_get_spec (RCPackage *package)
+{
+    return &package->spec;
+}
+
+RCArch
+rc_package_get_arch (RCPackage *package)
+{
+    return package->arch;
+}
+
+RCPackageSection
+rc_package_get_section (RCPackage *package)
+{
+    return package->section;
+}
+
+guint32
+rc_package_get_installed_size (RCPackage *package)
+{
+    return package->installed_size;
+}
+
+gchar *
+rc_package_get_summary (RCPackage *package)
+{
+    return g_strdup (package->summary);
+}
+
+gchar *
+rc_package_get_description (RCPackage *package)
+{
+    return g_strdup (package->description);
+}
+
+gchar *
+rc_package_get_signature_filename (RCPackage *package)
+{
+    return g_strdup (package->signature_filename);
+}
+
+void
+rc_package_set_signature_filename (RCPackage *package,
+                                   const char *filename)
+{
+    package->signature_filename = g_strdup (filename);
 }

@@ -57,6 +57,7 @@ struct _RCResolver {
     gboolean timed_out;
 };
 
+GType       rc_resolver_get_type ();
 RCResolver *rc_resolver_new  (void);
 void        rc_resolver_free (RCResolver *);
 
@@ -79,6 +80,7 @@ void        rc_resolver_add_extra_conflict                 (RCResolver *, RCPack
 
 void        rc_resolver_verify_system          (RCResolver *);
 void        rc_resolver_resolve_dependencies   (RCResolver *);
+RCResolverContext *rc_resolver_get_best_context (RCResolver *);
 
 #endif /* __RC_RESOLVER_H__ */
 

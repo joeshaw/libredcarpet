@@ -961,6 +961,26 @@ rc_world_multi_foreach_subworld (RCWorldMulti *multi,
     return count;
 }
 
+static gboolean
+subworld_foreach_fn (RCWorld *world, gpointer user_data)
+{
+    GSList **list = user_data;
+
+    *list = g_slist_prepend (*list, world);
+
+    return TRUE;
+}
+
+GSList *
+rc_world_multi_get_subworlds (RCWorldMulti *multi)
+{
+    GSList *list = NULL;
+
+    rc_world_multi_foreach_subworld (multi, subworld_foreach_fn, &list);
+
+    return list;
+}
+
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 typedef struct {

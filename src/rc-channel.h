@@ -132,6 +132,8 @@ const char   *rc_channel_get_file_path    (RCChannel *channel);
 
 const char   *rc_channel_get_icon_file    (RCChannel *channel);
 
+GSList       *rc_channel_get_packages     (RCChannel *channel);
+
 /* Distro target functions */
 
 void     rc_channel_add_distro_target (RCChannel  *channel,

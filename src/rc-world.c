@@ -401,6 +401,26 @@ rc_world_foreach_channel (RCWorld *world,
                                                            user_data);
 }
 
+static gboolean
+get_channel_foreach_fn (RCChannel *channel,
+                        gpointer user_data)
+{
+    GSList **list = user_data;
+    *list = g_slist_prepend (*list, channel);
+
+    return TRUE;
+}
+
+GSList *
+rc_world_get_channels (RCWorld *world)
+{
+    GSList *list = NULL;
+
+    rc_world_foreach_channel (world, get_channel_foreach_fn, &list);
+    return g_slist_reverse (list);
+}
+
+
 struct ContainsChannelInfo {
     RCChannel *match;
     gboolean found;
@@ -567,6 +587,25 @@ rc_world_foreach_lock (RCWorld         *world,
 
     g_assert (RC_WORLD_GET_CLASS (world)->foreach_lock_fn != NULL);
     return RC_WORLD_GET_CLASS (world)->foreach_lock_fn (world, fn, user_data);
+}
+
+static gboolean
+get_locks_foreach_fn (RCPackageMatch *match, gpointer user_data)
+{
+    GSList **list = user_data;
+
+    
+    *list = g_slist_prepend (*list, match);
+    return TRUE;
+}
+
+GSList *
+rc_world_get_locks (RCWorld *world)
+{
+    GSList *list = NULL;
+
+    rc_world_foreach_lock (world, get_locks_foreach_fn, &list);
+    return g_slist_reverse (list);
 }
 
 struct IsLockedInfo {
@@ -1083,6 +1122,29 @@ rc_world_foreach_upgrade (RCWorld *world,
                                       &info);
 
     return info.count;
+}
+
+static gboolean
+get_upgrades_foreach_fn (RCPackage *package, gpointer user_data)
+{
+    GSList **list = user_data;
+
+    *list = g_slist_prepend (*list, package);
+
+    return TRUE;
+}
+
+GSList *
+rc_world_get_upgrades (RCWorld *world,
+                       RCPackage *package,
+                       RCChannel *channel)
+{
+    GSList *list = NULL;
+
+    rc_world_foreach_upgrade (world, package, channel,
+                              get_upgrades_foreach_fn, &list);
+
+    return g_slist_reverse (list);
 }
 
 struct BestUpgradeInfo {

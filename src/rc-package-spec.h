@@ -33,8 +33,8 @@ struct _RCPackageSpec {
     GQuark nameq;
     gchar *version;
     gchar *release;
-    guint has_epoch : 1;
-    guint epoch : 31;
+    gboolean has_epoch;
+    gint epoch;
 };
 
 #define RC_PACKAGE_SPEC(item) ((RCPackageSpec *)(item))
@@ -46,7 +46,7 @@ void rc_package_spec_init (RCPackageSpec *rcps,
                            const gchar *version,
                            const gchar *release);
 
-void rc_package_spec_copy (RCPackageSpec *nuevo, RCPackageSpec *old);
+void rc_package_spec_copy (RCPackageSpec *new, RCPackageSpec *old);
 
 void rc_package_spec_free_members (RCPackageSpec *rcps);
 

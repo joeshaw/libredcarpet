@@ -84,6 +84,7 @@ struct _RCResolverContext {
 
 const char        *rc_package_status_to_string (RCPackageStatus status);
 
+GType              rc_resolver_context_get_type (void);
 RCResolverContext *rc_resolver_context_new (void);
 RCResolverContext *rc_resolver_context_new_child (RCResolverContext *parent);
 
@@ -120,15 +121,25 @@ void               rc_resolver_context_foreach_marked_package (RCResolverContext
                                                                RCMarkedPackageFn fn,
                                                                gpointer user_data);
 
+GSList            *rc_resolver_context_get_marked_packages (RCResolverContext *context);
+
 int                rc_resolver_context_foreach_install   (RCResolverContext *context,
                                                           RCMarkedPackageFn fn,
                                                           gpointer user_data);
+
+GSList            *rc_resolver_context_get_installs (RCResolverContext *context);
+
 int                rc_resolver_context_foreach_uninstall (RCResolverContext *context,
                                                           RCMarkedPackageFn fn,
                                                           gpointer user_data);
+
+GSList            *rc_resolver_context_get_uninstalls (RCResolverContext *context);
+
 int                rc_resolver_context_foreach_upgrade   (RCResolverContext *context,
                                                           RCMarkedPackagePairFn fn,
                                                           gpointer user_data);
+
+GSList            *rc_resolver_context_get_upgrades (RCResolverContext *context);
 
 int                rc_resolver_context_install_count   (RCResolverContext *context);
 int                rc_resolver_context_uninstall_count (RCResolverContext *context);

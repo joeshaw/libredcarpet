@@ -58,6 +58,20 @@ rc_package_status_to_string (RCPackageStatus status)
     return NULL;
 }
 
+GType
+rc_resolver_get_type ()
+{
+    static GType boxed_type = 0;
+                                                                                
+    if (!boxed_type) {
+            boxed_type = g_boxed_type_register_static ("RCResolverContext",
+                                    (GBoxedCopyFunc)rc_resolver_context_ref,
+                                    (GBoxedFreeFunc)rc_resolver_context_unref);
+    }
+                                                                                
+    return boxed_type;
+}
+
 RCResolverContext *
 rc_resolver_context_new (void)
 {
@@ -467,6 +481,24 @@ rc_resolver_context_foreach_marked_package (RCResolverContext *context,
     }
 }
 
+static void
+marked_package_collector (RCPackage *package, RCPackageStatus status, gpointer user_data)
+{
+    GSList **list = user_data;
+
+    *list = g_slist_append (*list, package);
+}
+
+GSList *
+rc_resolver_context_get_marked_packages (RCResolverContext *context)
+{
+    GSList *list = NULL;
+
+    rc_resolver_context_foreach_marked_package (context, marked_package_collector, &list);
+
+    return g_slist_reverse (list);
+}
+
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 struct InstallInfo {
@@ -512,6 +544,16 @@ rc_resolver_context_foreach_install (RCResolverContext *context,
                                                 &info);
 
     return info.count;
+}
+
+GSList *
+rc_resolver_context_get_installs (RCResolverContext *context)
+{
+    GSList *list = NULL;
+
+    rc_resolver_context_foreach_install (context, marked_package_collector, &list);
+
+    return g_slist_reverse (list);
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
@@ -570,6 +612,28 @@ rc_resolver_context_foreach_upgrade (RCResolverContext *context,
                                                 &info);
 
     return info.count;
+}
+
+static void
+pair_package_collector (RCPackage *package,
+                        RCPackageStatus status,
+                        RCPackage *old,
+                        RCPackageStatus old_status,
+                        gpointer user_data)
+{
+    GSList **list = user_data;
+    
+    *list = g_slist_prepend (*list, package);
+}
+
+GSList *
+rc_resolver_context_get_upgrades (RCResolverContext *context)
+{
+    GSList *list = NULL;
+
+    rc_resolver_context_foreach_upgrade (context, pair_package_collector, &list);
+
+    return g_slist_reverse (list);
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
@@ -635,6 +699,16 @@ rc_resolver_context_foreach_uninstall (RCResolverContext *context,
     g_hash_table_destroy (info.upgrade_hash);
 
     return info.count;
+}
+
+GSList *
+rc_resolver_context_get_uninstalls (RCResolverContext *context)
+{
+    GSList *list = NULL;
+
+    rc_resolver_context_foreach_uninstall (context, marked_package_collector, &list);
+
+    return g_slist_reverse (list);
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */

@@ -27,7 +27,7 @@
 #define RC_PACKAGE_FIND_LEAKS
 
 typedef struct _RCPackage RCPackage;
-typedef gboolean (*RCPackageFn) (struct _RCPackage *, gpointer);
+typedef gboolean (*RCPackageFn) (RCPackage *, gpointer);
 
 typedef GSList RCPackageSList;
 
@@ -85,12 +85,13 @@ struct _RCPackage {
     gchar *package_filename;
     gchar *signature_filename;
 
-    guint installed     : 1;
-    guint local_package : 1;
-    guint install_only  : 1; /* Only install, don't upgrade this package */
-    guint package_set   : 1;
+    gboolean installed;
+    gboolean local_package;
+    gboolean install_only; /* Only install, don't upgrade this package */
+    gboolean package_set;
 };
 
+GType      rc_package_get_type (void);
 RCPackage *rc_package_new (void);
 RCPackage *rc_package_ref   (RCPackage *package);
 void       rc_package_unref (RCPackage *package);
@@ -132,5 +133,16 @@ void             rc_package_set_channel       (RCPackage *package,
 const char      *rc_package_get_filename      (RCPackage  *package);
 void             rc_package_set_filename      (RCPackage  *package,
 					       const char *filename);
+
+RCPackageSpec   *rc_package_get_spec          (RCPackage  *package);
+RCArch           rc_package_get_arch          (RCPackage  *package);
+RCPackageSection rc_package_get_section       (RCPackage  *package);
+guint32          rc_package_get_installed_size (RCPackage *package);
+gchar           *rc_package_get_summary       (RCPackage  *package);
+gchar           *rc_package_get_description   (RCPackage  *package);
+gchar           *rc_package_get_signature_filename (RCPackage *package);
+void             rc_package_set_signature_filename (RCPackage  *package,
+                                                    const char *filename);
+
 
 #endif /* _RC_PACKAGE_H */

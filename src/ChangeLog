@@ -1,3 +1,50 @@
+2004-07-14  James Willcox  <james@ximian.com>
+
+	* rc-channel.c: (get_packages_foreach_fn),
+	(rc_channel_get_packages):
+	* rc-channel.h:
+	* rc-extract-packages.h:
+	* rc-package-spec.h:
+	* rc-package.c: (rc_package_get_type), (rc_package_unref),
+	(rc_package_set_filename), (rc_package_get_spec),
+	(rc_package_get_arch), (rc_package_get_section),
+	(rc_package_get_installed_size), (rc_package_get_summary),
+	(rc_package_get_description), (rc_package_get_signature_filename),
+	(rc_package_set_signature_filename):
+	* rc-package.h:
+	* rc-resolver-context.c: (rc_resolver_get_type),
+	(marked_package_collector),
+	(rc_resolver_context_get_marked_packages),
+	(rc_resolver_context_get_installs), (pair_package_collector),
+	(rc_resolver_context_get_upgrades),
+	(rc_resolver_context_foreach_uninstall),
+	(rc_resolver_context_get_uninstalls):
+	* rc-resolver-context.h:
+	* rc-resolver.c: (rc_resolver_fake_ref),
+	(rc_resolver_context_get_type), (rc_resolver_resolve_dependencies),
+	(rc_resolver_get_best_context):
+	* rc-resolver.h:
+	* rc-world-multi.c: (subworld_foreach_fn),
+	(rc_world_multi_get_subworlds):
+	* rc-world-multi.h:
+	* rc-world-service.c: (rc_world_service_get_url),
+	(rc_world_service_set_url), (rc_world_service_get_name),
+	(rc_world_service_set_name), (rc_world_service_get_id),
+	(rc_world_service_set_id), (rc_world_service_get_is_sticky),
+	(rc_world_service_set_is_sticky),
+	(rc_world_service_get_is_invisible),
+	(rc_world_service_set_is_invisible),
+	(rc_world_service_get_is_singleton),
+	(rc_world_service_set_is_singleton):
+	* rc-world-service.h:
+	* rc-world.c: (get_channel_foreach_fn), (rc_world_get_channels),
+	(get_locks_foreach_fn), (rc_world_get_locks),
+	(rc_world_foreach_upgrade), (get_upgrades_foreach_fn),
+	(rc_world_get_upgrades):
+	* rc-world.h:
+
+	Add a ton of API for mono bindings.
+
 2004-06-17  James Willcox  <james@ximian.com>
 
 	* rc-channel.h:

@@ -172,7 +172,6 @@ struct _RCWorldClass {
     RCWorldMembershipToXmlFn    membership_to_xml_fn;
 
     /* signals */
-    
     void (*changed_packages)      (RCWorld *);
     void (*changed_channels)      (RCWorld *);
     void (*changed_subscriptions) (RCWorld *);
@@ -212,6 +211,8 @@ int        rc_world_foreach_channel             (RCWorld      *world,
                                                  RCChannelFn   fn,
                                                  gpointer      user_data);
 
+GSList    *rc_world_get_channels		(RCWorld      *world);
+
 gboolean   rc_world_contains_channel            (RCWorld      *world,
                                                  RCChannel    *channel);
 
@@ -237,6 +238,8 @@ RCChannel *rc_world_get_channel_by_id           (RCWorld      *world,
 int        rc_world_foreach_lock      (RCWorld         *world,
                                        RCPackageMatchFn fn,
                                        gpointer         user_data);
+
+GSList    *rc_world_get_locks         (RCWorld   *world);
 
 gboolean   rc_world_package_is_locked (RCWorld   *world,
                                        RCPackage *package);
@@ -293,6 +296,10 @@ int        rc_world_foreach_upgrade          (RCWorld *world,
                                               RCChannel *channel,
                                               RCPackageFn fn,
                                               gpointer user_data);
+
+GSList    *rc_world_get_upgrades             (RCWorld   *world,
+                                              RCPackage *package,
+                                              RCChannel *channel);
 
 RCPackage *rc_world_get_best_upgrade        (RCWorld *world,
                                              RCPackage *package,

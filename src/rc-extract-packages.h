@@ -36,7 +36,7 @@ gint rc_extract_packages_from_xml_node (xmlNode *node,
                                         gpointer user_data);
 
 
-gint rc_extract_packages_from_helix_buffer (const guint8 *data, int len,
+gint rc_extract_packages_from_helix_buffer (const guint8 data[], int len,
                                             RCChannel *channel,
                                             RCPackageFn callback,
                                             gpointer user_data);

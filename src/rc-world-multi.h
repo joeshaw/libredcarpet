@@ -77,6 +77,8 @@ gint     rc_world_multi_foreach_subworld_by_type (RCWorldMulti *,
                                                   RCWorldFn callback,
                                                   gpointer user_data);
 
+GSList  *rc_world_multi_get_subworlds (RCWorldMulti *multi);
+
 RCWorldService *rc_world_multi_lookup_service (RCWorldMulti *,
                                                const char *url);
 RCWorldService *rc_world_multi_lookup_service_by_id (RCWorldMulti *,

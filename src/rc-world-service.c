@@ -126,6 +126,82 @@ rc_world_service_new (void)
     return world;
 }
 
+char *
+rc_world_service_get_url (RCWorldService *service)
+{
+    return g_strdup (service->url);
+}
+
+void
+rc_world_service_set_url (RCWorldService *service, const char *url)
+{
+    service->url = g_strdup (url);
+}
+
+char *
+rc_world_service_get_name (RCWorldService *service)
+{
+    return g_strdup (service->name);
+}
+
+void
+rc_world_service_set_name (RCWorldService *service, const char *name)
+{
+    service->name = g_strdup (name);
+}
+
+char *
+rc_world_service_get_id (RCWorldService *service)
+{
+    return g_strdup (service->unique_id);
+}
+
+void
+rc_world_service_set_id (RCWorldService *service, const char *id)
+{
+    service->unique_id = g_strdup (id);
+}
+
+gboolean
+rc_world_service_get_is_sticky (RCWorldService *service)
+{
+    return service->is_sticky;
+}
+
+void
+rc_world_service_set_is_sticky (RCWorldService *service,
+                                gboolean sticky)
+{
+    service->is_sticky = sticky;
+}
+
+gboolean
+rc_world_service_get_is_invisible (RCWorldService *service)
+{
+    return service->is_invisible;
+}
+
+void
+rc_world_service_set_is_invisible (RCWorldService *service,
+                                   gboolean invisible)
+{
+    service->is_invisible = invisible;
+}
+
+gboolean
+rc_world_service_get_is_singleton (RCWorldService *service)
+{
+    return service->is_singleton;
+}
+
+void
+rc_world_service_set_is_singleton (RCWorldService *service,
+                                   gboolean singleton)
+{
+    service->is_singleton = singleton;
+}
+
+
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 GHashTable *scheme_handlers = NULL;

@@ -33,6 +33,26 @@
 #include "rc-resolver-queue.h"
 #include "rc-resolver-compare.h"
 
+static RCResolver *
+rc_resolver_fake_ref (RCResolver *resolver)
+{
+    return resolver;
+}
+
+GType
+rc_resolver_context_get_type ()
+{
+    static GType boxed_type = 0;
+                                                                                
+    if (!boxed_type) {
+            boxed_type = g_boxed_type_register_static ("RCResolver",
+                                    (GBoxedCopyFunc)rc_resolver_fake_ref,
+                                    (GBoxedFreeFunc)rc_resolver_free);
+    }
+                                                                                
+    return boxed_type;
+}
+
 RCResolver *
 rc_resolver_new (void)
 {
@@ -495,5 +515,11 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
     
     if (local_multiworld)
         g_object_unref (local_multiworld);
+}
+
+RCResolverContext *
+rc_resolver_get_best_context (RCResolver *resolver)
+{
+	return resolver->best_context;
 }
 

@@ -70,6 +70,24 @@ GType rc_world_service_get_type (void);
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
+/* Instance methods */
+char *rc_world_service_get_url    (RCWorldService *service);
+void  rc_world_service_set_url    (RCWorldService *service, const char *url);
+char *rc_world_service_get_name   (RCWorldService *service);
+void  rc_world_service_set_name   (RCWorldService *service, const char *name);
+char *rc_world_service_get_id     (RCWorldService *service);
+void  rc_world_service_set_id     (RCWorldService *service, const char *id);
+gboolean rc_world_service_get_is_sticky (RCWorldService *service);
+void     rc_world_service_set_is_sticky (RCWorldService *service,
+                                         gboolean sticky);
+gboolean rc_world_service_get_is_invisible (RCWorldService *service);
+void     rc_world_service_set_is_invisible (RCWorldService *service,
+                                            gboolean invisible);
+gboolean rc_world_service_get_is_singleton (RCWorldService *service);
+void     rc_world_service_set_is_singleton (RCWorldService *service,
+                                            gboolean singleton);
+  
+/* Static methods */
 void  rc_world_service_register   (const char *scheme, GType world_type);
 void  rc_world_service_unregister (const char *scheme);
 GType rc_world_service_lookup     (const char *scheme);

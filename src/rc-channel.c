@@ -484,6 +484,28 @@ rc_channel_get_icon_file (RCChannel *channel)
     return icon_file;
 }
 
+static gboolean
+get_packages_foreach_fn (RCPackage *package,
+                         gpointer user_data)
+{
+    GSList **list = user_data;
+
+    *list = g_slist_prepend (*list, package);
+
+    return TRUE;
+}
+
+GSList *
+rc_channel_get_packages (RCChannel *channel)
+{
+    GSList *list = NULL;
+    RCWorld *world = rc_channel_get_world (channel);
+
+    rc_world_foreach_package (world, channel, get_packages_foreach_fn, &list);
+
+    return g_slist_reverse (list);
+}
+
 const char *
 rc_channel_get_pkginfo_file (RCChannel *channel)
 {
