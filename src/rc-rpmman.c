@@ -959,7 +959,7 @@ rc_rpmman_depends_fill (RCPackage *pkg, Header hdr)
     /* Only have to free the char** ones */
 
     free (names);
-    free (versions);
+    free (verrels);
 
     g_strfreev (versions);
     g_strfreev (releases);
