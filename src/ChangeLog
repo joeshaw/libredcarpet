@@ -1,3 +1,9 @@
+2001-09-20  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c: Also, do a sanity check of the results to make
+	sure we don't return packages with the same name in the install
+	list, or in the install/remove lists.
+
 2001-09-19  Ian Peters  <itp@ximian.com>
 
 	* rc-verification.c: pull up fixes
