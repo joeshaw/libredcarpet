@@ -1,3 +1,12 @@
+2002-07-15  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-resolver-context.c (rc_resolver_context_foreach_info): Filter
+	by package and priority before we merge info items, not
+	afterwards.  Since merging is a relatively expensive operation,
+	operating on a much shorter list can result in a substantial
+	improvement in performance when dealing with complex resolutions
+	(i.e. removing glibc).
+
 2002-07-12  Frank Belew  <frb@ximian.com>
 
 	* Makefile.am: add libredcarpet_a_SOURCES to fix make dist

@@ -668,7 +668,6 @@ rc_resolver_context_add_info (RCResolverContext *context,
 
         context->invalid = TRUE;
     }
-
 }
 
 void
@@ -810,8 +809,11 @@ rc_resolver_context_foreach_info (RCResolverContext *context,
     while (context) {
         for (iter = context->log; iter != NULL; iter = iter->next) {
             RCResolverInfo *info = iter->data;
-            info_slist = g_slist_prepend (info_slist, 
-                                          rc_resolver_info_copy (info));
+            if ((package == NULL || info->package == package)
+                && info->priority >= priority) {
+                info_slist = g_slist_prepend (info_slist, 
+                                              rc_resolver_info_copy (info));
+            }
         }
         context = context->parent;
     }
@@ -835,9 +837,7 @@ rc_resolver_context_foreach_info (RCResolverContext *context,
     for (info_iter = info_slist; info_iter != NULL; info_iter = info_iter->next) {
         RCResolverInfo *info = info_iter->data;
         if (info != NULL) {
-            if ((package == NULL || info->package == package)
-                && info->priority >= priority)
-                fn (info, user_data);
+            fn (info, user_data);
             rc_resolver_info_free (info);
         }
     }
