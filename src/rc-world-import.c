@@ -877,6 +877,7 @@ rc_world_add_channel_from_directory (RCWorld *world,
     channel->refresh_magic = refresh_channel_from_dir;
     channel->transient = TRUE;
     channel->subscribed = TRUE;
+    channel->priority = 12800;
 
     refresh_channel_from_dir (channel);
 

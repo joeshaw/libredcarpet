@@ -1,3 +1,8 @@
+2002-11-01  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-world-import.c (rc_world_add_channel_from_directory):
+	Increase the priority of mounted channels.
+
 2002-10-31  Joe Shaw  <joe@ximian.com>
 
 	* distributions.xml: Add Mandrake 9 and SuSE 8.1 as supported
