@@ -1,3 +1,8 @@
+2002-02-06  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c: only look in unsubscribed channels if and only if
+	nothing appropriate was found in any subscribed channels.
+
 2002-01-29  Joe Shaw  <joe@ximian.com>
 
 	* rc-package-info.c (rc_subchannel_parse_helix): If we don't have
