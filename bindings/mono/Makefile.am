@@ -79,7 +79,8 @@ EXTRA_DIST =				\
 	PackageMatch.custom		\
 	Package.custom			\
 	PackageUpdate.custom		\
-	PackageDep.custom
+	PackageDep.custom		\
+	Packman.custom
 
 dist-hook:
 	mkdir -p $(distdir)/en/RC
