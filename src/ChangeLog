@@ -1,3 +1,34 @@
+2002-08-15  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-resolver-compare.c (churn_factor): Use the
+	rc_resolver_context_*_count fns instead of directly accessing the
+	struct elements.
+
+	* rc-queue-item.c (install_item_process): Use
+	rc_package_status_is_to_be_uninstalled macro.
+	(require_process_cb): Ditto.
+
+	* rc-resolver-context.c (rc_resolver_context_new_child): No need
+	to copy install_count, etc. to the child context.
+	(rc_resolver_context_set_status): Use
+	rc_package_status_is_to_be_uninstalled macro.
+	(rc_resolver_context_install_package): Use
+	rc_package_status_is_to_be_uninstalled macro.  Don't try to count
+	installs as we go.
+	(rc_resolver_context_upgrade_package): Ditto.
+	(rc_resolver_context_uninstall_package): Ditto.
+	(uninstall_pkg_cb): Use rc_package_status_is_to_be_uninstalled
+	macro.
+	(rc_resolver_context_install_count): Added.
+	(rc_resolver_context_uninstall_count): Added.
+	(rc_resolver_context_upgrade_count): Added.
+	(requirement_possible_cb): Use
+	rc_package_status_is_to_be_uninstalled macro.
+
+	* rc-resolver-context.h: Removed install_count, upgrade_count and
+	uninstall_count from RCResolverContext.  Added
+	rc_package_status_is_to_be_uninstalled macro.
+
 2002-08-14  Ian Peters  <itp@ximian.com>
 
 	* rc-util.h (rc_is_program_in_path): removed

@@ -330,9 +330,9 @@ soln_cb (RCResolverContext *context, gpointer user_data)
     }
 
     g_print (">!> installs=%d, upgrades=%d, uninstalls=%d\n",
-             context->install_count,
-             context->upgrade_count,
-             context->uninstall_count);
+             rc_resolver_context_install_count (context),
+             rc_resolver_context_upgrade_count (context),
+             rc_resolver_context_uninstall_count (context));
 
     g_print ("download size=%.1fk, install size=%.1fk\n",
              context->download_size / 1024.0,

@@ -39,6 +39,9 @@ typedef enum {
     RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE
 } RCPackageStatus;
 
+#define rc_package_status_is_to_be_uninstalled(x) \
+(((x) == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED) || ((x) == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE))
+
 typedef struct _RCResolverContext RCResolverContext;
 
 typedef void (*RCResolverContextFn) (RCResolverContext *, gpointer);
@@ -58,10 +61,6 @@ struct _RCResolverContext {
 
     GList *log;
 
-    int install_count;
-    int upgrade_count;
-    int uninstall_count;
-    
     guint32 download_size;
     guint32 install_size;
 
@@ -122,6 +121,11 @@ int                rc_resolver_context_foreach_uninstall (RCResolverContext *con
 int                rc_resolver_context_foreach_upgrade   (RCResolverContext *context,
                                                           RCMarkedPackagePairFn fn,
                                                           gpointer user_data);
+
+int                rc_resolver_context_install_count   (RCResolverContext *context);
+int                rc_resolver_context_uninstall_count (RCResolverContext *context);
+int                rc_resolver_context_upgrade_count   (RCResolverContext *context);
+
 
 gboolean           rc_resolver_context_is_valid (RCResolverContext *);
 gboolean           rc_resolver_context_is_invalid (RCResolverContext *);

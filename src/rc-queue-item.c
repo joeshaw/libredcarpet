@@ -319,8 +319,7 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
         for (iter = install->needed_by; iter != NULL && !still_needed; iter = iter->next) {
             RCPackage *needer = iter->data;
             RCPackageStatus status = rc_resolver_context_get_status (context, needer);
-            if (status != RC_PACKAGE_STATUS_TO_BE_UNINSTALLED
-                && status != RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE)
+            if (! rc_package_status_is_to_be_uninstalled (status))
                 still_needed = TRUE;
         }
 
@@ -644,8 +643,7 @@ require_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data)
 
     status = rc_resolver_context_get_status (info->context, package);
 
-    if (status != RC_PACKAGE_STATUS_TO_BE_UNINSTALLED
-        && status != RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE
+    if ((! rc_package_status_is_to_be_uninstalled (status))
         && ! rc_resolver_context_is_parallel_install (info->context, package)
         && g_hash_table_lookup (info->uniq, package) == NULL
         && rc_resolver_context_package_is_possible (info->context, package)) {

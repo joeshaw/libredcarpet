@@ -69,12 +69,9 @@ rc_resolver_context_new_child (RCResolverContext *parent)
     context->status = g_hash_table_new (rc_package_spec_hash,
                                         rc_package_spec_equal);
     context->parent = rc_resolver_context_ref (parent);
-
+    
     if (parent) {
         context->world           = parent->world;
-        context->install_count   = parent->install_count;
-        context->upgrade_count   = parent->upgrade_count;
-        context->uninstall_count = parent->uninstall_count;
         context->download_size   = parent->download_size;
         context->install_size    = parent->install_size;
         context->total_priority  = parent->total_priority;
@@ -149,9 +146,8 @@ rc_resolver_context_set_status (RCResolverContext *context,
     old_status = rc_resolver_context_get_status (context, package);
 
     if (status == RC_PACKAGE_STATUS_TO_BE_INSTALLED 
-        || status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED
-        || status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE) {
-
+        || rc_package_status_is_to_be_uninstalled (status)) {
+        
         if (status != old_status) {
             g_hash_table_insert (context->status,
                                  package,
@@ -221,8 +217,7 @@ rc_resolver_context_install_package (RCResolverContext *context,
 
     status = rc_resolver_context_get_status (context, package);
 
-    if (status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED
-        || status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE) {
+    if (rc_package_status_is_to_be_uninstalled (status)) {
         msg = g_strconcat ("Can't install ",
                            rc_package_spec_to_str_static (& package->spec),
                            " since it is already marked as needing to be uninstalled",
@@ -264,7 +259,6 @@ rc_resolver_context_install_package (RCResolverContext *context,
 
     if (status == RC_PACKAGE_STATUS_UNINSTALLED) {
         /* FIXME: Incomplete */
-        ++context->install_count;
         context->download_size += package->file_size;
         context->install_size += package->installed_size;
 
@@ -302,8 +296,7 @@ rc_resolver_context_upgrade_package (RCResolverContext *context,
 
     status = rc_resolver_context_get_status (context, package);
 
-    if (status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED
-        || status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE)
+    if (rc_package_status_is_to_be_uninstalled (status))
         return FALSE;
 
     if (status == RC_PACKAGE_STATUS_TO_BE_INSTALLED)
@@ -313,23 +306,7 @@ rc_resolver_context_upgrade_package (RCResolverContext *context,
                                     RC_PACKAGE_STATUS_TO_BE_INSTALLED);
 
     if (status == RC_PACKAGE_STATUS_UNINSTALLED) {
-        
-        RCPackageStatus old_status;
-
-        ++context->upgrade_count;
-
-        /* In some cases, the package that we are upgrading has already been
-           marked as to-be-removed.  If this has happened, we decrement the
-           uninstall_count so that the removal isn't counted twice: an upgrade
-           explicitly counts as an install and a removal, and we could end up with
-           an inaccurate removal count otherwise. */
-        old_status = rc_resolver_context_get_status (context, old_package);
-        if (old_status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE
-            || old_status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED) {
-            g_assert (context->uninstall_count > 0);
-            --context->uninstall_count;
-        }
-        
+      
         context->download_size += package->file_size;
         
 
@@ -393,7 +370,7 @@ rc_resolver_context_uninstall_package (RCResolverContext *context,
         return TRUE;
     }
 
-    if (status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED) {
+    if (rc_package_status_is_to_be_uninstalled (status)) {
         return TRUE;
     }
 
@@ -404,10 +381,8 @@ rc_resolver_context_uninstall_package (RCResolverContext *context,
 
     rc_resolver_context_set_status (context, package, new_status);
 
-    if (status == RC_PACKAGE_STATUS_INSTALLED
-        && ! part_of_upgrade) {
+    if (status == RC_PACKAGE_STATUS_INSTALLED) {
         /* FIXME: incomplete */
-        ++context->uninstall_count;
     }
 
     return TRUE;
@@ -441,9 +416,8 @@ rc_resolver_context_package_is_absent (RCResolverContext *context,
     status = rc_resolver_context_get_status (context, package);
     g_return_val_if_fail (status != RC_PACKAGE_STATUS_UNKNOWN, FALSE);
 
-    return status == RC_PACKAGE_STATUS_UNINSTALLED
-        || status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED
-        || status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE;
+    return status == RC_PACKAGE_STATUS_UNINSTALLED 
+        || rc_package_status_is_to_be_uninstalled (status);
 }
 
 struct MarkedPackageInfo {
@@ -601,8 +575,7 @@ uninstall_pkg_cb (RCPackage *package,
 {
     struct UninstallInfo *info = user_data;
 
-    if ((status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED
-         || status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE)
+    if (rc_package_status_is_to_be_uninstalled (status)
         && g_hash_table_lookup (info->upgrade_hash, GINT_TO_POINTER (package->spec.nameq)) == NULL) {
         if (info->fn)
             info->fn (package, status, info->user_data);
@@ -649,6 +622,62 @@ rc_resolver_context_foreach_uninstall (RCResolverContext *context,
     g_hash_table_destroy (info.upgrade_hash);
 
     return info.count;
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+static void
+install_count_cb (RCPackage      *pkg,
+                  RCPackageStatus status,
+                  gpointer        user_data)
+{
+    if (pkg->channel != NULL) {
+        int *count = user_data;
+        ++*count;
+    }
+}
+
+int
+rc_resolver_context_install_count (RCResolverContext *context)
+{
+    int count = 0;
+
+    g_return_val_if_fail (context != NULL, -1);
+
+    rc_resolver_context_foreach_install (context, install_count_cb, &count);
+
+    return count;
+}
+
+static void
+uninstall_count_cb (RCPackage       *pkg,
+                    RCPackageStatus status,
+                    gpointer        user_data)
+{
+    if (pkg->channel == NULL) {
+        int *count = user_data;
+        ++*count;
+    }
+}
+
+int
+rc_resolver_context_uninstall_count (RCResolverContext *context)
+{
+    int count = 0;
+
+    g_return_val_if_fail (context != NULL, -1);
+
+    rc_resolver_context_foreach_uninstall (context, uninstall_count_cb, &count);
+
+    return count;
+}
+
+int
+rc_resolver_context_upgrade_count (RCResolverContext *context)
+{
+    g_return_val_if_fail (context != NULL, -1);
+
+    return rc_resolver_context_foreach_upgrade (context, NULL, NULL);
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
@@ -1031,9 +1060,8 @@ requirement_possible_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_
     struct RequirementMetInfo *info = user_data;
     RCPackageStatus status = rc_resolver_context_get_status (info->context, package);
 
-    if (status != RC_PACKAGE_STATUS_TO_BE_UNINSTALLED
-        && status != RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE) {
-            info->flag = TRUE;
+    if (! rc_package_status_is_to_be_uninstalled (status)) {
+        info->flag = TRUE;
     }
 
     return ! info->flag;

@@ -41,9 +41,9 @@ rev_num_cmp (double a, double b)
 static double
 churn_factor (RCResolverContext *a)
 {
-    return a->upgrade_count
-        + 2.0 * a->install_count
-        + 4.0 * a->uninstall_count;
+    return rc_resolver_context_upgrade_count (a)
+        + 2.0 * rc_resolver_context_install_count (a)
+        + 4.0 * rc_resolver_context_uninstall_count (a);
 }
 
 int
