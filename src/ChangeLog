@@ -1,3 +1,8 @@
+2003-08-28  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-world-multi.c (rc_world_multi_lookup_service_by_id):
+	Helper function to get RCWorldService by server_id.
+
 2003-08-27  Joe Shaw  <joe@ximian.com>
 
 	* rc-world-synthetic.c (rc_world_synthetic_transact): Make a copy

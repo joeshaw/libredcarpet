@@ -892,6 +892,7 @@ rc_world_multi_foreach_subworld_by_type (RCWorldMulti *multi,
 
 typedef struct {
     const char *url;
+    const char *id;
 
     RCWorldService *matching_service;
 } ForeachServiceLookupInfo;
@@ -902,7 +903,12 @@ foreach_service_lookup_cb (RCWorld *world, gpointer user_data)
     RCWorldService *service = RC_WORLD_SERVICE (world);
     ForeachServiceLookupInfo *info = user_data;
 
-    if (g_strcasecmp (service->url, info->url) == 0) {
+    if (info->url && g_strcasecmp (service->url, info->url) == 0) {
+        info->matching_service = service;
+        return FALSE; /* short-circuit foreach */
+    }
+
+    if (info->id && strcmp (service->unique_id, info->id) == 0) {
         info->matching_service = service;
         return FALSE; /* short-circuit foreach */
     }
@@ -918,6 +924,29 @@ rc_world_multi_lookup_service (RCWorldMulti *multi, const char *url)
     g_return_val_if_fail (RC_IS_WORLD_MULTI (multi), NULL);
 
     info.url = url;
+    info.id = NULL;
+    info.matching_service = NULL;
+
+    rc_world_multi_foreach_subworld_by_type (multi,
+                                             RC_TYPE_WORLD_SERVICE,
+                                             foreach_service_lookup_cb,
+                                             &info);
+
+    if (info.matching_service)
+        return info.matching_service;
+    else
+        return NULL;
+}
+
+RCWorldService *
+rc_world_multi_lookup_service_by_id (RCWorldMulti *multi, const char *id)
+{
+    ForeachServiceLookupInfo info;
+
+    g_return_val_if_fail (RC_IS_WORLD_MULTI (multi), NULL);
+
+    info.id = id;
+    info.url = NULL;
     info.matching_service = NULL;
 
     rc_world_multi_foreach_subworld_by_type (multi,

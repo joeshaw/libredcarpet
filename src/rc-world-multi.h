@@ -74,6 +74,8 @@ gint     rc_world_multi_foreach_subworld_by_type (RCWorldMulti *,
 
 RCWorldService *rc_world_multi_lookup_service (RCWorldMulti *,
                                                const char *url);
+RCWorldService *rc_world_multi_lookup_service_by_id (RCWorldMulti *,
+                                                     const char *id);
 
 gboolean rc_world_multi_mount_service (RCWorldMulti *,
                                        const char *url);
