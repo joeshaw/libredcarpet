@@ -108,8 +108,6 @@ RCDistroChunk distro_figurers[] = {
       func_string_in_file, "/etc/mandrake-release", "7.2", NULL, 0 },
     { "mandrake-80-i586", RC_ARCH_IA32,
       func_string_in_file, "/etc/mandrake-release", "8.0", NULL, 0 },
-    { "mandrake-81-i586", RC_ARCH_IA32,
-      func_string_in_file, "/etc/mandrake-release", "8.1", NULL, 0 },
 
     { "redhat-60-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/redhat-release", "6.0", NULL, 0 },
@@ -180,7 +178,6 @@ RCDistroType distro_types[] = {
     { "mandrake-71-i586", NULL, "Linux Mandrake", "7.1", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
     { "mandrake-72-i586", NULL, "Linux Mandrake", "7.2", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
     { "mandrake-80-i586", NULL, "Linux Mandrake", "8.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "mandrake-80-i586", NULL, "Linux Mandrake", "8.1", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
 
     { "debian-sid-i386", NULL, "Debian GNU/Linux", "sid", RC_PKG_DPKG, RC_ARCH_IA32, NULL },
     { "debian-woody-i386", NULL, "Debian GNU/Linux", "woody", RC_PKG_DPKG, RC_ARCH_IA32, NULL },

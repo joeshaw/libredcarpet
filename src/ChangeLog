@@ -1,5 +1,9 @@
 2001-09-19  Ian Peters  <itp@ximian.com>
 
+	* rc-deps.c, rc-distro.c: fixes from red-carpet-1-1
+
+2001-09-19  Ian Peters  <itp@ximian.com>
+
 	* rc-deps.c: bug fix to multiple install problem as dictated by
 	vlad over a cell phone from europe
 
