@@ -91,7 +91,6 @@ struct _RCChannel {
 
     time_t last_update;
 
-    RCPackageHashTableBySpec *dep_table;
     RCSubchannelSList *subchannels;
 
     RCPackageSetSList *package_sets;

@@ -34,132 +34,171 @@
 RCSubchannel *
 rc_subchannel_new (void)
 {
-    RCSubchannel *rcs = g_new0 (RCSubchannel, 1);
+    RCSubchannel *subchannel;
 
-    return (rcs);
+    RC_ENTRY;
+
+    subchannel = g_new0 (RCSubchannel, 1);
+
+    RC_EXIT;
+
+    return (subchannel);
 } /* rc_subchannel_new */
 
 static gboolean
 remove_helper (gchar *name, RCPackage *package, gpointer user_data)
 {
+    RC_ENTRY;
+
     rc_package_free (package);
+
+    RC_EXIT;
 
     return (TRUE);
 }
 
 void
-rc_subchannel_free (RCSubchannel *rcs)
+rc_subchannel_free (RCSubchannel *subchannel)
 {
-    g_free (rcs->name);
+    RC_ENTRY;
 
-    /* Everything in this table is a pointer into the elements of the packages
-       hash table, so it'll get free'd in a second or two */
-    if (rcs->dep_table)
-        g_hash_table_destroy (rcs->dep_table);
+    g_free (subchannel->name);
 
-    g_hash_table_foreach_remove (rcs->packages, (GHRFunc)remove_helper, NULL);
+    /* Everything in this table is a pointer into the elements of the
+       packages hash table, so it'll get free'd in a few lines */
+    if (subchannel->dep_table)
+        g_hash_table_destroy (subchannel->dep_table);
 
-    g_hash_table_destroy (rcs->packages);
+    g_hash_table_foreach_remove (subchannel->packages,
+                                 (GHRFunc) remove_helper, NULL);
 
-    g_free (rcs);
+    g_hash_table_destroy (subchannel->packages);
+
+    g_free (subchannel);
+
+    RC_EXIT;
 } /* rc_subchannel_free */
 
 void
-rc_subchannel_slist_free(RCSubchannelSList *rcsl)
+rc_subchannel_slist_free(RCSubchannelSList *subchannel_slist)
 {
-    g_slist_foreach(rcsl, (GFunc) rc_subchannel_free, NULL);
+    RC_ENTRY;
 
-    g_slist_free(rcsl);
+    g_slist_foreach(subchannel_slist, (GFunc) rc_subchannel_free, NULL);
+
+    g_slist_free(subchannel_slist);
+
+    RC_EXIT;
 } /* rc_subchannel_slist_free */
 
 RCChannel *
 rc_channel_new (void)
 {
-    RCChannel *rcc = g_new0 (RCChannel, 1);
-    rcc->type = RC_CHANNEL_TYPE_HELIX; /* default */
-    return (rcc);
+    RCChannel *channel;
+
+    RC_ENTRY;
+
+    channel = g_new0 (RCChannel, 1);
+
+    channel->type = RC_CHANNEL_TYPE_HELIX; /* default */
+
+    return (channel);
+
+    RC_EXIT;
 } /* rc_channel_new */
 
 void
-rc_channel_free (RCChannel *rcc)
+rc_channel_free (RCChannel *channel)
 {
-    g_free (rcc->name);
-    g_free (rcc->description);
+    RC_ENTRY;
 
-    g_free (rcc->distro_target);
+    g_free (channel->name);
+    g_free (channel->description);
 
-    g_free (rcc->path);
-    g_free (rcc->file_path);
+    g_free (channel->distro_target);
 
-    g_free (rcc->pkginfo_file);
+    g_free (channel->path);
+    g_free (channel->file_path);
 
-    g_free (rcc->subs_url);
-    g_free (rcc->unsubs_url);
+    g_free (channel->pkginfo_file);
 
-    g_free (rcc->icon_file);
+    g_free (channel->subs_url);
+    g_free (channel->unsubs_url);
 
-    rc_subchannel_slist_free (rcc->subchannels);
+    g_free (channel->icon_file);
 
-    rc_package_set_slist_free (rcc->package_sets);
+    rc_subchannel_slist_free (channel->subchannels);
 
-    g_free (rcc);
+    rc_package_set_slist_free (channel->package_sets);
+
+    g_free (channel);
+
+    RC_EXIT;
 } /* rc_channel_free */
 
 void
-rc_channel_slist_free(RCChannelSList *rccl)
+rc_channel_slist_free(RCChannelSList *channel_slist)
 {
-    g_slist_foreach(rccl, (GFunc) rc_channel_free, NULL);
+    RC_ENTRY;
+
+    g_slist_foreach(channel_slist, (GFunc) rc_channel_free, NULL);
     
-    g_slist_free(rccl);
+    g_slist_free(channel_slist);
+
+    RC_EXIT;
 } /* rc_channel_slist_free */
 
 RCChannelSList *
 rc_channel_parse_xml(char *xmlbuf, int compressed_length)
 {
-    RCChannelSList *cl = NULL;
+    RCChannelSList *channel_slist = NULL;
     xmlDoc *doc;
     xmlNode *root, *node;
 
     RC_ENTRY;
 
     if (compressed_length) {
-        GByteArray *ba;
+        GByteArray *buf;
 
-        if (rc_uncompress_memory (xmlbuf, compressed_length, &ba)) {
-            g_warning ("Uncompression failed!");
-            return NULL;
+        if (rc_uncompress_memory (xmlbuf, compressed_length, &buf)) {
+            rc_debug (RC_DEBUG_LEVEL_CRITICAL, "%s: uncompression failed\n",
+                      __FUNCTION__);
+
+            RC_EXIT;
+
+            return (NULL);
         }
 
-        doc = xmlParseMemory(ba->data, ba->len - 1);
-        g_byte_array_free (ba, TRUE);
+        doc = xmlParseMemory (buf->data, buf->len - 1);
+        g_byte_array_free (buf, TRUE);
     } else {
-        doc = xmlParseMemory(xmlbuf, strlen(xmlbuf));
+        doc = xmlParseMemory (xmlbuf, strlen(xmlbuf));
     }
 
     if (!doc) {
-        g_warning("Unable to parse channel list.");
+        rc_debug (RC_DEBUG_LEVEL_CRITICAL,
+                  "%s: unable to parse channel list\n", __FUNCTION__);
+
         RC_EXIT;
-        return NULL;
+
+        return (NULL);
     }
 
-#if LIBXML_VERSION  < 20000
-    root = doc->root;
-#else
     root = xmlDocGetRootElement (doc);
-#endif
+
     if (!root) {
-        /* Uh. Bad. */
-        g_warning("channels.xml document has no root");
+        rc_debug (RC_DEBUG_LEVEL_CRITICAL, "%s: channels.xml has no root\n",
+                  __FUNCTION__);
+
         xmlFreeDoc(doc);
+
         RC_EXIT;
-        return NULL;
+
+        return (NULL);
     }
 
-#if LIBXML_VERSION  < 20000
-    node = root->childs;
-#else
-    node = root->children;
-#endif
+    node = root->xmlChildrenNode;
+
     while (node) {
         char *tmp;
         RCChannel *channel;
@@ -228,16 +267,16 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
             channel->file_path = g_strdup (channel->path);
         }
 
-        cl = g_slist_append(cl, channel);
+        channel_slist = g_slist_append (channel_slist, channel);
 
         node = node->next;
     }
 
-    xmlFreeDoc(doc);
+    xmlFreeDoc (doc);
 
     RC_EXIT;
 
-    return cl;
+    return channel_slist;
 } /* rc_channel_parse_xml */
 
 #if 0
@@ -310,64 +349,70 @@ rc_channel_parse_apt_sources(const char *filename)
 #endif	    
 
 int
-rc_channel_get_id_by_name(RCChannelSList *channels, char *name)
+rc_channel_get_id_by_name (RCChannelSList *channels, char *name)
 {
-    RCChannelSList *i;
+    RCChannelSList *iter;
 
     RC_ENTRY;
       
-    i = channels;
-    while (i) {
-        RCChannel *c = i->data;
+    iter = channels;
 
-        if (g_strcasecmp(c->name, name) == 0) {
+    while (iter) {
+        RCChannel *channel = iter->data;
+
+        if (g_strcasecmp (channel->name, name) == 0) {
             RC_EXIT;
-            return c->id;
+
+            return channel->id;
         }
 
-        i = i->next;
+        iter = iter->next;
     }
 
     RC_EXIT;
-    return -1;
+
+    return (-1);
 } /* rc_channel_get_id_by_name */
 
 RCChannel *
-rc_channel_get_by_id(RCChannelSList *channels, int id)
+rc_channel_get_by_id (RCChannelSList *channels, int id)
 {
-    RCChannelSList *i;
+    RCChannelSList *iter;
     
     RC_ENTRY;
     
-    i = channels;
-    while (i) {
-        RCChannel *c = i->data;
+    iter = channels;
 
-        if (c->id == id) {
+    while (iter) {
+        RCChannel *channel = iter->data;
+
+        if (channel->id == id) {
             RC_EXIT;
-            return c;
+
+            return (channel);
         }
 
-        i = i->next;
+        iter = iter->next;
     }
 
     RC_EXIT;
-    return NULL;
+
+    return (NULL);
 } /* rc_channel_get_by_id */
 
 RCChannel *
 rc_channel_get_by_name(RCChannelSList *channels, char *name)
 {
     int id;
-    RCChannel *c;
+    RCChannel *channel;
     
     RC_ENTRY;
     
     id = rc_channel_get_id_by_name(channels, name);
-    c = rc_channel_get_by_id(channels, id);
+    channel = rc_channel_get_by_id(channels, id);
 
     RC_EXIT;
-    return c;
+    return channel;
 } /* rc_channel_get_by_name */
 
 gint
@@ -565,11 +610,6 @@ rc_xml_node_to_channel (RCChannel *channel, xmlNode *node)
                             rc_xml_node_to_subchannel (iter, channel));
         iter = iter->next;
     }
-
-    /* FIXME: this is a dirty dirty hack until the dependency code gets fixed,
-       which should happen with the new version */
-    channel->dep_table =
-        ((RCSubchannel *)(channel->subchannels->data))->dep_table;
 
     return (0);
 }
