@@ -421,14 +421,13 @@ rc_debman_fill_depends (gchar *input, RCPackageDepSList *list)
 }
 
 /* Given a file pointer to the beginning of a block of package information,
-   fill in the data in the RCPackage fields.  If do_depends is set, also fill
-   in the dependency information. */
+   fill in the data in the RCPackage fields. */
 static void
-rc_debman_query_helper (FILE *fp, RCPackage *pkg, gboolean do_depends)
+rc_debman_query_helper (FILE *fp, RCPackage *pkg)
 {
     gchar *buf;
-
-    do_depends = TRUE;
+    RCPackageDepItem *item;
+    RCPackageDep *dep = NULL;
 
     while ((buf = readline (fp)) && buf[0]) {
         if (!strncmp (buf, "Status: install", strlen ("Status: install"))) {
@@ -442,38 +441,31 @@ rc_debman_query_helper (FILE *fp, RCPackage *pkg, gboolean do_depends)
             rc_debman_parse_version (buf + strlen ("Version: "),
                                      &pkg->spec.epoch, &pkg->spec.version,
                                      &pkg->spec.release);
-        } else if (do_depends && !strncmp (buf, "Depends: ",
-                                           strlen ("Depends: "))) {
+        } else if (!strncmp (buf, "Depends: ", strlen ("Depends: "))) {
             /* Do the dependencies */
             pkg->requires = rc_debman_fill_depends (buf + strlen ("Depends: "),
                                                     pkg->requires);
-        } else if (do_depends && !strncmp (buf, "Recommends: ",
-                                           strlen ("Recommends: "))) {
+        } else if (!strncmp (buf, "Recommends: ", strlen ("Recommends: "))) {
             pkg->requires = rc_debman_fill_depends (buf +
                                                     strlen ("Recommends: "),
                                                     pkg->requires);
-//        } else if (do_depends && !strncmp (buf, "Suggests: ",
-//                                           strlen ("Suggests: "))) {
+//        } else if (!strncmp (buf, "Suggests: ", strlen ("Suggests: "))) {
 //            pkg->requires = rc_debman_fill_depends (buf +
 //                                                    strlen ("Suggests: "),
 //                                                    pkg->requires);
-        } else if (do_depends && !strncmp (buf, "Pre-Depends: ",
-                                           strlen ("Pre-Depends: "))) {
+        } else if (!strncmp (buf, "Pre-Depends: ", strlen ("Pre-Depends: "))) {
             pkg->requires = rc_debman_fill_depends (buf +
                                                     strlen ("Pre-Depends: "),
                                                     pkg->requires);
-        } else if (do_depends && !strncmp (buf, "Conflicts: ",
-                                           strlen ("Conflicts: "))) {
+        } else if (!strncmp (buf, "Conflicts: ", strlen ("Conflicts: "))) {
             pkg->conflicts = rc_debman_fill_depends (buf +
                                                      strlen ("Conflicts: "),
                                                      pkg->conflicts);
-        } else if (do_depends && !strncmp (buf, "Replaces: ",
-                                           strlen ("Replaces: "))) {
+        } else if (!strncmp (buf, "Replaces: ", strlen ("Replaces: "))) {
             pkg->conflicts = rc_debman_fill_depends (buf +
                                                      strlen ("Replaces: "),
                                                      pkg->conflicts);
-        } else if (do_depends && !strncmp (buf, "Provides: ",
-                                           strlen ("Provides: "))) {
+        } else if (!strncmp (buf, "Provides: ", strlen ("Provides: "))) {
             pkg->provides = rc_debman_fill_depends (buf +
                                                     strlen ("Provides: "),
                                                     pkg->provides);
@@ -484,16 +476,11 @@ rc_debman_query_helper (FILE *fp, RCPackage *pkg, gboolean do_depends)
 
     g_free (buf);
 
-    if (do_depends) {
-        RCPackageDepItem *item;
-        RCPackageDep *dep = NULL;
-
-        item = rc_package_dep_item_new (pkg->spec.name, pkg->spec.epoch,
-                                        pkg->spec.version, pkg->spec.release,
-                                        RC_RELATION_EQUAL);
-        dep = g_slist_append (NULL, item);
-        pkg->provides = g_slist_append (pkg->provides, dep);
-    }
+    item = rc_package_dep_item_new (pkg->spec.name, pkg->spec.epoch,
+                                    pkg->spec.version, pkg->spec.release,
+                                    RC_RELATION_EQUAL);
+    dep = g_slist_append (NULL, item);
+    pkg->provides = g_slist_append (pkg->provides, dep);
 }
 
 static RCPackage *
@@ -513,7 +500,7 @@ rc_debman_query (RCPackman *p, RCPackage *pkg)
     while ((buf = readline (fp))) {
         if (!strcmp (buf, target)) {
             g_free (buf);
-            rc_debman_query_helper (fp, pkg, FALSE);
+            rc_debman_query_helper (fp, pkg);
             break;
         }
 
@@ -527,47 +514,8 @@ rc_debman_query (RCPackman *p, RCPackage *pkg)
     return (pkg);
 }
 
-static RCPackageSList *
-rc_debman_depends (RCPackman *p, RCPackageSList *pkgs)
-{
-    /*
-    RCPackageSList *iter;
-
-    for (iter = pkgs; iter; iter = iter->next) {
-        RCPackage *pkg = (RCPackage *)(iter->data);
-    
-        FILE *fp = fopen ("/var/lib/dpkg/status", "r");
-        gchar *buf;
-        gchar *target;
-
-        pkg->spec.installed = FALSE;
-
-        g_assert (pkg);
-        g_assert (pkg->spec.name);
-
-        target = g_strconcat ("Package: ", pkg->spec.name, NULL);
-
-        while ((buf = readline (fp))) {
-            if (!strcmp (buf, target)) {
-                g_free (buf);
-                rc_debman_query_helper (fp, pkg, TRUE);
-                break;
-            }
-
-            g_free (buf);
-        }
-
-        g_free (target);
-
-        fclose (fp);
-    }
-    */    
-    
-    return (pkgs);
-}
-
 static RCPackage *
-rc_debman_file_helper (RCPackman *p, gchar *filename, gboolean do_depends)
+rc_debman_query_file (RCPackman *p, gchar *filename)
 {
     gchar *tmpdir;
     gchar *path;
@@ -616,7 +564,7 @@ rc_debman_file_helper (RCPackman *p, gchar *filename, gboolean do_depends)
 
     g_free (buf);
 
-    rc_debman_query_helper (fp, pkg, do_depends);
+    rc_debman_query_helper (fp, pkg);
 
     dp = opendir (path);
 
@@ -638,28 +586,6 @@ rc_debman_file_helper (RCPackman *p, gchar *filename, gboolean do_depends)
     g_free (path);
 
     return (pkg);
-}
-
-static RCPackage *
-rc_debman_query_file (RCPackman *p, gchar *filename)
-{
-    return (rc_debman_file_helper (p, filename, FALSE));
-}
-
-static RCPackageSList *
-rc_debman_depends_files (RCPackman *p, GSList *filenames)
-{
-    GSList *iter;
-    RCPackageSList *list = NULL;
-
-    for (iter = filenames; iter; iter = iter->next) {
-        gchar *filename = (gchar *)(iter->data);
-
-        list = g_slist_append (list,
-                               rc_debman_file_helper (p, filename, TRUE));
-    }
-
-    return (list);
 }
 
 static RCPackageSList *
@@ -687,7 +613,7 @@ rc_debman_query_all (RCPackman *p)
 
         g_free (buf);
 
-        rc_debman_query_helper (fp, pkg, FALSE);
+        rc_debman_query_helper (fp, pkg);
 
         if (pkg->spec.installed) {
             pkgs = g_slist_append (pkgs, pkg);
@@ -709,8 +635,6 @@ rc_debman_class_init (RCDebmanClass *klass)
     rcpc->rc_packman_real_query = rc_debman_query;
     rcpc->rc_packman_real_query_file = rc_debman_query_file;
     rcpc->rc_packman_real_query_all = rc_debman_query_all;
-    rcpc->rc_packman_real_depends = rc_debman_depends;
-    rcpc->rc_packman_real_depends_files = rc_debman_depends_files;
 } /* rc_debman_class_init */
 
 static void

@@ -131,22 +131,6 @@ rc_packman_fake_version_compare (RCPackman *p,
     return 0;
 }
 
-static RCPackageSList *
-rc_packman_fake_depends (RCPackman *p, RCPackageSList *pkgs)
-{
-    rc_packman_set_error (p, RC_PACKMAN_NO_BACKEND, NULL);
-
-    return (pkgs);
-}
-
-static RCPackageSList *
-rc_packman_fake_depends_files (RCPackman *p, GSList *files)
-{
-    rc_packman_set_error (p, RC_PACKMAN_NO_BACKEND, NULL);
-
-    return (NULL);
-}
-
 static gboolean
 rc_packman_fake_verify (RCPackman *p, RCPackage *d)
 {
@@ -227,8 +211,6 @@ rc_packman_class_init (RCPackmanClass *klass)
     klass->rc_packman_real_query_all = rc_packman_fake_query_all;
     klass->rc_packman_real_version_compare =
         rc_packman_fake_version_compare;
-    klass->rc_packman_real_depends = rc_packman_fake_depends;
-    klass->rc_packman_real_depends_files = rc_packman_fake_depends_files;
     klass->rc_packman_real_verify = rc_packman_fake_verify;
 }
 
@@ -299,22 +281,6 @@ rc_packman_version_compare (RCPackman *p,
     g_assert (_CLASS (p)->rc_packman_real_version_compare);
 
     return (_CLASS (p)->rc_packman_real_version_compare (p, s1, s2));
-}
-
-RCPackageSList *
-rc_packman_depends (RCPackman *p, RCPackageSList *pkgs)
-{
-    g_assert (_CLASS (p)->rc_packman_real_depends);
-
-    return (_CLASS (p)->rc_packman_real_depends (p, pkgs));
-}
-
-RCPackageSList *
-rc_packman_depends_files (RCPackman *p, GSList *files)
-{
-    g_assert (_CLASS (p)->rc_packman_real_depends_files);
-
-    return (_CLASS (p)->rc_packman_real_depends_files (p, files));
 }
 
 gboolean

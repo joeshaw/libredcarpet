@@ -105,12 +105,6 @@ struct _RCPackmanClass {
                                             RCPackageSpec *s1,
                                             RCPackageSpec *s2);
 
-    RCPackageSList *(*rc_packman_real_depends)(RCPackman *p,
-                                               RCPackageSList *pkgs);
-
-    RCPackageSList *(*rc_packman_real_depends_files)(RCPackman *p,
-                                                     GSList *files);
-
     gboolean (*rc_packman_real_verify)(RCPackman *p,
                                        RCPackage *pkg);
 };
@@ -123,73 +117,50 @@ RCPackman *rc_packman_new (void);
    manager to install them.  Sets the error code (and possibly reason field)
    after install.  Should make every effort to insure that the listed packages
    are either all installed, or none installed. */
-
 void rc_packman_install (RCPackman *p, GSList *filenames);
 
 /* Given a list of RCPackages, remove the listed packages from the system using
    the system package manager.  Sets the error code (and possibly reason field)
    after removal.  Should make every effort to insure that the listed packages
    are either all removed, or none removed. */
-
 void rc_packman_remove (RCPackman *p, RCPackageSList *pkgs);
 
 /* Queries the system package database for a given RCPackage.  Fills in any
-   missing information (for instance, if only the name field is filled in, will
-   return with the version, release, epoch fields filled in).  Most
-   importantly, this function should /never/ change non-NULL information in the
-   RCPackage (including dependency info), and should set the installed field in
-   the RCPackageSpec.
+   missing information, including version, release, epoch, dependency lists,
+   etc.  Sets the spec->installed field if it finds the package.
 
    Note: on systems which support installing multiple version of the same file,
    this function should return the latest version which matches the given
    criteria.  However, if the version information is supplied, it must only
    query packages which meet that criteria. */
-
 RCPackage *rc_packman_query (RCPackman *p, RCPackage *pkg);
 
 /* Uses the system package manager to examine a given filename, and returns
-   an RCPackage with the name, version, release, epoch fields filled in.  This
-   function does not touch the dependencies information.  This function does
-   not touch the system installed package database, so spec->installed must
-   always be FALSE (even if the identical package to this file is already
-   installed!). */
-
+   an RCPackage with the name, version, release, epoch, and dependency fields
+   filled in.  This function does not touch the system installed package
+   database, so spec->installed must always be FALSE (even if the identical
+   package to this file is already installed!). */
 RCPackage *rc_packman_query_file (RCPackman *p, gchar *filename);
 
 /* Queries the system package database and returns a list of all packages
    installed on the system.  This function will return all instances of a
    package installed, unlike _query. */
-
 RCPackageSList *rc_packman_query_all (RCPackman *p);
 
 /* Use the system package manager style comparison to do a strcmp-semantics
    like comparison on the two RCPackageSpec's. */
-
 gint rc_packman_version_compare (RCPackman *p,
                                  RCPackageSpec *s1,
                                  RCPackageSpec *s2);
 
-/* Given a list of RCPackage's, fill in the dependency fields in all of the
-   RCPackages. */
-
-RCPackageSList *rc_packman_depends (RCPackman *p, RCPackageSList *pkgs);
-
-/* Given a list of filenames, create an RCPackageSpec (a query), and then fill
-   in the dependency information as well. */
-
-RCPackageSList *rc_packman_depends_files (RCPackman *p, GSList *pkgs);
-
 /* Don't worry about this function yet, I haven't decided firmly on how to
    handle this stuff. */
-
 gboolean rc_packman_verify (RCPackman *p, RCPackage *pkg);
 
 /* Return the object's error code from the last operation. */
-
 guint rc_packman_get_error (RCPackman *p);
 
 /* Return a possible descriptive string about the last error that occured. */
-
 gchar *rc_packman_get_reason (RCPackman *p);
 
 /* Wrappers to emit signals */
