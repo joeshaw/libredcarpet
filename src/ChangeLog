@@ -1,3 +1,24 @@
+2003-04-28  Joe Shaw  <joe@ximian.com>
+
+	* rc-package-file.h: Nuke the "flags" and replace it with a
+	"ghost" boolean.
+
+	* rc-rpmman.c (HeaderInfo): Add an FD_t element for reading
+	headers out of package files.
+	(rc_rpmman_header_info_free): Free the file descriptor if it's
+	set.
+	(rc_rpmman_read_package_file): Added.   Reads a filename into a
+	HeaderInfo struct, and abstracts out a lot of duplicated code.
+	(transaction_add_install_packages): Use
+	rc_rpmman_read_package_file().
+	(rc_rpmman_query_file): Ditto.
+	(rc_rpmman_package_is_repackaged): Ditto.
+	(rc_rpmman_file_list): Add support for reading the file list out
+	of a package file on disk.  Flesh this out so we get the file
+	sizes, md5sums, UIDs and GIDs, the file modes and mtimes.
+	(load_fake_syms, load_rpm_syms): Add unameToUid() and gnameToGid()
+	to symbols we load from RPM.
+
 2003-04-28  Ian Peters  <itp@ximian.com>
 
 	* rc-world.c (struct _RCWorld): add a database_changed_id field to

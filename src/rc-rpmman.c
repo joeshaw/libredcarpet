@@ -445,6 +445,10 @@ rc_package_to_rpm_name (RCPackage *package)
 } /* rc_package_to_rpm_name */
 
 typedef struct {
+    /* For reading out of a package file */
+    FD_t fd;
+
+    /* For reading out the package database */
     rc_rpmdbMatchIterator mi; /* Only for RPM v4 */
     rc_dbiIndexSet matches;   /* Only for RPM v3 */
 
@@ -463,20 +467,123 @@ header_free_cb (gpointer data, gpointer user_data)
 static void
 rc_rpmman_header_info_free (RCRpmman *rpmman, HeaderInfo *hi)
 {
-    /*
-     * rpmdbFreeIterator() frees the headers for us, so we only want to
-     * free when it's not called.
-     */
-    if (rpmman->major_version == 4)
+    gboolean free_headers = TRUE;
+
+    if (hi->fd)
+        rc_rpm_close (rpmman, hi->fd);
+
+    if (hi->mi) {
+        /*
+         * rpmdbFreeIterator() frees the headers for us, so we only want to
+         * free them when it's not called.
+         */
         rpmman->rpmdbFreeIterator (hi->mi);
-    else {
-        rpmman->dbiFreeIndexRecord (hi->matches);
-        g_slist_foreach (hi->headers, header_free_cb, rpmman);
+        free_headers = FALSE;
     }
+
+    if (hi->matches.count)
+        rpmman->dbiFreeIndexRecord (hi->matches);
+
+    if (free_headers)
+        g_slist_foreach (hi->headers, header_free_cb, rpmman);
 
     g_slist_free (hi->headers);
 
     g_free (hi);
+}
+
+static HeaderInfo *
+rc_rpmman_read_package_file (RCRpmman *rpmman, const char *filename)
+{
+    FD_t fd;
+    Header header;
+    gboolean is_source;
+    HeaderInfo *hi;
+    
+    if (!rc_file_exists (filename)) {
+        rc_packman_set_error (RC_PACKMAN (rpmman), RC_PACKMAN_ERROR_ABORT,
+                              "file '%s' does not exist", filename);
+        return NULL;
+    }
+
+    fd = rc_rpm_open (rpmman, filename, "r.fdio", O_RDONLY, 0444);
+
+    if (fd == NULL) {
+        rc_packman_set_error (RC_PACKMAN (rpmman), RC_PACKMAN_ERROR_ABORT,
+                              "unable to open package '%s'", filename);
+        return NULL;
+    }
+
+    if (rpmman->version >= 40100) {
+        rpmts ts;
+        int rc;
+        char *tmp = NULL;
+        guint32 count = 0;
+
+        ts = rpmman->rpmtsCreate ();
+
+        if (!ts) {
+            rc_packman_set_error (RC_PACKMAN (rpmman), RC_PACKMAN_ERROR_ABORT,
+                                  "rpmtsCreate() failed");
+            rc_rpm_close (rpmman, fd);
+            return NULL;
+        }
+
+        rpmman->rpmtsSetRootDir (ts, rpmman->rpmroot);
+
+        /*
+         * We don't want to use RPM >= 4.1's built-in digest/signature
+         * checking because repackaged RPMs have invalid signatures and
+         * we do the checking ourselves.
+         */
+        rpmman->rpmtsSetVSFlags (ts, rpmman->rpmtsVSFlags (ts) |
+                                 _RPMVSF_NODIGESTS | _RPMVSF_NOSIGNATURES);
+
+        rc = rpmman->rpmReadPackageFile (ts, fd, NULL, &header);
+
+        rpmman->rpmtsFree (ts);
+
+        if (rc != 0) {
+            rc_packman_set_error (RC_PACKMAN (rpmman), RC_PACKMAN_ERROR_ABORT,
+                                  "unable to read package header");
+            rc_rpm_close (rpmman, fd);
+            return NULL;
+        }
+
+        rpmman->headerGetEntry (header, RPMTAG_SOURCEPACKAGE, NULL,
+                                (void **) &tmp, &count);
+
+        if (count)
+            is_source = TRUE;
+        else
+            is_source = FALSE;
+    }
+    else {
+        if (rpmman->rpmReadPackageHeader (fd, &header,
+                                          &is_source, NULL, NULL)) {
+            rc_packman_set_error (RC_PACKMAN (rpmman), RC_PACKMAN_ERROR_ABORT,
+                                  "unable to read package header");
+
+            rc_rpm_close (rpmman, fd);
+            
+            return NULL;
+        }
+    }
+
+    if (is_source) {
+        rc_packman_set_error (RC_PACKMAN (rpmman), RC_PACKMAN_ERROR_ABORT,
+                              "source packages are not supported");
+
+        rc_rpm_close (rpmman, fd);
+
+        return NULL;
+    }
+
+    hi = g_new0 (HeaderInfo, 1);
+    hi->fd = fd;
+    hi->headers = g_slist_append (hi->headers, header);
+
+    return hi;
 }
 
 static HeaderInfo *
@@ -698,74 +805,26 @@ transaction_add_install_packages (RCPackman *packman,
                                   rpmTransactionSet transaction,
                                   RCPackageSList *install_packages)
 {
-    RCPackageSList *iter;
-    FD_t fd;
-    Header header;
-    int rc;
-    gboolean is_source;
-    guint count = 0;
     RCRpmman *rpmman = RC_RPMMAN (packman);
+    RCPackageSList *iter;
+    int count = 0;
 
     for (iter = install_packages; iter; iter = iter->next) {
         gchar *filename = ((RCPackage *)(iter->data))->package_filename;
+        HeaderInfo *hi;
+        Header header;
+        int rc;
 
-        fd = rc_rpm_open (rpmman, filename, "r.fdio", O_RDONLY, 0);
+        hi = rc_rpmman_read_package_file (rpmman, filename);
 
-        if (fd == NULL) {
+        if (!hi) {
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                  "unable to open %s", filename);
-
-            return (0);
-        }
-
-        /* FIXME: Return values */
-        if (rpmman->version >= 40100) {
-            char *tmp = NULL;
-            guint32 count = 0;
-
-            rc = rpmman->rpmReadPackageFile (rpmman->rpmts, fd, NULL, &header);
-
-            if (rc) {
-                rc_rpm_close (rpmman, fd);
-            
-                rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                      "can't read RPM header in %s", filename);
-                
-                return 0;
-            }
-
-            rpmman->headerGetEntry (header, RPMTAG_SOURCEPACKAGE, NULL,
-                                (void **) &tmp, &count);
-
-            if (count)
-                is_source = TRUE;
-            else
-                is_source = FALSE;
-        }
-        else {
-            rc = rpmman->rpmReadPackageHeader (fd, &header, &is_source,
-                                               NULL, NULL);
-
-            if (rc) {
-                rc_rpm_close (rpmman, fd);
-            
-                rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                      "can't read RPM header in %s", filename);
-
-                return 0;
-            }
-        }
-
-        if (is_source) {
-            rc_rpm_close (rpmman, fd);
-
-            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                  "%s is a source package; installing "
-                                  "source packages is not supported",
+                                  "unable to add %s for installation",
                                   filename);
-            
             return 0;
         }
+
+        header = hi->headers->data;
 
         if (rpmman->version >= 40100) {
             rc = rpmman->rpmtsAddInstallElement (rpmman->rpmts, header,
@@ -778,8 +837,7 @@ transaction_add_install_packages (RCPackman *packman,
         }
 
         count++;
-        rpmman->headerFree (header);
-        rc_rpm_close (rpmman, fd);
+        rc_rpmman_header_info_free (rpmman, hi);
 
         switch (rc) {
         case 0:
@@ -2019,99 +2077,28 @@ rc_rpmman_query (RCPackman *packman, const char *name)
 static RCPackage *
 rc_rpmman_query_file (RCPackman *packman, const gchar *filename)
 {
-    FD_t fd;
-    Header header;
-    gboolean is_source;
-    RCPackage *package;
     RCRpmman *rpmman = RC_RPMMAN (packman);
+    HeaderInfo *hi;
+    Header header;
+    RCPackage *package;
 
-    if (!rc_file_exists(filename)) {
+    hi = rc_rpmman_read_package_file (rpmman, filename);
+
+    if (!hi) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              "file '%s' does not exist", filename);
+                              "Unable to query file");
         return NULL;
     }
 
-    fd = rc_rpm_open (rpmman, filename, "r.fdio", O_RDONLY, 0444);
+    header = hi->headers->data;
 
-    if (fd == NULL) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              "unable to open package '%s'", filename);
-        return NULL;
-    }
-
-    if (rpmman->version >= 40100) {
-        rpmts ts;
-        int rc;
-        char *tmp = NULL;
-        guint32 count = 0;
-
-        ts = rpmman->rpmtsCreate ();
-
-        if (!ts) {
-            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                  "rpmtsCreate() failed");
-            rc_rpm_close (rpmman, fd);
-            return NULL;
-        }
-
-        rpmman->rpmtsSetRootDir (ts, rpmman->rpmroot);
-
-        /*
-         * We don't want to use RPM >= 4.1's built-in digest/signature
-         * checking because repackaged RPMs have invalid signatures and
-         * we do the checking ourselves.
-         */
-        rpmman->rpmtsSetVSFlags (ts, rpmman->rpmtsVSFlags (ts) |
-                                 _RPMVSF_NODIGESTS | _RPMVSF_NOSIGNATURES);
-
-        rc = rpmman->rpmReadPackageFile (ts, fd, NULL, &header);
-
-        rpmman->rpmtsFree (ts);
-
-        if (rc != 0) {
-            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                  "unable to read package header");
-            rc_rpm_close (rpmman, fd);
-            return NULL;
-        }
-
-        rpmman->headerGetEntry (header, RPMTAG_SOURCEPACKAGE, NULL,
-                                (void **) &tmp, &count);
-
-        if (count)
-            is_source = TRUE;
-        else
-            is_source = FALSE;
-    }
-    else {
-        if (rpmman->rpmReadPackageHeader (fd, &header,
-                                          &is_source, NULL, NULL)) {
-            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                  "unable to read package header");
-
-            rc_rpm_close (rpmman, fd);
-            
-            return NULL;
-        }
-    }
-
-    if (is_source) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              "source packages are not supported");
-
-        rc_rpm_close (rpmman, fd);
-
-        return NULL;
-    }
-    
     package = rc_package_new ();
 
     rc_rpmman_read_header (rpmman, header, package);
 
     rc_rpmman_depends_fill (rpmman, header, package);
 
-    rpmman->headerFree (header);
-    rc_rpm_close (rpmman, fd);
+    rc_rpmman_header_info_free (rpmman, hi);
 
     return (package);
 } /* rc_packman_query_file */
@@ -2293,101 +2280,33 @@ static gboolean
 rc_rpmman_package_is_repackaged (RCPackman *packman, RCPackage *package)
 {
     RCRpmman *rpmman = RC_RPMMAN (packman);
-    FD_t rpm_fd = NULL;
-    int rc;
+    HeaderInfo *hi;
     Header header = NULL;
-    gboolean is_source;
-    char *buf = NULL;
-    guint32 count = 0;
+    char *buf;
+    guint32 count;
 
     if (!package->package_filename) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "no file name specified");
-        goto cleanup;
+        return FALSE;
     }
 
-    rpm_fd = rc_rpm_open (rpmman, package->package_filename, "r.fdio",
-                          O_RDONLY, 0);
+    hi = rc_rpmman_read_package_file (rpmman, package->package_filename);
 
-    if (rpm_fd == NULL) {
+    if (!hi) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "unable to open %s", package->package_filename);
-        goto cleanup;
+        return FALSE;
     }
 
-    if (rpmman->version >= 40100) {
-        rpmts ts;
-        char *buf = NULL;
-        guint32 count = 0;
-
-        ts = rpmman->rpmtsCreate ();
-
-        if (!ts) {
-            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                  "rpmtsCreate() failed");
-            goto cleanup;
-        }
-
-        rpmman->rpmtsSetRootDir (ts, rpmman->rpmroot);
-
-        /*
-         * We don't want to use RPM >= 4.1's built-in digest/signature
-         * checking because repackaged RPMs have invalid signatures and
-         * we do the checking ourselves.
-         */
-        rpmman->rpmtsSetVSFlags (ts, rpmman->rpmtsVSFlags (ts) |
-                                 _RPMVSF_NODIGESTS | _RPMVSF_NOSIGNATURES);
-
-        rc = rpmman->rpmReadPackageFile (ts, rpm_fd, NULL, &header);
-
-        rpmman->rpmtsFree (ts);
-
-        if (rc) {
-            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                  "unable to read package header");
-            goto cleanup;
-        }
-
-        rpmman->headerGetEntry (header, RPMTAG_SOURCEPACKAGE, NULL,
-                                (void **) &buf, &count);
-
-        if (count)
-            is_source = TRUE;
-        else
-            is_source = FALSE;
-    }
-    else {
-        rc = rpmman->rpmReadPackageHeader (rpm_fd, &header, &is_source,
-                                           NULL, NULL);
-
-        if (rc) {
-            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                  "unable to read package header");
-            goto cleanup;
-        }
-    }
-
-    if (is_source) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              "source packages are not supported");
-
-        goto cleanup;
-    }
+    header = hi->headers->data;
 
     rpmman->headerGetEntry (header, RPMTAG_REMOVETID, NULL,
                             (void **) &buf, &count);
 
-cleanup:
-    if (header)
-        rpmman->headerFree (header);
+    rc_rpmman_header_info_free (rpmman, hi);
 
-    if (rpm_fd)
-        rc_rpm_close (rpmman, rpm_fd);
-
-    if (count > 0)
-        return TRUE;
-    else
-        return FALSE;
+    return count > 0 ? TRUE : FALSE;
 }
 
 static gboolean
@@ -2933,7 +2852,7 @@ rc_rpmman_file_list (RCPackman *packman, RCPackage *package)
 {
     RCRpmman *rpmman = RC_RPMMAN (packman);
     gboolean close_db = FALSE;
-    char *package_name;
+    char *package_name = NULL;
     HeaderInfo *hi = NULL;
     Header header;
     RCPackageFileSList *file_list = NULL;
@@ -2941,26 +2860,43 @@ rc_rpmman_file_list (RCPackman *packman, RCPackage *package)
     int count, i;
     char **basenames = NULL;
     char **dirnames = NULL;
-    int *dirindexes = NULL;
+    gint32 *dirindexes = NULL;
+    gint32 *filesizes = NULL;
+    char **md5sums = NULL;
+    char **owners = NULL;
+    char **groups = NULL;
+    gint32 *uids = NULL;
+    gint32 *gids = NULL;
+    guint16 *filemodes = NULL;
+    gint32 *filemtimes = NULL;
+    gint32 *fileflags = NULL;
 
     g_return_val_if_fail (package, NULL);
 
     if (!package->installed) {
-        g_warning ("not yet implemented");
-        return NULL;
-    }
-
-    if ((RC_RPMMAN (packman))->db_status < RC_RPMMAN_DB_RDONLY) {
-        if (!open_database (RC_RPMMAN (packman), FALSE)) {
+        if (!package->package_filename) {
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                  "unable to query packages");
+                                  "no file list information available for "
+                                  "package '%s'",
+                                  g_quark_to_string (package->spec.nameq));
             return NULL;
         }
-        close_db = TRUE;
-    }
 
-    package_name = rc_package_to_rpm_name (package);
-    hi = rc_rpmman_find_system_headers (rpmman, package_name);
+        hi = rc_rpmman_read_package_file (rpmman, package->package_filename);
+    }
+    else {
+        if ((RC_RPMMAN (packman))->db_status < RC_RPMMAN_DB_RDONLY) {
+            if (!open_database (RC_RPMMAN (packman), FALSE)) {
+                rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                      "unable to query packages");
+                return NULL;
+            }
+            close_db = TRUE;
+        }
+        
+        package_name = rc_package_to_rpm_name (package);
+        hi = rc_rpmman_find_system_headers (rpmman, package_name);
+    }
 
     if (!hi)
         goto cleanup;
@@ -2979,16 +2915,66 @@ rc_rpmman_file_list (RCPackman *packman, RCPackage *package)
         goto cleanup;
     }
 
+    /* Ugh. */
     rpmman->headerGetEntry (header, RPMTAG_DIRNAMES, NULL,
                             (void **) &dirnames, NULL);
     rpmman->headerGetEntry (header, RPMTAG_DIRINDEXES, NULL,
                             (void **) &dirindexes, NULL);
+    rpmman->headerGetEntry (header, RPMTAG_FILESIZES, NULL,
+                            (void **) &filesizes, NULL);
+    rpmman->headerGetEntry (header, RPMTAG_FILEMD5S, NULL,
+                            (void **) &md5sums, NULL);
+    rpmman->headerGetEntry (header, RPMTAG_FILEUSERNAME, NULL,
+                            (void **) &owners, NULL);
+    rpmman->headerGetEntry (header, RPMTAG_FILEGROUPNAME, NULL,
+                            (void **) &groups, NULL);
+    rpmman->headerGetEntry (header, RPMTAG_FILEUIDS, NULL,
+                            (void **) &uids, NULL);
+    rpmman->headerGetEntry (header, RPMTAG_FILEGIDS, NULL,
+                            (void **) &gids, NULL);
+    rpmman->headerGetEntry (header, RPMTAG_FILEMODES, NULL,
+                            (void **) &filemodes, NULL);
+    rpmman->headerGetEntry (header, RPMTAG_FILEMTIMES, NULL,
+                            (void **) &filemtimes, NULL);
+    rpmman->headerGetEntry (header, RPMTAG_FILEFLAGS, NULL,
+                            (void **) &fileflags, NULL);
 
     for (i = 0; i < count; i++) {
         file = rc_package_file_new ();
 
         file->filename = g_strdup_printf ("%s%s", dirnames[dirindexes[i]],
                                           basenames[i]);
+        file->size = filesizes[i];
+        file->md5sum = g_strdup (md5sums[i]);
+        file->mode = filemodes[i];
+        file->mtime = filemtimes[i];
+
+        if (fileflags[i] & RPMFILE_GHOST)
+            file->ghost = TRUE;
+        else
+            file->ghost = FALSE;
+
+        if (uids)
+            file->uid = uids[i];
+        else {
+            if (rpmman->unameToUid (owners[i], &file->uid) < 0) {
+                rc_debug (RC_DEBUG_LEVEL_WARNING,
+                          "User '%s' does not exist; assuming root",
+                          owners[i]);
+                file->uid = 0;
+            }
+        }
+
+        if (gids)
+            file->gid = gids[i];
+        else {
+            if (rpmman->gnameToGid (groups[i], &file->gid) < 0) {
+                rc_debug (RC_DEBUG_LEVEL_WARNING,
+                          "Group '%s' does not exist; assuming root",
+                          groups[i]);
+                file->gid = 0;
+            }
+        }
 
         file_list = g_slist_prepend (file_list, file);
     }
@@ -2996,7 +2982,8 @@ rc_rpmman_file_list (RCPackman *packman, RCPackage *package)
     file_list = g_slist_reverse (file_list);
 
 cleanup:
-    g_free (package_name);
+    if (package_name)
+        g_free (package_name);
 
     if (hi)
         rc_rpmman_header_info_free (rpmman, hi);
@@ -3102,6 +3089,8 @@ load_fake_syms (RCRpmman *rpmman)
     rpmman->rpmExpandNumeric = &rpmExpandNumeric;
     rpmman->rpmDefineMacro = &rpmDefineMacro;
     rpmman->rpmGetPath = &rpmGetPath;
+    rpmman->unameToUid = &unameToUid;
+    rpmman->gnameToUid = &gnameToGid;
 
 #if RPM_VERSION >= 40100
     rpmman->rpmReadPackageFile = &rpmReadPackageFile;
@@ -3280,6 +3269,14 @@ load_rpm_syms (RCRpmman *rpmman)
     }
     if (!g_module_symbol (rpmman->rpm_lib, "rpmGetPath",
                           ((gpointer) &rpmman->rpmGetPath))) {
+        return (FALSE);
+    }
+    if (!g_module_symbol (rpmman->rpm_lib, "unameToUid",
+                          ((gpointer) &rpmman->unameToUid))) {
+        return (FALSE);
+    }
+    if (!g_module_symbol (rpmman->rpm_lib, "gnameToGid",
+                          ((gpointer) &rpmman->gnameToGid))) {
         return (FALSE);
     }
 

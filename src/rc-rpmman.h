@@ -110,6 +110,8 @@ struct _RCRpmman {
     int (*rpmExpandNumeric)(const char *);
     int (*rpmDefineMacro)(MacroContext *, const char *, int);
     const char * (*rpmGetPath)(const char *, ...);
+    int (*unameToUid)(const char *, uid_t * uid);
+    int (*gnameToGid)(const char *, gid_t * gid);
 
     /*
      * RPM 3.0.x only functions

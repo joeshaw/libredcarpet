@@ -33,9 +33,9 @@ typedef struct {
     guint uid;
     guint gid;
 
-    guint mode;
-    guint mtime;
-    guint flags;
+    guint16 mode;
+    gint32 mtime;
+    gboolean ghost; /* Ghost file */
 } RCPackageFile;
 
 typedef GSList RCPackageFileSList;
