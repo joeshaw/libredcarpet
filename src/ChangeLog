@@ -1,3 +1,17 @@
+2002-11-05  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-queue-item.c (require_item_process): Set a meaningful branch
+	label.  This is helpful when debugging dependency problems.
+	(branch_item_destroy): Free the branch label.
+	(branch_item_to_string): Include the branch label in the
+	stringification.
+	(rc_queue_item_branch_set_label): Added.  Attaches a label to a
+	branch item.  This label is not user-visible, unless they are
+	looking at debugging output.
+	(install_item_process): Added log info to the uninstall items we
+	construct to handle removals due to conflicts with the installed
+	package.  (Fixes bug #33312)
+
 2002-11-01  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-world-import.c (rc_world_add_channel_from_directory):

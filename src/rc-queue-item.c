@@ -488,9 +488,12 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
 
     for (iter = conflicts; iter != NULL; iter = iter->next) {
         RCPackage *conflicting_package = iter->data;
+        RCResolverInfo *log_info;
         RCQueueItem *uninstall_item = rc_queue_item_new_uninstall (rc_queue_item_get_world (item),
                                                                    conflicting_package,
                                                                    "conflict");
+        log_info = rc_resolver_info_conflicts_with_new (conflicting_package, package);
+        rc_queue_item_add_info (uninstall_item, log_info);
         *new_items = g_slist_prepend (*new_items, uninstall_item);
     }
     
