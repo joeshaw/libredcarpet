@@ -361,7 +361,7 @@ rc_world_add_packages_from_buffer (RCWorld *world,
         count = rc_world_parse_redhat (world, channel, buf);
         break;
     default:
-        g_error ("Trying to parse unknown channel type!");
+        g_warning ("Trying to parse unknown channel type!");
         break;
     }
 
@@ -669,6 +669,6 @@ debian_packages_helper (gchar *mbuf, RCPackage *pkg, gchar *url_prefix)
 static guint
 rc_world_parse_redhat (RCWorld *world, RCChannel *rcc, char *buf)
 {
-    g_error ("No redhat channel support!");
+    g_warning ("No redhat channel support!");
     return 0;
 }

@@ -1,3 +1,12 @@
+2002-07-09  Joe Shaw  <joe@ximian.com>
+
+	* rc-world.c (rc_world_dump): First pass at a function which will
+	XMLify the RCWorld.  Currently dumps subscriptions, system
+	packages, and packages in each channel, so output is huuuuuuuuge.
+
+	* rc-world-import.c: Fix a couple of g_error()s which should be
+	g_warning()s.
+
 2002-07-04  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-world.c: Added "own_dep" flag to the RCPackageAndDep struct.

@@ -33,6 +33,7 @@
 #include "rc-channel-private.h"
 #include "rc-util.h"
 #include "rc-dep-or.h"
+#include "rc-xml.h"
 
 struct _RCWorld {
 
@@ -1696,3 +1697,114 @@ rc_world_spew (RCWorld *world, FILE *out)
                           out);
 
 }
+
+static void
+add_channel_subscription_xml_cb (RCChannel *channel, gpointer user_data)
+{
+    xmlNode **clists = user_data;
+    xmlNode *node;
+    char *tmp;
+
+    node = xmlNewNode (NULL, "channel");
+    tmp = g_strdup_printf ("%d", rc_channel_get_id (channel));
+    xmlNewProp (node, "id", tmp);
+    g_free (tmp);
+    xmlNewProp (node, "name", rc_channel_get_name (channel));
+
+    if (rc_channel_subscribed (channel))
+        xmlAddChild(clists[0], node);
+    else
+        xmlAddChild(clists[1], node);
+} /* add_channel_subscription_xml_cb */
+
+static void
+add_package_xml_cb (RCPackage *package, gpointer user_data)
+{
+    xmlNode *parent = user_data;
+    xmlNode *node;
+
+    node = rc_package_to_xml_node (package);
+    xmlAddChild (parent, node);
+} /* add_package_xml_cb */
+
+typedef struct {
+    RCWorld *world;
+
+    xmlNode *node;
+} AddChannelClosure;
+
+static void
+add_channel_xml_cb (RCChannel *channel, gpointer user_data)
+{
+    AddChannelClosure *closure = user_data;
+    xmlNode *node;
+
+    node = xmlNewNode (NULL, "channel");
+    xmlAddChild (closure->node, node);
+
+    rc_world_foreach_package (closure->world, channel,
+                              add_package_xml_cb, node);
+} /* add_channel_xml_cb */
+
+/**
+ * rc_world_dump:
+ * @world: An #RCWorld.
+ * 
+ * Dumps subscription information, system packages, and
+ * channel packages to XML.  This is useful for
+ * debugging.
+ *
+ **/
+char *
+rc_world_dump (RCWorld *world)
+{
+    xmlNode *parent;
+    xmlNode *node;
+    xmlNode *clists[2];
+    AddChannelClosure closure;
+    xmlDoc *doc;
+    xmlChar *data;
+    int data_size;
+
+    g_return_val_if_fail (world != NULL, NULL);
+
+    parent = xmlNewNode (NULL, "world");
+
+    /*
+     * Get channels.  Subscribed channels are element 0 in the list,
+     * unsubscribed element 1.
+     */
+    node = xmlNewNode (NULL, "channels");
+    xmlAddChild (parent, node);
+
+    clists[0] = xmlNewNode (NULL, "subscribed_channels");
+    xmlAddChild (node, clists[0]);
+
+    clists[1] = xmlNewNode (NULL, "unsubscribed_channels");
+    xmlAddChild (node, clists[1]);
+
+    rc_world_foreach_channel (world, add_channel_subscription_xml_cb, &clists);
+
+    /* Get a list of the system packages */
+    node = xmlNewNode (NULL, "system_packages");
+    xmlAddChild (parent, node);
+    
+    rc_world_foreach_package (world, RC_WORLD_SYSTEM_PACKAGES,
+                              add_package_xml_cb, node);
+
+    /* Get a list of the packages in each channel */
+    node = xmlNewNode (NULL, "channel_packages");
+    xmlAddChild (parent, node);
+
+    closure.world = world;
+    closure.node = node;
+
+    rc_world_foreach_channel (world, add_channel_xml_cb, &closure);
+
+    doc = xmlNewDoc ("1.0");
+    xmlDocSetRootElement (doc, parent);
+    xmlDocDumpMemory (doc, &data, &data_size);
+    xmlFreeDoc (doc);
+
+    return data;
+} /* rc_world_dump */
