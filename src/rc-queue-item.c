@@ -721,8 +721,9 @@ require_item_process (RCQueueItem *item,
                                require->remove_only ? "alternative installed" : "installable",
                                " providers of ",
                                rc_package_dep_to_str_static (require->dep),
-                               " for ",
-                               rc_package_to_str_static (require->requiring_package),
+                               require->requiring_package ? " for " : NULL,
+                               require->requiring_package ? 
+                               rc_package_to_str_static (require->requiring_package) : NULL,
                                NULL);
             
             rc_resolver_context_add_info_str (context,
@@ -733,7 +734,7 @@ require_item_process (RCQueueItem *item,
 
         /* If this is an upgrade, we might be able to avoid removing stuff by upgrading
            it instead. */
-        if (require->upgraded_package) {
+        if (require->upgraded_package && require->requiring_package) {
             GSList *upgrade_list = NULL;
 
             rc_world_foreach_upgrade (rc_queue_item_get_world (item),
@@ -821,9 +822,10 @@ require_item_process (RCQueueItem *item,
             }
             
             g_slist_free (upgrade_list);
-        }
+
+        } /* if (require->upgrade_package && require->requiring_package) ... */
             
-        if (explore_uninstall_branch) {
+        if (explore_uninstall_branch && require->requiring_package) {
             RCResolverInfo *log_info;
             uninstall_item = rc_queue_item_new_uninstall (world,
                                                           require->requiring_package,
@@ -854,8 +856,12 @@ require_item_process (RCQueueItem *item,
         RCQueueItem *install_item = rc_queue_item_new_install (world, (RCPackage *) info.providers->data);
         rc_queue_item_install_add_dep (install_item, require->dep);
 
-        rc_queue_item_install_add_needed_by (install_item,
-                                             require->requiring_package);
+        /* The requiring package could be NULL if the requirement was added as 
+           an extra dependency. */
+        if (require->requiring_package) {
+            rc_queue_item_install_add_needed_by (install_item,
+                                                 require->requiring_package);
+        }
         
         *new_items = g_slist_prepend (*new_items, install_item);
 
@@ -867,8 +873,12 @@ require_item_process (RCQueueItem *item,
             rc_queue_item_install_add_dep (install_item, require->dep);
             rc_queue_item_branch_add_item (branch_item, install_item);
 
-            rc_queue_item_install_add_needed_by (install_item,
-                                                 require->requiring_package);
+            /* The requiring package could be NULL if the requirement was added as 
+               an extra dependency. */
+            if (require->requiring_package) {
+                rc_queue_item_install_add_needed_by (install_item,
+                                                     require->requiring_package);
+            }
         }
 
         *new_items = g_slist_prepend (*new_items, branch_item);

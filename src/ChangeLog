@@ -1,3 +1,13 @@
+2002-07-21  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-resolver-context.c (rc_resolver_context_uninstall_package):
+	Fix a totally harmless logical glitch.
+
+	* rc-queue-item.c (require_item_process): Gracefully handle the case 
+	of ->requiring_package being NULL.  This happens when a requirement
+	is added as an extra dependency.
+	
+
 2002-07-15  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-resolver-context.c (rc_resolver_context_foreach_info): Filter

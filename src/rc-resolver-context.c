@@ -370,8 +370,9 @@ rc_resolver_context_uninstall_package (RCResolverContext *context,
         return TRUE;
     }
 
-    if (status == RC_PACKAGE_STATUS_TO_BE_INSTALLED)
+    if (status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED) {
         return TRUE;
+    }
 
     if (due_to_obsolete)
         new_status = RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE;
