@@ -1,1 +1,5 @@
-SUBDIRS = python
+SUBDIRS =
+
+if ENABLE_PYTHON
+SUBDIRS += python
+endif

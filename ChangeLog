@@ -1,3 +1,10 @@
+2003-10-21  Joe Shaw  <joe@ximian.com>
+
+	* configure.in: Make building of the python bindings conditional
+	(but on by default).
+
+	* bindings/Makefile.am: Conditionalize building of the python dir.
+
 2003-10-06  Joe Shaw  <joe@ximian.com>
 
 	* configure.in: 1.5.90.
