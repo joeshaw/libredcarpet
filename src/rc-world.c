@@ -49,6 +49,8 @@ struct _RCWorld {
     GSList *channels;
     GSList *locks;
 
+    GHashTable *subscriptions;
+
     RCPackman *packman;
     int database_changed_id;
 
@@ -443,6 +445,11 @@ rc_world_new (RCPackman *packman)
     world->changed_channels      = FALSE;
     world->changed_subscriptions = FALSE;
 
+    world->subscriptions = g_hash_table_new_full (g_str_hash,
+                                                  g_str_equal,
+                                                  g_free,
+                                                  NULL);
+
     world->seq_no_packages       = 1;
     world->seq_no_channels       = 1;
     world->seq_no_subscriptions  = 1;
@@ -479,6 +486,8 @@ rc_world_free (RCWorld *world)
         GSList *iter;
 
         rc_world_remove_packages (world, RC_CHANNEL_ANY);
+
+        g_hash_table_destroy (world->subscriptions);
 
         hashed_slist_destroy (world->packages_by_name);
         hashed_slist_destroy (world->provides_by_name);
@@ -596,6 +605,48 @@ add_package_cb (RCPackage *package, gpointer user_data)
 
     *packages = g_slist_prepend (*packages, rc_package_ref (package));
 }
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+void
+rc_world_set_subscription (RCWorld   *world,
+                           RCChannel *channel,
+                           gboolean   is_subscribed)
+{
+    const char *id;
+
+    g_return_if_fail (world != NULL);
+    g_return_if_fail (channel != NULL);
+
+    if (! (rc_world_is_subscribed (world, channel) ^ is_subscribed))
+        return;
+
+    id = rc_channel_get_id (channel);
+
+    if (is_subscribed) {
+        g_hash_table_insert (world->subscriptions, g_strdup (id), (gpointer)1);
+    } else {
+        g_hash_table_remove (world->subscriptions, id);
+    }
+
+    rc_world_touch_subscription_sequence_number (world);
+}
+
+gboolean
+rc_world_is_subscribed (RCWorld   *world,
+                        RCChannel *channel)
+{
+    const char *id;
+
+    g_return_val_if_fail (world != NULL, FALSE);
+    g_return_val_if_fail (channel != NULL, FALSE);
+
+    id = rc_channel_get_id (channel);
+
+    return g_hash_table_lookup (world->subscriptions, id) != NULL;
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 void
 rc_world_migrate_channel (RCWorld *world,

@@ -63,7 +63,6 @@ struct _RCChannel {
 
     void (*refresh_magic) (RCChannel *);
 
-    gboolean subscribed : 1;
     gboolean transient  : 1;
     gboolean silent     : 1;
 };

@@ -1,3 +1,50 @@
+2003-05-12  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-world-import.c (rc_world_add_channel_from_directory): Instead
+	of setting the channel's subscription flag (which no longer
+	exists) directly, set it in the world.
+
+	* rc-world.c: Added a subscriptions hash table to the RCWorld
+	struct.
+	(rc_world_set_subscription): Added.  Subscription info is now
+	stored in the world.
+	(rc_world_is_subscribed): Ditto.
+	(rc_world_free): Clean up our subscriptions hash.
+	(rc_world_new): Allocate our subscriptions hash.
+
+	* rc-channel.c (rc_channel_subscribed): Query the channel's world
+	to get the subscription status.  We do this since the channel
+	struct no longer carries that piece of state around.
+	(rc_channel_set_subscription): Change the channel's subscription
+	status in it's world.
+
+	* rc-channel-private.h: Removed the subscribed flag from the
+	channel struct.  From here on out, channel structs should be
+	stateless (well, except for their initial state of course) and
+	immutable.
+
+	* rc-distro.c (rc_distro_parse_xml): We don't need to try to parse
+	the buffer as both compressed and uncompressed, because if the
+	distro file is compressed it will be automagically uncompressed
+	when we map it.
+
+	* rc-util.c: I've rearranged some things in the file in an attempt
+	to group similar functions.
+	(rc_memory_looks_gzipped): Added.  Checks if a block of memory
+	begins with the gzip magic numbers.
+	(rc_buffer_map_file): If we map a file that appears to be
+	compressed, magically uncompress it.
+	(rc_buffer_unmap_file): If we are 'unmapping' a file that was
+	actually compressed, we don't actually unmap the memory; we gfree
+	it instead.
+	(rc_parse_xml_from_buffer): A wrapper around xmlParseMemory that
+	transparently handles compressed buffers.  This is a
+	slightly-nicer replacement for rc_uncompress_xml, which has been
+	removed.
+	(rc_parse_xml_from_file): Like rc_parse_xml_from_file, this is a
+	convenience function that transparently uncompresses a gzipped
+	file before applying the xml parser.
+
 2003-05-09  Jon Trowbridge  <trow@ximian.com>
 
         * rc-resolver-info.c (rc_resolver_info_missing_req_new):

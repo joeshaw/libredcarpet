@@ -240,18 +240,16 @@ rc_channel_subscribed (const RCChannel *channel)
 {
     g_return_val_if_fail (channel != NULL, FALSE);
 
-    return channel->subscribed;
+    return rc_world_is_subscribed (channel->world, (RCChannel *) channel);
 }
 
 void
 rc_channel_set_subscription (RCChannel *channel,
                              gboolean   subscribed)
 {
-    if ((channel->subscribed ^ subscribed)
-        && channel->world != NULL
-        && ! rc_channel_get_silent (channel))
-        rc_world_touch_subscription_sequence_number (channel->world);
-    channel->subscribed = subscribed;
+    g_return_if_fail (channel != NULL);
+
+    rc_world_set_subscription (channel->world, channel, subscribed);
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */

@@ -652,9 +652,7 @@ rc_distro_parse_xml (const char *xml_buf,
                 goto ERROR;
             }
 
-            /* Try once compressed, once uncompressed */
-            if (!rc_distro_parse_xml (buffer->data, buffer->size) &&
-                !rc_distro_parse_xml (buffer->data, 0)) {
+            if (!rc_distro_parse_xml (buffer->data, 0)) {
                 rc_debug (RC_DEBUG_LEVEL_CRITICAL,
                           "Unable to parse RC_DISTRIBUTIONS_FILE %s",
                           distro_file);

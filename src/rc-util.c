@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 /* rc-util.c
- * Copyright (C) 2000-2002 Ximian, Inc.
+ * Copyright (C) 2000-2003 Ximian, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License,
@@ -33,6 +33,7 @@
 #include <sys/stat.h>
 
 #include "rc-util.h"
+#include "rc-debug.h"
 
 gint
 rc_mkdir(const char *dir, guint mode)
@@ -223,6 +224,123 @@ rc_maybe_merge_paths(const char *parent_path, const char *child_path)
     else
         return g_strconcat(parent_path, "/", child_path, NULL);
 } /* rc_maybe_merge_paths */
+
+gboolean
+rc_write (int fd, const void *buf, size_t count)
+{
+    size_t bytes_remaining = count;
+    const void *ptr = buf;
+
+    while (bytes_remaining) {
+        size_t bytes_written;
+
+        bytes_written = write (fd, ptr, bytes_remaining);
+
+        if (bytes_written == -1) {
+            if (errno == EAGAIN || errno == EINTR) {
+                continue;
+            } else {
+                break;
+            }
+        }
+
+        bytes_remaining -= bytes_written;
+        ptr += bytes_written;
+    }
+
+    if (bytes_remaining) {
+        return (FALSE);
+    }
+
+    return (TRUE);
+}
+
+gboolean
+rc_close (int fd)
+{
+    while (close (fd) == -1) {
+        if (errno != EAGAIN && errno != EINTR) {
+            return (FALSE);
+        }
+    }
+
+    return (TRUE);
+}
+
+gint
+rc_cp (const char *fromfile, const char *tofile)
+{
+    int fdin = -1, fdout = -1;
+    char *src = NULL, *dest = NULL;
+    int ret = -1;
+    int mode;
+    struct stat st;
+
+    fdin = open (fromfile, O_RDONLY);
+    
+    if (fdin < 0)
+        goto out;
+
+    if (fstat (fdin, &st) < 0)
+        goto out;
+
+    mode = st.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
+    fdout = open (tofile, O_RDWR | O_CREAT | O_TRUNC, mode);
+
+    if (fdout < 0)
+        goto out;
+
+    if (lseek (fdout, st.st_size - 1, SEEK_SET) < 0)
+        goto out;
+
+    if (rc_write (fdout, "\0", 1) < 0)
+        goto out;
+
+    src = mmap (NULL, st.st_size, PROT_READ, MAP_SHARED, fdin, 0);
+
+    if (src == MAP_FAILED)
+        goto out;
+
+    dest = mmap (NULL, st.st_size, PROT_READ | PROT_WRITE,
+                 MAP_SHARED, fdout, 0);
+
+    if (dest == MAP_FAILED)
+        goto out;
+
+    memcpy (dest, src, st.st_size);
+
+    ret = 0;
+
+out:
+    if (fdin >= 0)
+        rc_close (fdin);
+
+    if (fdout >= 0)
+        rc_close (fdout);
+
+    if (src != NULL)
+        munmap (src, st.st_size);
+
+    if (dest != NULL)
+        munmap (dest, st.st_size);
+
+    return ret;
+}
+
+guint32
+rc_string_to_guint32_with_default(const char *n, guint32 def)
+{
+    char *ret;
+    guint32 z;
+
+    z = strtoul(n, &ret, 10);
+    if (*ret != '\0')
+        return def;
+    else
+        return z;
+} /* rc_string_to_guint32_with_default */
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 /*
  * Magic gunzipping goodness
@@ -423,138 +541,18 @@ rc_compress_memory (const guint8 *input_buffer, guint input_length,
     return zret;
 } /* rc_compress_memory */
 
-xmlDoc *
-rc_uncompress_xml (const guint8 *input_buffer,
-                   guint32 input_length)
-{
-    GByteArray *buf;
-    xmlDoc *doc;
-
-    g_return_val_if_fail (input_buffer != NULL, NULL);
-    
-    if (rc_uncompress_memory (input_buffer, input_length, &buf))
-        return NULL;
-
-    doc = xmlParseMemory (buf->data, buf->len - 1);
-    g_byte_array_free (buf, TRUE);
-
-    return doc;
-}
-
 gboolean
-rc_write (int fd, const void *buf, size_t count)
+rc_memory_looks_gzipped (const guint8 *buffer)
 {
-    size_t bytes_remaining = count;
-    const void *ptr = buf;
+    g_return_val_if_fail (buffer != NULL, FALSE);
 
-    while (bytes_remaining) {
-        size_t bytes_written;
+    /* This is from RFC 1952 */
 
-        bytes_written = write (fd, ptr, bytes_remaining);
-
-        if (bytes_written == -1) {
-            if (errno == EAGAIN || errno == EINTR) {
-                continue;
-            } else {
-                break;
-            }
-        }
-
-        bytes_remaining -= bytes_written;
-        ptr += bytes_written;
-    }
-
-    if (bytes_remaining) {
-        return (FALSE);
-    }
-
-    return (TRUE);
+    return buffer[0] == gz_magic[0]  /* ID1 */
+        && buffer[1] == gz_magic[1]; /* ID2 */
 }
 
-gboolean
-rc_close (int fd)
-{
-    while (close (fd) == -1) {
-        if (errno != EAGAIN && errno != EINTR) {
-            return (FALSE);
-        }
-    }
-
-    return (TRUE);
-}
-
-gint
-rc_cp (const char *fromfile, const char *tofile)
-{
-    int fdin = -1, fdout = -1;
-    char *src = NULL, *dest = NULL;
-    int ret = -1;
-    int mode;
-    struct stat st;
-
-    fdin = open (fromfile, O_RDONLY);
-    
-    if (fdin < 0)
-        goto out;
-
-    if (fstat (fdin, &st) < 0)
-        goto out;
-
-    mode = st.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
-    fdout = open (tofile, O_RDWR | O_CREAT | O_TRUNC, mode);
-
-    if (fdout < 0)
-        goto out;
-
-    if (lseek (fdout, st.st_size - 1, SEEK_SET) < 0)
-        goto out;
-
-    if (rc_write (fdout, "\0", 1) < 0)
-        goto out;
-
-    src = mmap (NULL, st.st_size, PROT_READ, MAP_SHARED, fdin, 0);
-
-    if (src == MAP_FAILED)
-        goto out;
-
-    dest = mmap (NULL, st.st_size, PROT_READ | PROT_WRITE,
-                 MAP_SHARED, fdout, 0);
-
-    if (dest == MAP_FAILED)
-        goto out;
-
-    memcpy (dest, src, st.st_size);
-
-    ret = 0;
-
-out:
-    if (fdin >= 0)
-        rc_close (fdin);
-
-    if (fdout >= 0)
-        rc_close (fdout);
-
-    if (src != NULL)
-        munmap (src, st.st_size);
-
-    if (dest != NULL)
-        munmap (dest, st.st_size);
-
-    return ret;
-}
-
-guint32
-rc_string_to_guint32_with_default(const char *n, guint32 def)
-{
-    char *ret;
-    guint32 z;
-
-    z = strtoul(n, &ret, 10);
-    if (*ret != '\0')
-        return def;
-    else
-        return z;
-} /* rc_string_to_guint32_with_default */
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 /* 
  * This just allows reading from the buffer for now.  It could be extended to
@@ -566,7 +564,7 @@ rc_buffer_map_file(const char *filename)
     struct stat s;
     int fd;
     gpointer data;
-    RCBuffer *buf;
+    RCBuffer *buf = NULL;
 
     g_return_val_if_fail(filename, NULL);
 
@@ -585,9 +583,31 @@ rc_buffer_map_file(const char *filename)
     if (data == MAP_FAILED)
         return NULL;
 
-    buf = g_new(RCBuffer, 1);
-    buf->data = data;
-    buf->size = s.st_size;
+    /* Transparently uncompress */
+    if (s.st_size > 3 && rc_memory_looks_gzipped (data)) {
+        GByteArray *byte_array = NULL;
+
+        if (rc_uncompress_memory (data, s.st_size, &byte_array)) {
+            rc_debug (RC_DEBUG_LEVEL_WARNING,
+                      "Uncompression of '%s' failed", filename);
+        } else {
+            buf = g_new (RCBuffer, 1);
+            buf->data       = byte_array->data;
+            buf->size       = byte_array->len;
+            buf->is_mmapped = FALSE;
+        }
+
+        munmap (data, s.st_size);
+
+        if (byte_array)
+            g_byte_array_free (byte_array, FALSE);
+
+    } else {
+        buf = g_new(RCBuffer, 1);
+        buf->data       = data;
+        buf->size       = s.st_size;
+        buf->is_mmapped = TRUE;
+    }
 
     return buf;
 } /* rc_buffer_map_file */
@@ -595,11 +615,56 @@ rc_buffer_map_file(const char *filename)
 void
 rc_buffer_unmap_file(RCBuffer *buf)
 {
-    g_return_if_fail(buf);
+    g_return_if_fail (buf);
 
-    munmap(buf->data, buf->size);
-    g_free(buf);
+    if (buf->is_mmapped)
+        munmap (buf->data, buf->size);
+    else
+        g_free (buf->data);
+
+    g_free (buf);
 } /* rc_buffer_unmap_file */
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+xmlDoc *
+rc_parse_xml_from_buffer (const guint8 *input_buffer,
+                          guint32       input_length)
+{
+    xmlDoc *doc = NULL;
+
+    g_return_val_if_fail (input_buffer != NULL, NULL);
+
+    if (input_length > 3 && rc_memory_looks_gzipped (input_buffer)) { 
+        GByteArray *buf;       
+        if (rc_uncompress_memory (input_buffer, input_length, &buf))
+            return NULL;
+        doc = xmlParseMemory (buf->data, buf->len - 1);
+        g_byte_array_free (buf, TRUE);
+    } else {
+        doc = xmlParseMemory (input_buffer, input_length);
+    }
+
+    return doc;
+}
+
+xmlDoc *
+rc_parse_xml_from_file (const char *filename)
+{
+    RCBuffer *buf;
+    xmlDoc *doc = NULL;
+
+    g_return_val_if_fail (filename && *filename, NULL);
+
+    buf = rc_buffer_map_file (filename);
+    if (buf)
+        doc = xmlParseMemory (buf->data, buf->size);
+    rc_buffer_unmap_file (buf);
+
+    return doc;
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
     
 guint
 rc_str_case_hash (gconstpointer key)
@@ -624,38 +689,40 @@ rc_str_case_equal (gconstpointer v1, gconstpointer v2)
     return g_ascii_strcasecmp (string1, string2) == 0;
 }
 
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
 static void
 hash_values_to_list_cb (gpointer key, gpointer value, gpointer user_data)
 {
     GSList **list = user_data;
-
+ 
     *list = g_slist_prepend (*list, value);
 }
-
+ 
 GSList *
 rc_hash_values_to_list (GHashTable *hash_table)
 {
     GSList *list = NULL;
-
+ 
     g_hash_table_foreach (hash_table, hash_values_to_list_cb, &list);
-
+ 
     return list;
 }
-
+ 
 static void
 hash_keys_to_list_cb (gpointer key, gpointer value, gpointer user_data)
 {
     GSList **list = user_data;
-
+ 
     *list = g_slist_prepend (*list, key);
 }
-
+ 
 GSList *
 rc_hash_keys_to_list (GHashTable *hash_table)
 {
     GSList *list = NULL;
-
+ 
     g_hash_table_foreach (hash_table, hash_keys_to_list_cb, &list);
-
+ 
     return list;
 }

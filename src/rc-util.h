@@ -46,18 +46,6 @@ gboolean rc_url_is_absolute (const char *url);
    paths, etc. */
 gchar *rc_maybe_merge_paths(const char *parent_path, const char *child_path);
 
-/* uncompress memory */
-
-gint rc_uncompress_memory (const guint8 *input_buffer,
-                           guint32 input_length,
-                           GByteArray **out_ba);
-
-gint rc_compress_memory (const guint8 *input_buffer,
-                         guint32 input_length,
-                         GByteArray **out_ba);
-
-xmlDoc *rc_uncompress_xml (const guint8 *input_buffer,
-                           guint32 input_length);
 
 /* Safely write a buffer to a fd (handle all those pesky EINTR issues) */
 gboolean rc_write (int fd, const void *buf, size_t count);
@@ -70,22 +58,52 @@ gint rc_cp (const char *fromfile, const char *tofile);
 
 guint32 rc_string_to_guint32_with_default(const char *n, guint32 def);
 
+
+/* Wrappers around libz's compression/uncompression functions. */
+
+gint     rc_uncompress_memory    (const guint8 *input_buffer,
+                                  guint32       input_length,
+                                  GByteArray  **out_ba);
+
+gint     rc_compress_memory      (const guint8 *input_buffer,
+                                  guint32       input_length,
+                                  GByteArray  **out_ba);
+
+gboolean rc_memory_looks_gzipped (const guint8 *buffer);
+
+
+/* An easy way to map files.  If we map a compressed file,
+   it will be magically uncompressed for us. */
+
 typedef struct {
     gpointer data;
-    gsize size;
+    gsize    size;
+    gboolean is_mmapped;
 } RCBuffer;
 
-/* mmap()s a file */
-RCBuffer *rc_buffer_map_file(const char *filename);
+RCBuffer *rc_buffer_map_file   (const char *filename);
 
-/* munmap()s the buffer */
-void rc_buffer_unmap_file(RCBuffer *buffer);
+void      rc_buffer_unmap_file (RCBuffer   *buffer);
 
-guint rc_str_case_hash (gconstpointer key);
+
+/* Convenience functions for parsing XML.  If they are handed
+   compressed XML, it will be decompressed automatically. */
+
+xmlDoc *rc_parse_xml_from_buffer (const guint8 *input_buffer,
+                                  guint32       input_length);
+
+xmlDoc *rc_parse_xml_from_file   (const char   *filename);
+
+
+/* Some useful GHashTable functions */
+
+guint    rc_str_case_hash  (gconstpointer key);
 gboolean rc_str_case_equal (gconstpointer v1, gconstpointer v2);
 
+
 /* Converts GHashTables to GSLists */
+
 GSList *rc_hash_values_to_list (GHashTable *hash_table);
 GSList *rc_hash_keys_to_list   (GHashTable *hash_table);
-
+ 
 #endif

@@ -69,8 +69,18 @@ RCChannel *rc_world_add_channel_with_priorities (RCWorld      *world,
                                                  RCChannelType type,
                                                  int           subd_priority,
                                                  int           unsubd_priority);
+/* Subscriptions */
+
+void       rc_world_set_subscription            (RCWorld      *world,
+                                                 RCChannel    *channel,
+                                                 gboolean      is_subscribed);
+
+gboolean   rc_world_is_subscribed               (RCWorld      *world,
+                                                 RCChannel    *channel);
+
 
 /* Migrates a channel to this world */
+
 void       rc_world_migrate_channel             (RCWorld      *world,
                                                  RCChannel    *channel);
 

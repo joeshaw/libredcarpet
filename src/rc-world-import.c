@@ -800,8 +800,9 @@ rc_world_add_channel_from_directory (RCWorld *world,
     channel->description = g_strdup (directory);
     channel->refresh_magic = refresh_channel_from_dir;
     channel->transient = TRUE;
-    channel->subscribed = TRUE;
     channel->priority = 12800;
+
+    rc_world_set_subscription (world, channel, TRUE);
 
     refresh_channel_from_dir (channel);
 
