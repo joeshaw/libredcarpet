@@ -59,16 +59,16 @@ struct _RCResolverInfo {
 
 typedef void (*RCResolverInfoFn) (RCResolverInfo *, gpointer);
 
-const char        *rc_resolver_info_type_to_str      (RCResolverInfoType);
-RCResolverInfoType rc_resolver_info_type_from_str    (const char *);
+const char        *rc_resolver_info_type_to_string   (RCResolverInfoType);
+RCResolverInfoType rc_resolver_info_type_from_string (const char *);
 
-RCResolverInfoType rc_resolver_info_type             (RCResolverInfo *);
-gboolean           rc_resolver_info_merge            (RCResolverInfo *, RCResolverInfo *);
-RCResolverInfo    *rc_resolver_info_copy             (RCResolverInfo *);
-void               rc_resolver_info_free             (RCResolverInfo *);
-char              *rc_resolver_info_to_str           (RCResolverInfo *);
-char              *rc_resolver_info_packages_to_str  (RCResolverInfo *,
-                                                      gboolean names_only);
+RCResolverInfoType rc_resolver_info_type                (RCResolverInfo *);
+gboolean           rc_resolver_info_merge               (RCResolverInfo *, RCResolverInfo *);
+RCResolverInfo    *rc_resolver_info_copy                (RCResolverInfo *);
+void               rc_resolver_info_free                (RCResolverInfo *);
+char              *rc_resolver_info_to_string           (RCResolverInfo *);
+char              *rc_resolver_info_packages_to_string  (RCResolverInfo *,
+                                                         gboolean names_only);
 
 gboolean           rc_resolver_info_is_about            (RCResolverInfo *, RCPackage *);
 gboolean           rc_resolver_info_mentions            (RCResolverInfo *, RCPackage *);

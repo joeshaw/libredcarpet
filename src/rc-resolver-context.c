@@ -954,7 +954,7 @@ rc_resolver_context_foreach_info (RCResolverContext *context,
 void
 spew_cb (RCResolverInfo *info, gpointer user_data)
 {
-    char *msg = rc_resolver_info_to_str (info);
+    char *msg = rc_resolver_info_to_string (info);
     if (rc_resolver_info_is_error (info))
         g_print ("[ERROR] ");
     else if (rc_resolver_info_is_important (info))

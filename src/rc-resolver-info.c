@@ -40,7 +40,7 @@ struct {
 };
 
 const char *
-rc_resolver_info_type_to_str (RCResolverInfoType type)
+rc_resolver_info_type_to_string (RCResolverInfoType type)
 {
     int i;
 
@@ -53,7 +53,7 @@ rc_resolver_info_type_to_str (RCResolverInfoType type)
 }
 
 RCResolverInfoType
-rc_resolver_info_type_from_str (const char *str)
+rc_resolver_info_type_from_string (const char *str)
 {
     int i;
 
@@ -161,7 +161,7 @@ rc_resolver_info_free (RCResolverInfo *info)
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 char *
-rc_resolver_info_to_str (RCResolverInfo *info)
+rc_resolver_info_to_string (RCResolverInfo *info)
 {
     char *msg = NULL;
     char *pkgs = NULL;
@@ -171,25 +171,25 @@ rc_resolver_info_to_str (RCResolverInfo *info)
     switch (info->type) {
 
     case RC_RESOLVER_INFO_TYPE_NEEDED_BY:
-        pkgs = rc_resolver_info_packages_to_str (info, FALSE);
+        pkgs = rc_resolver_info_packages_to_string (info, FALSE);
         msg = g_strdup_printf ("needed by %s", pkgs);
         g_free (pkgs);
         break;
 
     case RC_RESOLVER_INFO_TYPE_CONFLICTS_WITH:
-        pkgs = rc_resolver_info_packages_to_str (info, FALSE);
+        pkgs = rc_resolver_info_packages_to_string (info, FALSE);
         msg = g_strdup_printf ("conflicts with %s", pkgs);
         g_free (pkgs);
         break;
 
     case RC_RESOLVER_INFO_TYPE_OBSOLETES:
-        pkgs = rc_resolver_info_packages_to_str (info, FALSE);
+        pkgs = rc_resolver_info_packages_to_string (info, FALSE);
         msg = g_strdup_printf ("replaces %s", pkgs);
         g_free (pkgs);
         break;
 
     case RC_RESOLVER_INFO_TYPE_DEPENDS_ON:
-        pkgs = rc_resolver_info_packages_to_str (info, FALSE);
+        pkgs = rc_resolver_info_packages_to_string (info, FALSE);
         msg = g_strdup_printf ("depended on %s", pkgs);
         g_free (pkgs);
         break;
@@ -223,8 +223,8 @@ rc_resolver_info_to_str (RCResolverInfo *info)
 }
 
 char *
-rc_resolver_info_packages_to_str (RCResolverInfo *info,
-                                  gboolean names_only)
+rc_resolver_info_packages_to_string (RCResolverInfo *info,
+                                     gboolean names_only)
 {
     char **strv;
     char *str;

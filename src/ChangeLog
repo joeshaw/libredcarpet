@@ -1,3 +1,14 @@
+2002-08-08  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-resolver-context.c (spew_cb): Changed to use
+	rc_resolver_info_to_string instead of the _to_str version.
+	
+	* rc-resolver-info.c (rc_resolver_info_type_to_string): Renamed
+	from _to_str.
+	(rc_resolver_info_type_from_string): Renamed from _from_str.
+	(rc_resolver_info_to_string): Renamed from _to_str.  Changed to
+	call _to_string version of other functions.
+
 2002-08-08  Ian Peters  <itp@ximian.com>
 
 	* distributions.xml: fix a typo in the version of TurboLinux 7.0
