@@ -28,6 +28,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include <sys/stat.h>
 
@@ -115,6 +116,7 @@ typedef enum {
 
 static void rc_rpmman_class_init (RCRpmmanClass *klass);
 static void rc_rpmman_init       (RCRpmman *obj);
+static gboolean yast_running     (void);
 
 static GObjectClass *parent_class;
 
@@ -209,6 +211,12 @@ rc_rpmman_is_database_changed (RCPackman *packman)
     RCRpmman *rpmman = RC_RPMMAN (packman);
     const gchar *path;
 
+    if (yast_running ()) {
+        rc_debug (RC_DEBUG_LEVEL_DEBUG,
+                  "YaST is running, not checking for database changes");
+        return FALSE;
+    }
+
     if (!rpmman->db_clean)
         return TRUE;
 
@@ -221,6 +229,29 @@ rc_rpmman_is_database_changed (RCPackman *packman)
     }
 
     return FALSE;
+}
+
+static gboolean
+yast_running (void)
+{
+    const gchar *pid_file = "/var/run/yast.pid";
+    RCBuffer *buf;
+    pid_t pid;
+    gboolean yast_running = FALSE;
+
+    if (!rc_file_exists (pid_file))
+        /* Good, it's not there */
+        return FALSE;
+
+    buf = rc_buffer_map_file (pid_file);
+
+    if (sscanf ((const char *) buf->data, "%d\n", &pid) > 0)
+        if (kill (pid, 0) >= 0)
+            yast_running = TRUE;
+
+    rc_buffer_unmap_file (buf);
+
+    return yast_running;
 }
 
 static gboolean
@@ -2297,6 +2328,13 @@ rc_rpmman_query_all (RCPackman *packman)
     int count;
 #endif
     gboolean close_db = FALSE;
+
+    /* Sigh */
+    while (yast_running ()) {
+        rc_debug (RC_DEBUG_LEVEL_DEBUG,
+                  "YaST is running, can't read database");
+        sleep (5);
+    }
 
     if ((RC_RPMMAN (packman))->db_status < RC_RPMMAN_DB_RDONLY) {
         if (!open_database (RC_RPMMAN (packman), FALSE)) {
