@@ -1,5 +1,8 @@
 2001-01-26  Vladimir Vukicevic  <vladimir@helixcode.com>
 
+	* rc-package-dep.c, rc-package-dep.h: New
+	rc_package_dep_system_is_rpmish call.
+
 	* rc-deps.c: VASTLY improved debian dependency code.  Conflits
 	are moslty handled correctly.  Debian stupid-self-conflicts are
 	handled.  Packages are correctly uninstalled.  The code itself

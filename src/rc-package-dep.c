@@ -727,6 +727,11 @@ rc_package_dep_slist_has_item (RCPackageDepSList *deps, RCPackageDepItem *di)
     return FALSE;
 }
 
+void
+rc_package_dep_system_is_rpmish (gboolean is_rpm)
+{
+    rpmish = is_rpm;
+}
 
 /**
  ** XML conversion functions
@@ -842,4 +847,3 @@ rc_xml_node_to_package_dep (const xmlNode *node)
 
     return (dep);
 }
-

@@ -128,6 +128,7 @@ gboolean rc_package_dep_is_fully_weak (RCPackageDep *dep);
 gboolean rc_package_dep_slist_is_fully_weak (RCPackageDepSList *deps);
 
 gboolean rc_package_dep_slist_has_item (RCPackageDepSList *deps, RCPackageDepItem *di);
+void rc_package_dep_system_is_rpmish (gboolean is_rpm);
 
 
 RCPackageRelation rc_string_to_package_relation (const gchar *relation);
