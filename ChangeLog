@@ -1,3 +1,7 @@
+2004-02-19  Frank Belew  <frb@ximian.com>
+
+	* bindings/Makefile.am: change logic to work with really new automake
+
 2004-02-11  Joe Shaw  <joe@ximian.com>
 
 	* configure.in: 2.0.2

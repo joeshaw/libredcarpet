@@ -1,5 +1,5 @@
-SUBDIRS =
+SUBDIRS = ${PYTHONSUBDIR}
 
 if ENABLE_PYTHON
-SUBDIRS += python
+PYTHONSUBDIR := python
 endif
