@@ -46,6 +46,8 @@ typedef struct _RCWorldSystemClass RCWorldSystemClass;
 struct _RCWorldSystem {
     RCWorldService world;
 
+    RCPackman *packman;
+
     RCChannel *system_channel;
     gboolean error_flag;
 };

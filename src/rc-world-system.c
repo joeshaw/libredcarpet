@@ -137,10 +137,25 @@ rc_world_system_finalize (GObject *obj)
 {
     RCWorldSystem *system = RC_WORLD_SYSTEM (obj);
 
+    g_object_unref (system->packman);
+
     rc_channel_unref (system->system_channel);
 
     if (G_OBJECT_CLASS (parent_class)->finalize)
         G_OBJECT_CLASS (parent_class)->finalize (obj);
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+static void
+database_changed_cb (RCPackman *packman, gpointer user_data)
+{
+    RCWorldSystem *system = RC_WORLD_SYSTEM (user_data);
+
+    rc_debug (RC_DEBUG_LEVEL_MESSAGE,
+              "Database changed; rescanning system packages");
+
+    rc_world_system_load_packages (system);
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
@@ -168,6 +183,15 @@ rc_world_system_class_init (RCWorldSystemClass *klass)
 static void
 rc_world_system_init (RCWorldSystem *system)
 {
+    system->packman = rc_packman_get_global ();
+
+    g_assert (system->packman != NULL);
+
+    g_object_ref (system->packman);
+
+    g_signal_connect (system->packman, "database_changed",
+                      G_CALLBACK (database_changed_cb), system);
+
     system->system_channel = rc_channel_new ("@system",
                                              "System Packages",
                                              "@system",

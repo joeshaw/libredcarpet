@@ -1,3 +1,11 @@
+2003-09-05  Joe Shaw  <joe@ximian.com>
+
+	* rc-world-system.c (rc_world_system_init): Connect to the
+	packman's "database_changed" signal so we can detect when the
+	package database changes from underneath us and reload the system
+	packages.  Also hold a ref to the packman and release it in
+	finalize.
+
 2003-09-04  Joe Shaw  <joe@ximian.com>
 
 	* rc-pending.c (rc_pending_complete_handler): The pending debug
