@@ -157,7 +157,7 @@ dep_new (const gchar       *name,
     RCPackageDep *dep = g_new0 (RCPackageDep, 1);
 
     rc_package_spec_init (RC_PACKAGE_SPEC (dep), name, has_epoch, epoch,
-                          version, release);
+                          version, release, RC_ARCH_NOARCH);
 
     dep->relation = relation;
     dep->channel  = rc_channel_ref (channel);

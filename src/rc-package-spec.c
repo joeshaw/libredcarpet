@@ -31,7 +31,12 @@
 RCPackageSpec *
 rc_package_spec_new (void)
 {
-    return g_new0 (RCPackageSpec, 1);
+    RCPackageSpec *spec;
+
+    spec = g_new0 (RCPackageSpec, 1);
+    spec->arch = RC_ARCH_UNKNOWN;
+
+    return spec;
 }
 
 void
@@ -40,7 +45,8 @@ rc_package_spec_init (RCPackageSpec *rcps,
                       gboolean has_epoch,
                       guint32 epoch,
                       const gchar *version,
-                      const gchar *release)
+                      const gchar *release,
+                      RCArch arch)
 {
     g_assert (rcps);
 
@@ -49,13 +55,14 @@ rc_package_spec_init (RCPackageSpec *rcps,
     rcps->epoch = epoch;
     rcps->version = g_strdup (version);
     rcps->release = g_strdup (release);
+    rcps->arch = arch;
 } /* rc_package_spec_init */
 
 void
 rc_package_spec_copy (RCPackageSpec *new, RCPackageSpec *old)
 {
     rc_package_spec_init (new, g_quark_to_string (old->nameq), old->has_epoch,
-                          old->epoch, old->version, old->release);
+                          old->epoch, old->version, old->release, old->epoch);
 }
 
 void
@@ -145,6 +152,22 @@ rc_package_spec_set_epoch (RCPackageSpec *rcps, gint value)
         rcps->has_epoch = TRUE;
         rcps->epoch = value;
     }
+}
+
+RCArch
+rc_package_spec_spec_get_arch (RCPackageSpec *rcps)
+{
+    g_return_val_if_fail (rcps != NULL, RC_ARCH_UNKNOWN);
+
+    return rcps->arch;
+}
+
+void
+rc_package_spec_set_arch (RCPackageSpec *rcps, RCArch value)
+{
+    g_return_if_fail (rcps != NULL);
+
+    rcps->arch = value;
 }
 
 gint

@@ -23,6 +23,8 @@
 #include <glib.h>
 #include <string.h>
 
+#include "rc-arch.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -35,6 +37,7 @@ struct _RCPackageSpec {
     gchar *release;
     gboolean has_epoch;
     gint epoch;
+    RCArch arch;
 };
 
 #define RC_PACKAGE_SPEC(item) ((RCPackageSpec *)(item))
@@ -46,7 +49,8 @@ void rc_package_spec_init (RCPackageSpec *rcps,
                            gboolean has_epoch,
                            guint32 epoch,
                            const gchar *version,
-                           const gchar *release);
+                           const gchar *release,
+                           RCArch arch);
 
 void rc_package_spec_copy (RCPackageSpec *new, RCPackageSpec *old);
 
@@ -70,6 +74,10 @@ gboolean     rc_package_spec_has_epoch   (RCPackageSpec *rcps);
 gint         rc_package_spec_get_epoch   (RCPackageSpec *rcps);
 void         rc_package_spec_set_epoch   (RCPackageSpec *rcps,
                                           gint value);
+
+RCArch       rc_package_spec_get_arch    (RCPackageSpec *rcps);
+void         rc_package_spec_set_arch    (RCPackageSpec *rcps,
+                                          RCArch value);
 
 gint rc_package_spec_compare_name (void *a, void *b);
 

@@ -784,7 +784,7 @@ rc_world_store_add_package (RCWorldStore *store,
         rc_arch_get_compat_list (rc_arch_get_system_arch ());
 
     arch_score = rc_arch_get_compat_score (compat_arch_list,
-                                           package->arch);
+                                           package->spec.arch);
 
     /* Before we do anything, check to make sure that a package of the
        same name isn't already in that channel.  If there is a
@@ -838,7 +838,7 @@ rc_world_store_add_package (RCWorldStore *store,
                                               RC_PACKAGE_SPEC (dup_package));
 
             dup_arch_score = rc_arch_get_compat_score (compat_arch_list,
-                                                       dup_package->arch);
+                                                       dup_package->spec.arch);
         
 
             /* If the package we are trying to add has a lower 

@@ -1,3 +1,29 @@
+2005-01-03  Tambet Ingo  <tambet@ximian.com>
+
+	Move arch from RCPackage to RCPackageSpec.
+
+	* rc-xml.c (parser_package_end, rc_xml_node_to_package) 
+	(rc_package_to_xml_node): 
+
+	* rc-world-store.c (rc_world_store_add_package) 
+	(rc_world_store_add_package): 
+
+	* rc-rpmman.c (rc_rpmman_read_header): 
+
+	* rc-package.h: 
+
+	* rc-package.c (rc_package_new, rc_package_copy): 
+
+	* rc-package-spec.h: 
+
+	* rc-package-spec.c (rc_package_spec_new, rc_package_spec_init) 
+	(rc_package_spec_copy, rc_package_spec_get_epoch) 
+	(rc_package_spec_set_epoch): 
+
+	* rc-package-dep.c (dep_new): 
+
+	* rc-extract-packages.c (fill_debian_package): 
+
 2004-12-21  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-rpmman.c (rc_rpmman_find_system_headers_v3): Checking for 0

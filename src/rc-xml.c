@@ -425,8 +425,8 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
                 &ctx->current_recommends);
 
         /* Hack for the old XML */
-        if (ctx->current_package->arch == RC_ARCH_UNKNOWN)
-            ctx->current_package->arch = rc_arch_get_system_arch ();
+        if (ctx->current_package->spec.arch == RC_ARCH_UNKNOWN)
+            ctx->current_package->spec.arch = rc_arch_get_system_arch ();
 
         ctx->all_packages = g_slist_prepend (ctx->all_packages,
                                              ctx->current_package);
@@ -452,7 +452,7 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
         ctx->current_package->section =
             rc_string_to_package_section (rc_xml_strip (ctx->text_buffer));
     } else if (!strcmp(name, "arch")) {
-        ctx->current_package->arch =
+        ctx->current_package->spec.arch =
             rc_arch_from_string (rc_xml_strip (ctx->text_buffer));
     }
     else if (!strcmp(name, "filesize")) {
@@ -990,7 +990,7 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
             g_free (tmp);
         } else if (!g_strcasecmp (iter->name, "arch")) {
             gchar *tmp = xml_get_content (iter);
-            package->arch = rc_arch_from_string (tmp);
+            package->spec.arch = rc_arch_from_string (tmp);
             g_free (tmp);
         } else if (!g_strcasecmp (iter->name, "filesize")) {
             gchar *tmp = xml_get_content (iter);
@@ -1117,8 +1117,8 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
     g_free (release);
 
     /* Hack for no archs in the XML yet */
-    if (package->arch == RC_ARCH_UNKNOWN)
-        package->arch = rc_arch_get_system_arch ();
+    if (package->spec.arch == RC_ARCH_UNKNOWN)
+        package->spec.arch = rc_arch_get_system_arch ();
 
     return (package);
 } /* rc_xml_node_to_package */
@@ -1365,7 +1365,7 @@ rc_package_to_xml_node (RCPackage *package)
     g_free (tmp_str);
 
     xmlNewTextChild (package_node, NULL, "arch",
-                     rc_arch_to_string (package->arch));
+                     rc_arch_to_string (package->spec.arch));
 
     xmlNewTextChild (package_node, NULL, "section",
                      rc_package_section_to_string (package->section));

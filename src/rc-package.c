@@ -24,7 +24,6 @@
 #include <string.h>
 
 #include "rc-world.h"
-#include "rc-arch.h"
 
 #ifdef RC_PACKAGE_FIND_LEAKS
 static GHashTable *leaked_packages = NULL;
@@ -48,8 +47,6 @@ RCPackage *
 rc_package_new (void)
 {
     RCPackage *package = g_new0 (RCPackage, 1);
-
-    package->arch = RC_ARCH_UNKNOWN;
 
     package->section = RC_SECTION_MISC;
     package->refs    = 1;
@@ -130,7 +127,6 @@ rc_package_copy (RCPackage *src)
 
     rc_package_spec_copy (&dest->spec, &src->spec);
 
-    dest->arch           = src->arch;
     dest->section        = src->section;
     dest->file_size      = src->file_size;
     dest->installed_size = src->installed_size;
@@ -397,10 +393,8 @@ rc_package_get_latest_update (RCPackage *package)
 
         if (installed != NULL &&
             rc_package_spec_equal (RC_PACKAGE_SPEC (installed),
-                                   RC_PACKAGE_SPEC (update->parent)) &&
-            installed->arch == update->parent->arch) {
+                                   RC_PACKAGE_SPEC (update->parent)))
             return update;
-        }
     }
 
     /* no suitable update found */
@@ -475,22 +469,6 @@ rc_package_get_spec (RCPackage *package)
     g_return_val_if_fail (package != NULL, NULL);
 
     return &package->spec;
-}
-
-RCArch
-rc_package_get_arch (RCPackage *package)
-{
-    g_return_val_if_fail (package != NULL, RC_ARCH_UNKNOWN);
-
-    return package->arch;
-}
-
-void
-rc_package_set_arch (RCPackage  *package, RCArch value)
-{
-    g_return_if_fail (package != NULL);
-
-    package->arch = value;
 }
 
 RCPackageSection

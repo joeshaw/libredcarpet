@@ -42,7 +42,6 @@ typedef GHashTable RCPackageHashTableBySpec;
 #include "rc-package-dep.h"
 #include "rc-package-update.h"
 #include "rc-channel.h"
-#include "rc-arch.h"
 
 typedef void     (*RCPackagePairFn) (RCPackage *pkg1,
                                      RCPackage *pkg2,
@@ -56,7 +55,6 @@ struct _RCPackage {
 
     gint refs;
 
-    RCArch arch;
     RCPackageSection section;
     
     guint32 file_size;
@@ -141,10 +139,6 @@ void             rc_package_set_filename      (RCPackage  *package,
                                                const char *filename);
 
 RCPackageSpec   *rc_package_get_spec          (RCPackage  *package);
-
-RCArch           rc_package_get_arch          (RCPackage  *package);
-void             rc_package_set_arch          (RCPackage  *package,
-                                               RCArch value);
 
 RCPackageSection rc_package_get_section       (RCPackage  *package);
 void             rc_package_set_section       (RCPackage  *package,

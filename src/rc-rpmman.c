@@ -1779,17 +1779,17 @@ rc_rpmman_read_header (RCRpmman *rpmman, Header header, RCPackage *package)
     rpmman->headerGetEntry (header, RPMTAG_ARCH, &type, (void **)&tmpc,
                             &count);
     if (count && (type == RPM_STRING_TYPE) && tmpc && tmpc[0])
-        package->arch = rc_arch_from_string (tmpc);
+        package->spec.arch = rc_arch_from_string (tmpc);
     else
-        package->arch = RC_ARCH_UNKNOWN;
+        package->spec.arch = RC_ARCH_UNKNOWN;
 
     rpmman->headerGetEntry (header, RPMTAG_NAME, &type, (void **)&tmpc,
                             &count);
     if (count && (type == RPM_STRING_TYPE) && tmpc && tmpc[0]) {
 #ifdef REDHAT_OPTERON
-        if (package->arch != RC_ARCH_X86_64 &&
-            package->arch != RC_ARCH_IA32E &&
-            package->arch != RC_ARCH_NOARCH) {
+        if (package->spec.arch != RC_ARCH_X86_64 &&
+            package->spec.arch != RC_ARCH_IA32E &&
+            package->spec.arch != RC_ARCH_NOARCH) {
             char *new_name = g_strdup_printf ("%s-32bit", tmpc);
             package->spec.nameq = g_quark_from_string (new_name);
             g_free (new_name);
