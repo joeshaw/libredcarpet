@@ -162,8 +162,6 @@ rc_world_undump_from_xml (RCWorld *world,
                                                     id,
                                                     RC_CHANNEL_TYPE_HELIX);
 
-            g_print ("Adding channel '%s'\n", name);
-
             if (current_channel) {
                 rc_channel_set_subscription (current_channel, subd);
                 rc_world_add_packages_from_xml (world, current_channel,

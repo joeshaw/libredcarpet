@@ -47,6 +47,13 @@ struct _RCWorld {
     GSList *channels;
 
     RCPackman *packman;
+
+    /* Set if we know package db has changed. */
+    gboolean dirty;
+
+    /* Set if we have synced the world while the db is locked.
+       Automatically cleared when the db is unlocked. */
+    gboolean did_sync_with_this_lock;
 };
 
 typedef struct _RCPackageAndDep RCPackageAndDep;
@@ -327,14 +334,56 @@ rc_world_free (RCWorld *world)
 /* Packmanish operations */
 
 static void
+rc_world_sync (RCWorld *world)
+{
+    if (world->packman == NULL)
+        return;
+
+    if ((!world->dirty)
+        && rc_packman_is_locked (world->packman)
+        && world->did_sync_with_this_lock) {
+        rc_debug (RC_DEBUG_LEVEL_MESSAGE,
+                  "Skipping sync: already synced during this lock.");
+        return;
+    }
+
+    if (world->dirty || rc_packman_check_database (world->packman)) {
+        
+        rc_debug (RC_DEBUG_LEVEL_MESSAGE, 
+                  "Database changed; rescanning system packages");
+
+        rc_world_get_system_packages (world);
+
+        if (rc_packman_is_locked (world->packman))
+            world->did_sync_with_this_lock = TRUE;
+    }
+
+    world->dirty = FALSE;
+}
+
+static void
+rc_world_conditional_sync (RCWorld *world, RCChannel *channel)
+{
+    if (channel_match (channel, RC_WORLD_SYSTEM_PACKAGES))
+        rc_world_sync (world);
+}
+
+static void
 database_changed_cb (RCPackman *packman, gpointer user_data)
 {
     RCWorld *world = user_data;
+    
+    world->dirty = TRUE;
+    
+    rc_world_sync (world);
+}
 
-    rc_debug (RC_DEBUG_LEVEL_MESSAGE,
-              "Database changed; rescanning system packages");
+static void
+database_unlocked_cb (RCPackman *packman, gpointer user_data)
+{
+    RCWorld *world = user_data;
 
-    rc_world_get_system_packages (world);
+    world->did_sync_with_this_lock = FALSE;
 }
 
 void
@@ -351,8 +400,15 @@ rc_world_register_packman (RCWorld *world,
 
     world->packman = packman;
 
-    g_signal_connect (G_OBJECT (packman), "database_changed",
-                      G_CALLBACK (database_changed_cb), world);
+    g_signal_connect (packman,
+                      "database_changed",
+                      G_CALLBACK (database_changed_cb),
+                      world);
+
+    g_signal_connect (packman,
+                      "database_unlocked",
+                      G_CALLBACK (database_unlocked_cb),
+                      world);
 }
 
 RCPackman *
@@ -880,6 +936,8 @@ rc_world_find_installed_version (RCWorld *world,
     g_return_val_if_fail (world != NULL, NULL);
     g_return_val_if_fail (package != NULL, NULL);
 
+    rc_world_sync (world);
+
     iter = hashed_slist_get (world->packages_by_name,
                              package->spec.name);
     
@@ -919,6 +977,8 @@ rc_world_get_package (RCWorld *world,
     g_return_val_if_fail (channel != RC_WORLD_ANY_CHANNEL
                           && channel != RC_WORLD_ANY_NON_SYSTEM, NULL);
     g_return_val_if_fail (name && *name, NULL);
+
+    rc_world_conditional_sync (world, channel);
 
     slist = hashed_slist_get (world->packages_by_name, name);
     while (slist) {
@@ -963,6 +1023,8 @@ rc_world_get_package_with_constraint (RCWorld *world,
     g_return_val_if_fail (channel != RC_WORLD_ANY_CHANNEL
                           && channel != RC_WORLD_ANY_NON_SYSTEM, NULL);
     g_return_val_if_fail (name && *name, NULL);
+
+    /* rc_world_get_package will call rc_world_sync */
     
     pkg = rc_world_get_package (world, channel, name);
 
@@ -1008,6 +1070,9 @@ rc_world_guess_package_channel (RCWorld *world,
 
     if (package->channel != NULL)
         return package->channel;
+
+    /* We don't need to call rc_world_sync, because we are searching
+       over the channel data --- not the installed packages. */
 
     iter = hashed_slist_get (world->packages_by_name,
                              RC_PACKAGE_SPEC (package)->name);
@@ -1079,6 +1144,8 @@ rc_world_foreach_package (RCWorld *world,
     struct ForeachPackageInfo info;
 
     g_return_val_if_fail (world != NULL, -1);
+
+    rc_world_conditional_sync (world, channel);
     
     info.channel = channel;
     info.fn = fn;
@@ -1120,6 +1187,8 @@ rc_world_foreach_package_by_name (RCWorld *world,
 
     g_return_val_if_fail (world != NULL, -1);
     g_return_val_if_fail (name && *name, -1);
+
+    rc_world_conditional_sync (world, channel);
 
     slist = hashed_slist_get (world->packages_by_name, name);
 
@@ -1197,6 +1266,8 @@ rc_world_foreach_upgrade (RCWorld *world,
     g_return_val_if_fail (world != NULL, -1);
     g_return_val_if_fail (package != NULL, -1);
 
+    rc_world_conditional_sync (world, channel);
+
     info.original_package = package;
     info.fn = fn;
     info.user_data = user_data;
@@ -1246,6 +1317,8 @@ rc_world_get_best_upgrade (RCWorld *world, RCPackage *package)
 
     g_return_val_if_fail (world != NULL, NULL);
     g_return_val_if_fail (package != NULL, NULL);
+
+    /* rc_world_foreach_upgrade calls rc_world_sync */
 
     best_upgrade = package;
 
@@ -1303,6 +1376,8 @@ rc_world_foreach_system_upgrade (RCWorld *world,
     struct SystemUpgradeInfo info;
 
     g_return_val_if_fail (world != NULL, -1);
+
+    /* rc_world_foreach_package calls rc_world_sync */
     
     info.world = world;
     info.fn = fn;
@@ -1364,6 +1439,8 @@ rc_world_foreach_providing_package (RCWorld *world, RCPackageDep *dep,
         g_slist_free (deps);
         return count;
     }
+
+    rc_world_conditional_sync (world, channel);
 
     slist = hashed_slist_get (world->provides_by_name,
                               dep->spec.name);
@@ -1448,6 +1525,8 @@ rc_world_check_providing_package (RCWorld *world, RCPackageDep *dep,
         return terminated;
     }
 
+    rc_world_conditional_sync (world, channel);
+
     slist = hashed_slist_get (world->provides_by_name,
                               dep->spec.name);
 
@@ -1524,6 +1603,8 @@ rc_world_foreach_requiring_package (RCWorld *world, RCPackageDep *dep,
     g_return_val_if_fail (world != NULL, -1);
     g_return_val_if_fail (dep != NULL, -1);
 
+    rc_world_conditional_sync (world, channel);
+
     slist = hashed_slist_get (world->requires_by_name,
                               dep->spec.name);
 
@@ -1570,6 +1651,8 @@ rc_world_foreach_conflicting_package (RCWorld *world, RCPackageDep *dep,
 
     g_return_val_if_fail (world != NULL, -1);
     g_return_val_if_fail (dep != NULL, -1);
+
+    rc_world_conditional_sync (world, channel);
 
     slist = hashed_slist_get (world->conflicts_by_name,
                               dep->spec.name);
@@ -1716,6 +1799,8 @@ foreach_conflicts_by_name_cb (gpointer key, gpointer val, gpointer user_data)
 void
 rc_world_spew (RCWorld *world, FILE *out)
 {
+    rc_world_sync (world);
+
     g_hash_table_foreach (world->packages_by_name,
                           foreach_package_by_name_cb,
                           out);

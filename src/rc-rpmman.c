@@ -2372,6 +2372,7 @@ rc_rpmman_class_init (RCRpmmanClass *klass)
     packman_class->rc_packman_real_find_file = rc_rpmman_find_file;
     packman_class->rc_packman_real_lock = rc_rpmman_lock;
     packman_class->rc_packman_real_unlock = rc_rpmman_unlock;
+    packman_class->rc_packman_real_check_database = rc_rpmman_check_database;
 } /* rc_rpmman_class_init */
 
 #ifdef STATIC_RPM

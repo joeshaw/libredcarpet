@@ -82,6 +82,8 @@ struct _RCPackmanClass {
     void (*transact_done)(RCPackman *packman);
 
     void (*database_changed)(RCPackman *packman);
+    void (*database_locked)(RCPackman *packman);
+    void (*database_unlocked)(RCPackman *packman);
 
     /* Virtual functions */
 
@@ -143,6 +145,8 @@ RCVerificationSList *rc_packman_verify (RCPackman *packman,
                                         guint32    type);
 
 RCPackage *rc_packman_find_file (RCPackman *packman, const gchar *filename);
+
+gboolean rc_packman_is_locked (RCPackman *packman);
 
 gboolean rc_packman_lock (RCPackman *packman);
 

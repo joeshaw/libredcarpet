@@ -52,6 +52,8 @@ enum SIGNALS {
     TRANSACT_PROGRESS,
     TRANSACT_DONE,
     DATABASE_CHANGED,
+    DATABASE_LOCKED,
+    DATABASE_UNLOCKED,
     LAST_SIGNAL
 };
 
@@ -154,6 +156,24 @@ rc_packman_class_init (RCPackmanClass *klass)
                       NULL, NULL,
                       rc_marshal_VOID__VOID,
                       G_TYPE_NONE, 0);
+
+    signals[DATABASE_LOCKED] =
+        g_signal_new ("database_locked",
+                      G_TYPE_FROM_CLASS (klass),
+                      G_SIGNAL_RUN_LAST,
+                      G_STRUCT_OFFSET (RCPackmanClass, database_locked),
+                      NULL, NULL,
+                      rc_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);
+
+    signals[DATABASE_UNLOCKED] =
+        g_signal_new ("database_unlocked",
+                      G_TYPE_FROM_CLASS (klass),
+                      G_SIGNAL_RUN_LAST,
+                      G_STRUCT_OFFSET (RCPackmanClass, database_unlocked),
+                      NULL, NULL,
+                      rc_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);
     
     /* Subclasses should provide real implementations of these functions, and
        we're just NULLing these for clarity (and paranoia!) */
@@ -181,6 +201,8 @@ rc_packman_init (RCPackman *packman)
     packman->priv->busy = FALSE;
 
     packman->priv->capabilities = RC_PACKMAN_CAP_NONE;    
+
+    packman->priv->lock_count = 0;
 }
 
 RCPackman *
@@ -412,19 +434,41 @@ rc_packman_find_file (RCPackman *packman, const gchar *filename)
 }
 
 gboolean
+rc_packman_is_locked (RCPackman *packman)
+{
+    g_return_val_if_fail (packman, FALSE);
+
+    return packman->priv->lock_count > 0;
+}
+
+gboolean
 rc_packman_lock (RCPackman *packman)
 {
     RCPackmanClass *klass;
+    gboolean success;
 
     g_return_val_if_fail (packman, FALSE);
 
     rc_packman_clear_error (packman);
 
-    klass = RC_PACKMAN_GET_CLASS (packman);
+    g_assert (packman->priv->lock_count >= 0);
 
-    g_assert (klass->rc_packman_real_lock);
+    if (packman->priv->lock_count == 0) {
+        klass = RC_PACKMAN_GET_CLASS (packman);
+        g_assert (klass->rc_packman_real_lock);
+        success = klass->rc_packman_real_lock (packman);
 
-    return (klass->rc_packman_real_lock (packman));
+        if (success)
+            g_signal_emit (packman, signals[DATABASE_LOCKED], 0);
+
+    } else {
+        success = TRUE;
+    }
+
+    if (success)
+        ++packman->priv->lock_count;
+
+    return success;
 }
 
 void
@@ -436,11 +480,20 @@ rc_packman_unlock (RCPackman *packman)
 
     rc_packman_clear_error (packman);
 
-    klass = RC_PACKMAN_GET_CLASS (packman);
+    g_assert (packman->priv->lock_count >= 0);
 
-    g_assert (klass->rc_packman_real_unlock);
+    if (packman->priv->lock_count == 0)
+        return;
 
-    klass->rc_packman_real_unlock (packman);
+    if (packman->priv->lock_count == 1) {
+        klass = RC_PACKMAN_GET_CLASS (packman);
+        g_assert (klass->rc_packman_real_unlock);
+        klass->rc_packman_real_unlock (packman);
+
+        g_signal_emit (packman, signals[DATABASE_UNLOCKED], 0);
+    }
+
+    --packman->priv->lock_count;
 }
 
 gboolean

@@ -1,3 +1,61 @@
+2002-07-26  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-world-dump.c (add_channel_packages_cb): Removed
+	debug spew.
+
+	* rc-world.c (rc_world_sync): Added.  Basically just rescans the
+	package db for the system packages, but contains some extra logic
+	to avoid checking/scanning the database more than is absolutely
+	necessary.
+	(rc_world_conditional_sync): Conditions an rc_world_sync on a
+	channel.  If we are performing a query that is filtered on a
+	channel or channels rather than the system packages, there is no
+	need to sync at that point -- it won't change the results of the
+	actual query.
+	(database_changed_cb): Just call rc_world_sync.
+	(rc_world_register_packman): Listen for the "database_unlocked"
+	signal, use it to reset the "did_sync_with_this_lock" flag that
+	allows us to avoid syncs in some cases.
+	(rc_world_find_installed_version): Added a sync.
+	(rc_world_get_package): Added a conditional sync.
+	(rc_world_get_package_with_constraint): Added a comment explaining
+	why we don't need to sync here.
+	(rc_world_guess_package_channel): Added a comment explaining why
+	we don't need to sync here.
+	(rc_world_foreach_package): Added a conditional sync.
+	(rc_world_foreach_package_by_name): Added a conditional sync.
+	(rc_world_foreach_upgrade): Added a conditional sync.
+	(rc_world_get_best_upgrade): Added a comment explaining why we
+	don't need to sync here.
+	(rc_world_foreach_system_upgrade): Added a comment explaining why
+	we don't need to sync here.
+	(rc_world_foreach_providing_package): Added a conditional sync.
+	(rc_world_check_providing_package): Added a conditional sync.
+	(rc_world_foreach_requiring_package): Added a conditional sync.
+	(rc_world_foreach_conflicting_package): Added a conditional sync.
+	(rc_world_spew): Added a sync.
+
+	* rc-rpmman.c (rc_rpmman_class_init): Actually initialize
+	rc_packman_real_check_database.
+	
+	* rc-packman.c: Added DATABASE_LOCKED and DATABASE_UNLOCKED to the
+	signals enum.
+	(rc_packman_class_init): Define the "database_locked" and
+	"database_unlocked" signals.
+	(rc_packman_init): Initialize the lock_count to 0.
+	(rc_packman_is_locked): Added.
+	(rc_packman_lock): Tweaked to allow lock to be called multiple
+	times, with successive calls only incrementing the lock count (and
+	always succeeding).  Emit "database_locked" on the first call to
+	rc_packman_lock.
+	(rc_packman_unlock): Allow unlock to be called multiple times, and
+	do nothing if the db isn't actually locked.  On the final call
+	to rc_packman_unlock that actually unlocks the db, emit the
+	"database_unlocked" signal.
+
+	* rc-packman-private.h: Added a lock_count field to the
+	RCPackmanPrivate struct.
+
 2002-07-26  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c (open_database): turns out rpm database locking is
