@@ -171,7 +171,11 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
             channel->pkginfo_file = g_strdup ("packageinfo.xml.gz");
             channel->pkginfo_compressed = TRUE;
         }
-        
+
+        if (channel->file_path == NULL) {
+            channel->file_path = g_strdup (channel->path);
+        }
+
         cl = g_slist_append(cl, channel);
 
         node = node->next;
