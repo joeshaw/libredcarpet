@@ -328,23 +328,79 @@ void
 rc_package_add_update (RCPackage *package,
                        RCPackageUpdate *update)
 {
+    GSList *l;
+    RCPackman *packman = rc_packman_get_global ();
+
     g_return_if_fail (package != NULL);
     g_return_if_fail (update != NULL);
 
     g_assert (update->package == NULL || update->package == package);
     update->package = package;
 
-    package->history = g_slist_append (package->history, update);
+    if (package->history != NULL) {
+        for (l = package->history; l; l = l->next) {
+            int result = rc_packman_version_compare (packman, RC_PACKAGE_SPEC (update),
+                                                     RC_PACKAGE_SPEC (l->data));
+
+            if (result > 0 || (result == 0 && update->parent != NULL)) {
+                package->history = g_slist_insert_before (package->history, l, update);
+                break;
+            } else if (l->next == NULL ||
+                       (result == 0 && update->parent == NULL)) {
+                package->history = g_slist_insert_before (package->history, l->next, update);
+                break;
+            }
+        }
+    } else {
+        package->history = g_slist_append (package->history, update);
+    }
 }
 
 RCPackageUpdate *
 rc_package_get_latest_update(RCPackage *package)
 {
-    g_return_val_if_fail (package, NULL);
-    if (package->history == NULL)
-        return NULL;
+    RCWorld *world = rc_get_world ();
+    RCPackageUpdate *latest = (RCPackageUpdate *) package->history->data;
+    GSList *l;
 
-    return (RCPackageUpdate *) package->history->data;
+    g_return_val_if_fail (package, NULL);
+    if (package->history == NULL) {
+        return NULL;
+    }
+
+    /* if the absolute latest is not a patch, just return that */
+    if (latest->parent == NULL) {
+        return latest;
+    }
+
+    for (l = package->history; l; l = l->next) {
+        RCPackageUpdate *update = (RCPackageUpdate *) l->data;
+        RCPackage *installed;
+        
+        if (!rc_package_spec_equal (RC_PACKAGE_SPEC (l->data),
+                                    RC_PACKAGE_SPEC (latest))) {
+            return NULL;
+        }
+
+        /* found a non-patch package equal to the latest, so use that */
+        if (update->parent == NULL) {
+            return update;
+        }
+
+        /* see if the required parent for this patch is installed */
+        installed = rc_world_find_installed_version (world,
+                                                     ((RCPackageUpdate *)l->data)->parent);
+
+        if (installed != NULL &&
+            rc_package_spec_equal (RC_PACKAGE_SPEC (installed),
+                                   RC_PACKAGE_SPEC (update->parent)) &&
+            installed->arch == update->parent->arch) {
+            return update;
+        }
+    }
+
+    /* no suitable update found */
+    return NULL;
 } /* rc_package_get_latest_update */
 
 RCPackageUpdateSList *
@@ -389,7 +445,7 @@ rc_package_set_channel (RCPackage *package, RCChannel *channel)
 {
     g_return_if_fail (package != NULL);
 
-    package->channel = rc_package_ref (channel);
+    package->channel = rc_channel_ref (channel);
 }
 
 const char *

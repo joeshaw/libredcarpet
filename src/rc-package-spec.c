@@ -27,6 +27,17 @@
 #include "rc-package-spec.h"
 #include "rc-packman.h"
 
+RCPackageSpec *
+rc_package_spec_new (const gchar *name,
+                     gboolean has_epoch,
+                     guint32 epoch,
+                     const gchar *version,
+                     const gchar *release)
+{
+    RCPackageSpec *spec = g_new0 (RCPackageSpec, 1);
+    rc_package_spec_init (spec, name, has_epoch, epoch, version, release);
+}
+
 void
 rc_package_spec_init (RCPackageSpec *rcps,
                       const gchar *name,
@@ -57,6 +68,13 @@ rc_package_spec_free_members (RCPackageSpec *rcps)
     g_free (rcps->version);
     g_free (rcps->release);
 } /* rc_package_spec_free_members */
+
+void
+rc_package_spec_free (RCPackageSpec *rcps)
+{
+    rc_package_spec_free_members (rcps);
+    g_free (rcps);
+}
 
 const char *
 rc_package_spec_get_name (RCPackageSpec *rcps)

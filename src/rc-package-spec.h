@@ -39,6 +39,12 @@ struct _RCPackageSpec {
 
 #define RC_PACKAGE_SPEC(item) ((RCPackageSpec *)(item))
 
+RCPackageSpec *rc_package_spec_new (const gchar *name,
+                                    gboolean has_epoch,
+                                    guint32 epoch,
+                                    const char *version,
+                                    const char *release);
+
 void rc_package_spec_init (RCPackageSpec *rcps,
                            const gchar *name,
                            gboolean has_epoch,
@@ -49,6 +55,7 @@ void rc_package_spec_init (RCPackageSpec *rcps,
 void rc_package_spec_copy (RCPackageSpec *new, RCPackageSpec *old);
 
 void rc_package_spec_free_members (RCPackageSpec *rcps);
+void rc_package_spec_free         (RCPackageSpec *rcps);
 
 const char *rc_package_spec_get_name     (RCPackageSpec *rcps);
 void        rc_package_spec_set_name     (RCPackageSpec *rcps,

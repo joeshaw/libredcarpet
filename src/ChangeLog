@@ -1,3 +1,20 @@
+2004-11-19  James Willcox  <james@ximian.com>
+
+	* rc-package-spec.c: (rc_package_spec_new), (rc_package_spec_free): new
+	* rc-package-spec.h: added the above
+	* rc-package-update.c: (rc_package_update_copy),
+	(rc_package_update_free), (rc_package_update_slist_sort),
+	(rc_package_update_get_parent), (rc_package_update_set_parent):
+	* rc-package-update.h:
+	* rc-package.c: (rc_package_add_update),
+	(rc_package_get_latest_update), (rc_package_set_channel):
+
+	Added a 'parent' member to RCPackageUpdate, which is set if the update
+	is a patch rpm.  Also added logic to rc_package_add_update and
+	rc_package_get_latest_update for patch updates.  It tries to give you
+	a patch if it can, otherwise the full rpm (if it exists), otherwise
+	nothing.
+
 2004-11-16  James Willcox  <james@ximian.com>
 
 	* rc-distro.c: (sax_start_element), (sax_end_element):

@@ -56,6 +56,9 @@ struct _RCPackageUpdate {
     guint hid;
 
     gchar *license;
+
+    /* refers to the parent package for SuSE patch RPMs */
+    RCPackage *parent;
 };
 
 RCPackageUpdate *rc_package_update_new (void);
@@ -107,6 +110,9 @@ guint   rc_package_update_get_hid            (RCPackageUpdate *update);
 void    rc_package_update_set_hid            (RCPackageUpdate *update,
                                               guint value);
 
+
+RCPackage *rc_package_update_get_parent      (RCPackageUpdate *update);
+void       rc_package_update_set_parent      (RCPackageUpdate *update, RCPackage *parent);
 
 RCPackageUpdateSList
 *rc_package_update_slist_copy (RCPackageUpdateSList *old_update);
