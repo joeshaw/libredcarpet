@@ -1,5 +1,10 @@
 2001-01-22  Ian Peters  <itp@helixcode.com>
 
+	* rc-debman.c (rc_debman_find_file): add some rc_packman_set_error
+	calls where appropriate
+
+2001-01-22  Ian Peters  <itp@helixcode.com>
+
 	* rc-rpmman.c: remove some spurious rpm includes
 
 2001-01-22  Ian Peters  <itp@helixcode.com>

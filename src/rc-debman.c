@@ -2459,6 +2459,9 @@ rc_debman_find_file (RCPackman *packman, const gchar *filename)
         rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
                   ": pathname is not absolute\n");
 
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "pathname is not absolute");
+
         RC_EXIT;
 
         return (NULL);
@@ -2468,6 +2471,9 @@ rc_debman_find_file (RCPackman *packman, const gchar *filename)
         rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
                   ": realpath returned NULL\n");
 
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "realpath returned NULL");
+
         RC_EXIT;
 
         return (NULL);
@@ -2476,6 +2482,9 @@ rc_debman_find_file (RCPackman *packman, const gchar *filename)
     if (!(info_dir = opendir ("/var/lib/dpkg/info"))) {
         rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
                   ": opendir /var/lib/dpkg/info failed\n");
+
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "unable to scan /var/lib/dpkg/info");
 
         RC_EXIT;
 
@@ -2501,6 +2510,9 @@ rc_debman_find_file (RCPackman *packman, const gchar *filename)
             closedir (info_dir);
 
             g_free (fullname);
+
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "failed to open %s", fullname);
 
             RC_EXIT;
 
