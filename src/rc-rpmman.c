@@ -35,8 +35,6 @@
 #    define RPM_ROOTDIR "/"
 #endif
 
-#define RPM_ROOTDIR "/"
-
 static void rc_rpmman_class_init (RCRpmmanClass *klass);
 static void rc_rpmman_init       (RCRpmman *obj);
 
