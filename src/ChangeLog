@@ -1,3 +1,13 @@
+2002-08-10  Ian Peters  <itp@ximian.com>
+
+	* rc-util.h: if HAVE_MKDTEMP is defined, then rc_mkdtemp is just
+	mkdtemp, otherwise we need to declare our own.
+
+	* rc-util.c (rc_mkdtemp): our very own implementation of mkdtemp,
+	since we need to build on platforms that don't offer this function
+
+	* rc-rpmman.c (write_objects): call rc_mkdtemp, not mkdtemp
+
 2002-08-09  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c (split_rpm): change the way we handle errors in this

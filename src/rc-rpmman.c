@@ -2772,7 +2772,7 @@ write_objects (void)
     mask = umask (0077);
 
     object_dir = g_strdup (OBJECTDIR "/rc-rpm-XXXXXX");
-    if (!mkdtemp (object_dir)) {
+    if (!rc_mkdtemp (object_dir)) {
         g_free (object_dir);
         object_dir = NULL;
         goto ERROR;

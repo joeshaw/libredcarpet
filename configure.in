@@ -43,6 +43,9 @@ dnl Check for libz to handle compressed xml files
 AC_CHECK_LIB(z, inflate, LIBREDCARPET_LIBS="$LIBREDCARPET_LIBS -lz",
   AC_ERROR([libredcarpet requires zlib]))
 
+dnl not everyone has mkdtemp
+AC_CHECK_FUNCS(mkdtemp)
+
 dnl The available backends
 AC_ARG_ENABLE(backend-dpkg, [  --enable-backend-dpkg   include DPKG backend],
   enable_backend_dpkg=yes, enable_backend_dpkg=no)

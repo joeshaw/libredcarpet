@@ -35,6 +35,12 @@ gint rc_rmdir (const char *dir);
 /* Create the directory specified and all of the child directories. Whee. */
 gint rc_mkdir(const char *dir, guint mode);
 
+#ifdef HAVE_MKDTEMP
+#define rc_mkdtemp mkdtemp
+#else
+char *rc_mkdtemp (char *template);
+#endif
+
 gboolean rc_file_exists (const char *filename);
 
 gchar *rc_is_program_in_path (const gchar *program);

@@ -68,6 +68,50 @@ rc_mkdir(const char *dir, guint mode)
     return 0;
 } /* rc_mkdir */
 
+#ifndef HAVE_MKDTEMP
+char *
+rc_mkdtemp (char *template)
+{
+    unsigned int len;
+    char *replace;
+
+    len = strlen (template);
+
+    if (len < 6) {
+        errno = EINVAL;
+        return NULL;
+    }
+
+    replace = template + (len - 6);
+
+    if (strcmp (replace, "XXXXXX")) {
+        errno = EINVAL;
+        return NULL;
+    }
+
+    srand (time (NULL));
+
+    do {
+        int i;
+        for (i = 0; i < 6; i++) {
+            int value = rand () % 62;
+            if (value < 10)
+                replace[i] = value + 48;
+            else if (value < 36)
+                replace[i] = value + 55;
+            else
+                replace[i] = value + 61;
+        }
+        errno = 0;
+    } while (mkdir (template, 0700) && errno == EEXIST);
+
+    if (errno)
+        return NULL;
+
+    return template;
+}
+#endif
+
 gint
 rc_rmdir (const char *dir)
 {
