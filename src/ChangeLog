@@ -1,3 +1,11 @@
+2005-01-14  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-world-multi.c (rc_world_multi_transact_real): Implement. Move
+	the real work out of (rc_world_multi_transact_fn).
+	(rc_world_multi_transact_fn): Change the order of transacting:
+	First, transact system world(s), then, if there were no errors
+	transact all other worlds. Fixes #70427.
+
 2005-01-10  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-rpmman.c (in_set):

@@ -466,6 +466,57 @@ rc_world_multi_can_transact_fn (RCWorld   *world,
     return FALSE;
 }
 
+typedef struct {
+    RCPackageSList *install_packages;
+    RCPackageSList *remove_packages;
+    int flags;
+    gboolean ignore_system_worlds;
+    gboolean failures;
+} MultiTransactInfo;
+
+static gboolean
+rc_world_multi_transact_real (RCWorld *world, gpointer user_data)
+{
+    MultiTransactInfo *info = user_data;
+    RCPackageSList *install_subset = NULL;
+    RCPackageSList *remove_subset = NULL;
+    RCPackageSList *pkg_iter;
+
+    if ((G_TYPE_FROM_INSTANCE (world) == rc_world_system_get_type () &&
+         info->ignore_system_worlds) ||
+        !rc_world_can_transact_package (world, NULL))
+        return TRUE;
+
+    for (pkg_iter = info->install_packages;
+         pkg_iter != NULL; pkg_iter = pkg_iter->next) {
+        RCPackage *pkg = pkg_iter->data;
+        if (rc_world_can_transact_package (world, pkg))
+            install_subset = g_slist_prepend (install_subset, pkg);
+    }
+
+    for (pkg_iter = info->remove_packages;
+         pkg_iter != NULL; pkg_iter = pkg_iter->next) {
+        RCPackage *pkg = pkg_iter->data;
+        if (rc_world_can_transact_package (world, pkg))
+            remove_subset = g_slist_prepend (remove_subset, pkg);
+    }
+
+    if (install_subset != NULL || remove_subset != NULL) {
+        if (! rc_world_transact (world,
+                                 install_subset,
+                                 remove_subset,
+                                 info->flags)) {
+            g_warning ("Problematic transaction!");
+            info->failures = TRUE;
+        }
+
+        g_slist_free (install_subset);
+        g_slist_free (remove_subset);
+    }
+
+    return TRUE;
+}
+
 static gboolean
 rc_world_multi_transact_fn (RCWorld        *world,
                             RCPackageSList *install_packages,
@@ -474,18 +525,8 @@ rc_world_multi_transact_fn (RCWorld        *world,
 {
     RCWorldMulti *multi = (RCWorldMulti *) world;
     RCPackman *packman = rc_packman_get_global ();
-    gboolean rollback_enabled;
-    GSList *iter, *pkg_iter;
-    gboolean success = TRUE;
-
-    /* For every subworld that has any transactional capability,
-       build up sublists of install_packages and remove_packages
-       that contain the packages that need to be transacted by
-       that world, and then transact them.
-
-       Yeah, this isn't maximally efficient, but it is the simplest
-       approach.
-    */
+    gboolean rollback_enabled = FALSE;
+    MultiTransactInfo info;
 
     /*
      * Ugh.  This is such a hack... it prevents recursion while getting
@@ -493,54 +534,33 @@ rc_world_multi_transact_fn (RCWorld        *world,
      */
     if (packman) {
         rollback_enabled = rc_packman_get_rollback_enabled (packman);
-
         rc_packman_set_rollback_enabled (packman, FALSE);
     }
 
-    for (iter = multi->subworlds; iter != NULL; iter = iter->next) {
-        SubworldInfo *info = iter->data;
+    info.install_packages = install_packages;
+    info.remove_packages = remove_packages;
+    info.flags = flags;
+    info.failures = FALSE;
 
-        if (rc_world_can_transact_package (info->subworld, NULL)) {
+    /* First, we transact on system world(s) only */
+    info.ignore_system_worlds = FALSE;
+    rc_world_multi_foreach_subworld_by_type (multi,
+                                             rc_world_system_get_type (),
+                                             rc_world_multi_transact_real,
+                                             &info);
 
-            RCPackageSList *install_subset = NULL;
-            RCPackageSList *remove_subset = NULL;
-
-            for (pkg_iter = install_packages;
-                 pkg_iter != NULL; pkg_iter = pkg_iter->next) {
-                RCPackage *pkg = pkg_iter->data;
-                if (rc_world_can_transact_package (info->subworld, pkg))
-                    install_subset = g_slist_prepend (install_subset, pkg);
-            }
-
-            for (pkg_iter = remove_packages;
-                 pkg_iter != NULL; pkg_iter = pkg_iter->next) {
-                RCPackage *pkg = pkg_iter->data;
-                if (rc_world_can_transact_package (info->subworld, pkg))
-                    remove_subset = g_slist_prepend (remove_subset, pkg);
-            }
-
-            /* We don't short-circuit if one of our transactions goes
-               bad.  This probably isn't smart.  And talk about
-               lame-ass error reporting! */
-            if (install_subset != NULL || remove_subset != NULL) {
-                if (! rc_world_transact (info->subworld,
-                                         install_subset,
-                                         remove_subset,
-                                         flags)) {
-                    g_warning ("Problematic transaction!");
-                    success = FALSE;
-                }
-
-                g_slist_free (install_subset);
-                g_slist_free (remove_subset);
-            }
-        }
+    if (!info.failures) {
+        /* Then, if there's no failures, go on all others */
+        info.ignore_system_worlds = TRUE;
+        rc_world_multi_foreach_subworld (multi,
+                                         rc_world_multi_transact_real,
+                                         &info);
     }
 
     if (packman)
         rc_packman_set_rollback_enabled (packman, rollback_enabled);
 
-    return success;
+    return !info.failures;
 }
 
 static int
