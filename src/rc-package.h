@@ -111,5 +111,6 @@ RCPackageSList *rc_package_slist_remove_older_duplicates (RCPackageSList *packag
                                                           RCPackageSList **removed_packages);
 
 RCPackage *rc_xml_node_to_package (const xmlNode *, const RCChannel *channel);
+xmlNode   *rc_package_to_xml_node (RCPackage *);
 
 #endif /* _RC_PACKAGE_H */

@@ -4,7 +4,7 @@
 DOC_DIR=
 # endif
 
-SUBDIRS = src dependency-tests $(DOC_DIR)
+SUBDIRS = src dependency-tests tools $(DOC_DIR)
 
 gpgdir = $(datadir)/@PRIVATE_NAMESPACE@
 gpg_DATA = red-carpet.gpg

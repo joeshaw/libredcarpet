@@ -1,5 +1,14 @@
 2002-04-16  Jon Trowbridge  <trow@ximian.com>
 
+	* rc-package.c (rc_package_to_xml_node): Restored.
+
+	* rc-package-update.c (rc_package_update_to_xml_node): Restored.
+
+	* rc-package-dep.c (rc_package_dep_or_slist_to_xml_node): Restored.
+	(rc_package_dep_to_xml_node): Restored.
+
+2002-04-16  Jon Trowbridge  <trow@ximian.com>
+
 	* rc-package.c (rc_xml_node_to_package): Treat a conflicts section
 	in the XML as obsoletes if the 'obsoletes' property is set.
 

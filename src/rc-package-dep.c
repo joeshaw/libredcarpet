@@ -383,3 +383,63 @@ rc_xml_node_to_package_dep (const xmlNode *node)
 
     return (dep);
 } /* rc_xml_node_to_package_dep */
+
+xmlNode *
+rc_package_dep_or_slist_to_xml_node (RCPackageDepSList *dep)
+{
+    xmlNode *or_node;
+    const RCPackageDepSList *dep_iter;
+
+    or_node = xmlNewNode (NULL, "or");
+
+    dep_iter = dep;
+    while (dep_iter) {
+        RCPackageDep *dep_item = (RCPackageDep *)(dep_iter->data);
+        xmlAddChild (or_node, rc_package_dep_to_xml_node (dep_item));
+        dep_iter = dep_iter->next;
+    }
+
+    return or_node;
+} /* rc_package_dep_or_slist_to_xml_node */
+
+
+xmlNode *
+rc_package_dep_to_xml_node (RCPackageDep *dep_item)
+{
+    xmlNode *dep_node;
+
+    if (dep_item->is_or) {
+        RCPackageDepSList *dep_or_slist;
+        dep_or_slist = rc_dep_string_to_or_dep_slist (dep_item->spec.name);
+        dep_node = rc_package_dep_or_slist_to_xml_node (dep_or_slist);
+        rc_package_dep_slist_free (dep_or_slist);
+        return dep_node;
+    }
+
+    dep_node = xmlNewNode (NULL, "dep");
+
+    xmlSetProp (dep_node, "name", dep_item->spec.name);
+
+    if (dep_item->relation != RC_RELATION_ANY) {
+        xmlSetProp (dep_node, "op",
+                    rc_package_relation_to_string (dep_item->relation, FALSE));
+
+        if (dep_item->spec.epoch > 0) {
+            gchar *tmp;
+
+            tmp = g_strdup_printf ("%d", dep_item->spec.epoch);
+            xmlSetProp (dep_node, "epoch", tmp);
+            g_free (tmp);
+        }
+
+        if (dep_item->spec.version) {
+            xmlSetProp (dep_node, "version", dep_item->spec.version);
+        }
+
+        if (dep_item->spec.release) {
+            xmlSetProp (dep_node, "release", dep_item->spec.release);
+        }
+    }
+
+    return (dep_node);
+} /* rc_package_dep_to_xml_node */

@@ -113,6 +113,8 @@ const gchar *rc_package_relation_to_string (RCPackageRelation relation,
 RCPackageDepSList *rc_package_dep_slist_remove_duplicates (RCPackageDepSList *deps);
 
 /* XML */
-RCPackageDep *rc_xml_node_to_package_dep (const xmlNode *);
+RCPackageDep *rc_xml_node_to_package_dep          (const xmlNode *);
+xmlNode      *rc_package_dep_or_slist_to_xml_node (RCPackageDepSList *);
+xmlNode      *rc_package_dep_to_xml_node          (RCPackageDep *);
 
 #endif /* _RC_PACKAGE_DEP_H */

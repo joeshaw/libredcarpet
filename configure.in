@@ -193,6 +193,7 @@ AC_OUTPUT([
 Makefile
 src/Makefile
 dependency-tests/Makefile
+tools/Makefile
 ])
 
 # Removed cause it's busted-ass.

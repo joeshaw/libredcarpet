@@ -73,5 +73,6 @@ RCPackageUpdateSList
 
 RCPackageUpdate *rc_xml_node_to_package_update (const xmlNode *,
                                                 const RCPackage *package);
+xmlNode         *rc_package_update_to_xml_node (RCPackageUpdate *);
 
 #endif /* _RC_PACKAGE_UPDATE_H */
