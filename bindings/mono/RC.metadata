@@ -45,6 +45,7 @@
   <attr path="/api/namespace/boxed[@cname='RCResolver']" name="opaque">1</attr>
   <attr path="/api/namespace/boxed[@cname='RCResolverContext']" name="opaque">1</attr>
   <attr path="/api/namespace/object[@cname='RCWorldMulti']/method[@cname='rc_world_multi_mount_service']" name="hidden">1</attr>
+  <attr path="/api/namespace/boxed[@cname='RCResolver']/method[@cname='rc_resolver_get_invalid_queues']/return-type" name="element_type">RC.ResolverQueue</attr>
 <!--
   <attr path="/api/namespace/*/*/*[@type='RCPackage*']" name="pass_as">ref</attr>
   <attr path="/api/namespace/*/*/*/*[@type='RCPackage*']" name="pass_as">ref</attr>

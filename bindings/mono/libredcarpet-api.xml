@@ -3091,6 +3091,9 @@
       <method name="GetBestContext" cname="rc_resolver_get_best_context">
         <return-type type="RCResolverContext*" />
       </method>
+      <method name="GetInvalidQueues" cname="rc_resolver_get_invalid_queues">
+        <return-type type="GSList*" element_type="RC.ResolverQueue" />
+      </method>
       <method name="GetType" cname="rc_resolver_get_type" shared="true">
         <return-type type="GType" />
       </method>
@@ -3209,6 +3212,9 @@
         <parameters>
           <parameter type="RCChannel*" name="arg1" />
         </parameters>
+      </method>
+      <method name="GetInfo" cname="rc_resolver_context_get_info">
+        <return-type type="char*" />
       </method>
       <method name="GetInstalls" cname="rc_resolver_context_get_installs">
         <return-type type="GSList*" element_type="RC.Package" />

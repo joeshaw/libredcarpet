@@ -11,7 +11,7 @@ DOC_ASSEMBLER=@MONODOC@ --assemble
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libredcarpet-sharp.pc
 
-all: $(ASSEMBLY) docs-stamp
+all: $(ASSEMBLY)
 
 $(API):
 	$(GAPI_PARSER) $(SOURCES)
@@ -24,15 +24,14 @@ generated-stamp: $(API) RC.metadata
 $(ASSEMBLY): generated-stamp
 	$(MCS) --unsafe -target:library -pkg:gtk-sharp -o $(ASSEMBLY) --recurse '*.cs'
 
-docs-stamp:
+libredcarpet-sharp-docs.zip libredcarpet-sharp-docs.tree:
 	$(DOC_UPDATER) $(ASSEMBLY) -o en -f
-	$(DOC_ASSEMBLER) --ecma en -o libredcarpet-sharp-docs && touch docs-stamp
+	$(DOC_ASSEMBLER) --ecma en -o libredcarpet-sharp-docs
 
 merge-docs:
 	@MONODOC@ --merge-changes ~/.config/monodoc/changeset.xml `pwd`
 
 clean-docs:
-	rm -f docs-stamp
 	rm -f libredcarpet-sharp-docs.zip
 	rm -f libredcarpet-sharp-docs.tree
 	rm -rf en
@@ -62,4 +61,4 @@ doc_DATA =				\
 	libredcarpet-sharp-docs.source
 
 EXTRA_DIST = libredcarpet-sharp.pc.in
-CLEANFILES = $(ASSEMBLY) docs-stamp
+CLEANFILES = $(ASSEMBLY)

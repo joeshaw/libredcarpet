@@ -1,3 +1,9 @@
+2004-08-18  James Willcox  <james@ximian.com>
+
+	* Makefile.am:  cleaned up a bit
+	* RC.metadata:  wrapped another gslist
+	* libredcarpet-api.xml:  regenned
+
 2004-08-17  Tambet Ingo  <tambet@ximian.com>
 
 	* RC.metadata: Re-enable rc_maybe_merge_paths.
