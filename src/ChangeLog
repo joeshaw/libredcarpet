@@ -1,5 +1,8 @@
 2002-07-25  Jon Trowbridge  <trow@ximian.com>
 
+	* rc-debman.c (query_all_read_line_cb): The epoch is now a
+	bitfield, so we can't take the address of it.
+
 	* rc-xml.c (rc_channel_to_xml_node): Added.
 
 	* rc-channel.h: Removed the prototype for rc_xml_node_to_channel,

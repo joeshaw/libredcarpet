@@ -2274,6 +2274,7 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
     DebmanQueryInfo *query_info = (DebmanQueryInfo *)data;
     char *ptr;
     char *line;
+    guint epoch;
 
     line = alloca (strlen (status_line) + 1);
     strcpy (line, status_line);
@@ -2436,9 +2437,10 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
             ptr++;
         }
 
-        rc_debman_parse_version (ptr, &query_info->package_buf->spec.epoch,
+        rc_debman_parse_version (ptr, &epoch,
                                  &query_info->package_buf->spec.version,
                                  &query_info->package_buf->spec.release);
+        query_info->package_buf->spec.epoch = epoch;
 
         return;
     }
