@@ -1,3 +1,7 @@
+2001-12-17  Ian Peters  <itp@ximian.com>
+
+	* rc-deps.c: some stuff I don't understand
+
 2001-12-07  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c: fix the /usr/share/magic.mime problem, don't ask
