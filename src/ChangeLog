@@ -1,3 +1,9 @@
+2001-01-24  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* rc-package-dep.c: If you're going to use autoconf config.h
+	flags in your code, it helps to include config.h.  It also
+	helps to get the right name of the variable.
+
 2001-01-23  Vladimir Vukicevic  <vladimir@helixcode.com>
 
 	* rc-package-dep.c: Use rpmish semantics only if RPM is compiled in

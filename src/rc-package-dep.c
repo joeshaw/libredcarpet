@@ -20,6 +20,10 @@
 
 #include <stdio.h>
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "rc-package-dep.h"
 #include "rc-debug-misc.h"
 #include "rc-packman.h"
@@ -30,7 +34,7 @@
 
 #define DEBUG 50 
 
-#if defined(HAVE_RPM3) || defined(HAVE_RPM4)
+#if defined(WITH_RPM3) || defined(WITH_RPM4)
 static gboolean rpmish = TRUE;
 #else
 static gboolean rpmish = FALSE;
