@@ -773,8 +773,7 @@ require_item_process (RCQueueItem *item,
                         if (explore_uninstall_branch) {
                             int i;
                             if (upgrade_package->requires_a) {
-                                i = 0;
-                                while (i < upgrade_package->requires_a->len) {
+                                for (i = 0; i < upgrade_package->requires_a->len; i++) {
                                     RCPackageDep *req =
                                         upgrade_package->requires_a->data + i;
                                     if (! rc_resolver_context_requirement_is_met (context, req))
