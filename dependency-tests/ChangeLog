@@ -1,5 +1,11 @@
 2003-11-11  Joe Shaw  <joe@ximian.com>
 
+	* deptestomatic.c (report_solutions): Print out statistics on all
+	of the the various queue types up front.
+	(parse_xml_trial): Add RC_DEPS_TIME.
+
+2003-11-11  Joe Shaw  <joe@ximian.com>
+
 	* deptestomatic.c: Also match channels against their alias.
 
 2003-11-11  Joe Shaw  <joe@ximian.com>

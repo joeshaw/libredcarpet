@@ -509,6 +509,28 @@ report_solutions (RCResolver *resolver)
     GSList *cs_list = NULL;
 
     g_return_if_fail (resolver);
+
+    g_print ("\n");
+
+    if (resolver->complete_queues) {
+        g_print ("Completed solutions: %d\n",
+                 g_slist_length (resolver->complete_queues));
+    }
+
+    if (resolver->pruned_queues) {
+        g_print ("Pruned solutions: %d\n",
+                 g_slist_length (resolver->pruned_queues));
+    }
+
+    if (resolver->deferred_queues) {
+        g_print ("Deferred solutions: %d\n",
+                 g_slist_length (resolver->deferred_queues));
+    }
+
+    if (resolver->invalid_queues) {
+        g_print ("Invalid solutions: %d\n",
+                 g_slist_length (resolver->invalid_queues));
+    }
     
     if (resolver->best_context) {
         g_print ("\nBest Solution:\n\n");
@@ -524,16 +546,6 @@ report_solutions (RCResolver *resolver)
                     print_solution (queue->context, &count, &cs_list);
             }
         }
-    }
-
-    if (resolver->deferred_queues) {
-        g_print ("Deferred queues: %d\n",
-                 g_slist_length (resolver->deferred_queues));
-    }
-
-    if (resolver->invalid_queues) {
-        g_print ("Failed solutions: %d\n",
-                 g_slist_length (resolver->invalid_queues));
     }
 
     if (g_slist_length (resolver->invalid_queues) < 20) {
@@ -713,6 +725,12 @@ parse_xml_trial (xmlNode *node)
         }
 
         node = node->next;
+    }
+
+    if (getenv ("RC_DEPS_TIME")) {
+        int timeout = atoi (getenv ("RC_DEPS_TIME"));
+
+        rc_resolver_set_timeout (resolver, timeout);
     }
 
     if (verify)
