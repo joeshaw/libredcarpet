@@ -180,6 +180,7 @@ rc_verify_gpg (gchar *file, gchar *sig)
     verification = rc_verification_new ();
 
     verification->type = RC_VERIFICATION_TYPE_GPG;
+    verification->status = RC_VERIFICATION_STATUS_UNDEF;
 
     gpg_command = rc_is_program_in_path ("gpg");
 
@@ -227,9 +228,12 @@ rc_verify_gpg (gchar *file, gchar *sig)
 
         close (fds[1]);
 
+        /* I wish I could add --no-auto-key-retrieve, but it's not in
+         * gpg 1.0.1, and is in 1.0.4.  Maybe we can require a
+         * specific version of gpg... */
         execlp (gpg_command, gpg_command, "--batch", "--quiet",
                 "--no-secmem-warning", "--no-default-keyring",
-                "--no-auto-key-retrieve", "--keyring", keyring, "--status-fd",
+                "--keyring", keyring, "--status-fd",
                 "1", "--logger-fd", "2", "--verify", sig, file, NULL);
 
         _exit (-1);

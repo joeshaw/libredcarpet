@@ -1,5 +1,13 @@
 2001-01-22  Ian Peters  <itp@helixcode.com>
 
+	* rc-verification.c (rc_verify_gpg): don't pass the
+	--no-auto-key-retrieve option, as it does not appear to be present
+	in gpg 1.0.1 on RH6.2.  Initialize the verification as
+	RC_VERIFICATION_STATUS_UNDEF instead of the default,
+	RC_VERIFICATION_STATUS_FAIL
+
+2001-01-22  Ian Peters  <itp@helixcode.com>
+
 	* rc-channel.c, rc-channel.h, rc-debman-general.c,
 	rc-debman-general.h, rc-debman-private.h, rc-debman.h,
 	rc-debug-misc.c, rc-distman.c, rc-line-buf-private.h,
