@@ -151,7 +151,7 @@ rc_package_and_dep_verify_relation (RCPackageAndDep *pad, RCPackageDep *dep)
     packman = rc_packman_get_global ();
     g_assert (packman != NULL);
 
-    if (!rc_package_dep_verify_relation (packman, pad->dep, dep))
+    if (!rc_package_dep_verify_relation (packman, dep, pad->dep))
         return FALSE;
 
     return rc_channel_equal (rc_package_get_channel (pad->package),

@@ -1,3 +1,12 @@
+2003-10-30  Joe Shaw  <joe@ximian.com>
+
+	* rc-rpmman.c (rc_rpmman_find_file_v3): Any non-zero return from
+	rpmdbFindByFile is a failure, not just -1.  Fixes #50373.
+
+	* rc-world-store.c (rc_package_and_dep_verify_relation): Fix
+	backwards arguments, so that asking if "= 1.0" verifies against
+	"1.0-9" returns TRUE.
+
 2003-10-29  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-world-multi.c (rc_world_multi_add_subworld): Revert not emitting

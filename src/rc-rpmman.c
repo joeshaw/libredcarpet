@@ -2722,7 +2722,7 @@ rc_rpmman_find_file_v3 (RCPackman *packman, const gchar *filename)
     int i;
     RCRpmman *rpmman = RC_RPMMAN (packman);
 
-    if (rpmman->rpmdbFindByFile (rpmman->db, filename, &matches) == -1) {
+    if (rpmman->rpmdbFindByFile (rpmman->db, filename, &matches) != 0) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "RPM database search failed");
 
