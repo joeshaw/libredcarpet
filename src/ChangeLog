@@ -1,3 +1,9 @@
+2002-01-11  Joe Shaw  <joe@ximian.com>
+
+	* rc-debman.c (i18n_fixer): Set the PATH environment variable to
+	include /sbin, /usr/sbin, and /usr/local/sbin, where dpkg and
+	friends are located.  Fixes #18157.
+
 2002-01-04  Joe Shaw  <joe@ximian.com>
 
 	* rc-rpmman.c (rc_rpmman_transact): Add back in my RC_JUST_KIDDING

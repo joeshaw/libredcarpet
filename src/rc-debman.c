@@ -115,6 +115,11 @@ dump_argv (int level, gchar **argv)
 static void
 i18n_fixer ()
 {
+    char *path;
+    path = g_strdup_printf("PATH=%s:/sbin:/usr/sbin:/usr/local/sbin",
+                           getenv("PATH"));
+
+    putenv ("PATH");
     putenv ("LANG");
     putenv ("LC_ALL");
 }
