@@ -1,3 +1,15 @@
+2002-03-09  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-queue-item.c (require_process_cb): Screen out "impossible"
+	installs from the list.  This could save us a lot of fruitless
+	branchless in some cases.
+
+	* rc-world.c (remove_packages_generic): Don't test for a non-NULL
+	channel parameter when removing by channel, since a NULL value is
+	perfectly legal (and denotes a system package).  Doh!
+	(remove_package_structs_generic): Ditto.  These two changes together
+	fix Ximian #21344.
+
 2002-03-08  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-queue-item.c (require_item_process): Don't search our

@@ -206,10 +206,12 @@ remove_packages_generic (GSList *slist, RCPackage *package_to_remove, RCChannel 
         GSList *next = iter->next;
         if (package && 
             ((package_to_remove && package == package_to_remove)
-             || (channel && package->channel == channel))) {
+             || (package->channel == channel))) {
+
             /* FIXME: Why does freeing the package here lead to corruption?
                Where else is it being freed? */
             /* rc_package_free (package); */
+
             if (iter == slist) {
                 iter->data = NULL;
             } else {
@@ -265,7 +267,7 @@ remove_package_structs_generic (GSList *slist, RCPackage *package_to_remove, RCC
             
             if (package && 
                 ((package_to_remove && package == package_to_remove)
-                 || (channel && package->channel == channel))) {
+                 || (package->channel == channel))) {
                 g_free (our_struct);
                 if (iter == slist) {
                     iter->data = NULL;
@@ -712,7 +714,7 @@ foreach_package_by_name_cb (gpointer key, gpointer val, gpointer user_data)
     while (iter) {
         RCPackage *package = iter->data;
         if (package) {
-            fprintf (out, rc_package_spec_to_str_static (& package->spec));
+            fprintf (out, rc_package_to_str_static (package));
             fprintf (out, " ");
         } else {
             fprintf (out, "(null) ");
@@ -734,7 +736,7 @@ foreach_provides_by_name_cb (gpointer key, gpointer val, gpointer user_data)
         RCPackageAndDep *pad = iter->data;
         if (pad) {
             fprintf (out, rc_package_to_str_static (pad->package));
-            fprintf (out, "/");
+            fprintf (out, "::");
             fprintf (out, rc_package_dep_to_str_static (pad->dep));
             fprintf (out, " ");
         } else {
@@ -756,8 +758,8 @@ foreach_requires_by_name_cb (gpointer key, gpointer val, gpointer user_data)
     while (iter) {
         RCPackageAndDep *pad = iter->data;
         if (pad) {
-            fprintf (out, rc_package_spec_to_str_static (& pad->package->spec));
-            fprintf (out, "/");
+            fprintf (out, rc_package_to_str_static (pad->package));
+            fprintf (out, "::");
             fprintf (out, rc_package_spec_to_str_static (& pad->dep->spec));
             fprintf (out, " ");
         } else {

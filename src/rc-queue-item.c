@@ -568,7 +568,8 @@ require_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data)
 
     if (rc_resolver_context_get_status (info->context, package) != RC_PACKAGE_STATUS_TO_BE_UNINSTALLED
         && ! rc_resolver_context_is_parallel_install (info->context, package)
-        && g_hash_table_lookup (info->uniq, package) == NULL) {
+        && g_hash_table_lookup (info->uniq, package) == NULL
+        && rc_resolver_context_package_is_possible (info->context, package)) {
 
         info->providers = g_slist_prepend (info->providers, package);
         g_hash_table_insert (info->uniq, package, GINT_TO_POINTER (1));
