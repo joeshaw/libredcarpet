@@ -1,3 +1,8 @@
+2003-03-25  Joe Shaw  <joe@ximian.com>
+
+	* distributions.xml: Change "Linux Mandrake" to "Mandrake Linux"
+	starting with version 8.1.
+
 2003-03-20  Joe Shaw  <joe@ximian.com>
 
 	* rc-rpmman-types.h: Include the structure definitions for
