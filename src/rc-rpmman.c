@@ -105,11 +105,11 @@ transact_cb (const Header h, const rpmCallbackType what,
 
     switch (what) {
     case RPMCALLBACK_INST_OPEN_FILE:
-        fd = RC_RPMMAN (state->packman)->fdOpen (filename, O_RDONLY, 0);
+        fd = RC_RPMMAN (state->packman)->rc_fdOpen (filename, O_RDONLY, 0);
         return fd;
 
     case RPMCALLBACK_INST_CLOSE_FILE:
-        RC_RPMMAN (state->packman)->fdClose (fd);
+        RC_RPMMAN (state->packman)->rc_fdClose (fd);
         break;
 
     case RPMCALLBACK_INST_PROGRESS:
@@ -182,7 +182,7 @@ transaction_add_install_packages (RCPackman *packman,
     for (iter = install_packages; iter; iter = iter->next) {
         gchar *filename = ((RCPackage *)(iter->data))->package_filename;
 
-        fd = rpmman->fdOpen (filename, O_RDONLY, 0);
+        fd = rpmman->rc_fdOpen (filename, O_RDONLY, 0);
 
         /* if (fd == NULL || rpmman->Ferror (fd)) { */
         if (fd == NULL) {
@@ -196,7 +196,7 @@ transaction_add_install_packages (RCPackman *packman,
 
         switch (rc) {
         case 1:
-            rpmman->fdClose (fd);
+            rpmman->rc_fdClose (fd);
 
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "can't read RPM header in %s", filename);
@@ -204,7 +204,7 @@ transaction_add_install_packages (RCPackman *packman,
             return (0);
 
         default:
-            rpmman->fdClose (fd);
+            rpmman->rc_fdClose (fd);
 
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "%s is not installable", filename);
@@ -216,7 +216,7 @@ transaction_add_install_packages (RCPackman *packman,
                 transaction, header, NULL, filename, 1, NULL);
             count++;
             rpmman->headerFree (header);
-            rpmman->fdClose (fd);
+            rpmman->rc_fdClose (fd);
 
             switch (rc) {
             case 0:
@@ -1362,7 +1362,7 @@ rc_rpmman_query_file (RCPackman *packman, const gchar *filename)
     RCPackage *package;
     RCRpmman *rpmman = RC_RPMMAN (packman);
 
-    fd = rpmman->fdOpen (filename, O_RDONLY, 0444);
+    fd = rpmman->rc_fdOpen (filename, O_RDONLY, 0444);
 
     if (rpmman->rpmReadPackageHeader (fd, &header, NULL, NULL, NULL)) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
@@ -1382,7 +1382,7 @@ rc_rpmman_query_file (RCPackman *packman, const gchar *filename)
     rc_rpmman_depends_fill (rpmman, header, package);
 
     rpmman->headerFree (header);
-    rpmman->fdClose (fd);
+    rpmman->rc_fdClose (fd);
 
     return (package);
 
@@ -1525,7 +1525,7 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
         return (FALSE);
     }
 
-    rpm_fd = rpmman->fdOpen (package->package_filename, O_RDONLY, 0);
+    rpm_fd = rpmman->rc_fdOpen (package->package_filename, O_RDONLY, 0);
 
     /* if (!rpm_fd || rpmman->Ferror (rpm_fd)) { */
     if (rpm_fd == NULL) {
@@ -1540,7 +1540,7 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
                               "unable to read from %s",
                               package->package_filename);
 
-        rpmman->fdClose (rpm_fd);
+        rpmman->rc_fdClose (rpm_fd);
 
         return (FALSE);
     }
@@ -1565,7 +1565,7 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
 
             rpmman->headerFree (signature_header);
 
-            rpmman->fdClose (rpm_fd);
+            rpmman->rc_fdClose (rpm_fd);
 
             return (FALSE);
         }
@@ -1576,7 +1576,7 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
 
             rpmman->headerFree (signature_header);
 
-            rpmman->fdClose (rpm_fd);
+            rpmman->rc_fdClose (rpm_fd);
 
             return (FALSE);
         }
@@ -1598,7 +1598,7 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
 
         *payload_filename = NULL;
     } else {
-        while ((num_bytes = rpmman->fdRead (
+        while ((num_bytes = rpmman->rc_fdRead (
                     rpm_fd, buffer, sizeof (buffer))) > 0)
         {
             if (!rc_write (payload_fd, buffer, num_bytes)) {
@@ -1610,14 +1610,14 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
 
                 rpmman->headerFree (signature_header);
 
-                rpmman->fdClose (rpm_fd);
+                rpmman->rc_fdClose (rpm_fd);
 
                 return (FALSE);
             }
         }
     }
 
-    rpmman->fdClose (rpm_fd);
+    rpmman->rc_fdClose (rpm_fd);
 
     count = 0;
 
@@ -2024,9 +2024,9 @@ rc_rpmman_class_init (RCRpmmanClass *klass)
 static void
 load_fake_syms (RCRpmman *rpmman)
 {
-    rpmman->fdOpen = &fdOpen;
-    rpmman->fdRead = &fdRead;
-    rpmman->fdClose = &fdClose;
+    rpmman->rc_fdOpen = &fdOpen;
+    rpmman->rc_fdRead = &fdRead;
+    rpmman->rc_fdClose = &fdClose;
     /* rpmman->Ferror = &Ferror; */
     rpmman->headerGetEntry = &headerGetEntry;
     rpmman->headerFree = &headerFree;
@@ -2076,17 +2076,17 @@ static gboolean
 load_rpm_syms (RCRpmman *rpmman)
 {
     if (!g_module_symbol (rpmman->rpm_lib, "fdOpen",
-                          ((gpointer)&rpmman->fdOpen)))
+                          ((gpointer)&rpmman->rc_fdOpen)))
     {
         return (FALSE);
     }
     if (!g_module_symbol (rpmman->rpm_lib, "fdRead",
-                          ((gpointer)&rpmman->fdRead)))
+                          ((gpointer)&rpmman->rc_fdRead)))
     {
         return (FALSE);
     }
     if (!g_module_symbol (rpmman->rpm_lib, "fdClose",
-                          ((gpointer)&rpmman->fdClose))) {
+                          ((gpointer)&rpmman->rc_fdClose))) {
         return (FALSE);
     }
     /*

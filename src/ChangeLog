@@ -1,3 +1,9 @@
+2001-04-05  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c, rc-rpmman.h: rename fd* to rc_fd*, because jbj is
+	an idiot.  fixes a bug that only shows up on rpm 3.0.4.  god what
+	a fucker.
+
 2001-04-04  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c: sigh, s/RPMTAG_NAMES/RPMTAG_NAME/, this is the

@@ -62,9 +62,9 @@ struct _RCRpmman {
      * Common functions
      */
 
-    FD_t (*fdOpen)(const char *, int, mode_t);
-    ssize_t (*fdRead)(void *, char *, size_t);
-    int (*fdClose)(void *);
+    FD_t (*rc_fdOpen)(const char *, int, mode_t);
+    ssize_t (*rc_fdRead)(void *, char *, size_t);
+    int (*rc_fdClose)(void *);
     /* it turns out this isn't in 3.0.3 and there's no equivalent
      * older fd* version.  we're not really using it for anything
      * important so i'm not going to worry about it */
