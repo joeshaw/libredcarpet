@@ -141,7 +141,14 @@ rc_resolver_info_to_str (RCResolverInfo *info)
         break;
 
     case RC_RESOLVER_INFO_TYPE_MISC:
-        msg = g_strdup (info->msg);
+        msg = g_strconcat (info->action ? "Action: " : "",
+                           info->action ? info->action : "",
+                           info->action ? "\n" : "",
+                           info->trigger ? "Trigger: " : "",
+                           info->trigger ? info->trigger : "",
+                           info->trigger ? "\n" : "",
+                           info->msg,
+                           NULL);
         break;
 
     default:
@@ -288,6 +295,28 @@ rc_resolver_info_misc_new (RCPackage *package,
     info->msg      = msg;
 
     return info;
+}
+
+void
+rc_resolver_info_misc_add_action (RCResolverInfo *info,
+                                  char *action_msg)
+{
+    g_return_if_fail (info != NULL);
+    g_return_if_fail (info->type != RC_RESOLVER_INFO_TYPE_MISC);
+
+    g_free (info->action);
+    info->action = action_msg;
+}
+
+void
+rc_resolver_info_misc_add_trigger (RCResolverInfo *info,
+                                   char *trigger_msg)
+{
+    g_return_if_fail (info != NULL);
+    g_return_if_fail (info->type != RC_RESOLVER_INFO_TYPE_MISC);
+    
+    g_free (info->trigger);
+    info->trigger = trigger_msg;
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */

@@ -1,3 +1,34 @@
+2002-05-06  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-world.c: (hashed_slist_*): Added a set of functions for
+	dealing with hashtables of slists.  This gets rid of our
+	extensive use of g_slist_append... now all list additions
+	are done via prepends.
+	(remove_packages_generic): Removed.
+	(remove_package_structs_generic): Removed.
+	(rc_world_new): Use hashed slists.
+	(rc_world_free): Use hashed slists.
+	(rc_world_add_package): Use hashed slists.
+	(remove_package_cb): Use hashed slists.
+	(remove_package_struct_cb): Use hashed slists.
+	(rc_world_remove_package): Use hashed slists.
+	(remove_package_by_channel_cb): Use hashed slists.
+	(remove_package_struct_by_channel_cb): Use hashed slists.
+	(rc_world_remove_packages): Use hashed slists.
+	(rc_world_find_installed_version): Use hashed slists.
+	(rc_world_get_package): Use hashed slists.
+	(rc_world_foreach_package): Use hashed slists.
+	(rc_world_foreach_package_by_name): Use hashed slists.
+	(rc_world_foreach_providing_package): Use hashed slists.
+	(rc_world_check_providing_package): Use hashed slists.
+	(rc_world_foreach_requiring_package): Use hashed slists.
+
+	* rc-resolver-info.c (rc_resolver_info_misc_add_action): Added.
+	(rc_resolver_info_misc_add_trigger): Added.  These two functions
+	are related to improved error reporting in the dependency code.
+
+	* libredcarpet.h: include rc-xml.h.
+
 2002-05-02  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-xml.c (sax_end_document): Set ctx->text_buffer to NULL so

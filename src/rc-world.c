@@ -75,6 +75,131 @@ rc_package_and_dep_free (RCPackageAndDep *pad)
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
+typedef struct _SListAnchor SListAnchor;
+struct _SListAnchor {
+    char *key;
+    GSList *slist;
+};
+
+static GHashTable *
+hashed_slist_new (void)
+{
+    return g_hash_table_new (g_str_hash, g_str_equal);
+}
+
+static void
+hashed_slist_destroy (GHashTable *hash)
+{
+    g_hash_table_destroy (hash);
+}
+
+static void
+hashed_slist_add (GHashTable *hash,
+                  const char *key,
+                  gpointer val)
+{
+    SListAnchor *anchor;
+
+    anchor = g_hash_table_lookup (hash, key);
+
+    if (anchor == NULL) {
+        anchor = g_new0 (SListAnchor, 1);
+        anchor->key = g_strdup (key);
+        g_hash_table_insert (hash, anchor->key, anchor);
+    }
+
+    anchor->slist = g_slist_prepend (anchor->slist, val);
+}
+
+static GSList *
+hashed_slist_get (GHashTable *hash,
+                  const char *key)
+{
+    SListAnchor *anchor;
+
+    anchor = g_hash_table_lookup (hash, key);
+    return anchor ? anchor->slist : NULL;
+}
+
+struct ForeachInfo {
+    void (*fn) (gpointer, gpointer, gpointer);
+    gpointer user_data;
+};
+
+static void
+hashed_slist_foreach_cb (gpointer key, gpointer val, gpointer user_data)
+{
+    SListAnchor *anchor = val;
+    GSList *iter = anchor->slist;
+    struct ForeachInfo *info = user_data;
+
+    while (iter) {
+        info->fn (anchor->key, iter->data, info->user_data);
+        iter = iter->next;
+    }
+}
+
+static void
+hashed_slist_foreach (GHashTable *hash,
+                      void (*fn) (gpointer key, gpointer val, gpointer user_data),
+                      gpointer user_data)
+{
+    struct ForeachInfo info;
+
+    info.fn = fn;
+    info.user_data = user_data;
+
+    g_hash_table_foreach (hash,
+                          hashed_slist_foreach_cb,
+                          &info);
+}
+
+struct ForeachRemoveInfo {
+    gboolean (*func) (gpointer item, gpointer user_data);
+    gpointer user_data;
+};
+
+static gboolean
+foreach_remove_func (gpointer key, gpointer val, gpointer user_data)
+{
+    SListAnchor *anchor = val;
+    GSList *iter = anchor->slist;
+    struct ForeachRemoveInfo *info = user_data;
+
+    while (iter != NULL) {
+        GSList *next = iter->next;
+        if (info->func (iter->data, info->user_data)) {
+            anchor->slist = g_slist_delete_link (anchor->slist, iter);
+        }
+        iter = next;
+    }
+
+    if (anchor->slist == NULL) {
+        g_free (anchor->key);
+        g_free (anchor);
+        return TRUE;
+    }
+    
+    return FALSE;
+}
+
+static void
+hashed_slist_foreach_remove (GHashTable *hash,
+                             gboolean (*func) (gpointer val, gpointer user_data),
+                             gpointer user_data)
+{
+    struct ForeachRemoveInfo info;
+    
+    info.func = func;
+    info.user_data = user_data;
+
+    g_hash_table_foreach_remove (hash,
+                                 foreach_remove_func,
+                                 &info);
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
 static gboolean
 channel_match (const RCChannel *a, const RCChannel *b)
 {
@@ -129,9 +254,9 @@ rc_world_new (void)
 {
 	RCWorld *world = g_new0 (RCWorld, 1);
 
-	world->packages_by_name = g_hash_table_new (g_str_hash, g_str_equal);
-	world->provides_by_name = g_hash_table_new (g_str_hash, g_str_equal);
-	world->requires_by_name = g_hash_table_new (g_str_hash, g_str_equal);
+	world->packages_by_name = hashed_slist_new ();
+    world->provides_by_name = hashed_slist_new ();
+    world->requires_by_name = hashed_slist_new ();
 	
 	return world;
 }
@@ -150,9 +275,9 @@ rc_world_free (RCWorld *world)
 
         rc_world_remove_packages (world, RC_WORLD_ANY_CHANNEL);
 
-        g_hash_table_destroy (world->packages_by_name);
-        g_hash_table_destroy (world->provides_by_name);
-        g_hash_table_destroy (world->requires_by_name);
+        hashed_slist_destroy (world->packages_by_name);
+        hashed_slist_destroy (world->provides_by_name);
+        hashed_slist_destroy (world->requires_by_name);
 
 		g_free (world);
 
@@ -236,18 +361,17 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
     rc_package_ref (package);
 
     /* Store all of our packages in a hash by name. */
-
-    rc_hash_table_slist_insert (world->packages_by_name,
-                                package->spec.name,
-                                package);
+    hashed_slist_add (world->packages_by_name,
+                      package->spec.name,
+                      package);
 
     /* Store all of the package's provides in a hash by name.
        Packages implicitly provide themselves. */
 
     pad = rc_package_and_dep_new_package (package);
-    rc_hash_table_slist_insert (world->provides_by_name,
-                                pad->dep->spec.name,
-                                pad);
+    hashed_slist_add (world->provides_by_name,
+                      pad->dep->spec.name,
+                      pad);
 
     for (iter = package->provides; iter != NULL; iter = iter->next) {
 
@@ -255,9 +379,9 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
 
         pad = rc_package_and_dep_new_pair (package, dep);
 
-        rc_hash_table_slist_insert (world->provides_by_name,
-                                    dep->spec.name,
-                                    pad);
+        hashed_slist_add (world->provides_by_name,
+                          pad->dep->spec.name,
+                          pad);
     }
 
     /* Store all of the package's requires in a hash by name. */
@@ -267,9 +391,9 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
 
         pad = rc_package_and_dep_new_pair (package, dep);
 
-        rc_hash_table_slist_insert (world->requires_by_name,
-                                    dep->spec.name,
-                                    pad);
+        hashed_slist_add (world->requires_by_name,
+                          pad->dep->spec.name,
+                          pad);
     }
 
 }
@@ -278,56 +402,13 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 static gboolean
-remove_packages_generic (GSList *slist, RCPackage *package_to_remove, RCChannel *channel)
+remove_package_cb (gpointer val, gpointer user_data)
 {
-    GSList *orig, *iter;
+    RCPackage *package = val;
+    RCPackage *package_to_remove = user_data;
 
-    /* If channel == RC_WORLD_ANY_CHANNEL, remove everything. */
-    if (package_to_remove == NULL
-        && channel == RC_WORLD_ANY_CHANNEL) {
-        for (iter = slist; iter != NULL; iter = iter->next) {
-            if (iter->data)
-                rc_package_unref (iter->data);
-        }
-        
-        g_slist_free (slist);
-        return TRUE;
-    }
-
-    /* 
-       Walk the list, removing links that contain a package in the
-       matching channel.  Don't remove the first link in order to avoid
-       needing to change the head of the list that is stored in the
-       hash --- just set the data to NULL in that case. 
-    */
-    orig = iter = slist;
-    while (iter != NULL) {
-        RCPackage *package = iter->data;
-        GSList *next = iter->next;
-        if (package && 
-            ((package_to_remove && package == package_to_remove)
-             || channel_match (package->channel, channel))) {
-
-            rc_package_unref (package);
-
-            if (iter == slist) {
-                iter->data = NULL;
-            } else {
-                slist = g_slist_remove_link (slist, iter);
-                g_slist_free_1 (iter);
-            }
-        }
-        iter = next;
-    }
-
-    /* Sanity check: make sure the head of the list didn't change. */
-    g_assert (slist == orig);
-
-    /* If this node's list is empty, remove it. */
-    if (slist == NULL)
-        return TRUE;
-    if (slist && slist->data == NULL && slist->next == NULL) {
-        g_slist_free_1 (slist);
+    if (package_to_remove && package == package_to_remove) {
+        rc_package_unref (package);
         return TRUE;
     }
 
@@ -335,82 +416,17 @@ remove_packages_generic (GSList *slist, RCPackage *package_to_remove, RCChannel 
 }
 
 static gboolean
-remove_package_structs_generic (GSList *slist, RCPackage *package_to_remove, RCChannel *channel)
+remove_package_struct_cb (gpointer val, gpointer user_data)
 {
-    GSList *orig, *iter;
+    RCPackageAndDep *pad = val;
+    RCPackage *package_to_remove = user_data;
 
-    if (package_to_remove == NULL
-        && channel == RC_WORLD_ANY_CHANNEL) {
-        for (iter = slist; iter != NULL; iter = iter->next) {
-            RCPackageAndDep *pad = iter->data;
-            rc_package_and_dep_free (pad);
-        }
-        
-        g_slist_free (slist);
-        return TRUE;
-    }
-
-    /* 
-       Walk the list, removing links that contain a package in the
-       matching channel.  Don't remove the first link in order to avoid
-       needing to change the head of the list that is stored in the
-       hash --- just set the data to NULL in that case. 
-    */
-    orig = iter = slist;
-    while (iter != NULL) {
-        RCPackageAndDep *pad = iter->data;
-        GSList *next = iter->next;
-        
-        if (pad) {
-            RCPackage *package = pad->package;
-            
-            if (package && 
-                ((package_to_remove && package == package_to_remove)
-                 || channel_match (package->channel, channel))) {
-                rc_package_and_dep_free (pad);
-                if (iter == slist) {
-                    iter->data = NULL;
-                } else {
-                    slist = g_slist_remove_link (slist, iter);
-                    g_slist_free_1 (iter);
-                }
-            }
-        }
-        iter = next;
-    }
-
-    /* Sanity check: make sure the head of the list didn't change. */
-    g_assert (slist == orig);
-
-    /* If this node's list is empty, remove it. */
-    if (slist == NULL)
-        return TRUE;
-    if (slist && slist->data == NULL && slist->next == NULL) {
-        g_slist_free_1 (slist);
+    if (pad && package_to_remove && pad->package == package_to_remove) {
+        rc_package_and_dep_free (pad);
         return TRUE;
     }
 
     return FALSE;
-}
-
-/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
-
-static gboolean
-remove_package_cb (gpointer key, gpointer val, gpointer user_data)
-{
-    GSList *slist = val;
-    RCPackage *package = user_data;
-
-    return remove_packages_generic (slist, package, NULL);
-}
-
-static gboolean
-remove_package_struct_cb (gpointer key, gpointer val, gpointer user_data)
-{
-    GSList *slist = val;
-    RCPackage *package = user_data;
-
-    return remove_package_structs_generic (slist, package, NULL);
 }
 
 /**
@@ -433,15 +449,17 @@ rc_world_remove_package (RCWorld *world,
     g_return_if_fail (world != NULL);
     g_return_if_fail (package != NULL);
 
-    /* FIXME: This is grossly inefficient */
+    /* FIXME: This is fairly inefficient */
 
-    g_hash_table_foreach_remove (world->provides_by_name,
+    hashed_slist_foreach_remove (world->provides_by_name,
                                  remove_package_struct_cb,
                                  package);
-    g_hash_table_foreach_remove (world->requires_by_name,
+
+    hashed_slist_foreach_remove (world->requires_by_name,
                                  remove_package_struct_cb,
                                  package);
-    g_hash_table_foreach_remove (world->packages_by_name,
+    
+    hashed_slist_foreach_remove (world->packages_by_name,
                                  remove_package_cb,
                                  package);
 }
@@ -449,21 +467,31 @@ rc_world_remove_package (RCWorld *world,
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 static gboolean
-remove_package_by_channel_cb (gpointer key, gpointer val, gpointer user_data)
+remove_package_by_channel_cb (gpointer val, gpointer user_data)
 {
-    GSList *slist = val;
+    RCPackage *package = val;
     RCChannel *channel = user_data;
 
-    return remove_packages_generic (slist, NULL, channel);
+    if (package && channel_match (package->channel, channel)) {
+        rc_package_unref (package);
+        return  TRUE;
+    }
+
+    return FALSE;
 }
 
 static gboolean
-remove_package_struct_by_channel_cb (gpointer key, gpointer val, gpointer user_data)
+remove_package_struct_by_channel_cb (gpointer val, gpointer user_data)
 {
-    GSList *slist = val;
+    RCPackageAndDep *pad = val;
     RCChannel *channel = user_data;
+    
+    if (pad && channel_match (pad->package->channel, channel)) {
+        rc_package_and_dep_free (pad);
+        return TRUE;
+    }
 
-    return remove_package_structs_generic (slist, NULL, channel);
+    return FALSE;
 }
 
 /**
@@ -484,13 +512,15 @@ rc_world_remove_packages (RCWorld *world,
 {
     g_return_if_fail (world != NULL);
 
-    g_hash_table_foreach_remove (world->provides_by_name,
+    hashed_slist_foreach_remove (world->provides_by_name,
                                  remove_package_struct_by_channel_cb,
                                  channel);
-    g_hash_table_foreach_remove (world->requires_by_name,
+    
+    hashed_slist_foreach_remove (world->requires_by_name,
                                  remove_package_struct_by_channel_cb,
                                  channel);
-    g_hash_table_foreach_remove (world->packages_by_name,
+
+    hashed_slist_foreach_remove (world->packages_by_name,
                                  remove_package_by_channel_cb,
                                  channel);
 }
@@ -516,8 +546,8 @@ rc_world_find_installed_version (RCWorld *world,
     g_return_val_if_fail (world != NULL, NULL);
     g_return_val_if_fail (package != NULL, NULL);
 
-    iter = g_hash_table_lookup (world->packages_by_name,
-                                package->spec.name);
+    iter = hashed_slist_get (world->packages_by_name,
+                             package->spec.name);
     
     while (iter != NULL) {
         RCPackage *this_package = iter->data;
@@ -556,7 +586,7 @@ rc_world_get_package (RCWorld *world,
                           && channel != RC_WORLD_ANY_NON_SYSTEM, NULL);
     g_return_val_if_fail (name && *name, NULL);
 
-    slist = g_hash_table_lookup (world->packages_by_name, name);
+    slist = hashed_slist_get (world->packages_by_name, name);
     while (slist) {
         RCPackage *package = slist->data;
         if (package && package->channel == channel)
@@ -624,17 +654,14 @@ static void
 foreach_package_cb (gpointer key, gpointer val, gpointer user_data)
 {
     struct ForeachPackageInfo *info = user_data;
-    GSList *slist = val, *iter;
+    RCPackage *package = val;
 
     /* FIXME: we should filter out dup uninstalled packages. */
 
-    for (iter = slist; iter != NULL; iter = iter->next) {
-        RCPackage *package = iter->data;
-        if (package && channel_match (info->channel, package->channel)) {
-            if (info->fn)
-                info->fn (package, info->user_data);
-            ++info->count;
-        }
+    if (package && channel_match (info->channel, package->channel)) {
+        if (info->fn)
+            info->fn (package, info->user_data);
+        ++info->count;
     }
 }
 
@@ -667,8 +694,8 @@ rc_world_foreach_package (RCWorld *world,
     info.user_data = user_data;
     info.count = 0;
 
-    g_hash_table_foreach (world->packages_by_name,
-                          foreach_package_cb, 
+    hashed_slist_foreach (world->packages_by_name,
+                          foreach_package_cb,
                           &info);
 
     return info.count;
@@ -703,7 +730,7 @@ rc_world_foreach_package_by_name (RCWorld *world,
     g_return_val_if_fail (world != NULL, -1);
     g_return_val_if_fail (name && *name, -1);
 
-    slist = (GSList *) g_hash_table_lookup (world->packages_by_name, name);
+    slist = hashed_slist_get (world->packages_by_name, name);
 
     installed = g_hash_table_new (rc_package_spec_hash,
                                   rc_package_spec_equal);
@@ -947,8 +974,8 @@ rc_world_foreach_providing_package (RCWorld *world, RCPackageDep *dep,
         return count;
     }
 
-    slist = (GSList *) g_hash_table_lookup (world->provides_by_name,
-                                            dep->spec.name);
+    slist = hashed_slist_get (world->provides_by_name,
+                              dep->spec.name);
 
     installed = g_hash_table_new (rc_package_spec_hash,
                                   rc_package_spec_equal);
@@ -1030,8 +1057,8 @@ rc_world_check_providing_package (RCWorld *world, RCPackageDep *dep,
         return terminated;
     }
 
-    slist = (GSList *) g_hash_table_lookup (world->provides_by_name,
-                                            dep->spec.name);
+    slist = hashed_slist_get (world->provides_by_name,
+                              dep->spec.name);
 
     installed = g_hash_table_new (rc_package_spec_hash,
                                   rc_package_spec_equal);
@@ -1106,8 +1133,8 @@ rc_world_foreach_requiring_package (RCWorld *world, RCPackageDep *dep,
     g_return_val_if_fail (world != NULL, -1);
     g_return_val_if_fail (dep != NULL, -1);
 
-    slist = (GSList *) g_hash_table_lookup (world->requires_by_name,
-                                            dep->spec.name);
+    slist = hashed_slist_get (world->requires_by_name,
+                              dep->spec.name);
 
     installed = g_hash_table_new (rc_package_spec_hash,
                                   rc_package_spec_equal);
@@ -1146,7 +1173,8 @@ foreach_package_by_name_cb (gpointer key, gpointer val, gpointer user_data)
 {
     FILE *out = user_data;
     char *name = key;
-    GSList *iter = val;
+    SListAnchor *anchor = val;
+    GSList *iter = anchor->slist;
 
     fprintf (out, "PKG %s: ", name);
     while (iter) {
@@ -1167,7 +1195,8 @@ foreach_provides_by_name_cb (gpointer key, gpointer val, gpointer user_data)
 {
     FILE *out = user_data;
     char *name = key;
-    GSList *iter = val;
+    SListAnchor *anchor = val;
+    GSList *iter = anchor->slist;
 
     fprintf (out, "PRV %s: ", name);
     while (iter) {
@@ -1190,7 +1219,8 @@ foreach_requires_by_name_cb (gpointer key, gpointer val, gpointer user_data)
 {
     FILE *out = user_data;
     char *name = key;
-    GSList *iter = val;
+    SListAnchor *anchor = val;
+    GSList *iter = anchor->slist;
 
     fprintf (out, "REQ %s: ", name);
     while (iter) {

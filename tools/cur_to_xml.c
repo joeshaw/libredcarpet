@@ -1,5 +1,3 @@
-#include <gnome-xml/tree.h>
-
 #include "libredcarpet.h"
 
 #include <stdio.h>

@@ -51,6 +51,8 @@ struct _RCResolverInfo {
 
     GSList *package_list;
     char   *msg;
+    char   *action;
+    char   *trigger;
 
     guint is_error     : 1;
     guint is_important : 1;
@@ -77,6 +79,8 @@ void               rc_resolver_info_flag_as_important (RCResolverInfo *);
 
 RCResolverInfo    *rc_resolver_info_misc_new           (RCPackage *package, int priority,
                                                         char *msg);
+void               rc_resolver_info_misc_add_action    (RCResolverInfo *info, char *action_msg);
+void               rc_resolver_info_misc_add_trigger   (RCResolverInfo *info, char *trigger_msg);
 
 RCResolverInfo    *rc_resolver_info_needed_by_new      (RCPackage *package);
 void               rc_resolver_info_needed_add         (RCResolverInfo *, RCPackage *needed_by);

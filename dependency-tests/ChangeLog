@@ -1,3 +1,8 @@
+2002-05-06  Jon Trowbridge  <trow@ximian.com>
+
+	* deptestomatic.c (report_solutions): Break the solution printing
+	code into its own function.
+
 2002-05-02  Jon Trowbridge  <trow@ximian.com>
 
 	* deptestomatic.c (main): Call rc_package_spew_leaks after

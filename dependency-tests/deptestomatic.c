@@ -351,6 +351,39 @@ soln_cb (RCResolverContext *context, gpointer user_data)
 }
 
 static void
+report_solutions (RCResolver *resolver)
+{
+    int count = 1;
+    GSList *iter;
+
+    g_return_if_fail (resolver);
+    
+    if (resolver->best_context) {
+        g_print ("\nBest Solution:\n\n");
+        soln_cb (resolver->best_context, &count);
+
+        g_print ("\nOther Valid Solutions:\n\n");
+
+        if (g_slist_length (resolver->complete_queues) < 20) {
+            for (iter = resolver->complete_queues; iter != NULL; iter = iter->next) {
+                RCResolverQueue *queue = iter->data;
+                if (queue->context != resolver->best_context) 
+                    soln_cb (queue->context, &count);
+            }
+        }
+    }
+
+    if (g_slist_length (resolver->invalid_queues) < 20) {
+        for (iter = resolver->invalid_queues; iter != NULL; iter = iter->next) {
+            RCResolverQueue *queue = iter->data;
+            g_print ("Failed Solution:\n");
+            rc_resolver_context_spew_info (queue->context);
+            g_print ("\n");
+        }
+    }
+}
+
+static void
 trial_upgrade_cb (RCPackage *original, RCPackage *upgrade, gpointer user_data)
 {
     RCResolver *resolver = user_data;
@@ -369,8 +402,6 @@ static void
 parse_xml_trial (xmlNode *node)
 {
     RCResolver *resolver;
-    GSList *iter;
-    int count = 1;
     gboolean verify = FALSE;
 
     g_assert (! g_strcasecmp (node->name, "trial"));
@@ -489,31 +520,8 @@ parse_xml_trial (xmlNode *node)
         rc_resolver_verify_system (resolver);
     else
         rc_resolver_resolve_dependencies (resolver);
-    
-    if (resolver->best_context) {
-        g_print ("\nBest Solution:\n\n");
-        soln_cb (resolver->best_context, &count);
 
-        g_print ("\nOther Valid Solutions:\n\n");
-
-        if (g_slist_length (resolver->complete_queues) < 20) {
-            for (iter = resolver->complete_queues; iter != NULL; iter = iter->next) {
-                RCResolverQueue *queue = iter->data;
-                if (queue->context != resolver->best_context) 
-                    soln_cb (queue->context, &count);
-            }
-        }
-    }
-
-    if (g_slist_length (resolver->invalid_queues) < 20) {
-        for (iter = resolver->invalid_queues; iter != NULL; iter = iter->next) {
-            RCResolverQueue *queue = iter->data;
-            g_print ("Failed Solution:\n");
-            rc_resolver_context_spew_info (queue->context);
-            g_print ("\n");
-        }
-    }
-
+    report_solutions (resolver);
     rc_resolver_free (resolver);
 }
 

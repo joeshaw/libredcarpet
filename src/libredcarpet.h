@@ -55,4 +55,6 @@
 #include "rc-world.h"
 #include "rc-world-import.h"
 
+#include "rc-xml.h"
+
 #endif
