@@ -8,7 +8,7 @@
 
 <setup>
   <undump file="exercise-52-dump.xml.gz"/>
-  <lock package="ytalk" channel="SYSTEM"/>
+  <lock package="ytalk" channel="@system"/>
 </setup>
 
 <trial>

@@ -7,7 +7,7 @@
 
 <setup>
   <undump file="exercise-52-dump.xml.gz"/>
-  <lock package="xtoolwait" channel="SYSTEM"/>
+  <lock package="xtoolwait" channel="@system"/>
 </setup>
 
 <trial>
