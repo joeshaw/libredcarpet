@@ -114,7 +114,8 @@ rc_channel_free (RCChannel *channel)
     g_free (channel->name);
     g_free (channel->description);
 
-    g_free (channel->distro_target);
+    g_slist_foreach (channel->distro_target, (GFunc)g_free, NULL);
+    g_slist_free (channel->distro_target);
 
     g_free (channel->path);
     g_free (channel->file_path);
@@ -200,6 +201,8 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
 
     while (node) {
         char *tmp;
+        gchar **targets;
+        gchar **iter;
         RCChannel *channel;
 
         /* Skip comments */
@@ -215,7 +218,20 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
         channel->file_path = xml_get_prop(node, "file_path");
         channel->icon_file = xml_get_prop(node, "icon");
         channel->description = xml_get_prop(node, "description");
-        channel->distro_target = xml_get_prop(node, "distro_target");
+
+        channel->distro_target = NULL;
+
+        tmp = xml_get_prop (node, "distro_target");
+        targets = g_strsplit (tmp, ":", 0);
+        g_free (tmp);
+
+        for (iter = targets; *iter; iter++) {
+            channel->distro_target =
+                g_slist_append (channel->distro_target, *iter);
+        }
+
+        g_free (targets);
+
         channel->pkginfo_file = xml_get_prop(node, "pkginfo_file");
         tmp = xml_get_prop(node, "mirrored");
         if (tmp) {

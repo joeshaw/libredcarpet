@@ -1,5 +1,16 @@
 2001-01-22  Ian Peters  <itp@helixcode.com>
 
+	* rc-channel.h: distro_target is now a GSList* of gchar*, not just
+	gchar*
+
+	* rc-channel.c: as above; split the xml distro_target on : to get
+	a list of distros to work with.  Basically this is channel
+	aliasing; we can now say
+	distro_target="redhat-60-i386:redhat-61-i386:redhat-62-i386" and
+	it'll just work
+
+2001-01-22  Ian Peters  <itp@helixcode.com>
+
 	* rc-rpmman.c (rc_rpmman_find_file): stubbed out for rpm4, need to
 	talk to msw.  fixed a memory leak in the rpm3 version
 

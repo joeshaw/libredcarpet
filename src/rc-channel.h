@@ -74,7 +74,8 @@ struct _RCChannel {
 
     RCChannelType type;
 
-    gchar *distro_target;
+//    gchar *distro_target;
+    GSList *distro_target;
 
     gchar *path;
     gchar *file_path;
