@@ -1,5 +1,15 @@
 
 		[DllImport("libredcarpet")]
+                static extern int rc_extract_packages_from_aptrpm_file(string filename, IntPtr packman, IntPtr channel, RCSharp.PackageDelegateNative cb, IntPtr user_data);
+
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.Synchronized)]
+		public static int PackagesFromAptrpmFile(string filename, RC.Packman packman, RC.Channel channel, RC.PackageDelegate cb) {
+                        RCSharp.PackageDelegateWrapper cb_wrapper = null;                         cb_wrapper = new RCSharp.PackageDelegateWrapper (cb, null);
+                        int raw_ret = rc_extract_packages_from_aptrpm_file(filename, packman.Handle, channel.Handle, cb_wrapper.NativeDelegate, IntPtr.Zero);
+                        int ret = raw_ret;                         return ret;
+                }
+
+		[DllImport("libredcarpet")]
 		static extern int rc_extract_packages_from_helix_buffer(byte[] data, int len, IntPtr channel, RCSharp.PackageDelegateNative cb, IntPtr user_data);
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.Synchronized)] 

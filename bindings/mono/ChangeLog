@@ -1,3 +1,10 @@
+2004-10-14  James Willcox  <james@ximian.com>
+
+	* Extract.custom: synchronize Extract.PackagesFromAptrpmFile
+	* Makefile.am: don't blow away the docs in clean-all
+	* RC.metadata:
+	* libredcarpet-api.xml:
+
 2004-10-13  James Willcox  <james@ximian.com>
 
 	* Extract.custom:

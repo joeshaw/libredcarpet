@@ -36,7 +36,6 @@ merge-docs:
 clean-docs:
 	rm -f libredcarpet-sharp-docs.zip
 	rm -f libredcarpet-sharp-docs.tree
-	rm -rf en
 
 clean-all: clean clean-docs
 	rm -f generated-stamp

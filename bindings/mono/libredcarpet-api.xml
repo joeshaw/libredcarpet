@@ -3328,7 +3328,7 @@
           <parameter type="gpointer" name="user_data" />
         </parameters>
       </method>
-      <method name="PackagesFromAptrpmFile" cname="rc_extract_packages_from_aptrpm_file" shared="true">
+      <method name="PackagesFromAptrpmFile" cname="rc_extract_packages_from_aptrpm_file" shared="true" hidden="true">
         <return-type type="gint" />
         <parameters>
           <parameter type="const-char*" name="filename" />

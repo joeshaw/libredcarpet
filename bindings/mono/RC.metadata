@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <metadata>
   <attr path="/api/namespace/class[@name='Extract']/method[@cname='rc_extract_packages_from_helix_buffer']" name="hidden">true</attr>
+  <attr path="/api/namespace/class[@name='Extract']/method[@cname='rc_extract_packages_from_aptrpm_file']" name="hidden">true</attr>
   <attr path="/api/namespace/object[@cname='RCWorld']" name="parent">GObject</attr>
   <attr path="/api/namespace/object[@cname='RCPending']/signal[@name='Update']" name="name">Updated</attr>
   <attr path="/api/namespace/callback[@name='WorldMembershipToXmlFn']" name="hidden">1</attr>
