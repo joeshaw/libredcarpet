@@ -173,36 +173,6 @@ packman_test_query_all (RCPackman *p, gchar *buf)
     rc_package_slist_free (pkg_list);
 }
 
-const gchar *
-dep_symbol (RCPackageRelation rel)
-{
-    if (rel == RC_RELATION_ANY) {
-        return ("any");
-    }
-
-    if (rel == RC_RELATION_EQUAL) {
-        return ("==");
-    }
-
-    if (rel == RC_RELATION_LESS) {
-        return ("<<");
-    }
-
-    if (rel == RC_RELATION_GREATER) {
-        return (">>");
-    }
-
-    if (rel == (RC_RELATION_EQUAL | RC_RELATION_LESS)) {
-        return ("<=");
-    }
-
-    if (rel == (RC_RELATION_EQUAL | RC_RELATION_GREATER)) {
-        return (">=");
-    }
-
-    return ("EEK");
-}
-
 static void
 pretty_print_pkg (RCPackage *pkg)
 {
@@ -213,8 +183,8 @@ pretty_print_pkg (RCPackage *pkg)
     printf ("%-15s%-25.25s%-15s%-25.25s\n", "Version:", pkg->spec.version,
             "Release:", pkg->spec.release);
     printf ("%-15s%-25.25s%-15s%-25d\n", "Section:",
-            sectable[pkg->spec.section].name, "Size:",
-            pkg->spec.installed_size);
+            rc_package_section_to_string (pkg->section), "Size:",
+            pkg->installed_size);
     printf ("\n");
     printf ("Summary:\n%s\n\n", pkg->summary);
     printf ("Description:\n%s\n\n", pkg->description);
@@ -222,20 +192,20 @@ pretty_print_pkg (RCPackage *pkg)
     for (iter = pkg->requires; iter; iter = iter->next) {
         RCPackageDepItem *di = ((RCPackageDep *)iter->data)->data;
         printf ("Requires: %s %s %d %s %s\n", di->spec.name,
-                dep_symbol (di->relation), di->spec.epoch,
-                di->spec.version, di->spec.release);
+                rc_package_relation_to_string (di->relation, FALSE),
+                di->spec.epoch, di->spec.version, di->spec.release);
     }
     for (iter = pkg->provides; iter; iter = iter->next) {
         RCPackageDepItem *di = ((RCPackageDep *)iter->data)->data;
         printf ("Provides: %s %s %d %s %s\n", di->spec.name,
-                dep_symbol (di->relation), di->spec.epoch,
-                di->spec.version, di->spec.release);
+                rc_package_relation_to_string (di->relation, FALSE),
+                di->spec.epoch, di->spec.version, di->spec.release);
     }
     for (iter = pkg->conflicts; iter; iter = iter->next) {
         RCPackageDepItem *di = ((RCPackageDep *)iter->data)->data;
         printf ("Conflicts: %s %s %d %s %s\n", di->spec.name,
-                dep_symbol (di->relation), di->spec.epoch,
-                di->spec.version, di->spec.release);
+                rc_package_relation_to_string (di->relation, FALSE),
+                di->spec.epoch, di->spec.version, di->spec.release);
     }
 }
 
@@ -316,7 +286,7 @@ packman_test_query (RCPackman *p, gchar *buf)
         return;
     }
 
-    if (pkg->spec.installed) {
+    if (pkg->installed) {
         pretty_print_pkg (pkg);
     } else {
         printf ("Package \"%s\" not found\n", pkg->spec.name);
@@ -453,7 +423,7 @@ packman_test_remove (RCPackman *p, gchar *line)
 
     pkg = packman_test_make_pkg (p, line);
 
-    if (pkg->spec.installed) {
+    if (pkg->installed) {
         transaction.remove_pkgs = g_slist_append (transaction.remove_pkgs,
                                                   pkg);
     } else {
