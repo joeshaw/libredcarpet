@@ -89,7 +89,7 @@ rc_subscription_match (RCSubscription *sub, RCChannel *channel)
     /* If this is an old (i.e. imported from 1.x) subscription, we
        compare it against the channel id's tail. */
     if (sub->old) {
-        const char *id = rc_channel_get_id (channel);
+        const char *id = rc_channel_get_legacy_id (channel);
         int len1 = strlen (sub->channel_id);
         int len2 = strlen (id);
 
@@ -100,7 +100,7 @@ rc_subscription_match (RCSubscription *sub, RCChannel *channel)
            new-style subscription for that channel. */
         if (! strcmp (id + (len2 - len1), sub->channel_id)) {
             g_free (sub->channel_id);
-            sub->channel_id = g_strdup (id);
+            sub->channel_id = g_strdup (rc_channel_get_id (channel));
             sub->old = FALSE;
             subscriptions_changed = TRUE;
 

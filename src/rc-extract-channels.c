@@ -67,7 +67,10 @@ rc_extract_channels_from_helix_buffer (const guint8 *data, int len,
         if (alias == NULL)
             alias = g_strdup ("");
 
-        id_str = xml_get_prop(node, "id");
+        id_str = xml_get_prop(node, "bid");
+
+        if (!id_str)
+            id_str = xml_get_prop(node, "id");
 
         description = xml_get_prop (node, "description");
 
@@ -77,6 +80,9 @@ rc_extract_channels_from_helix_buffer (const guint8 *data, int len,
         g_free (alias);
         g_free (id_str);
         g_free (description);
+
+        id_str = xml_get_prop(node, "id");
+        rc_channel_set_legacy_id (channel, id_str);
         
         tmp = xml_get_prop (node, "distro_target");
         if (tmp) {

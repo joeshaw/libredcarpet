@@ -62,6 +62,9 @@ void rc_channel_set_id_prefix (RCChannel  *channel,
 void rc_channel_set_world (RCChannel *channel,
                            struct _RCWorld *world);
 
+void rc_channel_set_legacy_id (RCChannel  *channel,
+                               const char *legacy_id);
+
 void rc_channel_set_type (RCChannel     *channel,
                           RCChannelType  type);
 
@@ -103,6 +106,8 @@ struct _RCWorld *rc_channel_get_world    (RCChannel *channel);
 RCChannelType rc_channel_get_type        (RCChannel *channel);
 
 const char   *rc_channel_get_id          (RCChannel *channel);
+
+const char   *rc_channel_get_legacy_id   (RCChannel *channel);
 
 const char   *rc_channel_get_name        (RCChannel *channel);
 

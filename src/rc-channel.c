@@ -40,6 +40,7 @@ struct _RCChannel {
     RCChannelType type;
 
     gchar *id;
+    gchar *legacy_id;       /* Old ID for RCE servers */
 
     gchar *name;
     gchar *alias;
@@ -135,6 +136,7 @@ rc_channel_unref (RCChannel *channel)
 
         if (channel->refs == 0) {
             g_free (channel->id);
+            g_free (channel->legacy_id);
 
             g_free (channel->name);
             g_free (channel->alias);
@@ -216,6 +218,16 @@ rc_channel_set_world (RCChannel *channel,
     g_return_if_fail (world != NULL && RC_IS_WORLD (world));
 
     channel->world = world;
+}
+
+void
+rc_channel_set_legacy_id (RCChannel *channel, const char *legacy_id)
+{
+    g_return_if_fail (channel != NULL);
+    g_return_if_fail (!rc_channel_is_immutable (channel));
+
+    g_free (channel->legacy_id);
+    channel->legacy_id = g_strdup (legacy_id);
 }
 
 void
@@ -373,6 +385,15 @@ rc_channel_get_id (RCChannel *channel)
     g_return_val_if_fail (rc_channel_is_wildcard (channel) == FALSE, NULL);
     
     return channel->id;
+}
+
+const char *
+rc_channel_get_legacy_id (RCChannel *channel)
+{
+    g_return_val_if_fail (channel != NULL, NULL);
+    g_return_val_if_fail (rc_channel_is_wildcard (channel) == FALSE, NULL);
+    
+    return channel->legacy_id;
 }
 
 const char *

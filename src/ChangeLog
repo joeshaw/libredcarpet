@@ -1,3 +1,19 @@
+2003-09-16  Joe Shaw  <joe@ximian.com>
+
+	* rc-channel.c (RCChannel): Add a legacy_id field for migrating
+	old channel IDs to the new ones.
+	(rc_channel_unref): Free the legacy ID.
+	(rc_channel_{set|get}_legacy_id): Added.
+
+	* rc-extract-channels.c (rc_extract_channels_from_helix_buffer):
+	Set the channel ID to the "bid" field in the XML.  Fall back on
+	"id" if "bid" isn't present.  Set the legacy id to "id".
+
+	* rc-subscription.c (rc_subscription_match): When matching
+	old-style ids, check the channel's legacy ID.  When we rewrite the
+	subscription entry as a new-style one, change it to the channel
+	id.
+
 2003-09-15  Joe Shaw  <joe@ximian.com>
 
 	* rc-world-multi.c (rc_world_multi_refresh_fn): If the pending
