@@ -1,5 +1,17 @@
 2003-11-11  Joe Shaw  <joe@ximian.com>
 
+	* deptestomatic.c (load_channel): Add an evil hack so we don't try
+	to save our subscriptions to disk.
+	(get_package): Look up the channel by both name and id.
+	(parse_xml_setup, parse_xml_trial): Load system channel with id
+	"@system" instead of "SYSTEM".
+	(parse_xml_setup): Fix up force-install and force-uninstall
+	(report_solutions): Only print "Other Valid Solutions" if we have
+	other valid solutions.  Print the number of deferred queues and
+	failed solutions, if any.
+	
+2003-11-11  Joe Shaw  <joe@ximian.com>
+
 	* deptestomatic.c: Try to get this thing back in shape...
 	(mark_as_system_cb): Don't set the package's channel to NULL; even
 	system packages are in channels now.

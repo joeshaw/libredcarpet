@@ -39,6 +39,23 @@ static RCPackman *packman = NULL;
 
 static RCWorld *world = NULL;
 
+static GSList *subscribed_channels = NULL;
+
+static void
+set_subscription (RCWorld *world, RCChannel *channel, gboolean subd)
+{
+    if (subd)
+        subscribed_channels = g_slist_prepend (subscribed_channels, channel);
+    else
+        subscribed_channels = g_slist_remove (subscribed_channels, channel);
+}
+
+static gboolean
+get_subscription (RCWorld *world, RCChannel *channel)
+{
+    return g_slist_find (subscribed_channels, channel) != NULL;
+}
+
 static gboolean
 mark_as_system_cb (RCPackage *package, gpointer user_data)
 {
@@ -64,11 +81,18 @@ load_channel (const char *name,
               gboolean system_packages)
 {
     RCWorld *store;
+    RCWorldClass *world_class;
     RCChannelType chan_type = RC_CHANNEL_TYPE_UNKNOWN;
     RCChannel *channel;
     guint count;
 
     store = rc_world_store_new ();
+
+    /* Evil. */
+    world_class = RC_WORLD_GET_CLASS (store);
+    world_class->set_subscribed_fn = set_subscription;
+    world_class->get_subscribed_fn = get_subscription;
+
     rc_world_multi_add_subworld (RC_WORLD_MULTI (rc_get_world ()), store);
     g_object_unref (store);
 
@@ -140,7 +164,10 @@ get_package (const char *channel_name, const char *package_name)
     RCChannel *channel;
     RCPackage *package;
 
-    channel = rc_world_get_channel_by_name (world, channel_name);
+    channel = rc_world_get_channel_by_id (world, channel_name);
+
+    if (!channel)
+        channel = rc_world_get_channel_by_name (world, channel_name);
 
     if (channel == NULL) {
         g_warning ("Can't find package '%s': channel '%s' not defined",
@@ -177,6 +204,24 @@ lock_package (RCPackage *package)
     rc_world_add_lock (rc_get_world (), match);
 }
 
+static gboolean
+remove_package_cb (RCWorld *world, gpointer user_data)
+{
+    RCPackage *package = user_data;
+
+    rc_world_store_remove_package (RC_WORLD_STORE (world), package);
+
+    return TRUE;
+}
+
+static void
+remove_package (RCPackage *package)
+{
+    rc_world_multi_foreach_subworld_by_type (RC_WORLD_MULTI (world),
+                                             RC_TYPE_WORLD_STORE,
+                                             remove_package_cb, package);
+}
+
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 static void
@@ -208,7 +253,7 @@ parse_xml_setup (xmlNode *node)
         if (! g_strcasecmp (node->name, "system")) {
             gchar *file = xml_get_prop (node, "file");
             g_assert (file);
-            load_channel ("SYSTEM", file, "helix", TRUE);
+            load_channel ("@system", file, "helix", TRUE);
             g_free (file);
         } else if (! g_strcasecmp (node->name, "channel")) {
             gchar *name = xml_get_prop (node, "name");
@@ -229,6 +274,7 @@ parse_xml_setup (xmlNode *node)
             gchar *channel_name = xml_get_prop (node, "channel");
             gchar *package_name = xml_get_prop (node, "package");
             RCPackage *package;
+            RCChannel *system_channel;
 
             g_assert (channel_name);
             g_assert (package_name);
@@ -237,7 +283,15 @@ parse_xml_setup (xmlNode *node)
             if (package) {
                 g_print (">!> Force-installing %s from channel %s\n",
                          package_name, channel_name);
-                package->channel = NULL;
+
+                system_channel = rc_world_get_channel_by_id (world, "@system");
+
+                if (!system_channel)
+                    g_warning ("No system channel available!");
+
+                rc_channel_unref (package->channel);
+                package->channel = rc_channel_ref (system_channel);
+
                 package->installed = TRUE;
             } else {
                 g_warning ("Unknown package %s::%s",
@@ -251,15 +305,14 @@ parse_xml_setup (xmlNode *node)
             RCPackage *package;
 
             g_assert (package_name);
-            package = get_package ("SYSTEM", package_name);
+            package = get_package ("@system", package_name);
             
             if (! package) {
-                g_warning ("Can't force-install uninstalled package '%s'\n",
+                g_warning ("Can't force-uninstall installed package '%s'\n",
                            package_name);
             } else {
                 g_print (">!> Force-uninstalling '%s'\n", package_name);
-                g_warning ("force-install failed.");
-                /* rc_world_remove_package (world, package); */
+                remove_package (package);
             }
 
 
@@ -448,7 +501,8 @@ report_solutions (RCResolver *resolver)
         g_print ("\nBest Solution:\n\n");
         print_solution (resolver->best_context, &count, &cs_list);
 
-        g_print ("\nOther Valid Solutions:\n\n");
+        if (g_slist_length (resolver->complete_queues) > 1)
+            g_print ("\nOther Valid Solutions:\n\n");
 
         if (g_slist_length (resolver->complete_queues) < 20) {
             for (iter = resolver->complete_queues; iter != NULL; iter = iter->next) {
@@ -459,14 +513,29 @@ report_solutions (RCResolver *resolver)
         }
     }
 
+    if (resolver->deferred_queues) {
+        g_print ("There are %d deferred queues.\n",
+                 g_slist_length (resolver->deferred_queues));
+    }
+
+    if (resolver->invalid_queues) {
+        g_print ("There are %d failed solutions.\n",
+                 g_slist_length (resolver->invalid_queues));
+    }
+
     if (g_slist_length (resolver->invalid_queues) < 20) {
+        g_print ("\n");
+
         for (iter = resolver->invalid_queues; iter != NULL; iter = iter->next) {
             RCResolverQueue *queue = iter->data;
             g_print ("Failed Solution:\n");
             rc_resolver_context_spew_info (queue->context);
             g_print ("\n");
         }
+    } else {
+        g_print ("(Not displaying more than 20 invalid solutions)\n");
     }
+     
 
     g_slist_free (cs_list);
 }
@@ -578,7 +647,7 @@ parse_xml_trial (xmlNode *node)
 
             g_assert (package_name);
 
-            package = get_package ("SYSTEM", package_name);
+            package = get_package ("@system", package_name);
             if (package) {
                 g_print (">!> Uninstalling %s\n", package_name);
                 rc_resolver_add_package_to_remove (resolver, package);
