@@ -1,3 +1,8 @@
+2001-05-01  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c: Oops. fix bug where some dependants weren't getting
+	correctly upgraded.
+
 2001-05-01  Joe Shaw  <joe@ximian.com>
 
 	* rc-distro.c: Change the string for Yellow Dog because it was totally
