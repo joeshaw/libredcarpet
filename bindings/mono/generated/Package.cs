@@ -154,6 +154,23 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
+		static extern IntPtr rc_package_get_id(IntPtr raw);
+
+		[DllImport("libredcarpet")]
+		static extern void rc_package_set_id(IntPtr raw, string id);
+
+		public string Id { 
+			get {
+				IntPtr raw_ret = rc_package_get_id(Handle);
+				string ret = GLib.Marshaller.PtrToStringGFree(raw_ret);
+				return ret;
+			}
+			set {
+				rc_package_set_id(Handle, value);
+			}
+		}
+
+		[DllImport("libredcarpet")]
 		static extern IntPtr rc_package_get_signature_filename(IntPtr raw);
 
 		[DllImport("libredcarpet")]
@@ -359,13 +376,6 @@ namespace RC {
 #region Customized extensions
 #line 1 "Package.custom"
     
-    private string id;
-
-    public string Id {
-        get { return id; }
-        set { id = value; }
-    }
-
     [DllImport("libredcarpet")]
     static extern IntPtr rc_package_get_updates(IntPtr raw);
 

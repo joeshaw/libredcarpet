@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
-<api
->
+<api>
   <!--
 
         This file was automatically generated.
@@ -1704,6 +1703,7 @@
       <field cname="local_package" type="gboolean" />
       <field cname="install_only" type="gboolean" />
       <field cname="package_set" type="gboolean" />
+      <field cname="id" type="gchar*" />
       <method name="AddDummyUpdate" cname="rc_package_add_dummy_update">
         <return-type type="void" />
         <parameters>
@@ -1737,6 +1737,9 @@
       </method>
       <method name="GetFilename" cname="rc_package_get_filename">
         <return-type type="const-char*" />
+      </method>
+      <method name="GetId" cname="rc_package_get_id">
+        <return-type type="char*" />
       </method>
       <method name="GetInstalledSize" cname="rc_package_get_installed_size">
         <return-type type="guint32" />
@@ -1867,6 +1870,12 @@
         <return-type type="void" />
         <parameters>
           <parameter type="const-char*" name="filename" />
+        </parameters>
+      </method>
+      <method name="SetId" cname="rc_package_set_id">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="id" />
         </parameters>
       </method>
       <method name="SetInstalledSize" cname="rc_package_set_installed_size">
