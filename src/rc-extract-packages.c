@@ -738,6 +738,17 @@ hash_iter_cb (gpointer key, gpointer val, gpointer user_data)
 }
 
 
+static void
+add_fake_history (RCPackage *pkg)
+{
+    RCPackageUpdate *up;
+
+    up = rc_package_update_new ();
+    rc_package_spec_copy (&up->spec, &pkg->spec);
+    up->importance = RC_IMPORTANCE_SUGGESTED;
+    rc_package_add_update (pkg, up);
+}
+
 gint
 rc_extract_packages_from_directory (const char *path,
                                     RCChannel *channel,
@@ -857,6 +868,7 @@ rc_extract_packages_from_directory (const char *path,
                 pkg->channel = rc_channel_ref (channel);
                 pkg->package_filename = g_strdup (file_path);
                 pkg->local_package = FALSE;
+                add_fake_history (pkg);
                 package_into_hash (pkg, packman, hash);
                 rc_package_unref (pkg);
             }
