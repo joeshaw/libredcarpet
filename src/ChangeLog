@@ -1,5 +1,10 @@
 2001-09-24  Vladimir Vukicevic  <vladimir@ximian.com>
 
+	* rc-deps.c: Don't add a package if we're removing a newer
+	version of it.
+
+2001-09-24  Vladimir Vukicevic  <vladimir@ximian.com>
+
 	* rc-deps.c, rc-deps.h: give a reason when we abort, so the GUI
 	can display a useful message.
 
