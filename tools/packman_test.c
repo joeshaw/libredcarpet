@@ -142,7 +142,7 @@ int main (int argc, char **argv)
             if (!rlist) {
                 if (!strcmp (argv[1], "-ra")) {
                     printf ("Removing all packages...\n");
-                    rlist = rc_packman_query (p, NULL);
+                    rlist = rc_packman_query_list (p, NULL);
                 } else {
                     printf ("%s: -r must provide package name(s)\n", argv[0]);
                     exit (-1);
@@ -195,7 +195,7 @@ int main (int argc, char **argv)
         gtk_main ();
     }
 
-    gtk_object_destroy (p);
+    gtk_object_destroy (GTK_OBJECT (p));
 
     return (0);
 }
