@@ -1,3 +1,8 @@
+2001-04-21  Ian Peters  <itp@ximian.com>
+
+	* rc-distro.c: cleaned up, put YDL 1.2 in the list, removed
+	Caldera, fixed a LinuxPPC naming issue
+
 2001-04-21  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c: some speed fixes; fixed the doubling bug (oops), also

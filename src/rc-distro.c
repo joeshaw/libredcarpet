@@ -91,6 +91,10 @@ RCDistroChunk distro_figurers[] = {
     { "linuxppc-2000-ppc", RC_ARCH_PPC,
       func_string_in_file, "/etc/redhat-release", "LinuxPPC 2000", NULL, 0 },
 
+    { "yellowdog-12-ppc", RC_ARCH_PPC,
+      func_string_in_file, "/etc/yellowdog-release", "Yellow Dog Linux 1.2",
+      NULL, 0 },
+
     { "mandrake-70-i586", RC_ARCH_IA32,
       func_string_in_file, "/etc/mandrake-release", "7.0", NULL, 0 },
     { "mandrake-71-i586", RC_ARCH_IA32,
@@ -105,17 +109,12 @@ RCDistroChunk distro_figurers[] = {
     { "redhat-62-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/redhat-release", "6.2", NULL, 0 },
     { "redhat-70-i386", RC_ARCH_IA32,
-      func_string_in_file, "/etc/redhat-release", "7.0", NULL, CHECK_OP_OR,
-      func_string_in_file, "/etc/redhat-release", "Rawhide", NULL },
+      func_string_in_file, "/etc/redhat-release", "7.0", NULL, 0 },
     { "redhat-71-i386", RC_ARCH_IA32,
-      func_string_in_file, "/etc/redhat-release", "7.1", NULL, CHECK_OP_OR,
-      func_string_in_file, "/etc/redhat-release", "Fisher", NULL },
+      func_string_in_file, "/etc/redhat-release", "7.1", NULL, 0 },
 
     { "turbolinux-60-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/turbolinux-release", "6.0", NULL, 0 },
-
-    { "caldera-24-i386", RC_ARCH_IA32,
-      func_string_in_file, "/etc/.issue", "2.4", NULL, 0 },
 
     { "suse-63-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/SuSE-release", "6.3", NULL, 0 },
@@ -130,8 +129,8 @@ RCDistroChunk distro_figurers[] = {
       func_string_in_file, "/etc/debian_version", "woody", NULL, 0},
     { "debian-sid-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/debian_version", "sid", NULL, 0},
-    { "debian-sid-i386", RC_ARCH_IA32,
-      func_string_in_file, "/etc/debian_version", "unstable", NULL, 0},
+    { "debian-woody-i386", RC_ARCH_IA32,
+      func_string_in_file, "/etc/debian_version", "testing", NULL, 0},
     { NULL }
 };
 
@@ -146,8 +145,6 @@ RCDistroType distro_types[] = {
 
     { "turbolinux-60-i386", NULL, "TurboLinux", "6.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
 
-    { "caldera-24-i386", NULL, "Caldera OpenLinux eDesktop", "2.4", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
-
     { "suse-63-i386", NULL, "SuSE", "6.3", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=3, non-gdm-runlevel=2" },
     { "suse-64-i386", NULL, "SuSE", "6.4", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=3, non-gdm-runlevel=2" },
     { "suse-70-i386", NULL, "SuSE", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=3, non-gdm-runlevel=2" },
@@ -160,7 +157,9 @@ RCDistroType distro_types[] = {
     { "debian-woody-i386", NULL, "Debian GNU/Linux", "woody", RC_PKG_DPKG, RC_ARCH_IA32, NULL },
     { "debian-potato-i386", NULL, "Debian GNU/Linux", "potato", RC_PKG_DPKG, RC_ARCH_IA32, NULL },
 
-    { "linuxppc-2000-ppc", NULL, "LinuxPPC 2000", "2000", RC_PKG_RPM, RC_ARCH_PPC, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "linuxppc-2000-ppc", NULL, "LinuxPPC", "2000", RC_PKG_RPM, RC_ARCH_PPC, "gdm-runlevel=5, non-gdm-runlevel=3" },
+
+    { "yellowdog-12-ppc", NULL, "Yellow Dog Linux", "1.2", RC_PKG_RPM, RC_ARCH_PPC, "gdm-runlevel=5, non-gdm-runlevel=3" },
 
     { NULL }
 };
