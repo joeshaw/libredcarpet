@@ -68,6 +68,7 @@ EXTRA_DIST =				\
 	RC.metadata			\
 	libredcarpet-sharp-docs.source	\
 	Channel.custom			\
+	Extract.custom			\
 	Global.custom			\
 	World.custom			\
 	WorldService.custom		\
