@@ -6,3 +6,5 @@ Makefile
 rc-marshal.c
 rc-marshal.h
 distributions-xml.h
+rpm-stubs.h
+dpkg-helper.h
