@@ -1,3 +1,7 @@
+2003-10-06  Joe Shaw  <joe@ximian.com>
+
+	* configure.in: 1.5.90.
+
 2003-09-23  Joe Shaw  <joe@ximian.com>
 
 	* configure.in: Get rid of --enable-strict-rpm-order, we always
