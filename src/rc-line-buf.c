@@ -169,7 +169,7 @@ rc_line_buf_read_cb (GIOChannel *source, GIOCondition condition,
                 lb->buf = g_string_append (lb->buf, buf + base);
                 gtk_signal_emit ((GtkObject *)lb, signals[READ_LINE],
                                  lb->buf->str);
-                g_string_free (lb->buf, FALSE);
+                g_string_free (lb->buf, TRUE);
                 lb->buf = g_string_new (NULL);
                 base = count + 1;
             }
