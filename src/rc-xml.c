@@ -1506,8 +1506,10 @@ rc_package_update_to_xml_node (RCPackageUpdate *update)
         xmlNewTextChild (update_node, NULL, "release", update->spec.release);
     }
 
-    xmlNewTextChild (update_node, NULL, "filename",
-                     g_basename (update->package_url));
+    if (update->package_url && *update->package_url) {
+        xmlNewTextChild (update_node, NULL, "filename",
+                         g_basename (update->package_url));
+    }
 
     tmp_string = g_strdup_printf ("%d", update->package_size);
     xmlNewTextChild (update_node, NULL, "filesize", tmp_string);

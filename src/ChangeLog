@@ -1,3 +1,9 @@
+2002-11-22  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-xml.c (rc_package_update_to_xml_node): Make sure that
+	update->package_url isn't NULL or empty before writing it out in
+	the XML.  (Probably fixes bug #34499.)
+
 2002-11-22  Joe Shaw  <joe@ximian.com>
 
 	* rc-rpmman.c (rc_rpmman_package_is_repackaged): Added.  Opens up
