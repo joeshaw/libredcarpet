@@ -1,3 +1,7 @@
+2001-02-09  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c: Fix conflict resolution (fixes Mandrake 7.0 bug)
+
 2001-02-08  Joe Shaw  <joe@ximian.com>
 
 	* rc-distro.c (distro_figurers): Move Mandrake ahead of Red Hat, 
