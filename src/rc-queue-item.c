@@ -347,8 +347,7 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
     }
 
     /* Log which packages need this install */
-    if (install->needed_by != NULL
-        && install->upgrades == NULL) {
+    if (install->needed_by != NULL) {
         RCResolverInfo *info;
 
         info = rc_resolver_info_needed_by_new (package);

@@ -1,3 +1,10 @@
+2002-07-23  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-queue-item.c (install_item_process): Generate a "needed by"
+	info item whenever we can.  For some weird reason we were
+	explicitly not creating the proper info items in the case of
+	upgrades.
+
 2002-07-22  Joe Shaw  <joe@ximian.com>
 
 	* rc-debug.c (rc_debug): Changed the signature of the RCDebugFn
