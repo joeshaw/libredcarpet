@@ -107,7 +107,7 @@ rc_package_slist_free (RCPackageSList *packages)
 RCPackageUpdateSList *
 rc_package_slist_sort_by_name (RCPackageSList *packages)
 {
-    return (g_slist_sort (packages, (GCompareFunc) strcmp));
+    return (g_slist_sort (packages, (GCompareFunc) rc_package_spec_compare_name));
 } /* rc_package_slist_sort_by_name */
 
 static void
