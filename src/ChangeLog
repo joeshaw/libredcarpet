@@ -1,5 +1,9 @@
 2001-10-04  Ian Peters  <itp@ximian.com>
 
+	* Makefile.am: add things to CLEANFILES in a few places
+
+2001-10-04  Ian Peters  <itp@ximian.com>
+
 	* make_stub.sh: simplified
 
 	* Makefile.am: new calling convention for make_stub.sh

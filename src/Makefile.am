@@ -85,6 +85,7 @@ if ENABLE_DPKG
 dpkghelperdir = $(libdir)/redcarpet
 dpkghelper_DATA = \
 	rc-dpkg-helper.so
+CLEANFILES += rc-dpkg-helper.so
 endif
 
 rc-dpkg-helper.so: $(srcdir)/rc-dpkg-helper.c
@@ -102,6 +103,7 @@ rpmhelper_DATA = \
 	{rpm_rpmio}.so.0 \
 	{rpm_rpmio_rpmdb}-4.0.3.so \
 	{rpm_rpmio_rpmdb}.so
+CLEANFILES += {rpm}.so.0 {rpm_rpmio}.so.0 {rpm_rpmio_rpmdb}-4.0.3.so {rpm_rpmio_rpmdb}.so
 endif
 
 {rpm}.so.0:
