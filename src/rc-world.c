@@ -1259,12 +1259,22 @@ rc_world_foreach_upgrade (RCWorld *world,
     return info.count;
 }
 
+struct BestUpgradeInfo {
+    RCPackage *best_upgrade;
+    gboolean subscribed_only;
+};
+
 static void
 get_best_upgrade_cb (RCPackage *package, gpointer user_data)
 {
-    RCPackage **best_upgrade = user_data;
-    if (rc_package_spec_compare (*best_upgrade, package) < 0) {
-        *best_upgrade = package;
+    struct BestUpgradeInfo *info = user_data;
+
+    if (info->subscribed_only)
+        if (!(package->channel && rc_channel_subscribed (package->channel)))
+            return;
+
+    if (rc_package_spec_compare (info->best_upgrade, package) < 0) {
+        info->best_upgrade = package;
     }
 }
 
@@ -1288,23 +1298,25 @@ get_best_upgrade_cb (RCPackage *package, gpointer user_data)
  * Return value: the highest-versioned upgrade for @package.
  **/
 RCPackage *
-rc_world_get_best_upgrade (RCWorld *world, RCPackage *package)
+rc_world_get_best_upgrade (RCWorld *world, RCPackage *package,
+                           gboolean subscribed_only)
 {
-    RCPackage *best_upgrade;
+    struct BestUpgradeInfo info;
 
     g_return_val_if_fail (world != NULL, NULL);
     g_return_val_if_fail (package != NULL, NULL);
 
     /* rc_world_foreach_upgrade calls rc_world_sync */
 
-    best_upgrade = package;
+    info.best_upgrade = package;
+    info.subscribed_only = subscribed_only;
 
-    rc_world_foreach_upgrade (world, package, RC_WORLD_ANY_NON_SYSTEM, get_best_upgrade_cb, &best_upgrade);
+    rc_world_foreach_upgrade (world, package, RC_WORLD_ANY_NON_SYSTEM, get_best_upgrade_cb, &info);
 
-    if (best_upgrade == package)
-        best_upgrade = NULL;
+    if (info.best_upgrade == package)
+        info.best_upgrade = NULL;
 
-    return best_upgrade;
+    return info.best_upgrade;
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
@@ -1320,7 +1332,8 @@ static void
 system_upgrade_cb (RCPackage *package, gpointer user_data)
 {
     struct SystemUpgradeInfo *info = user_data;
-    RCPackage *upgrade = rc_world_get_best_upgrade (info->world, package);
+    RCPackage *upgrade = rc_world_get_best_upgrade (info->world, package,
+                                                    TRUE);
 
     if (upgrade) {
         if (info->fn)

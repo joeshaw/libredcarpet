@@ -132,7 +132,8 @@ int        rc_world_foreach_upgrade         (RCWorld *world,
                                              gpointer user_data);
 
 RCPackage *rc_world_get_best_upgrade        (RCWorld *world,
-                                             RCPackage *package);
+                                             RCPackage *package,
+                                             gboolean subscribed_only);
 
 int        rc_world_foreach_system_upgrade  (RCWorld *world, 
                                              RCPackagePairFn fn,

@@ -209,14 +209,15 @@ rc_package_is_installed (RCPackage *package)
 }
 
 RCPackage *
-rc_package_get_best_upgrade (RCPackage *package)
+rc_package_get_best_upgrade (RCPackage *package, gboolean subscribed_only)
 {
     g_return_val_if_fail (package != NULL, NULL);
 
     if (package->channel == NULL || package->channel->world)
         return NULL;
 
-    return rc_world_get_best_upgrade (package->channel->world, package);
+    return rc_world_get_best_upgrade (package->channel->world, package,
+                                      subscribed_only);
 }
 
 RCPackageSList *

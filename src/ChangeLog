@@ -1,3 +1,22 @@
+2002-08-01  Ian Peters  <itp@ximian.com>
+
+	* rc-world.h: rc_world_get_best_upgrade now takes a
+	subscribed_only flag to control what channels to look in
+
+	* rc-world.c (struct BestUpgradeInfo): added
+	(get_best_upgrade_cb): user_data is not a BestUpgradeInfo, of
+	which best_upgrade is an element.  Check the subscribed_only flag
+	in the info struct to filter upgrades from unsubscribed channels.
+	(rc_world_get_best_upgrade): create a BestUpgradeInfo struct,
+	initialize it with the subscribed_only flag, and pass it to the
+	cb, rather than just the best_upgrade.
+
+	* rc-package.h: rc_package_get_best_upgrade now takes a
+	subscribed_only flag
+
+	* rc-package.c: pass the subscribed_only flag to
+	rc_world_get_best_upgrade
+
 2002-07-31  Ian Peters  <itp@ximian.com>
 
 	* rc-arch.c, rc-arch.h: added
