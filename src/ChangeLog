@@ -1,5 +1,8 @@
 2001-07-11  Vladimir Vukicevic  <vladimir@ximian.com>
 
+	* rc-deps.c: Oops, rc_hash_table_slist_insert_unique needs
+	a comparison function argument
+
 	* rc-deps.c, rc-package-dep.c, rc-package-spec.c, rc-package-spec.h:
 	Some speed optimizations
 
