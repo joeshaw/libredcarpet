@@ -1,5 +1,8 @@
 2001-02-27  Vladimir Vukicevic  <vladimir@ximian.com>
 
+	* rc-deps.c: ewpz. don't get rid of old provides conflicts if the
+	new one is the same as the old one.
+
 	* rc-deps.c: updated rant
 
 	* rc-deps.c: Get rid of old provides conflicts if there is a new one
