@@ -1,3 +1,8 @@
+2002-07-26  Joe Shaw  <joe@ximian.com>
+
+	* rc-debman.c (verify_status): Make sure we unlock the database in
+	the successful case as well.
+
 2002-07-26  Ian Peters  <itp@ximian.com>
 
 	* rc-packman.c, rc-packman.h (rc_packman_check_database): added

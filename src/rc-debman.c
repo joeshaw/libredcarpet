@@ -569,6 +569,8 @@ verify_status (RCPackman *packman)
         goto ERROR;
     }
 
+    unlock_database (debman);
+
     return (TRUE);
 
   ERROR:
