@@ -51,6 +51,9 @@ struct _RCResolverInfo {
 
     GSList *package_list;
     char   *msg;
+
+    guint is_error     : 1;
+    guint is_important : 1;
 };
 
 typedef void (*RCResolverInfoFn) (RCResolverInfo *, gpointer);
@@ -62,6 +65,15 @@ void               rc_resolver_info_free             (RCResolverInfo *);
 char              *rc_resolver_info_to_str           (RCResolverInfo *);
 char              *rc_resolver_info_packages_to_str  (RCResolverInfo *,
                                                       gboolean names_only);
+
+gboolean           rc_resolver_info_mentions            (RCResolverInfo *, RCPackage *);
+void               rc_resolver_info_add_related_package (RCResolverInfo *, RCPackage *);
+
+gboolean           rc_resolver_info_is_error         (RCResolverInfo *);
+void               rc_resolver_info_flag_as_error    (RCResolverInfo *);
+
+gboolean           rc_resolver_info_is_important      (RCResolverInfo *);
+void               rc_resolver_info_flag_as_important (RCResolverInfo *);
 
 RCResolverInfo    *rc_resolver_info_misc_new           (RCPackage *package, int priority,
                                                         char *msg);

@@ -698,7 +698,7 @@ require_item_process (RCQueueItem *item,
                                NULL);
             
             rc_resolver_context_add_info_str (context,
-                                              NULL,
+                                              require->requiring_package,
                                               RC_RESOLVER_INFO_PRIORITY_VERBOSE,
                                               msg);
         }
@@ -765,6 +765,8 @@ require_item_process (RCQueueItem *item,
                 for (iter = upgrade_list; iter != NULL; iter = iter->next) {
                     char *str;
                     char *p1, *p2;
+                    RCResolverInfo *log_info;
+
                     p1 = rc_package_to_str (require->requiring_package);
                     p2 = rc_package_to_str ((RCPackage *) iter->data);
                     str = g_strconcat ("Upgrade to ", p2, " to avoid removing ", p1, 
@@ -773,10 +775,12 @@ require_item_process (RCQueueItem *item,
                     g_free (p1);
                     g_free (p2);
 
-                    rc_resolver_context_add_info_str (context,
-                                                      require->requiring_package,
-                                                      RC_RESOLVER_INFO_PRIORITY_VERBOSE,
-                                                      str);
+                    log_info = rc_resolver_info_misc_new (NULL,
+                                                          RC_RESOLVER_INFO_PRIORITY_VERBOSE,
+                                                          str);
+                    rc_resolver_info_add_related_package (log_info, require->requiring_package);
+                    rc_resolver_info_add_related_package (log_info, (RCPackage *) iter->data);
+                    rc_resolver_context_add_info (context, log_info);
 
                     explore_uninstall_branch = TRUE;
                 }
@@ -1101,6 +1105,7 @@ conflict_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data
     struct ConflictProcessInfo *info = (struct ConflictProcessInfo *) user_data;
     RCPackageStatus status;
     char *pkg_str, *spec_str, *msg;
+    RCResolverInfo *log_info;
 
     if (rc_package_spec_equal (& package->spec, & info->conflicting_package->spec))
         return;
@@ -1133,7 +1138,9 @@ conflict_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data
         break;
     }
 
-    case RC_PACKAGE_STATUS_TO_BE_INSTALLED:
+    case RC_PACKAGE_STATUS_TO_BE_INSTALLED: {
+        RCResolverInfo *log_info;
+        
         msg = g_strconcat ("A conflict over ",
                            info->dep_str,
                            " (",
@@ -1141,12 +1148,19 @@ conflict_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data
                            ") requires the removal of the to-be-installed package ",
                            pkg_str,
                            NULL);
-        rc_resolver_context_add_info_str (info->context,
-                                          package,
-                                          RC_RESOLVER_INFO_PRIORITY_VERBOSE,
-                                          msg);
-        rc_resolver_context_invalidate (info->context);
+
+        
+        log_info = rc_resolver_info_misc_new (package,
+                                              RC_RESOLVER_INFO_PRIORITY_VERBOSE,
+                                              msg);
+
+        rc_resolver_info_flag_as_error (log_info);
+        rc_resolver_info_add_related_package (log_info, info->conflicting_package);
+
+        rc_resolver_context_add_info (info->context, log_info);
+
         break;
+    }
 
     case RC_PACKAGE_STATUS_UNINSTALLED: 
         rc_resolver_context_set_status (info->context, package,
@@ -1160,10 +1174,16 @@ conflict_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data
                            ") from ",
                            info->pkg_str,
                            NULL);
-        rc_resolver_context_add_info_str (info->context,
-                                          NULL, 
-                                          RC_RESOLVER_INFO_PRIORITY_VERBOSE,
-                                          msg);
+
+        log_info = rc_resolver_info_misc_new (NULL,
+                                              RC_RESOLVER_INFO_PRIORITY_VERBOSE,
+                                              msg);
+
+        rc_resolver_info_add_related_package (log_info, package);
+        rc_resolver_info_add_related_package (log_info, info->conflicting_package);
+        
+        rc_resolver_context_add_info (info->context, log_info);
+
         break;
 
     case RC_PACKAGE_STATUS_TO_BE_UNINSTALLED:

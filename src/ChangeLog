@@ -1,3 +1,53 @@
+2002-04-24  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-queue-item.c (require_item_process): Attach the requiring
+	package to the "There are no installable providers..." log entry.
+	(require_item_process): Attach both packages foo and bar to the
+	"Upgrade to foo to avoid removing bar..." log entry.
+	(conflict_process_cb): Attach packages to the "A conflict over foo
+	(bar) requires..." log entry, and flag it as an error.  Attach
+	packages to the "Marking foo as uninstallable due to conflicts..."
+	log entry.
+ 
+	* rc-resolver-context.c (rc_resolver_context_install_package):
+	"Can't install foo since it is already marked as needing to be
+	uninstalled" and "Can't install foo, since a package of the same
+	name..."  are error conditions, so add them to the log via
+	_add_error_str.
+	(rc_resolver_context_uninstall_package): "Can't uninstall the
+	to-be-installed..." is an error condition, log it via
+	_add_error_str.
+	(rc_resolver_context_invalidate): Removed.
+	(rc_resolver_context_add_info): Set the propagated_importance flag
+	to FALSE.  If the info item that we are adding is flag as an
+	error, invalidate the context.  This replaces the need for
+	explicit calls to rc_resolver_context_invalidate.
+	(rc_resolver_context_add_error_str): Added.  A convenience routine
+	for logging errors.
+	(rc_resolver_context_propagate_importance): Repeatedly walk across
+	the log items, flagging as important any items that are mentioned
+	in an "important" or "error" info item.  We repeat this process
+	until no new items are flagged.  The point of this is, in the case
+	of an error, to try to distinguish a subset of the entire log and
+	allow us to highlight the "important" log entries.
+	(rc_resolver_context_foreach_info): Call _propagate_importance
+	before iterating.
+	(spew_cb): Preceed "important" items with "[!!!!!]" and "error"
+	items with "[ERROR]" when spewing.
+
+	* rc-resolver-info.c (rc_resolver_info_add_related_package):
+	Added.  Pushes a package onto the package_list.
+	(rc_resolver_info_is_error): Added.  Accessor for is_error flag.
+	(rc_resolver_info_flag_as_error): Added.  Sets is_error to TRUE.
+	(rc_resolver_info_is_important): Added.  Returns is_error ||
+	is_important.  After all, errors are inherently important. :)
+	(rc_resolver_info_flag_as_important): Added.  Sets is_important to
+	TRUE.
+	(rc_resolver_info_copy): Copy is_error and is_important flags.
+
+	* rc-resolver-info.h: Add is_error and is_important
+	flags to the RCResolverInfo struct.
+
 2002-04-18  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-queue-item.c (rc_queue_item_branch_is_empty): Added.

@@ -80,6 +80,7 @@ struct _RCResolverContext {
 
     guint allow_conflicts_with_virtual_provides : 1;
     guint invalid : 1;
+    guint propagated_importance : 1;
 };
 
 const char        *rc_package_status_to_string (RCPackageStatus status);
@@ -121,7 +122,6 @@ int                rc_resolver_context_foreach_upgrade   (RCResolverContext *con
                                                           RCMarkedPackagePairFn fn,
                                                           gpointer user_data);
 
-void               rc_resolver_context_invalidate (RCResolverContext *);
 gboolean           rc_resolver_context_is_valid (RCResolverContext *);
 gboolean           rc_resolver_context_is_invalid (RCResolverContext *);
 
@@ -130,6 +130,9 @@ void               rc_resolver_context_add_info     (RCResolverContext *,
 void               rc_resolver_context_add_info_str (RCResolverContext *,
                                                      RCPackage *, int priority,
                                                      char *str);
+void               rc_resolver_context_add_error_str (RCResolverContext *,
+                                                      RCPackage *,
+                                                      char *str);
 void               rc_resolver_context_foreach_info (RCResolverContext *,
                                                      RCPackage *, int priority,
                                                      RCResolverInfoFn fn,

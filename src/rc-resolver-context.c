@@ -234,11 +234,9 @@ rc_resolver_context_install_package (RCResolverContext *context,
                            " since it is already marked as needing to be uninstalled",
                            NULL);
 
-        rc_resolver_context_add_info_str (context,
-                                          package,
-                                          RC_RESOLVER_INFO_PRIORITY_VERBOSE,
-                                          msg);
-        rc_resolver_context_invalidate (context);
+        rc_resolver_context_add_error_str (context,
+                                           package,
+                                           msg);
         return FALSE;
     }
 
@@ -261,11 +259,9 @@ rc_resolver_context_install_package (RCResolverContext *context,
                            "is already marked as needing to be installed",
                            NULL);
 
-        rc_resolver_context_add_info_str (context,
-                                          package,
-                                          RC_RESOLVER_INFO_PRIORITY_USER,
-                                          msg);
-        rc_resolver_context_invalidate (context);
+        rc_resolver_context_add_error_str (context,
+                                           package,
+                                           msg);
         return FALSE;
     }
 
@@ -356,11 +352,9 @@ rc_resolver_context_uninstall_package (RCResolverContext *context,
         msg = g_strconcat ("Can't uninstall the to-be-installed package ",
                            rc_package_spec_to_str_static (& package->spec),
                            NULL);
-        rc_resolver_context_add_info_str (context,
-                                          package,
-                                          RC_RESOLVER_INFO_PRIORITY_USER,
-                                          msg);
-        rc_resolver_context_invalidate (context);
+        rc_resolver_context_add_error_str (context,
+                                           package,
+                                           msg);
         return FALSE;
     }
 
@@ -635,18 +629,6 @@ rc_resolver_context_foreach_uninstall (RCResolverContext *context,
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
-void
-rc_resolver_context_invalidate (RCResolverContext *context)
-{
-    g_return_if_fail (context != NULL);
-    if (! context->invalid)
-        rc_resolver_context_add_info_str (context,
-                                          NULL,
-                                          RC_RESOLVER_INFO_PRIORITY_VERBOSE,
-                                          g_strdup ("Marking this resolution attempt as invalid."));
-    context->invalid = TRUE;
-}
-
 gboolean
 rc_resolver_context_is_valid (RCResolverContext *context)
 {
@@ -671,6 +653,22 @@ rc_resolver_context_add_info (RCResolverContext *context,
     g_return_if_fail (info != NULL);
 
     context->log = g_list_prepend (context->log, info);
+    context->propagated_importance = FALSE;
+
+    if (rc_resolver_info_is_error (info)) {
+
+        if (! context->invalid) {
+            RCResolverInfo *info;
+            info = rc_resolver_info_misc_new (NULL,
+                                              RC_RESOLVER_INFO_PRIORITY_VERBOSE,
+                                              g_strdup ("Marking this resolution attempt as invalid."));
+            rc_resolver_info_flag_as_error (info);
+            context->log = g_list_prepend (context->log, info);
+        }
+
+        context->invalid = TRUE;
+    }
+
 }
 
 void
@@ -688,6 +686,112 @@ rc_resolver_context_add_info_str (RCResolverContext *context,
 }
 
 void
+rc_resolver_context_add_error_str (RCResolverContext *context,
+                                   RCPackage *package,
+                                   char *msg)
+{
+    RCResolverInfo *info;
+
+    g_return_if_fail (context != NULL);
+    g_return_if_fail (msg != NULL);
+
+    info = rc_resolver_info_misc_new (package,
+                                      RC_RESOLVER_INFO_PRIORITY_VERBOSE,
+                                      msg);
+
+    rc_resolver_info_flag_as_error (info);
+
+    rc_resolver_context_add_info (context, info);
+}
+
+static void
+rc_resolver_context_propagate_importance (RCResolverContext *context)
+{
+    GHashTable *important_hash = NULL;
+    GSList *important_list = NULL, *pkg_iter;
+    GList *log_iter;
+    gboolean did_something;
+    int propagation_count = 1;
+
+    g_return_if_fail (context != NULL);
+    
+    if (context->propagated_importance)
+        return;
+
+    important_hash = g_hash_table_new (NULL, NULL);
+
+
+    do {
+        did_something = FALSE;
+
+        ++propagation_count;
+
+        for (log_iter = context->log; log_iter != NULL; log_iter = log_iter->next) {
+            RCResolverInfo *info = log_iter->data;
+            
+            /* If info is not important, but mentions a package that we have declared
+               to be important, flag info as important. */
+            if (! rc_resolver_info_is_important (info)) {
+                
+                gboolean mentions_important = FALSE;
+
+                pkg_iter = important_list;
+                while (pkg_iter && ! mentions_important) {
+                    RCPackage *pkg = pkg_iter->data;
+                    if (rc_resolver_info_mentions (info, pkg))
+                        mentions_important = TRUE;
+                    pkg_iter = pkg_iter->next;
+                }
+                
+                if (mentions_important) {
+                    rc_resolver_info_flag_as_important (info);
+                    did_something = TRUE;
+                }
+            }
+
+            /* If info is important, walk across the package_list and
+               and store those in our important package hash/list. */
+            if (rc_resolver_info_is_important (info)) {
+
+                if (info->package
+                    && g_hash_table_lookup (important_hash, info->package) == NULL) {
+                    g_hash_table_insert (important_hash, info->package, info->package);
+                    important_list = g_slist_prepend (important_list, info->package);
+                    did_something = TRUE;
+                }
+
+                
+                pkg_iter = info->package_list;
+                while (pkg_iter != NULL) {
+                    RCPackage *pkg = pkg_iter->data;
+                    
+                    if (g_hash_table_lookup (important_hash, pkg) == NULL) {
+                        g_hash_table_insert (important_hash, pkg, pkg);
+                        important_list = g_slist_prepend (important_list, pkg);
+                        did_something = TRUE;
+                    }
+                    
+                    pkg_iter = pkg_iter->next;
+                }
+
+            } /* if (rc_resolver_info_is_important (info)) ... */
+
+        }
+
+        if (propagation_count > 10000) {
+            g_warning ("Excessive looping in rc_resolver_context_propagate_importance!");
+            did_something = FALSE;
+        }
+
+    } while (did_something);
+
+    g_hash_table_destroy (important_hash);
+    g_slist_free (important_list);
+
+    context->propagated_importance = TRUE;
+}
+
+void
 rc_resolver_context_foreach_info (RCResolverContext *context,
                                   RCPackage *package, int priority,
                                   RCResolverInfoFn fn,
@@ -698,6 +802,9 @@ rc_resolver_context_foreach_info (RCResolverContext *context,
 
     g_return_if_fail (context != NULL);
     g_return_if_fail (fn != NULL);
+
+    /* If necessary, propagate importance */
+    rc_resolver_context_propagate_importance (context);
 
     /* Assemble a list of copies of all of the info objects */
     while (context) {
@@ -742,6 +849,10 @@ void
 spew_cb (RCResolverInfo *info, gpointer user_data)
 {
     char *msg = rc_resolver_info_to_str (info);
+    if (rc_resolver_info_is_error (info))
+        g_print ("[ERROR] ");
+    else if (rc_resolver_info_is_important (info))
+        g_print ("[!!!!!] ");
     g_print ("%s\n", msg);
     g_free (msg);
 }

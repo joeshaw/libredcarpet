@@ -88,6 +88,8 @@ rc_resolver_info_copy (RCResolverInfo *info)
     cpy->priority     = info->priority;
     cpy->package_list = NULL;
     cpy->msg          = g_strdup (info->msg);
+    cpy->is_error     = info->is_error;
+    cpy->is_important = info->is_important;
 
     for (iter = info->package_list; iter != NULL; iter = iter->next) {
         cpy->package_list = g_slist_prepend (cpy->package_list,
@@ -191,6 +193,80 @@ rc_resolver_info_packages_to_str (RCResolverInfo *info,
     }
 
     return str;
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+gboolean
+rc_resolver_info_mentions (RCResolverInfo *info,
+                           RCPackage *package)
+{
+    GSList *iter;
+
+    g_return_val_if_fail (info != NULL, FALSE);
+    g_return_val_if_fail (package != NULL, FALSE);
+
+    if (info->package 
+        && !strcmp (package->spec.name, info->package->spec.name))
+        return TRUE;
+
+    /* Search package_list for any mention of the package. */
+
+    iter = info->package_list;
+    while (iter != NULL) {
+        RCPackage *this_pkg = iter->data;
+        if (this_pkg && !strcmp (package->spec.name, this_pkg->spec.name))
+            return TRUE;
+        iter = iter->next;
+    }
+    
+    return FALSE;
+}
+
+void
+rc_resolver_info_add_related_package (RCResolverInfo *info,
+                                      RCPackage *package)
+{
+    g_return_if_fail (info != NULL);
+    
+    if (package == NULL)
+        return;
+
+    if (! rc_resolver_info_mentions (info, package)) {
+
+        info->package_list = g_slist_prepend (info->package_list,
+                                              package);
+    }
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+gboolean
+rc_resolver_info_is_error (RCResolverInfo *info)
+{
+    g_return_val_if_fail (info != NULL, FALSE);
+    return info->is_error;
+}
+
+void
+rc_resolver_info_flag_as_error (RCResolverInfo *info)
+{
+    g_return_if_fail (info != NULL);
+    info->is_error = TRUE;
+}
+
+gboolean
+rc_resolver_info_is_important (RCResolverInfo *info)
+{
+    g_return_val_if_fail (info != NULL, FALSE);
+    return info->is_error || info->is_important;
+}
+
+void
+rc_resolver_info_flag_as_important (RCResolverInfo *info)
+{
+    g_return_if_fail (info != NULL);
+    info->is_important = TRUE;
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
