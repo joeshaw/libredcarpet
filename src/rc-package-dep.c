@@ -558,3 +558,22 @@ rc_package_dep_verify_relation (RCPackman    *packman,
     
     return FALSE;
 }
+
+static void
+spew_cache_cb (gpointer key, gpointer val, gpointer user_data)
+{
+    GSList *list = val;
+
+    while (list) {
+        RCPackageDep *dep = list->data;
+        fprintf (stderr, "%s ", rc_package_dep_to_string_static (dep));
+        list = list->next;
+    }
+    fprintf (stderr, "\n");
+}
+
+void
+rc_package_dep_spew_cache (void)
+{
+    g_hash_table_foreach (global_deps, spew_cache_cb, NULL);
+}

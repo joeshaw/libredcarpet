@@ -1982,7 +1982,7 @@ uninstall_item_process (RCQueueItem *item,
             gchar *msg;
             msg = g_strconcat (pkg_str, " is locked, and cannot be uninstalled.", NULL);
             rc_resolver_context_add_error_str (context, uninstall->package, msg);
-            return TRUE;
+            goto finished;
         }
 
         rc_queue_item_log_info (item, context);

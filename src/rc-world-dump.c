@@ -244,4 +244,6 @@ rc_world_undump (RCWorld    *world,
         rc_world_undump_from_xml (world, root);
     else
         rc_debug (RC_DEBUG_LEVEL_WARNING, "Undump failed!");
+
+    xmlFreeDoc (doc);
 }

@@ -1,3 +1,14 @@
+2003-04-23  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-package-dep.c (rc_package_dep_spew_cache): Added; this is a
+	debugging function meant to help find memory leaks.
+
+	* rc-world-dump.c (rc_world_undump): Fixed memory leak.
+
+	* rc-channel.c (rc_channel_unref): Fixed memory leak.
+
+	* rc-queue-item.c (uninstall_item_process): Fixed memory leak.
+
 2003-04-22  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-queue-item.c (rc_queue_item_new_install): When comparing

@@ -155,4 +155,7 @@ rc_package_dep_verify_relation (RCPackman    *packman,
                                 RCPackageDep *dep,
                                 RCPackageDep *prov);
 
+void
+rc_package_dep_spew_cache (void);
+
 #endif /* _RC_PACKAGE_DEP_H */

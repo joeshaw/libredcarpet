@@ -100,6 +100,8 @@ rc_channel_unref (RCChannel *channel)
         --channel->refs;
 
         if (channel->refs == 0) {
+            g_free (channel->id);
+
             g_free (channel->name);
             g_free (channel->alias);
             g_free (channel->description);
