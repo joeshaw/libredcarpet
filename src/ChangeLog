@@ -1,3 +1,10 @@
+2003-11-12  Joe Shaw  <joe@ximian.com>
+
+	* distributions.xml: Add support for SLES 8 on ppc.
+
+	* rc-arch.[ch]: Add support for ppc64 and make it superior (but
+	backward compatible) to ppc.
+
 2003-11-11  Joe Shaw  <joe@ximian.com>
 
 	* rc-queue-item.c (install_item_process): When iterating through

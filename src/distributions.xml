@@ -416,6 +416,18 @@
                 </detect>
         </distro>
 
+        <distro>
+                <name>SuSE Linux Enterprise Server</name>
+                <version>8</version>
+                <arch>ppc</arch>
+                <type>rpm</type>
+                <target>sles-8-ppc</target>
+                <status>supported</status>
+                <detect>
+                        <file source="/etc/SuSE-release" substring="SLES-8"/>
+                </detect>
+        </distro>
+
 	<distro>
 		<name>SuSE Linux</name>
 		<version>6.3</version>

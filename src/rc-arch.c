@@ -46,6 +46,7 @@ static RCArchAndName arch_table[] = {
     { "i686",    RC_ARCH_I686 },
     { "athlon",  RC_ARCH_ATHLON },
     { "ppc",     RC_ARCH_PPC },
+    { "ppc64",   RC_ARCH_PPC64 },
     { "sparc",   RC_ARCH_SPARC },
     { "sun4c",   RC_ARCH_SPARC },
     { "sun4d",   RC_ARCH_SPARC },
@@ -77,6 +78,7 @@ static RCArchAndCompatArch compat_table[] = {
     { RC_ARCH_ATHLON,  RC_ARCH_I586 },
     { RC_ARCH_ATHLON,  RC_ARCH_I486 },
     { RC_ARCH_ATHLON,  RC_ARCH_I386 },
+    { RC_ARCH_PPC64,   RC_ARCH_PPC },
     { RC_ARCH_SPARC64, RC_ARCH_SPARC },
     { RC_ARCH_NOARCH,  RC_ARCH_NOARCH },
 };

@@ -37,6 +37,7 @@ typedef enum {
     RC_ARCH_I686,
     RC_ARCH_ATHLON,
     RC_ARCH_PPC,
+    RC_ARCH_PPC64,
     RC_ARCH_SPARC,
     RC_ARCH_SPARC64,
 } RCArch;
