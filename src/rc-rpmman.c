@@ -2373,7 +2373,7 @@ load_fake_syms (RCRpmman *rpmman)
 #endif
     rpmman->rpmExpandNumeric = &rpmExpandNumeric;
 
-#ifdef RC_RPM4
+#if RPM_VERSION >= 40000
 
     rpmman->rpmdbInitIterator = &rpmdbInitIterator;
     rpmman->rpmdbGetIteratorCount = &rpmdbGetIteratorCount;
@@ -2653,6 +2653,7 @@ rc_rpmman_init (RCRpmman *obj)
     RCPackman *packman = RC_PACKMAN (obj);
     gchar *tmp;
     int flags;
+#ifndef STATIC_RPM
     gchar **rpm_version;
     gchar *so_file;
     const char *objects[] = {
@@ -2663,6 +2664,7 @@ rc_rpmman_init (RCRpmman *obj)
         "rc-{rpm_rpmio_rpmdb}.so",
         NULL };
     const char **iter;
+#endif
 
 #ifdef STATIC_RPM
 

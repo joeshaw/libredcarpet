@@ -35,120 +35,117 @@ AC_SUBST(LIBREDCARPET_CFLAGS)
 AC_SUBST(LIBREDCARPET_LIBS)
 
 dnl Check for libz to handle compressed xml files
-AC_CHECK_LIB(z, inflate)
+AC_CHECK_LIB(z, inflate, LIBREDCARPET_LIBS="$LIBREDCARPET_LIBS -lz",
+  AC_ERROR([libredcarpet requires zlib]))
+
+dnl Where should we put our library private files?
+AC_ARG_WITH(private-namespace, 
+  [  --with-private-namespace=NAME  subdir of $libdir and $datadir where private libraries/data will be installed (redcarpet) ],
+  [PRIVATE_NAMESPACE="$withval"], [PRIVATE_NAMESPACE="redcarpet"])
+
+AC_SUBST(PRIVATE_NAMESPACE)
 
 dnl The available backends
 AC_ARG_ENABLE(backend-dpkg, [  --enable-backend-dpkg   include DPKG backend],
   enable_backend_dpkg=yes, enable_backend_dpkg=no)
-AC_ARG_ENABLE(backend-rpm,  [  --enable-backend-rpm     include RPM backend],
+AC_ARG_ENABLE(backend-rpm,  [  --enable-backend-rpm    include RPM backend],
   enable_backend_rpm=yes, enable_backend_rpm=no)
-AC_ARG_ENABLE(backend-rpm3-static,  [  --enable-backend-rpm3-static include static RPM3 backend],
-  enable_backend_rpm3_static=yes, enable_backend_rpm3_static=no)
-AC_ARG_ENABLE(strict-rpm-order,  [  --enable-strict-rpm-order     order packages with rpmlib ordering],
-  strict_rpm_order=yes, strict_rpm_order=no)
-AC_ARG_ENABLE(backend-rpm4-static,  [  --enable-backend-rpm4-static include static RPM4 backend],
-  enable_backend_rpm4_static=yes, enable_backend_rpm4_static=no)
-AC_ARG_WITH(private-namespace, 
-[  --with-private-namespace=NAME   subdir of $libdir and $datadir where private libraries/data will be installed (redcarpet) ],
-[PRIVATE_NAMESPACE="$withval"], [PRIVATE_NAMESPACE="redcarpet"])
 
-AC_SUBST(PRIVATE_NAMESPACE)
-
-if test "x$enable_backend_dpkg" != "xyes" -a "x$enable_backend_rpm" != "xyes" -a "x$enable_backend_rpm3_static" != "xyes" -a "x$enable_backend_rpm4_static";
+if test "x$enable_backend_dpkg" != "xyes" -a "x$enable_backend_rpm" != "xyes";
 then
-  AC_WARN([no backends were specified])
+  AC_MSG_WARN([no backends were specified])
 fi
-
-AC_ARG_WITH(rpm-prefix,
-[  --with-rpm-prefix=DIR   prefix where rpm header files are installed (/usr)], [RPM_PREFIX=$withval], [RPM_PREFIX=/usr])
-
-AC_ARG_WITH(rpm-static-libs,
-[  --with-rpm-extra-libs=], [RPM_STATIC_LIBS=$withval], [RPM_STATIC_LIBS="/usr/lib/librpm.a /usr/lib/libpopt.a /usr/lib/libz.a /usr/lib/libbz2.a /usr/lib/libdb1.a"])
-
-RPM_STATIC_LIBS=`echo $RPM_STATIC_LIBS | sed 's,@, ,g'`
-
-AC_MSG_CHECKING("RPM version")
-
-AC_ARG_ENABLE(rpm-version,
-[  --enable-rpm-version=], [RPM_VERSION=$enableval], [RPM_VERSION=4.0.2])
-
-RPM_MAJOR_VERSION=`echo $RPM_VERSION | cut -d . -f 1`
-RPM_MINOR_VERSION=`echo $RPM_VERSION | cut -d . -f 2`
-RPM_MICRO_VERSION=`echo $RPM_VERSION | cut -d . -f 3`
-
-AC_DEFINE_UNQUOTED(RPM_MAJOR_VERSION, $RPM_MAJOR_VERSION, [major rpm version])
-AC_DEFINE_UNQUOTED(RPM_MINOR_VERSION, $RPM_MINOR_VERSION, [minor rpm version])
-AC_DEFINE_UNQUOTED(RPM_MICRO_VERSION, $RPM_MICRO_VERSION, [micro rpm version])
-
-RPM_VERSION=`printf "%d%02d%02d\n" $RPM_MAJOR_VERSION $RPM_MINOR_VERSION $RPM_MICRO_VERSION`
-
-AC_DEFINE_UNQUOTED(RPM_VERSION, $RPM_VERSION, [rpm version])
-
-AC_MSG_RESULT($RPM_MAJOR_VERSION.$RPM_MINOR_VERSION.$RPM_MICRO_VERSION)
-
-AC_SUBST(RPM_PREFIX)
-AC_SUBST(RPM_STATIC_LIBS)
 
 AM_CONDITIONAL(ENABLE_RPM, false)
 AM_CONDITIONAL(STATIC_RPM, false)
+AM_CONDITIONAL(ENABLE_DPKG, false);
 
-AC_SUBST(RPMLIB_CFLAGS)
+if test "x$enable_backend_rpm" = "xyes";
+then
+  AM_CONDITIONAL(ENABLE_RPM, true)
+  AC_DEFINE(ENABLE_RPM)
 
-dnl Ordering for numbers vs letters
-if test "x$strict_rpm_order" = "xyes"; then
-  AC_DEFINE(STRICT_RPM_ORDER)
-fi
+  dnl I wonder if it's possible to figure out the RPM version automatically
+  AC_MSG_CHECKING("RPM version")
 
-dnl RPM (dynamic)
-if test "x$enable_backend_rpm" = "xyes"; then
+  AC_ARG_ENABLE(rpm-version,
+    [  --enable-rpm-version=], [RPM_VERSION=$enableval], [RPM_VERSION=4.0.2])
+
+  RPM_MAJOR_VERSION=`echo $RPM_VERSION | cut -d . -f 1`
+  RPM_MINOR_VERSION=`echo $RPM_VERSION | cut -d . -f 2`
+  RPM_MICRO_VERSION=`echo $RPM_VERSION | cut -d . -f 3`
+
+  AC_DEFINE_UNQUOTED(RPM_MAJOR_VERSION, $RPM_MAJOR_VERSION)
+  AC_DEFINE_UNQUOTED(RPM_MINOR_VERSION, $RPM_MINOR_VERSION)
+  AC_DEFINE_UNQUOTED(RPM_MICRO_VERSION, $RPM_MICRO_VERSION)
+
+  RPM_VERSION=`printf "%d%02d%02d\n" $RPM_MAJOR_VERSION $RPM_MINOR_VERSION $RPM_MICRO_VERSION`
+
+  AC_DEFINE_UNQUOTED(RPM_VERSION, $RPM_VERSION)
+
+  AC_MSG_RESULT($RPM_MAJOR_VERSION.$RPM_MINOR_VERSION.$RPM_MICRO_VERSION)
+
+  dnl Where is RPM installed?
+  AC_ARG_WITH(rpm-prefix,
+    [  --with-rpm-prefix=DIR   prefix where rpm is installed (/usr)],
+    [RPM_PREFIX=$withval], [RPM_PREFIX=/usr])
+
+  AC_SUBST(RPM_PREFIX)
+
+  dnl Static linking sucks
+  AC_ARG_ENABLE(static-rpm,  [  --enable-static-rpm     link RPM statically],
+    enable_static_rpm=yes, enable_static_rpm=no)
+
+  if test "x$enable_static_rpm" = "xyes";
+  then
+    AM_CONDITIONAL(STATIC_RPM, true)
+    AC_DEFINE(STATIC_RPM)
+
+    AC_ARG_WITH(rpm-static-libs,
+      [  --with-rpm-extra-libs=], [RPM_STATIC_LIBS=$withval],
+      [RPM_STATIC_LIBS="/usr/lib/librpm.a /usr/lib/libpopt.a /usr/lib/libz.a /usr/lib/libbz2.a /usr/lib/libdb1.a"])
+
+    RPM_STATIC_LIBS=`echo $RPM_STATIC_LIBS | sed 's,@, ,g'`
+
+    AC_SUBST(RPM_STATIC_LIBS)
+  fi
+
+  dnl Ordering for numbers vs letters
+  AC_ARG_ENABLE(strict-rpm-order,
+    [  --enable-strict-rpm-order     order packages with rpmlib ordering],
+    strict_rpm_order=yes, strict_rpm_order=no)
+
+  if test "x$strict_rpm_order" = "xyes"; then
+    AC_DEFINE(STRICT_RPM_ORDER)
+  fi
+
+  dnl Find the RPM headers
   save_CPPFLAGS="$CPPFLAGS"
   CPPFLAGS="$CPPFLAGS -I$RPM_PREFIX/include -I$RPM_PREFIX/include/rpm"
 
-  AC_CHECK_HEADERS(rpm/rpmlib.h,, AC_MSG_ERROR(couldn't find rpmlib.h))
+  AC_CHECK_HEADERS(rpm/rpmlib.h rpm/rpmmacro.h,,
+    AC_MSG_ERROR(couldn't find rpm headers))
 
   RPMLIB_CFLAGS="-I$RPM_PREFIX/include -I$RPM_PREFIX/include/rpm"
 
-  AM_CONDITIONAL(ENABLE_RPM, true)
-  AC_DEFINE(ENABLE_RPM)
-
   CPPFLAGS="$save_CPPFLAGS"
-fi
 
-dnl RPM (static)
-if test "x$enable_backend_rpm3_static" = "xyes" -o "x$enable_backend_rpm4_static" = "xyes"; then
-  save_CPPFLAGS="$CPPFLAGS"
-  CPPFLAGS="$CPPFLAGS -I$RPM_PREFIX/include/rpm"
-
-  AC_CHECK_HEADERS(rpm/rpmlib.h,, AC_MSG_ERROR(couldn't find rpmlib.h))
-
-  if test "x$enable_backend_rpm4_static" = "xyes"; then
-    if grep -q ugid.h "$RPM_PREFIX/include/rpm/misc.h"; then
-      if test \! -r /usr/include/rpm/ugid.h ; then
-        AC_MSG_ERROR([broken rpm/misc.h, see README-ugid])
-      fi
+  if grep -q ugid.h "$RPM_PREFIX/include/rpm/misc.h"; then
+    if test \! -r /usr/include/rpm/ugid.h ; then
+      AC_MSG_ERROR([broken rpm/misc.h, see README-ugid])
     fi
-    AC_DEFINE(RC_RPM4)
   fi
 
-  RPMLIB_CFLAGS="-I$RPM_PREFIX/include/rpm"
-
-  AM_CONDITIONAL(ENABLE_RPM, true)
-  AM_CONDITIONAL(STATIC_RPM, true)
-  AC_DEFINE(ENABLE_RPM)
-  AC_DEFINE(STATIC_RPM)
-
-  CPPFLAGS="$save_CPPFLAGS"
+  LIBREDCARPET_CFLAGS="$LIBREDCARPET_CFLAGS $RPMLIB_CFLAGS"
 fi
 
-AM_CONDITIONAL(ENABLE_DPKG, false)
-
-dnl DPKG
 if test "x$enable_backend_dpkg" = "xyes"; then
   AC_ARG_ENABLE(fake-openpty,
     [  --enable-fake-openpty   pretend openpty exists],
     [CFLAGS="$CFLAGS -Dfake_openpty"; disable_openpty=yes])
   if test "x$disable_openpty" != "xyes"; then
-    AC_CHECK_LIB(util, openpty,,
+    AC_CHECK_LIB(util, openpty,
+      LIBREDCARPET_LIBS="$LIBREDCARPET_LIBS -lutil",
       AC_MSG_ERROR(couldn't find openpty in libutil))
   fi
 
@@ -159,19 +156,8 @@ fi
 dnl gtk-doc
 AM_CONDITIONAL(ENABLE_GTK_DOC, test x$enable_gtk_doc = xyes)
 
-save_CPPFLAGS="$CPPFLAGS"
-CPPFLAGS="$CPPFLAGS $XML_CFLAGS"
-save_LDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS $XML_LIBS"
-
-AC_CHECK_LIB(xml, xmlDocDump,,
-  AC_MSG_ERROR(couldn't find libxml))
-
-AC_CHECK_HEADERS(gnome-xml/tree.h,,
-  AC_MSG_ERROR(couldn't find gnome-xml/tree.h))
-
-CPPFLAGS="$save_CPPFLAGS"
-LDFLAGS="$save_LDFLAGS"
+LIBREDCARPET_LIBS=`echo $LIBREDCARPET_LIBS | sed -e 's,^ *,,g' -e 's,  *, ,g' -e 's, *$,,g'`
+LIBREDCARPET_CFLAGS=`echo $LIBREDCARPET_CFLAGS | sed -e 's,^ *,,g' -e 's,  *, ,g' -e 's, *$,,g'`
 
 AC_OUTPUT([
 Makefile
@@ -191,7 +177,8 @@ Configuration:
   Compiler:                     ${CC}
 
   Include DPKG support:         ${enable_backend_dpkg}
-  Include dynamic RPM support:  ${enable_backend_rpm}
-  Include static RPM3 support:  ${enable_backend_rpm3_static}
-  Include static RPM4 support:  ${enable_backend_rpm4_static}
+  Include RPM support:          ${enable_backend_rpm}
+
+  LIBREDCARPET_LIBS:            ${LIBREDCARPET_LIBS}
+  LIBREDCARPET_CFLAGS:          ${LIBREDCARPET_CFLAGS}
 "

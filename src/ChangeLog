@@ -1,3 +1,7 @@
+2002-06-06  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c: no more RC_RPM4, now check #if RPM_VERSION >= 40000
+
 2002-06-05  Ian Peters  <itp@ximian.com>
 
 	* rc-package-spec.c (rc_package_spec_version_to_str): man solaris
