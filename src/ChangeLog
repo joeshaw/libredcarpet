@@ -1,3 +1,19 @@
+2002-05-01  Joe Shaw  <joe@ximian.com>
+
+	* Makefile.am: Add rc-xml.[ch].
+
+	* rc-package-dep.[ch], rc-package-update.[ch], rc-package.[ch]:
+	Move the DOM XML routines out of these files.
+
+	* rc-xml.c: New file, contains the DOM routines above and a new
+	SAX parser for packageinfo files.
+
+	* rc-util.c (rc_string_to_guint32_with_default): Added.
+
+	* rc-world-import.c (rc_world_parse_helix): Conditionalize whether
+	the SAX or DOM parser is used depending on the RC_OLD_XML
+	environment variable.
+
 2002-05-01  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-packman.c (rc_packman_query_file_list): Use rc_package_unref.
@@ -18,6 +34,15 @@
 	(rc_package_free): Removed.
 	(rc_package_slist_unref): Created from rc_package_slist_free.
 
+2002-04-30  Joe Shaw  <joe@ximian.com>
+
+	* rc-distro.c (rc_figure_distro): The semantics of the
+	g_strsplit() function changed in glib2.  Update.
+
+	* *.[ch]: Update libxml header includes, check the xmlNode's types
+	to ensure that we only get XML_NODE_ELEMENTs and not
+	XML_NODE_TEXTs which break the fragile DOM parsing.
+	
 2002-04-30  Jon Trowbridge  <trow@ximian.com>
 
 	* Ported to glib2.

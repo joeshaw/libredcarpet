@@ -71,6 +71,8 @@ libredcarpettmp_a_SOURCES =		\
 	rc-verification-private.h	\
 	rc-channel.h			\
 	rc-channel.c			\
+	rc-xml.c			\
+	rc-xml.h			\
 	rc-util.c			\
 	rc-util.h			\
 	rc-distro.c			\

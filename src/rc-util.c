@@ -442,3 +442,16 @@ rc_close (int fd)
 
     return (TRUE);
 }
+
+guint32
+rc_string_to_guint32_with_default(const char *n, guint32 def)
+{
+    char *ret;
+    guint32 z;
+
+    z = strtoul(n, &ret, 10);
+    if (*ret != '\0')
+        return def;
+    else
+        return z;
+} /* rc_string_to_guint32_with_default */

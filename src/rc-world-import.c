@@ -39,6 +39,7 @@
 #include "rc-debman-general.h"
 #include "rc-debug.h"
 #include "rc-util.h"
+#include "rc-xml.h"
 #include "xml-util.h"
 #include "rc-package-update.h"
 
@@ -163,16 +164,32 @@ rc_world_parse_helix (RCWorld *world, RCChannel *channel, gchar *buf)
 
     g_assert (buf);
 
-    xml_doc = xmlParseMemory (buf, strlen (buf));
-
-    if (!xml_doc) {
-        return 0;
+    if (getenv("RC_OLD_XML")) {
+        xml_doc = xmlParseMemory (buf, strlen (buf));
+        
+        if (!xml_doc) {
+            return 0;
+        }
+        
+        root = xmlDocGetRootElement (xml_doc);
+        count = rc_world_add_packages_from_xml (world, channel, root);
+        
+        xmlFreeDoc (xml_doc);
     }
+    else {
+        RCPackageSAXContext *ctx;
+        RCPackageSList *packages;
 
-    root = xmlDocGetRootElement (xml_doc);
-    count = rc_world_add_packages_from_xml (world, channel, root);
+        ctx = rc_package_sax_context_new(channel);
+        rc_package_sax_context_parse_chunk(ctx, buf, strlen(buf));
+        packages = rc_package_sax_context_done(ctx);
 
-    xmlFreeDoc (xml_doc);
+        count = g_slist_length(packages);
+        
+        rc_world_freeze(world);
+        rc_world_add_packages_from_slist(world, packages);
+        rc_world_thaw(world);
+    }
 
     return count;
 }
