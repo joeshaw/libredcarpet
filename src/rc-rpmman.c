@@ -471,7 +471,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         GString *dep_info = g_string_new ("");
 
         for (count = 0; count < rc; count++) {
-            g_string_sprintfa (dep_info, "\n%s", conflict->byName);
+            g_string_sprintfa (dep_info, "<br>%s", conflict->byName);
             if (conflict->byVersion && conflict->byVersion[0]) {
                 g_string_sprintfa (dep_info, "-%s", conflict->byVersion);
                 if (conflict->byRelease && conflict->byRelease[0]) {
@@ -591,7 +591,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         GString *report = g_string_new ("");
 
         for (count = 0; count < probs->numProblems; count++) {
-            g_string_sprintfa (report, "\n%s", rpmProblemString (*problem));
+            g_string_sprintfa (report, "<br>%s", rpmProblemString (*problem));
             problem++;
         }
 
