@@ -24,6 +24,7 @@
 #include <gmodule.h>
 
 #include <rpm/rpmlib.h>
+#include <rpm/rpmmacro.h>
 
 #include "rc-packman.h"
 #include "rc-rpmman-types.h"
@@ -124,6 +125,7 @@ struct _RCRpmman {
 #endif
     int (*rpmGetRpmlibProvides)(char ***, int **, char ***);
     int (*rpmExpandNumeric)(const char *);
+    int (*rpmDefineMacro)(MacroContext, const char *, int);
 
     /*
      * RPMv3 only functions

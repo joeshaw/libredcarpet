@@ -78,6 +78,7 @@ rc_packman_finalize (GObject *obj)
     RCPackman *packman = RC_PACKMAN (obj);
 
     g_free (packman->priv->reason);
+    g_free (packman->priv->repackage_dir);
 
     g_free (packman->priv);
 
@@ -184,7 +185,9 @@ rc_packman_init (RCPackman *packman)
 
     packman->priv->error = RC_PACKMAN_ERROR_NONE;
     packman->priv->reason = NULL;
+
     packman->priv->extension = NULL;
+    packman->priv->repackage_dir = NULL;
 
     packman->priv->busy = FALSE;
 
@@ -205,8 +208,10 @@ rc_packman_new (void)
 /* Wrappers around all of the virtual functions */
 
 void
-rc_packman_transact (RCPackman *packman, RCPackageSList *install_packages,
-                     RCPackageSList *remove_packages, gboolean perform)
+rc_packman_transact (RCPackman       *packman,
+                     RCPackageSList  *install_packages,
+                     RCPackageSList  *remove_packages,
+                     int              flags)
 {
     RCPackmanClass *klass;
     RCPackageSList *iter;
@@ -280,7 +285,7 @@ rc_packman_transact (RCPackman *packman, RCPackageSList *install_packages,
     packman->priv->busy = TRUE;
 
     klass->rc_packman_real_transact (packman, install_packages,
-                                     remove_packages, perform);
+                                     remove_packages, flags);
 
     packman->priv->busy = FALSE;
 }
@@ -681,4 +686,22 @@ rc_packman_generic_version_compare (RCPackageSpec *spec1,
     }
 
     return (0);
+}
+
+void
+rc_packman_set_repackage_dir (RCPackman   *packman,
+                              const gchar *repackage_dir)
+{
+    g_return_if_fail (packman);
+
+    g_free (packman->priv->repackage_dir);
+    packman->priv->repackage_dir = g_strdup (repackage_dir);
+}
+
+const gchar *
+rc_packman_get_repackage_dir (RCPackman *packman)
+{
+    g_return_val_if_fail (packman, NULL);
+
+    return packman->priv->repackage_dir;
 }

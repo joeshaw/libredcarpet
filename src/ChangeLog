@@ -1,3 +1,29 @@
+2002-10-10  Joe Shaw  <joe@ximian.com>
+
+	* rc-packman.[ch]: Change the "perform" gboolean on
+	rc_packman_transact() to be a bitfield.  Create the
+	RC_TRANSACT_FLAG_NO_ACT and RC_TRANSACT_FLAG_REPACKAGE flags.  Add
+	the RC_PACKMAN_CAP_REPACKAGING capability.
+	(rc_packman_{set|get}_repackage_dir): Added.
+
+	* rc-debman.c (do_unpack, rc_debman_transact): update for the
+	above flags change.
+
+	* rc-package-spec.c (rc_package_spec_slist_find_name): Make the
+	name argument const.
+
+	* rc-rpmman.c (rc_rpmman_transact): Update for the flags change.
+	If we're on RPM 4.0.4 or greater and the REPACKAGE flag is set,
+	define an RPM macro with the repackage directory.  If we can read
+	the signature header in the RPM, proceed as normal.  If we get an
+	RPMRC_BADSIZE return value and we're on 4.0.4, we're probably
+	trying to install a repackaged RPM (which are technically
+	invalid).
+	(load_fake_syms, load_rpm_syms): Get rpmDefineMacro out of the rpm
+	library.
+	(rc_rpmman_init): If we're on RPM 4.0.4, add the REPACKAGING
+	capability.
+
 2002-10-10  Jon Trowbridge  <trow@ximian.com>
 
 	* Makefile.am: Added rc-package-match.c and rc-package-match.h to

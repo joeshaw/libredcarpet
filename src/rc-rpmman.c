@@ -67,6 +67,12 @@
 #define RPMTAG_BASENAMES  1117
 #define RPMTAG_DIRNAMES   1118
 
+/* Repackaging was added in RPM 4.0.3, but broken until 4.0.4. */
+#define RPMTRANS_FLAG_REPACKAGE (1 << 10)
+
+/* RPMRC_* was added in RPM 4.0.3 */
+#define RPMRC_BADSIZE 3
+
 static void rc_rpmman_class_init (RCRpmmanClass *klass);
 static void rc_rpmman_init       (RCRpmman *obj);
 
@@ -656,7 +662,7 @@ render_problems (RCPackman *packman, rpmProblemSet probs)
 
 static void
 rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
-                    RCPackageSList *remove_packages, gboolean perform)
+                    RCPackageSList *remove_packages, int flags)
 {
     rpmTransactionSet transaction;
     int rc;
@@ -668,7 +674,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
 #else
     struct rpmDependencyConflict *conflicts;
 #endif
-    int transaction_flags, problem_filter;
+    int transaction_flags = 0, problem_filter;
     RCRpmman *rpmman = RC_RPMMAN (packman);
     RCPackageSList *real_remove_packages = NULL;
     RCPackageSList *obsoleted = NULL;
@@ -681,10 +687,31 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         close_db = TRUE;
     }
 
-    if (getenv ("RC_JUST_KIDDING") || !perform)
-        transaction_flags = RPMTRANS_FLAG_TEST;
-    else
-        transaction_flags = 0; /* Nothing interesting to do here */
+    if (getenv ("RC_JUST_KIDDING") || flags & RC_TRANSACT_FLAG_NO_ACT)
+        transaction_flags |= RPMTRANS_FLAG_TEST;
+
+    /*
+     * Repackaging was added in RPM 4.0.3, but broken until 4.0.4.
+     *
+     * FIXME: Should we warn or abort or do something if we don't support
+     * repackaging?
+     */
+    if (rpmman->version >= 40004) {
+        if (flags & RC_TRANSACT_FLAG_REPACKAGE) {
+            const char *repackage_dir;
+            char *macro;
+
+            repackage_dir = rc_packman_get_repackage_dir (packman);
+            if (!repackage_dir)
+                repackage_dir = "/tmp";
+
+            macro = g_strconcat ("_repackage_dir ", repackage_dir, NULL);
+            rpmman->rpmDefineMacro (NULL, macro, RMIL_GLOBAL);
+            g_free (macro);
+
+            transaction_flags |= RPMTRANS_FLAG_REPACKAGE;
+        }
+    }
 
     problem_filter =
         /* These need to go away as soon as possible, except many of
@@ -1912,6 +1939,7 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
     guchar buffer[128];
     ssize_t num_bytes;
     RCRpmman *rpmman = RC_RPMMAN (packman);
+    int rc;
 
     if (!package->package_filename) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
@@ -1935,38 +1963,71 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
         goto ERROR;
     }
 
-    if (rpmman->rpmReadSignature (rpm_fd, &signature_header,
-                                  lead.signature_type) ||
-        (signature_header == NULL))
-    {
+    *signature_filename = NULL;
+    *payload_filename = NULL;
+    *md5sum = NULL;
+    *size = 0;
+
+    rc = rpmman->rpmReadSignature (rpm_fd, &signature_header,
+                                   lead.signature_type);
+    if (!rc && signature_header != NULL) {
+        rpmman->headerGetEntry (signature_header, RPMSIGTAG_GPG, NULL,
+                                (void **)&buf, &count);
+
+        if (count > 0) {
+            if ((signature_fd = g_file_open_tmp ("rpm-sig-XXXXXX",
+                                                 signature_filename,
+                                                 NULL)) == -1)
+            {
+                rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                      "failed to create temporary signature "
+                                      "file");
+                goto ERROR;
+            }
+            
+            if (!rc_write (signature_fd, buf, count)) {
+                rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                      "failed to write temporary signature "
+                                      "file");
+                goto ERROR;
+            }
+
+            rc_close (signature_fd);
+            signature_fd = -1;
+        }
+
+        count = 0;
+
+        rpmman->headerGetEntry (signature_header, RPMSIGTAG_MD5, NULL,
+                                (void **)&buf, &count);
+        
+        if (count > 0) {
+            *md5sum = g_new (guint8, count);
+            memcpy (*md5sum, buf, count);
+        }
+
+        count = 0;
+
+        rpmman->headerGetEntry (signature_header, RPMSIGTAG_SIZE, NULL,
+                                (void **)&buf, &count);
+
+        if (count > 0)
+            *size = *((guint32 *)buf);
+        
+        rpmman->headerFree (signature_header);
+        signature_header = NULL;
+    }
+    else if (rpmman->version >= 40004 && rc == RPMRC_BADSIZE) {
+        /*
+         * RPM writes out bad signatures when it repacks, and we get
+         * back RPMRC_BADSIZE.  So if we're on RPM 4.0.4 and we get it,
+         * chances are we're dealing with a repacked package.
+         */
+    }
+    else {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "failed to read RPM signature section");
         goto ERROR;
-    }
-
-    rpmman->headerGetEntry (signature_header, RPMSIGTAG_GPG, NULL,
-                            (void **)&buf, &count);
-
-    if (count > 0) {
-        if ((signature_fd = g_file_open_tmp ("rpm-sig-XXXXXX",
-                                             signature_filename,
-                                             NULL)) == -1)
-        {
-            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                  "failed to create temporary signature file");
-            goto ERROR;
-        }
-
-        if (!rc_write (signature_fd, buf, count)) {
-            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                  "failed to write temporary signature file");
-            goto ERROR;
-        }
-
-        rc_close (signature_fd);
-        signature_fd = -1;
-    } else {
-        *signature_filename = NULL;
     }
 
     if ((payload_fd = g_file_open_tmp ("rpm-data-XXXXXX",
@@ -1993,30 +2054,6 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
 
     rc_rpm_close (rpmman, rpm_fd);
     rpm_fd = NULL;
-
-    count = 0;
-
-    rpmman->headerGetEntry (signature_header, RPMSIGTAG_MD5, NULL,
-                            (void **)&buf, &count);
-
-    if (count > 0) {
-        *md5sum = g_new (guint8, count);
-        memcpy (*md5sum, buf, count);
-    } else
-        *md5sum = NULL;
-
-    count = 0;
-
-    rpmman->headerGetEntry (signature_header, RPMSIGTAG_SIZE, NULL,
-                            (void **)&buf, &count);
-
-    if (count > 0) {
-        *size = *((guint32 *)buf);
-    } else
-        *size = 0;
-
-    rpmman->headerFree (signature_header);
-    signature_header = NULL;
 
     return TRUE;
 
@@ -2503,6 +2540,7 @@ load_fake_syms (RCRpmman *rpmman)
     rpmman->rpmGetRpmlibProvides = &rpmGetRpmlibProvides;
 #endif
     rpmman->rpmExpandNumeric = &rpmExpandNumeric;
+    rpmman->rpmDefineMacro = &rpmDefineMacro;
 
 #if RPM_VERSION >= 40000
 
@@ -2673,6 +2711,11 @@ load_rpm_syms (RCRpmman *rpmman)
 #endif
     if (!g_module_symbol (rpmman->rpm_lib, "rpmExpandNumeric",
                           ((gpointer)&rpmman->rpmExpandNumeric))) {
+        return (FALSE);
+    }
+
+    if (!g_module_symbol (rpmman->rpm_lib, "rpmDefineMacro",
+                          ((gpointer) &rpmman->rpmDefineMacro))) {
         return (FALSE);
     }
 
@@ -2898,6 +2941,7 @@ rc_rpmman_init (RCRpmman *obj)
 {
     RCPackman *packman = RC_PACKMAN (obj);
     gchar *tmp;
+    int capabilities = 0;
 #ifndef STATIC_RPM
     gchar **rpm_version;
     gchar *so_file;
@@ -2984,7 +3028,15 @@ rc_rpmman_init (RCRpmman *obj)
     }
 
     rc_packman_set_file_extension(packman, "rpm");
-    rc_packman_set_capabilities(packman, RC_PACKMAN_CAP_PROVIDE_ALL_VERSIONS|RC_PACKMAN_CAP_LEGACY_EPOCH_HANDLING);
+
+    capabilities = RC_PACKMAN_CAP_PROVIDE_ALL_VERSIONS |
+        RC_PACKMAN_CAP_LEGACY_EPOCH_HANDLING;
+
+    /* Repackaging was added in RPM 4.0.3, but broken until 4.0.4 */
+    if (obj->version >= 40004)
+        capabilities |= RC_PACKMAN_CAP_REPACKAGING;
+
+    rc_packman_set_capabilities(packman, capabilities);
 
     obj->db_status = RC_RPMMAN_DB_NONE;
 

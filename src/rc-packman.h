@@ -59,10 +59,14 @@ typedef enum {
 #define RC_PACKMAN_CAP_PROVIDE_ALL_VERSIONS  (1 << 0)
 #define RC_PACKMAN_CAP_SELF_CONFLICT         (1 << 1)
 #define RC_PACKMAN_CAP_LEGACY_EPOCH_HANDLING (1 << 2)
+#define RC_PACKMAN_CAP_REPACKAGING           (1 << 3)
+
+#define RC_TRANSACT_FLAG_NONE      (0)
+#define RC_TRANSACT_FLAG_NO_ACT    (1 << 0)
+#define RC_TRANSACT_FLAG_REPACKAGE (1 << 1)
 
 #include "rc-package.h"
 #include "rc-verification.h"
-
 
 struct _RCPackman {
     GObject parent;
@@ -88,7 +92,7 @@ struct _RCPackmanClass {
     void (*rc_packman_real_transact)(RCPackman *packman,
                                      RCPackageSList *install_packages,
                                      RCPackageSList *remove_packages,
-                                     gboolean perform);
+                                     int flags);
 
     RCPackageSList *(*rc_packman_real_query)(RCPackman *packman,
                                              const char *name);
@@ -130,7 +134,7 @@ RCPackman *rc_packman_new (void);
 void rc_packman_transact (RCPackman *packman,
                           RCPackageSList *install_packages,
                           RCPackageSList *remove_packages,
-                          gboolean perform);
+                          int flags);
 
 RCPackageSList *rc_packman_query (RCPackman *packman, const char *name);
 
@@ -173,5 +177,10 @@ guint32 rc_packman_get_capabilities(RCPackman *packman);
 guint rc_packman_get_error (RCPackman *packman);
 
 const gchar *rc_packman_get_reason (RCPackman *packman);
+
+void rc_packman_set_repackage_dir (RCPackman *packman,
+                                   const gchar *repackage_dir);
+
+const gchar *rc_packman_get_repackage_dir (RCPackman *packman);
 
 #endif /* _RC_PACKMAN_H */

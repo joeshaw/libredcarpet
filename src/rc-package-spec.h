@@ -57,7 +57,7 @@ gchar *rc_package_spec_version_to_str (RCPackageSpec *spec);
 const gchar *rc_package_spec_to_str_static (RCPackageSpec *spec);
 const gchar *rc_package_spec_version_to_str_static (RCPackageSpec *spec);
 
-gpointer rc_package_spec_slist_find_name (GSList *specs, gchar *name);
+gpointer rc_package_spec_slist_find_name (GSList *specs, const gchar *name);
 
 gint rc_package_spec_equal (gconstpointer ptra, gconstpointer ptrb);
 

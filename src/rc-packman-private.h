@@ -37,6 +37,8 @@ struct _RCPackmanPrivate {
     guint32 capabilities;
     
     gint lock_count;
+
+    gchar *repackage_dir;
 };
 
 void rc_packman_set_file_extension (RCPackman *packman,

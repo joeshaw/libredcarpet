@@ -212,7 +212,7 @@ spec_find_by_name (gconstpointer a, gconstpointer b)
 }
 
 gpointer
-rc_package_spec_slist_find_name (GSList *specs, gchar *name)
+rc_package_spec_slist_find_name (GSList *specs, const gchar *name)
 {
     GSList *lnk;
 
