@@ -1,5 +1,9 @@
 2001-04-04  Ian Peters  <itp@ximian.com>
 
+	* Makefile.am: whoops, fix the rpmlead and signature references
+
+2001-04-04  Ian Peters  <itp@ximian.com>
+
 	* rc-rpmman.c: the rpmlead and signature includes were the same
 	for rpm 3.0.x and 4.0.x, so just include the one copy regardless
 	of rpm version

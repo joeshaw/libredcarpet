@@ -6,10 +6,8 @@ rpm_sources =			\
 	rc-rpmman.c		\
 	rc-rpmman.h		\
 	rc-rpmman-types.h	\
-	rpmlead-3-0-x.h		\
-	signature-3-0-x.h	\
-	rpmlead-4-0-x.h		\
-	signature-4-0-x.h
+	rpm-rpmlead.h		\
+	rpm-signature.h		
 
 dpkg_sources =			\
 	rc-debman.c		\
