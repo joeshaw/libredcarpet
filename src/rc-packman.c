@@ -176,6 +176,7 @@ rc_packman_class_init (RCPackmanClass *klass)
     klass->rc_packman_real_lock = NULL;
     klass->rc_packman_real_unlock = NULL;
     klass->rc_packman_real_is_database_changed = NULL;
+    klass->rc_packman_real_file_list = NULL;
 }
 
 static void
@@ -535,6 +536,22 @@ rc_packman_is_database_changed (RCPackman *packman)
     g_assert (klass->rc_packman_real_is_database_changed);
 
     return (klass->rc_packman_real_is_database_changed (packman));
+}
+
+RCPackageFileSList *
+rc_packman_file_list (RCPackman *packman, RCPackage *package)
+{
+    RCPackmanClass *klass;
+
+    g_return_val_if_fail (packman, NULL);
+
+    rc_packman_clear_error (packman);
+
+    klass = RC_PACKMAN_GET_CLASS (packman);
+
+    g_assert (klass->rc_packman_real_file_list);
+
+    return klass->rc_packman_real_file_list (packman, package);
 }
 
 void

@@ -31,6 +31,7 @@
 
 #include <sys/stat.h>
 
+#include "rc-debug.h"
 #include "rc-packman-private.h"
 #include "rc-rpmman.h"
 #include "rc-rpmman-types.h"
@@ -418,6 +419,156 @@ open_database (RCRpmman *rpmman, gboolean write)
     return FALSE;
 }
 
+static gchar *
+rc_package_to_rpm_name (RCPackage *package)
+{
+    gchar *ret = NULL;
+
+    g_assert (package);
+    g_assert (package->spec.nameq);
+
+    ret = g_strdup (g_quark_to_string (package->spec.nameq));
+
+    if (package->spec.version) {
+        gchar *tmp = g_strconcat (ret, "-", package->spec.version, NULL);
+        g_free (ret);
+        ret = tmp;
+
+        if (package->spec.release) {
+            tmp = g_strconcat (ret, "-", package->spec.release, NULL);
+            g_free (ret);
+            ret = tmp;
+        }
+    }
+
+    return (ret);
+} /* rc_package_to_rpm_name */
+
+typedef struct {
+    rc_rpmdbMatchIterator mi; /* Only for RPM v4 */
+    rc_dbiIndexSet matches;   /* Only for RPM v3 */
+
+    GSList *headers;
+} HeaderInfo;
+
+static void
+header_free_cb (gpointer data, gpointer user_data)
+{
+    Header h = data;
+    RCRpmman *rpmman = RC_RPMMAN (user_data);
+
+    rpmman->headerFree (h);
+}
+
+static void
+rc_rpmman_header_info_free (RCRpmman *rpmman, HeaderInfo *hi)
+{
+    /*
+     * rpmdbFreeIterator() frees the headers for us, so we only want to
+     * free when it's not called.
+     */
+    if (rpmman->major_version == 4)
+        rpmman->rpmdbFreeIterator (hi->mi);
+    else {
+        rpmman->dbiFreeIndexRecord (hi->matches);
+        g_slist_foreach (hi->headers, header_free_cb, rpmman);
+    }
+
+    g_slist_free (hi->headers);
+
+    g_free (hi);
+}
+
+static HeaderInfo *
+rc_rpmman_find_system_headers_v4 (RCRpmman *rpmman, const char *name)
+{
+    rc_rpmdbMatchIterator mi = NULL;
+    Header header;
+    HeaderInfo *hi;
+
+    if (rpmman->version >= 40100) {
+        g_return_val_if_fail (rpmman->rpmts != NULL, NULL);
+        mi = rpmman->rpmtsInitIterator (rpmman->rpmts, RPMDBI_LABEL, name, 0);
+    } else {
+        g_return_val_if_fail (rpmman->db != NULL, NULL);
+        mi = rpmman->rpmdbInitIterator (rpmman->db, RPMDBI_LABEL, name, 0);
+    }
+
+    if (!mi)
+        return NULL;
+
+    hi = g_new0 (HeaderInfo, 1);
+    hi->mi = mi;
+
+    while ((header = rpmman->rpmdbNextIterator (mi)))
+        hi->headers = g_slist_prepend (hi->headers, header);
+
+    /*
+     * We can't free the match iterator here because it'll free the
+     * headers and we need those.  That's why we keep state around
+     * and defer the freeing until after we're done with the headers
+     */
+
+    return hi;
+}
+
+static HeaderInfo *
+rc_rpmman_find_system_headers_v3 (RCRpmman *rpmman, const char *name)
+{
+    rc_dbiIndexSet matches;
+    guint i;
+    HeaderInfo *hi;
+
+    g_return_val_if_fail (rpmman->db != NULL, NULL);
+
+    switch (rpmman->rpmdbFindByLabel (rpmman->db, name, &matches)) {
+    case -1:
+        rc_packman_set_error (RC_PACKMAN (rpmman), RC_PACKMAN_ERROR_ABORT,
+                              "unable to initialize database search");
+
+        return NULL;
+
+    case 1:
+        return NULL;
+
+    default:
+        break;
+    }
+
+    hi = g_new0 (HeaderInfo, 1);
+    hi->matches = matches;
+
+    for (i = 0; i < matches.count; i++) {
+        Header header;
+
+        if (!(header = rpmman->rpmdbGetRecord (rpmman->db,
+                                               matches.recs[i].recOffset))) {
+            rc_packman_set_error (RC_PACKMAN (rpmman), RC_PACKMAN_ERROR_ABORT,
+                                  "unable to fetch RPM header from database");
+
+            return NULL;
+        }
+
+        hi->headers = g_slist_prepend (hi->headers, header);
+    }
+
+    return hi;
+}
+
+/*
+ * Make sure you've called open_database() before calling this or you'll
+ * get back a NULL list of headers inexplicably.
+ */
+static HeaderInfo *
+rc_rpmman_find_system_headers (RCRpmman *rpmman, const char *name)
+{
+    if (rpmman->major_version == 4)
+        return rc_rpmman_find_system_headers_v4 (rpmman, name);
+    else
+        return rc_rpmman_find_system_headers_v3 (rpmman, name);
+}
+
+
 typedef struct _InstallState InstallState;
 
 struct _InstallState {
@@ -657,31 +808,6 @@ transaction_add_install_packages (RCPackman *packman,
     return (count);
 } /* transaction_add_install_pkgs */
 
-static gchar *
-rc_package_to_rpm_name (RCPackage *package)
-{
-    gchar *ret = NULL;
-
-    g_assert (package);
-    g_assert (package->spec.nameq);
-
-    ret = g_strdup (g_quark_to_string (package->spec.nameq));
-
-    if (package->spec.version) {
-        gchar *tmp = g_strconcat (ret, "-", package->spec.version, NULL);
-        g_free (ret);
-        ret = tmp;
-
-        if (package->spec.release) {
-            tmp = g_strconcat (ret, "-", package->spec.release, NULL);
-            g_free (ret);
-            ret = tmp;
-        }
-    }
-
-    return (ret);
-} /* rc_package_to_rpm_name */
-
 static guint
 transaction_add_remove_packages_v4 (RCPackman *packman,
                                     rpmTransactionSet transaction,
@@ -694,35 +820,25 @@ transaction_add_remove_packages_v4 (RCPackman *packman,
     for (iter = remove_packages; iter; iter = iter->next) {
         RCPackage *package = (RCPackage *)(iter->data);
         gchar *package_name = rc_package_to_rpm_name (package);
-        rc_rpmdbMatchIterator mi;
-        Header header;
-        unsigned int offset;
+        HeaderInfo *hi;
+        GSList *hiter;
 
-        if (rpmman->version >= 40100) {
-            mi = rpmman->rpmtsInitIterator (rpmman->rpmts, RPMDBI_LABEL,
-                                            package_name, 0);
-        }
-        else {
-            mi = rpmman->rpmdbInitIterator (rpmman->db, RPMDBI_LABEL,
-                                            package_name, 0);
-        }
+        hi = rc_rpmman_find_system_headers (rpmman, package_name);
 
-        if (rpmman->rpmdbGetIteratorCount (mi) <= 0) {
-            rc_packman_set_error
-                (packman, RC_PACKMAN_ERROR_ABORT,
-                 "package %s does not appear to be installed (%d)",
-                 package_name,
-                 RC_RPMMAN (packman)->rpmdbGetIteratorCount (mi));
-
-            rpmman->rpmdbFreeIterator (mi);
-
+        if (!hi || !hi->headers) {
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "package %s does not appear to be installed",
+                                  package_name);
+            if (hi)
+                rc_rpmman_header_info_free (rpmman, hi);
             g_free (package_name);
 
-            return (0);
+            return 0;
         }
 
-        while ((header = rpmman->rpmdbNextIterator (mi))) {
-            offset = rpmman->rpmdbGetIteratorOffset (mi);
+        for (hiter = hi->headers; hiter; hiter = hiter->next) {
+            Header header = hiter->data;
+            unsigned int offset = rpmman->rpmdbGetIteratorOffset (hi->mi);
 
             if (rpmman->version >= 40100)
                 rpmman->rpmtsAddEraseElement (rpmman->rpmts, header, offset);
@@ -732,7 +848,8 @@ transaction_add_remove_packages_v4 (RCPackman *packman,
             count++;
         }
 
-        rpmman->rpmdbFreeIterator (mi);
+        if (hi)
+            rc_rpmman_header_info_free (rpmman, hi);
 
         g_free (package_name);
     }
@@ -745,7 +862,6 @@ transaction_add_remove_packages_v3 (RCPackman *packman,
                                     rpmTransactionSet transaction,
                                     RCPackageSList *remove_packages)
 {
-    int rc;
     RCPackageSList *iter;
     int i;
     guint count = 0;
@@ -754,58 +870,41 @@ transaction_add_remove_packages_v3 (RCPackman *packman,
     for (iter = remove_packages; iter; iter = iter->next) {
         RCPackage *package = (RCPackage *)(iter->data);
         gchar *package_name = rc_package_to_rpm_name (package);
-        rc_dbiIndexSet matches;
+        HeaderInfo *hi;
 
-        rc = rpmman->rpmdbFindByLabel (rpmman->db, package_name,
-                                       &matches);
+        hi = rc_rpmman_find_system_headers (rpmman, package_name);
 
-        switch (rc) {
-        case 0:
-            for (i = 0; i < rpmman->dbiIndexSetCount (matches); i++) {
-                unsigned int offset = rpmman->dbiIndexRecordOffset (
-                    matches, i);
-
-                if (offset) {
-                    rpmman->rpmtransRemovePackage (transaction, offset);
-                    count++;
-                } else {
-                    rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                          "unable to locate %s in database",
-                                          package_name);
-
-                    g_free (package_name);
-
-                    return (0);
-                }
-            }
-
-            rpmman->dbiFreeIndexRecord (matches);
-
-            g_free (package_name);
-
-            break;
-
-        case 1:
+        if (!hi || !hi->headers) {
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "package %s does not appear to be installed",
                                   package_name);
-
+            if (hi)
+                rc_rpmman_header_info_free (rpmman, hi);
             g_free (package_name);
 
-            return (0);
-
-/*
-        case 2:
-*/
-        default:
-            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                  "unspecified error removing %s",
-                                  package_name);
-
-            g_free (package_name);
-
-            return (0);
+            return 0;
         }
+
+        for (i = 0; i < rpmman->dbiIndexSetCount (hi->matches); i++) {
+            unsigned int offset = rpmman->dbiIndexRecordOffset (hi->matches, i);
+
+            if (offset) {
+                rpmman->rpmtransRemovePackage (transaction, offset);
+                count++;
+            } else {
+                rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                      "unable to locate %s in database",
+                                      package_name);
+
+                rc_rpmman_header_info_free (rpmman, hi);
+                g_free (package_name);
+
+                return 0;
+            }
+        }
+
+        rc_rpmman_header_info_free (rpmman, hi);
+        g_free (package_name);
     }
 
     return (count);
@@ -1877,99 +1976,12 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
 } /* rc_rpmman_depends_fill */
 
 static RCPackageSList *
-rc_rpmman_query_v4 (RCPackman *packman, const char *name)
-{
-    rc_rpmdbMatchIterator mi = NULL;
-    Header header;
-    RCPackageSList *ret = NULL;
-    RCRpmman *rpmman = RC_RPMMAN (packman);
-
-    if (rpmman->version >= 40100)
-        mi = rpmman->rpmtsInitIterator (rpmman->rpmts, RPMDBI_LABEL, name, 0);
-    else
-        mi = rpmman->rpmdbInitIterator (rpmman->db, RPMDBI_LABEL, name, 0);
-
-    if (!mi) {
-        return NULL;
-    }
-
-    while ((header = rpmman->rpmdbNextIterator (mi))) {
-        RCPackage *package = rc_package_new ();
-
-        rc_rpmman_read_header (rpmman, header, package);
-
-        package->installed = TRUE;
-
-        ret = g_slist_prepend (ret, package);
-    }
-
-    rpmman->rpmdbFreeIterator (mi);
-
-    return ret;
-}
-
-static RCPackageSList *
-rc_rpmman_query_v3 (RCPackman *packman, const char *name)
-{
-    rc_dbiIndexSet matches;
-    guint i;
-    RCRpmman *rpmman = RC_RPMMAN (packman);
-    RCPackageSList *ret = NULL;
-
-    switch (rpmman->rpmdbFindPackage (rpmman->db, name, &matches)) {
-    case -1:
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              "unable to initialize database search");
-
-        goto ERROR;
-
-    case 1:
-        return NULL;
-
-    default:
-        break;
-    }
-
-    for (i = 0; i < matches.count; i++) {
-        Header header;
-        RCPackage *package;
-
-        if (!(header = rpmman->rpmdbGetRecord (rpmman->db,
-                                               matches.recs[i].recOffset))) {
-            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                  "unable to fetch RPM header from database");
-
-            goto ERROR;
-        }
-
-        package = rc_package_new ();
-        rc_rpmman_read_header (rpmman, header, package);
-        package->installed = TRUE;
-
-        ret = g_slist_prepend (ret, package);
-
-        rpmman->headerFree (header);
-    }
-
-    rpmman->dbiFreeIndexRecord (matches);
-
-    return ret;
-
-  ERROR:
-    rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                          "System query failed");
-
-    if (ret)
-        rc_package_slist_unref (ret);
-
-    return NULL;
-} /* rc_packman_query */
-
-static RCPackageSList *
 rc_rpmman_query (RCPackman *packman, const char *name)
 {
-    RCPackageSList *ret;
+    RCPackageSList *ret = NULL;
     gboolean close_db = FALSE;
+    HeaderInfo *hi;
+    GSList *iter;
 
     if ((RC_RPMMAN (packman))->db_status < RC_RPMMAN_DB_RDONLY) {
         if (!open_database (RC_RPMMAN (packman), FALSE)) {
@@ -1980,10 +1992,20 @@ rc_rpmman_query (RCPackman *packman, const char *name)
         close_db = TRUE;
     }
 
-    if (RC_RPMMAN (packman)->major_version == 4) {
-        ret = rc_rpmman_query_v4 (packman, name);
-    } else {
-        ret = rc_rpmman_query_v3 (packman, name);
+    hi = rc_rpmman_find_system_headers (RC_RPMMAN (packman), name);
+    if (hi) {
+        for (iter = hi->headers; iter; iter = iter->next) {
+            Header header = iter->data;
+            RCPackage *package;
+            
+            package = rc_package_new ();
+            rc_rpmman_read_header (RC_RPMMAN (packman), header, package);
+            package->installed = TRUE;
+
+            ret = g_slist_prepend (ret, package);
+        }
+
+        rc_rpmman_header_info_free (RC_RPMMAN (packman), hi);
     }
 
     if (close_db)
@@ -2906,6 +2928,86 @@ rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
     return ret;
 }
 
+static RCPackageFileSList *
+rc_rpmman_file_list (RCPackman *packman, RCPackage *package)
+{
+    RCRpmman *rpmman = RC_RPMMAN (packman);
+    gboolean close_db = FALSE;
+    char *package_name;
+    HeaderInfo *hi = NULL;
+    Header header;
+    RCPackageFileSList *file_list = NULL;
+    RCPackageFile *file;
+    int count, i;
+    char **basenames = NULL;
+    char **dirnames = NULL;
+    int *dirindexes = NULL;
+
+    g_return_val_if_fail (package, NULL);
+
+    if (!package->installed) {
+        g_warning ("not yet implemented");
+        return NULL;
+    }
+
+    if ((RC_RPMMAN (packman))->db_status < RC_RPMMAN_DB_RDONLY) {
+        if (!open_database (RC_RPMMAN (packman), FALSE)) {
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "unable to query packages");
+            return NULL;
+        }
+        close_db = TRUE;
+    }
+
+    package_name = rc_package_to_rpm_name (package);
+    hi = rc_rpmman_find_system_headers (rpmman, package_name);
+
+    if (!hi)
+        goto cleanup;
+    
+    if (g_slist_length (hi->headers) > 1) {
+        rc_debug (RC_DEBUG_LEVEL_WARNING, "Package '%s' matches %d entries",
+                  package_name, g_slist_length (hi->headers));
+    }
+
+    header = (Header) hi->headers->data;
+
+    if (!rpmman->headerGetEntry (header, RPMTAG_BASENAMES, NULL,
+                                 (void **) &basenames, &count)) {
+        rc_debug (RC_DEBUG_LEVEL_WARNING, "Package '%s' contains no files",
+                  g_quark_to_string (package->spec.nameq));
+        goto cleanup;
+    }
+
+    rpmman->headerGetEntry (header, RPMTAG_DIRNAMES, NULL,
+                            (void **) &dirnames, NULL);
+    rpmman->headerGetEntry (header, RPMTAG_DIRINDEXES, NULL,
+                            (void **) &dirindexes, NULL);
+
+    for (i = 0; i < count; i++) {
+        file = rc_package_file_new ();
+
+        file->filename = g_strdup_printf ("%s%s", dirnames[dirindexes[i]],
+                                          basenames[i]);
+
+        file_list = g_slist_prepend (file_list, file);
+    }
+
+    file_list = g_slist_reverse (file_list);
+
+cleanup:
+    g_free (package_name);
+
+    if (hi)
+        rc_rpmman_header_info_free (rpmman, hi);
+
+    if (close_db)
+        close_database (rpmman);
+
+    return file_list;
+}
+    
+
 gboolean
 rc_rpmman_lock (RCPackman *packman)
 {
@@ -2965,6 +3067,7 @@ rc_rpmman_class_init (RCRpmmanClass *klass)
     packman_class->rc_packman_real_unlock = rc_rpmman_unlock;
     packman_class->rc_packman_real_is_database_changed =
         rc_rpmman_is_database_changed;
+    packman_class->rc_packman_real_file_list = rc_rpmman_file_list;
 } /* rc_rpmman_class_init */
 
 #ifdef STATIC_RPM

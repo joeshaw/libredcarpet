@@ -3260,6 +3260,123 @@ rc_debman_find_file (RCPackman *packman, const gchar *filename)
     return (NULL);
 }
 
+typedef struct {
+    GMainLoop *loop;
+
+    guint read_line_id;
+    guint read_done_id;
+
+    RCPackageFileSList *files;
+} DebmanFileListInfo;
+
+static void
+child_setup_cb (gpointer user_data)
+{
+    putenv ("PAGER=cat");
+    i18n_fixer ();
+}
+
+static void
+file_list_read_line_cb (RCLineBuf *line_buf,
+                        char      *status_line,
+                        gpointer   user_data)
+{
+    DebmanFileListInfo *file_list_info = (DebmanFileListInfo *) user_data;
+    RCPackageFile *file;
+
+    if (status_line[0] == '\0') {
+        /* Empty line */
+        return;
+    }
+
+    file = rc_package_file_new ();
+    file->filename = g_strdup (status_line);
+
+    file_list_info->files = g_slist_prepend (file_list_info->files, file);
+}
+
+static void
+file_list_read_done_cb (RCLineBuf       *line_buf,
+                        RCLineBufStatus  status,
+                        gpointer         user_data)
+{
+    DebmanFileListInfo *file_list_info = (DebmanFileListInfo *) user_data;
+
+    g_signal_handler_disconnect (line_buf, file_list_info->read_line_id);
+    g_signal_handler_disconnect (line_buf, file_list_info->read_done_id);
+
+    file_list_info->files = g_slist_reverse (file_list_info->files);
+
+    g_main_quit (file_list_info->loop);
+}
+
+static RCPackageFileSList *
+rc_debman_file_list (RCPackman *packman, RCPackage *package)
+{
+    RCDebman *debman = RC_DEBMAN (packman);
+    char *dpkg_argv[] = { "/usr/bin/dpkg", "-L", NULL, NULL };
+    GError *error = NULL;
+    int child_pid, stdout_fd;
+    RCLineBuf *line_buf;
+    DebmanFileListInfo file_list_info;
+    int status;
+
+    if (!debman->priv->hash_valid)
+        rc_debman_query_all_real (packman);
+
+    if (!package->installed) {
+        g_warning ("not yet implemented");
+        return NULL;
+    }
+
+    dpkg_argv[2] = (char *) g_quark_to_string (package->spec.nameq);
+
+    if (!g_spawn_async_with_pipes (
+            NULL, dpkg_argv, NULL, 0, child_setup_cb, NULL,
+            &child_pid, NULL, &stdout_fd, NULL, &error))
+    {
+        rc_debug (RC_DEBUG_LEVEL_ERROR,
+                  "g_spawn failed: %s", error->message);
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "g_spawn failed: %s", error->message);
+        return NULL;
+    }
+        
+    line_buf = rc_line_buf_new ();
+    rc_line_buf_set_fd (line_buf, stdout_fd);
+
+    file_list_info.loop = g_main_loop_new (NULL, FALSE);
+    file_list_info.read_line_id =
+        g_signal_connect (line_buf, "read_line",
+                          G_CALLBACK (file_list_read_line_cb),
+                          &file_list_info);
+    file_list_info.read_done_id =
+        g_signal_connect (line_buf, "read_done",
+                          G_CALLBACK (file_list_read_done_cb),
+                          &file_list_info);
+
+    file_list_info.files = NULL;
+
+    g_main_loop_run (file_list_info.loop);
+    g_main_loop_unref (file_list_info.loop);
+    g_object_unref (line_buf);
+
+#if 0
+    waitpid (child_pid, &status, 0);
+
+    if (!(WIFEXITED (status)) || WEXITSTATUS (status)) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
+                              "dpkg exited abnormally");
+        rc_debug (RC_DEBUG_LEVEL_ERROR, G_GNUC_PRETTY_FUNCTION \
+                  ": dpkg exited abnormally");
+
+        return NULL;
+    }
+#endif
+
+    return file_list_info.files;
+}
+
 static gboolean
 rc_debman_lock (RCPackman *packman)
 {
@@ -3314,6 +3431,7 @@ rc_debman_class_init (RCDebmanClass *klass)
     packman_class->rc_packman_real_unlock = rc_debman_unlock;
     packman_class->rc_packman_real_is_database_changed =
         rc_debman_is_database_changed;
+    packman_class->rc_packman_real_file_list = rc_debman_file_list;
 
     putenv ("DEBIAN_FRONTEND=noninteractive");
 }

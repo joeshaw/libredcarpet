@@ -1,3 +1,32 @@
+2003-04-25  Joe Shaw  <joe@ximian.com>
+
+	* Makefile.am: Add rc-package-file.[ch].
+
+	* rc-package-file.[ch]: Added.  Represents a file in an RCPackage.
+	
+	* rc-packman.c: Add rc_packman_file_list(), which lists the files
+	in a package.  Added rc_packman_real_file_list virtual method.
+
+	* rc-debman.c (rc_debman_file_list): Added.  g_spawns dpkg -L and
+	attaches an RCLineBuf to it to get the list of files in a package.
+
+	* rc-rpmman.c (rc_rpmman_find_system_headers): Took a bunch of
+	similar code from a few functions within rc-rpmman.c and made this
+	function.  Given a package name (with optional version and
+	release) it will return a list of headers from the system database
+	which match it.
+	(transaction_add_remove_packages_v4): Use
+	rc_rpmman_find_system_headers()
+	(transaction_add_remove_packages_v3): Ditto.
+	(rc_rpmman_query_v4, rc_rpmman_query_v3): Removed, no longer
+	needed.
+	(rc_rpmman_query): We don't need to call version-specific query
+	functions anymore, this is largely just a wrapper around
+	rc_rpmman_find_system_headers() (which has its own
+	version-specific functions).
+	(rc_rpmman_file_list): Added.  Returns a list of files within a
+	package.
+
 2003-04-23  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-resolver-queue.c (rc_resolver_queue_add_package_to_verify):

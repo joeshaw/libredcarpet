@@ -96,6 +96,7 @@ typedef enum {
 #define RC_TRANSACT_FLAG_REPACKAGE (1 << 1)
 
 #include "rc-package.h"
+#include "rc-package-file.h"
 #include "rc-verification.h"
 
 struct _RCPackman {
@@ -155,6 +156,9 @@ struct _RCPackmanClass {
     void (*rc_packman_real_unlock)(RCPackman *packman);
 
     gboolean (*rc_packman_real_is_database_changed)(RCPackman *packman);
+
+    RCPackageFileSList *(*rc_packman_real_file_list)(RCPackman *packman,
+                                                     RCPackage *package);
 };
 
 GType rc_packman_get_type (void);
@@ -199,6 +203,9 @@ gboolean rc_packman_lock (RCPackman *packman);
 void rc_packman_unlock (RCPackman *packman);
 
 gboolean rc_packman_is_database_changed (RCPackman *packman);
+
+RCPackageFileSList *rc_packman_file_list (RCPackman *packman,
+                                          RCPackage *package);
 
 const gchar *rc_packman_get_file_extension(RCPackman *packman);
 
