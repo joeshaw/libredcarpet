@@ -284,6 +284,10 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
             if (buf[count] == '\n') {
                 buf[count] = '\0';
 
+                if (buf[count - 1] == '\r') {
+                    buf[count - 1] = '\0';
+                }
+
                 line_buf->priv->buf =
                     g_string_append (line_buf->priv->buf, buf + base);
 

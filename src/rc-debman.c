@@ -628,7 +628,7 @@ debman_poll_write_cb (gpointer data)
 
     line = hack_info->buf->str;
     line = g_strstrip (line);
-    line = g_strdelimit (line, "\r\t", ' '); /* Stupid odd strings produced */
+    line = g_strdelimit (line, "\t", ' '); /* Tabs is bad, mmkay? */
 
     label = gtk_label_new (line);
 

@@ -1,5 +1,14 @@
 2001-01-16  Ian Peters  <itp@helixcode.com>
 
+	* rc-debman.c (debman_poll_write_cb): only need to handle \t, not
+	\r here anymore
+
+	* rc-line-buf.c (rc_line_buf_cb): handle the \r\n case -- when we
+	hit a \n, backtrack a step and see if we should chop off the \r
+	too
+
+2001-01-16  Ian Peters  <itp@helixcode.com>
+
 	* rc-util.c, rc-util.h: Added rc_close
 
 	* rc-line-buf.c, rc-line-buf.h, rc-line-buf-private.h: Added
