@@ -3165,13 +3165,6 @@ rc_rpmman_patch_parents (RCPackman *packman, RCPackage *package)
 
     parent_list = read_patch_parents (rpmman, header);
 
-    {
-        GSList *iter;;
-
-        for (iter = parent_list; iter; iter = iter->next)
-            printf ("%s\n",rc_package_spec_to_str_static (RC_PACKAGE_SPEC (iter->data)));
-    }
-
  cleanup:
     if (package_name)
         g_free (package_name);

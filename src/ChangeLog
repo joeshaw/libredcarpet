@@ -1,3 +1,7 @@
+2005-02-03  Peter Teichman  <peter@ximian.com>
+
+	* rc-rpmman.c (rc_rpmman_patch_parents): remove debugging printf
+
 2005-01-31  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-package-spec.c (rc_package_spec_equal): Test archs too.
