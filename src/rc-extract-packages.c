@@ -408,7 +408,7 @@ rc_extract_yum_package (const guint8 *data, int len,
     p = rc_package_new ();
 
     rc_rpmman_read_header (rpmman, h, p);
-    rc_rpmman_depends_fill (rpmman, h, p);
+    rc_rpmman_depends_fill (rpmman, h, p, TRUE);
 
     pu = rc_package_update_new ();
     rc_package_spec_copy (RC_PACKAGE_SPEC (pu), RC_PACKAGE_SPEC (p));
@@ -502,7 +502,7 @@ rc_extract_packages_from_aptrpm_buffer (const guint8 *data, int len,
         p = rc_package_new ();
 
         rc_rpmman_read_header (rpmman, h, p);
-        rc_rpmman_depends_fill (rpmman, h, p);
+        rc_rpmman_depends_fill (rpmman, h, p, TRUE);
 
         p->channel = rc_channel_ref (channel);
 
@@ -992,7 +992,7 @@ rc_extract_packages_from_directory (const char *path,
         } else if (g_file_test (file_path, G_FILE_TEST_IS_REGULAR)) {
             RCPackage *pkg;
 
-            pkg = rc_packman_query_file (packman, file_path);
+            pkg = rc_packman_query_file (packman, file_path, TRUE);
             if (pkg != NULL) {
                 pkg->channel = rc_channel_ref (channel);
                 pkg->package_filename = g_strdup (file_path);

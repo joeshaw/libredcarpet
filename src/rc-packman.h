@@ -130,7 +130,8 @@ struct _RCPackmanClass {
                                              const char *name);
 
     RCPackage *(*rc_packman_real_query_file)(RCPackman *packman,
-                                             const gchar *filename);
+                                             const gchar *filename,
+                                             gboolean filter_file_deps);
 
     RCPackageSList *(*rc_packman_real_query_all)(RCPackman *packman);
 
@@ -173,10 +174,13 @@ void rc_packman_transact (RCPackman *packman,
 
 RCPackageSList *rc_packman_query (RCPackman *packman, const char *name);
 
-RCPackage *rc_packman_query_file (RCPackman *packman, const gchar *filename);
+RCPackage *rc_packman_query_file (RCPackman *packman,
+                                  const gchar *filename,
+                                  gboolean filter_file_deps);
 
 RCPackageSList *rc_packman_query_file_list (RCPackman *packman,
-                                            GSList *filenames);
+                                            GSList *filenames,
+                                            gboolean filter_file_deps);
 
 RCPackageSList *rc_packman_query_all (RCPackman *packman);
 

@@ -206,7 +206,8 @@ RCRpmman *rc_rpmman_new (void);
 /* Functions exported mainly for the apt-rpm loader */
 void rc_rpmman_depends_fill (RCRpmman  *rpmman,
                              Header     header,
-                             RCPackage *package);
+                             RCPackage *package,
+                             gboolean filter_file_deps);
 void rc_rpmman_read_header  (RCRpmman  *rpmman,
                              Header     header,
                              RCPackage *package);

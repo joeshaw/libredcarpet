@@ -261,28 +261,28 @@ add_tracked_package (RCRollbackInfo *rollback_info,
     return;
 }        
 
-/*
- * FIXME: What do we do in the case when multiple packages by the
- * same name are installed?  Right now we just pick the first one,
- * which is probably not the right thing to do.
- *
- * I think that we'd probably want to track all versions and then
- * install all the versions when we rollback and apply the changes,
- * but we currently don't have a way of doing an install (as
- * opposed to an upgrade) to allow this.  (Obviously this is only
- * a problem for RPM systems; dpkg doesn't allow it)
- */
+typedef struct {
+    RCPackage *package_to_install;
+    RCPackage *system_package;
+} RollbackForeachPackageInfo;
+
 static gboolean
 foreach_package_cb (RCPackage *package, gpointer user_data)
 {
-    RCPackage **system_package = user_data;
+    RollbackForeachPackageInfo *info = user_data;
 
-    *system_package = package;
+    /* If package is marked as "install only" we're not overwriting
+       anything except if it is exactly same version */
 
-    /* Short-circuit the foreach; see the FIXME above. */
-    return FALSE;
+    if (info->package_to_install->install_only == FALSE ||
+        rc_package_spec_equal (info->package_to_install, package)) {
+        info->system_package = package;
+        return FALSE;
+    }
+
+    return TRUE;
 }
-    
+
 RCRollbackInfo *
 rc_rollback_info_new (RCWorld         *world,
                       RCPackageSList  *install_packages,
@@ -334,19 +334,19 @@ rc_rollback_info_new (RCWorld         *world,
      * to see if the files have changed at all.
      */
     for (iter = install_packages; iter; iter = iter->next) {
-        RCPackage *package_to_install = iter->data;
-        RCPackage *system_package = NULL;
+        RollbackForeachPackageInfo info;
         GError *tmp_error = NULL;
 
-        rc_world_foreach_package_by_name (world,
-                                          g_quark_to_string (package_to_install->spec.nameq),
-                                          RC_CHANNEL_SYSTEM,
-                                          foreach_package_cb,
-                                          &system_package);
+        info.package_to_install = iter->data;
+        info.system_package = NULL;
+
+        rc_world_foreach_package_by_name 
+            (world, g_quark_to_string (info.package_to_install->spec.nameq),
+             RC_CHANNEL_SYSTEM, foreach_package_cb, &info);
 
 
-        add_tracked_package (rollback_info, system_package,
-                             package_to_install, &tmp_error);
+        add_tracked_package (rollback_info, info.system_package,
+                             info.package_to_install, &tmp_error);
 
         if (tmp_error) {
             g_propagate_error (err, tmp_error);

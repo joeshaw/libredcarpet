@@ -1,3 +1,26 @@
+2004-11-30  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-rollback.c (foreach_package_cb): Handle multiple installed
+	packages with same name (kernel package usually).
+	(rc_rollback_info_new): Ditto.
+
+	* rc-rpmman.c (rc_rpmman_find_system_headers_v3): Ignore matches with
+	zero offset. Fixes #70011.
+	(rc_rpmman_get_file_deps): Move file dependency fetching to it's own
+	function. Optimize the case where we don't want file deps.
+	Add "filter_file_deps" argument.
+
+	* rc-rpmman.h: Add "filter_file_deps" argument.
+
+	* rc-packman.h: Ditto.
+
+	* rc-packman.c (rc_packman_query_file) 
+	(rc_packman_query_file_list): Ditto.
+
+	* rc-debman.c (rc_debman_query_file): Ditto.
+
+	* rc-extract-packages.c: Use updated api.
+
 2004-11-19  James Willcox  <james@ximian.com>
 
 	* rc-package-spec.c: (rc_package_spec_new), (rc_package_spec_free): new

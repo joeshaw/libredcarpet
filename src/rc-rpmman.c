@@ -687,6 +687,12 @@ rc_rpmman_find_system_headers_v3 (RCRpmman *rpmman, const char *name)
     for (i = 0; i < matches.count; i++) {
         Header header;
 
+        if (matches.recs[i].recOffset == 0)
+            continue;
+
+        if (matches.recs[i].recOffset == 0)
+            continue;
+
         if (!(header = rpmman->rpmdbGetRecord (rpmman->db,
                                                matches.recs[i].recOffset))) {
             rc_packman_set_error (RC_PACKMAN (rpmman), RC_PACKMAN_ERROR_ABORT,
@@ -1207,7 +1213,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         /* FIXME: what is the logic here now?  Ugh ugh ugh */
 
         file_package =
-            rc_packman_query_file (packman, package->package_filename);
+            rc_packman_query_file (packman, package->package_filename, TRUE);
 
         packages = rc_packman_query (
             packman, g_quark_to_string (file_package->spec.nameq));
@@ -2018,8 +2024,92 @@ depends_fill_helper (RCRpmman *rpmman, Header header, int names_tag,
     g_free (has_epochs);
 }
 
+static void
+rc_rpmman_get_file_deps (RCRpmman *rpmman,
+                         Header header,
+                         RCPackageDepSList **provides,
+                         gboolean filter_file_deps)
+{
+    RCPackageDep *dep;
+    gchar **basenames, **dirnames;
+    guint32 *dirindexes;
+    int count, i;
+
+    const gchar *file_dep_set[] = {
+        "/bin/",
+        "/usr/bin/",
+        "/usr/X11R6/bin/",
+        "/sbin/",
+        "/usr/sbin/",
+        "/lib/",
+        "/usr/games/",
+        "/usr/share/dict/words",
+        "/usr/share/magic.mime",
+        "/etc/",
+        "/opt/gnome/bin",
+        "/opt/gnome/sbin",
+        "/opt/gnome/etc",
+        "/opt/gnome/games",
+        "/usr/local/bin",   /* /usr/local shouldn't be required, but */
+        "/usr/local/sbin",  /* apparently msc linux uses it */
+        NULL
+    };
+
+    if (!filter_file_deps) {
+        rpmman->headerGetEntry (header, RPMTAG_BASENAMES, NULL,
+                                (void **)&basenames, &count);
+        rpmman->headerGetEntry (header, RPMTAG_DIRNAMES, NULL,
+                                (void **)&dirnames, NULL);
+        rpmman->headerGetEntry (header, RPMTAG_DIRINDEXES, NULL,
+                                (void **)&dirindexes, NULL);
+
+        for (i = 0; i < count; i++) {
+            gchar *tmp = g_strconcat (dirnames[dirindexes[i]],
+                                      basenames[i], NULL);
+
+            if (g_utf8_validate (tmp, -1, NULL)) {
+                if (in_set (tmp, file_dep_set)) {
+                    dep = rc_package_dep_new (tmp, 0, 0, NULL, NULL,
+                                              RC_RELATION_ANY,
+                                              RC_CHANNEL_ANY,
+                                              FALSE, FALSE);
+
+                    *provides = g_slist_prepend (*provides, dep);
+                }
+            } else {
+                rc_debug (RC_DEBUG_LEVEL_INFO,
+                          "File '%s' is not valid UTF-8; dropping it from "
+                          "the list of file provides", tmp);
+            }
+
+            g_free (tmp);
+        }
+
+        free (basenames);
+        free (dirnames);
+    }
+
+    rpmman->headerGetEntry (header, RPMTAG_FILENAMES, NULL,
+                            (void **)&basenames, &count);
+
+    for (i = 0; i < count; i++) {
+        if (in_set (basenames[i], file_dep_set)) {
+            dep = rc_package_dep_new (basenames[i], 0, 0, NULL, NULL,
+                                      RC_RELATION_ANY, RC_CHANNEL_ANY,
+                                      FALSE, FALSE);
+
+            *provides = g_slist_prepend (*provides, dep);
+        }
+    }
+
+    free (basenames);
+}
+
 void
-rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
+rc_rpmman_depends_fill (RCRpmman *rpmman,
+                        Header header,
+                        RCPackage *package,
+                        gboolean filter_file_deps)
 {
     RCPackageDep *dep;
     RCPackageDepSList *requires = NULL, *provides = NULL,
@@ -2059,81 +2149,7 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
         provides = g_slist_prepend (provides, dep);
     }
 
-    /* First stab at handling the pesky file dependencies */
-    {
-        const gchar *file_dep_set[] = {
-            "/bin/",
-            "/usr/bin/",
-            "/usr/X11R6/bin/",
-            "/sbin/",
-            "/usr/sbin/",
-            "/lib/",
-            "/usr/games/",
-            "/usr/share/dict/words",
-            "/usr/share/magic.mime",
-            "/etc/",
-            "/opt/gnome/bin",
-            "/opt/gnome/sbin",
-            "/opt/gnome/etc",
-            "/opt/gnome/games",
-            "/usr/local/bin",   /* /usr/local shouldn't be required, but */
-            "/usr/local/sbin",  /* apparently msc linux uses it */
-            NULL
-        };
-
-        gchar **basenames, **dirnames;
-        guint32 *dirindexes;
-        int count, i;
-        gboolean dont_filter;
-        
-        dont_filter = getenv ("RC_PLEASE_DONT_FILTER_FILE_DEPS") != NULL;
-
-        rpmman->headerGetEntry (header, RPMTAG_BASENAMES, NULL,
-                                (void **)&basenames, &count);
-        rpmman->headerGetEntry (header, RPMTAG_DIRNAMES, NULL,
-                                (void **)&dirnames, NULL);
-        rpmman->headerGetEntry (header, RPMTAG_DIRINDEXES, NULL,
-                                (void **)&dirindexes, NULL);
-
-        for (i = 0; i < count; i++) {
-            gchar *tmp = g_strconcat (dirnames[dirindexes[i]], basenames[i],
-                                      NULL);
-
-            if (g_utf8_validate (tmp, -1, NULL)) {
-                if (dont_filter || in_set (tmp, file_dep_set)) {
-                    dep = rc_package_dep_new (tmp, 0, 0, NULL, NULL,
-                                              RC_RELATION_ANY, RC_CHANNEL_ANY,
-                                              FALSE, FALSE);
-
-                    provides = g_slist_prepend (provides, dep);
-                }
-            } else {
-                rc_debug (RC_DEBUG_LEVEL_INFO,
-                          "File '%s' is not valid UTF-8; dropping it from "
-                          "the list of file provides", tmp);
-            }
-
-            g_free (tmp);
-        }
-
-        free (basenames);
-        free (dirnames);
-
-        rpmman->headerGetEntry (header, RPMTAG_FILENAMES, NULL,
-                                (void **)&basenames, &count);
-
-        for (i = 0; i < count; i++) {
-            if (in_set (basenames[i], file_dep_set)) {
-                dep = rc_package_dep_new (basenames[i], 0, 0, NULL, NULL,
-                                          RC_RELATION_ANY, RC_CHANNEL_ANY,
-                                          FALSE, FALSE);
-
-                provides = g_slist_prepend (provides, dep);
-            }
-        }
-
-        free (basenames);
-    }
+    rc_rpmman_get_file_deps (rpmman, header, &provides, filter_file_deps);
 
     package->requires_a =
         rc_package_dep_array_from_slist (&requires);
@@ -2187,7 +2203,9 @@ rc_rpmman_query (RCPackman *packman, const char *name)
 /* Query a file for rpm header information */
 
 static RCPackage *
-rc_rpmman_query_file (RCPackman *packman, const gchar *filename)
+rc_rpmman_query_file (RCPackman *packman,
+                      const gchar *filename,
+                      gboolean filter_file_deps)
 {
     RCRpmman *rpmman = RC_RPMMAN (packman);
     HeaderInfo *hi;
@@ -2208,7 +2226,7 @@ rc_rpmman_query_file (RCPackman *packman, const gchar *filename)
 
     rc_rpmman_read_header (rpmman, header, package);
 
-    rc_rpmman_depends_fill (rpmman, header, package);
+    rc_rpmman_depends_fill (rpmman, header, package, filter_file_deps);
 
     rc_rpmman_header_info_free (rpmman, hi);
 
@@ -2248,7 +2266,7 @@ rc_rpmman_query_all_v4 (RCPackman *packman)
 
         package->installed = TRUE;
 
-        rc_rpmman_depends_fill (rpmman, header, package);
+        rc_rpmman_depends_fill (rpmman, header, package, TRUE);
 
         list = g_slist_prepend (list, package);
     }
@@ -2298,7 +2316,7 @@ rc_rpmman_query_all_v3 (RCPackman *packman)
 
         package->installed = TRUE;
 
-        rc_rpmman_depends_fill (rpmman, header, package);
+        rc_rpmman_depends_fill (rpmman, header, package, TRUE);
 
         list = g_slist_prepend (list, package);
 

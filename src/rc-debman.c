@@ -2850,7 +2850,9 @@ rc_debman_query (RCPackman *packman, const char *name)
 }
 
 static RCPackage *
-rc_debman_query_file (RCPackman *packman, const gchar *filename)
+rc_debman_query_file (RCPackman *packman,
+                      const gchar *filename,
+                      gboolean filter_file_deps)
 {
     int fds[2];
     pid_t child;

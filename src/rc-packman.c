@@ -297,7 +297,9 @@ rc_packman_query (RCPackman *packman, const char *name)
 }
 
 RCPackage *
-rc_packman_query_file (RCPackman *packman, const gchar *filename)
+rc_packman_query_file (RCPackman *packman,
+                       const gchar *filename,
+                       gboolean filter_file_deps)
 {
     RCPackmanClass *klass;
     RCPackage *package;
@@ -310,7 +312,8 @@ rc_packman_query_file (RCPackman *packman, const gchar *filename)
 
     g_assert (klass->rc_packman_real_query_file);
 
-    package = klass->rc_packman_real_query_file (packman, filename);
+    package = klass->rc_packman_real_query_file (packman, filename,
+                                                 filter_file_deps);
 
     if (package) {
         /* Get the file size if the rc_packman_real_query_file didn't do
@@ -329,7 +332,9 @@ rc_packman_query_file (RCPackman *packman, const gchar *filename)
 }
 
 RCPackageSList *
-rc_packman_query_file_list (RCPackman *packman, GSList *filenames)
+rc_packman_query_file_list (RCPackman *packman,
+                            GSList *filenames,
+                            gboolean filter_file_deps)
 {
     GSList *iter;
     RCPackageSList *ret = NULL;
@@ -342,7 +347,7 @@ rc_packman_query_file_list (RCPackman *packman, GSList *filenames)
         gchar *filename = (gchar *)(iter->data);
         RCPackage *package;
 
-        package = rc_packman_query_file (packman, filename);
+        package = rc_packman_query_file (packman, filename, filter_file_deps);
 
         if (packman->priv->error) {
             rc_package_unref (package);
