@@ -25,6 +25,8 @@
 #include "rc-util.h"
 #include "rc-line-buf.h"
 #include "deps.h"
+#include "rc-verification.h"
+#include "rc-verification-private.h"
 
 #include <sys/wait.h>
 #include <sys/time.h>
