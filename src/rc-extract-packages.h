@@ -81,6 +81,7 @@ gint rc_extract_packages_from_undump_file   (const char *filename,
 gint rc_extract_packages_from_directory (const char *path,
                                          RCChannel *channel,
                                          RCPackman *packman,
+                                         gboolean recursive,
                                          RCPackageFn callback,
                                          gpointer user_data);
 

@@ -753,6 +753,7 @@ gint
 rc_extract_packages_from_directory (const char *path,
                                     RCChannel *channel,
                                     RCPackman *packman,
+                                    gboolean recursive,
                                     RCPackageFn callback,
                                     gpointer user_data)
 {
@@ -761,7 +762,7 @@ rc_extract_packages_from_directory (const char *path,
     struct HashIterInfo info;
     const char *filename;
     char *magic;
-    gboolean recursive, distro_magic, pkginfo_magic;
+    gboolean distro_magic, pkginfo_magic;
     
     g_return_val_if_fail (path && *path, -1);
     g_return_val_if_fail (channel != NULL, -1);
@@ -780,7 +781,8 @@ rc_extract_packages_from_directory (const char *path,
     g_free (magic);
 
     magic = g_strconcat (path, "/RC_RECURSIVE", NULL);
-    recursive = g_file_test (magic, G_FILE_TEST_EXISTS);
+    if (g_file_test (magic, G_FILE_TEST_EXISTS))
+        recursive = TRUE;
     g_free (magic);
     
     magic = g_strconcat (path, "/RC_BY_DISTRO", NULL);
@@ -858,6 +860,7 @@ rc_extract_packages_from_directory (const char *path,
             rc_extract_packages_from_directory (file_path,
                                                 channel,
                                                 packman,
+                                                TRUE,
                                                 hash_recurse_cb,
                                                 &info);
         } else if (g_file_test (file_path, G_FILE_TEST_IS_REGULAR)) {

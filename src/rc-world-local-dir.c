@@ -101,6 +101,7 @@ rc_world_local_dir_populate (RCWorldLocalDir *ldir,
     rc_extract_packages_from_directory (ldir->path,
                                         ldir->channel,
                                         rc_packman_get_global (),
+                                        ldir->recursive,
                                         add_pkg_cb, ldir);
 
     ldir->mtime = statbuf.st_mtime;
@@ -183,6 +184,7 @@ rc_world_local_dir_assemble_fn (RCWorldService *service, GError **error)
     RCWorldLocalDir *ldir = RC_WORLD_LOCAL_DIR (service);
     char *query_part, *path;
     char *name = NULL, *alias = NULL;
+    gboolean recursive = FALSE;
 
     /* Find the path.  The "+ 7" part moves past "file://" */
     query_part = strchr (service->url + 7, '?');
@@ -213,6 +215,15 @@ rc_world_local_dir_assemble_fn (RCWorldService *service, GError **error)
             if (g_strncasecmp (*t, "alias", 5) == 0) {
                 alias = extract_value (*t);
             }
+
+            if (g_strncasecmp (*t, "recursive", 9) == 0) {
+                char *tmp = extract_value (*t);
+
+                if (atoi(tmp))
+                    recursive = TRUE;
+
+                g_free (tmp);
+            }
         }
     }
 
@@ -229,6 +240,7 @@ rc_world_local_dir_assemble_fn (RCWorldService *service, GError **error)
     ldir->alias = g_path_get_basename (path);
     ldir->description = g_strdup_printf ("Files from %s", path);
     ldir->mtime = 0;
+    ldir->recursive = recursive;
     
     rc_world_local_dir_populate (ldir, FALSE);
 

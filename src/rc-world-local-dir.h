@@ -48,6 +48,7 @@ struct _RCWorldLocalDir {
     char *alias;
     char *description;
     time_t mtime;
+    gboolean recursive;
     RCChannel *channel;
 
     gboolean frozen;

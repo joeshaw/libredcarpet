@@ -1,3 +1,13 @@
+2003-09-11  Joe Shaw  <joe@ximian.com>
+
+	* rc-extract-packages.c (rc_extract_packages_from_directory): Add
+	a recursive flag. 
+
+	* rc-world-local-dir.c (rc_world_local_dir_assemble_fn): Check for
+	the "recursive" flag in the URI.
+	(rc_world_local_dir_populate): Pass the recursive flag into
+	rc_extract_packages_from_directory().
+
 2003-09-10  Joe Shaw  <joe@ximian.com>
 
 	* rc-world-local-dir.c (rc_world_local_dir_assemble_fn): name and
