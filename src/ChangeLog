@@ -1,5 +1,11 @@
 2003-11-12  Joe Shaw  <joe@ximian.com>
 
+	* distributions.xml: Add support for SLES 8 on s390 and s390x.
+
+	* rc-arch.[ch]: Add support for s390 and s390x.
+
+2003-11-12  Joe Shaw  <joe@ximian.com>
+
 	* distributions.xml: Add support for SLES 8 on ppc.
 
 	* rc-arch.[ch]: Add support for ppc64 and make it superior (but
