@@ -1,3 +1,7 @@
+2005-03-17  Tambet Ingo  <tambet@ximian.com>
+
+	* distributions.xml: Fix sles-9 target.
+
 2005-03-04  James Willcox  <james@ximian.com>
 
 	* rc-package.c: (rc_package_get_install_only),

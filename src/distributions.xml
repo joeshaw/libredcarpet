@@ -541,9 +541,9 @@
         <distro>
                 <name>SuSE Linux Enterprise Server</name>
                 <version>9</version>
-                <arch>i386</arch>
+                <arch>i586</arch>
                 <type>rpm</type>
-                <target>sles-9-i386</target>
+                <target>sles-9-i586</target>
                 <status>supported</status>
                 <detect>
                         <file source="/etc/SuSE-release" substring="SUSE LINUX Enterprise Server 9"/>
