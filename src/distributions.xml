@@ -341,7 +341,7 @@
 
         <distro>
                 <name>SuSE Linux Desktop</name>
-                <version>1</version>
+                <version>1.0</version>
                 <arch>i586</arch>
                 <type>rpm</type>
                 <target>sld-10-i586</target>
