@@ -1349,6 +1349,10 @@ depends_fill_helper (RCRpmman *rpmman, Header header, int names_tag,
         RCPackageRelation relation = RC_RELATION_ANY;
 
         if (!strncmp (names[i], "rpmlib(", strlen ("rpmlib("))) {
+            if (versions)
+                g_free (versions[i]);
+            if (releases)
+                g_free (releases[i]);
             continue;
         }
 
@@ -1371,13 +1375,18 @@ depends_fill_helper (RCRpmman *rpmman, Header header, int names_tag,
         }
 
         *deps = g_slist_prepend (*deps, dep);
+
+        if (versions)
+            g_free (versions[i]);
+        if (releases)
+            g_free (releases[i]);
     }
 
     free (names);
     free (verrels);
 
-    g_strfreev (versions);
-    g_strfreev (releases);
+    g_free (versions);
+    g_free (releases);
     g_free (epochs);
     g_free (has_epochs);
 }
