@@ -19,12 +19,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include "rc-channel.h"
-#include "rc-common.h"
-
 #include <stdlib.h>
 #include <unistd.h>
+#include <glib.h>
+
 #include "xml-util.h"
+
+#include "rc-channel.h"
+#include "rc-common.h"
+#include "rc-util.h"
 
 RCSubchannel *
 rc_subchannel_new (void)
@@ -93,18 +96,16 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
     RC_ENTRY;
 
     if (compressed_length) {
-        gchar *gz_tmp_name = g_strdup("/tmp/rc-xml.XXXXXX");
-        int gz_fd;
-        gz_fd = mkstemp(gz_tmp_name);
-        write(gz_fd, xmlbuf, compressed_length);
-        /* gz_fd is purposely kept open so that no intruding file can be
-           struck instead of our gz */
-        doc = xmlParseFile(gz_tmp_name);
-        close(gz_fd);
-        unlink(gz_tmp_name);
-        g_free(gz_tmp_name);
-    }
-    else {
+        GByteArray *ba;
+
+        if (rc_uncompress_memory (xmlbuf, compressed_length, &ba)) {
+            g_warning ("Uncompression failed!");
+            return NULL;
+        }
+
+        doc = xmlParseMemory(ba->data, ba->len);
+        g_byte_array_free (ba, TRUE);
+    } else {
 	doc = xmlParseMemory(xmlbuf, strlen(xmlbuf));
     }
 

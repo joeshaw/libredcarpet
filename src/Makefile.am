@@ -24,6 +24,8 @@ libredcarpet_a_SOURCES =		\
 	rc-package-dep.h		\
 	rc-package-update.c		\
 	rc-package-update.h		\
+	rc-package-set.c		\
+	rc-package-set.h		\
 	rc-package.c			\
 	rc-package.h			\
 	rc-channel.h			\

@@ -23,6 +23,7 @@
 #define _RC_CHANNEL_H
 
 #include "rc-package.h"
+#include "rc-package-set.h"
 
 typedef struct _RCSubchannel RCSubchannel;
 
@@ -80,6 +81,8 @@ struct _RCChannel {
 
     RCPackageHashTableBySpec *dep_table;
     RCSubchannelSList *subchannels;
+
+    RCPackageSetSList *package_sets;
 };
 
 RCChannel *rc_channel_new (void);

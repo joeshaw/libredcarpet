@@ -59,6 +59,11 @@ gchar *rc_build_url (const gchar *method, const gchar *host,
 
 
 
+/* uncompress memory */
+gint rc_uncompress_memory (guint8 *input_buffer, guint32 input_length,
+                           GByteArray **out_ba);
+
+
 typedef struct _RCLineBuf RCLineBuf;
 struct _RCLineBuf {
     FILE *fp;
