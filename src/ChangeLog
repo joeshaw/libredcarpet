@@ -1,5 +1,10 @@
 2001-01-25  Vladimir Vukicevic  <vladimir@helixcode.com>
 
+	* rc-deps.c: oops. don't remove the list we're traversing
+	from under us.
+
+2001-01-25  Vladimir Vukicevic  <vladimir@helixcode.com>
+
 	* rc-deps.c, rc-deps.h: More yummy fixes.  I'm feeling much more
 	confident about debian now.  gaim-gnome $!@# doesn't work, still.
 	I know why, just haven't poked the right place to fix it.
