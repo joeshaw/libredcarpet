@@ -1,3 +1,8 @@
+2003-06-06  Joe Shaw  <joe@ximian.com>
+
+	* rc-debman.c (query_all_read_line_cb): Fix some undefined C
+	pointer magic.  Fixes #44114.
+
 2003-06-04  Joe Shaw  <joe@ximian.com>
 
 	* rc-world-import.c (add_packages_from_hash_cb): Set the

@@ -2470,7 +2470,8 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
     ptr = line;
     if (*ptr != ' ') { /* These lines must begin with a space */
         while (*ptr != ':') {
-            *ptr++ = tolower (*ptr);
+            *ptr = tolower (*ptr);
+            ptr++;
         }
     }
 
