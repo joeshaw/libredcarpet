@@ -83,29 +83,6 @@ rc_packman_destroy (GtkObject *obj)
         (* GTK_OBJECT_CLASS(rc_packman_parent)->destroy) (obj);
 }
 
-#define gtk_marshal_NONE__STRING_INT gtk_marshal_NONE__POINTER_INT
-
-typedef void (*GtkSignal_NONE__BOOL_STRING_INT) (GtkObject *object,
-                                                 gboolean arg1,
-                                                 gpointer arg2,
-                                                 gint arg3,
-                                                 gpointer user_data);
-static void
-gtk_marshal_NONE__BOOL_STRING_INT (GtkObject *object,
-                                   GtkSignalFunc func,
-                                   gpointer func_data,
-                                   GtkArg *args)
-{
-    GtkSignal_NONE__BOOL_STRING_INT rfunc;
-
-    rfunc = (GtkSignal_NONE__BOOL_STRING_INT) func;
-    (*rfunc) (object,
-              GTK_VALUE_BOOL (args[0]),
-              GTK_VALUE_POINTER (args[1]),
-              GTK_VALUE_INT (args[2]),
-              func_data);
-}
-
 static void
 rc_packman_class_init (RCPackmanClass *klass)
 {
@@ -378,7 +355,7 @@ rc_packman_set_file_extension(RCPackman *packman, const gchar *extension)
 const gchar *
 rc_packman_get_file_extension(RCPackman *packman)
 {
-    g_return_if_fail(packman);
+    g_return_val_if_fail (packman, NULL);
 
     return packman->priv->extension;
 }

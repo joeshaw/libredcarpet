@@ -1840,6 +1840,8 @@ do_configure (RCPackman *packman, DebmanInstallState *install_state)
     return (TRUE);
 }
 
+#if 0
+
 typedef struct _Node Node;
 
 struct _Node {
@@ -2108,6 +2110,8 @@ order_packages (RCPackageSList *packages)
 
     return ret;
 }
+
+#endif
 
 /*
  * Combine the last four code blocks into a useful transaction.

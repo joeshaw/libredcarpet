@@ -1,3 +1,9 @@
+2001-07-11  Ian Peters  <itp@ximian.com>
+
+	* rc-debman.c: #if 0 out some currently unused code
+
+	* rc-packman.c: fix two warnings
+
 2001-07-11  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps-private, rc-deps.c, rc-deps-util.c, rc-md5.c, rc-package-dep.h,
