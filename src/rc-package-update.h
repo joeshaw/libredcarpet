@@ -27,7 +27,7 @@ struct _RCPackageUpdate {
     RCPackageSpec spec;
 
     RCPackageImportance importance;
-    gchar *filename;
+    gchar *url;                 /* URL for the filename of this pkg */
     gchar *md5sum;
     gchar *description;
     guint32 installed_size;

@@ -13,7 +13,7 @@ rc_package_update_free (RCPackageUpdate *rcpu)
 {
     rc_package_spec_free_members(RC_PACKAGE_SPEC(rcpu));
 
-    g_free (rcpu->filename);
+    g_free (rcpu->url);
     g_free (rcpu->md5sum);
     g_free (rcpu->description);
 
