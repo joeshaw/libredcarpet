@@ -367,6 +367,8 @@ do_purge (RCPackman *p, DebmanInstallState *dis)
 
     unlock_database (RC_DEBMAN (p));
 
+    signal (SIGCHLD, SIG_DFL);
+
     child = fork ();
 
     switch (child) {
@@ -566,6 +568,8 @@ do_unpack (RCPackman *p, GSList *pkgs, DebmanInstallState *dis)
         /* The locking in Debian sucks ass */
         unlock_database (RC_DEBMAN (p));
 
+        signal (SIGCHLD, SIG_DFL);
+
         child = fork ();
 
         switch (child) {
@@ -583,7 +587,7 @@ do_unpack (RCPackman *p, GSList *pkgs, DebmanInstallState *dis)
             break;
 
         case 0:
-            signal (SIGPIPE, SIG_DFL);
+            signal (SIGPIPE, SIG_DFL); /* dpkg can bite me */
 
             close (rfds[0]);
 
@@ -618,10 +622,11 @@ do_unpack (RCPackman *p, GSList *pkgs, DebmanInstallState *dis)
 
             g_main_run (loop);
             
-//            gtk_object_destroy (GTK_OBJECT (lb));
             gtk_object_unref (GTK_OBJECT (lb));
 
             g_main_destroy (loop);
+
+            close (rfds[0]);
 
             waitpid (child, &status, 0);
 
@@ -647,8 +652,6 @@ do_unpack (RCPackman *p, GSList *pkgs, DebmanInstallState *dis)
 
                 return (FALSE);
             }
-
-            close (rfds[0]);
 
             break;
         }
@@ -712,6 +715,8 @@ do_configure (RCPackman *p, DebmanInstallState *dis)
     fcntl (rfds[1], F_SETFL, O_NONBLOCK);
 
     unlock_database (RC_DEBMAN (p));
+
+    signal (SIGCHLD, SIG_DFL);
 
     child = fork ();
 
@@ -1381,6 +1386,8 @@ rc_debman_query_file (RCPackman *p, gchar *filename)
     pipe (rfds);
     fcntl (rfds[0], F_SETFL, O_NONBLOCK);
     fcntl (rfds[1], F_SETFL, O_NONBLOCK);
+
+    signal (SIGCHLD, SIG_DFL);
 
     child = fork ();
 
