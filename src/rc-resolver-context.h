@@ -155,7 +155,9 @@ void               rc_resolver_context_spew         (RCResolverContext *);
 void               rc_resolver_context_spew_info    (RCResolverContext *);
 
 gboolean           rc_resolver_context_requirement_is_met (RCResolverContext *,
-                                                           RCPackageDep *dep);
+                                                           RCPackageDep *dep,
+                                                           gboolean is_child);
+
 gboolean           rc_resolver_context_requirement_is_possible (RCResolverContext *,
                                                                 RCPackageDep *dep);
 

@@ -1083,6 +1083,7 @@ rc_resolver_context_spew_info (RCResolverContext *context)
 
 struct RequirementMetInfo {
     RCResolverContext *context;
+    RCPackageSpec *dep;
     gboolean flag;
 };
 
@@ -1091,16 +1092,19 @@ requirement_met_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data)
 {
     struct RequirementMetInfo *info = user_data;
 
-    if (rc_resolver_context_package_is_present (info->context, package)) {
+    /* info->dep is set for package set children. If it is set, query the
+       exact version only. */
+    if ((info->dep == NULL || rc_package_spec_equal (info->dep, spec)) &&
+        rc_resolver_context_package_is_present (info->context, package))
         info->flag = TRUE;
-    }
 
     return ! info->flag;
 }
 
 gboolean
 rc_resolver_context_requirement_is_met (RCResolverContext *context,
-                                        RCPackageDep *dep)
+                                        RCPackageDep *dep,
+                                        gboolean is_child)
 {
     struct RequirementMetInfo info;
 
@@ -1108,6 +1112,7 @@ rc_resolver_context_requirement_is_met (RCResolverContext *context,
     g_return_val_if_fail (dep != NULL, FALSE);
 
     info.context = context;
+    info.dep = is_child ? (RCPackageSpec *) dep : NULL;
     info.flag = FALSE;
 
     rc_world_foreach_providing_package (rc_resolver_context_get_world (context),

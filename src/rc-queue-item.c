@@ -437,7 +437,7 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
         for (i = 0; i < package->requires_a->len; i++) {
             RCPackageDep *dep = package->requires_a->data[i];
             
-            if (!rc_resolver_context_requirement_is_met (context, dep)) {
+            if (!rc_resolver_context_requirement_is_met (context, dep, FALSE)) {
                 RCQueueItem *req_item = rc_queue_item_new_require (rc_queue_item_get_world (item), dep);
                 rc_queue_item_require_add_package (req_item, package);
             
@@ -451,9 +451,10 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
         for (i = 0; i < package->children_a->len; i++) {
             RCPackageDep *dep = package->children_a->data[i];
 
-            if (!rc_resolver_context_requirement_is_met (context, dep)) {
+            if (!rc_resolver_context_requirement_is_met (context, dep, TRUE)) {
                 RCQueueItem *req_item = rc_queue_item_new_require (rc_queue_item_get_world (item), dep);
                 rc_queue_item_require_add_package (req_item, package);
+                ((RCQueueItem_Require *) req_item)->is_child = TRUE;
             
                 *new_items = g_slist_prepend (*new_items, req_item);
             }
@@ -731,6 +732,7 @@ rc_queue_item_install_set_explicitly_requested (RCQueueItem *item)
 
 struct RequireProcessInfo {
     RCPackage *package;
+    RCPackageSpec *dep;
     RCResolverContext *context;
     RCWorld *world;
     GSList *providers;
@@ -744,6 +746,11 @@ require_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data)
     RCPackageStatus status;
 
     status = rc_resolver_context_get_status (info->context, package);
+
+    /* info->dep is set for package set childern only. If it is set
+       allow only exactly required version */
+    if (info->dep && rc_package_spec_not_equal (info->dep, spec))
+        return TRUE;
 
     if ((! rc_package_status_is_to_be_uninstalled (status))
         && ! rc_resolver_context_is_parallel_install (info->context, package)
@@ -851,11 +858,13 @@ require_item_process (RCQueueItem *item,
     RCWorld *world = rc_queue_item_get_world (item);
     char *msg;
 
-    if (rc_resolver_context_requirement_is_met (context, require->dep)) {
+    if (rc_resolver_context_requirement_is_met (context, require->dep,
+                                                require->is_child)) {
         goto finished;
     }
 
     info.package = require->requiring_package;
+    info.dep = require->is_child ? (RCPackageSpec *) require->dep : NULL;
     info.context = context;
     info.world = world;
     info.providers = NULL;
@@ -957,7 +966,7 @@ require_item_process (RCQueueItem *item,
                                 for (i = 0; i < upgrade_package->requires_a->len; i++) {
                                     RCPackageDep *req =
                                         upgrade_package->requires_a->data[i];
-                                    if (! rc_resolver_context_requirement_is_met (context, req))
+                                    if (! rc_resolver_context_requirement_is_met (context, req, FALSE))
                                         break;
                                 }
                                 if (i == upgrade_package->requires_a->len) {
@@ -1879,7 +1888,7 @@ unlink_check_cb (RCPackage *package, RCPackageDep *dep, gpointer user_data)
     if (! rc_resolver_context_package_is_present (info->context, package))
         return TRUE;
 
-    if (rc_resolver_context_requirement_is_met (info->context, dep))
+    if (rc_resolver_context_requirement_is_met (info->context, dep, FALSE))
         return TRUE;
 
     info->cancel_unlink = TRUE;
@@ -1905,7 +1914,7 @@ uninstall_process_cb (RCPackage *package, RCPackageDep *dep, gpointer user_data)
     if (! rc_resolver_context_package_is_present (info->context, package))
         return TRUE;
 
-    if (rc_resolver_context_requirement_is_met (info->context, dep))
+    if (rc_resolver_context_requirement_is_met (info->context, dep, FALSE))
         return TRUE;
 
     require_item = rc_queue_item_new_require (info->world, dep);

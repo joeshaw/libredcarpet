@@ -94,6 +94,7 @@ struct _RCQueueItem_Require {
     RCPackage *upgraded_package;
     RCPackage *lost_package;
     guint remove_only : 1;
+    gboolean is_child;
 };
 
 struct _RCQueueItem_Branch {

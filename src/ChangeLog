@@ -1,3 +1,15 @@
+2004-04-06  James Willcox  <james@ximian.com>
+
+	* rc-queue-item.c: (install_item_process), (require_process_cb),
+	(require_item_process), (unlink_check_cb), (uninstall_process_cb):
+	* rc-queue-item.h:
+	* rc-resolver-context.c: (requirement_met_cb),
+	(rc_resolver_context_requirement_is_met):
+	* rc-resolver-context.h:
+
+	Fix the resolver such that package set child deps are always
+	satisfied by the exact version required.
+
 2004-04-01  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-packman.c (rc_packman_finalize): Set the file extension to NULL.
