@@ -87,6 +87,7 @@ initredcarpet (void)
 
   g_type_init ();
   rc_distro_parse_xml (NULL, 0);
+  rc_packman_set_global (rc_distman_new());
   
   m = Py_InitModule ("redcarpet", redcarpet_methods);
   d = PyModule_GetDict (m);
