@@ -132,6 +132,13 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
+		static extern void rc_package_spec_free(IntPtr raw);
+
+		public void Free() {
+			rc_package_spec_free(Handle);
+		}
+
+		[DllImport("libredcarpet")]
 		static extern IntPtr rc_package_spec_get_release(IntPtr raw);
 
 		[DllImport("libredcarpet")]
@@ -156,6 +163,14 @@ namespace RC {
 		}
 
 		public PackageSpec(IntPtr raw) : base(raw) {}
+
+		[DllImport("libredcarpet")]
+		static extern IntPtr rc_package_spec_new(string name, bool has_epoch, uint epoch, string version, string release);
+
+		public PackageSpec (string name, bool has_epoch, uint epoch, string version, string release) 
+		{
+			Raw = rc_package_spec_new(name, has_epoch, epoch, version, release);
+		}
 
 #endregion
 #region Customized extensions

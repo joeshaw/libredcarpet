@@ -2177,6 +2177,9 @@
           <parameter type="gconstpointer" name="ptrb" />
         </parameters>
       </method>
+      <method name="Free" cname="rc_package_spec_free">
+        <return-type type="void" />
+      </method>
       <method name="FreeMembers" cname="rc_package_spec_free_members">
         <return-type type="void" />
       </method>
@@ -2211,6 +2214,15 @@
           <parameter type="const-gchar*" name="release" />
         </parameters>
       </method>
+      <constructor cname="rc_package_spec_new">
+        <parameters>
+          <parameter type="const-gchar*" name="name" />
+          <parameter type="gboolean" name="has_epoch" />
+          <parameter type="guint32" name="epoch" />
+          <parameter type="const-char*" name="version" />
+          <parameter type="const-char*" name="release" />
+        </parameters>
+      </constructor>
       <method name="NotEqual" cname="rc_package_spec_not_equal" shared="true" hidden="1">
         <return-type type="gint" />
         <parameters>
@@ -2275,6 +2287,7 @@
       <field cname="description" type="gchar*" />
       <field cname="hid" type="guint" />
       <field cname="license" type="gchar*" />
+      <field cname="parent" type="RCPackage*" />
       <method name="Copy" cname="rc_package_update_copy">
         <return-type type="RCPackageUpdate*" />
       </method>
@@ -2307,6 +2320,9 @@
       </method>
       <method name="GetPackageUrl" cname="rc_package_update_get_package_url">
         <return-type type="const-gchar*" />
+      </method>
+      <method name="GetParent" cname="rc_package_update_get_parent">
+        <return-type type="RCPackage*" />
       </method>
       <method name="GetSignatureSize" cname="rc_package_update_get_signature_size">
         <return-type type="guint32" />
@@ -2364,6 +2380,12 @@
         <return-type type="void" />
         <parameters>
           <parameter type="const-gchar*" name="value" />
+        </parameters>
+      </method>
+      <method name="SetParent" cname="rc_package_update_set_parent">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackage*" name="parent" />
         </parameters>
       </method>
       <method name="SetSignatureSize" cname="rc_package_update_set_signature_size">

@@ -11,81 +11,6 @@ namespace RC {
 	public class PackageUpdate : RC.PackageSpec {
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_package_update_get_license(IntPtr raw);
-
-		[DllImport("libredcarpet")]
-		static extern void rc_package_update_set_license(IntPtr raw, string value);
-
-		public string License { 
-			get {
-				IntPtr raw_ret = rc_package_update_get_license(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
-				return ret;
-			}
-			set {
-				rc_package_update_set_license(Handle, value);
-			}
-		}
-
-		[DllImport("libredcarpet")]
-		static extern IntPtr rc_package_update_slist_copy(IntPtr old_update);
-
-		public static GLib.SList SlistCopy(GLib.SList old_update) {
-			IntPtr raw_ret = rc_package_update_slist_copy(old_update.Handle);
-			GLib.SList ret = new GLib.SList(raw_ret);
-			return ret;
-		}
-
-		[DllImport("libredcarpet")]
-		static extern IntPtr rc_package_update_get_package_url(IntPtr raw);
-
-		[DllImport("libredcarpet")]
-		static extern void rc_package_update_set_package_url(IntPtr raw, string value);
-
-		public string PackageUrl { 
-			get {
-				IntPtr raw_ret = rc_package_update_get_package_url(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
-				return ret;
-			}
-			set {
-				rc_package_update_set_package_url(Handle, value);
-			}
-		}
-
-		[DllImport("libredcarpet")]
-		static extern uint rc_package_update_get_package_size(IntPtr raw);
-
-		[DllImport("libredcarpet")]
-		static extern void rc_package_update_set_package_size(IntPtr raw, uint value);
-
-		public uint PackageSize { 
-			get {
-				uint raw_ret = rc_package_update_get_package_size(Handle);
-				uint ret = raw_ret;
-				return ret;
-			}
-			set {
-				rc_package_update_set_package_size(Handle, value);
-			}
-		}
-
-		[DllImport("libredcarpet")]
-		static extern IntPtr rc_package_update_get_package(IntPtr raw);
-
-		public RC.Package Package { 
-			get {
-				IntPtr raw_ret = rc_package_update_get_package(Handle);
-				RC.Package ret;
-				if (raw_ret == IntPtr.Zero)
-					ret = null;
-				else
-					ret = new RC.Package(raw_ret);
-				return ret;
-			}
-		}
-
-		[DllImport("libredcarpet")]
 		static extern int rc_package_update_get_importance(IntPtr raw);
 
 		[DllImport("libredcarpet")]
@@ -103,36 +28,24 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_package_update_get_signature_url(IntPtr raw);
+		static extern IntPtr rc_package_update_get_parent(IntPtr raw);
 
 		[DllImport("libredcarpet")]
-		static extern void rc_package_update_set_signature_url(IntPtr raw, string value);
+		static extern void rc_package_update_set_parent(IntPtr raw, IntPtr parent);
 
-		public string SignatureUrl { 
+		public RC.Package Parent { 
 			get {
-				IntPtr raw_ret = rc_package_update_get_signature_url(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
+				IntPtr raw_ret = rc_package_update_get_parent(Handle);
+				RC.Package ret;
+				if (raw_ret == IntPtr.Zero)
+					ret = null;
+				else
+					ret = new RC.Package(raw_ret);
 				return ret;
 			}
 			set {
-				rc_package_update_set_signature_url(Handle, value);
+				rc_package_update_set_parent(Handle, value.Handle);
 			}
-		}
-
-		[DllImport("libredcarpet")]
-		static extern IntPtr rc_package_update_slist_sort(IntPtr old_slist);
-
-		public static GLib.SList SlistSort(GLib.SList old_slist) {
-			IntPtr raw_ret = rc_package_update_slist_sort(old_slist.Handle);
-			GLib.SList ret = new GLib.SList(raw_ret);
-			return ret;
-		}
-
-		[DllImport("libredcarpet")]
-		static extern void rc_package_update_free(IntPtr raw);
-
-		public void Free() {
-			rc_package_update_free(Handle);
 		}
 
 		[DllImport("libredcarpet")]
@@ -153,6 +66,30 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
+		static extern IntPtr rc_package_update_get_package(IntPtr raw);
+
+		public RC.Package Package { 
+			get {
+				IntPtr raw_ret = rc_package_update_get_package(Handle);
+				RC.Package ret;
+				if (raw_ret == IntPtr.Zero)
+					ret = null;
+				else
+					ret = new RC.Package(raw_ret);
+				return ret;
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern IntPtr rc_package_update_slist_copy(IntPtr old_update);
+
+		public static GLib.SList SlistCopy(GLib.SList old_update) {
+			IntPtr raw_ret = rc_package_update_slist_copy(old_update.Handle);
+			GLib.SList ret = new GLib.SList(raw_ret);
+			return ret;
+		}
+
+		[DllImport("libredcarpet")]
 		static extern void rc_package_update_slist_free(IntPtr update_slist);
 
 		public static void SlistFree(GLib.SList update_slist) {
@@ -160,36 +97,19 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern uint rc_package_update_get_hid(IntPtr raw);
+		static extern IntPtr rc_package_update_get_package_url(IntPtr raw);
 
 		[DllImport("libredcarpet")]
-		static extern void rc_package_update_set_hid(IntPtr raw, uint value);
+		static extern void rc_package_update_set_package_url(IntPtr raw, string value);
 
-		public uint Hid { 
+		public string PackageUrl { 
 			get {
-				uint raw_ret = rc_package_update_get_hid(Handle);
-				uint ret = raw_ret;
+				IntPtr raw_ret = rc_package_update_get_package_url(Handle);
+				string ret = Marshal.PtrToStringAnsi(raw_ret);
 				return ret;
 			}
 			set {
-				rc_package_update_set_hid(Handle, value);
-			}
-		}
-
-		[DllImport("libredcarpet")]
-		static extern uint rc_package_update_get_signature_size(IntPtr raw);
-
-		[DllImport("libredcarpet")]
-		static extern void rc_package_update_set_signature_size(IntPtr raw, uint value);
-
-		public uint SignatureSize { 
-			get {
-				uint raw_ret = rc_package_update_get_signature_size(Handle);
-				uint ret = raw_ret;
-				return ret;
-			}
-			set {
-				rc_package_update_set_signature_size(Handle, value);
+				rc_package_update_set_package_url(Handle, value);
 			}
 		}
 
@@ -211,6 +131,60 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
+		static extern IntPtr rc_package_update_copy(IntPtr raw);
+
+		public RC.PackageUpdate Copy() {
+			IntPtr raw_ret = rc_package_update_copy(Handle);
+			RC.PackageUpdate ret;
+			if (raw_ret == IntPtr.Zero)
+				ret = null;
+			else
+				ret = new RC.PackageUpdate(raw_ret);
+			return ret;
+		}
+
+		[DllImport("libredcarpet")]
+		static extern uint rc_package_update_get_package_size(IntPtr raw);
+
+		[DllImport("libredcarpet")]
+		static extern void rc_package_update_set_package_size(IntPtr raw, uint value);
+
+		public uint PackageSize { 
+			get {
+				uint raw_ret = rc_package_update_get_package_size(Handle);
+				uint ret = raw_ret;
+				return ret;
+			}
+			set {
+				rc_package_update_set_package_size(Handle, value);
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern IntPtr rc_package_update_get_signature_url(IntPtr raw);
+
+		[DllImport("libredcarpet")]
+		static extern void rc_package_update_set_signature_url(IntPtr raw, string value);
+
+		public string SignatureUrl { 
+			get {
+				IntPtr raw_ret = rc_package_update_get_signature_url(Handle);
+				string ret = Marshal.PtrToStringAnsi(raw_ret);
+				return ret;
+			}
+			set {
+				rc_package_update_set_signature_url(Handle, value);
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern void rc_package_update_free(IntPtr raw);
+
+		public new void Free() {
+			rc_package_update_free(Handle);
+		}
+
+		[DllImport("libredcarpet")]
 		static extern IntPtr rc_package_update_get_md5sum(IntPtr raw);
 
 		[DllImport("libredcarpet")]
@@ -228,16 +202,63 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_package_update_copy(IntPtr raw);
+		static extern IntPtr rc_package_update_slist_sort(IntPtr old_slist);
 
-		public RC.PackageUpdate Copy() {
-			IntPtr raw_ret = rc_package_update_copy(Handle);
-			RC.PackageUpdate ret;
-			if (raw_ret == IntPtr.Zero)
-				ret = null;
-			else
-				ret = new RC.PackageUpdate(raw_ret);
+		public static GLib.SList SlistSort(GLib.SList old_slist) {
+			IntPtr raw_ret = rc_package_update_slist_sort(old_slist.Handle);
+			GLib.SList ret = new GLib.SList(raw_ret);
 			return ret;
+		}
+
+		[DllImport("libredcarpet")]
+		static extern uint rc_package_update_get_hid(IntPtr raw);
+
+		[DllImport("libredcarpet")]
+		static extern void rc_package_update_set_hid(IntPtr raw, uint value);
+
+		public uint Hid { 
+			get {
+				uint raw_ret = rc_package_update_get_hid(Handle);
+				uint ret = raw_ret;
+				return ret;
+			}
+			set {
+				rc_package_update_set_hid(Handle, value);
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern IntPtr rc_package_update_get_license(IntPtr raw);
+
+		[DllImport("libredcarpet")]
+		static extern void rc_package_update_set_license(IntPtr raw, string value);
+
+		public string License { 
+			get {
+				IntPtr raw_ret = rc_package_update_get_license(Handle);
+				string ret = Marshal.PtrToStringAnsi(raw_ret);
+				return ret;
+			}
+			set {
+				rc_package_update_set_license(Handle, value);
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern uint rc_package_update_get_signature_size(IntPtr raw);
+
+		[DllImport("libredcarpet")]
+		static extern void rc_package_update_set_signature_size(IntPtr raw, uint value);
+
+		public uint SignatureSize { 
+			get {
+				uint raw_ret = rc_package_update_get_signature_size(Handle);
+				uint ret = raw_ret;
+				return ret;
+			}
+			set {
+				rc_package_update_set_signature_size(Handle, value);
+			}
 		}
 
 		public PackageUpdate(IntPtr raw) : base(raw) {}
