@@ -1,3 +1,16 @@
+2001-09-13  Ian Peters  <itp@ximian.com>
+
+	* src/rc-rpm-helper-with-rpmio-and-rpmdb.so: another shared
+	object, works with RPM 4.0.3
+
+	* src/Makefile.am: dist and install
+	rc-rpm-helper-with-rpmio-and-rpmdb.so
+
+	* src/rc-rpmman.c, src/rc-rpmman.h: conditionalize a lot of stuff
+	on both the API and ABI version using both the preprocessor and
+	runtime checks.  Add the third shared object to the list of things
+	we attempt to dlopen.
+
 2001-08-27  Joe Shaw  <joe@ximian.com>
 
 	* rc-deps-util.c (rc_dep_string_to_or_dep_slist): Fix a crash that

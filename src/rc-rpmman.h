@@ -50,9 +50,11 @@ struct _RCRpmman {
 
     gchar *rpmroot;
 
-    gint major_version;
-    gint minor_version;
-    gint micro_version;
+    guint major_version;
+    guint minor_version;
+    guint micro_version;
+
+    guint version;
 
 #ifndef STATIC_RPM
     GModule *rpm_lib;
@@ -84,9 +86,15 @@ struct _RCRpmman {
     void (*rpmtransRemovePackage)(rpmTransactionSet, int);
     rpmTransactionSet (*rpmtransCreateSet)(rpmdb, const char *);
     void (*rpmtransFree)(rpmTransactionSet);
+#if RPM_VERSION >= 040003
+    int (*rpmdepCheck)(rpmTransactionSet, rpmDependencyConflict *,
+                       int *);
+    void (*rpmdepFreeConflicts)(rpmDependencyConflict, int);
+#else
     int (*rpmdepCheck)(rpmTransactionSet, struct rpmDependencyConflict **,
                        int *);
     void (*rpmdepFreeConflicts)(struct rpmDependencyConflict *, int);
+#endif
     int (*rpmdepOrder)(rpmTransactionSet);
     int (*rpmRunTransactions)(rpmTransactionSet, rpmCallbackFunction,
                               void *, rpmProblemSet, rpmProblemSet *,
@@ -97,7 +105,11 @@ struct _RCRpmman {
     int (*rpmReadConfigFiles)(const char *, const char *);
     int (*rpmdbOpen)(const char *, rpmdb *, int, int);
     void (*rpmdbClose)(rpmdb);
+#if RPM_VERSION >= 040002
     const char * (*rpmProblemString)(rpmProblem);
+#else
+    const char * (*rpmProblemString)(rpmProblem *);
+#endif
     int (*rpmGetRpmlibProvides)(char ***, int **, char ***);
 
     /*

@@ -25,6 +25,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <ctype.h>
+#include <libgen.h>
 
 #include <rpm/rpmlib.h>
 
@@ -450,7 +451,11 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     rpmProblemSet probs = NULL;
     InstallState state;
     RCPackageSList *iter;
+#if RPM_VERSION >= 040003
+    rpmDependencyConflict conflicts;
+#else
     struct rpmDependencyConflict *conflicts;
+#endif
     int transaction_flags, problem_filter;
     RCRpmman *rpmman = RC_RPMMAN (packman);
 
@@ -505,7 +510,11 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     }
 
     if (rpmman->rpmdepCheck (transaction, &conflicts, &rc) || rc) {
+#if RPM_VERSION >= 040003
+        rpmDependencyConflict conflict = conflicts;
+#else
         struct rpmDependencyConflict *conflict = conflicts;
+#endif
         guint count;
         GString *dep_info = g_string_new ("");
 
@@ -619,12 +628,35 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
 #endif
     } else if (rc > 0) {
         guint count;
+#if RPM_VERSION >= 040002
+        rpmProblem problem = probs->probs;
+#else
         rpmProblem *problem = probs->probs;
+#endif
         GString *report = g_string_new ("");
 
         for (count = 0; count < probs->numProblems; count++) {
-            g_string_sprintfa (report, "\n%s",
-                               rpmman->rpmProblemString (*problem));
+#if RPM_VERSION >= 040002
+            if (rpmman->version >= 040002) {
+                g_string_sprintfa (
+                    report, "\n%s",
+                    rpmman->rpmProblemString (problem));
+            } else {
+                g_string_sprintfa (
+                    report, "\n%s",
+                    rpmman->rpmProblemString (*((rpmProblem *)problem)));
+            }
+#else
+            if (rpmman->version >= 040002) {
+                g_string_sprintfa (
+                    report, "\n%s",
+                    rpmman->rpmProblemString ((rpmProblem *)&problem));
+            } else {
+                g_string_sprintfa (
+                    report, "\n%s",
+                    rpmman->rpmProblemString (problem));
+            }
+#endif
             problem++;
         }
 
@@ -2358,10 +2390,11 @@ parse_rpm_version (RCRpmman *rpmman, const gchar *version)
 {
     const char *nptr = version;
     char *endptr = NULL;
+    char *tmp;
 
-    rpmman->major_version = -1;
-    rpmman->minor_version = -1;
-    rpmman->micro_version = -1;
+    rpmman->major_version = 0;
+    rpmman->minor_version = 0;
+    rpmman->micro_version = 0;
 
     if (nptr && *nptr) {
         rpmman->major_version = strtoul (nptr, &endptr, 10);
@@ -2380,6 +2413,11 @@ parse_rpm_version (RCRpmman *rpmman, const gchar *version)
     if (nptr && *nptr) {
         rpmman->micro_version = strtoul (nptr, &endptr, 10);
     }
+
+    tmp = g_strdup_printf ("%02d%02d%02d", rpmman->major_version,
+                           rpmman->minor_version, rpmman->micro_version);
+    rpmman->version = atoi (tmp);
+    g_free (tmp);
 }
 
 static void
@@ -2415,6 +2453,15 @@ rc_rpmman_init (RCRpmman *obj)
 
     if (!obj->rpm_lib) {
         so_file = g_strdup_printf ("%s/rc-rpm-helper-with-rpmio.so",
+                                   rc_libdir);
+
+        obj->rpm_lib = g_module_open (so_file, 0);
+
+        g_free (so_file);
+    }
+
+    if (!obj->rpm_lib) {
+        so_file = g_strdup_printf ("%s/rc-rpm-helper-with-rpmio-and-rpmdb.so",
                                    rc_libdir);
 
         obj->rpm_lib = g_module_open (so_file, 0);
