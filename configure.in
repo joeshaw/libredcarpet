@@ -85,7 +85,7 @@ if test "x$enable_backend_rpm3" = "xyes"; then
     RPM_BZ2=""
   fi
 
-  RPMLIB_LIBS="-L$RPM_PREFIX/lib -Wl,-Bstatic -lrpm -lpopt -Wl,-Bdynamic -lz $RPM_BZ2"
+  RPMLIB_LIBS="-L$RPM_PREFIX/lib -Wl,-Bstatic -lrpm -Wl,-Bdynamic -lpopt -lz $RPM_BZ2"
   RPMLIB_CFLAGS="-I$RPM_PREFIX/include/rpm"
 
   AM_CONDITIONAL(ENABLE_RPM, true)
@@ -122,7 +122,7 @@ if test "x$enable_backend_rpm4" = "xyes"; then
     AC_MSG_ERROR(broken misc.h, see README-ugid)
   fi
   AC_CHECK_LIB(db-3.1, db_version,,, -ldb1) dnl what?
-  RPMLIB_LIBS="-L$RPM_PREFIX/lib -Wl,-Bstatic -lrpm -lrpmio -lpopt -Wl,-Bdynamic -lz -lbz2"
+  RPMLIB_LIBS="-L$RPM_PREFIX/lib -Wl,-Bstatic -lrpm -lrpmio -Wl,-Bdynamic -lpopt -lz -lbz2"
   RPMLIB_CFLAGS="-I$RPM_PREFIX/include/rpm"
 
   AM_CONDITIONAL(ENABLE_RPM, true)
