@@ -42,11 +42,7 @@ rc_debman_parse_version (gchar *input, guint32 *epoch, gchar **version,
 
     gchar *tmp;
 
-    fprintf (stderr, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n");
-
     RC_ENTRY;
-
-    fprintf (stderr, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n");
 
     *epoch = 0;
     *version = NULL;
