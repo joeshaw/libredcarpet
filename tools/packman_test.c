@@ -8,8 +8,8 @@
 #include <rc-distman.h>
 
 void pkg_installed_cb (RCPackman *, gchar *, gpointer);
-void install_done_cb (RCPackman *, RCPackmanOperationStatus);
-void remove_done_cb (RCPackman *, RCPackmanOperationStatus);
+void install_done_cb (RCPackman *);
+void remove_done_cb (RCPackman *);
 
 void
 pkg_installed_cb (RCPackman *hp, gchar *file, gpointer data)
@@ -18,33 +18,27 @@ pkg_installed_cb (RCPackman *hp, gchar *file, gpointer data)
 }
 
 void
-install_done_cb (RCPackman *hp, RCPackmanOperationStatus status)
+install_done_cb (RCPackman *hp)
 {
-    switch (status) {
-    case RC_PACKMAN_COMPLETE:
-	printf ("Installation complete.\n");
-	break;
-    case RC_PACKMAN_FAIL:
-	printf ("Installation failed: %s\n", rc_packman_get_reason (hp));
-	break;
-    case RC_PACKMAN_ABORT:
-	printf ("Installation aborted: %s\n", rc_packman_get_reason (hp));
-	break;
+    switch (rc_packman_get_error (hp)) {
+    case RC_PACKMAN_ERROR_NONE:
+        printf ("Installation complete.\n");
+        break;
+    default:
+        printf ("Installation error: %s\n", rc_packman_get_reason (hp));
+        break;
     }
 }
 
 void
-remove_done_cb (RCPackman *hp, RCPackmanOperationStatus status)
+remove_done_cb (RCPackman *hp)
 {
-    switch (status) {
-    case RC_PACKMAN_COMPLETE:
+    switch (rc_packman_get_error (hp)) {
+    case RC_PACKMAN_ERROR_NONE:
 	printf ("Remove complete.\n");
 	break;
-    case RC_PACKMAN_FAIL:
-	printf ("Remove failed: %s\n", rc_packman_get_reason (hp));
-	break;
-    case RC_PACKMAN_ABORT:
-	printf ("Remove aborted: %s\n", rc_packman_get_reason (hp));
+    default:
+	printf ("Remove error: %s\n", rc_packman_get_reason (hp));
 	break;
     }
 }
