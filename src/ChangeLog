@@ -1,5 +1,10 @@
 2003-09-22  Joe Shaw  <joe@ximian.com>
 
+	* rc-world-local-dir.c (rc_world_local_dir_assemble_fn): Use else
+	ifs, since we can only match one token at a time.  Fix a thinko
+	where the alias was always being set to the directory's basename
+	and not the passed-in alias.
+
 	* rc-world-multi.c (rc_world_multi_add_subworld): Add some code to
 	check to see if any other services have the same name and then
 	differentiate them with a number.  Kind of ugly code, could
