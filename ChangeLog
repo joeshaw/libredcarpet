@@ -1,3 +1,7 @@
+2005-04-06  James Willcox  <james@ximian.com>
+
+	* configure.in: set GLIB_SHARP_LIBDIR
+
 2004-10-29  James Willcox  <james@ximian.com>
 
 	* configure.in:

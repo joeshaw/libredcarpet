@@ -281,6 +281,9 @@ if test "x$enable_mono" != xno; then
   if test "x$MONODOC" = "xno"; then
 	  AC_MSG_ERROR([You need to install gacutil])
   fi
+
+  GLIB_SHARP_LIBDIR=`pkg-config --variable=libdir gtk-sharp`
+  AC_SUBST(GLIB_SHARP_LIBDIR)
 fi
 
 AM_CONDITIONAL(ENABLE_MONO, test "$enable_mono" = "yes")
