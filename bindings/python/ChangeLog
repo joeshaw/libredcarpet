@@ -1,5 +1,9 @@
 2003-09-03  James Willcox  <james@ximian.com>
 
+	* Makefile.am:  Add headers to the SOURCES
+
+2003-09-03  James Willcox  <james@ximian.com>
+
 	* channel.c: (PyChannel_set_system):  Added
 	* packman.c: (PyPackman_register):
 	* resolver.c: (PyResolver_set_world), (PyResolver_init):
