@@ -1,5 +1,12 @@
 2001-04-23  Ian Peters  <itp@ximian.com>
 
+	* rc-rpmman.c: if the provide we read out of the
+	RPMTAG_PROVIDENAME is the same as the name of the package we're
+	in, don't include the provide, since it looks like rpmlib picked
+	up the same hack we did.
+
+2001-04-23  Ian Peters  <itp@ximian.com>
+
 	* rc-rpmman.c: add some stupid /opt/gnome SuSE directories
 
 2001-04-23  Vladimir Vukicevic  <vladimir@ximian.com>

@@ -1264,12 +1264,14 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
                             (void **)&names, &count);
 
     for (i = 0; i < count; i++) {
-        dep = rc_package_dep_item_new (names[i], 0, NULL, NULL,
-                                       RC_RELATION_ANY);
+        if (strcmp (names[i], package->spec.name) != 0) {
+            dep = rc_package_dep_item_new (names[i], 0, NULL, NULL,
+                                           RC_RELATION_ANY);
 
-        depl = g_slist_append (NULL, dep);
+            depl = g_slist_append (NULL, dep);
 
-        package->provides = g_slist_append (package->provides, depl);
+            package->provides = g_slist_append (package->provides, depl);
+        }
     }
 
     /* Only have to free the char** ones */
