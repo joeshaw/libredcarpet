@@ -557,7 +557,7 @@ sax_end_element (void *data, const xmlChar *name)
         }
         else {
             if (rc_arch_get_compat_score (
-                    state->compat_arch_list, state->cur_distro->arch) &&
+                    state->compat_arch_list, state->cur_distro->arch) > -1 &&
                 distro_check_eval_list (state->cur_checks))
             {
                 state->our_distro = state->cur_distro;

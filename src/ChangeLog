@@ -1,3 +1,9 @@
+2002-09-20  Joe Shaw  <joe@ximian.com>
+
+	* rc-distro.c (sax_end_element): Check to make sure the arch score
+	is greater than -1, not non-zero.  I guess Ian would have never
+	caught this bug with his crappy processor.
+
 2002-09-19  Joe Shaw  <joe@ximian.com>
 
 	* rc-world-subscriptions.c (rc_world_export_subscriptions_to_xml):
