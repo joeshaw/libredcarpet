@@ -89,7 +89,7 @@ gint rc_package_spec_compare (gconstpointer ptra, gconstpointer ptrb)
     gint ret;
 
 #if DEBUG > 40
-    fprintf (stderr, "(%s-%d:%s-%s vs. %s-%d:%s-%s)", a->name, a->epoch,
+    rc_debug (RC_DEBUG_LEVEL_DEBUG, "(%s-%d:%s-%s vs. %s-%d:%s-%s)", a->name, a->epoch,
              a->version, a->release, b->name, b->epoch,
              b->version, b->release);
 #endif
@@ -97,7 +97,7 @@ gint rc_package_spec_compare (gconstpointer ptra, gconstpointer ptrb)
         ret = strcmp (a->name ? a->name : "", b->name ? b->name : "");
         if (ret) {
 #if DEBUG > 40
-            fprintf (stderr, " -> N %s\n", ret > 0 ? ">" : "<");
+            rc_debug (RC_DEBUG_LEVEL_DEBUG, " -> N %s\n", ret > 0 ? ">" : "<");
 #endif
             return ret;
         }
@@ -106,7 +106,7 @@ gint rc_package_spec_compare (gconstpointer ptra, gconstpointer ptrb)
     if (a->epoch != b->epoch) {
         ret = a->epoch - b->epoch;
 #if DEBUG > 40
-        fprintf (stderr, " -> E %s\n", ret > 0 ? ">" : "<");
+        rc_debug (RC_DEBUG_LEVEL_DEBUG, " -> E %s\n", ret > 0 ? ">" : "<");
 #endif
         return ret;
     }
@@ -115,7 +115,7 @@ gint rc_package_spec_compare (gconstpointer ptra, gconstpointer ptrb)
         ret = vercmp (a->version ? a->version : "", b->version ? b->version : "");
         if (ret) {
 #if DEBUG > 40
-            fprintf (stderr, " -> V %s\n", ret > 0 ? ">" : "<");
+            rc_debug (RC_DEBUG_LEVEL_DEBUG, " -> V %s\n", ret > 0 ? ">" : "<");
 #endif
             return ret;
         }
@@ -125,14 +125,14 @@ gint rc_package_spec_compare (gconstpointer ptra, gconstpointer ptrb)
         ret = vercmp (a->release ? a->release : "", b->release ? b->release : "");
         if (ret) {
 #if DEBUG > 40
-            fprintf (stderr, " -> R %s\n", ret > 0 ? ">" : "<");
+            rc_debug (RC_DEBUG_LEVEL_DEBUG, " -> R %s\n", ret > 0 ? ">" : "<");
 #endif
             return ret;
         }
     }
 
 #if DEBUG > 40
-    fprintf (stderr, " -> ==\n");
+    rc_debug (RC_DEBUG_LEVEL_DEBUG, " -> ==\n");
 #endif
 
     /* If everything passed, then they're equal */

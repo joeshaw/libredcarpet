@@ -182,7 +182,7 @@ rc_package_dep_item_verify_relation (RCPackageDepItem *dep,
     g_assert (spec);
 
 #if DEBUG > 10
-    fprintf (stderr, "--> Checking: %s-%d:%s-%s (rel %d) vs. %s-%d:%s-%s: ",
+    rc_debug (RC_DEBUG_LEVEL_DEBUG, "--> Checking: %s-%d:%s-%s (rel %d) vs. %s-%d:%s-%s: ",
              dep->spec.name, dep->spec.epoch, dep->spec.version, dep->spec.release,
              dep->relation, spec->name, spec->epoch, spec->version, spec->release);
 #endif
@@ -204,7 +204,7 @@ rc_package_dep_item_verify_relation (RCPackageDepItem *dep,
         strcmp (dep->spec.name, spec->name) == 0)
     {
 #if DEBUG > 10
-        fprintf (stderr, "FAIL (pass) NONE relation\n");
+        rc_debug (RC_DEBUG_LEVEL_DEBUG, "FAIL (pass) NONE relation\n");
 #endif
         return FALSE;
     }
@@ -212,7 +212,7 @@ rc_package_dep_item_verify_relation (RCPackageDepItem *dep,
     if (dep->spec.version == NULL && dep->spec.release == NULL) {
         if (strcmp (dep->spec.name, spec->name) == 0) {
 #if DEBUG > 10
-            fprintf (stderr, "PASS (nullrv)\n");
+            rc_debug (RC_DEBUG_LEVEL_DEBUG, "PASS (nullrv)\n");
 #endif
             return TRUE;
         }
@@ -223,7 +223,7 @@ rc_package_dep_item_verify_relation (RCPackageDepItem *dep,
         /* If it's the same name and the relation isn't looking for a version less than blah */
         if ((strcmp (dep->spec.name, spec->name) == 0) && !(unweak_rel & RC_RELATION_LESS)) {
 #if DEBUG > 10
-            fprintf (stderr, "PASS (nullrv)\n");
+            rc_debug (RC_DEBUG_LEVEL_DEBUG, "PASS (nullrv)\n");
 #endif
             return TRUE;
         } else {
@@ -261,14 +261,14 @@ rc_package_dep_item_verify_relation (RCPackageDepItem *dep,
      */
     if (unweak_rel == RC_RELATION_ANY) {
 #if DEBUG > 10
-            fprintf (stderr, "PASS\n");
+            rc_debug (RC_DEBUG_LEVEL_DEBUG, "PASS\n");
 #endif
         return TRUE;
     }
 
     if ((unweak_rel & RC_RELATION_EQUAL) && (compare_ret == 0)) {
 #if DEBUG > 10
-            fprintf (stderr, "PASS\n");
+            rc_debug (RC_DEBUG_LEVEL_DEBUG, "PASS\n");
 #endif
         return TRUE;
     }
@@ -277,19 +277,19 @@ rc_package_dep_item_verify_relation (RCPackageDepItem *dep,
      */
     if ((unweak_rel & RC_RELATION_GREATER) && (compare_ret < 0)) {
 #if DEBUG > 10
-            fprintf (stderr, "PASS\n");
+            rc_debug (RC_DEBUG_LEVEL_DEBUG, "PASS\n");
 #endif
         return TRUE;
     }
     if ((unweak_rel & RC_RELATION_LESS) && (compare_ret > 0)) {
 #if DEBUG > 10
-            fprintf (stderr, "PASS\n");
+            rc_debug (RC_DEBUG_LEVEL_DEBUG, "PASS\n");
 #endif
         return TRUE;
     }
 
 #if DEBUG > 10
-            fprintf (stderr, "FAIL\n");
+            rc_debug (RC_DEBUG_LEVEL_DEBUG, "FAIL\n");
 #endif
     return FALSE;
 }
@@ -390,7 +390,7 @@ gint rc_package_dep_item_is_subset (RCPackageDepItem *a, RCPackageDepItem *b)
     gint ret;
     ret = rc_package_dep_item_is_subset_real (a, b);
 #if 0
-    fprintf (stderr, "IS_SUBSET: A: %s B: %s  --> %d\n", debug_rc_package_dep_item_str (a),
+    rc_debug (RC_DEBUG_LEVEL_DEBUG, "IS_SUBSET: A: %s B: %s  --> %d\n", debug_rc_package_dep_item_str (a),
              debug_rc_package_dep_item_str (b), ret);
 #endif
     return ret;

@@ -203,6 +203,12 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
         char *tmp;
         RCChannel *channel;
 
+        /* Skip comments */
+        if (node->type == XML_COMMENT_NODE) {
+            node = node->next;
+            continue;
+        }
+
         channel = rc_channel_new();
 
         channel->name = xml_get_prop(node, "name");
