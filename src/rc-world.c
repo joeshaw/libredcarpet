@@ -431,7 +431,7 @@ foreach_package_cb (gpointer key, gpointer val, gpointer user_data)
     /* FIXME: we should filter out dup uninstalled packages. */
 
     for (iter = slist; iter != NULL; iter = iter->next) {
-        RCPackage *package = slist->data;
+        RCPackage *package = iter->data;
         if (package && channel_match (info->channel, package->channel)) {
             if (info->fn)
                 info->fn (package, info->user_data);

@@ -1,3 +1,8 @@
+2002-03-12  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-world.c (foreach_package_cb): Doh!  We weren't using the
+	iter variable.
+
 2002-03-12  Joe Shaw  <joe@ximian.com>
 
 	* rc-packman-private.h: Move RC_PACKMAN_CAP_* out of here, move
