@@ -1886,11 +1886,11 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
            gchar **payload_filename, guint8 **md5sum, guint32 *size)
 {
     FD_t rpm_fd = NULL;
-    int signature_fd;
-    int payload_fd;
+    int signature_fd = -1;
+    int payload_fd = -1;
     struct rpmlead lead;
-    Header signature_header;
-    gchar *buf;
+    Header signature_header = NULL;
+    char *buf = NULL;
     guint32 count = 0;
     guchar buffer[128];
     ssize_t num_bytes;
@@ -1899,29 +1899,23 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
     if (!package->package_filename) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "no file name specified");
-
-        return (FALSE);
+        goto ERROR;
     }
 
     rpm_fd = rc_rpm_open (rpmman, package->package_filename, "r.fdio",
                           O_RDONLY, 0);
 
-    /* if (!rpm_fd || rpmman->Ferror (rpm_fd)) { */
     if (rpm_fd == NULL) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "unable to open %s", package->package_filename);
-
-        return (FALSE);
+        goto ERROR;
     }
 
     if (rpmman->readLead (rpm_fd, &lead)) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "unable to read from %s",
                               package->package_filename);
-
-        rc_rpm_close (rpmman, rpm_fd);
-
-        return (FALSE);
+        goto ERROR;
     }
 
     if (rpmman->rpmReadSignature (rpm_fd, &signature_header,
@@ -1930,8 +1924,7 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
     {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "failed to read RPM signature section");
-
-        return (FALSE);
+        goto ERROR;
     }
 
     rpmman->headerGetEntry (signature_header, RPMSIGTAG_GPG, NULL,
@@ -1940,43 +1933,31 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
     if (count > 0) {
         if ((signature_fd = g_file_open_tmp ("rpm-sig-XXXXXX",
                                              signature_filename,
-                                             NULL)) == -1) {
+                                             NULL)) == -1)
+        {
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "failed to create temporary signature file");
-
-            rpmman->headerFree (signature_header);
-
-            rc_rpm_close (rpmman, rpm_fd);
-
-            return (FALSE);
+            goto ERROR;
         }
 
         if (!rc_write (signature_fd, buf, count)) {
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "failed to write temporary signature file");
-
-            rpmman->headerFree (signature_header);
-
-            rc_rpm_close (rpmman, rpm_fd);
-
-            return (FALSE);
+            goto ERROR;
         }
 
-        close (signature_fd);
+        rc_close (signature_fd);
+        signature_fd = -1;
     } else {
         *signature_filename = NULL;
     }
 
     if ((payload_fd = g_file_open_tmp ("rpm-data-XXXXXX",
-                                       payload_filename, NULL)) == -1) {
+                                       payload_filename, NULL)) == -1)
+    {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "failed to create temporary payload file");
-
-        rpmman->headerFree (signature_header);
-
-        g_free (*payload_filename);
-
-        *payload_filename = NULL;
+        goto ERROR;
     } else {
         while ((num_bytes = rc_rpm_read (rpmman, buffer, sizeof (buffer[0]),
                                          sizeof (buffer), rpm_fd)) > 0)
@@ -1985,21 +1966,16 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
                 rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                       "unable to write temporary payload "
                                       "file");
-
-                rc_close (payload_fd);
-
-                rpmman->headerFree (signature_header);
-
-                rc_rpm_close (rpmman, rpm_fd);
-
-                return (FALSE);
+                goto ERROR;
             }
         }
 
         rc_close (payload_fd);
+        payload_fd = -1;
     }
 
     rc_rpm_close (rpmman, rpm_fd);
+    rpm_fd = NULL;
 
     count = 0;
 
@@ -2008,9 +1984,10 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
 
     if (count > 0) {
         *md5sum = g_new (guint8, count);
-
         memcpy (*md5sum, buf, count);
-    }
+        free (buf);
+    } else
+        *md5sum = NULL;
 
     count = 0;
 
@@ -2019,13 +1996,35 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
 
     if (count > 0) {
         *size = *((guint32 *)buf);
-    } else {
+    } else
         *size = 0;
-    }
 
     rpmman->headerFree (signature_header);
+    signature_header = NULL;
 
-    return (TRUE);
+    return TRUE;
+
+  ERROR:
+    if (rpm_fd)
+        rc_rpm_close (rpmman, rpm_fd);
+    if (signature_fd != -1)
+        rc_close (signature_fd);
+    if (payload_fd != -1)
+        rc_close (payload_fd);
+    if (signature_header)
+        rpmman->headerFree (signature_header);
+    if (*signature_filename) {
+        unlink (*signature_filename);
+        g_free (*signature_filename);
+        *signature_filename = NULL;
+    }
+    if (*payload_filename) {
+        unlink (*payload_filename);
+        g_free (*payload_filename);
+        *payload_filename = NULL;
+    }
+
+    return FALSE;
 }
 
 static RCVerificationSList *
