@@ -1,3 +1,10 @@
+2001-01-29  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c, rc-deps.h: Oops. count /correctly/ for the recursion.
+	Also add notification of abort.
+
+	* rc-pretty-name.c: get rid of debug fprintf
+
 2001-01-29  Ian Peters  <itp@ximian.com>
 
 	* rc-debman.c: pass some carefully chosen --force-foo options to

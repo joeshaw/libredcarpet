@@ -118,7 +118,6 @@ rc_pretty_name_parse_xml (gchar *tbuf, gint compressed_length)
                 while (packiter) {
                     gchar *pnm = (gchar *) packiter->data;
                     g_hash_table_insert (rc_pretty_name_hash, pnm, pretty_name);
-                    fprintf (stderr, "pretty name: '%s' for package '%s'\n", pretty_name, pnm);
                     packiter = packiter->next;
                 }
                 g_slist_free (package_names_list);
