@@ -60,9 +60,7 @@ Command commands[] = {
     { "list", (command_func) packman_test_list,
       "List the contents of the transaction.", "list" },
     { "query", (command_func) packman_test_query,
-      "Query a package on the system.",
-      "query [<name> [epoch=<epoch>] [version=<version>] [release=<release>]]"
-    },
+      "Query a package on the system.", "query <name>" },
     { "query_all", (command_func) packman_test_query_all,
       "Query all of the packages on the system.", "query_all" },
     { "query_file", (command_func) packman_test_query_file,
@@ -291,84 +289,31 @@ pretty_print_pkg (RCPackage *pkg)
     }
 }
 
-static RCPackage *
-packman_test_make_pkg (RCPackman *p, char *name, char *line)
-{
-    RCPackage *pkg;
-
-    pkg = rc_package_new ();
-    pkg->spec.name = g_strdup (name);
-
-    while (line) {
-        gchar **parts;
-        char *attrib;
-
-        line = pop_token (line, &attrib);
-        parts = g_strsplit (attrib, "=", 1);
-
-        if (!parts[1]) {
-            packman_test_print (
-                PACKMAN_TEST_ERROR,
-                "must provide attributes as <attribute>=<value>");
-            g_strfreev (parts);
-            rc_package_unref (pkg);
-            return (NULL);
-        }
-
-        if (!(strcmp (parts[0], "epoch"))) {
-            pkg->spec.epoch = g_strtod (parts[1], NULL);
-            g_strfreev (parts);
-            continue;
-        }
-
-        if (!(strcmp (parts[0], "version"))) {
-            pkg->spec.version = g_strdup (parts[1]);
-            g_strfreev (parts);
-            continue;
-        }
-
-        if (!(strcmp (parts[0], "release"))) {
-            pkg->spec.release = g_strdup (parts[1]);
-            g_strfreev (parts);
-            continue;
-        }
-
-        packman_test_print (
-            PACKMAN_TEST_ERROR,
-            "unknown attribute \"%s\"", parts[0]);
-        g_strfreev (parts);
-        rc_package_unref (pkg);
-        return (NULL);
-    }
-
-    pkg = rc_packman_query (p, pkg);
-
-    return (pkg);
-}
-
 static void
 packman_test_query (RCPackman *p, char *line)
 {
-    RCPackage *pkg;
+    RCPackageSList *packages;
+    GSList *iter;
     char *name;
 
     CHECK_PARAMS (line, "query");
 
     line = pop_token (line, &name);
 
-    pkg = packman_test_make_pkg (p, name, line);
+    packages = rc_packman_query (p, name);
 
-    if (!pkg) {
+    if (!packages) {
+        printf ("No package matching name \"%s\" found\n", name);
         return;
     }
 
-    if (pkg->installed) {
-        pretty_print_pkg (pkg);
-    } else {
-        printf ("Package \"%s\" not found\n", pkg->spec.name);
+    for (iter = packages; iter; iter = iter->next) {
+        RCPackage *package = (RCPackage *)(iter->data);
+
+        pretty_print_pkg (package);
     }
 
-    rc_package_unref (pkg);
+    rc_package_slist_unref (packages);
 }
 
 static void
@@ -512,23 +457,28 @@ packman_test_install (RCPackman *p, char *line)
 static void
 packman_test_remove (RCPackman *p, char *line)
 {
-    RCPackage *pkg;
+    RCPackageSList *packages;
+    GSList *iter;
     char *name;
 
     CHECK_PARAMS (line, "remove");
 
     line = pop_token (line, &name);
 
-    pkg = packman_test_make_pkg (p, name, line);
+    packages = rc_packman_query (p, name);
 
-    if (pkg->installed) {
-        transaction.remove_pkgs = g_slist_append (transaction.remove_pkgs,
-                                                  pkg);
-    } else {
+    if (!packages) {
         packman_test_print (
             PACKMAN_TEST_ERROR,
-            "package \"%s\" is not installed", pkg->spec.name);
-        rc_package_unref (pkg);
+            "package \"%s\" is not installed", name);
+        return;
+    }
+
+    for (iter = packages; iter; iter = iter->next) {
+        RCPackage *package = (RCPackage *)(iter->data);
+
+        transaction.remove_pkgs = g_slist_prepend (transaction.remove_pkgs,
+                                                   package);
     }
 }
 

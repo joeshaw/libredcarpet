@@ -87,8 +87,8 @@ struct _RCPackmanClass {
                                      RCPackageSList *install_packages,
                                      RCPackageSList *remove_packages);
 
-    RCPackage *(*rc_packman_real_query)(RCPackman *packman,
-                                        RCPackage *package);
+    RCPackageSList *(*rc_packman_real_query)(RCPackman *packman,
+                                             const char *name);
 
     RCPackage *(*rc_packman_real_query_file)(RCPackman *packman,
                                              const gchar *filename);
@@ -115,10 +115,7 @@ void rc_packman_transact (RCPackman *packman,
                           RCPackageSList *install_packages,
                           RCPackageSList *remove_packages);
 
-RCPackage *rc_packman_query (RCPackman *packman, RCPackage *package);
-
-RCPackageSList *rc_packman_query_list (RCPackman *packman,
-                                       RCPackageSList *packages);
+RCPackageSList *rc_packman_query (RCPackman *packman, const char *name);
 
 RCPackage *rc_packman_query_file (RCPackman *packman, const gchar *filename);
 

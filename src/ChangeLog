@@ -1,3 +1,17 @@
+2002-07-25  Ian Peters  <itp@ximian.com>
+
+	* rc-packman.c, rc-packman.h: rc_packman_query now returns an
+	RCPackageSList
+
+	* rc-rpmman.c: rc_rpmman_query, rc_rpmman_query_v3, and
+	rc_rpmman_query_v4 now all return an RCPackageSList.  Streamlined
+	rc_rpmman_read_header to now take an RCPackage, got rid of
+	rc_rpmman_check_match, and fixed rc_rpmman_transact to use _query
+	properly.
+
+	* rc-debman.c: rc_debman_query now returns an RCPackageSList.
+	rc_debman_find_file updated to use _query properly.
+
 2002-07-24  Peter Bowen  <pzb@ximian.com>
 
 	* rc-xml.c (rc_package_to_xml_node): Put the dependencies in a 

@@ -1,3 +1,8 @@
+2002-07-25  Ian Peters  <itp@ximian.com>
+
+	* packman_test.c: packman_test_query and packman_test_remove
+	updated to use rc_packman_query properly.
+
 2002-06-21  Jon Trowbridge  <trow@ximian.com>
 
 	* pkg_to_xml.c: Added.  A small tool to query packages and dump

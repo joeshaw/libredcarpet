@@ -262,8 +262,8 @@ rc_packman_transact (RCPackman *packman, RCPackageSList *install_packages,
     packman->priv->busy = FALSE;
 }
 
-RCPackage *
-rc_packman_query (RCPackman *packman, RCPackage *package)
+RCPackageSList *
+rc_packman_query (RCPackman *packman, const char *name)
 {
     RCPackmanClass *klass;
 
@@ -275,29 +275,7 @@ rc_packman_query (RCPackman *packman, RCPackage *package)
 
     g_assert (klass->rc_packman_real_query);
 
-    return (klass->rc_packman_real_query (packman, package));
-}
-
-RCPackageSList *
-rc_packman_query_list (RCPackman *packman, RCPackageSList *packages)
-{
-    RCPackageSList *iter;
-
-    g_return_val_if_fail (packman, NULL);
-
-    rc_packman_clear_error (packman);
-
-    for (iter = packages; iter; iter = iter->next) {
-        RCPackage *package = (RCPackage *)(iter->data);
-
-        rc_packman_query (packman, package);
-
-        if (rc_packman_get_error (packman)) {
-            return (packages);
-        }
-    }
-
-    return (packages);
+    return (klass->rc_packman_real_query (packman, name));
 }
 
 RCPackage *

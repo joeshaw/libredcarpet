@@ -2673,34 +2673,27 @@ rc_debman_query_all (RCPackman *packman)
     return packages;
 }
 
-static RCPackage *
-rc_debman_query (RCPackman *packman, RCPackage *package)
+static RCPackageSList *
+rc_debman_query (RCPackman *packman, const char *name)
 {
     RCDebman *debman = RC_DEBMAN (packman);
-    RCPackage *lpackage;
-
-    g_assert (package);
-    g_assert (package->spec.name);
+    RCPackage *package;
+    RCPackageSList *ret = NULL;
 
     if (!debman->priv->hash_valid) {
         rc_debman_query_all_real (packman);
     }
 
-    lpackage = g_hash_table_lookup (debman->priv->package_hash,
-                                    (gconstpointer) package->spec.name);
+    package = g_hash_table_lookup (debman->priv->package_hash,
+                                   (gconstpointer) name);
 
-    if (lpackage &&
-        (!package->spec.version ||
-         !strcmp (lpackage->spec.version, package->spec.version)) &&
-        (!package->spec.release ||
-         !strcmp (lpackage->spec.release, package->spec.release)))
-    {
-        rc_package_unref (package);
+    if (package) {
+        ret = g_slist_append (NULL, package);
 
-        return (rc_package_copy (lpackage));
-    } else {
-        return (package);
+        return ret;
     }
+
+    return NULL;
 }
 
 static RCPackage *
@@ -3053,22 +3046,21 @@ rc_debman_find_file (RCPackman *packman, const gchar *filename)
         close (fd);
 
         if (find_file_info.accept) {
+            RCPackageSList *packages;
             RCPackage *package;
+            gchar *name;
 
-            package = rc_package_new ();
-
-            package->spec.name = g_strndup (info_file->d_name, length - 5);
-
+            name = g_strndup (info_file->d_name, length - 5);
             closedir (info_dir);
 
-            package = rc_packman_query (packman, package);
+            packages = rc_packman_query (packman, name);
 
-            if (!package->installed) {
-                rc_package_unref (package);
-
-                return (NULL);
-            } else {
-                return (package);
+            if (!packages)
+                return NULL;
+            else {
+                package = packages->data;
+                g_slist_free (packages);
+                return package;
             }
         }
     }

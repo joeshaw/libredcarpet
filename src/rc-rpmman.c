@@ -581,19 +581,15 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     for (iter = install_packages; iter; iter = iter->next) {
         RCPackage *package = (RCPackage *)(iter->data);
         RCPackage *file_package, *inst_package;
+        RCPackageSList *packages;
+
+        /* FIXME: what is the logic here now?  Ugh ugh ugh */
 
         file_package =
             rc_packman_query_file (packman, package->package_filename);
 
-        inst_package = rc_package_copy (file_package);
-
-        inst_package->spec.epoch = 0;
-        g_free (inst_package->spec.version);
-        inst_package->spec.version = NULL;
-        g_free (inst_package->spec.release);
-        inst_package->spec.release = NULL;
-
-        inst_package = rc_packman_query (packman, inst_package);
+        packages = rc_packman_query (packman, file_package->spec.name);
+        inst_package = packages->data;
 
         if (inst_package->installed &&
             rc_packman_version_compare (
@@ -605,7 +601,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         }
 
         rc_package_unref (file_package);
-        rc_package_unref (inst_package);
+        rc_package_slist_unref (packages);
     }
 
     /* trust me */
@@ -1052,128 +1048,73 @@ rc_rpmman_section_to_package_section (const gchar *rpmsection)
    Just remember to free the header later! */
 
 static void
-rc_rpmman_read_header (RCRpmman *rpmman, Header header, gchar **name,
-                       gboolean *has_epoch, guint32 *epoch, gchar **version,
-                       gchar **release, RCPackageSection *section,
-                       guint32 *size, gchar **summary, gchar **description)
+rc_rpmman_read_header (RCRpmman *rpmman, Header header, RCPackage *package)
 {
     int_32 type, count;
+    char *tmpc;
+    guint32 *tmpi;
 
-    if (name) {
-        gchar *tmpname;
+    g_free (package->spec.name);
+    rpmman->headerGetEntry (header, RPMTAG_NAME, &type, (void **)&tmpc,
+                            &count);
+    if (count && (type == RPM_STRING_TYPE) && tmpc && tmpc[0])
+        package->spec.name = g_strdup (tmpc);
+    else
+        package->spec.name = NULL;
 
-        g_free (*name);
-        *name = NULL;
+    rpmman->headerGetEntry (header, RPMTAG_EPOCH, &type, (void **)&tmpi,
+                            &count);
+    if (count && (type == RPM_INT32_TYPE)) {
+        package->spec.epoch = *tmpi;
+        package->spec.has_epoch = 1;
+    } else
+        package->spec.has_epoch = 0;
 
-        rpmman->headerGetEntry (header, RPMTAG_NAME, &type, (void **)&tmpname,
-                                &count);
+    g_free (package->spec.version);
+    rpmman->headerGetEntry (header, RPMTAG_VERSION, &type, (void **)&tmpc,
+                            &count);
+    if (count && (type == RPM_STRING_TYPE) && tmpc && tmpc[0])
+        package->spec.version = g_strdup (tmpc);
+    else
+        package->spec.version = NULL;
 
-        if (count && (type == RPM_STRING_TYPE) && tmpname && tmpname[0]) {
-            *name = g_strdup (tmpname);
-        }
-    }
+    g_free (package->spec.release);
+    rpmman->headerGetEntry (header, RPMTAG_RELEASE, &type, (void **)&tmpc,
+                            &count);
+    if (count && (type == RPM_STRING_TYPE) && tmpc && tmpc[0])
+        package->spec.release = g_strdup (tmpc);
+    else
+        package->spec.release = NULL;
 
-    if (has_epoch && epoch) {
-        guint32 *tmpepoch;
+    rpmman->headerGetEntry (header, RPMTAG_GROUP, &type, (void **)&tmpc,
+                            &count);
+    if (count && (type == RPM_STRING_TYPE) && tmpc && tmpc[0])
+        package->section = rc_rpmman_section_to_package_section (tmpc);
+    else
+        package->section = RC_SECTION_MISC;
 
-        *epoch = 0;
+    rpmman->headerGetEntry (header, RPMTAG_SIZE, &type, (void **)&tmpi,
+                            &count);
+    if (count && (type == RPM_INT32_TYPE))
+        package->installed_size = *tmpi;
+    else
+        package->installed_size = 0;
 
-        rpmman->headerGetEntry (header, RPMTAG_EPOCH, &type,
-                                (void **)&tmpepoch, &count);
+    g_free (package->summary);
+    rpmman->headerGetEntry (header, RPMTAG_SUMMARY, &type, (void **)&tmpc,
+                            &count);
+    if (count && (type == RPM_STRING_TYPE) && tmpc && tmpc[0])
+        package->summary = g_strdup (tmpc);
+    else
+        package->summary = NULL;
 
-        if (count && (type == RPM_INT32_TYPE)) {
-            *epoch = *tmpepoch;
-            *has_epoch = 1;
-        } else {
-            *has_epoch = 0;
-        }
-    }
-
-    if (version) {
-        gchar *tmpver;
-
-        g_free (*version);
-        *version = NULL;
-
-        rpmman->headerGetEntry (header, RPMTAG_VERSION, &type,
-                                (void **)&tmpver, &count);
-
-        if (count && (type == RPM_STRING_TYPE) && tmpver && tmpver[0]) {
-            *version = g_strdup (tmpver);
-        }
-    }
-
-    if (release) {
-        gchar *tmprel;
-
-        g_free (*release);
-        *release = NULL;
-
-        rpmman->headerGetEntry (header, RPMTAG_RELEASE, &type,
-                                (void **)&tmprel, &count);
-
-        if (count && (type == RPM_STRING_TYPE) && tmprel && tmprel[0]) {
-            *release = g_strdup (tmprel);
-        }
-    }
-
-    if (section) {
-        gchar *tmpsection;
-
-        *section = RC_SECTION_MISC;
-
-        rpmman->headerGetEntry (header, RPMTAG_GROUP, &type,
-                                (void **)&tmpsection, &count);
-
-        if (count && (type == RPM_STRING_TYPE) && tmpsection &&
-            tmpsection[0])
-        {
-            *section = rc_rpmman_section_to_package_section (tmpsection);
-        } else {
-            *section = RC_SECTION_MISC;
-        }
-    }
-
-    if (size) {
-        guint32 *tmpsize;
-
-        *size = 0;
-
-        rpmman->headerGetEntry (header, RPMTAG_SIZE, &type, (void **)&tmpsize,
-                                &count);
-
-        if (count && (type == RPM_INT32_TYPE)) {
-            *size = *tmpsize;
-        }
-    }
-
-    if (summary) {
-        gchar *tmpsummary;
-
-        g_free (*summary);
-        *summary = NULL;
-
-        rpmman->headerGetEntry (header, RPMTAG_SUMMARY, &type,
-                                (void **)&tmpsummary, &count);
-
-        if (count && (type == RPM_STRING_TYPE)) {
-            *summary = g_strdup (tmpsummary);
-        }
-    }
-
-    if (description) {
-        gchar *tmpdescription;
-
-        g_free (*description);
-        *description = NULL;
-
-        rpmman->headerGetEntry (header, RPMTAG_DESCRIPTION, &type,
-                                (void **)&tmpdescription, &count);
-
-        if (count && (type == RPM_STRING_TYPE)) {
-            *description = g_strdup (tmpdescription);
-        }
-    }
+    g_free (package->description);
+    rpmman->headerGetEntry (header, RPMTAG_DESCRIPTION, &type, (void **)&tmpc,
+                            &count);
+    if (count && (type == RPM_STRING_TYPE) && tmpc && tmpc[0])
+        package->description = g_strdup (tmpc);
+    else
+        package->description = NULL;
 }
 
 /* Takes an array of strings, which may be of the form <version>, or
@@ -1422,93 +1363,44 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
     }
 } /* rc_rpmman_depends_fill */
 
-/* Query for information about a package (version, release, installed status,
-   installed size...).  If you specify more than just a name, it tries to match
-   those criteria. */
-
-static gboolean
-rc_rpmman_check_match (RCRpmman *rpmman, Header header, RCPackage *package)
-{
-    gchar *version = NULL, *release = NULL;
-    gchar *summary = NULL, *description = NULL;
-    guint32 size = 0, epoch = 0;
-    RCPackageSection section = RC_SECTION_MISC;
-    gboolean has_epoch;
-
-    rc_rpmman_read_header (rpmman, header, NULL, &has_epoch, &epoch, &version,
-                           &release, &section, &size, &summary, &description);
-
-    if ((!package->spec.version || !strcmp (package->spec.version, version)) &&
-        (!package->spec.release || !strcmp (package->spec.release, release)) &&
-        (!package->spec.has_epoch || package->spec.epoch == epoch)) {
-
-        g_free (package->spec.version);
-        g_free (package->spec.release);
-
-        package->spec.epoch = epoch;
-        package->spec.version = version;
-        package->spec.release = release;
-        package->section = section;
-        package->summary = summary;
-        package->description = description;
-        package->installed = TRUE;
-        package->installed_size = size;
-
-        rc_rpmman_depends_fill (rpmman, header, package);
-
-        return (TRUE);
-    } else {
-        g_free (version);
-        g_free (release);
-        g_free (summary);
-        g_free (description);
-    }
-
-    return (FALSE);
-}
-
-static RCPackage *
-rc_rpmman_query_v4 (RCPackman *packman, RCPackage *package)
+static RCPackageSList *
+rc_rpmman_query_v4 (RCPackman *packman, const char *name)
 {
     rc_rpmdbMatchIterator mi = NULL;
     Header header;
+    RCPackageSList *ret = NULL;
     RCRpmman *rpmman = RC_RPMMAN (packman);
 
-    mi = rpmman->rpmdbInitIterator (rpmman->db, RPMDBI_LABEL,
-                                    package->spec.name, 0);
+    mi = rpmman->rpmdbInitIterator (rpmman->db, RPMDBI_LABEL, name, 0);
 
     if (!mi) {
-        package->installed = FALSE;
-
-        return (package);
+        return NULL;
     }
 
     while ((header = rpmman->rpmdbNextIterator (mi))) {
-        if (rc_rpmman_check_match (rpmman, header, package)) {
-            rpmman->rpmdbFreeIterator (mi);
+        RCPackage *package = rc_package_new ();
 
-            package->installed = TRUE;
+        rc_rpmman_read_header (rpmman, header, package);
 
-            return (package);
-        }
+        package->installed = TRUE;
+
+        ret = g_slist_prepend (ret, package);
     }
-
-    package->installed = FALSE;
 
     rpmman->rpmdbFreeIterator (mi);
 
-    return (package);
-} /* rc_packman_query */
+    return ret;
+}
 
-static RCPackage *
-rc_rpmman_query_v3 (RCPackman *packman, RCPackage *package)
+static RCPackageSList *
+rc_rpmman_query_v3 (RCPackman *packman, const char *name)
 {
     rc_dbiIndexSet matches;
     guint i;
     RCRpmman *rpmman = RC_RPMMAN (packman);
+    RCPackageSList *ret = NULL;
 
-    switch (rpmman->rpmdbFindPackage (rpmman->db, package->spec.name,
-                                      &matches)) {
+    switch (rpmman->rpmdbFindPackage (rpmman->db, name, &matches)) {
     case -1:
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "unable to initialize database search");
@@ -1516,9 +1408,7 @@ rc_rpmman_query_v3 (RCPackman *packman, RCPackage *package)
         goto ERROR;
 
     case 1:
-        package->installed = FALSE;
-
-        return (package);
+        return NULL;
 
     default:
         break;
@@ -1526,6 +1416,7 @@ rc_rpmman_query_v3 (RCPackman *packman, RCPackage *package)
 
     for (i = 0; i < matches.count; i++) {
         Header header;
+        RCPackage *package;
 
         if (!(header = rpmman->rpmdbGetRecord (rpmman->db,
                                                matches.recs[i].recOffset))) {
@@ -1535,37 +1426,36 @@ rc_rpmman_query_v3 (RCPackman *packman, RCPackage *package)
             goto ERROR;
         }
 
-        if (rc_rpmman_check_match (RC_RPMMAN (packman), header, package)) {
-            rpmman->headerFree (header);
-            rpmman->dbiFreeIndexRecord (matches);
-            return (package);
-        }
+        package = rc_package_new ();
+        rc_rpmman_read_header (rpmman, header, package);
+        package->installed = TRUE;
+
+        ret = g_slist_prepend (ret, package);
 
         rpmman->headerFree (header);
     }
 
-    package->installed = FALSE;
-
     rpmman->dbiFreeIndexRecord (matches);
 
-    return (package);
+    return ret;
 
   ERROR:
     rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                           "System query failed");
 
-    package->installed = FALSE;
+    if (ret)
+        rc_package_slist_unref (ret);
 
-    return (package);
+    return NULL;
 } /* rc_packman_query */
 
-static RCPackage *
-rc_rpmman_query (RCPackman *packman, RCPackage *package)
+static RCPackageSList *
+rc_rpmman_query (RCPackman *packman, const char *name)
 {
     if (RC_RPMMAN (packman)->major_version == 4) {
-        return (rc_rpmman_query_v4 (packman, package));
+        return (rc_rpmman_query_v4 (packman, name));
     } else {
-        return (rc_rpmman_query_v3 (packman, package));
+        return (rc_rpmman_query_v3 (packman, name));
     }
 }
 
@@ -1578,7 +1468,6 @@ rc_rpmman_query_file (RCPackman *packman, const gchar *filename)
     Header header;
     RCPackage *package;
     RCRpmman *rpmman = RC_RPMMAN (packman);
-    gboolean has_epoch;
 
     if (!rc_file_exists(filename)) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
@@ -1603,12 +1492,7 @@ rc_rpmman_query_file (RCPackman *packman, const gchar *filename)
 
     package = rc_package_new ();
 
-    rc_rpmman_read_header (rpmman, header, &package->spec.name, &has_epoch,
-                           &package->spec.epoch, &package->spec.version,
-                           &package->spec.release, &package->section,
-                           &package->installed_size, &package->summary,
-                           &package->description);
-    package->spec.has_epoch = has_epoch;
+    rc_rpmman_read_header (rpmman, header, package);
 
     rc_rpmman_depends_fill (rpmman, header, package);
 
@@ -1648,16 +1532,8 @@ rc_rpmman_query_all_v4 (RCPackman *packman)
 
     while ((header = rpmman->rpmdbNextIterator (mi))) {
         RCPackage *package = rc_package_new ();
-        gboolean has_epoch;
 
-        rc_rpmman_read_header (rpmman, header,
-                               &package->spec.name, &has_epoch,
-                               &package->spec.epoch,
-                               &package->spec.version, &package->spec.release,
-                               &package->section,
-                               &package->installed_size, &package->summary,
-                               &package->description);
-        package->spec.has_epoch = has_epoch;
+        rc_rpmman_read_header (rpmman, header, package);
 
         package->installed = TRUE;
 
@@ -1694,7 +1570,6 @@ rc_rpmman_query_all_v3 (RCPackman *packman)
     for (; recno; recno = rpmman->rpmdbNextRecNum (rpmman->db, recno)) {
         RCPackage *package;
         Header header;
-        gboolean has_epoch;
         
         if (!(header = rpmman->rpmdbGetRecord (rpmman->db, recno))) {
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
@@ -1708,13 +1583,7 @@ rc_rpmman_query_all_v3 (RCPackman *packman)
 
         package = rc_package_new ();
 
-        rc_rpmman_read_header (rpmman, header,
-                               &package->spec.name, &has_epoch,
-                               &package->spec.epoch,
-                               &package->spec.version, &package->spec.release,
-                               &package->section, &package->installed_size,
-                               &package->summary, &package->description);
-        package->spec.has_epoch = has_epoch;
+        rc_rpmman_read_header (rpmman, header, package);
 
         package->installed = TRUE;
 
@@ -2192,7 +2061,6 @@ rc_rpmman_find_file_v4 (RCPackman *packman, const gchar *filename)
     Header header;
     RCPackage *package;
     RCRpmman *rpmman = RC_RPMMAN (packman);
-    gboolean has_epoch;
 
     mi = rpmman->rpmdbInitIterator (rpmman->db, RPMTAG_BASENAMES, filename, 0);
 
@@ -2216,12 +2084,7 @@ rc_rpmman_find_file_v4 (RCPackman *packman, const gchar *filename)
 
     package = rc_package_new ();
 
-    rc_rpmman_read_header (rpmman, header, &package->spec.name, &has_epoch,
-                           &package->spec.epoch, &package->spec.version,
-                           &package->spec.release, &package->section,
-                           &package->installed_size, &package->summary,
-                           &package->description);
-    package->spec.has_epoch = has_epoch;
+    rc_rpmman_read_header (rpmman, header, package);
 
     rpmman->rpmdbFreeIterator (mi);
 
@@ -2241,7 +2104,6 @@ rc_rpmman_find_file_v3 (RCPackman *packman, const gchar *filename)
     Header header;
     RCPackage *package;
     RCRpmman *rpmman = RC_RPMMAN (packman);
-    gboolean has_epoch;
 
     if (rpmman->rpmdbFindByFile (rpmman->db, filename, &matches) == -1) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
@@ -2267,12 +2129,7 @@ rc_rpmman_find_file_v3 (RCPackman *packman, const gchar *filename)
 
     package = rc_package_new ();
 
-    rc_rpmman_read_header (rpmman, header, &package->spec.name, &has_epoch,
-                           &package->spec.epoch, &package->spec.version,
-                           &package->spec.release, &package->section,
-                           &package->installed_size, &package->summary,
-                           &package->description);
-    package->spec.has_epoch = has_epoch;
+    rc_rpmman_read_header (rpmman, header, package);
 
     rpmman->dbiFreeIndexRecord (matches);
 
