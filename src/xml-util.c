@@ -51,8 +51,8 @@ xml_get_value(xmlNode *node, const gchar *name)
                 xmlFree (xml_s);
                 return ret;
             }
-            child = child->next;
 	}
+	child = child->next;
     }
 
     return NULL;
