@@ -105,6 +105,8 @@ int main (int argc, char **argv)
             printf ("Installed version is %s-%s-%s\n", pkg->spec.name,
                     pkg->spec.version, pkg->spec.release);
             printf ("Installed size is %u\n", pkg->spec.installed_size);
+            printf ("Summary: %s\nDescription: %s\n", pkg->summary,
+                    pkg->description);
         } else {
             printf ("%s-%s-%s is not installed\n", pkg->spec.name,
                     pkg->spec.version, pkg->spec.release);

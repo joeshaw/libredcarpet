@@ -455,6 +455,7 @@ rc_debman_query_helper (FILE *fp, RCPackage *pkg)
     gchar *buf;
     RCPackageDepItem *item;
     RCPackageDep *dep = NULL;
+    gboolean desc = FALSE;
 
     while ((buf = readline (fp)) && buf[0]) {
         if (!strncmp (buf, "Status: install ok installed",
@@ -465,6 +466,29 @@ rc_debman_query_helper (FILE *fp, RCPackage *pkg)
             pkg->spec.installed_size = strtoul (buf +
                                                 strlen ("Installed-Size: "),
                                                 NULL, 10) * 1024;
+        } else if (!strncmp (buf, "Description: ", strlen ("Description: "))) {
+            pkg->summary = g_strdup (buf + strlen ("Description: "));
+            desc = TRUE;
+        } else if (!strncmp (buf, " ", strlen (" ")) && desc) {
+            gchar *buf2;
+
+            if (!strcmp (buf, " .")) {
+                buf2 = g_strdup ("\n");
+            } else {
+                buf2 = g_strdup (buf);
+            }
+
+            if (pkg->description) {
+                gchar *tmp = g_strconcat (pkg->description,
+                                          buf2 + strlen (" "), "\n", NULL);
+                g_free (pkg->description);
+                pkg->description = tmp;
+            } else {
+                pkg->description = g_strconcat (buf2 + strlen (" "), "\n",
+                                                NULL);
+            }
+
+            g_free (buf2);
         } else if (!strncmp (buf, "Version: ", strlen ("Version: "))) {
             rc_debman_parse_version (buf + strlen ("Version: "),
                                      &pkg->spec.epoch, &pkg->spec.version,

@@ -563,7 +563,8 @@ rc_rpmman_remove (RCPackman *p, RCPackageSList *pkgs)
 
 static void
 rc_rpmman_read_header (Header hdr, gchar **name, guint32 *epoch,
-                       gchar **version, gchar **release, guint32 *size)
+                       gchar **version, gchar **release, guint32 *size,
+                       gchar **summary, gchar **description)
 {
     int_32 type, count;
 
@@ -627,6 +628,34 @@ rc_rpmman_read_header (Header hdr, gchar **name, guint32 *epoch,
 
         if (count && (type == RPM_INT32_TYPE)) {
             *size = *tmpsize;
+        }
+    }
+
+    if (summary) {
+        gchar *tmpsummary;
+
+        g_free (*summary);
+        *summary = NULL;
+
+        headerGetEntry (hdr, RPMTAG_SUMMARY, &type, (void **)&tmpsummary,
+                        &count);
+
+        if (count && (type == RPM_STRING_TYPE)) {
+            *summary = g_strdup (tmpsummary);
+        }
+    }
+
+    if (description) {
+        gchar *tmpdescription;
+
+        g_free (*description);
+        *description = NULL;
+
+        headerGetEntry (hdr, RPMTAG_DESCRIPTION, &type,
+                        (void **)&tmpdescription, &count);
+
+        if (count && (type == RPM_STRING_TYPE)) {
+            *description = g_strdup (tmpdescription);
         }
     }
 }
@@ -882,6 +911,7 @@ rc_rpmman_query (RCPackman *p, RCPackage *pkg)
     for (i = 0; i < matches.count; i++) {
         Header hdr;
         gchar *version = NULL, *release = NULL;
+        gchar *summary = NULL, *description = NULL;
         guint32 size = 0, epoch = 0;
 
         if (!(hdr = rpmdbGetRecord (db, matches.recs[i].recOffset))) {
@@ -891,7 +921,8 @@ rc_rpmman_query (RCPackman *p, RCPackage *pkg)
             return (pkg);
         }
 
-        rc_rpmman_read_header (hdr, NULL, &epoch, &version, &release, &size);
+        rc_rpmman_read_header (hdr, NULL, &epoch, &version, &release, &size,
+                               &summary, &description);
 
         /* FIXME: this could potentially be a big problem if an rpm can have
            just an epoch (serial), and no version/release.  I'm choosing to
@@ -906,8 +937,10 @@ rc_rpmman_query (RCPackman *p, RCPackage *pkg)
             g_free (pkg->spec.release);
 
             pkg->spec.epoch = epoch;
-            pkg->spec.version = g_strdup (version);
-            pkg->spec.release = g_strdup (release);
+            pkg->spec.version = version;
+            pkg->spec.release = release;
+            pkg->summary = summary;
+            pkg->description = description;
             pkg->spec.installed = TRUE;
             pkg->spec.installed_size = size;
 
@@ -918,6 +951,11 @@ rc_rpmman_query (RCPackman *p, RCPackage *pkg)
             rpmdbClose (db);
 
             return (pkg);
+        } else {
+            g_free (version);
+            g_free (release);
+            g_free (summary);
+            g_free (description);
         }
 
         headerFree (hdr);
@@ -940,6 +978,7 @@ rc_rpmman_query_file (RCPackman *p, gchar *filename)
     FD_t fd;
     Header hdr;
     gchar *name = NULL, *version = NULL, *release = NULL;
+    gchar *summary = NULL, *description = NULL;
     guint32 size = 0, epoch = 0;
     RCPackage *pkg = rc_package_new ();
 
@@ -952,13 +991,10 @@ rc_rpmman_query_file (RCPackman *p, gchar *filename)
         return (NULL);
     }
 
-    rc_rpmman_read_header (hdr, &name, &epoch, &version, &release, &size);
-
-    pkg->spec.name = g_strdup (name);
-    pkg->spec.epoch = epoch;
-    pkg->spec.version = g_strdup (version);
-    pkg->spec.release = g_strdup (release);
-    pkg->spec.installed_size = size;
+    rc_rpmman_read_header (hdr, &pkg->spec.name, &pkg->spec.epoch,
+                           &pkg->spec.version, &pkg->spec.release,
+                           &pkg->spec.installed_size, &pkg->summary,
+                           &pkg->description);
 
     rc_rpmman_depends_fill (hdr, pkg);
 
@@ -1004,7 +1040,8 @@ rc_rpmman_query_all (RCPackman *p)
 
         rc_rpmman_read_header (hdr, &pkg->spec.name, &pkg->spec.epoch,
                                &pkg->spec.version, &pkg->spec.release,
-                               &pkg->spec.installed_size);
+                               &pkg->spec.installed_size, &pkg->summary,
+                               &pkg->description);
 
         rc_rpmman_depends_fill (hdr, pkg);
 
