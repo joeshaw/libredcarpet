@@ -1,5 +1,13 @@
 2002-06-14  Joe Shaw  <joe@ximian.com>
 
+	* rc-packman.h: Add a RC_PACKMAN_STEP_PREPARE
+
+	* rc-rpmman.c (transact_cb): Set the step to be
+	RC_PACKMAN_STEP_PREPARE instead of RC_PACKMAN_STEP_CONFIGURE,
+	since that's more accurate as to what it's actually doing.
+
+2002-06-14  Joe Shaw  <joe@ximian.com>
+
 	* rc-rpmman.c (split_rpm): Use g_file_open_tmp () instead of
 	mkstemp () things like TMPDIR are obeyed.
 	(rc_rpmman_verify): Don't need to bother passing in templates to

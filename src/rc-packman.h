@@ -50,9 +50,10 @@ typedef enum {
 
 typedef enum {
     RC_PACKMAN_STEP_UNKNOWN,
-    RC_PACKMAN_STEP_CONFIGURE,
+    RC_PACKMAN_STEP_PREPARE,
     RC_PACKMAN_STEP_INSTALL,
     RC_PACKMAN_STEP_REMOVE,
+    RC_PACKMAN_STEP_CONFIGURE,
 } RCPackmanStep;
 
 #define RC_PACKMAN_CAP_NONE                  (0)

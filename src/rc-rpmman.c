@@ -174,7 +174,7 @@ transact_cb (const Header h, const rpmCallbackType what,
             if (!state->installing || (state->seqno >= state->install_total)) {
                 step = RC_PACKMAN_STEP_REMOVE;
             } else {
-                step = RC_PACKMAN_STEP_CONFIGURE;
+                step = RC_PACKMAN_STEP_PREPARE;
             }
             g_signal_emit_by_name (state->packman, "transact_step",
                                    ++state->seqno, step, NULL);
