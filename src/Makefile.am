@@ -72,7 +72,7 @@ libredcarpet_a_SOURCES =		\
 	rc-line-buf.h			\
 	rc-line-buf-private.h		\
 	rc-debman-general.c		\
-	rc-debman.general.h		\
+	rc-debman-general.h		\
 	$(dpkg_sources2)		\
         $(rpm_sources2)
 
