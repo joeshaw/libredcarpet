@@ -24,6 +24,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <zlib.h>
+#include <string.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -249,7 +250,7 @@ GSList *
 rc_slist_unique (const GSList *sorted_list)
 {
     GSList *out = NULL;
-    GSList *iter = sorted_list;
+    const GSList *iter = sorted_list;
     gpointer last_thing = NULL;
     while (iter) {
         if (last_thing != iter->data) {

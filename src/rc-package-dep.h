@@ -125,6 +125,7 @@ RCPackageRelation rc_string_to_package_relation (const gchar *relation);
 const gchar *rc_package_relation_to_string (RCPackageRelation relation,
                                             gint words);
 RCPackageDepSList *rc_package_dep_slist_remove_duplicates (RCPackageDepSList *deps);
+gboolean rc_package_dep_slist_has_dep (RCPackageDepSList *deps, RCPackageDep *pd);
 
 /* XML */
 RCPackageDep *rc_xml_node_to_package_dep (const xmlNode *);

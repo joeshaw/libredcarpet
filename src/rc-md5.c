@@ -37,6 +37,7 @@
 
 #include "rc-md5.h"
 #include "rc-md5-private.h"
+#include "rc-util.h"
 
 #ifdef WORDS_BIGENDIAN
 void

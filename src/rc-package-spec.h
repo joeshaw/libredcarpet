@@ -22,6 +22,7 @@
 #define _RC_PACKAGE_SPEC_H
 
 #include <glib.h>
+#include <string.h>
 
 typedef struct _RCPackageSpec RCPackageSpec;
 

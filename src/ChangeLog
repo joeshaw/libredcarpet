@@ -1,3 +1,8 @@
+2001-07-11  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps-private, rc-deps.c, rc-deps-util.c, rc-md5.c, rc-package-dep.h,
+	rc-package-spec.h, rc-pretty-name.c, rc-util.c: Fix compiler warnings
+
 2001-07-11  Ian Peters  <itp@ximian.com>
 
 	* rc-deps.c (deps_create_extra_info): s/_append/_prepend
