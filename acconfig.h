@@ -5,3 +5,5 @@
 #undef HAVE_STPCPY
 
 #undef HAVE_RPM_4_0
+#undef ENABLE_RPM
+#undef ENABLE_DPKG

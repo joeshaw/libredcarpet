@@ -84,6 +84,7 @@ if test "x$enable_backend_rpm3" = "xyes"; then
 
   AM_CONDITIONAL(ENABLE_RPM, true)
   ENABLE_RPM=yes
+  AC_DEFINE(ENABLE_RPM)
 
   AC_SUBST(RPMLIB_LIBS)
   AC_SUBST(RPMLIB_CFLAGS)
@@ -120,6 +121,7 @@ if test "x$enable_backend_rpm4" = "xyes"; then
 
   AM_CONDITIONAL(ENABLE_RPM, true)
   ENABLE_RPM=yes
+  AC_DEFINE(ENABLE_RPM)
 
   AC_SUBST(RPMLIB_LIBS)
   AC_SUBST(RPMLIB_CFLAGS)
@@ -145,6 +147,7 @@ if test "x$enable_backend_dpkg" = "xyes"; then
 
   AM_CONDITIONAL(ENABLE_DPKG, true)
   ENABLE_DPKG=yes
+  AC_DEFINE(ENABLE_DPKG)
 fi
 
 dnl libxml
