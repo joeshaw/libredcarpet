@@ -26,22 +26,22 @@
 #include "rc-package.h"
 #include "rc-verification.h"
 
-#define GTK_TYPE_RC_PACKMAN        (rc_packman_get_type ())
+#define RC_TYPE_PACKMAN            (rc_packman_get_type ())
 #define RC_PACKMAN(obj)            (GTK_CHECK_CAST ((obj), \
-                                    GTK_TYPE_RC_PACKMAN, RCPackman))
+                                    RC_TYPE_PACKMAN, RCPackman))
 #define RC_PACKMAN_CLASS(klass)    (GTK_CHECK_CLASS_CAST ((klass), \
-                                    GTK_TYPE_RC_PACKMAN, \
+                                    RC_TYPE_PACKMAN, \
                                     RCPackmanClass))
-#define IS_RC_PACKMAN(obj)         (GTK_CHECK_TYPE ((obj), \
-                                    GTK_TYPE_RC_PACKMAN))
-#define IS_RC_PACKMAN_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), \
-                                    GTK_TYPE_RC_PACKMAN))
+#define RC_IS_PACKMAN(obj)         (GTK_CHECK_TYPE ((obj), \
+                                    RC_TYPE_PACKMAN))
+#define RC_IS_PACKMAN_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), \
+                                    RC_TYPE_PACKMAN))
+#define RC_PACKMAN_GET_CLASS(obj)  (RC_PACKMAN_CLASS (GTK_OBJECT (obj)->klass))
 
-#define _CLASS(p) (RC_PACKMAN_CLASS(GTK_OBJECT(p)->klass))
-
-typedef struct _RCPackman      RCPackman;
-typedef struct _RCPackmanClass RCPackmanClass;
-
+typedef struct _RCPackman        RCPackman;
+typedef struct _RCPackmanClass   RCPackmanClass;
+typedef struct _RCPackmanPrivate RCPackmanPrivate;
+    
 typedef enum _RCPackmanError RCPackmanError;
 
 enum _RCPackmanError {
@@ -58,24 +58,19 @@ enum _RCPackmanError {
     RC_PACKMAN_ERROR_FATAL,
 };
 
+typedef enum _RCPackmanFeatures RCPackmanFeatures;
+
+enum _RCPackmanFeatures {
+    RC_PACKMAN_FEATURE_PRE_CONFIG      = 1 << 0,
+    RC_PACKMAN_FEATURE_POST_CONFIG     = 1 << 1,
+    RC_PACKMAN_FEATURE_CONFIG_PROGRESS = 1 << 2,
+    RC_PACKMAN_FEATURE_PKG_PROGRESS    = 1 << 3,
+};
+
 struct _RCPackman {
     GtkObject parent;
 
-    /* Stores the error code from the last packman operation (0 is a
-       successful operation, everything else is a problem) */
-    guint error;
-
-    /* If an operation (eg installation) fails, the reason for failure will be
-       stored here */
-    gchar *reason;
-
-    /* Current status of the object */
-    gboolean busy;
-
-    /* Flags for the supported interface */
-    gboolean pre_config;
-    gboolean pkg_progress;
-    gboolean post_config;
+    RCPackmanPrivate *priv;
 };
 
 struct _RCPackmanClass {
@@ -83,109 +78,72 @@ struct _RCPackmanClass {
 
     /* Signals */
 
-    void (*configure_progress)(RCPackman *, gint amount, gint total);
-    void (*configure_step)(RCPackman *, gint seqno, gint total);
-    void (*configure_done)(RCPackman *);
+    void (*configure_progress)(RCPackman *packman, gint amount, gint total);
+    void (*configure_step)(RCPackman *packman, gint seqno, gint total);
+    void (*configure_done)(RCPackman *packman);
 
-    void (*transaction_progress)(RCPackman *, gint amount, gint total);
-    void (*transaction_step)(RCPackman *, gint seqno, gint total);
-    void (*transaction_done)(RCPackman *);
+    void (*transaction_progress)(RCPackman *packman, gint amount, gint total);
+    void (*transaction_step)(RCPackman *packman, gint seqno, gint total);
+    void (*transaction_done)(RCPackman *packman);
 
     /* Virtual functions */
 
-    void (*rc_packman_real_transact)(RCPackman *p,
-                                     RCPackageSList *install_pkgs,
-                                     RCPackageSList *remove_pkgs);
+    void (*rc_packman_real_transact)(RCPackman *packman,
+                                     RCPackageSList *install_packages,
+                                     RCPackageSList *remove_packages);
 
-    RCPackage *(*rc_packman_real_query)(RCPackman *p, RCPackage *pkg);
+    RCPackage *(*rc_packman_real_query)(RCPackman *packman,
+                                        RCPackage *package);
 
-    RCPackage *(*rc_packman_real_query_file)(RCPackman *p, gchar *filename);
+    RCPackage *(*rc_packman_real_query_file)(RCPackman *packman,
+                                             const gchar *filename);
 
-    RCPackageSList *(*rc_packman_real_query_all)(RCPackman *p);
+    RCPackageSList *(*rc_packman_real_query_all)(RCPackman *packman);
 
-    gint (*rc_packman_real_version_compare)(RCPackman *p,
-                                            RCPackageSpec *s1,
-                                            RCPackageSpec *s2);
+    gint (*rc_packman_real_version_compare)(RCPackman *packman,
+                                            RCPackageSpec *spec1,
+                                            RCPackageSpec *spec2);
 
-    RCVerificationSList *(*rc_packman_real_verify)(RCPackman *p,
-                                                   RCPackage *pkg);
+    RCVerificationSList *(*rc_packman_real_verify)(RCPackman *packman,
+                                                   RCPackage *package);
+
+    RCPackage *(*rc_packman_real_find_file)(RCPackman *packman,
+                                            const gchar *filename);
 };
 
 guint rc_packman_get_type (void);
 
 RCPackman *rc_packman_new (void);
 
-/* Query the supported interfaces of the backend.  First parameter, does the
-   packman give config_progress signals?  Second parameter, does the packman
-   give pkg_progress signals?  Thirdly, does the packman require a post-install
-   step? */
+RCPackmanFeatures rc_packman_get_features (RCPackman *packman);
 
-void rc_packman_query_interface (RCPackman *p, gboolean *config, gboolean *pkg,
-                                 gboolean *post);
+void rc_packman_transact (RCPackman *packman,
+                          RCPackageSList *install_packages,
+                          RCPackageSList *remove_packages);
 
-void rc_packman_transact (RCPackman *p, GSList *install_pkgs,
-                          RCPackageSList *remove_pkgs);
+RCPackage *rc_packman_query (RCPackman *packman, RCPackage *package);
 
-/* Queries the system package database for a given RCPackage.  Fills in any
-   missing information, including version, release, epoch, dependency lists,
-   etc.  Sets the spec->installed field if it finds the package.
+RCPackageSList *rc_packman_query_list (RCPackman *packman,
+                                       RCPackageSList *packages);
 
-   Note: on systems which support installing multiple version of the same file,
-   this function should return the latest version which matches the given
-   criteria.  However, if the version information is supplied, it must only
-   query packages which meet that criteria. */
-RCPackage *rc_packman_query (RCPackman *p, RCPackage *pkg);
+RCPackage *rc_packman_query_file (RCPackman *packman, const gchar *filename);
 
-RCPackageSList *rc_packman_query_list (RCPackman *p, RCPackageSList *pkgs);
+RCPackageSList *rc_packman_query_file_list (RCPackman *packman,
+                                            GSList *filenames);
 
-/* Uses the system package manager to examine a given filename, and returns
-   an RCPackage with the name, version, release, epoch, and dependency fields
-   filled in.  This function does not touch the system installed package
-   database, so spec->installed must always be FALSE (even if the identical
-   package to this file is already installed!). */
-RCPackage *rc_packman_query_file (RCPackman *p, gchar *filename);
+RCPackageSList *rc_packman_query_all (RCPackman *packman);
 
-RCPackageSList *rc_packman_query_file_list (RCPackman *p, GSList *filenames);
+gint rc_packman_version_compare (RCPackman *packman,
+                                 RCPackageSpec *spec1,
+                                 RCPackageSpec *spec2);
 
-/* Queries the system package database and returns a list of all packages
-   installed on the system.  This function will return all instances of a
-   package installed, unlike _query. */
-RCPackageSList *rc_packman_query_all (RCPackman *p);
+RCVerificationSList *rc_packman_verify (RCPackman *packman,
+                                        RCPackage *package);
 
-/* Use the system package manager style comparison to do a strcmp-semantics
-   like comparison on the two RCPackageSpec's. */
-gint rc_packman_version_compare (RCPackman *p,
-                                 RCPackageSpec *s1,
-                                 RCPackageSpec *s2);
+RCPackage *rc_packman_find_file (RCPackman *packman, const gchar *filename);
 
-RCVerificationSList *rc_packman_verify (RCPackman *p, RCPackage *pkg);
+guint rc_packman_get_error (RCPackman *packman);
 
-/* Return the object's error code from the last operation. */
-guint rc_packman_get_error (RCPackman *p);
-
-/* Return a possible descriptive string about the last error that occured. */
-gchar *rc_packman_get_reason (RCPackman *p);
-
-/* Wrappers to emit signals */
-
-void rc_packman_configure_progress (RCPackman *p, gint amount, gint total);
-
-void rc_packman_configure_step (RCPackman *p, gint seqno, gint total);
-
-void rc_packman_configure_done (RCPackman *p);
-
-void rc_packman_transaction_progress (RCPackman *p, gint amount, gint total);
-
-void rc_packman_transaction_step (RCPackman *p, gint seqno, gint total);
-
-void rc_packman_transaction_done (RCPackman *p);
-
-/* Helper function to build RCPackageSList's easily */
-
-RCPackageSList *rc_package_slist_add_package (RCPackageSList *pkgs,
-                                              gchar *name, guint32 epoch,
-                                              gchar *version, gchar *release,
-                                              gboolean installed,
-                                              guint32 installed_size);
+const gchar *rc_packman_get_reason (RCPackman *packman);
 
 #endif /* _RC_PACKMAN_H */

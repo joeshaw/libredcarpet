@@ -25,6 +25,7 @@
 #include <history.h>
 
 static void packman_test_clear (RCPackman *p, gchar *buf);
+static void packman_test_find_file (RCPackman *p, gchar *buf);
 static void packman_test_help (RCPackman *p, gchar *buf);
 static void packman_test_install (RCPackman *p, gchar *buf);
 static void packman_test_remove (RCPackman *p, gchar *buf);
@@ -49,6 +50,8 @@ typedef struct _Command Command;
 Command commands[] = {
     { "clear", (command_func) packman_test_clear,
       "Clear the pending transaction.", "clear" },
+    { "find", (command_func) packman_test_find_file,
+      "Find the package which owns a file.", "find <filename>" },
     { "help", (command_func) packman_test_help,
       "Help on packman_test commands.", "help [<command>]" },
     { "install", (command_func) packman_test_install,
@@ -296,6 +299,37 @@ packman_test_query (RCPackman *p, gchar *buf)
 }
 
 static void
+packman_test_find_file (RCPackman *p, gchar *buf)
+{
+    RCPackage *package;
+    gchar **tokens;
+
+    if (!buf) {
+        printf ("ERROR: \"find\" requires parameters (see \"help find\")\n");
+        return;
+    }
+
+    tokens = pop_token (buf);
+
+    if (tokens[1]) {
+        printf ("ERROR: extraneous characters after \"%s\"\n", tokens[0]);
+        g_strfreev (tokens);
+        return;
+    }
+
+    package = rc_packman_find_file (p, tokens[0]);
+
+    if (!package) {
+        return;
+    }
+
+    pretty_print_pkg (package);
+
+    rc_package_free (package);
+    g_strfreev (tokens);
+}
+
+static void
 packman_test_query_file (RCPackman *p, gchar *line)
 {
     struct stat buf;
@@ -395,6 +429,7 @@ packman_test_install (RCPackman *p, gchar *line)
 {
     struct stat buf;
     gchar **tokens;
+    RCPackage *package;
 
     tokens = pop_token (line);
 
@@ -410,8 +445,12 @@ packman_test_install (RCPackman *p, gchar *line)
         return;
     }
 
+    package = rc_package_new ();
+
+    package->package_filename = g_strdup (tokens[0]);
+
     transaction.install_pkgs = g_slist_append (transaction.install_pkgs,
-                                               g_strdup (tokens[0]));
+                                               package);
 
     g_strfreev (tokens);
 }
@@ -440,8 +479,7 @@ packman_test_clear (RCPackman *p, gchar *line)
         return;
     }
 
-    g_slist_foreach (transaction.install_pkgs, (GFunc) g_free, NULL);
-    g_slist_free (transaction.install_pkgs);
+    rc_package_slist_free (transaction.install_pkgs);
     transaction.install_pkgs = NULL;
 
     rc_package_slist_free (transaction.remove_pkgs);
@@ -543,8 +581,8 @@ int main (int argc, char **argv)
 
     p = rc_distman_new ();
 
-    if (p->error) {
-        printf ("ERROR: %s\n", p->reason);
+    if (rc_packman_get_error (p)) {
+        printf ("ERROR: %s\n", rc_packman_get_reason (p));
         exit (-1);
     }
 

@@ -164,7 +164,7 @@ rc_verify_gpg (gchar *file, gchar *sig)
 
     gpgi.loop = loop;
 
-    rlb = rc_line_buf_new ();
+    rlb = rc_line_buf_new (fds[0]);
 
     gpgi.read_line_id =
         gtk_signal_connect (GTK_OBJECT (rlb), "read_line",
@@ -174,8 +174,6 @@ rc_verify_gpg (gchar *file, gchar *sig)
         gtk_signal_connect (GTK_OBJECT (rlb), "read_done",
                             GTK_SIGNAL_FUNC (gpg_read_done_cb),
                             (gpointer) &gpgi);
-
-    rc_line_buf_set_fd (rlb, fds[0]);
 
     g_main_run (loop);
 

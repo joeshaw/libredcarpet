@@ -3,15 +3,15 @@
 
 #include <gtk/gtk.h>
 
-#define GTK_TYPE_RC_LINE_BUF        (rc_line_buf_get_type ())
+#define RC_TYPE_LINE_BUF            (rc_line_buf_get_type ())
 #define RC_LINE_BUF(obj)            (GTK_CHECK_CAST ((obj), \
-                                     GTK_TYPE_RC_LINE_BUF, RCLineBuf))
+                                     RC_TYPE_LINE_BUF, RCLineBuf))
 #define RC_LINE_BUF_CLASS(klass)    (GTK_CHECK_CLASS_CAST ((klass), \
-                                     GTK_TYPE_RC_LINE_BUF, RCLineBufClass))
+                                     RC_TYPE_LINE_BUF, RCLineBufClass))
 #define IS_RC_LINE_BUF(obj)         (GTK_CHECK_TYPE ((obj), \
-                                     GTK_TYPE_RC_LINE_BUF))
+                                     RC_TYPE_LINE_BUF))
 #define IS_RC_LINE_BUF_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), \
-                                     GTK_TYPE_RC_LINE_BUF))
+                                     RC_TYPE_LINE_BUF))
 
 typedef enum _RCLineBufStatus RCLineBufStatus;
 
@@ -20,17 +20,14 @@ enum _RCLineBufStatus {
     RC_LINE_BUF_ERROR
 };
 
-typedef struct _RCLineBuf      RCLineBuf;
-typedef struct _RCLineBufClass RCLineBufClass;
+typedef struct _RCLineBuf        RCLineBuf;
+typedef struct _RCLineBufClass   RCLineBufClass;
+typedef struct _RCLineBufPrivate RCLineBufPrivate;
 
 struct _RCLineBuf {
     GtkObject parent;
 
-    GIOChannel *channel;
-
-    guint cb_id;
-
-    GString *buf;
+    RCLineBufPrivate *priv;
 };
 
 struct _RCLineBufClass {
@@ -38,16 +35,14 @@ struct _RCLineBufClass {
 
     /* Signals */
 
-    void (*read_line)(RCLineBuf *lb, gchar *line);
-    void (*read_done)(RCLineBuf *lb, RCLineBufStatus status);
+    void (*read_line)(RCLineBuf *line_buf, gchar *line);
+    void (*read_done)(RCLineBuf *line_buf, RCLineBufStatus status);
 };
 
 guint rc_line_buf_get_type (void);
 
-RCLineBuf *rc_line_buf_new (void);
+RCLineBuf *rc_line_buf_new (int fd);
 
-void rc_line_buf_set_fd (RCLineBuf *lb, int fd);
+gchar *rc_line_buf_get_buf (RCLineBuf *line_buf);
 
-gchar *rc_line_buf_get_buf (RCLineBuf *lb);
-
-#endif
+#endif /* _RC_LINE_BUF_H */

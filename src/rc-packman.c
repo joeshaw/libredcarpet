@@ -63,9 +63,11 @@ rc_packman_get_type (void)
 static void
 rc_packman_destroy (GtkObject *obj)
 {
-    RCPackman *hp = RC_PACKMAN (obj);
+    RCPackman *packman = RC_PACKMAN (obj);
 
-    g_free (hp->reason);
+    g_free (packman->priv->reason);
+
+    g_free (packman->priv);
 
     if (GTK_OBJECT_CLASS(rc_packman_parent)->destroy)
         (* GTK_OBJECT_CLASS(rc_packman_parent)->destroy) (obj);
@@ -147,356 +149,268 @@ rc_packman_class_init (RCPackmanClass *klass)
     klass->rc_packman_real_query_all = NULL;
     klass->rc_packman_real_version_compare = NULL;
     klass->rc_packman_real_verify = NULL;
+    klass->rc_packman_real_find_file = NULL;
 }
 
 static void
-rc_packman_init (RCPackman *obj)
+rc_packman_init (RCPackman *packman)
 {
-    obj->error = RC_PACKMAN_ERROR_NONE;
+    packman->priv = g_new (RCPackmanPrivate, 1);
 
-    obj->reason = NULL;
+    packman->priv->error = RC_PACKMAN_ERROR_NONE;
+    packman->priv->reason = NULL;
 
-    obj->busy = FALSE;
+    packman->priv->busy = FALSE;
+
+    packman->priv->features = 0;
 }
 
 RCPackman *
 rc_packman_new (void)
 {
-    RCPackman *new =
+    RCPackman *packman =
         RC_PACKMAN (gtk_type_new (rc_packman_get_type ()));
 
-    new->busy = FALSE;
-
-    return new;
+    return packman;
 }
 
-void
-rc_packman_query_interface (RCPackman *p, gboolean *pre_config,
-                            gboolean *pkg_progress, gboolean *post_config)
+RCPackmanFeatures
+rc_packman_get_features (RCPackman *packman)
 {
-    if (pre_config) {
-        *pre_config = p->pre_config;
-    }
-    if (pkg_progress) {
-        *pkg_progress = p->pkg_progress;
-    }
-    if (post_config) {
-        *post_config = p->post_config;
-    }
+    return (packman->priv->features);
 }
 
 /* Wrappers around all of the virtual functions */
 
 void
-rc_packman_transact (RCPackman *p, GSList *install_pkgs,
-                     RCPackageSList *remove_pkgs)
+rc_packman_transact (RCPackman *packman, RCPackageSList *install_packages,
+                     RCPackageSList *remove_packages)
 {
-    g_return_if_fail (p);
+    RCPackmanClass *klass;
 
-    rc_packman_set_error (p, RC_PACKMAN_ERROR_NONE, NULL);
+    g_return_if_fail (packman);
 
-    if (p->busy) {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_BUSY, NULL);
+    rc_packman_set_error (packman, RC_PACKMAN_ERROR_NONE, NULL);
+
+    if (packman->priv->busy) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_BUSY, NULL);
         return;
     }
 
-    g_assert (_CLASS (p)->rc_packman_real_transact);
+    klass = RC_PACKMAN_GET_CLASS (packman);
 
-    p->busy = TRUE;
+    g_assert (klass->rc_packman_real_transact);
 
-    _CLASS (p)->rc_packman_real_transact (p, install_pkgs, remove_pkgs);
+    packman->priv->busy = TRUE;
 
-    p->busy = FALSE;
+    klass->rc_packman_real_transact (packman, install_packages,
+                                     remove_packages);
+
+    packman->priv->busy = FALSE;
 }
 
 RCPackage *
-rc_packman_query (RCPackman *p, RCPackage *pkg)
+rc_packman_query (RCPackman *packman, RCPackage *package)
 {
-    RCPackage *ret = NULL;
+    RCPackmanClass *klass;
 
-    g_return_val_if_fail(p, NULL);
+    g_return_val_if_fail (packman, NULL);
 
-    rc_packman_set_error (p, RC_PACKMAN_ERROR_NONE, NULL);
+    rc_packman_set_error (packman, RC_PACKMAN_ERROR_NONE, NULL);
 
-    if (p->busy) {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_BUSY, NULL);
-        return (pkg);
+    if (packman->priv->busy) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_BUSY, NULL);
+        return (package);
     }
 
-    g_assert (_CLASS (p)->rc_packman_real_query);
+    klass = RC_PACKMAN_GET_CLASS (packman);
 
-    p->busy = TRUE;
+    g_assert (klass->rc_packman_real_query);
 
-    ret = _CLASS (p)->rc_packman_real_query (p, pkg);
-
-    p->busy = FALSE;
-
-    return (ret);
+    return (klass->rc_packman_real_query (packman, package));
 }
 
 RCPackageSList *
-rc_packman_query_list (RCPackman *p, RCPackageSList *pkgs)
+rc_packman_query_list (RCPackman *packman, RCPackageSList *packages)
 {
     RCPackageSList *iter;
 
-    g_return_val_if_fail(p, NULL);
+    g_return_val_if_fail (packman, NULL);
 
-    g_free (p->reason);
-    p->error = RC_PACKMAN_ERROR_NONE;
+    rc_packman_set_error (packman, RC_PACKMAN_ERROR_NONE, NULL);
 
-    for (iter = pkgs; iter; iter = iter->next) {
-        RCPackage *pkg = (RCPackage *)(iter->data);
+    for (iter = packages; iter; iter = iter->next) {
+        RCPackage *package = (RCPackage *)(iter->data);
 
-        rc_packman_query (p, pkg);
+        rc_packman_query (packman, package);
 
-        if (p->error) {
-            return (pkgs);
+        if (rc_packman_get_error (packman)) {
+            return (packages);
         }
     }
-    return pkgs;
+
+    return (packages);
 }
 
 RCPackage *
-rc_packman_query_file (RCPackman *p, gchar *filename)
+rc_packman_query_file (RCPackman *packman, const gchar *filename)
 {
-    RCPackage *ret = NULL;
+    RCPackmanClass *klass;
 
-    g_return_val_if_fail(p, NULL);
+    g_return_val_if_fail (packman, NULL);
 
-    rc_packman_set_error (p, RC_PACKMAN_ERROR_NONE, NULL);
+    rc_packman_set_error (packman, RC_PACKMAN_ERROR_NONE, NULL);
 
-    if (p->busy) {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_BUSY, NULL);
+    if (packman->priv->busy) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_BUSY, NULL);
         return (NULL);
     }
 
-    g_assert (_CLASS (p)->rc_packman_real_query_file);
+    klass = RC_PACKMAN_GET_CLASS (packman);
 
-    p->busy = TRUE;
+    g_assert (klass->rc_packman_real_query_file);
 
-    ret =  _CLASS (p)->rc_packman_real_query_file (p, filename);
-
-    p->busy = FALSE;
-
-    return (ret);
+    return (klass->rc_packman_real_query_file (packman, filename));
 }
 
 RCPackageSList *
-rc_packman_query_file_list (RCPackman *p, GSList *filenames)
+rc_packman_query_file_list (RCPackman *packman, GSList *filenames)
 {
     GSList *iter;
     RCPackageSList *ret = NULL;
 
-    g_return_val_if_fail(p, NULL);
+    g_return_val_if_fail (packman, NULL);
 
-    g_free (p->reason);
-    p->error = RC_PACKMAN_ERROR_NONE;
+    rc_packman_set_error (packman, RC_PACKMAN_ERROR_NONE, NULL);
 
     for (iter = filenames; iter; iter = iter->next) {
         gchar *filename = (gchar *)(iter->data);
-        RCPackage *pkg;
+        RCPackage *package;
 
-        pkg = rc_packman_query_file (p, filename);
+        package = rc_packman_query_file (packman, filename);
 
-        if (p->error) {
-            rc_package_free (pkg);
+        if (packman->priv->error) {
+            rc_package_free (package);
             return (ret);
         }
 
-        ret = g_slist_append (ret, pkg);
+        ret = g_slist_append (ret, package);
     }
 
     return (ret);
 }
 
 RCPackageSList *
-rc_packman_query_all (RCPackman *p)
+rc_packman_query_all (RCPackman *packman)
 {
-    RCPackageSList *ret = NULL;
+    RCPackmanClass *klass;
 
-    g_return_val_if_fail(p, NULL);
+    g_return_val_if_fail (packman, NULL);
 
-    rc_packman_set_error (p, RC_PACKMAN_ERROR_NONE, NULL);
+    rc_packman_set_error (packman, RC_PACKMAN_ERROR_NONE, NULL);
 
-    if (p->busy) {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_BUSY, NULL);
+    if (packman->priv->busy) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_BUSY, NULL);
         return (NULL);
     }
 
-    g_assert (_CLASS (p)->rc_packman_real_query_all);
+    klass = RC_PACKMAN_GET_CLASS (packman);
 
-    p->busy = TRUE;
+    g_assert (klass->rc_packman_real_query_all);
 
-    ret =  _CLASS (p)->rc_packman_real_query_all (p);
-
-    p->busy = FALSE;
-
-    return (ret);
+    return (klass->rc_packman_real_query_all (packman));
 }
 
 gint
-rc_packman_version_compare (RCPackman *p,
-                            RCPackageSpec *s1,
-                            RCPackageSpec *s2)
+rc_packman_version_compare (RCPackman *packman,
+                            RCPackageSpec *spec1,
+                            RCPackageSpec *spec2)
 {
-    g_return_val_if_fail(p, 0);
+    RCPackmanClass *klass;
 
-    g_assert (_CLASS (p)->rc_packman_real_version_compare);
+    g_return_val_if_fail (packman, 0);
 
-    rc_packman_set_error (p, RC_PACKMAN_ERROR_NONE, NULL);
+    rc_packman_set_error (packman, RC_PACKMAN_ERROR_NONE, NULL);
 
-    return (_CLASS (p)->rc_packman_real_version_compare (p, s1, s2));
+    klass = RC_PACKMAN_GET_CLASS (packman);
+
+    g_assert (klass->rc_packman_real_version_compare);
+
+    return (klass->rc_packman_real_version_compare (packman, spec1, spec2));
 }
 
 RCVerificationSList *
-rc_packman_verify (RCPackman *p, RCPackage *pkg)
+rc_packman_verify (RCPackman *packman, RCPackage *package)
 {
-    RCVerificationSList *ret = FALSE;
+    RCPackmanClass *klass;
 
-    g_return_val_if_fail(p, NULL);
+    g_return_val_if_fail (packman, NULL);
 
-    rc_packman_set_error (p, RC_PACKMAN_ERROR_NONE, NULL);
+    rc_packman_set_error (packman, RC_PACKMAN_ERROR_NONE, NULL);
 
-    if (p->busy) {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_BUSY, NULL);
+    if (packman->priv->busy) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_BUSY, NULL);
         return (NULL);
     }
 
-    g_assert (_CLASS (p)->rc_packman_real_verify);
+    klass = RC_PACKMAN_GET_CLASS (packman);
 
-    p->busy = TRUE;
+    g_assert (klass->rc_packman_real_verify);
 
-    ret = _CLASS (p)->rc_packman_real_verify (p, pkg);
-
-    p->busy = FALSE;
-
-    return (ret);
+    return (klass->rc_packman_real_verify (packman, package));
 }
 
-/* Public functions to emit signals */
-
-void
-rc_packman_configure_progress (RCPackman *p, gint amount, gint total)
+RCPackage *
+rc_packman_find_file (RCPackman *packman, const gchar *filename)
 {
-    g_return_if_fail (p);
+    RCPackmanClass *klass;
 
-    gtk_signal_emit ((GtkObject *)p, signals[CONFIGURE_PROGRESS], amount,
-                     total);
+    g_return_val_if_fail (packman, NULL);
 
-    while (gtk_events_pending ()) {
-        gtk_main_iteration ();
+    rc_packman_set_error (packman, RC_PACKMAN_ERROR_NONE, NULL);
+
+    if (packman->priv->busy) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_BUSY, NULL);
+        return (NULL);
     }
-}
 
-void
-rc_packman_configure_step (RCPackman *p, gint seqno, gint total)
-{
-    g_return_if_fail (p);
+    klass = RC_PACKMAN_GET_CLASS (packman);
 
-    gtk_signal_emit ((GtkObject *)p, signals[CONFIGURE_STEP], seqno, total);
+    g_assert (klass->rc_packman_real_find_file);
 
-    while (gtk_events_pending ()) {
-        gtk_main_iteration ();
-    }
-}
-
-void
-rc_packman_configure_done (RCPackman *p)
-{
-    g_return_if_fail (p);
-
-    gtk_signal_emit ((GtkObject *)p, signals[CONFIGURE_DONE]);
-
-    while (gtk_events_pending ()) {
-        gtk_main_iteration ();
-    }
-}
-
-void
-rc_packman_transaction_progress (RCPackman *p, gint amount, gint total)
-{
-    g_return_if_fail (p);
-
-    gtk_signal_emit ((GtkObject *)p, signals[TRANSACTION_PROGRESS],
-                     amount, total);
-
-    while (gtk_events_pending ()) {
-        gtk_main_iteration ();
-    }
-}
-
-void
-rc_packman_transaction_step (RCPackman *p, gint seqno, gint total)
-{
-    g_return_if_fail (p);
-
-    gtk_signal_emit ((GtkObject *)p, signals[TRANSACTION_STEP], seqno, total);
-
-    while (gtk_events_pending ()) {
-        gtk_main_iteration ();
-    }
-}
-
-void
-rc_packman_transaction_done (RCPackman *p)
-{
-    g_return_if_fail (p);
-
-    gtk_signal_emit ((GtkObject *)p, signals[TRANSACTION_DONE]);
-
-    while (gtk_events_pending ()) {
-        gtk_main_iteration ();
-    }
+    return (klass->rc_packman_real_find_file (packman, filename));
 }
 
 /* Methods to access the error stuff */
 
 void
-rc_packman_set_error (RCPackman *p, RCPackmanError error, const gchar *reason)
+rc_packman_set_error (RCPackman *packman, RCPackmanError error,
+                      const gchar *reason)
 {
-    g_return_if_fail(p);
+    g_return_if_fail (packman);
 
-    g_free (p->reason);
+    g_free (packman->priv->reason);
 
-    p->error = error;
-    p->reason = g_strdup (reason);
+    packman->priv->error = error;
+    packman->priv->reason = g_strdup (reason);
 }
 
 guint
-rc_packman_get_error (RCPackman *p)
+rc_packman_get_error (RCPackman *packman)
 {
-    g_return_val_if_fail(p, RC_PACKMAN_ERROR_FAIL);
+    g_return_val_if_fail (packman, RC_PACKMAN_ERROR_FAIL);
 
-    return (p->error);
+    return (packman->priv->error);
 }
 
-gchar *
-rc_packman_get_reason (RCPackman *p)
+const gchar *
+rc_packman_get_reason (RCPackman *packman)
 {
-    g_return_val_if_fail(p, "No packman object");
+    g_return_val_if_fail (packman, "No packman object");
 
-    if (p->reason)
-        return (p->reason);
+    if (packman->priv->reason) {
+        return (packman->priv->reason);
+    }
 
-    return ("");
-}
-
-/* Helper function to build RCPackageSList's easily */
-
-RCPackageSList *
-rc_package_slist_add_package (RCPackageSList *pkgs, gchar *name,
-                              guint32 epoch, gchar *version, gchar *release,
-                              gboolean installed, guint32 installed_size)
-{
-    RCPackage *pkg = rc_package_new ();
-
-    rc_package_spec_init (RC_PACKAGE_SPEC (pkg), name, epoch, version,
-                          release);
-
-    pkg->installed = installed;
-    pkg->installed_size = installed_size;
-
-    pkgs = g_slist_append (pkgs, pkg);
-
-    return (pkgs);
+    return (NULL);
 }

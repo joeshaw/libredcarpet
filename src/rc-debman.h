@@ -36,16 +36,14 @@
 #define IS_RC_DEBMAN_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), \
                                    GTK_TYPE_RC_DEBMAN))
 
-typedef struct _RCDebman      RCDebman;
-typedef struct _RCDebmanClass RCDebmanClass;
+typedef struct _RCDebman        RCDebman;
+typedef struct _RCDebmanClass   RCDebmanClass;
+typedef struct _RCDebmanPrivate RCDebmanPrivate;
 
 struct _RCDebman {
     RCPackman parent;
 
-    int lock_fd;
-
-    GHashTable *pkg_hash;
-    gboolean hash_valid;
+    RCDebmanPrivate *priv;
 };
 
 struct _RCDebmanClass {

@@ -98,30 +98,33 @@ transact_cb (const Header h, const rpmCallbackType what,
         break;
 
     case RPMCALLBACK_INST_PROGRESS:
-        rc_packman_transaction_progress (state->p, amount, total);
+        gtk_signal_emit_by_name (GTK_OBJECT (state->p), "transaction_progress",
+                                 amount, total);
         if (amount == total) {
-            rc_packman_transaction_step (state->p, ++state->seqno,
-                                         state->install_total +
-                                         state->remove_total);
+            gtk_signal_emit_by_name (GTK_OBJECT (state->p), "transaction_step",
+                                     ++state->seqno, state->install_total +
+                                     state->remove_total);
         }
         break;
 
     case RPMCALLBACK_TRANS_PROGRESS:
         if (state->configuring) {
-            rc_packman_configure_step (state->p, ++state->seqno,
-                                       state->install_total);
+            gtk_signal_emit_by_name (GTK_OBJECT (state->p), "configure_step",
+                                     ++state->seqno, state->install_total);
             if (state->seqno == state->install_total) {
                 state->configuring = FALSE;
                 state->seqno = 0;
-                rc_packman_configure_done (state->p);
-                rc_packman_transaction_step (state->p, 0,
-                                             state->install_total +
-                                             state->remove_total);
-            }
-        } else {
-            rc_packman_transaction_step (state->p, ++state->seqno,
+                gtk_signal_emit_by_name (GTK_OBJECT (state->p),
+                                         "configure_done");
+                gtk_signal_emit_by_name (GTK_OBJECT (state->p),
+                                         "transaction_step", 0,
                                          state->install_total +
                                          state->remove_total);
+            }
+        } else {
+            gtk_signal_emit_by_name (GTK_OBJECT (state->p), "transaction_step",
+                                     ++state->seqno, state->install_total +
+                                     state->remove_total);
         }
         break;
 
@@ -145,15 +148,15 @@ transact_cb (const Header h, const rpmCallbackType what,
 
 static gboolean
 transaction_add_install_pkgs (RCPackman *p, rpmTransactionSet transaction,
-                              GSList *install_pkgs)
+                              RCPackageSList *install_packages)
 {
-    GSList *iter;
+    RCPackageSList *iter;
     FD_t fd;
     Header hdr;
     int rc;
 
-    for (iter = install_pkgs; iter; iter = iter->next) {
-        gchar *filename = (gchar *)(iter->data);
+    for (iter = install_packages; iter; iter = iter->next) {
+        gchar *filename = ((RCPackage *)(iter->data))->package_filename;
 
         fd = Fopen (filename, "r.ufdio");
 
@@ -332,8 +335,8 @@ transaction_add_remove_pkgs (RCPackman *p, rpmTransactionSet transaction,
 #endif /* !HAVE_RPM_4_0 */
 
 static void
-rc_rpmman_transact (RCPackman *p, GSList *install_pkgs,
-                    RCPackageSList *remove_pkgs)
+rc_rpmman_transact (RCPackman *p, RCPackageSList *install_packages,
+                    RCPackageSList *remove_packages)
 {
     rpmdb db = NULL;
     rpmTransactionSet transaction;
@@ -348,12 +351,12 @@ rc_rpmman_transact (RCPackman *p, GSList *install_pkgs,
 
     transaction = rpmtransCreateSet (db, RC_RPMMAN (p)->rpmroot);
 
-    if (!(transaction_add_install_pkgs (p, transaction, install_pkgs))) {
+    if (!(transaction_add_install_pkgs (p, transaction, install_packages))) {
         /* FIXME: Uh oh */
         return;
     }
 
-    if (!(transaction_add_remove_pkgs (p, transaction, db, remove_pkgs))) {
+    if (!(transaction_add_remove_pkgs (p, transaction, db, remove_packages))) {
         /* FIXME: Uh oh */
         return;
     }
@@ -366,15 +369,15 @@ rc_rpmman_transact (RCPackman *p, GSList *install_pkgs,
     state = g_new0 (InstallState, 1);
     state->p = p;
     state->seqno = 0;
-    state->install_total = g_slist_length (install_pkgs);
-    state->remove_total = g_slist_length (remove_pkgs);
+    state->install_total = g_slist_length (install_packages);
+    state->remove_total = g_slist_length (remove_packages);
 
-    rc_packman_configure_step (p, 0, state->install_total);
+    gtk_signal_emit_by_name (GTK_OBJECT (p), 0, state->install_total);
 
     rc = rpmRunTransactions (transaction, transact_cb, (void *) state,
                              NULL, &probs, 0, 0);
 
-    rc_packman_transaction_done (p);
+    gtk_signal_emit_by_name (GTK_OBJECT (p), "transaction_done");
 
     rpmdbClose (db);
 } /* rc_rpmman_transact */
@@ -937,7 +940,7 @@ rc_rpmman_query (RCPackman *p, RCPackage *pkg)
 /* Query a file for rpm header information */
 
 static RCPackage *
-rc_rpmman_query_file (RCPackman *p, gchar *filename)
+rc_rpmman_query_file (RCPackman *p, const gchar *filename)
 {
     FD_t fd;
     Header hdr;
@@ -1299,9 +1302,9 @@ rc_rpmman_init (RCRpmman *obj)
         obj->rpmroot = g_strdup ("/");
     }
 
-    p->pre_config = TRUE;
-    p->pkg_progress = TRUE;
-    p->post_config = FALSE;
+    p->priv->features =
+        RC_PACKMAN_FEATURE_PRE_CONFIG |
+        RC_PACKMAN_FEATURE_PKG_PROGRESS;
 } /* rc_rpmman_init */
 
 RCRpmman *

@@ -1,4 +1,5 @@
-#include "rc-line-buf.h"
+#include <libredcarpet/rc-line-buf.h>
+#include <libredcarpet/rc-line-buf-private.h>
 
 static void rc_line_buf_class_init (RCLineBufClass *klass);
 static void rc_line_buf_init       (RCLineBuf *obj);
@@ -38,20 +39,22 @@ rc_line_buf_get_type (void)
 static void
 rc_line_buf_destroy (GtkObject *obj)
 {
-    RCLineBuf *lb = RC_LINE_BUF (obj);
+    RCLineBuf *line_buf = RC_LINE_BUF (obj);
 
-    if (lb->buf) {
-        g_string_free (lb->buf, TRUE);
+    if (line_buf->priv->buf) {
+        g_string_free (line_buf->priv->buf, TRUE);
     }
 
-    if (lb->cb_id) {
-        g_source_remove (lb->cb_id);
+    if (line_buf->priv->cb_id) {
+        g_source_remove (line_buf->priv->cb_id);
     }
 
-    if (lb->channel) {
-        g_io_channel_close (lb->channel);
-        g_io_channel_unref (lb->channel);
+    if (line_buf->priv->channel) {
+        g_io_channel_close (line_buf->priv->channel);
+        g_io_channel_unref (line_buf->priv->channel);
     }
+
+    g_free (line_buf->priv);
 
     if (GTK_OBJECT_CLASS (rc_line_buf_parent)->destroy) {
         (*GTK_OBJECT_CLASS (rc_line_buf_parent)->destroy) (obj);
@@ -94,16 +97,18 @@ rc_line_buf_class_init (RCLineBufClass *klass)
 static void
 rc_line_buf_init (RCLineBuf *obj)
 {
-    obj->channel = NULL;
-    obj->cb_id = 0;
-    obj->buf = NULL;
+    obj->priv = g_new (RCLineBufPrivate, 1);
+
+    obj->priv->channel = NULL;
+    obj->priv->cb_id = 0;
+    obj->priv->buf = g_string_new (NULL);
 }
 
 static gboolean
 rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
-                     gpointer data)
+                gpointer data)
 {
-    RCLineBuf *lb = (RCLineBuf *)data;
+    RCLineBuf *line_buf = (RCLineBuf *)data;
     GIOError ret;
     guint bytes_read;
     guint count;
@@ -111,10 +116,10 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
     gchar buf[101];
 
     if (condition == G_IO_HUP) {
-        gtk_signal_emit (GTK_OBJECT (lb), signals[READ_DONE],
+        gtk_signal_emit (GTK_OBJECT (line_buf), signals[READ_DONE],
                          RC_LINE_BUF_OK);
-        g_source_remove (lb->cb_id);
-        lb->cb_id = 0;
+        g_source_remove (line_buf->priv->cb_id);
+        line_buf->priv->cb_id = 0;
         return (FALSE);
     }
 
@@ -130,41 +135,44 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
     case G_IO_ERROR_INVAL:
     case G_IO_ERROR_UNKNOWN:
         /* Bork bork */
-        gtk_signal_emit ((GtkObject *)lb, signals[READ_DONE],
+        gtk_signal_emit (GTK_OBJECT (line_buf), signals[READ_DONE],
                          RC_LINE_BUF_ERROR);
         /* I don't think I should have to do this, but this is the solution to
            the infamous big bad oh-what-the-fuck bug, so... */
-        g_source_remove (lb->cb_id);
-        lb->cb_id = 0;
+        g_source_remove (line_buf->priv->cb_id);
+        line_buf->priv->cb_id = 0;
         return (FALSE);
         break;
 
     case G_IO_ERROR_NONE:
         if (bytes_read == 0) {
-            gtk_signal_emit ((GtkObject *)lb, signals[READ_DONE],
+            gtk_signal_emit (GTK_OBJECT (line_buf), signals[READ_DONE],
                              RC_LINE_BUF_OK);
             /* I don't think I should have to do this, but this is the
                    solution to the infamous big bad oh-what-the-fuck bug, so */
-            g_source_remove (lb->cb_id);
-            lb->cb_id = 0;
+            g_source_remove (line_buf->priv->cb_id);
+            line_buf->priv->cb_id = 0;
             return (FALSE);
         }
 
         buf[bytes_read] = '\0';
 
         for (count = 0; count < bytes_read; count++) {
-            if (buf[count] == '\n') {
+            if (buf[count] == '\n')
+            {
                 buf[count] = '\0';
-                lb->buf = g_string_append (lb->buf, buf + base);
-                gtk_signal_emit ((GtkObject *)lb, signals[READ_LINE],
-                                 lb->buf->str);
-                g_string_free (lb->buf, TRUE);
-                lb->buf = g_string_new (NULL);
+                line_buf->priv->buf =
+                    g_string_append (line_buf->priv->buf, buf + base);
+                gtk_signal_emit (GTK_OBJECT (line_buf), signals[READ_LINE],
+                                 line_buf->priv->buf->str);
+                g_string_free (line_buf->priv->buf, TRUE);
+                line_buf->priv->buf = g_string_new (NULL);
                 base = count + 1;
             }
         }
 
-        lb->buf = g_string_append (lb->buf, buf + base);
+        line_buf->priv->buf = g_string_append (line_buf->priv->buf,
+                                               buf + base);
 
         return (TRUE);
         break;
@@ -175,35 +183,30 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
 }
 
 RCLineBuf *
-rc_line_buf_new ()
+rc_line_buf_new (int fd)
 {
-    RCLineBuf *new =
+    RCLineBuf *line_buf =
         RC_LINE_BUF (gtk_type_new (rc_line_buf_get_type ()));
 
-    new->buf = g_string_new (NULL);
+    line_buf->priv->channel = g_io_channel_unix_new (fd);
 
-    return (new);
-}
+    line_buf->priv->cb_id = g_io_add_watch (line_buf->priv->channel,
+                                            G_IO_IN | G_IO_HUP,
+                                            (GIOFunc) rc_line_buf_cb,
+                                            (gpointer) line_buf);
 
-void
-rc_line_buf_set_fd (RCLineBuf *lb, int fd)
-{
-    lb->channel = g_io_channel_unix_new (fd);
-
-    lb->cb_id = g_io_add_watch (lb->channel, G_IO_IN | G_IO_HUP,
-                                (GIOFunc) rc_line_buf_cb,
-                                (gpointer) lb);
+    return (line_buf);
 }
 
 gchar *
-rc_line_buf_get_buf (RCLineBuf *lb)
+rc_line_buf_get_buf (RCLineBuf *line_buf)
 {
     gchar *tmp;
 
-    tmp = lb->buf->str;
+    tmp = line_buf->priv->buf->str;
 
-    g_string_free (lb->buf, FALSE);
-    lb->buf = g_string_new (NULL);
+    g_string_free (line_buf->priv->buf, FALSE);
+    line_buf->priv->buf = g_string_new (NULL);
 
     return (tmp);
 }
