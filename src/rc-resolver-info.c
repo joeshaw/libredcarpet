@@ -184,7 +184,7 @@ rc_resolver_info_to_string (RCResolverInfo *info)
 
     case RC_RESOLVER_INFO_TYPE_OBSOLETES:
         pkgs = rc_resolver_info_packages_to_string (info, FALSE);
-        msg = g_strdup_printf ("replaces %s", pkgs);
+        msg = g_strdup_printf ("replaced by %s", pkgs);
         g_free (pkgs);
         break;
 

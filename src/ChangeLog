@@ -1,3 +1,8 @@
+2002-12-10  Joe Shaw  <joe@ximian.com>
+
+	* rc-resolver-info.c (rc_resolver_info_to_string): Change
+	"replaces" to "replaced by"
+
 2002-12-06  Joe Shaw  <joe@ximian.com>
 
 	* rc-rpmman.c: Pass in the address to a gboolean as the third
