@@ -66,18 +66,11 @@ PyPackageMatch_set_channel (PyObject *self, PyObject *args)
 }
 
 static PyObject *
-PyPackageMatch_get_channel (PyObject *self, PyObject *args)
+PyPackageMatch_get_channel_id (PyObject *self, PyObject *args)
 {
 	RCPackageMatch *match = PyPackageMatch_get_package_match (self);
-	RCChannel *channel;
 
-	channel = rc_package_match_get_channel (match);
-	if (channel == NULL) {
-		Py_INCREF (Py_None);
-		return Py_None;
-	}
-
-	return PyChannel_new (channel);
+	return PyString_FromString (rc_package_match_get_channel_id (match));
 }
 
 static PyObject *
@@ -204,7 +197,7 @@ PyPackageMatch_to_xml (PyObject *self, PyObject *args)
 
 static PyMethodDef PyPackageMatch_methods[] = {
 	{ "set_channel",    PyPackageMatch_set_channel,    METH_VARARGS },
-	{ "get_channel",    PyPackageMatch_get_channel,    METH_NOARGS  },
+	{ "get_channel_id", PyPackageMatch_get_channel_id, METH_NOARGS  },
 	{ "set_dep",        PyPackageMatch_set_dep,        METH_VARARGS },
 	{ "get_dep",        PyPackageMatch_get_dep,        METH_NOARGS  },
 	{ "set_glob",       PyPackageMatch_set_glob,       METH_VARARGS },

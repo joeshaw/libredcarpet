@@ -21,35 +21,35 @@ other_libs     = ["redcarpet", "bz2"]
 other_libdirs  = ["../../src"]
  
 
-py_tsar_sources = [ "pyutil.c",
-                    "distro.c",
-                    "verification.c",
-                    "package-importance.c",
-                    "package-spec.c",
-                    "package-dep.c",
-                    "package-match.c",
-                    "package-update.c",
-                    "package.c",
-		    "package-file.c",
-                    "packman.c",
-                    "channel.c",
-                    "world.c",
-                    "resolver-info.c",
-                    "resolver-context.c",
-                    "resolver-queue.c",
-                    "resolver.c",
-                    "redcarpet.c",
-                    ]
+py_redcarpet_sources = [ "pyutil.c",
+                         "distro.c",
+                         "verification.c",
+                         "package-importance.c",
+                         "package-spec.c",
+                         "package-dep.c",
+                         "package-match.c",
+                         "package-update.c",
+                         "package.c",
+                         "package-file.c",
+                         "packman.c",
+                         "channel.c",
+                         #"world.c",
+                         #"resolver-info.c",
+                         #"resolver-context.c",
+                         #"resolver-queue.c",
+                         #"resolver.c",
+                         "redcarpet.c",
+                         ]
 
  
 module_redcarpet = Extension("redcarpet",
-                             sources=py_tsar_sources,
+                             sources=py_redcarpet_sources,
                              extra_compile_args=["-Wall", "-g"],
                              include_dirs=pkg_includes+other_includes,
                              libraries=pkg_libs+other_libs,
                              library_dirs=pkg_libdirs+other_libdirs)
 
-setup (name="redcarpet",
+setup (name="xxx_redcarpet",
        version="0.1",
        description="Red Carpet",
        ext_modules=[module_redcarpet])

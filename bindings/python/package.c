@@ -67,6 +67,8 @@ PyPackage_is_synthetic (PyObject *self, PyObject *args)
 	return Py_BuildValue ("i", rc_package_is_synthetic (package));
 }
 
+#if BINDINGS_NOT_TOTALLY_BROKEN
+
 static PyObject *
 PyPackage_get_best_upgrade (PyObject *self, PyObject *args)
 {
@@ -101,6 +103,24 @@ PyPackage_get_latest_update (PyObject *self, PyObject *args)
 	return PyPackageUpdate_new (update);
 }
 
+#endif
+
+static PyObject *
+PyPackage_add_dummy_update (PyObject *self, PyObject *args)
+{
+	RCPackage *package = PyPackage_get_package (self);
+	char *filename;
+	long filesize;
+
+	if (! PyArg_ParseTuple (args, "sl", &filename, &filesize))
+		return NULL;
+
+	rc_package_add_dummy_update (package, filename, filesize);
+
+	Py_INCREF (Py_None);
+	return Py_None;
+}
+
 static PyObject *
 PyPackage_to_xml (PyObject *self, PyObject *args)
 {
@@ -123,8 +143,12 @@ static PyMethodDef PyPackage_methods[] = {
 	{ "is_installed",       PyPackage_is_installed,       METH_NOARGS  },
 	{ "is_package_set",     PyPackage_is_package_set,     METH_NOARGS  },
 	{ "is_synthetic",       PyPackage_is_synthetic,       METH_NOARGS  },
+
+#if BINDINGS_NOT_TOTALLY_BROKEN
 	{ "get_best_upgrade",   PyPackage_get_best_upgrade,   METH_VARARGS },
 	{ "get_latest_update",  PyPackage_get_latest_update,  METH_NOARGS  },
+#endif
+	{ "add_dummy_update",   PyPackage_add_dummy_update,   METH_VARARGS },
 
 	/* From rc-xml.h */
 	{ "to_xml",             PyPackage_to_xml,             METH_NOARGS  },

@@ -38,12 +38,15 @@
 #include "package.h"
 #include "packman.h"
 #include "channel.h"
+#if BINDINGS_NOT_TOTALLY_BROKEN
 #include "world.h"
 #include "resolver-info.h"
 #include "resolver-context.h"
 #include "resolver-queue.h"
 #include "resolver.h"
+#endif
 #include "package-file.h"
+
 
 static PyMethodDef redcarpet_methods[] = {
 
@@ -67,17 +70,19 @@ static RegistrationFn redcarpet_registration_fns[] = {
 	PyPackage_register,
 	PyPackman_register,
 	PyChannel_register,
+#if BINDINGS_NOT_TOTALLY_BROKEN
 	PyWorld_register,
 	PyResolverInfo_register,
 	PyResolverContext_register,
 	PyResolverQueue_register,
 	PyResolver_register,
+#endif
 	PyPackageFile_register,
 	NULL
 };
 
 void
-initxxx_redcarpet (void)
+initredcarpet (void)
 {
   PyObject *m, *d;
   int i;
@@ -85,7 +90,7 @@ initxxx_redcarpet (void)
   g_type_init ();
   rc_distro_parse_xml (NULL, 0);
   
-  m = Py_InitModule ("xxx_redcarpet", redcarpet_methods);
+  m = Py_InitModule ("redcarpet", redcarpet_methods);
   d = PyModule_GetDict (m);
 
   for (i = 0; redcarpet_init_fns[i]; ++i)
