@@ -497,6 +497,70 @@ rc_debman_query_helper (FILE *fp, RCPackage *pkg)
             rc_debman_parse_version (buf + strlen ("Version: "),
                                      &pkg->spec.epoch, &pkg->spec.version,
                                      &pkg->spec.release);
+        } else if (!strncmp (buf, "Section: ", strlen ("Section: "))) {
+            gchar **tokens = g_strsplit (buf + strlen ("Section: "), "/", -1);
+            gint i = 0;
+            gchar *sec;
+            while (tokens[i+1] != NULL) i++;
+            sec = g_strchomp (tokens[i]);
+            if (!g_strcasecmp (sec, "admin")) {
+                pkg->spec.section = SECTION_SYSTEM;
+            } else if (!g_strcasecmp (sec, "base")) {
+                pkg->spec.section = SECTION_SYSTEM;
+            } else if (!g_strcasecmp (sec, "comm")) {
+                pkg->spec.section = SECTION_INTERNET;
+            } else if (!g_strcasecmp (sec, "devel")) {
+                pkg->spec.section = SECTION_DEVEL;
+            } else if (!g_strcasecmp (sec, "doc")) {
+                pkg->spec.section = SECTION_DOC;
+            } else if (!g_strcasecmp (sec, "editors")) {
+                pkg->spec.section = SECTION_UTIL;
+            } else if (!g_strcasecmp (sec, "electronics")) {
+                pkg->spec.section = SECTION_MISC;
+            } else if (!g_strcasecmp (sec, "games")) {
+                pkg->spec.section = SECTION_GAME;
+            } else if (!g_strcasecmp (sec, "graphics")) {
+                pkg->spec.section = SECTION_IMAGING;
+            } else if (!g_strcasecmp (sec, "hamradio")) {
+                pkg->spec.section = SECTION_MISC;
+            } else if (!g_strcasecmp (sec, "interpreters")) {
+                pkg->spec.section = SECTION_DEVELUTIL;
+            } else if (!g_strcasecmp (sec, "libs")) {
+                pkg->spec.section = SECTION_LIBRARY;
+            } else if (!g_strcasecmp (sec, "mail")) {
+                pkg->spec.section = SECTION_INTERNET;
+            } else if (!g_strcasecmp (sec, "math")) {
+                pkg->spec.section = SECTION_MISC;
+            } else if (!g_strcasecmp (sec, "misc")) {
+                pkg->spec.section = SECTION_MISC;
+            } else if (!g_strcasecmp (sec, "net")) {
+                pkg->spec.section = SECTION_INTERNET;
+            } else if (!g_strcasecmp (sec, "news")) {
+                pkg->spec.section = SECTION_INTERNET;
+            } else if (!g_strcasecmp (sec, "oldlibs")) {
+                pkg->spec.section = SECTION_LIBRARY;
+            } else if (!g_strcasecmp (sec, "otherosfs")) {
+                pkg->spec.section = SECTION_MISC;
+            } else if (!g_strcasecmp (sec, "science")) {
+                pkg->spec.section = SECTION_MISC;
+            } else if (!g_strcasecmp (sec, "shells")) {
+                pkg->spec.section = SECTION_SYSTEM;
+            } else if (!g_strcasecmp (sec, "sound")) {
+                pkg->spec.section = SECTION_MULTIMEDIA;
+            } else if (!g_strcasecmp (sec, "tex")) {
+                pkg->spec.section = SECTION_MISC;
+            } else if (!g_strcasecmp (sec, "text")) {
+                pkg->spec.section = SECTION_UTIL;
+            } else if (!g_strcasecmp (sec, "utils")) {
+                pkg->spec.section = SECTION_UTIL;
+            } else if (!g_strcasecmp (sec, "web")) {
+                pkg->spec.section = SECTION_INTERNET;
+            } else if (!g_strcasecmp (sec, "x11")) {
+                pkg->spec.section = SECTION_XAPP;
+            } else {
+                pkg->spec.section = SECTION_MISC;
+            }
+            g_strfreev (tokens);
         } else if (!strncmp (buf, "Depends: ", strlen ("Depends: "))) {
             pkg->requires = rc_debman_fill_depends (buf + strlen ("Depends: "),
                                                     pkg->requires);
