@@ -1,3 +1,9 @@
+2003-02-21  Joe Shaw  <joe@ximian.com>
+
+	* rc-world.c (rc_world_touch_channel_sequence_number): Fix a
+	cut-and-paste-o where we were signaling that the subscriptions
+	seqno had changed, not the channel seqno.
+
 2003-02-07  Joe Shaw  <joe@ximian.com>
 
 	* rc-debman.c (query_all_read_line_cb): Set the arch to NOARCH by
