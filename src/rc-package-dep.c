@@ -107,14 +107,25 @@ rc_package_dep_item_verify_relation (RCPackageDepItem *dep, RCPackageSpec *spec)
  * operation.
  */
 
-    if ((dep->spec.version == NULL && dep->spec.release == NULL) ||
-        (spec->version == NULL && spec->release == NULL))
-    {
+    if (dep->spec.version == NULL && dep->spec.release == NULL) {
         if (strcmp (dep->spec.name, spec->name) == 0) {
 #if DEBUG > 10
             fprintf (stderr, "PASS (nullrv)\n");
 #endif
             return TRUE;
+        }
+    }
+
+    if (spec->version == NULL && spec->release == NULL)
+    {
+        /* If it's the same name and the relation isn't looking for a version less than blah */
+        if ((strcmp (dep->spec.name, spec->name) == 0) && !(dep->relation & RC_RELATION_LESS)) {
+#if DEBUG > 10
+            fprintf (stderr, "PASS (nullrv)\n");
+#endif
+            return TRUE;
+        } else {
+            return FALSE;
         }
     }
 
