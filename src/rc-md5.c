@@ -20,8 +20,8 @@
  *  - Ian Jackson <ijackson@nyx.cs.du.edu>.
  * Still in the public domain.
  *
- * Modified to glibify a lil' bit by ALL YOUR BASE ARE BELONG TO US.
- * Still in the public domain. All of them.
+ * Modified to use glib by Ximian, Inc.
+ * Still in the public domain.
  */
 
 #include <config.h>

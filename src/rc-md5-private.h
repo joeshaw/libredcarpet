@@ -19,6 +19,9 @@
  * header definitions; now uses stuff from dpkg's config.h
  *  - Ian Jackson <ijackson@nyx.cs.du.edu>.
  * Still in the public domain.
+ *
+ * Modified to use glib by Ximian, Inc.
+ * Still in the public domain.
  */
 
 #include <glib.h>

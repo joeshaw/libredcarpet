@@ -30,89 +30,86 @@ endif
 
 BUILT_SOURCES =				\
 	distributions-xml.h		\
-	rc-marshal.h			\
-	rc-marshal.c
+	rc-marshal.c			\
+	rc-marshal.h
 
 libredcarpet_public_headers = 		\
-	rc-debug.h			\
-	rc-arch.h			\
-	rc-package-spec.h		\
 	libredcarpet.h			\
-	rc-package-dep.h		\
-	rc-package-importance.h		\
-	rc-package-update.h		\
-	rc-package-set.h		\
-	rc-package.h			\
-	rc-package-section.h		\
-	rc-world.h			\
-	rc-world-import.h		\
-	rc-world-dump.h			\
-	rc-world-subscriptions.h	\
-	rc-resolver-info.h		\
-	rc-resolver-context.h		\
-	rc-resolver-compare.h		\
-	rc-queue-item.h			\
-	rc-resolver-queue.h		\
-	rc-resolver.h			\
-	rc-verification.h		\
+	rc-arch.h			\
 	rc-channel.h			\
-	rc-xml.h			\
-	rc-util.h			\
-	rc-distro.h			\
+	rc-debman-general.h		\
+	rc-debug.h			\
 	rc-dep-or.h			\
         rc-distman.h                    \
-        rc-packman.h                    \
-        rc-md5.h                        \
-	rc-debug-misc.h			\
-	rc-pretty-name.h		\
-        xml-util.h                      \
+	rc-distro.h			\
 	rc-line-buf.h			\
-	rc-debman-general.h
+        rc-md5.h                        \
+	rc-package.h			\
+	rc-package-dep.h		\
+	rc-package-importance.h		\
+	rc-package-set.h		\
+	rc-package-spec.h		\
+	rc-package-update.h		\
+	rc-package-section.h		\
+        rc-packman.h                    \
+	rc-pretty-name.h		\
+	rc-queue-item.h			\
+	rc-resolver.h			\
+	rc-resolver-compare.h		\
+	rc-resolver-context.h		\
+	rc-resolver-info.h		\
+	rc-resolver-queue.h		\
+	rc-util.h			\
+	rc-verification.h		\
+	rc-world.h			\
+	rc-world-dump.h			\
+	rc-world-import.h		\
+	rc-world-subscriptions.h	\
+	rc-xml.h			\
+        xml-util.h
 
 libredcarpettmp_a_SOURCES =		\
-	rc-debug.c			\
-	rc-arch.c			\
-	rc-package-spec.c		\
-	rc-package-dep.c		\
-	rc-package-importance.c		\
-	rc-package-update.c		\
-	rc-package-set.c		\
-	rc-package.c			\
-	rc-package-section.c		\
-	rc-world.c			\
-	rc-world-import.c		\
-	rc-world-dump.c			\
-	rc-world-subscriptions.c	\
-	rc-resolver-info.c		\
-	rc-resolver-context.c		\
-	rc-resolver-compare.c		\
-	rc-queue-item.c			\
-	rc-resolver-queue.c		\
-	rc-resolver.c			\
-	rc-verification.c		\
-	rc-verification-private.h	\
-	rc-channel.c			\
-	rc-channel-private.h		\
-	rc-channel-private.c		\
-	rc-xml.c			\
-	rc-util.c			\
 	distributions-xml.h		\
-	rc-distro.c			\
+	rc-arch.c			\
+	rc-channel.c			\
+	rc-channel-private.c		\
+	rc-channel-private.h		\
+	rc-debman-general.c		\
+	rc-debug.c			\
 	rc-dep-or.c			\
         rc-distman.c                    \
-	rc-marshal.c			\
-	rc-marshal.h			\
-        rc-packman.c                    \
-        rc-packman-private.h            \
-        rc-md5.c                        \
-        rc-md5-private.h                \
-	rc-debug-misc.c			\
-	rc-pretty-name.c		\
-        xml-util.c                      \
+	rc-distro.c			\
 	rc-line-buf.c			\
 	rc-line-buf-private.h		\
-	rc-debman-general.c		\
 	rc-marshal.c			\
+	rc-marshal.h			\
+        rc-md5.c                        \
+        rc-md5-private.h                \
+	rc-package.c			\
+	rc-package-dep.c		\
+	rc-package-importance.c		\
+	rc-package-set.c		\
+	rc-package-spec.c		\
+	rc-package-update.c		\
+	rc-package-section.c		\
+        rc-packman.c                    \
+        rc-packman-private.h            \
+	rc-pretty-name.c		\
+	rc-queue-item.c			\
+	rc-resolver.c			\
+	rc-resolver-compare.c		\
+	rc-resolver-context.c		\
+	rc-resolver-info.c		\
+	rc-resolver-queue.c		\
+	rc-util.c			\
+	rc-verification.c		\
+	rc-verification-private.h	\
+	rc-world.c			\
+	rc-world-dump.c			\
+	rc-world-import.c		\
+	rc-world-subscriptions.c	\
+	rc-xml.c			\
+        xml-util.c                      \
 	$(libredcarpet_public_headers)	\
 	$(dpkg_sources2)		\
 	$(rpm_sources2)
@@ -123,8 +120,8 @@ EXTRA_DIST =				\
 	rc-channel-private.h		\
 	rc-dpkg-helper.c 		\
 	make_stub.sh			\
-	rc-marshal.list			\
-	packer.pl
+	packer.pl			\
+	rc-marshal.list
 
 if ENABLE_DPKG
 dpkghelperdir = $(libdir)/@PRIVATE_NAMESPACE@
