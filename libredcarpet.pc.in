@@ -3,8 +3,8 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
-Name: libredcarpet-2.0
+Name: libredcarpet
 Description: LIBREDCARPET - Red Carpet Library version 2.0
 Version: @VERSION@
 Libs: -L${libdir} -lredcarpet @LIBREDCARPET_LIBS@
-Cflags: -I${includedir}/libredcarpet-2.0 @LIBREDCARPET_CFLAGS@
+Cflags: -I${includedir}/libredcarpet @LIBREDCARPET_CFLAGS@

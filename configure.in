@@ -162,7 +162,7 @@ Makefile
 src/Makefile
 dependency-tests/Makefile
 tools/Makefile
-libredcarpet-2.0.pc
+libredcarpet.pc
 ])
 
 # Removed cause it's busted-ass.

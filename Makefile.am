@@ -6,7 +6,7 @@ DOC_DIR=
 
 SUBDIRS = src dependency-tests tools $(DOC_DIR)
 
-EXTRA_DIST = libredcarpet-2.0.pc.in
+EXTRA_DIST = libredcarpet.pc.in
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = libredcarpet-2.0.pc
+pkgconfig_DATA = libredcarpet.pc

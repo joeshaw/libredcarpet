@@ -1,3 +1,11 @@
+2002-08-06  Ian Peters  <itp@ximian.com>
+
+	* Makefile.am: libredcarpet.pc, not 2.0
+
+	* configure.in: libredcarpet.pc, not 2.0
+
+	* libredcarpet.pc.in: libredcarpet, not 2.0
+
 2002-08-06  Joe Shaw  <joe@ximian.com>
 
 	* red-carpet.gpg: Removed.  Moved into rcd.
