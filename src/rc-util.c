@@ -71,10 +71,12 @@ rc_mkdir(const char *dir, guint mode)
     return 0;
 } /* rc_mkdir */
 
-#ifndef HAVE_MKDTEMP
 char *
 rc_mkdtemp (char *template)
 {
+#ifdef HAVE_MKDTEMP
+    return mkdtemp (template);
+#else
     unsigned int len;
     char *replace;
     struct timeval tv;
@@ -114,8 +116,8 @@ rc_mkdtemp (char *template)
         return NULL;
 
     return template;
-}
 #endif
+}
 
 gint
 rc_rmdir (const char *dir)
