@@ -1,3 +1,8 @@
+2004-05-18  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-extract-channels.c (rc_extract_channels_from_helix_buffer):
+	Free 'id_str' when done, fixes a memory leak.
+
 2004-05-13  James Willcox  <james@ximian.com>
 
 	* rc-rpmman.c: (load_fake_syms), (load_rpm_syms):
