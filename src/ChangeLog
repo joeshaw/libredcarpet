@@ -1,5 +1,7 @@
 2001-03-30  Vladimir Vukicevic  <vladimir@ximian.com>
 
+	* rc-deps.c: Got rid of a stray fprintf
+
 	* rc-package-dep.c: Make dep_to_str take an arg of '2' if you
 	want html-ized symbols (&lt; instead of <, etc.)  It's a gint
 	now instead of a boolean.
