@@ -1,3 +1,11 @@
+2003-08-20  Joe Shaw  <joe@ximian.com>
+
+	* cur_to_xml.c, dep_lint.c, pkg-vercmp.c, pkg_to_xml.c: None of
+	these need to parse the distro xml anymore, since that's separated
+	from rc-distman.  RC_PACKMAN_TYPE will need to be set instead of
+	RC_DISTRO_TARGET, however, to determine which packaging backend to
+	use.
+
 2003-07-10  Joe Shaw  <joe@ximian.com>
 
 	* pkg_to_xml.c: Print out the packman error if

@@ -48,12 +48,6 @@ main (int argc, char *argv[])
                               NULL);
     }
 
-    if (!rc_distro_parse_xml (NULL, 0)) {
-        g_printerr ("Unable to parse internal distribution info\n");
-        failed = TRUE;
-        goto out;
-    }
-
     packman = rc_distman_new ();
 
     if (! packman) {
