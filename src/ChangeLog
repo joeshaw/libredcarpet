@@ -1,3 +1,8 @@
+2003-04-04  Joe Shaw  <joe@ximian.com>
+
+	* distributions.xml: Add support for SLEC 1 and Red Hat 9, from
+	Peter Teichman.
+
 2003-04-04  Ian Peters  <itp@ximian.com>
 
 	* rc-util.c (rc_rmdir): lstat not stat.  Also fixed Jose's
