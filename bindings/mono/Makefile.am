@@ -68,9 +68,10 @@ EXTRA_DIST =				\
 	Channel.custom			\
 	Global.custom			\
 	World.custom			\
-	WorldService.custom
-
-Distro.custom   PackageSpec.custom  WorldMulti.custom
+	WorldService.custom		\
+	Distro.custom			\
+	PackageSpec.custom		\
+	WorldMulti.custom
 
 
 CLEANFILES = $(ASSEMBLY)
