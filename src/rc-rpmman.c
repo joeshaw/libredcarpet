@@ -1340,7 +1340,7 @@ rc_rpmman_read_header (RCRpmman *rpmman, Header header, RCPackage *package)
     if (count && (type == RPM_STRING_TYPE) && tmpc && tmpc[0]) {
         /* charset nonsense */
         if (g_utf8_validate (tmpc, -1, NULL))
-            package->description = g_strdup (tmpc);
+            package->summary = g_strdup (tmpc);
         else {
             package->summary = g_convert_with_fallback (tmpc, -1,
                                                         "UTF-8",
