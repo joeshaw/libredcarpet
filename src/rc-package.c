@@ -254,6 +254,11 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
             while (iter2) {
                 RCPackageUpdate *update;
 
+                if (iter2->type != XML_ELEMENT_NODE) {
+                    iter2 = iter2->next;
+                    continue;
+                }
+
                 update = rc_xml_node_to_package_update (iter2, package);
 
                 package->history =
