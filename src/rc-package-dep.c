@@ -24,7 +24,6 @@
 #endif
 
 #include "rc-package-dep.h"
-#include "rc-debug-misc.h"
 #include "rc-packman.h"
 #include "xml-util.h"
 #include "rc-debug.h"
