@@ -18,10 +18,14 @@
  * 02111-1307, USA.
  */
 
+#include <stdlib.h>
+#include <unistd.h>
+
 #include <gnome-xml/xmlmemory.h>
 
 #include "xml-util.h"
 #include "rc-pretty-name.h"
+#include "rc-util.h"
 
 static GHashTable *rc_pretty_name_hash = NULL;
 

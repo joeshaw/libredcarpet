@@ -1,5 +1,8 @@
 2001-03-09  Vladimir Vukicevic  <vladimir@ximian.com>
 
+	* rc-deps-util.c, rc-deps.c, rc-deps.h, rc-pretty-name.c: Made
+	these warning clean.  Also cought a bug in rc-deps.c (oops!)
+
 	* rc-package-section.c, rc-package-section.h: Created
 	rc_package_section_to_user_string ().
 
