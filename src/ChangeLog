@@ -1,3 +1,15 @@
+2002-03-05  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-world.c (rc_world_remove_package): Added.  Allows a single
+	package to be removed from the RCWorld.
+	(remove_packages_generic): Added.  This is a static function for
+	removing packages from slists -- the code was originally in one of
+	the g_hash_table_foreach_remove callbacks, but I've split it out
+	to avoid some code duplication.
+	(remove_package_structs_generic): Added.  Same as above, except it
+	acts on package structs (RCPackageAndSpec, RCPackageAndDep)
+	instead of packages.
+
 2002-03-04  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-queue-item.c (rc_queue_item_uninstall_set_dep): Changed from

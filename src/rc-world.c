@@ -181,41 +181,24 @@ rc_world_add_packages_from_slist (RCWorld *world,
     rc_world_thaw (world);
 }
 
-static gboolean
-remove_all_packages_cb (gpointer key, gpointer val, gpointer user_data)
-{
-    GSList *iter;
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
-    for (iter = val; iter != NULL; iter = iter->next) {
-        if (iter->data)
-            rc_package_free (iter->data);
+static gboolean
+remove_packages_generic (GSList *slist, RCPackage *package_to_remove, RCChannel *channel)
+{
+    GSList *orig, *iter;
+
+    /* If both are NULL, remove everything. */
+    if (package_to_remove == NULL
+        && channel == RC_WORLD_ANY_CHANNEL) {
+        for (iter = slist; iter != NULL; iter = iter->next) {
+            if (iter->data)
+                rc_package_free (iter->data);
+        }
+        
+        g_slist_free (slist);
+        return TRUE;
     }
-
-    g_slist_free (val);
-    
-    return TRUE;
-}
-
-static gboolean
-remove_all_package_structs_cb (gpointer key, gpointer val, gpointer user_data)
-{
-    GSList *iter;
-
-    for (iter = val; iter != NULL; iter = iter->next) {
-        if (iter->data)
-            g_free (iter->data);
-    }
-
-    g_slist_free (val);
-
-    return TRUE;
-}
-
-static gboolean
-remove_package_cb (gpointer key, gpointer val, gpointer user_data)
-{
-    GSList *slist, *orig, *iter;
-    RCChannel *channel = user_data;
 
     /* 
        Walk the list, removing links that contain a package in the
@@ -223,11 +206,13 @@ remove_package_cb (gpointer key, gpointer val, gpointer user_data)
        needing to change the head of the list that is stored in the
        hash --- just set the data to NULL in that case. 
     */
-    slist = orig = iter = (GSList *) val;
+    orig = iter = slist;
     while (iter != NULL) {
         RCPackage *package = iter->data;
         GSList *next = iter->next;
-        if (package && package->channel == channel) {
+        if (package && 
+            ((package_to_remove && package == package_to_remove)
+             || (channel && package->channel == channel))) {
             /* FIXME: Why does freeing the package here lead to corruption?
                Where else is it being freed? */
             /* rc_package_free (package); */
@@ -241,6 +226,7 @@ remove_package_cb (gpointer key, gpointer val, gpointer user_data)
         iter = next;
     }
 
+    /* Sanity check: make sure the head of the list didn't change. */
     g_assert (slist == orig);
 
     /* If this node's list is empty, remove it. */
@@ -255,24 +241,37 @@ remove_package_cb (gpointer key, gpointer val, gpointer user_data)
 }
 
 static gboolean
-remove_package_struct_cb (gpointer key, gpointer val, gpointer user_data)
+remove_package_structs_generic (GSList *slist, RCPackage *package_to_remove, RCChannel *channel)
 {
-    GSList *slist, *orig, *iter;
-    RCChannel *channel = user_data;
+    GSList *orig, *iter;
+
+    if (package_to_remove == NULL
+        && channel == RC_WORLD_ANY_CHANNEL) {
+        for (iter = slist; iter != NULL; iter = iter->next) {
+            if (iter->data)
+                g_free (iter->data);
+        }
+        
+        g_slist_free (slist);
+        return TRUE;
+    }
 
     /* 
-       Walk the list, as above.  We take advantage of the fact that the
-       first item in both the RCPackageAndSpec and RCPackageAndDep structs
-       is a RCPackage *.
+       Walk the list, removing links that contain a package in the
+       matching channel.  Don't remove the first link in order to avoid
+       needing to change the head of the list that is stored in the
+       hash --- just set the data to NULL in that case. 
     */
-    slist = orig = iter = (GSList *) val;
+    orig = iter = slist;
     while (iter != NULL) {
         RCPackage **our_struct = iter->data;
         GSList *next = iter->next;
         if (our_struct) {
             RCPackage *package = *our_struct;
-
-            if (package && package->channel == channel) {
+            
+            if (package && 
+                ((package_to_remove && package == package_to_remove)
+                 || (channel && package->channel == channel))) {
                 g_free (our_struct);
                 if (iter == slist) {
                     iter->data = NULL;
@@ -281,10 +280,11 @@ remove_package_struct_cb (gpointer key, gpointer val, gpointer user_data)
                     g_slist_free_1 (iter);
                 }
             }
+            iter = next;
         }
-        iter = next;
     }
 
+    /* Sanity check: make sure the head of the list didn't change. */
     g_assert (slist == orig);
 
     /* If this node's list is empty, remove it. */
@@ -298,37 +298,81 @@ remove_package_struct_cb (gpointer key, gpointer val, gpointer user_data)
     return FALSE;
 }
 
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+static gboolean
+remove_package_cb (gpointer key, gpointer val, gpointer user_data)
+{
+    GSList *slist = val;
+    RCPackage *package = user_data;
+
+    return remove_packages_generic (slist, package, NULL);
+}
+
+static gboolean
+remove_package_struct_cb (gpointer key, gpointer val, gpointer user_data)
+{
+    GSList *slist = val;
+    RCPackage *package = user_data;
+
+    return remove_package_structs_generic (slist, package, NULL);
+}
+
+void
+rc_world_remove_package (RCWorld *world,
+                          RCPackage *package)
+{
+    g_return_if_fail (world != NULL);
+    g_return_if_fail (package != NULL);
+
+    /* FIXME: This is grossly inefficient */
+
+    g_hash_table_foreach_remove (world->provides_by_name,
+                                 remove_package_struct_cb,
+                                 package);
+    g_hash_table_foreach_remove (world->requires_by_name,
+                                 remove_package_struct_cb,
+                                 package);
+    g_hash_table_foreach_remove (world->packages_by_name,
+                                 remove_package_cb,
+                                 package);
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+static gboolean
+remove_package_by_channel_cb (gpointer key, gpointer val, gpointer user_data)
+{
+    GSList *slist = val;
+    RCChannel *channel = user_data;
+
+    return remove_packages_generic (slist, NULL, channel);
+}
+
+static gboolean
+remove_package_struct_by_channel_cb (gpointer key, gpointer val, gpointer user_data)
+{
+    GSList *slist = val;
+    RCChannel *channel = user_data;
+
+    return remove_package_structs_generic (slist, NULL, channel);
+}
+
 void
 rc_world_remove_packages (RCWorld *world,
                           RCChannel *channel)
 {
     g_return_if_fail (world != NULL);
 
-    if (channel == RC_WORLD_ANY_CHANNEL) {
-
-        g_hash_table_foreach_remove (world->provides_by_name,
-                                     remove_all_package_structs_cb,
-                                     channel);
-        g_hash_table_foreach_remove (world->requires_by_name,
-                                     remove_all_package_structs_cb,
-                                     channel);
-        g_hash_table_foreach_remove (world->packages_by_name,
-                                     remove_all_packages_cb,
-                                     channel);
-
-    } else {
-
-        g_hash_table_foreach_remove (world->provides_by_name,
-                                     remove_package_struct_cb,
-                                     channel);
-        g_hash_table_foreach_remove (world->requires_by_name,
-                                     remove_package_struct_cb,
-                                     channel);
-        g_hash_table_foreach_remove (world->packages_by_name,
-                                     remove_package_cb,
-                                     channel);
-
-    }
+    g_hash_table_foreach_remove (world->provides_by_name,
+                                 remove_package_struct_by_channel_cb,
+                                 channel);
+    g_hash_table_foreach_remove (world->requires_by_name,
+                                 remove_package_struct_by_channel_cb,
+                                 channel);
+    g_hash_table_foreach_remove (world->packages_by_name,
+                                 remove_package_by_channel_cb,
+                                 channel);
 }
 
 RCPackage *

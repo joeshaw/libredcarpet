@@ -53,6 +53,8 @@ void       rc_world_freeze (RCWorld *);
 void       rc_world_thaw   (RCWorld *);
 void       rc_world_add_package (RCWorld *, RCPackage *);
 void       rc_world_add_packages_from_slist (RCWorld *, RCPackageSList *package_list);
+
+void       rc_world_remove_package  (RCWorld *, RCPackage *);
 void       rc_world_remove_packages (RCWorld *, RCChannel *);
 
 RCPackage *rc_world_find_installed_version (RCWorld *, RCPackage *);

@@ -186,6 +186,44 @@ parse_xml_setup (xmlNode *node)
             load_channel (name, file, type, FALSE);
             xmlFree (name);
             xmlFree (file);
+        } else if (! g_strcasecmp (node->name, "force-install")) {
+            xmlChar *channel_name = xml_get_prop (node, "channel");
+            xmlChar *package_name = xml_get_prop (node, "package");
+            RCPackage *package;
+
+            g_assert (channel_name);
+            g_assert (package_name);
+
+            package = get_package (channel_name, package_name);
+            if (package) {
+                g_print (">!> Force-installing %s from channel %s\n",
+                         package_name, channel_name);
+                package->channel = NULL;
+                package->installed = TRUE;
+            } else {
+                g_warning ("Unknown package %s::%s",
+                           channel_name, package_name);
+            }
+
+            xmlFree (channel_name);
+            xmlFree (package_name);
+        } else if (! g_strcasecmp (node->name, "force-uninstall")) {
+            xmlChar *package_name = xml_get_prop (node, "package");
+            RCPackage *package;
+
+            g_assert (package_name);
+            package = get_package ("SYSTEM", package_name);
+            
+            if (! package) {
+                g_warning ("Can't force-install uninstalled package '%s'\n",
+                           package_name);
+            } else {
+                g_print (">!> Force-uninstalling '%s'", package_name);
+                rc_world_remove_package (rc_get_world (), package);
+            }
+
+
+            xmlFree (package_name);
         } else {
             g_warning ("Unrecognized tag '%s' in setup", node->name);
         }
