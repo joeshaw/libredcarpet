@@ -130,6 +130,9 @@ rc_world_export_subcriptions_to_xml (RCWorld *world)
         xmlNode *node;
         char buf[16];
 
+        if (rc_world_get_channel_by_id (world, GPOINTER_TO_INT (iter->data)))
+            continue;
+
         node = xmlNewChild (root, NULL, "channel", NULL);
 
         g_snprintf (buf, 16, "%d", GPOINTER_TO_INT (iter->data));

@@ -1,3 +1,9 @@
+2002-09-19  Joe Shaw  <joe@ximian.com>
+
+	* rc-world-subscriptions.c (rc_world_export_subscriptions_to_xml):
+	When we're writing out our old subscriptions, if one is being
+	handled by the world, skip it.
+
 2002-09-18  Ian Peters  <itp@ximian.com>
 
 	* rc-verification.h: add RC_VERIFICATION_TYPE_SANITY
