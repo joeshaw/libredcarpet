@@ -1,3 +1,10 @@
+2002-03-05  Joe Shaw  <joe@ximian.com>
+
+	* rc-channel.c (rc_xml_node_to_channel): Move the priority stuff
+	from here (basically parsing packageinfo.xml.gz) to...
+	(rc_channel_parse_xml): ... here (parsing channels.xml.gz).  Man,
+	these function names are confusing.
+
 2002-03-05  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-queue-item.h: Add concept of priority to queue items.	

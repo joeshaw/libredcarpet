@@ -354,9 +354,30 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
         channel->id = atoi(tmp);
         g_free(tmp);
 
+        /* Tiers determine how channels are ordered in the client. */
         tmp = xml_get_prop(node, "tier");
         if (tmp) {
             channel->tier = atoi(tmp);
+            g_free(tmp);
+        }
+
+        /* Priorities determine affinity amongst channels in dependency
+           resolution. */
+        tmp = xml_get_prop(node, "priority");
+        if (tmp) {
+            channel->priority = rc_channel_priority_parse(tmp);
+            g_free(tmp);
+        }
+
+        tmp = xml_get_prop(node, "priority_when_current");
+        if (tmp) {
+            channel->priority_current = rc_channel_priority_parse(tmp);
+            g_free(tmp);
+        }
+
+        tmp = xml_get_prop(node, "priority_when_unsubscribed");
+        if (tmp) {
+            channel->priority_unsubd = rc_channel_priority_parse(tmp);
             g_free(tmp);
         }
 
@@ -596,24 +617,6 @@ rc_xml_node_to_channel (RCChannel *channel, xmlNode *node)
 
     if (g_strcasecmp (node->name, "channel")) {
         return (1);
-    }
-
-    priority_str = xml_get_prop (node, "priority");
-    if (priority_str) {
-        channel->priority = rc_channel_priority_parse (priority_str);
-        g_free (priority_str);
-    }
-
-    priority_str = xml_get_prop (node, "priority_when_current");
-    if (priority_str) {
-        channel->priority_current = rc_channel_priority_parse (priority_str);
-        g_free (priority_str);
-    }
-
-    priority_str = xml_get_prop (node, "priority_when_unsubscribed");
-    if (priority_str) {
-        channel->priority_unsubd = rc_channel_priority_parse (priority_str);
-        g_free (priority_str);
     }
 
     iter = node->xmlChildrenNode;
