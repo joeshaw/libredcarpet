@@ -14,13 +14,23 @@
       <member cname="RC_ARCH_I486" name="I486" />
       <member cname="RC_ARCH_I586" name="I586" />
       <member cname="RC_ARCH_I686" name="I686" />
+      <member cname="RC_ARCH_X86_64" name="X8664" />
+      <member cname="RC_ARCH_IA32E" name="Ia32e" />
       <member cname="RC_ARCH_ATHLON" name="Athlon" />
       <member cname="RC_ARCH_PPC" name="Ppc" />
       <member cname="RC_ARCH_PPC64" name="Ppc64" />
       <member cname="RC_ARCH_S390" name="S390" />
       <member cname="RC_ARCH_S390X" name="S390x" />
+      <member cname="RC_ARCH_IA64" name="Ia64" />
       <member cname="RC_ARCH_SPARC" name="Sparc" />
       <member cname="RC_ARCH_SPARC64" name="Sparc64" />
+    </enum>
+    <enum name="ChannelType" cname="RCChannelType" type="enum">
+      <member cname="RC_CHANNEL_TYPE_UNKNOWN" name="Unknown" value="-1" />
+      <member cname="RC_CHANNEL_TYPE_HELIX" name="Helix" />
+      <member cname="RC_CHANNEL_TYPE_DEBIAN" name="Debian" />
+      <member cname="RC_CHANNEL_TYPE_APTRPM" name="Aptrpm" />
+      <member cname="RC_CHANNEL_TYPE_YUM" name="Yum" />
     </enum>
     <enum name="DebugLevel" cname="RCDebugLevel" type="enum">
       <member cname="RC_DEBUG_LEVEL_ALWAYS" name="Always" value="-1" />
@@ -107,6 +117,15 @@
       <member cname="RC_PACKMAN_STEP_REMOVE" name="Remove" />
       <member cname="RC_PACKMAN_STEP_CONFIGURE" name="Configure" />
     </enum>
+    <enum name="PendingStatus" cname="RCPendingStatus" type="enum">
+      <member cname="RC_PENDING_STATUS_INVALID" name="Invalid" />
+      <member cname="RC_PENDING_STATUS_PRE_BEGIN" name="PreBegin" />
+      <member cname="RC_PENDING_STATUS_RUNNING" name="Running" />
+      <member cname="RC_PENDING_STATUS_BLOCKING" name="Blocking" />
+      <member cname="RC_PENDING_STATUS_ABORTED" name="Aborted" />
+      <member cname="RC_PENDING_STATUS_FAILED" name="Failed" />
+      <member cname="RC_PENDING_STATUS_FINISHED" name="Finished" />
+    </enum>
     <enum name="QueueItemType" cname="RCQueueItemType" type="enum">
       <member cname="RC_QUEUE_ITEM_TYPE_UNKNOWN" name="Unknown" />
       <member cname="RC_QUEUE_ITEM_TYPE_INSTALL" name="Install" />
@@ -143,21 +162,6 @@
       <member cname="RC_VERIFICATION_TYPE_SIZE" name="Size" value="1 &lt;&lt; 1" />
       <member cname="RC_VERIFICATION_TYPE_MD5" name="Md5" value="1 &lt;&lt; 2" />
       <member cname="RC_VERIFICATION_TYPE_GPG" name="Gpg" value="1 &lt;&lt; 3" />
-    </enum>
-    <enum name="ChannelType" cname="RCChannelType" type="enum">
-      <member cname="RC_CHANNEL_TYPE_UNKNOWN" name="Unknown" value="-1" />
-      <member cname="RC_CHANNEL_TYPE_HELIX" name="Helix" />
-      <member cname="RC_CHANNEL_TYPE_DEBIAN" name="Debian" />
-      <member cname="RC_CHANNEL_TYPE_APTRPM" name="Aptrpm" />
-    </enum>
-    <enum name="PendingStatus" cname="RCPendingStatus" type="enum">
-      <member cname="RC_PENDING_STATUS_INVALID" name="Invalid" />
-      <member cname="RC_PENDING_STATUS_PRE_BEGIN" name="PreBegin" />
-      <member cname="RC_PENDING_STATUS_RUNNING" name="Running" />
-      <member cname="RC_PENDING_STATUS_BLOCKING" name="Blocking" />
-      <member cname="RC_PENDING_STATUS_ABORTED" name="Aborted" />
-      <member cname="RC_PENDING_STATUS_FAILED" name="Failed" />
-      <member cname="RC_PENDING_STATUS_FINISHED" name="Finished" />
     </enum>
     <enum name="RpmVSFlags" cname="rpmVSFlags" type="enum">
       <member cname="RPMVSF_DEFAULT" name="Default" />
@@ -1537,6 +1541,12 @@
           <parameter type="RCPackageMatch*" name="lock" />
         </parameters>
       </method>
+      <method name="SetRefreshFunction" cname="rc_world_set_refresh_function" hidden="1">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCWorldRefreshFn" name="refresh_fn" />
+        </parameters>
+      </method>
       <method name="SetSubscription" cname="rc_world_set_subscription">
         <return-type type="void" />
         <parameters>
@@ -1734,6 +1744,12 @@
           <parameter type="GType" name="world_type" />
         </parameters>
       </method>
+      <method name="SetAssembleFunction" cname="rc_world_service_set_assemble_function" hidden="1">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCWorldServiceAssembleFn" name="assemble_fn" />
+        </parameters>
+      </method>
       <method name="SetId" cname="rc_world_service_set_id">
         <return-type type="void" />
         <parameters>
@@ -1901,7 +1917,33 @@
         <return-type type="void" />
       </method>
     </struct>
-    <struct name="Channel" cname="RCChannel" opaque="true">
+    <boxed name="Channel" cname="RCChannel" opaque="1">
+      <field cname="refs" type="gint" />
+      <field cname="world" type="struct-_RCWorld*" />
+      <field cname="id" type="gchar*" />
+      <field cname="name" type="gchar*" />
+      <field cname="alias" type="gchar*" />
+      <field cname="description" type="gchar*" />
+      <field cname="priority" type="gint" />
+      <field cname="priority_unsubd" type="gint" />
+      <field cname="distro_target" type="GSList*" />
+      <field cname="path" type="gchar*" />
+      <field cname="file_path" type="gchar*" />
+      <field cname="icon_file" type="gchar*" />
+      <field cname="pkginfo_file" type="gchar*" />
+      <field cname="pkginfo_compressed" type="gboolean" />
+      <field cname="pkgset_file" type="gchar*" />
+      <field cname="pkgset_compressed" type="gboolean" />
+      <field cname="last_update" type="time_t" />
+      <callback cname="refresh_magic">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCChannel*" name="arg1" />
+        </parameters>
+      </callback>
+      <field cname=": 1" type="unsigned system_flag" />
+      <field cname=": 1" type="unsigned transient" />
+      <field cname=": 1" type="unsigned silent" />
       <method name="AddDistroTarget" cname="rc_channel_add_distro_target">
         <return-type type="void" />
         <parameters>
@@ -1922,6 +1964,9 @@
       </method>
       <method name="GetAlias" cname="rc_channel_get_alias">
         <return-type type="const-char*" />
+      </method>
+      <method name="GetChannelType" cname="rc_channel_get_channel_type">
+        <return-type type="RCChannelType" />
       </method>
       <method name="GetDescription" cname="rc_channel_get_description">
         <return-type type="const-char*" />
@@ -1956,8 +2001,8 @@
           <parameter type="gboolean" name="is_subscribed" />
         </parameters>
       </method>
-      <method name="GetType" cname="rc_channel_get_type">
-        <return-type type="RCChannelType" />
+      <method name="GetType" cname="rc_channel_get_type" shared="true">
+        <return-type type="GType" />
       </method>
       <method name="HasDistroTarget" cname="rc_channel_has_distro_target">
         <return-type type="gboolean" />
@@ -2085,7 +2130,7 @@
       <method name="Unref" cname="rc_channel_unref">
         <return-type type="void" />
       </method>
-    </struct>
+    </boxed>
     <alias name="ChannelSList" cname="RCChannelSList" type="GSList" />
     <struct name="DepOr" cname="RCDepOr">
       <field cname="or_dep" type="gchar*" />
@@ -2128,6 +2173,9 @@
       </method>
       <method name="GetArch" cname="rc_distro_get_arch">
         <return-type type="RCArch" />
+      </method>
+      <method name="GetCurrent" cname="rc_distro_get_current" shared="true">
+        <return-type type="RCDistro*" />
       </method>
       <method name="GetDeathDate" cname="rc_distro_get_death_date">
         <return-type type="time_t" />
@@ -2962,6 +3010,7 @@
       <field cname="upgraded_package" type="RCPackage*" />
       <field cname="lost_package" type="RCPackage*" />
       <field cname="remove_only" bits="1" type="guint" />
+      <field cname="is_child" type="gboolean" />
     </struct>
     <struct name="QueueItem_Uninstall" cname="RCQueueItem_Uninstall">
       <field cname="parent" type="RCQueueItem" />
@@ -3245,6 +3294,7 @@
         <return-type type="gboolean" />
         <parameters>
           <parameter type="RCPackageDep*" name="dep" />
+          <parameter type="gboolean" name="is_child" />
         </parameters>
       </method>
       <method name="RequirementIsPossible" cname="rc_resolver_context_requirement_is_possible">
@@ -3568,6 +3618,12 @@
         <return-type type="void" />
       </method>
       <constructor cname="rc_verification_new" />
+      <method name="SetKeyring" cname="rc_verification_set_keyring" shared="true">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-gchar*" name="keyring" />
+        </parameters>
+      </method>
       <method name="SlistFree" cname="rc_verification_slist_free" shared="true">
         <return-type type="void" />
         <parameters>
@@ -3889,6 +3945,15 @@
           <parameter type="RCChannel*" name="channel" />
           <parameter type="RCPackageFn" name="callback" />
           <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="YumPackage" cname="rc_extract_yum_package" shared="true">
+        <return-type type="RCPackage*" />
+        <parameters>
+          <parameter type="const-guint8*" name="data" />
+          <parameter type="int" name="len" />
+          <parameter type="RCPackman*" name="packman" />
+          <parameter type="char*" name="url" />
         </parameters>
       </method>
     </class>

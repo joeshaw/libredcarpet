@@ -1,5 +1,10 @@
 2004-07-20  James Willcox  <james@ximian.com>
 
+	* RC.metadata: make Channel a boxed type, and the new crackrock API.
+	* libredcarpet-api.xml: regenned
+
+2004-07-20  James Willcox  <james@ximian.com>
+
 	* AssemblyInfo.cs: don't sign the assembly.
 	Especially not with ecma.pub.
 

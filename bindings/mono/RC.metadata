@@ -22,12 +22,14 @@
   <!--
   <attr path="/api/namespace/object[@cname='RCWorld']/method[@cname='rc_world_refresh']" name="hidden">1</attr>
   -->
+  <attr path="/api/namespace/object[@cname='RCWorld']/method[@cname='rc_world_set_refresh_function']" name="hidden">1</attr>
+  <attr path="/api/namespace/object[@cname='RCWorldService']/method[@cname='rc_world_service_set_assemble_function']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='RCWorldService']/method[@name='Mount']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='RCWorldService']/method[@name='Register']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='RCWorld']/method[@name='GetChannels']/return-type" name="element_type">RC.Channel</attr>
   <attr path="/api/namespace/object[@cname='RCWorld']/method[@name='GetLocks']/return-type" name="element_type">RC.PackageMatch</attr>
   <attr path="/api/namespace/object[@cname='RCWorld']/method[@name='GetUpgrades']/return-type" name="element_type">RC.Package</attr>
-  <attr path="/api/namespace/struct[@cname='RCChannel']/method[@name='GetPackages']/return-type" name="element_type">RC.Package</attr>
+  <attr path="/api/namespace/boxed[@cname='RCChannel']/method[@name='GetPackages']/return-type" name="element_type">RC.Package</attr>
   <attr path="/api/namespace/boxed[@cname='RCResolverContext']/method[@name='GetInstalls']/return-type" name="element_type">RC.Package</attr>
   <attr path="/api/namespace/boxed[@cname='RCResolverContext']/method[@name='GetUninstalls']/return-type" name="element_type">RC.Package</attr>
   <attr path="/api/namespace/boxed[@cname='RCResolverContext']/method[@name='GetMarkedPackages']/return-type" name="element_type">RC.Package</attr>
@@ -36,6 +38,7 @@
   <attr path="/api/namespace/struct[@name='ResolverInfo']/method[@cname='rc_resolver_info_type']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@name='WorldLocalDir']/method[@cname='rc_world_local_dir_set_name']" name="hidden">1</attr>
   <attr path="/api/namespace/boxed[@cname='RCPackage']" name="opaque">1</attr>
+  <attr path="/api/namespace/boxed[@cname='RCChannel']" name="opaque">1</attr>
   <attr path="/api/namespace/boxed[@cname='RCResolver']" name="opaque">1</attr>
   <attr path="/api/namespace/boxed[@cname='RCResolverContext']" name="opaque">1</attr>
   <attr path="/api/namespace/object[@cname='RCWorldMulti']/method[@cname='rc_world_multi_mount_service']" name="hidden">1</attr>
