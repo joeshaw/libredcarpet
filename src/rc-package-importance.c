@@ -39,10 +39,6 @@ rc_package_importance_to_string (RCPackageImportance importance)
         return ("feature");
     case RC_IMPORTANCE_MINOR:
         return ("minor");
-    case RC_IMPORTANCE_NEW:
-        return ("new");
-    case RC_IMPORTANCE_MAX:
-        return ("max");
     default:
         rc_debug (RC_DEBUG_LEVEL_WARNING, "invalid section number %s\n",
                   importance);
@@ -64,9 +60,6 @@ rc_string_to_package_importance (const gchar *importance)
         }
         goto INVALID;
     case 'm':
-        if (!strcmp (importance, "max")) {
-            return (RC_IMPORTANCE_MAX);
-        }
         if (!strcmp (importance, "minor")) {
             return (RC_IMPORTANCE_MINOR);
         }
@@ -74,9 +67,6 @@ rc_string_to_package_importance (const gchar *importance)
     case 'n':
         if (!strcmp (importance, "necessary")) {
             return (RC_IMPORTANCE_NECESSARY);
-        }
-        if (!strcmp (importance, "new")) {
-            return (RC_IMPORTANCE_NEW);
         }
         goto INVALID;
     case 's':

@@ -34,9 +34,8 @@ enum _RCPackageImportance {
     RC_IMPORTANCE_FEATURE,
     RC_IMPORTANCE_MINOR,
 
-    RC_IMPORTANCE_NEW,
-
-    RC_IMPORTANCE_MAX
+    /* Not a real importance */
+    RC_IMPORTANCE_LAST
 };
 
 const gchar *rc_package_importance_to_string (RCPackageImportance importance);
