@@ -79,10 +79,6 @@ struct _RCChannel {
     time_t last_update;
 
     RCPackageSetSList *package_sets;
-
-    RCPackageHashTableByString *packages;
-    RCPackageHashTableBySpec *dep_table;
-    RCPackageHashTableByString *dep_name_table;
 };
 
 int rc_channel_priority_parse (const char *);
@@ -91,9 +87,9 @@ RCChannel *rc_channel_new (void);
 
 void rc_channel_free (RCChannel *rcc);
 
-int rc_channel_get_priority         (const RCChannel *,
-                                     gboolean is_subscribed,
-                                     gboolean is_current);
+int rc_channel_get_priority (const RCChannel *,
+                             gboolean is_subscribed,
+                             gboolean is_current);
 
 void rc_channel_slist_free(RCChannelSList *rccl);
 

@@ -94,28 +94,10 @@ rc_channel_new (void)
     channel->priority_unsubd = -1;
     channel->priority_current = -1;
 
-    channel->packages = g_hash_table_new (g_str_hash, g_str_equal);
-    channel->dep_table = g_hash_table_new (rc_package_spec_hash,
-                                           rc_package_spec_equal);
-    channel->dep_name_table = g_hash_table_new (g_str_hash, g_str_equal);
-
-
     return (channel);
 
     RC_EXIT;
 } /* rc_channel_new */
-
-static gboolean
-remove_helper (gchar *name, RCPackage *package, gpointer user_data)
-{
-    RC_ENTRY;
-
-    rc_package_free (package);
-
-    RC_EXIT;
-
-    return (TRUE);
-}
 
 void
 rc_channel_free (RCChannel *channel)
@@ -138,22 +120,6 @@ rc_channel_free (RCChannel *channel)
     g_free (channel->unsubs_file);
 
     g_free (channel->icon_file);
-
-    if (channel->dep_table) {
-        rc_hash_table_slist_free (channel->dep_table);
-        g_hash_table_destroy (channel->dep_table);
-    }
-
-    if (channel->dep_name_table) {
-        rc_hash_table_slist_free (channel->dep_name_table);
-        g_hash_table_destroy (channel->dep_name_table);
-    }
-
-    if (channel->packages) {
-        g_hash_table_foreach_remove (channel->packages,
-                                     (GHRFunc) remove_helper, NULL);
-        g_hash_table_destroy (channel->packages);
-    }
 
     rc_package_set_slist_free (channel->package_sets);
 
@@ -563,50 +529,29 @@ rc_channel_compare_func (gconstpointer a, gconstpointer b)
 static void
 rc_xml_node_process (xmlNode *node, RCChannel *channel)
 {
+    RCWorld *world = rc_get_world ();
     const xmlNode *iter;
 
     if (g_strcasecmp (node->name, "subchannel")) {
         return;
     }
 
-    g_hash_table_freeze (channel->packages);
-    g_hash_table_freeze (channel->dep_table);
-    g_hash_table_freeze (channel->dep_name_table);
-
     iter = node->xmlChildrenNode;
+
+    rc_world_freeze (world);
 
     while (iter) {
         RCPackage *package;
-        const RCPackageDepSList *prov_iter;
 
         package = rc_xml_node_to_package (iter, channel);
 
-        if (package) {
-            RCWorld *world = rc_get_world ();
+        if (package) 
             rc_world_add_package (world, package);
-
-            for (prov_iter = package->provides; prov_iter;
-                 prov_iter = prov_iter->next)
-            {
-                const RCPackageDep *dep = (RCPackageDep *)(prov_iter->data);
-                
-                rc_hash_table_slist_insert_unique (channel->dep_table,
-                                                   (gpointer) &dep->spec, package, NULL);
-                rc_hash_table_slist_insert_unique (channel->dep_name_table,
-                                                   dep->spec.name, package, NULL);
-            }
-
-            g_hash_table_insert (channel->packages,
-                                 (gpointer) package->spec.name,
-                                 (gpointer) package);
-        }
 
         iter = iter->next;
     }
 
-    g_hash_table_thaw (channel->packages);
-    g_hash_table_thaw (channel->dep_table);
-    g_hash_table_thaw (channel->dep_name_table);
+    rc_world_thaw (world);
 }
 
 guint

@@ -1,5 +1,22 @@
 2002-03-12  Jon Trowbridge  <trow@ximian.com>
 
+	* rc-package-info.c (rc_channel_parse_debian): Store packages
+	in RCWorld only, not in the channel.
+	(pkginfo_find_package_with_constraint): Find the package in
+	the RCWorld, not in the channel.
+
+	* rc-dep-or.c (package_process_helper_fn): Changed to work with
+	rc_world_foreach_package_by_name instead of g_hash_table_foreach.
+	(rc_dep_or_process_system_and_channels): Use
+	rc_world_foreach_package.
+
+	* rc-channel.c (rc_channel_new): Removed initialization of
+	->packages, ->dep_table, ->dep_name_table.
+	(rc_channel_free): Removed clean-up of ->packages, ->dep_table,
+	->dep_name_table.
+	(rc_xml_node_process): Only store the loaded package in RCWorld,
+	not in the channel.
+
 	* rc-world.c (foreach_package_cb): Doh!  We weren't using the
 	iter variable.
 

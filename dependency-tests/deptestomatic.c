@@ -43,12 +43,10 @@ static RCPackman *packman = NULL;
 static gboolean allow_virtual_conflicts;
 
 static void
-mark_as_system_cb (gpointer key, gpointer val, gpointer user_data)
+mark_as_system_cb (RCPackage *package, gpointer user_data)
 {
-    RCPackage *package = val;
-
-    package->channel = NULL;
     package->installed = TRUE;
+    package->channel = NULL;
 }
 
 static void
@@ -105,21 +103,25 @@ load_channel (const char *name,
     g_free (buffer);
 
     if (system_packages) {
-        g_hash_table_foreach (channel->packages,
-                              mark_as_system_cb,
-                              NULL);
+        rc_world_foreach_package (rc_get_world (),
+                                  channel,
+                                  mark_as_system_cb,
+                                  NULL);
     }
 
-    g_print ("Loaded %d %spackages from %s\n",
-             g_hash_table_size (channel->packages),
-             system_packages ? "system " : "",
-             filename);
+    g_print ("Loaded packages from %s\n", filename);
 
     if (channel_hash == NULL) {
         channel_hash = g_hash_table_new (g_str_hash, g_str_equal);
     }
 
     g_hash_table_insert (channel_hash, g_strdup (name), channel);
+}
+
+static void
+set_ptr (RCPackage *package, gpointer user_data)
+{
+    *(RCPackage **) user_data = package;
 }
 
 static RCPackage *
@@ -141,7 +143,13 @@ get_package (const char *channel_name, const char *package_name)
         return NULL;
     }
 
-    package = g_hash_table_lookup (channel->packages, package_name);
+    package = NULL;
+    rc_world_foreach_package_by_name (rc_get_world (),
+                                      package_name,
+                                      channel,
+                                      set_ptr,
+                                      &package);
+
     if (package == NULL) {
         g_warning ("Can't find package '%s' in channel '%s': no such package",
                    package_name, channel_name);

@@ -23,10 +23,10 @@
 
 #include <glib.h>
 #include <string.h>
-
-#include "rc-debman-general.h"
-
 #include "rc-dep-or.h"
+
+#include "rc-world.h"
+#include "rc-debman-general.h"
 
 static GHashTable *or_dep_storage = NULL;
 
@@ -330,10 +330,9 @@ process_package_slist_helper (RCPackageSList *pkgs, RCPackageDepSList **dl)
 }
 
 static void
-process_package_hash_helper (gpointer key, gpointer value, gpointer data)
+package_process_helper_fn (RCPackage *pkg, gpointer user_data)
 {
-    RCPackage *pkg = (RCPackage *) value;
-    struct _RCOrFixerHelperStruct *rof = (struct _RCOrFixerHelperStruct *) data;
+    struct _RCOrFixerHelperStruct *rof = (struct _RCOrFixerHelperStruct *) user_data;
     RCPackageDepSList *prov_iter;
 
     process_one_package_helper (pkg, &rof->found_ors);
@@ -361,15 +360,10 @@ rc_dep_or_process_system_and_channels (RCPackageSList *system_packages,
 
     process_package_slist_helper (system_packages, &rof.found_ors);
 
-    ch_iter = channels;
-    while (ch_iter) {
-        RCChannel *ch = (RCChannel *) ch_iter->data;
-
-        g_hash_table_foreach (ch->packages, process_package_hash_helper,
-                              (gpointer) &rof);
-
-        ch_iter = ch_iter->next;
-    }
+    rc_world_foreach_package (rc_get_world (),
+                              RC_WORLD_ANY_CHANNEL,
+                              package_process_helper_fn, 
+                              &rof);
 
     /* At this point, we have a list of everything that's possibly an OR */
     rof.found_ors = rc_package_dep_slist_remove_duplicates (rof.found_ors);
@@ -422,10 +416,6 @@ rc_dep_or_process_system_and_channels (RCPackageSList *system_packages,
                     RCPackageDep *prov_dep = rc_dep_or_new_provide (dor);
 //                    rc_debug (0, "Package %s provides %s\n", rc_package_spec_to_str (&pkg->spec), dor->or_dep);
                     pkg->provides = g_slist_prepend (pkg->provides, prov_dep);
-                    if (pkg->channel) {
-                        rc_hash_table_slist_insert_unique (pkg->channel->dep_table, &prov_dep->spec, pkg, NULL);
-                        rc_hash_table_slist_insert_unique (pkg->channel->dep_name_table, prov_dep->spec.name, pkg, NULL);
-                    }
                 } else if (strstr (dor->or_dep, pkg->spec.name)) {
 //                    rc_debug (0, "--- Package %s maybe should provide %s, but it doesn't!\n", rc_package_spec_to_str (&pkg->spec), dor->or_dep);
                 }

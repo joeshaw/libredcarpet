@@ -1,3 +1,9 @@
+2002-03-12  Jon Trowbridge  <trow@ximian.com>
+
+	* deptestomatic.c (load_channel): Iterate the channel packages in
+	the RCWorld, since channels no longer contain their packages.
+	(get_package): Lookup packages in RCWorld, not in the channel.
+
 2002-03-09  Ian Peters  <itp@ximian.com>
 
 	* deptestomatic.c: #include "xml-util.h"
