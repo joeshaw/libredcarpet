@@ -1,5 +1,9 @@
 2001-10-04  Ian Peters  <itp@ximian.com>
 
+	* rc-rpmman.c, Makefile.am: change it one more time
+
+2001-10-04  Ian Peters  <itp@ximian.com>
+
 	* rc-rpmamn.c, Makefile.am: change the .so file names -again- for
 	broken old rpm
 

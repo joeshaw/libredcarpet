@@ -2452,10 +2452,10 @@ rc_rpmman_init (RCRpmman *obj)
     gchar **rpm_version;
     gchar *so_file;
     const char *objects[] = {
-        "(rpm).so.0",
-        "(rpm_rpmio).so.0",
-        "(rpm_rpmio_rpmdb)-4.0.3.so",
-        "(rpm_rpmio_rpmdb).so",
+        "rc-{rpm}.so.0",
+        "rc-{rpm_rpmio}.so.0",
+        "rc-{rpm_rpmio_rpmdb}-4.0.3.so",
+        "rc-{rpm_rpmio_rpmdb}.so",
         NULL };
     const char **iter;
 

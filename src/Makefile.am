@@ -99,24 +99,24 @@ endif
 if ENABLE_RPM
 rpmhelperdir = $(libdir)/redcarpet
 rpmhelper_DATA = \
-	(rpm).so.0 \
-	(rpm_rpmio).so.0 \
-	(rpm_rpmio_rpmdb)-4.0.3.so \
-	(rpm_rpmio_rpmdb).so
-CLEANFILES += (rpm).so.0 (rpm_rpmio).so.0 (rpm_rpmio_rpmdb)-4.0.3.so (rpm_rpmio_rpmdb).so
+	rc-{rpm}.so.0 \
+	rc-{rpm_rpmio}.so.0 \
+	rc-{rpm_rpmio_rpmdb}-4.0.3.so \
+	rc-{rpm_rpmio_rpmdb}.so
+CLEANFILES += rc-{rpm}.so.0 rc-{rpm_rpmio}.so.0 rc-{rpm_rpmio_rpmdb}-4.0.3.so rc-{rpm_rpmio_rpmdb}.so
 endif
 
-(rpm).so.0:
-	./make_stub.sh (rpm).so.0 librpm.so.0
+rc-{rpm}.so.0:
+	./make_stub.sh rc-{rpm}.so.0 librpm.so.0
 
-(rpm_rpmio).so.0:
-	./make_stub.sh (rpm_rpmio).so.0 librpm.so.0 librpmio.so.0
+rc-{rpm_rpmio}.so.0:
+	./make_stub.sh rc-{rpm_rpmio}.so.0 librpm.so.0 librpmio.so.0
 
-(rpm_rpmio_rpmdb)-4.0.3.so:
-	./make_stub.sh (rpm_rpmio_rpmdb)-4.0.3.so librpm-4.0.3.so librpmio-4.0.3.so librpmdb-4.0.3.so
+rc-{rpm_rpmio_rpmdb}-4.0.3.so:
+	./make_stub.sh rc-{rpm_rpmio_rpmdb}-4.0.3.so librpm-4.0.3.so librpmio-4.0.3.so librpmdb-4.0.3.so
 
-(rpm_rpmio_rpmdb).so:
-	./make_stub.sh (rpm_rpmio_rpmdb).so librpm.so librpmio.so librpmdb.so
+rc-{rpm_rpmio_rpmdb}.so:
+	./make_stub.sh rc-{rpm_rpmio_rpmdb}.so librpm.so librpmio.so librpmdb.so
 
 all-local: libredcarpet.a
 
