@@ -2444,8 +2444,6 @@ find_file_read_done_cb (RCLineBuf *line_buf, RCLineBufStatus status,
     RC_EXIT;
 }
 
-/* FIXME: rc_packman_set_error in here (find_file isn't used so I'm
- * not doing it right now */
 static RCPackage *
 rc_debman_find_file (RCPackman *packman, const gchar *filename)
 {
@@ -2464,7 +2462,7 @@ rc_debman_find_file (RCPackman *packman, const gchar *filename)
 
         RC_EXIT;
 
-        return (NULL);
+        goto ERROR;
     }
 
     if (!realpath (filename, realname)) {
@@ -2476,7 +2474,7 @@ rc_debman_find_file (RCPackman *packman, const gchar *filename)
 
         RC_EXIT;
 
-        return (NULL);
+        goto ERROR;
     }
 
     if (!(info_dir = opendir ("/var/lib/dpkg/info"))) {
@@ -2488,7 +2486,7 @@ rc_debman_find_file (RCPackman *packman, const gchar *filename)
 
         RC_EXIT;
 
-        return (NULL);
+        goto ERROR;
     }
 
     while ((info_file = readdir (info_dir))) {
@@ -2516,7 +2514,7 @@ rc_debman_find_file (RCPackman *packman, const gchar *filename)
 
             RC_EXIT;
 
-            return (NULL);
+            goto ERROR;
         }
 
         g_free (fullname);
@@ -2575,6 +2573,12 @@ rc_debman_find_file (RCPackman *packman, const gchar *filename)
     closedir (info_dir);
 
     RC_EXIT;
+
+    return (NULL);
+
+  ERROR:
+    rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                          "find_file failed");
 
     return (NULL);
 }

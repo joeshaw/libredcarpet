@@ -1354,6 +1354,64 @@ rc_rpmman_version_compare (RCPackman *packman,
     return (rc_packman_generic_version_compare (spec1, spec2, vercmp));
 }
 
+static RCPackage *
+rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
+{
+    rpmdb db;
+    dbiIndexSet matches;
+    Header hdr;
+    RCPackage *package;
+
+    if (rpmdbOpen (RC_RPMMAN (packman)->rpmroot, &db, O_RDONLY, 0444)) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "unable to open rpm database");
+
+        goto ERROR;
+    }
+
+    if (rpmdbFindByFile (db, filename, &matches) == -1) {
+        rpmdbClose (db);
+
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "RPM database search failed");
+
+        goto ERROR;
+    }
+
+    if (matches.count != 1) {
+        rpmdbClose (db);
+
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "found owners != 1");
+
+        goto ERROR;
+    }
+
+    if (!(hdr = rpmdbGetRecord (db, matches.recs[0].recOffset))) {
+        rpmdbClose (db);
+
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "read of RPM header failed");
+
+        goto ERROR;
+    }
+
+    package = rc_package_new ();
+
+    rc_rpmman_read_header (hdr, &package->spec.name, &package->spec.epoch,
+                           &package->spec.version, &package->spec.release,
+                           &package->section, &package->installed_size,
+                           &package->summary, &package->description);
+
+    return (package);
+
+  ERROR:
+    rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                          "find_file_failed");
+
+    return (NULL);
+}
+
 static void
 rc_rpmman_destroy (GtkObject *obj)
 {
@@ -1381,6 +1439,7 @@ rc_rpmman_class_init (RCRpmmanClass *klass)
     hpc->rc_packman_real_query_file = rc_rpmman_query_file;
     hpc->rc_packman_real_version_compare = rc_rpmman_version_compare;
     hpc->rc_packman_real_verify = rc_rpmman_verify;
+    hpc->rc_packman_real_find_file = rc_rpmman_find_file;
 } /* rc_rpmman_class_init */
 
 static void
