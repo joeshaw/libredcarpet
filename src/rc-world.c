@@ -50,10 +50,6 @@ struct _RCWorld {
 
     /* Set if we know package db has changed. */
     gboolean dirty;
-
-    /* Set if we have synced the world while the db is locked.
-       Automatically cleared when the db is unlocked. */
-    gboolean did_sync_with_this_lock;
 };
 
 typedef struct _RCPackageAndDep RCPackageAndDep;
@@ -339,26 +335,22 @@ rc_world_sync (RCWorld *world)
     if (world->packman == NULL)
         return;
 
-    if ((!world->dirty)
-        && rc_packman_is_locked (world->packman)
-        && world->did_sync_with_this_lock) {
+    if (rc_packman_is_locked (world->packman)) {
         rc_debug (RC_DEBUG_LEVEL_MESSAGE,
-                  "Skipping sync: already synced during this lock.");
+                  "Skipping sync: database is locked");
         return;
     }
 
-    if (world->dirty || rc_packman_check_database (world->packman)) {
-        
-        rc_debug (RC_DEBUG_LEVEL_MESSAGE, 
+    if (!world->dirty && rc_packman_is_database_changed (world->packman))
+        world->dirty = TRUE;
+
+    if (world->dirty) {
+        rc_debug (RC_DEBUG_LEVEL_MESSAGE,
                   "Database changed; rescanning system packages");
 
-        rc_world_get_system_packages (world);
-
-        if (rc_packman_is_locked (world->packman))
-            world->did_sync_with_this_lock = TRUE;
+        if (rc_world_get_system_packages (world))
+            world->dirty = FALSE;
     }
-
-    world->dirty = FALSE;
 }
 
 static void
@@ -376,14 +368,6 @@ database_changed_cb (RCPackman *packman, gpointer user_data)
     world->dirty = TRUE;
     
     rc_world_sync (world);
-}
-
-static void
-database_unlocked_cb (RCPackman *packman, gpointer user_data)
-{
-    RCWorld *world = user_data;
-
-    world->did_sync_with_this_lock = FALSE;
 }
 
 void
@@ -404,11 +388,6 @@ rc_world_register_packman (RCWorld *world,
                       "database_changed",
                       G_CALLBACK (database_changed_cb),
                       world);
-
-    g_signal_connect (packman,
-                      "database_unlocked",
-                      G_CALLBACK (database_unlocked_cb),
-                      world);
 }
 
 RCPackman *
@@ -419,32 +398,30 @@ rc_world_get_packman (RCWorld *world)
     return world->packman;
 } /* rc_world_get_packman */
 
-void
+gboolean
 rc_world_get_system_packages (RCWorld *world)
 {
-    RCPackmanError err;
-    GSList *system_packages;
+    GSList *system_packages = NULL;
 
-    g_return_if_fail (world != NULL);
-    g_return_if_fail (world->packman != NULL);
+    g_return_val_if_fail (world != NULL, FALSE);
+    g_return_val_if_fail (world->packman != NULL, FALSE);
 
-    do {
+    system_packages = rc_packman_query_all (world->packman);
+    if (rc_packman_get_error (world->packman)) {
+        rc_debug (RC_DEBUG_LEVEL_MESSAGE,
+                  "System query failed: %s",
+                  rc_packman_get_reason (world->packman));
+        if (system_packages)
+            rc_package_slist_unref (system_packages);
+        return FALSE;
+    }
 
-        system_packages = rc_packman_query_all (world->packman);
-        err = rc_packman_get_error (world->packman);
-
-        if (err) {
-            const gchar *reason = rc_packman_get_reason (world->packman);
-            g_warning ("Packman error: %s", reason);
-            
-            g_assert (err != RC_PACKMAN_ERROR_FATAL);
-        }
-    } while (err);
-        
     rc_world_remove_packages (world, RC_WORLD_SYSTEM_PACKAGES);
     rc_world_add_packages_from_slist (world, system_packages);
-        
+
     g_slist_free (system_packages);
+
+    return TRUE;
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */

@@ -50,7 +50,7 @@ void       rc_world_register_packman    (RCWorld   *world,
 
 RCPackman *rc_world_get_packman         (RCWorld *world);
 
-void       rc_world_get_system_packages (RCWorld *world);
+gboolean   rc_world_get_system_packages (RCWorld *world);
 
 /* Channel operations */
 

@@ -186,7 +186,7 @@ rc_packman_class_init (RCPackmanClass *klass)
     klass->rc_packman_real_find_file = NULL;
     klass->rc_packman_real_lock = NULL;
     klass->rc_packman_real_unlock = NULL;
-    klass->rc_packman_real_check_database = NULL;
+    klass->rc_packman_real_is_database_changed = NULL;
 }
 
 static void
@@ -497,7 +497,7 @@ rc_packman_unlock (RCPackman *packman)
 }
 
 gboolean
-rc_packman_check_database (RCPackman *packman)
+rc_packman_is_database_changed (RCPackman *packman)
 {
     RCPackmanClass *klass;
 
@@ -507,9 +507,9 @@ rc_packman_check_database (RCPackman *packman)
 
     klass = RC_PACKMAN_GET_CLASS (packman);
 
-    g_assert (klass->rc_packman_real_check_database);
+    g_assert (klass->rc_packman_real_is_database_changed);
 
-    return (klass->rc_packman_real_check_database (packman));
+    return (klass->rc_packman_real_is_database_changed (packman));
 }
 
 void

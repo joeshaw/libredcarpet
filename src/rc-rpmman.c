@@ -124,9 +124,10 @@ rc_rpm_read (RCRpmman *rpmman, void *buf, size_t size, size_t nmemb, FD_t fd)
 }
 
 static gboolean
-rc_rpmman_check_database (RCRpmman *rpmman)
+rc_rpmman_is_database_changed (RCPackman *packman)
 {
     struct stat buf;
+    RCRpmman *rpmman = RC_RPMMAN (packman);
 
     if (rpmman->version < 40000)
         stat ("/var/lib/rpm/packages.rpm", &buf);
@@ -144,8 +145,10 @@ rc_rpmman_check_database (RCRpmman *rpmman)
 static gboolean
 database_check_func (RCRpmman *rpmman)
 {
-    if (rc_rpmman_check_database (rpmman))
-        g_signal_emit_by_name (RC_PACKMAN (rpmman), "database_changed");
+    RCPackman *packman;
+
+    if (rc_rpmman_is_database_changed (packman = RC_PACKMAN (rpmman)))
+        g_signal_emit_by_name (packman, "database_changed");
 
     return TRUE;
 }
@@ -156,7 +159,7 @@ close_database (RCRpmman *rpmman)
     if (getenv ("RC_RPM_NO_DB"))
         return;
 
-    rc_rpmman_check_database (rpmman);
+    rc_rpmman_is_database_changed (RC_PACKMAN (rpmman));
     rpmman->db_watcher_cb =
         g_timeout_add (5000, (GSourceFunc) database_check_func,
                        (gpointer) rpmman);
@@ -2402,7 +2405,8 @@ rc_rpmman_class_init (RCRpmmanClass *klass)
     packman_class->rc_packman_real_find_file = rc_rpmman_find_file;
     packman_class->rc_packman_real_lock = rc_rpmman_lock;
     packman_class->rc_packman_real_unlock = rc_rpmman_unlock;
-    packman_class->rc_packman_real_check_database = rc_rpmman_check_database;
+    packman_class->rc_packman_real_is_database_changed =
+        rc_rpmman_is_database_changed;
 } /* rc_rpmman_class_init */
 
 #ifdef STATIC_RPM
@@ -2808,7 +2812,7 @@ rc_rpmman_init (RCRpmman *obj)
 
     /* initialize the mtime */
     obj->db_mtime = 0;
-    rc_rpmman_check_database (obj);
+    rc_rpmman_is_database_changed (packman);
 
     /* Watch for changes */
     obj->db_watcher_cb =

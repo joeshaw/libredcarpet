@@ -113,9 +113,10 @@ dump_argv (int level, gchar **argv)
 } /* dump_argv */
 
 static gboolean
-rc_debman_check_database (RCDebman *debman)
+rc_debman_is_database_changed (RCPackman *packman)
 {
     struct stat buf;
+    RCDebman *debman = RC_DEBMAN (packman);
 
     stat ("/var/lib/dpkg/status", &buf);
 
@@ -130,8 +131,10 @@ rc_debman_check_database (RCDebman *debman)
 static gboolean
 database_check_func (RCDebman *debman)
 {
-    if (rc_debman_check_database (debman))
-        g_signal_emit_by_name (RC_PACKMAN (debman), "database_changed");
+    RCPackman *packman;
+
+    if (rc_debman_is_database_changed (packman = RC_PACKMAN (debman)))
+        g_signal_emit_by_name (packman, "database_changed");
 
     return TRUE;
 }
@@ -263,7 +266,7 @@ unlock_database (RCDebman *debman)
         return;
     }
 
-    rc_debman_check_database (debman);
+    rc_debman_is_database_changed (RC_PACKMAN (debman));
     debman->priv->db_watcher_cb =
         g_timeout_add (5000, (GSourceFunc) database_check_func,
                        (gpointer) debman);
@@ -3181,7 +3184,8 @@ rc_debman_class_init (RCDebmanClass *klass)
     packman_class->rc_packman_real_version_compare = rc_debman_version_compare;
     packman_class->rc_packman_real_lock = rc_debman_lock;
     packman_class->rc_packman_real_unlock = rc_debman_unlock;
-    packman_class->rc_packman_real_check_database = rc_debman_check_database;
+    packman_class->rc_packman_real_is_database_changed =
+        rc_debman_is_database_changed;
 
     putenv ("DEBIAN_FRONTEND=noninteractive");
 
@@ -3216,7 +3220,7 @@ rc_debman_init (RCDebman *debman)
     rc_packman_set_capabilities(packman, RC_PACKMAN_CAP_VIRTUAL_CONFLICTS|RC_PACKMAN_CAP_SELF_CONFLICT);
 
     debman->priv->db_mtime = 0;
-    rc_debman_check_database (debman);
+    rc_debman_is_database_changed (packman);
     debman->priv->db_watcher_cb =
         g_timeout_add (5000, (GSourceFunc) database_check_func,
                        (gpointer) debman);

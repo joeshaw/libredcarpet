@@ -1,3 +1,22 @@
+2002-07-30  Ian Peters  <itp@ximian.com>
+
+	* rc-packman.c, rc-packman.h, rc-rpmman.c, rc-debman.c:
+	s/_check_database/_is_database_changed, because it was bugging me
+	just that much
+
+	* rc-world.c (struct _RCWorld): remove the did_sync_with_this_lock
+	field
+	(rc_world_sync): changed the logic around quite a bit to only sync
+	at appropriate times; keep the world dirty if
+	rc_world_get_system_packages fails
+	(database_unlocked_cb): removed
+	(rc_world_register_packman): removed reference to
+	database_unlocked_cb
+	(rc_world_get_system_packages): rather than retrying a failed
+	query, return a gboolean to indicate status of the query
+
+	* rc-world.h: change prototype for rc_world_get_system_packages
+
 2002-07-30  Joe Shaw  <joe@ximian.com>
 
 	* rc-rpmman.c (rc_rpmman_verify): Initialize signature_filename
