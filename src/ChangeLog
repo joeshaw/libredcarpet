@@ -1,5 +1,14 @@
 2001-04-01  Ian Peters  <itp@ximian.com>
 
+	* Makefile.am: pick more proper names for the rpm .so files
+
+	* rc-rpmman.c: use those more proper names
+
+	* rc-rpm-helper.so, rc-rpm-helper-with-rpmio.so: here are those
+	more proper names we were speaking of
+
+2001-04-01  Ian Peters  <itp@ximian.com>
+
 	* Makefile.am: hacked it up to parse RPM_STATIC_LIBS and do some
 	ar magic to put the object files from those libraries into
 	libredcarpet.a.

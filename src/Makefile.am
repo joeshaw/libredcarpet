@@ -83,8 +83,8 @@ EXTRA_DIST = $(rpm_sources) $(dpkg_sources) rc-dpkg-helper.c
 helperdir = $(libdir)/redcarpet
 helper_DATA = \
 	rc-dpkg-helper.so		\
-	rpm-sucks-with-rpmio.so	\
-	rpm-sucks-without-rpmio.so
+	rc-rpm-helper-with-rpmio.so	\
+	rc-rpm-helper.so
 
 all-local: rc-dpkg-helper.so libredcarpet.a
 
