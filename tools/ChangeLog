@@ -1,3 +1,13 @@
+2002-09-11  Ian Peters  <itp@ximian.com>
+
+	* pkg-vercmp.c (main): fix the usage message to not expect a
+	package type argument.  BTW the argc check was borken before,
+	since expecting 3 arguments means you need an argc of 4 in C.  Get
+	rid of the rpmman / debman stuff, just use rc_distman_new, and
+	rely on RC_DISTRO_TARGET to help you do the right thing.  That way
+	we don't really need to know the package type, just the system for
+	which we're doing the comparison.
+
 2002-09-06  Jon Trowbridge  <trow@ximian.com>
 
 	* packman_test.c: Disable command completion if we are using a

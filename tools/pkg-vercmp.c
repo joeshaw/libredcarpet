@@ -27,14 +27,6 @@
 
 #include "libredcarpet.h"
 
-#ifdef ENABLE_DPKG
-#include "rc-debman.h"
-#endif
-
-#ifdef ENABLE_RPM
-#include "rc-rpmman.h"
-#endif
-
 int main (int argc, char *argv[])
 {
     RCPackman *packman = NULL;
@@ -46,29 +38,14 @@ int main (int argc, char *argv[])
     int rc;
 
     if (argc < 3)
-        g_error ("Usage: %s <version> <version> <package type>", argv[0]);
+        g_error ("Usage: %s <version> <version>", argv[0]);
 
     g_type_init ();
 
     if (!rc_distro_parse_xml (NULL, 0))
         exit (-1);
 
-    if (g_strcasecmp (argv[3], "rpm") == 0) {
-#ifdef ENABLE_RPM
-        packman = RC_PACKMAN (rc_rpmman_new ());
-#else
-        g_error ("RPM support not enabled");
-#endif
-    }
-    else if (g_strcasecmp (argv[3], "dpkg") == 0) {
-#ifdef ENABLE_DPKG
-        packman = RC_PACKMAN (rc_debman_new ());
-#else
-        g_error ("dpkg support not enabled");
-#endif
-    }
-    else
-        g_error ("Unknown packaging type: %s", argv[3]);
+    packman = rc_distman_new ();
 
     if (!packman)
         g_error ("Couldn't access the packaging system");
