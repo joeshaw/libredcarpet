@@ -60,8 +60,11 @@ rc_resolver_info_merge (RCResolverInfo *info, RCResolverInfo *to_be_merged)
     for (iter = info->package_list; iter; iter = iter->next)
         g_hash_table_insert (seen_pkgs, iter->data, (gpointer) 0x1);
     for (iter = to_be_merged->package_list; iter; iter = iter->next) {
+        RCPackage *p = (RCPackage *) iter->data;
+
         if (g_hash_table_lookup (seen_pkgs, iter->data) == NULL) {
-            info->package_list = g_slist_prepend (info->package_list, iter->data);
+            info->package_list = g_slist_prepend (info->package_list,
+                                                  rc_package_ref (p));
             g_hash_table_insert (seen_pkgs, iter->data, (gpointer) 0x1);
         }
     }

@@ -1,3 +1,8 @@
+2002-08-05  Joe Shaw  <joe@ximian.com>
+
+	* rc-resolver-info.c (rc_resolver_info_merge): Need to ref the
+	package when we're merging infos, as well.
+
 2002-08-05  Ian Peters  <itp@ximian.com>
 
 	* rc-queue-item.c (require_item_process): if you never increment
