@@ -1,3 +1,12 @@
+2001-07-31  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps-util.c: Keep rof as a static struct, so that
+	we can call dep_or_process multiple times.
+
+	* rc-deps.c: Oops, get rid of references to a package
+	that probably just got deleted.  Pesky FMR's and SEGV's!
+	I wish C didn't suck.
+
 2001-07-27  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c: Oops, sort a list correctly
