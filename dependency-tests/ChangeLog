@@ -1,3 +1,8 @@
+2002-05-23  Jon Trowbridge  <trow@ximian.com>
+
+	* deptestomatic.c (parse_xml_trial): Use
+	rc_channel_set_subscription to subscribe to channels.
+
 2002-05-09  Jon Trowbridge  <trow@ximian.com>
 
 	* deptestomatic.c (load_channel): Use our new functions,

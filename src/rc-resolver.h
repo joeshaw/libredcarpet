@@ -34,7 +34,6 @@ typedef struct _RCResolver RCResolver;
 
 struct _RCResolver {
     RCChannel *current_channel;
-    GSList    *subscribed_channels;
     
     RCWorld *world;
 

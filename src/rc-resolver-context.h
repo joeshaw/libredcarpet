@@ -74,7 +74,6 @@ struct _RCResolverContext {
     int other_penalties;
 
     RCChannel *current_channel;
-    GHashTable *subscribed_channels;
 
     RCResolverContext *parent;
 

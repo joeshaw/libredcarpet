@@ -67,6 +67,13 @@ int           rc_channel_get_priority    (const RCChannel *channel,
 RCChannelType rc_channel_get_type        (const RCChannel *channel);
 
 
+/* Subscription management */
+
+gboolean rc_channel_subscribed       (const RCChannel *channel);
+
+void     rc_channel_set_subscription (RCChannel       *channel,
+                                      gboolean         subscribed);
+
 /* Iterators/Accessors for channel packages */
 
 int rc_channel_foreach_package (const RCChannel *channel,
@@ -74,6 +81,7 @@ int rc_channel_foreach_package (const RCChannel *channel,
                                 gpointer user_data);
 
 int rc_channel_package_count (const RCChannel *channel);
+
 
 /* Other */
 

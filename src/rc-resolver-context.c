@@ -1007,13 +1007,7 @@ rc_resolver_context_get_channel_priority (RCResolverContext *context,
     }
 
     if (! is_current) {
-        for (c = context; c != NULL; c = c->parent) {
-            if (c->subscribed_channels) {
-                is_subscribed = (g_hash_table_lookup (c->subscribed_channels,
-                                                      channel) != NULL);
-                break;
-            }
-        }
+        is_subscribed = rc_channel_subscribed (channel);
     }
 
     priority = rc_channel_get_priority (channel, is_subscribed, is_current);

@@ -44,9 +44,6 @@ struct _RCChannel {
     gint priority_unsubd;  /* unsubscribed */
     gint priority_current; /* the current channel */
 
-    gboolean mirrored;
-    gboolean featured;
-
     RCChannelType type;
 
     GSList *distro_target;
@@ -68,6 +65,10 @@ struct _RCChannel {
     time_t last_update;
 
     RCPackageSetSList *package_sets;
+
+    gboolean mirrored   : 1;
+    gboolean featured   : 1;
+    gboolean subscribed : 1;
 };
 
 RCChannel *rc_channel_new  (void);

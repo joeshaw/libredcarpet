@@ -66,7 +66,6 @@ rc_resolver_free (RCResolver *resolver)
                          (GFunc) rc_resolver_queue_free,
                          NULL);
 
-        g_slist_free (resolver->subscribed_channels);
         g_slist_free (resolver->packages_to_install);
         g_slist_free (resolver->packages_to_remove);
         g_slist_free (resolver->packages_to_verify);
@@ -115,17 +114,6 @@ rc_resolver_set_current_channel (RCResolver *resolver,
     g_return_if_fail (channel != NULL);
 
     resolver->current_channel = channel;
-}
-
-void
-rc_resolver_add_subscribed_channel (RCResolver *resolver,
-                                    RCChannel *channel)
-{
-    g_return_if_fail (resolver != NULL);
-    g_return_if_fail (channel != NULL);
-
-    resolver->subscribed_channels = g_slist_prepend (resolver->subscribed_channels,
-                                                     channel);
 }
 
 void
@@ -229,12 +217,6 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
     
     initial_queue->context->current_channel = resolver->current_channel;
     
-    initial_queue->context->subscribed_channels = g_hash_table_new (NULL, NULL);
-    for (iter = resolver->subscribed_channels; iter != NULL; iter = iter->next) {
-        g_hash_table_insert (initial_queue->context->subscribed_channels,
-                             iter->data, (gpointer) 0x1);
-    }
-
     initial_queue->context->allow_conflicts_with_virtual_provides =
         resolver->allow_conflicts_with_virtual_provides;
 

@@ -191,6 +191,23 @@ rc_channel_get_type (const RCChannel *channel)
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
+gboolean
+rc_channel_subscribed (const RCChannel *channel)
+{
+    g_return_val_if_fail (channel != NULL, FALSE);
+
+    return channel->subscribed;
+}
+
+void
+rc_channel_set_subscription (RCChannel *channel,
+                             gboolean   subscribed)
+{
+    channel->subscribed = subscribed;
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
 int
 rc_channel_foreach_package (const RCChannel *channel,
                             RCPackageFn fn,

@@ -1,5 +1,21 @@
 2002-05-23  Jon Trowbridge  <trow@ximian.com>
 
+	* rc-resolver.c: (rc_resolver_add_subscribed_channel) Removed.
+	(rc_resolver_resolve_dependencies): Don't worry about propogating
+	any lists of subscribed channels.
+
+	* rc-resolver-context.c
+	(rc_resolver_context_get_channel_priority): Get the subscription
+	status directly from the channel.
+
+	* rc-channel.c (rc_channel_subscribed): Added.
+	(rc_channel_set_subscription): Added.
+
+	* rc-channel-private.h: Added subscribed flag (and made two other
+	gbooleans into single-bit entries.)
+
+2002-05-23  Jon Trowbridge  <trow@ximian.com>
+
 	* rc-world.c (rc_world_register_packman): The beginnings of
 	our RCWorld/RCPackman integration...
 	(rc_world_get_system_packages): Use the packman to find all of

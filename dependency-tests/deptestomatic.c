@@ -455,7 +455,7 @@ parse_xml_trial (xmlNode *node)
 
             channel = g_hash_table_lookup (channel_hash, channel_name);
             if (channel != NULL) {
-                rc_resolver_add_subscribed_channel (resolver, channel);
+                rc_channel_set_subscription (channel, TRUE);
             } else {
                 g_warning ("Unknown channel '%s' (subscribe)", channel_name);
             }
