@@ -1,3 +1,9 @@
+2001-01-19  Ian Peters  <itp@helixcode.com>
+
+	* rc-package-update.c (rc_xml_node_to_package_update):
+	s/"installed_size"/"installedsize"/ so we stop getting installed
+	size's of 0
+
 2001-01-18  Ian Peters  <itp@helixcode.com>
 
 	* red-carpet.gpg: added.  contains our public key, so far

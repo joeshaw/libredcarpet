@@ -246,7 +246,7 @@ rc_xml_node_to_package_update (const xmlNode *node, const RCPackage *package)
         } else if (!g_strcasecmp (iter->name, "filesize")) {
             update->package_size =
                 xml_get_guint32_content_default (iter, 0);
-        } else if (!g_strcasecmp (iter->name, "installed_size")) {
+        } else if (!g_strcasecmp (iter->name, "installedsize")) {
             update->installed_size =
                 xml_get_guint32_content_default (iter, 0);
         } else if (!g_strcasecmp (iter->name, "signaturename")) {
