@@ -1,3 +1,13 @@
+2001-04-23  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c: don't pull in an older version while trying to remove
+	the intermediate failed dependency on system package version; we
+	need to check if the "existing" package is newer, not merely
+	equal.  I now realize that this makes no sense to anyone but me,
+	and I might as well have written about pink elephants and blue
+	clouds in this changelog.
+	
+
 2001-04-23  Ian Peters  <itp@ximian.com>
 
 	* rc-debman.c: a questionable but apparently necessary fix to no
