@@ -1,0 +1,51 @@
+CONTRIBUTING
+------------
+
+Contributions to libredcarpet are more than welcome.  libredcarpet is
+written in C and heavily uses the glib library.
+
+Discussion takes place on the rc-devel@ximian.com mailing list.
+Patches should be sent there, and should follow the existing stylistic
+conventions, be accompanied by a ChangeLog entry, and sent in GNU
+unified diff format (diff -u).
+
+Please DO NOT commit to CVS without approval from one of the
+maintainers.
+
+BUILDING
+--------
+
+Building libredcarpet can be tricky.  Hopefully we'll have snapshot
+packages available soon, which should remove some of the pain.
+
+* glib 2
+
+  First, you will need glib2.  It comes with Red Hat 7.3 and up, and
+  probably every distro after.  If you don't have it, you can get it
+  from http://www.gtk.org.
+
+* RPM
+
+  If you plan to build libredcarpet with RPM support, you will need
+  some version of RPM, from 3.0.3 to 4.0.4, available at build time.
+  Additionally, while libredcarpet does not link against librpm.so,
+  the RPM libraries will be a runtime dependency of your program.
+
+* DPKG
+
+  You don't even need to be on a Debian system to build with DPKG
+  support.  At runtime, it won't work unless you're on a Debian system
+  -- or, more accurately, unless you have dpkg in your PATH.
+
+To build libredcarpet, you need to pass the appropriate backend flags
+to autogen.sh/configure.  If you need RPM support, pass in:
+
+  --enable-backend-rpm --enable-rpm-version=x.y.z
+
+To build with DPKG support, pass in:
+
+  --enable-backend-dpkg
+
+Both backends may be specified simultaneously, if you want.  This is
+especially helpful while doing development, so that you don't break
+the compile on a system you don't run.
