@@ -1,5 +1,9 @@
 2001-04-19  Vladimir Vukicevic  <vladimir@ximian.com>
 
+	* rc-deps.c: oops. process system packages /before/ the package
+	that's about to be installed, so that we catch conflicts and the
+	like correctly.
+
 	* rc-deps.c: stopped calling deps_fix_missing in loop.  This
 	probably isn't necessary any more; will need a good chunk of testing
 	to make sure, though.
