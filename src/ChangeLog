@@ -1,3 +1,10 @@
+2001-03-04  Ian Peters  <itp@ximian.com>
+
+	* rc-line-buf.c (rc_line_buf_cb): handle G_IO_ERR in addition to
+	G_IO_HUP, perhaps this will fix the defunct dpkg problem.  I don't
+	know how to recreate, so this is just a guess, but it makes sense
+	to me.
+
 2001-02-28  Ian Peters  <itp@ximian.com>
 
 	* rc-debman.c (i18n_fixer): added.  fixes the language issues with

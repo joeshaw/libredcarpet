@@ -213,15 +213,15 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
 
     RC_ENTRY;
 
-    if (condition == G_IO_HUP) {
+    if (condition & (G_IO_HUP | G_IO_ERR)) {
         gtk_signal_emit (GTK_OBJECT (line_buf), signals[READ_DONE],
                          RC_LINE_BUF_OK);
 
         g_source_remove (line_buf->priv->cb_id);
         line_buf->priv->cb_id = 0;
 
-        rc_debug (RC_DEBUG_LEVEL_DEBUG, "%s: got G_IO_HUP, we're done here\n",
-                  __FUNCTION__);
+        rc_debug (RC_DEBUG_LEVEL_DEBUG, "%s: got G_IO_[(HUP)|(ERR)], we're "
+                  "done here\n", __FUNCTION__);
 
         RC_EXIT;
 
@@ -357,7 +357,7 @@ rc_line_buf_set_fd (RCLineBuf *line_buf, int fd)
     line_buf->priv->channel = g_io_channel_unix_new (fd);
 
     line_buf->priv->cb_id = g_io_add_watch (line_buf->priv->channel,
-                                            G_IO_IN | G_IO_HUP,
+                                            G_IO_IN | G_IO_HUP | G_IO_ERR,
                                             (GIOFunc) rc_line_buf_cb,
                                             (gpointer) line_buf);
 
