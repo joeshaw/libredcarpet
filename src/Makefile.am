@@ -57,6 +57,10 @@ libredcarpet_a_SOURCES =		\
         xml-util.h                      \
 	rc-line-buf.c			\
 	rc-line-buf.h			\
+	rpmlead-4-0-x.h			\
+	rpmlead-3-0-x.h			\
+	signature-4-0-x.h		\
+	signature-3-0-x.h		\
         $(rpm_sources2)
 
 #	rc-crypto.c			\

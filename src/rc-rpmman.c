@@ -33,12 +33,12 @@
 #include <rpm/header.h>
 #include <rpm/rpmlib.h>
 
-#ifndef HAVE_RPM_4_0
-#include <rpmlead-3-0-x.h>
-#include <signature-3-0-x.h>
+#ifdef HAVE_RPM_4_0
+#include "rpmlead-4-0-x.h"
+#include "signature-4-0-x.h"
 #else
-#include <rpmlead.h>
-#include <signature.h>
+#include "rpmlead-3-0-x.h"
+#include "signature-3-0-x.h"
 #endif
 
 static void rc_rpmman_class_init (RCRpmmanClass *klass);

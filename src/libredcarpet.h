@@ -6,7 +6,6 @@
 #include "pkginfo.h"
 #include "rc-channel.h"
 #include "rc-common.h"
-#include "rc-debman.h"
 #include "rc-distman.h"
 #include "rc-md5.h"
 #include "rc-package-dep.h"
@@ -14,7 +13,6 @@
 #include "rc-package-update.h"
 #include "rc-package.h"
 #include "rc-packman.h"
-#include "rc-rpmman.h"
 #include "rc-util.h"
 #include "xml-util.h"
 
