@@ -1,3 +1,9 @@
+2002-07-24  Peter Bowen  <pzb@ximian.com>
+
+	* rc-xml.c (rc_package_to_xml_node): Put the dependencies in a 
+	deps tag.  This allows the addition of additional dependency types
+	without changes to the parser used in the server code.
+
 2002-07-23  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-world-import.c (rc_world_add_channels_from_xml): Look for a
