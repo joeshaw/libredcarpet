@@ -2513,7 +2513,7 @@ static RCVerificationSList *
 rc_debman_verify (RCPackman *packman, RCPackage *package)
 {
     RCVerificationSList *ret = NULL;
-    RCPackageUpdate *update = (RCPackageUpdate *)package->history->data;
+    RCPackageUpdate *update = NULL;
 
     RC_ENTRY;
 
@@ -2521,7 +2521,10 @@ rc_debman_verify (RCPackman *packman, RCPackage *package)
     g_assert (package);
     g_assert (package->package_filename);
 
-    if (update->md5sum) {
+    if (package->history)
+        update = rc_package_get_latest_update(package);
+
+    if (update && update->md5sum) {
         RCVerification *verification;
 
         verification = rc_verify_md5_string (package->package_filename,
