@@ -376,7 +376,7 @@ rc_packman_version_compare (RCPackman *packman,
 }
 
 RCVerificationSList *
-rc_packman_verify (RCPackman *packman, RCPackage *package)
+rc_packman_verify (RCPackman *packman, RCPackage *package, guint32 type)
 {
     RCPackmanClass *klass;
 
@@ -388,7 +388,7 @@ rc_packman_verify (RCPackman *packman, RCPackage *package)
 
     g_assert (klass->rc_packman_real_verify);
 
-    return (klass->rc_packman_real_verify (packman, package));
+    return (klass->rc_packman_real_verify (packman, package, type));
 }
 
 RCPackage *

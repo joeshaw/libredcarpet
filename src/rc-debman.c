@@ -2829,7 +2829,7 @@ rc_debman_query_file (RCPackman *packman, const gchar *filename)
 }
 
 static RCVerificationSList *
-rc_debman_verify (RCPackman *packman, RCPackage *package)
+rc_debman_verify (RCPackman *packman, RCPackage *package, guint32 type)
 {
     RCVerificationSList *ret = NULL;
     RCPackageUpdate *update = NULL;
@@ -2844,7 +2844,9 @@ rc_debman_verify (RCPackman *packman, RCPackage *package)
         return (NULL);
     }
 
-    if (update && package->package_filename && (update->package_size > 0)) {
+    if ((type & RC_VERIFICATION_TYPE_SIZE) && update &&
+        package->package_filename && (update->package_size > 0))
+    {
         RCVerification *verification;
 
         verification = rc_verify_size (package->package_filename,
@@ -2853,7 +2855,7 @@ rc_debman_verify (RCPackman *packman, RCPackage *package)
         ret = g_slist_append (ret, verification);
     }
 
-    if (update && update->md5sum) {
+    if ((type & RC_VERIFICATION_TYPE_MD5) && update && update->md5sum) {
         RCVerification *verification;
 
         verification = rc_verify_md5_string (package->package_filename,
@@ -2862,7 +2864,7 @@ rc_debman_verify (RCPackman *packman, RCPackage *package)
         ret = g_slist_append (ret, verification);
     }
 
-    if (package->signature_filename) {
+    if ((type & RC_VERIFICATION_TYPE_GPG) && package->signature_filename) {
         RCVerification *verification;
 
         verification = rc_verify_gpg (package->package_filename,

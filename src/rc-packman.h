@@ -99,7 +99,8 @@ struct _RCPackmanClass {
                                             RCPackageSpec *spec2);
 
     RCVerificationSList *(*rc_packman_real_verify)(RCPackman *packman,
-                                                   RCPackage *package);
+                                                   RCPackage *package,
+                                                   guint32    type);
 
     RCPackage *(*rc_packman_real_find_file)(RCPackman *packman,
                                             const gchar *filename);
@@ -130,7 +131,8 @@ gint rc_packman_version_compare (RCPackman *packman,
                                  RCPackageSpec *spec2);
 
 RCVerificationSList *rc_packman_verify (RCPackman *packman,
-                                        RCPackage *package);
+                                        RCPackage *package,
+                                        guint32    type);
 
 RCPackage *rc_packman_find_file (RCPackman *packman, const gchar *filename);
 

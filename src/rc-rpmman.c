@@ -1927,7 +1927,7 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
 }
 
 static RCVerificationSList *
-rc_rpmman_verify (RCPackman *packman, RCPackage *package)
+rc_rpmman_verify (RCPackman *packman, RCPackage *package, guint32 type)
 {
     RCVerificationSList *ret = NULL;
     RCVerification *verification = NULL;
@@ -1958,19 +1958,19 @@ rc_rpmman_verify (RCPackman *packman, RCPackage *package)
         goto ERROR;
     }
 
-    if (signature_filename) {
+    if (signature_filename && (type & RC_VERIFICATION_TYPE_GPG)) {
         verification = rc_verify_gpg (payload_filename, signature_filename);
 
         ret = g_slist_append (ret, verification);
     }
 
-    if (md5sum) {
+    if (md5sum && (type & RC_VERIFICATION_TYPE_MD5)) {
         verification = rc_verify_md5 (payload_filename, md5sum);
 
         ret = g_slist_append (ret, verification);
     }
 
-    if (size > 0) {
+    if ((size > 0) && (type && RC_VERIFICATION_TYPE_SIZE)) {
         verification = rc_verify_size (payload_filename, size);
 
         ret = g_slist_append (ret, verification);

@@ -24,9 +24,10 @@
 #include <glib.h>
 
 typedef enum {
-    RC_VERIFICATION_TYPE_SIZE,
-    RC_VERIFICATION_TYPE_MD5,
-    RC_VERIFICATION_TYPE_GPG,
+    RC_VERIFICATION_TYPE_ALL  = ~0,
+    RC_VERIFICATION_TYPE_SIZE = 1 << 1,
+    RC_VERIFICATION_TYPE_MD5  = 1 << 2,
+    RC_VERIFICATION_TYPE_GPG  = 1 << 3,
 } RCVerificationType;
 
 typedef enum {

@@ -1,5 +1,19 @@
 2002-06-05  Ian Peters  <itp@ximian.com>
 
+	* rc-verification.h: add RC_VERIFICATION_TYPE_ALL, add bit values
+	to RC_VERIFICATION_TYPE_*
+
+	* rc-packman.h, rc-packman.c: rc_packman_real_verify
+	takes a type argument
+
+	* rc-rpmman.c (rc_rpmman_verify): only run the requested
+	verifications as per the type parameter
+
+	* rc-debman.c (rc_debman_verify): only run the requested
+	verifications as per the type parameter
+
+2002-06-05  Ian Peters  <itp@ximian.com>
+
 	* rc-package-spec.c (rc_package_spec_version_to_str): fix a stupid
 	solaris crash, because solaris sucks
 
