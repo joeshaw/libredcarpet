@@ -63,14 +63,14 @@ struct _RCPackage {
     RCChannel *channel;
 
     /* Filled in by the package manager or dependency XML */
-    RCPackageDepSList *requires;
-    RCPackageDepSList *provides;
-    RCPackageDepSList *conflicts;
-    RCPackageDepSList *obsoletes;
+    RCPackageDepArray *requires_a;
+    RCPackageDepArray *provides_a;
+    RCPackageDepArray *conflicts_a;
+    RCPackageDepArray *obsoletes_a;
 
     /* These are here to make the debian folks happy */
-    RCPackageDepSList *suggests;
-    RCPackageDepSList *recommends;
+    RCPackageDepArray *suggests_a;
+    RCPackageDepArray *recommends_a;
 
     /* Filled in by package info XML */
     gchar *summary;

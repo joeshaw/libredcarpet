@@ -2306,6 +2306,11 @@ struct _DebmanQueryInfo {
     RCPackageSList *packages;
 
     RCPackage *package_buf;
+    RCPackageDepSList *requires_buf;
+    RCPackageDepSList *recommends_buf;
+    RCPackageDepSList *suggests_buf;
+    RCPackageDepSList *conflicts_buf;
+    RCPackageDepSList *provides_buf;
     GString *desc_buf;
 #if 0
     RCPackageDepSList *replaces;
@@ -2369,6 +2374,21 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
             query_info->replaces = NULL;
 #endif
 
+            query_info->provides_buf =
+                g_slist_prepend (query_info->provides_buf,
+                                 rc_package_dep_new_from_spec (
+                                     &query_info->package_buf->spec,
+                                     RC_RELATION_EQUAL));
+            query_info->package_buf->requires_a =
+                rc_package_dep_array_from_slist (&query_info->requires_buf);
+            query_info->package_buf->recommends_a =
+                rc_package_dep_array_from_slist (&query_info->recommends_buf);
+            query_info->package_buf->suggests_a =
+                rc_package_dep_array_from_slist (&query_info->suggests_buf);
+            query_info->package_buf->conflicts_a =
+                rc_package_dep_array_from_slist (&query_info->conflicts_buf);
+            query_info->package_buf->provides_a =
+                rc_package_dep_array_from_slist (&query_info->provides_buf);
             query_info->packages = g_slist_prepend (query_info->packages,
                                                     query_info->package_buf);
             query_info->package_buf = NULL;
@@ -2397,6 +2417,11 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
         }
 
         query_info->package_buf = rc_package_new ();
+        query_info->requires_buf = NULL;
+        query_info->recommends_buf = NULL;
+        query_info->suggests_buf = NULL;
+        query_info->conflicts_buf = NULL;
+        query_info->provides_buf = NULL;
         /* All debian packages "have" epochs */
         query_info->package_buf->spec.has_epoch = 1;
 
@@ -2541,8 +2566,8 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
             rc_package_dep_slist_free (tmp);
         }
 
-        query_info->package_buf->requires = g_slist_concat (
-            query_info->package_buf->requires, list);
+        query_info->requires_buf = g_slist_concat (
+            query_info->requires_buf, list);
 
         return;
     }
@@ -2553,8 +2578,8 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
             ptr++;
         }
 
-        query_info->package_buf->recommends = g_slist_concat (
-            query_info->package_buf->recommends, rc_debman_fill_depends (ptr));
+        query_info->recommends_buf = g_slist_concat (
+            query_info->recommends_buf, rc_debman_fill_depends (ptr));
 
         return;
     }
@@ -2564,8 +2589,8 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
         while (*ptr && isspace (*ptr)) {
             ptr++;
         }
-        query_info->package_buf->suggests = g_slist_concat (
-            query_info->package_buf->suggests, rc_debman_fill_depends (ptr));
+        query_info->suggests_buf = g_slist_concat (
+            query_info->suggests_buf, rc_debman_fill_depends (ptr));
         return;
     }
 
@@ -2583,8 +2608,8 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
             ((RCPackageDep *)(iter->data))->pre = 1;
         }
 
-        query_info->package_buf->requires = g_slist_concat (
-            query_info->package_buf->requires, tmp);
+        query_info->requires_buf = g_slist_concat (
+            query_info->requires_buf, tmp);
 
         return;
     }
@@ -2594,8 +2619,8 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
         while (*ptr && isspace (*ptr)) {
             ptr++;
         }
-        query_info->package_buf->conflicts = g_slist_concat (
-            query_info->package_buf->conflicts, rc_debman_fill_depends (ptr));
+        query_info->conflicts_buf = g_slist_concat (
+            query_info->conflicts_buf, rc_debman_fill_depends (ptr));
         return;
     }
 
@@ -2604,8 +2629,8 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
         while (*ptr && isspace (*ptr)) {
             ptr++;
         }
-        query_info->package_buf->provides = g_slist_concat (
-            query_info->package_buf->provides, rc_debman_fill_depends (ptr));
+        query_info->provides_buf = g_slist_concat (
+            query_info->provides_buf, rc_debman_fill_depends (ptr));
         return;
     }
 
@@ -2691,11 +2716,6 @@ rc_debman_query_all_real (RCPackman *packman)
         RCPackage *package = (RCPackage *)(iter->data);
 
         if (package->installed) {
-            package->provides =
-                g_slist_prepend (package->provides,
-                                 rc_package_dep_new_from_spec (
-                                     &package->spec,
-                                     RC_RELATION_EQUAL));
             g_hash_table_insert (debman->priv->package_hash,
                                  (gpointer) package->spec.name,
                                  (gpointer) package);
@@ -2874,8 +2894,19 @@ rc_debman_query_file (RCPackman *packman, const gchar *filename)
         (RCPackageSpec *)query_info.package_buf,
         RC_RELATION_EQUAL);
 
-    query_info.package_buf->provides =
-        g_slist_prepend (query_info.package_buf->provides, dep);
+    query_info.provides_buf =
+        g_slist_prepend (query_info.provides_buf, dep);
+
+    query_info.package_buf->requires_a =
+        rc_package_dep_array_from_slist (&query_info.requires_buf);
+    query_info.package_buf->recommends_a =
+        rc_package_dep_array_from_slist (&query_info.recommends_buf);
+    query_info.package_buf->suggests_a =
+        rc_package_dep_array_from_slist (&query_info.suggests_buf);
+    query_info.package_buf->conflicts_a =
+        rc_package_dep_array_from_slist (&query_info.conflicts_buf);
+    query_info.package_buf->provides_a =
+        rc_package_dep_array_from_slist (&query_info.provides_buf);
 
     return (query_info.package_buf);
 }

@@ -1,5 +1,77 @@
 2002-08-05  Ian Peters  <itp@ximian.com>
 
+	* rc-package-dep.h, rc-package-dep.c: added an RCPackageDepArray
+	type, and rc_package_dep_array_from_slist,
+	rc_package_dep_array_free, rc_package_dep_array_copy methods.
+	Storing deps as arrays rather than lists should save a good chunk
+	of memory.  Note that _from_slist takes an RCPackageDepSList **,
+	and uses the RCPackageDep *'s directly, g_slist_frees the list,
+	and sets it to NULL.
+
+	* rc-package.h (struct _RCPackage): no more RCPackageDepSLists
+	here; long live the RCPackageDepArray
+
+	* rc-package.c (rc_package_copy):
+	s/rc_package_dep_slist_copy/rc_package_dep_array_copy
+	(rc_package_free):
+	s/rc_package_dep_slist_free/rc_package_dep_array_free
+
+	* rc-debman.c (struct DebmanQueryInfo): include buffers to
+	assemble temporary RCPackageDepSLists
+	(query_all_read_line_cb): add deps to these temporary lists, not
+	to the package itself.
+	(rc_debman_query_all_real): convert the temporary dep lists to
+	arrays inside the package
+	(rc_debman_query_file): ditto
+
+	* rc-debug-misc.c (rc_package_dump): #if 0'd it out, nothing uses
+	it now and i didn't want to fix it for dep arrays.  I'll go on a
+	dead code hunting spree soon.
+
+	* rc-rpmman.c (rc_rpmman_transact): change the way we iterate over
+	the obsoletes, since they're now an array
+	(rc_rpmman_depends_fill): assemble all of the deps in local lists,
+	instead of the package, and then convert them into arrays in the
+	package at the end.
+
+	* rc-queue-item.c (install_item_process): change the way we
+	iterate over deps, they're now arrays
+	(uninstall_item_process): ditto
+
+	* rc-resolver-context.c (rc_resolver_context_package_is_possible):
+	more dependency iteration changes
+
+	* rc-resolver-queue.c (rc_resolver_queue_add_package_to_verify):
+	see a pattern here?
+
+	* rc-world-import.c (debian_packages_helper): assemble
+	dependencies in local lists, convert them all to arrays inside the
+	package at the end.
+
+	* rc-world.c (rc_world_add_package): more dependency iteration
+	changes
+
+	* rc-xml.c (struct _RCPackageSAXContext): add all 6 dependency
+	lists
+	(parser_toplevel_start): set all 6 lists to NULL
+	(parser_package_start): add deps to the context lists, not the
+	context package
+	(parser_dep_start): ditto
+	(parser_package_end): iterate over the provides list in the
+	context.  convert the context lists to arrays in the context
+	package
+	(struct DepTable): added, for the DOM parser.  Has 6
+	RCPackageDepSLists.
+	(extract_dep_info): takes a DepTable, not an RCPackage, and
+	assembles the dep lists in the dep_table.
+	(rc_xml_node_to_package): fill in the deps into a DepTable.
+	convert those lists into arrays inside the package at the end.
+	when looking for our version, walk the provides array.
+	(rc_package_to_xml_node): change the way we iterate all of the
+	deps, since they're arrays now.
+
+2002-08-05  Ian Peters  <itp@ximian.com>
+
 	* rc-rpmman.c (rc_rpmman_transact): joe was right a few days ago,
 	real_remove_packages doesn't need to be a deep copy or free
 

@@ -696,8 +696,9 @@ package_size (RCPackage *package)
 void
 rc_world_add_package (RCWorld *world, RCPackage *package)
 {
-    const RCPackageDepSList *iter;
+//    const RCPackageDepSList *iter;
     RCPackageAndDep *pad;
+    int i;
 
     g_return_if_fail (world != NULL);
     g_return_if_fail (package != NULL);
@@ -718,40 +719,39 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
                       pad->dep->spec.name,
                       pad);
 
-    for (iter = package->provides; iter != NULL; iter = iter->next) {
+    if (package->provides_a)
+        for (i = 0; i < package->provides_a->len; i++) {
+            pad = rc_package_and_dep_new_pair (
+                package, package->provides_a->data + i);
 
-        RCPackageDep *dep = (RCPackageDep *) iter->data;
-
-        pad = rc_package_and_dep_new_pair (package, dep);
-
-        hashed_slist_add (world->provides_by_name,
-                          pad->dep->spec.name,
-                          pad);
-    }
+            hashed_slist_add (world->provides_by_name,
+                              pad->dep->spec.name,
+                              pad);
+        }
 
     /* Store all of the package's requires in a hash by name. */
 
-    for (iter = package->requires; iter != NULL; iter = iter->next) {
-        RCPackageDep *dep = (RCPackageDep *) iter->data;
+    if (package->requires_a)
+        for (i = 0; i < package->requires_a->len; i++) {
+            pad = rc_package_and_dep_new_pair (
+                package, package->requires_a->data + i);
 
-        pad = rc_package_and_dep_new_pair (package, dep);
-
-        hashed_slist_add (world->requires_by_name,
-                          pad->dep->spec.name,
-                          pad);
-    }
+            hashed_slist_add (world->requires_by_name,
+                              pad->dep->spec.name,
+                              pad);
+        }
 
     /* Store all of the package's conflicts in a hash by name. */
 
-    for (iter = package->conflicts; iter != NULL; iter = iter->next) {
-        RCPackageDep *dep = (RCPackageDep *) iter->data;
+    if (package->conflicts_a)
+        for (i = 0; i < package->conflicts_a->len; i++) {
+            pad = rc_package_and_dep_new_pair (
+                package, package->conflicts_a->data + i);
 
-        pad = rc_package_and_dep_new_pair (package, dep);
-
-        hashed_slist_add (world->conflicts_by_name,
-                          pad->dep->spec.name,
-                          pad);
-    }
+            hashed_slist_add (world->conflicts_by_name,
+                              pad->dep->spec.name,
+                              pad);
+        }
 
 }
 

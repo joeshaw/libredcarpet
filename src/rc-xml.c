@@ -50,11 +50,15 @@ struct _RCPackageSAXContext {
 
     /* Temporary state */
     RCPackage *current_package;
+    RCPackageDepSList *current_requires;
+    RCPackageDepSList *current_provides;
+    RCPackageDepSList *current_conflicts;
+    RCPackageDepSList *current_recommends;
+    RCPackageDepSList *current_suggests;
+    RCPackageDepSList *current_obsoletes;
     RCPackageUpdate *current_update;
     RCPackageDepSList **toplevel_dep_list;
     RCPackageDepSList **current_dep_list;
-
-    RCPackageDepSList *obsoletes;
 
     char *text_buffer;
 };
@@ -100,6 +104,12 @@ parser_toplevel_start(RCPackageSAXContext *ctx,
         ctx->state = PARSER_PACKAGE;
 
         ctx->current_package = rc_package_new();
+        ctx->current_requires = NULL;
+        ctx->current_provides = NULL;
+        ctx->current_conflicts = NULL;
+        ctx->current_recommends = NULL;
+        ctx->current_suggests = NULL;
+        ctx->current_obsoletes = NULL;
 
         ctx->current_package->channel = ctx->channel;
         rc_channel_ref (ctx->channel);
@@ -131,17 +141,17 @@ parser_package_start(RCPackageSAXContext *ctx,
     else if (!strcmp(name, "requires")) {
         ctx->state = PARSER_DEP;
         ctx->current_dep_list = ctx->toplevel_dep_list =
-            &ctx->current_package->requires;
+            &ctx->current_requires;
     }
     else if (!strcmp(name, "recommends")) {
         ctx->state = PARSER_DEP;
         ctx->current_dep_list = ctx->toplevel_dep_list = 
-            &ctx->current_package->recommends;
+            &ctx->current_recommends;
     }
     else if (!strcmp(name, "suggests")) {
         ctx->state = PARSER_DEP;
         ctx->current_dep_list = ctx->toplevel_dep_list = 
-            &ctx->current_package->suggests;
+            &ctx->current_suggests;
     }
     else if (!strcmp(name, "conflicts")) {
         gboolean is_obsolete = FALSE;
@@ -161,21 +171,22 @@ parser_package_start(RCPackageSAXContext *ctx,
         }
 
         if (is_obsolete)
-            ctx->current_dep_list = ctx->toplevel_dep_list = &ctx->obsoletes;
+            ctx->current_dep_list = ctx->toplevel_dep_list =
+                &ctx->current_obsoletes;
         else {
             ctx->current_dep_list = ctx->toplevel_dep_list =
-                &ctx->current_package->conflicts;
+                &ctx->current_conflicts;
         }
     }
     else if (!strcmp(name, "obsoletes")) {
         ctx->state = PARSER_DEP;
         ctx->current_dep_list = ctx->toplevel_dep_list =
-            &ctx->current_package->obsoletes;
+            &ctx->current_obsoletes;
     }
     else if (!strcmp(name, "provides")) {
         ctx->state = PARSER_DEP;
         ctx->current_dep_list = ctx->toplevel_dep_list =
-            &ctx->current_package->provides;
+            &ctx->current_provides;
     }
     else {
         if (getenv ("RC_SPEW_XML"))
@@ -276,7 +287,8 @@ parser_dep_start(RCPackageSAXContext *ctx,
         is_obsolete = parse_dep_attrs(dep, attrs);
         
         if (is_obsolete)
-            ctx->obsoletes = g_slist_append (ctx->obsoletes, dep);
+            ctx->current_obsoletes =
+                g_slist_append (ctx->current_obsoletes, dep);
         else {
             *ctx->current_dep_list = g_slist_append (
                 *ctx->current_dep_list, dep);
@@ -351,7 +363,7 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
         else {
             RCPackageDepSList *iter;
 
-            for (iter = ctx->current_package->provides;
+            for (iter = ctx->current_provides;
                  iter; iter = iter->next) {
                 RCPackageDep *dep = iter->data;
                 
@@ -366,8 +378,29 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
             }
         }
 
+#if 0
         ctx->current_package->obsoletes = g_slist_concat (
             ctx->current_package->obsoletes, ctx->obsoletes);
+#endif
+
+        ctx->current_package->requires_a =
+            rc_package_dep_array_from_slist (
+                &ctx->current_requires);
+        ctx->current_package->provides_a =
+            rc_package_dep_array_from_slist (
+                &ctx->current_provides);
+        ctx->current_package->conflicts_a =
+            rc_package_dep_array_from_slist (
+                &ctx->current_conflicts);
+        ctx->current_package->obsoletes_a =
+            rc_package_dep_array_from_slist (
+                &ctx->current_obsoletes);
+        ctx->current_package->suggests_a =
+            rc_package_dep_array_from_slist (
+                &ctx->current_suggests);
+        ctx->current_package->recommends_a =
+            rc_package_dep_array_from_slist (
+                &ctx->current_recommends);
 
         /* Hack for the old XML */
         if (ctx->current_package->arch == RC_ARCH_UNKNOWN)
@@ -723,9 +756,19 @@ rc_package_sax_context_new(RCChannel *channel)
 
 /* ------ */
 
+struct DepTable {
+    RCPackageDepSList *requires;
+    RCPackageDepSList *provides;
+    RCPackageDepSList *conflicts;
+    RCPackageDepSList *obsoletes;
+    RCPackageDepSList *suggests;
+    RCPackageDepSList *recommends;
+};
+
 static void
-extract_dep_info (const xmlNode *iter, RCPackage *package)
+extract_dep_info (const xmlNode *iter, struct DepTable *dep_table)
 {
+
     if (!g_strcasecmp (iter->name, "requires")) {
         const xmlNode *iter2;
         
@@ -737,13 +780,13 @@ extract_dep_info (const xmlNode *iter, RCPackage *package)
                 continue;
             }
 
-            package->requires =
-                g_slist_prepend (package->requires,
+            dep_table->requires =
+                g_slist_prepend (dep_table->requires,
                                  rc_xml_node_to_package_dep (iter2));
             iter2 = iter2->next;
         }
 
-        package->requires = g_slist_reverse (package->requires);
+        dep_table->requires = g_slist_reverse (dep_table->requires);
 
     } else if (!g_strcasecmp (iter->name, "recommends")) {
         const xmlNode *iter2;
@@ -756,13 +799,13 @@ extract_dep_info (const xmlNode *iter, RCPackage *package)
                 continue;
             }
 
-            package->recommends =
-                g_slist_prepend (package->recommends,
+            dep_table->recommends =
+                g_slist_prepend (dep_table->recommends,
                                  rc_xml_node_to_package_dep (iter2));
             iter2 = iter2->next;
         }
 
-        package->recommends = g_slist_reverse (package->recommends);
+        dep_table->recommends = g_slist_reverse (dep_table->recommends);
 
     } else if (!g_strcasecmp (iter->name, "suggests")) {
         const xmlNode *iter2;
@@ -775,13 +818,13 @@ extract_dep_info (const xmlNode *iter, RCPackage *package)
                 continue;
             }
 
-            package->suggests =
-                g_slist_prepend (package->suggests,
+            dep_table->suggests =
+                g_slist_prepend (dep_table->suggests,
                                  rc_xml_node_to_package_dep (iter2));
             iter2 = iter2->next;
         }
 
-        package->suggests = g_slist_reverse (package->suggests);
+        dep_table->suggests = g_slist_reverse (dep_table->suggests);
 
     } else if (!g_strcasecmp (iter->name, "conflicts")) {
         xmlNode *iter2;
@@ -814,17 +857,17 @@ extract_dep_info (const xmlNode *iter, RCPackage *package)
             }
                 
             if (all_are_obs || this_is_obs) {
-                package->obsoletes =
-                    g_slist_prepend (package->obsoletes, dep);
+                dep_table->obsoletes =
+                    g_slist_prepend (dep_table->obsoletes, dep);
             } else {
-                package->conflicts =
-                    g_slist_prepend (package->conflicts, dep);
+                dep_table->conflicts =
+                    g_slist_prepend (dep_table->conflicts, dep);
             }
                 
             iter2 = iter2->next;
         }
 
-        package->conflicts = g_slist_reverse (package->conflicts);
+        dep_table->conflicts = g_slist_reverse (dep_table->conflicts);
 
     } else if (!g_strcasecmp (iter->name, "obsoletes")) {
         const xmlNode *iter2;
@@ -837,13 +880,13 @@ extract_dep_info (const xmlNode *iter, RCPackage *package)
                 continue;
             }
 
-            package->obsoletes = 
-                g_slist_prepend (package->obsoletes,
+            dep_table->obsoletes = 
+                g_slist_prepend (dep_table->obsoletes,
                                  rc_xml_node_to_package_dep (iter2));
             iter2 = iter2->next;
         }
 
-        package->obsoletes = g_slist_reverse (package->obsoletes);
+        dep_table->obsoletes = g_slist_reverse (dep_table->obsoletes);
 
     } else if (!g_strcasecmp (iter->name, "provides")) {
         const xmlNode *iter2;
@@ -856,13 +899,13 @@ extract_dep_info (const xmlNode *iter, RCPackage *package)
                 continue;
             }
 
-            package->provides =
-                g_slist_prepend (package->provides,
+            dep_table->provides =
+                g_slist_prepend (dep_table->provides,
                                  rc_xml_node_to_package_dep (iter2));
             iter2 = iter2->next;
         }
 
-        package->provides = g_slist_reverse (package->provides);
+        dep_table->provides = g_slist_reverse (dep_table->provides);
     }
 }
 
@@ -872,12 +915,20 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
     RCPackage *package;
     const xmlNode *iter;
     char *epoch = NULL, *version = NULL, *release = NULL;
+    struct DepTable dep_table;
 
     if (g_strcasecmp (node->name, "package")) {
         return (NULL);
     }
 
     package = rc_package_new ();
+
+    dep_table.requires = NULL;
+    dep_table.provides = NULL;
+    dep_table.conflicts = NULL;
+    dep_table.obsoletes = NULL;
+    dep_table.suggests = NULL;
+    dep_table.recommends = NULL;
 
     package->channel = (RCChannel *) channel;
     rc_channel_ref ((RCChannel *) channel);
@@ -941,14 +992,14 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
                 if (iter2->type != XML_ELEMENT_NODE)
                     continue;
 
-                extract_dep_info (iter2, package);
+                extract_dep_info (iter2, &dep_table);
             }
 
             extracted_deps = TRUE;
         }
         else {
             if (!extracted_deps)
-                extract_dep_info (iter, package);
+                extract_dep_info (iter, &dep_table);
             else {
                 /* FIXME: Bitch to the user here? */
             }
@@ -956,6 +1007,19 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
 
         iter = iter->next;
     }
+
+    package->requires_a =
+        rc_package_dep_array_from_slist (&dep_table.requires);
+    package->provides_a =
+        rc_package_dep_array_from_slist (&dep_table.provides);
+    package->conflicts_a =
+        rc_package_dep_array_from_slist (&dep_table.conflicts);
+    package->obsoletes_a =
+        rc_package_dep_array_from_slist (&dep_table.obsoletes);
+    package->suggests_a =
+        rc_package_dep_array_from_slist (&dep_table.suggests);
+    package->recommends_a =
+        rc_package_dep_array_from_slist (&dep_table.recommends);
 
     if (version) {
 
@@ -985,20 +1049,21 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
         /* Otherwise, try to find where the package provides itself,
            and use that version info. */
         
-        RCPackageDepSList *iter3;
+        int i;
 
-        for (iter3 = package->provides; iter3 != NULL; iter3 = iter3->next) {
-            RCPackageDep *dep = (RCPackageDep *) iter3->data;
+        if (package->provides_a)
+            for (i = 0; i < package->provides_a->len; i++) {
+                RCPackageDep *dep = package->provides_a->data + i;
             
-            if (dep->relation == RC_RELATION_EQUAL
-                && ! strcmp (dep->spec.name, package->spec.name)) {
-                package->spec.epoch   = dep->spec.epoch;
-                package->spec.has_epoch = dep->spec.has_epoch;
-                package->spec.version = g_strdup (dep->spec.version);
-                package->spec.release = g_strdup (dep->spec.release);
-                break;
+                if (dep->relation == RC_RELATION_EQUAL
+                    && ! strcmp (dep->spec.name, package->spec.name)) {
+                    package->spec.epoch   = dep->spec.epoch;
+                    package->spec.has_epoch = dep->spec.has_epoch;
+                    package->spec.version = g_strdup (dep->spec.version);
+                    package->spec.release = g_strdup (dep->spec.release);
+                    break;
+                }
             }
-        }
     }
 
     /* clean-up */
@@ -1233,7 +1298,7 @@ rc_package_to_xml_node (RCPackage *package)
     xmlNode *tmp_node;
     xmlNode *deps_node;
     RCPackageUpdateSList *history_iter;
-    RCPackageDepSList *dep_iter;
+    int i;
     char buffer[128];
     char *tmp_str;
 
@@ -1284,67 +1349,55 @@ rc_package_to_xml_node (RCPackage *package)
 
     deps_node = xmlNewChild (package_node, NULL, "deps", NULL);
 
-    if (package->requires) {
+    if (package->requires_a) {
         tmp_node = xmlNewChild (deps_node, NULL, "requires", NULL);
-        for (dep_iter = package->requires; dep_iter;
-             dep_iter = dep_iter->next)
-        {
-            RCPackageDep *dep = (RCPackageDep *)(dep_iter->data);
+        for (i = 0; i < package->requires_a->len; i++) {
+            RCPackageDep *dep = package->requires_a->data + i;
 
             xmlAddChild (tmp_node, rc_package_dep_to_xml_node (dep));
         }
     }
 
-    if (package->recommends) {
+    if (package->recommends_a) {
         tmp_node = xmlNewChild (deps_node, NULL, "recommends", NULL);
-        for (dep_iter = package->recommends; dep_iter;
-             dep_iter = dep_iter->next)
-        {
-            RCPackageDep *dep = (RCPackageDep *)(dep_iter->data);
+        for (i = 0; i < package->recommends_a->len; i++) {
+            RCPackageDep *dep = package->recommends_a->data + i;
 
             xmlAddChild (tmp_node, rc_package_dep_to_xml_node (dep));
         }
     }
 
-    if (package->suggests) {
+    if (package->suggests_a) {
         tmp_node = xmlNewChild (deps_node, NULL, "suggests", NULL);
-        for (dep_iter = package->suggests; dep_iter;
-             dep_iter = dep_iter->next)
-        {
-            RCPackageDep *dep = (RCPackageDep *)(dep_iter->data);
+        for (i = 0; i < package->suggests_a->len; i++) {
+            RCPackageDep *dep = package->suggests_a->data + i;
 
             xmlAddChild (tmp_node, rc_package_dep_to_xml_node (dep));
         }
     }
 
-    if (package->conflicts) {
+    if (package->conflicts_a) {
         tmp_node = xmlNewChild (deps_node, NULL, "conflicts", NULL);
-        for (dep_iter = package->conflicts; dep_iter;
-             dep_iter = dep_iter->next)
-        {
-            RCPackageDep *dep = (RCPackageDep *)(dep_iter->data);
+        for (i = 0; i < package->conflicts_a->len; i++) {
+            RCPackageDep *dep = package->conflicts_a->data + i;
 
             xmlAddChild (tmp_node, rc_package_dep_to_xml_node (dep));
         }
     }
 
-    if (package->obsoletes) {
+    if (package->obsoletes_a) {
         tmp_node = xmlNewChild (deps_node, NULL, "obsoletes", NULL);
-        for (dep_iter = package->obsoletes; dep_iter;
-             dep_iter = dep_iter->next)
-        {
-            RCPackageDep *dep = (RCPackageDep *)(dep_iter->data);
+        for (i = 0; i < package->obsoletes_a->len; i++) {
+            RCPackageDep *dep = package->obsoletes_a->data + i;
 
             xmlAddChild (tmp_node, rc_package_dep_to_xml_node (dep));
         }
     }
 
-    if (package->provides) {
+    if (package->provides_a) {
         tmp_node = xmlNewChild (deps_node, NULL, "provides", NULL);
-        for (dep_iter = package->provides; dep_iter;
-             dep_iter = dep_iter->next)
-        {
-            RCPackageDep *dep = (RCPackageDep *)(dep_iter->data);
+        for (i = 0; i < package->provides_a->len; i++) {
+            RCPackageDep *dep = package->provides_a->data + i;
 
             xmlAddChild (tmp_node, rc_package_dep_to_xml_node (dep));
         }

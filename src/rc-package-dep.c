@@ -69,24 +69,37 @@ rc_package_dep_new_from_spec (RCPackageSpec *spec,
     return (rcpd);
 } /* rc_package_dep_new_from_spec */
 
+static void
+rc_package_dep_copy_with_dest (RCPackageDep *dest,
+                               RCPackageDep *src)
+{
+    rc_package_spec_copy (RC_PACKAGE_SPEC (dest), RC_PACKAGE_SPEC (src));
+
+    dest->relation = src->relation;
+    dest->is_or = src->is_or;
+    dest->pre = src->pre;
+}
+
 RCPackageDep *
 rc_package_dep_copy (RCPackageDep *rcpd)
 {
     RCPackageDep *new = g_new0 (RCPackageDep, 1); /* That sucks */
 
-    rc_package_spec_copy ((RCPackageSpec *) new, (RCPackageSpec *) rcpd);
-
-    new->relation = rcpd->relation;
-    new->is_or = rcpd->is_or;
-    new->pre = rcpd->pre;
+    rc_package_dep_copy_with_dest (new, rcpd);
 
     return (new);
 } /* rc_package_dep_copy */
 
+static void
+rc_package_dep_free_members (RCPackageDep *dep)
+{
+    rc_package_spec_free_members (RC_PACKAGE_SPEC (dep));
+}
+
 void
 rc_package_dep_free (RCPackageDep *rcpd)
 {
-    rc_package_spec_free_members (RC_PACKAGE_SPEC (rcpd));
+    rc_package_dep_free_members (rcpd);
 
     g_free (rcpd);
 } /* rc_package_dep_free */
@@ -339,3 +352,69 @@ rc_package_dep_slist_remove_duplicates (RCPackageDepSList *deps)
     g_slist_free (deps);
     return out;
 } /* rc_package_dep_slist_remove_duplicates */
+
+/* Consumes *list */
+RCPackageDepArray *
+rc_package_dep_array_from_slist (RCPackageDepSList **list)
+{
+    RCPackageDepArray *array;
+    RCPackageDepSList *iter;
+    int i;
+
+    array = g_new0 (RCPackageDepArray, 1);
+    array->len = g_slist_length (*list);
+    array->data = g_new0 (RCPackageDep, array->len);
+
+    i = 0;
+    iter = *list;
+
+    while (iter) {
+        rc_package_dep_copy_with_dest (array->data + i,
+                                       (RCPackageDep *)iter->data);
+        rc_package_dep_free ((RCPackageDep *)iter->data);
+        iter = iter->next;
+        i++;
+    }
+    
+    g_slist_free (*list);
+
+    *list = NULL;
+
+    return array;
+}
+
+void
+rc_package_dep_array_free (RCPackageDepArray *array)
+{
+    int i;
+
+    if (!array)
+        return;
+
+    for (i = 0; i < array->len; i++)
+        rc_package_dep_free_members (array->data + i);
+
+    g_free (array->data);
+
+    g_free (array);
+}
+
+RCPackageDepArray *
+rc_package_dep_array_copy (RCPackageDepArray *old)
+{
+    int i;
+    RCPackageDepArray *new;
+
+    if (!old)
+        return NULL;
+
+    new = g_new0 (RCPackageDepArray, 1);
+    new->len = old->len;
+    new->data = g_new0 (RCPackageDep, old->len);
+
+    for (i = 0; i < old->len; i++)
+        rc_package_dep_copy_with_dest (new->data + i,
+                                       old->data + i);
+
+    return new;
+}

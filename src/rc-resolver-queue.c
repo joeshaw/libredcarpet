@@ -109,27 +109,29 @@ rc_resolver_queue_add_package_to_verify (RCResolverQueue *queue,
                                          RCPackage *package)
 {
     RCWorld *world;
-    GSList *iter;
+    int i;
     
     g_return_if_fail (queue != NULL);
     g_return_if_fail (package != NULL);
 
     world = rc_resolver_context_get_world (queue->context);
 
-    for (iter = package->requires; iter != NULL; iter = iter->next) {
-        RCQueueItem *item;
-        RCPackageDep *dep = iter->data;
-        item = rc_queue_item_new_require (world, dep);
-        rc_queue_item_require_add_package (item, package);
-        queue->items = g_slist_prepend (queue->items, item);
-    }
+    if (package->requires_a)
+        for (i = 0; i < package->requires_a->len; i++) {
+            RCPackageDep *dep = package->requires_a->data + i;
+            RCQueueItem *item;
+            item = rc_queue_item_new_require (world, dep);
+            rc_queue_item_require_add_package (item, package);
+            queue->items = g_slist_prepend (queue->items, item);
+        }
 
-    for (iter = package->conflicts; iter != NULL; iter = iter->next) {
-        RCQueueItem *item;
-        RCPackageDep *dep = iter->data;
-        item = rc_queue_item_new_conflict (world, dep, package);
-        queue->items = g_slist_prepend (queue->items, item);
-    }
+    if (package->conflicts_a)
+        for (i = 0; i < package->conflicts_a->len; i++) {
+            RCPackageDep *dep = package->conflicts_a->data + i;
+            RCQueueItem *item;
+            item = rc_queue_item_new_conflict (world, dep, package);
+            queue->items = g_slist_prepend (queue->items, item);
+        }
 }
 
 void

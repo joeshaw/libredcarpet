@@ -504,6 +504,8 @@ debian_packages_helper (gchar *mbuf, RCPackage *pkg, gchar *url_prefix)
     RCPackageUpdate *up = NULL;
     gboolean desc = FALSE;
     int ilen;
+    RCPackageSList *requires = NULL, *provides = NULL, *conflicts = NULL,
+        *suggests = NULL, *recommends = NULL;
 
     up = rc_package_update_new ();
     /* All debian packages "have" epochs */
@@ -646,16 +648,16 @@ debian_packages_helper (gchar *mbuf, RCPackage *pkg, gchar *url_prefix)
 #endif
             g_strfreev (tokens);
         } else if (!strncmp (buf, "depends: ", strlen ("depends: "))) {
-            pkg->requires = g_slist_concat (
-                pkg->requires,
+            requires = g_slist_concat (
+                requires,
                 rc_debman_fill_depends (buf + strlen ("depends: ")));
         } else if (!strncmp (buf, "recommends: ", strlen ("recommends: "))) {
-            pkg->recommends = g_slist_concat (
-                pkg->recommends,
+            recommends = g_slist_concat (
+                recommends,
                 rc_debman_fill_depends (buf + strlen ("recommends: ")));
         } else if (!strncmp (buf, "suggests: ", strlen ("suggests: "))) {
-            pkg->suggests = g_slist_concat (
-                pkg->suggests,
+            suggests = g_slist_concat (
+                suggests,
                 rc_debman_fill_depends (buf + strlen ("suggests: ")));
         } else if (!strncmp (buf, "pre-depends: ", strlen ("pre-depends: "))) {
             RCPackageDepSList *tmp, *iter;
@@ -666,15 +668,15 @@ debian_packages_helper (gchar *mbuf, RCPackage *pkg, gchar *url_prefix)
 
                 dep->pre = TRUE;
             }
-            pkg->requires = g_slist_concat (
-                pkg->requires, tmp);
+            requires = g_slist_concat (
+                requires, tmp);
         } else if (!strncmp (buf, "conflicts: ", strlen ("conflicts: "))) {
-            pkg->conflicts = g_slist_concat (
-                pkg->conflicts,
+            conflicts = g_slist_concat (
+                conflicts,
                 rc_debman_fill_depends (buf + strlen ("conflicts: ")));
         } else if (!strncmp (buf, "provides: ", strlen ("provides: "))) {
-            pkg->provides = g_slist_concat (
-                pkg->provides,
+            provides = g_slist_concat (
+                provides,
                 rc_debman_fill_depends (buf + strlen ("provides: ")));
 
         } else if (!strncmp (buf, "filename: ", strlen ("filename: "))) {
@@ -701,10 +703,16 @@ debian_packages_helper (gchar *mbuf, RCPackage *pkg, gchar *url_prefix)
     rc_package_add_update (pkg, up);
 
     /* Make sure to provide myself, for the dep code! */
-    pkg->provides =
-        g_slist_append (pkg->provides, rc_package_dep_new_from_spec
+    provides =
+        g_slist_append (provides, rc_package_dep_new_from_spec
                         (&pkg->spec,
                          RC_RELATION_EQUAL));
+
+    pkg->requires_a = rc_package_dep_array_from_slist (&requires);
+    pkg->provides_a = rc_package_dep_array_from_slist (&provides);
+    pkg->conflicts_a = rc_package_dep_array_from_slist (&conflicts);
+    pkg->suggests_a = rc_package_dep_array_from_slist (&suggests);
+    pkg->recommends_a = rc_package_dep_array_from_slist (&recommends);
 }
 
 

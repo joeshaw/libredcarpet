@@ -63,7 +63,20 @@ typedef enum {
 
 typedef struct _RCPackageDep RCPackageDep;
 
+typedef struct _RCPackageDepArray RCPackageDepArray;
+
 typedef GSList RCPackageDepSList;
+
+struct _RCPackageDepArray {
+    RCPackageDep *data;
+    guint len;
+};
+
+RCPackageDepArray *
+rc_package_dep_array_from_slist (RCPackageDepSList **list);
+
+void
+rc_package_dep_array_free (RCPackageDepArray *array);
 
 /* These are included later, so as to avoid circular #include hell */
 
@@ -97,9 +110,10 @@ RCPackageDep *rc_package_dep_copy (RCPackageDep *rcpdi);
 
 void rc_package_dep_free (RCPackageDep *rcpdi);
 
-RCPackageDepSList *rc_package_dep_slist_copy (RCPackageDepSList *old);
+RCPackageSList *rc_package_dep_slist_copy (RCPackageSList *old);
+RCPackageDepArray *rc_package_dep_array_copy (RCPackageDepArray *old);
 
-void rc_package_dep_slist_free (RCPackageDepSList *rcpdsl);
+void rc_package_dep_slist_free (RCPackageDepSList *deps);
 
 char       *rc_package_dep_to_str (RCPackageDep *dep);
 const char *rc_package_dep_to_str_static (RCPackageDep *dep);
@@ -111,6 +125,5 @@ gboolean rc_package_dep_verify_relation (RCPackageDep *dep,
 RCPackageRelation rc_string_to_package_relation (const gchar *relation);
 const gchar *rc_package_relation_to_string (RCPackageRelation relation,
                                             gint words);
-RCPackageDepSList *rc_package_dep_slist_remove_duplicates (RCPackageDepSList *deps);
 
 #endif /* _RC_PACKAGE_DEP_H */

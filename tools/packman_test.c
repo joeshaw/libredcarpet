@@ -260,8 +260,6 @@ packman_test_query_all (RCPackman *p, char *line)
 static void
 pretty_print_pkg (RCPackage *pkg)
 {
-    RCPackageDepSList *iter;
-
     printf ("%-15s%-25.25s%-15s%-25d\n", "Name:", pkg->spec.name,
             "Epoch:", pkg->spec.epoch);
     printf ("%-15s%-25.25s%-15s%-25.25s\n", "Version:", pkg->spec.version,
@@ -273,6 +271,7 @@ pretty_print_pkg (RCPackage *pkg)
     printf ("Summary:\n%s\n\n", pkg->summary);
     printf ("Description:\n%s\n\n", pkg->description);
 
+#if 0
     for (iter = pkg->requires; iter; iter = iter->next) {
         RCPackageDep *dep = (RCPackageDep *)(iter->data);
         printf ("Requires: %s %s %d %s %s\n", dep->spec.name,
@@ -291,6 +290,7 @@ pretty_print_pkg (RCPackage *pkg)
                 rc_package_relation_to_string (dep->relation, FALSE),
                 dep->spec.epoch, dep->spec.version, dep->spec.release);
     }
+#endif
 }
 
 static void

@@ -1,3 +1,8 @@
+2002-08-05  Ian Peters  <itp@ximian.com>
+
+	* packman_test.c (pretty_print_pkg): get rid of the deps printing
+	stuff for now.
+
 2002-08-03  Ian Peters  <itp@ximian.com>
 
 	* packman_test.c (main): call rl_initialize, which we were never

@@ -1047,17 +1047,18 @@ gboolean
 rc_resolver_context_package_is_possible (RCResolverContext *context,
                                          RCPackage *package)
 {
-    GSList *iter;
+    int i;
 
     g_return_val_if_fail (context != NULL, FALSE);
     g_return_val_if_fail (package != NULL, FALSE);
 
-    for (iter = package->requires; iter != NULL; iter = iter->next) {
-        RCPackageDep *dep = iter->data;
-        if (! rc_resolver_context_requirement_is_possible (context, dep)) {
-            return FALSE;
+    if (package->requires_a)
+        for (i = 0; i < package->requires_a->len; i++) {
+            RCPackageDep *dep = package->requires_a->data + i;
+            if (! rc_resolver_context_requirement_is_possible (context, dep)) {
+                return FALSE;
+            }
         }
-    }
 
     return TRUE;
 }

@@ -297,6 +297,8 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
     GSList *iter, *conflicts;
     RCPackageDep *pkg_dep;
 
+    int i;
+
     /* If we are trying to upgrade package A with package B and they both have the
        same version number, do nothing.  This shouldn't happen in general with
        red-carpet, but can come up with the installer & autopull. */
@@ -387,35 +389,38 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
 
     /* Construct require items for each of the package's requires that is still 
        unsatisfied. */
-    for (iter = package->requires; iter != NULL; iter = iter->next) {
-        RCPackageDep *dep = iter->data;
+    if (package->requires_a)
+        for (i = 0; i < package->requires_a->len; i++) {
+            RCPackageDep *dep = package->requires_a->data + i;
 
-        if (!rc_resolver_context_requirement_is_met (context, dep)) {
-            RCQueueItem *req_item = rc_queue_item_new_require (rc_queue_item_get_world (item), dep);
-            rc_queue_item_require_add_package (req_item, package);
+            if (!rc_resolver_context_requirement_is_met (context, dep)) {
+                RCQueueItem *req_item = rc_queue_item_new_require (rc_queue_item_get_world (item), dep);
+                rc_queue_item_require_add_package (req_item, package);
             
-            *new_items = g_slist_prepend (*new_items, req_item);
+                *new_items = g_slist_prepend (*new_items, req_item);
+            }
         }
-    }
 
     /* Construct conflict items for each of the package's conflicts. */
-    for (iter = package->conflicts; iter != NULL; iter = iter->next) {
-        RCPackageDep *dep = iter->data;
-        RCQueueItem *conflict_item = rc_queue_item_new_conflict (rc_queue_item_get_world (item),
-                                                                 dep, package);
+    if (package->conflicts_a)
+        for (i = 0; i < package->conflicts_a->len; i++) {
+            RCPackageDep *dep = package->conflicts_a->data + i;
+            RCQueueItem *conflict_item = rc_queue_item_new_conflict (rc_queue_item_get_world (item),
+                                                                     dep, package);
         
-        *new_items = g_slist_prepend (*new_items, conflict_item);
-    }
+            *new_items = g_slist_prepend (*new_items, conflict_item);
+        }
 
     /* Construct conflict items for each of the package's obsoletes. */
-    for (iter = package->obsoletes; iter != NULL; iter = iter->next) {
-        RCPackageDep *dep = iter->data;
-        RCQueueItem *conflict_item = rc_queue_item_new_conflict (rc_queue_item_get_world (item),
-                                                                 dep, package);
-        ((RCQueueItem_Conflict *)conflict_item)->actually_an_obsolete = TRUE;
+    if (package->obsoletes_a)
+        for (i = 0; i < package->obsoletes_a->len; i++) {
+            RCPackageDep *dep = package->obsoletes_a->data + i;
+            RCQueueItem *conflict_item = rc_queue_item_new_conflict (rc_queue_item_get_world (item),
+                                                                     dep, package);
+            ((RCQueueItem_Conflict *)conflict_item)->actually_an_obsolete = TRUE;
         
-        *new_items = g_slist_prepend (*new_items, conflict_item);
-    }
+            *new_items = g_slist_prepend (*new_items, conflict_item);
+        }
 
     /* Constuct uninstall items for things that conflict with us. */
     conflicts = NULL;
@@ -768,17 +773,20 @@ require_item_process (RCQueueItem *item,
                            FIXME: should we also look at conflicts here?
                         */
                         if (explore_uninstall_branch) {
-                            GSList *req_iter = upgrade_package->requires;
-                            while (req_iter) {
-                                RCPackageDep *req = req_iter->data;
-                                if (! rc_resolver_context_requirement_is_met (context, req))
-                                    break;
-                                
-                                req_iter = req_iter->next;
-                            }
-                            if (req_iter == NULL) {
+                            int i;
+                            if (upgrade_package->requires_a) {
+                                i = 0;
+                                while (i < upgrade_package->requires_a->len) {
+                                    RCPackageDep *req =
+                                        upgrade_package->requires_a->data + i;
+                                    if (! rc_resolver_context_requirement_is_met (context, req))
+                                        break;
+                                }
+                                if (i == upgrade_package->requires_a->len) {
+                                    explore_uninstall_branch = FALSE;
+                                }
+                            } else
                                 explore_uninstall_branch = FALSE;
-                            }
                         }
                         
                     } /* if (rc_resolver_context_package_is_possible ( ... */
@@ -1382,7 +1390,8 @@ uninstall_item_process (RCQueueItem *item,
     
     RCPackageStatus status;
     char *pkg_str, *dep_str = NULL;
-    GSList *iter;
+
+    int i;
     
     pkg_str = rc_package_spec_to_str (& uninstall->package->spec);
 
@@ -1417,21 +1426,22 @@ uninstall_item_process (RCQueueItem *item,
                                           msg);
 #endif
 
-        for (iter = uninstall->package->provides; iter != NULL; iter = iter->next) {
-            RCPackageDep *dep = iter->data;
-            struct UninstallProcessInfo info;
+        if (uninstall->package->provides_a)
+            for (i = 0; i < uninstall->package->provides_a->len; i++) {
+                RCPackageDep *dep = uninstall->package->provides_a->data + i;
+                struct UninstallProcessInfo info;
             
-            info.world = rc_queue_item_get_world (item);
-            info.context = context;
-            info.uninstalled_package = uninstall->package;
-            info.upgraded_package = uninstall->upgraded_to;
-            info.require_items = new_items;
-            info.remove_only = uninstall->remove_only;
+                info.world = rc_queue_item_get_world (item);
+                info.context = context;
+                info.uninstalled_package = uninstall->package;
+                info.upgraded_package = uninstall->upgraded_to;
+                info.require_items = new_items;
+                info.remove_only = uninstall->remove_only;
             
-            rc_world_foreach_requiring_package (world, dep,
-                                                RC_WORLD_ANY_CHANNEL,
-                                                uninstall_process_cb, &info);
-        }
+                rc_world_foreach_requiring_package (world, dep,
+                                                    RC_WORLD_ANY_CHANNEL,
+                                                    uninstall_process_cb, &info);
+            }
     }
     
     g_free (pkg_str);

@@ -724,37 +724,36 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
              install_iter = install_iter->next)
         {
             RCPackage *install_package = (RCPackage *)(install_iter->data);
-            GSList *obsolete_iter;
+            int i;
 
-            for (obsolete_iter = install_package->obsoletes; obsolete_iter;
-                 obsolete_iter = obsolete_iter->next)
-            {
-                RCPackageDep *obsolete = (RCPackageDep *)(obsolete_iter->data);
-                GSList *remove_iter;
+            if (install_package->obsoletes_a)
+                for (i = 0; i < install_package->obsoletes_a->len; i++) {
+                    RCPackageDep *obsolete = install_package->obsoletes_a->data + i;
+                    GSList *remove_iter;
 
-                for (remove_iter = real_remove_packages; remove_iter;
-                     remove_iter = remove_iter->next)
-                {
-                    RCPackage *remove_package =
-                        (RCPackage *)(remove_iter->data);
-                    RCPackageDep *prov;
+                    for (remove_iter = real_remove_packages; remove_iter;
+                         remove_iter = remove_iter->next)
+                    {
+                        RCPackage *remove_package =
+                            (RCPackage *)(remove_iter->data);
+                        RCPackageDep *prov;
 
-                    prov = rc_package_dep_new (
-                        remove_package->spec.name,
-                        remove_package->spec.has_epoch,
-                        remove_package->spec.epoch,
-                        remove_package->spec.version,
-                        remove_package->spec.release,
-                        RC_RELATION_EQUAL);
+                        prov = rc_package_dep_new (
+                            remove_package->spec.name,
+                            remove_package->spec.has_epoch,
+                            remove_package->spec.epoch,
+                            remove_package->spec.version,
+                            remove_package->spec.release,
+                            RC_RELATION_EQUAL);
 
-                    if (rc_package_dep_verify_relation (obsolete, prov)) {
-                        obsoleted =
-                            g_slist_prepend (obsoleted, remove_package);
+                        if (rc_package_dep_verify_relation (obsolete, prov)) {
+                            obsoleted =
+                                g_slist_prepend (obsoleted, remove_package);
+                        }
+
+                        rc_package_dep_free (prov);
                     }
-
-                    rc_package_dep_free (prov);
                 }
-            }
         }
     }
 
@@ -1430,6 +1429,8 @@ static void
 rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
 {
     RCPackageDep *dep;
+    RCPackageDepSList *requires = NULL, *provides = NULL,
+        *conflicts = NULL, *obsoletes = NULL;
 
     /* Shouldn't ever ask for dependencies unless you know what you really
        want (name, version, release) */
@@ -1439,19 +1440,19 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
 
     depends_fill_helper (rpmman, header, RPMTAG_REQUIRENAME,
                          RPMTAG_REQUIREVERSION, RPMTAG_REQUIREFLAGS,
-                         &package->requires);
+                         &requires);
 
     depends_fill_helper (rpmman, header, RPMTAG_PROVIDENAME,
                          RPMTAG_PROVIDEVERSION, RPMTAG_PROVIDEFLAGS,
-                         &package->provides);
+                         &provides);
 
     depends_fill_helper (rpmman, header, RPMTAG_CONFLICTNAME,
                          RPMTAG_CONFLICTVERSION, RPMTAG_CONFLICTFLAGS,
-                         &package->conflicts);
+                         &conflicts);
 
     depends_fill_helper (rpmman, header, RPMTAG_OBSOLETENAME,
                          RPMTAG_OBSOLETEVERSION, RPMTAG_OBSOLETEFLAGS,
-                         &package->obsoletes);
+                         &obsoletes);
 
     /* RPM versions prior to 4.0 don't make each package provide
      * itself automatically, so we have to add the dependency
@@ -1460,7 +1461,7 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
         dep = rc_package_dep_new (
             package->spec.name, package->spec.has_epoch, package->spec.epoch,
             package->spec.version, package->spec.release, RC_RELATION_EQUAL);
-        package->provides = g_slist_prepend (package->provides, dep);
+        provides = g_slist_prepend (provides, dep);
     }
 
     /* First stab at handling the pesky file dependencies */
@@ -1504,7 +1505,7 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
                 dep = rc_package_dep_new (tmp, 0, 0, NULL, NULL,
                                           RC_RELATION_ANY);
 
-                package->provides = g_slist_prepend (package->provides, dep);
+                provides = g_slist_prepend (provides, dep);
             }
 
             g_free (tmp);
@@ -1521,12 +1522,21 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
                 dep = rc_package_dep_new (basenames[i], 0, 0, NULL, NULL,
                                           RC_RELATION_ANY);
 
-                package->provides = g_slist_prepend (package->provides, dep);
+                provides = g_slist_prepend (provides, dep);
             }
         }
 
         free (basenames);
     }
+
+    package->requires_a =
+        rc_package_dep_array_from_slist (&requires);
+    package->provides_a =
+        rc_package_dep_array_from_slist (&provides);
+    package->conflicts_a =
+        rc_package_dep_array_from_slist (&conflicts);
+    package->obsoletes_a =
+        rc_package_dep_array_from_slist (&obsoletes);
 } /* rc_rpmman_depends_fill */
 
 static RCPackageSList *

@@ -75,13 +75,19 @@ rc_package_copy (RCPackage *old_package)
 
     package->channel = rc_channel_ref (old_package->channel);
 
-    package->requires = rc_package_dep_slist_copy (old_package->requires);
-    package->provides = rc_package_dep_slist_copy (old_package->provides);
-    package->conflicts = rc_package_dep_slist_copy (old_package->conflicts);
-    package->obsoletes = rc_package_dep_slist_copy (old_package->obsoletes);
+    package->requires_a =
+        rc_package_dep_array_copy (old_package->requires_a);
+    package->provides_a =
+        rc_package_dep_array_copy (old_package->provides_a);
+    package->conflicts_a =
+        rc_package_dep_array_copy (old_package->conflicts_a);
+    package->obsoletes_a =
+        rc_package_dep_array_copy (old_package->obsoletes_a);
 
-    package->suggests = rc_package_dep_slist_copy (old_package->suggests);
-    package->recommends = rc_package_dep_slist_copy (old_package->recommends);
+    package->suggests_a =
+        rc_package_dep_array_copy (old_package->suggests_a);
+    package->recommends_a =
+        rc_package_dep_array_copy (old_package->recommends_a);
 
     package->summary = g_strdup (old_package->summary);
     package->description = g_strdup (old_package->description);
@@ -123,13 +129,13 @@ rc_package_unref (RCPackage *package)
 
             rc_package_spec_free_members (RC_PACKAGE_SPEC (package));
 
-            rc_package_dep_slist_free (package->requires);
-            rc_package_dep_slist_free (package->provides);
-            rc_package_dep_slist_free (package->conflicts);
-            rc_package_dep_slist_free (package->obsoletes);
+            rc_package_dep_array_free (package->requires_a);
+            rc_package_dep_array_free (package->provides_a);
+            rc_package_dep_array_free (package->conflicts_a);
+            rc_package_dep_array_free (package->obsoletes_a);
 
-            rc_package_dep_slist_free (package->suggests);
-            rc_package_dep_slist_free (package->recommends);
+            rc_package_dep_array_free (package->suggests_a);
+            rc_package_dep_array_free (package->recommends_a);
 
             g_free (package->summary);
             g_free (package->description);
