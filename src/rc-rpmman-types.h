@@ -12,7 +12,7 @@ typedef struct _rpmdbMatchIterator * rc_rpmdbMatchIterator;
 #define RPMDBI_LABEL            2
 #define RPMDBI_ADDED            3
 #define RPMDBI_REMOVED          4
-#define RPMDBI_AVAILABLE        5
+/* #define RPMDBI_AVAILABLE        5 */
 
 /* dbindex.h version 3.0.5 */
 

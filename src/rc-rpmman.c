@@ -629,7 +629,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
 #endif
     } else if (rc > 0) {
         guint count;
-#ifdef RPMDBI_PACKAGES
+#ifdef RPMDBI_AVAILABLE
         rpmProblem problem = probs->probs;
 #else
         rpmProblem *problem = probs->probs;
@@ -637,7 +637,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         GString *report = g_string_new ("");
 
         for (count = 0; count < probs->numProblems; count++) {
-#ifdef RPMDBI_PACKAGES
+#ifdef RPMDBI_AVAILABLE
             g_string_sprintfa (report, "\n%s",
                                rpmman->rpmProblemString (problem));
 #else

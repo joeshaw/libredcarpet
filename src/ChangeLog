@@ -1,5 +1,13 @@
 2001-06-14  Ian Peters  <itp@ximian.com>
 
+	* rc-rpmman.c (rc_rpmman_transact):
+	s/RPMDBI_PACKAGES/RPMDBI_AVAILABLE/
+
+	* rc-rpmman-types.h: remove the unneeded definition of
+	RPMDBI_AVAILABLE
+
+2001-06-14  Ian Peters  <itp@ximian.com>
+
 	* rc-rpmman.c (rc_rpmman_transact): use RPMDBI_PACKAGES, an rpm4
 	specific define, to decide what kind of rpmProblem we have at our
 	disposal.
