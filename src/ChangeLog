@@ -1,3 +1,11 @@
+2001-06-21  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-line-buf.c: debugging output die die die
+
+	* rc-deps.c, rc-deps-private.h: minor cleanup
+
+	* rc-deps-util.c: minor cleanup
+
 2001-06-20  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-package-info.c: Oops, dep_name_table needs slists to be

@@ -250,8 +250,10 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
             if (bytes_read == 0) {
                 /* A read of 0 bytes with no error means we're done
                  * here */
+#if 0
                 rc_debug (RC_DEBUG_LEVEL_DEBUG,
                           "%s: read 0 bytes, we're done here\n", __FUNCTION__);
+#endif
 
                 gtk_signal_emit (GTK_OBJECT (line_buf), signals[READ_DONE],
                                  RC_LINE_BUF_OK);
@@ -266,9 +268,10 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
 
                 return (FALSE);
             }
-
+#if 0
             rc_debug (RC_DEBUG_LEVEL_DEBUG, "%s: read %d bytes\n",
                       __FUNCTION__, bytes_read);
+#endif
 
             buf[bytes_read] = '\0';
 
@@ -283,9 +286,11 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
                     line_buf->priv->buf =
                         g_string_append (line_buf->priv->buf, buf + base);
 
+#if 0
                     rc_debug (RC_DEBUG_LEVEL_DEBUG,
                               __FUNCTION__ ": line is \"%s\"\n",
                               line_buf->priv->buf->str);
+#endif
 
                     gtk_signal_emit (GTK_OBJECT (line_buf), signals[READ_LINE],
                                      line_buf->priv->buf->str);
@@ -310,8 +315,10 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
         g_source_remove (line_buf->priv->cb_id);
         line_buf->priv->cb_id = 0;
 
+#if 0
         rc_debug (RC_DEBUG_LEVEL_DEBUG, "%s: got G_IO_[(HUP)|(ERR)], we're "
                   "done here\n", __FUNCTION__);
+#endif
 
         RC_EXIT;
 
