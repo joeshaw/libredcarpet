@@ -26,12 +26,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
-#include <dirent.h>
 
-#include <sys/types.h>
 #include <sys/wait.h>
-#include <sys/stat.h>
 
 static void rc_debman_class_init (RCDebmanClass *klass);
 static void rc_debman_init       (RCDebman *obj);
@@ -91,11 +87,14 @@ rc_debman_do_purge (GSList *pkgs)
     }
 
     if (!(child = fork ())) {
+        /* Purge the packages */
         fclose (stdout);
         execv ("/usr/bin/dpkg", filev);
     } else {
         gint status;
 
+        /* While we're waiting for dpkg to return, keep everything as
+           responsive as possible */
         while (!waitpid (child, &status, WNOHANG)) {
             while (gtk_events_pending ()) {
                 gtk_main_iteration ();
@@ -104,6 +103,7 @@ rc_debman_do_purge (GSList *pkgs)
 
         g_strfreev (filev);
 
+        /* Just use the dpkg return value here, basically */
         if (WIFEXITED (status)) {
             return (WEXITSTATUS (status));
         } else {
@@ -122,16 +122,16 @@ rc_debman_do_purge (GSList *pkgs)
    of the packages, and at the end we configure them.  The only tricky part is
    keeping a list of all of the packages we've already unpacked, so that if we
    have to abort at any point, we can purge the unpacked but unconfigured
-   packages.
-*/
+   packages. */
 static void
 rc_debman_install (RCPackman *p, GSList *pkgs)
 {
     GSList *iter;
     GSList *installed_list = NULL;
+    GSList *remove_list = NULL;
     pid_t child;
     gboolean remove = FALSE;
-    guint i = 0;
+    guint pkg_count = 0;
 
     /* If the list of packages is empty, let's spare ourselves the trouble of
        doing anything */
@@ -170,11 +170,11 @@ rc_debman_install (RCPackman *p, GSList *pkgs)
                be harmless */
             installed_list = g_slist_append (installed_list, filename);
 
-            rc_packman_package_installed (p, filename, ++i);
+            rc_packman_package_installed (p, filename, pkg_count);
 
             /* Check the exit status of dpkg, and abort this install if things
                have started to go wrong */
-            if (WIFEXITED (status) && WEXITSTATUS (status)) {
+            if (!WIFEXITED (status) || WEXITSTATUS (status)) {
                 remove = TRUE;
                 break;
             }
@@ -195,13 +195,14 @@ rc_debman_install (RCPackman *p, GSList *pkgs)
         } else {
             gint status;
 
+            /* Keep the gtk mainloop in the picture */
             while (!waitpid (child, &status, 0)) {
                 while (gtk_events_pending ()) {
                     gtk_main_iteration ();
                 }
             }
 
-            if (WIFEXITED (status) && !WEXITSTATUS (status)) {
+            if (!WIFEXITED (status) || !WEXITSTATUS (status)) {
                 /* Looks like everything went ok, we're done */
 
                 /* Since I got confused by this, I may as well make it clear
@@ -220,7 +221,7 @@ rc_debman_install (RCPackman *p, GSList *pkgs)
        or we were unable to complete the final configure.  Time to purge all of
        the packages we unpacked */
     for (iter = installed_list; iter; iter = iter->next) {
-        gchar *filename = (gchar *)(iter->data);
+        gchar *filename = g_strdup ((gchar *)(iter->data));
         /* A debian file has filename <name>_<epoch>:<version>-<release>..., so
            this should be a fairly safe way to get the actual package name.  Of
            course, if we ever don't name our packages the canonical way we're
@@ -228,24 +229,24 @@ rc_debman_install (RCPackman *p, GSList *pkgs)
            trouble anyway, so I don't want to rely on any more fork'd dpkg
            methods */
         gchar **parts = g_strsplit (filename, "_", 1);
-        gchar *pkg = g_strdup (strrchr (parts[0], '/') + 1);
+        gchar *pkg_name = g_strdup (strrchr (parts[0], '/') + 1);
+
+        remove_list = g_slist_append (remove_list, pkg_name);
 
         g_free (filename);
-        filename = pkg;
-
         g_strfreev (parts);
     }
 
-    if (!rc_debman_do_purge (installed_list)) {
+    if (!rc_debman_do_purge (remove_list)) {
         /* Looks like the purge went ok, so all we did was fail to install.
            Let the people know the truth and bow out gracefully. */
         rc_packman_install_done (p, RC_PACKMAN_FAIL);
     } else {
         /* Ok, if we got here, we're fucked.  Hard.  So grab the wife and kids
            and get the hell out of Dodge. */
-        gchar *error = g_strdup ("The following packages were left in an inconsistant state:");
+        gchar *error = g_strdup ("The following packages may have been left in an inconsistant state:");
 
-        for (iter = installed_list; iter; iter = iter->next) {
+        for (iter = remove_list; iter; iter = iter->next) {
             gchar *tmp = g_strconcat (error, " ", (gchar *)(iter->data), NULL);
             g_free (error);
             error = tmp;
@@ -486,9 +487,15 @@ rc_debman_query_helper (FILE *fp, RCPackage *pkg)
 static RCPackage *
 rc_debman_query (RCPackman *p, RCPackage *pkg)
 {
-    FILE *fp = fopen ("/var/lib/dpkg/status", "r");
+    FILE *fp;
     gchar *buf;
     gchar *target;
+
+    if (!(fp = fopen ("/var/lib/dpkg/status", "r"))) {
+        rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
+                              "Unable to open /var/lib/dpkg/status");
+        return (NULL);
+    }
 
     pkg->spec.installed = FALSE;
 
@@ -517,28 +524,14 @@ rc_debman_query (RCPackman *p, RCPackage *pkg)
 static RCPackage *
 rc_debman_query_file (RCPackman *p, gchar *filename)
 {
-    gchar *tmpdir;
-    gchar *path;
     gchar *file;
     pid_t child;
     FILE *fp;
     RCPackage *pkg = rc_package_new ();
     gchar *buf;
-    DIR *dp;
-    struct dirent *entry;
+    gchar *path;
 
-    tmpdir = getenv ("TMPDIR");
-    if (!tmpdir) {
-        tmpdir = g_strdup ("/tmp");
-    }
-
-    path = g_strconcat (tmpdir, "/rc-debman-XXXXXX", NULL);
-    g_free (tmpdir);
-
-    path = mktemp (path);
-
-    /* FIXME: error checking */
-    mkdir (path, 0755);
+    path = rc_mktmpdir (NULL);
 
     if (!(child = fork())) {
         fclose (stdout);
@@ -556,7 +549,16 @@ rc_debman_query_file (RCPackman *p, gchar *filename)
 
     file = g_strconcat (path, "/control", NULL);
 
-    fp = fopen (file, "r");
+    if (!(fp = fopen (file, "r"))) {
+        rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
+                              "Unable to open package control file");
+        g_free (path);
+        g_free (file);
+        return (NULL);
+    }
+
+    
+    g_free (file);
 
     buf = readline (fp);
 
@@ -566,23 +568,8 @@ rc_debman_query_file (RCPackman *p, gchar *filename)
 
     rc_debman_query_helper (fp, pkg);
 
-    dp = opendir (path);
+    rc_rmdir (path);
 
-    while ((entry = readdir (dp))) {
-        if (strcmp (entry->d_name, ".") && strcmp (entry->d_name, "..")) {
-            gchar *filename = g_strconcat (path, "/", entry->d_name, NULL);
-
-            unlink (filename);
-
-            g_free (filename);
-        }
-    }
-
-    closedir (dp);
-
-    rmdir (path);
-
-    g_free (file);
     g_free (path);
 
     return (pkg);
