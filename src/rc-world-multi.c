@@ -909,8 +909,7 @@ rc_world_multi_add_subworld (RCWorldMulti *multi,
     info = subworld_info_new (subworld, multi);
     multi->subworlds = g_slist_append (multi->subworlds, info);
 
-    if (!rc_world_is_refreshing (RC_WORLD (multi)))
-        g_signal_emit (multi, signals[SUBWORLD_ADDED], 0, subworld);
+    g_signal_emit (multi, signals[SUBWORLD_ADDED], 0, subworld);
 }
 
 void
@@ -929,10 +928,7 @@ rc_world_multi_remove_subworld (RCWorldMulti *multi,
             g_object_ref (subworld);
             subworld_info_free (info);
             multi->subworlds = g_slist_remove_link (multi->subworlds, iter);
-
-            if (!rc_world_is_refreshing (RC_WORLD (multi)))
-                g_signal_emit (multi, signals[SUBWORLD_REMOVED], 0, subworld);
-
+            g_signal_emit (multi, signals[SUBWORLD_REMOVED], 0, subworld);
             g_object_unref (subworld);
             return;
         }
