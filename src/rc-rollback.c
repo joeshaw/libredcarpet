@@ -328,6 +328,9 @@ rc_rollback_info_new (RCPackman      *packman,
         add_tracked_package (rollback_info, system_package,
                              package_to_install);
 
+        rc_package_slist_unref (system_packages);
+        g_slist_free (system_packages);
+
         if (rc_packman_get_error (packman))
             goto ERROR;
     }
