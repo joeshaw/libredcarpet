@@ -713,7 +713,7 @@ rc_world_add_lock (RCWorld        *world,
     g_return_if_fail (world != NULL);
     g_return_if_fail (lock != NULL);
 
-    world->locks = g_slist_prepend (world->locks, lock);
+    world->locks = g_slist_append (world->locks, lock);
 }
 
 void

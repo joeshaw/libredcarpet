@@ -51,6 +51,8 @@ rc_package_match_new (void)
 
   match = g_new0 (RCPackageMatch, 1);
 
+  match->importance = RC_IMPORTANCE_INVALID;
+
   return match;
 }
 
@@ -148,6 +150,47 @@ rc_package_match_get_importance (RCPackageMatch *match,
   if (match_gteq)
     *match_gteq = match->importance_gteq;
   return match->importance;
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+gboolean
+rc_package_match_equal (RCPackageMatch *a,
+			RCPackageMatch *b)
+{
+  g_return_val_if_fail (a != NULL, FALSE);
+  g_return_val_if_fail (b != NULL, FALSE);
+
+  /* Check the name glob */
+  if ((a->name_glob == NULL) ^ (b->name_glob == NULL))
+    return FALSE;
+  if (a->name_glob && b->name_glob && strcmp (a->name_glob, b->name_glob))
+    return FALSE;
+
+  /* Check the channel */
+  if ((a->channel == NULL) ^ (b->channel == NULL))
+    return FALSE;
+  if (a->channel && b->channel
+      && rc_channel_get_id (a->channel) != rc_channel_get_id (b->channel))
+    return FALSE;
+
+  /* Check the importance */
+  if (a->importance != b->importance
+      || a->importance_gteq != b->importance_gteq)
+    return FALSE;
+
+  /* Check the dep */
+  if ((a->dep == NULL) ^ (b->dep == NULL))
+    return FALSE;
+  if (a->dep && b->dep) {
+    if (rc_package_spec_not_equal (RC_PACKAGE_SPEC (a->dep),
+				   RC_PACKAGE_SPEC (b->dep))
+	|| (rc_package_dep_get_relation (a->dep) 
+	    != rc_package_dep_get_relation(b->dep)))
+      return FALSE;
+  }
+
+  return TRUE;
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */

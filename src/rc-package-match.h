@@ -64,6 +64,8 @@ void                rc_package_match_set_importance (RCPackageMatch *match,
 RCPackageImportance rc_package_match_get_importance (RCPackageMatch *match,
 						     gboolean *match_gteq);
 
+gboolean        rc_package_match_equal (RCPackageMatch *match1,
+					RCPackageMatch *match2);
 
 gboolean        rc_package_match_test (RCPackageMatch  *package_match,
 				       RCPackage       *package,

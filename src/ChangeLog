@@ -1,3 +1,13 @@
+2002-10-17  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-package-match.c (rc_package_match_new): Initialize the
+	->importance field to RC_IMPORTANCE_INVALID.
+	(rc_package_match_equal): Added.
+
+	* rc-world.c (rc_world_add_lock): Append to the list of locks.
+	This is less annoying, since newly-added locks show up at the end
+	of the list.
+
 2002-10-11  Joe Shaw  <joe@ximian.com>
 
 	* rc-md5.c (rc_md5_digest, rc_md5_digest_from_string): Plug a leak.
