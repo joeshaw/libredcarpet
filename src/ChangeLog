@@ -1,3 +1,8 @@
+2001-01-23  Ian Peters  <itp@ximian.com>
+
+	* red-carpet.gpg: added keys for Red Hat, Caldera, TurboLinux,
+	Linux Mandrake, and SuSE
+
 2001-01-23  Vladimir Vukicevic  <vladimir@helixcode.com>
 
 	* rc-distro.c: erm, get it right.
