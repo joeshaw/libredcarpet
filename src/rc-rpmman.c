@@ -466,9 +466,8 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
 
     transaction_flags = 0; /* Nothing interesting to do here */
     problem_filter =
-        RPMPROB_FILTER_REPLACEPKG |
-        RPMPROB_FILTER_REPLACEOLDFILES |
-        RPMPROB_FILTER_REPLACENEWFILES |
+        /* This isn't really a problem, and we'll trust RC to do the
+           right thing here */
         RPMPROB_FILTER_OLDPACKAGE;
 
     transaction = rpmman->rpmtransCreateSet (rpmman->db, rpmman->rpmroot);
