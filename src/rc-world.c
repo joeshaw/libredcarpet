@@ -37,6 +37,26 @@ struct _RCPackageAndDep {
     RCPackageDep *dep;
 };
 
+static gboolean
+channel_match (const RCChannel *a, const RCChannel *b)
+{
+    if (a == RC_WORLD_ANY_CHANNEL
+        || b == RC_WORLD_ANY_CHANNEL)
+        return TRUE;
+    
+    if (a == RC_WORLD_SYSTEM_PACKAGES)
+        return b == NULL;
+    if (b == RC_WORLD_SYSTEM_PACKAGES)
+        return a == NULL;
+
+    if (a == RC_WORLD_ANY_NON_SYSTEM)
+        return b != NULL;
+    if (b == RC_WORLD_ANY_NON_SYSTEM)
+        return a != NULL;
+
+    return a == b;
+}
+
 RCWorld *
 rc_get_world (void)
 {
@@ -182,7 +202,7 @@ remove_packages_generic (GSList *slist, RCPackage *package_to_remove, RCChannel 
 {
     GSList *orig, *iter;
 
-    /* If both are NULL, remove everything. */
+    /* If channel == RC_WORLD_ANY_CHANNEL, remove everything. */
     if (package_to_remove == NULL
         && channel == RC_WORLD_ANY_CHANNEL) {
         for (iter = slist; iter != NULL; iter = iter->next) {
@@ -206,7 +226,7 @@ remove_packages_generic (GSList *slist, RCPackage *package_to_remove, RCChannel 
         GSList *next = iter->next;
         if (package && 
             ((package_to_remove && package == package_to_remove)
-             || (package->channel == channel))) {
+             || channel_match (package->channel, channel))) {
 
             /* FIXME: Why does freeing the package here lead to corruption?
                Where else is it being freed? */
@@ -267,7 +287,7 @@ remove_package_structs_generic (GSList *slist, RCPackage *package_to_remove, RCC
             
             if (package && 
                 ((package_to_remove && package == package_to_remove)
-                 || (package->channel == channel))) {
+                 || channel_match (package->channel, channel))) {
                 g_free (our_struct);
                 if (iter == slist) {
                     iter->data = NULL;
@@ -412,8 +432,7 @@ foreach_package_cb (gpointer key, gpointer val, gpointer user_data)
 
     for (iter = slist; iter != NULL; iter = iter->next) {
         RCPackage *package = slist->data;
-        if (package && (info->channel == RC_WORLD_ANY_CHANNEL 
-                        || package->channel == info->channel)) {
+        if (package && channel_match (info->channel, package->channel)) {
             if (info->fn)
                 info->fn (package, info->user_data);
             ++info->count;
@@ -470,7 +489,7 @@ rc_world_foreach_package_by_name (RCWorld *world,
     
     for (iter = slist; iter != NULL; iter = iter->next) {
         RCPackage *package = iter->data;
-        if (package && (channel == RC_WORLD_ANY_CHANNEL || package->channel == channel)) {
+        if (package && channel_match (channel, package->channel)) {
             if (rc_package_is_installed (package)
                 || g_hash_table_lookup (installed, & package->spec) == NULL) {
                 if (fn) 
@@ -569,7 +588,7 @@ rc_world_foreach_providing_package (RCWorld *world, RCPackageDep *dep,
         RCPackageAndDep *pad = iter->data;
 
         if (pad
-            && (channel == RC_WORLD_ANY_CHANNEL || pad->package->channel == channel)
+            && channel_match (channel, pad->package->channel)
             && rc_package_dep_verify_relation (dep, pad->dep)) {
 
             /* If we have multiple identical packages in RCWorld, we want to only
@@ -635,7 +654,7 @@ rc_world_check_providing_package (RCWorld *world, RCPackageDep *dep,
         RCPackageAndDep *pad = iter->data;
 
         if (pad
-            && (channel == RC_WORLD_ANY_CHANNEL || pad->package->channel == channel)
+            && channel_match (channel, pad->package->channel)
             && rc_package_dep_verify_relation (dep, pad->dep)) {
 
             /* Skip uninstalled dups */
@@ -684,7 +703,7 @@ rc_world_foreach_requiring_package (RCWorld *world, RCPackageDep *dep,
         RCPackageAndDep *pad = iter->data;
 
         if (pad
-            && (channel == RC_WORLD_ANY_CHANNEL || pad->package->channel == channel)
+            && channel_match (channel, pad->package->channel)
             && rc_package_dep_verify_relation (pad->dep, dep)) {
 
             /* Skip dups if one of them in installed. */

@@ -43,6 +43,7 @@ struct _RCWorld {
 
 #define RC_WORLD_SYSTEM_PACKAGES (NULL)
 #define RC_WORLD_ANY_CHANNEL     ((RCChannel *) 0x1)
+#define RC_WORLD_ANY_NON_SYSTEM  ((RCChannel *) 0x2)
 
 RCWorld   *rc_get_world (void);
 

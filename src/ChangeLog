@@ -1,3 +1,17 @@
+2002-03-12  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-world.c (channel_match): Added.  A small function to do our
+	channel compares for us, properly handling
+	RC_WORLD_SYSTEM_PACKAGES, RC_WORLD_ANY_CHANNEL and our new
+	RC_WORLD_ANY_NON_SYSTEM.
+	(remove_packages_generic): Use channel_match.
+	(remove_package_structs_generic): Use channel_match.
+	(foreach_package_cb): Use channel_match.
+	(rc_world_foreach_package_by_name): Use channel_match.
+	(rc_world_foreach_providing_package): Use channel_match.
+	(rc_world_check_providing_package): Use channel_match.
+	(rc_world_foreach_requiring_package): Use channel_match.
+
 2002-03-11  Joe Shaw  <joe@ximian.com>
 
 	* rc-channel.c (rc_channel_priority_parse): Step through the
