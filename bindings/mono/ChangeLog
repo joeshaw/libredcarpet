@@ -1,3 +1,10 @@
+2004-12-01  James Willcox  <james@ximian.com>
+
+	* PackageSpec.custom:
+	* generated/PackageSpec.cs:
+
+	Override Object.Equals
+
 2004-11-30  James Willcox  <james@ximian.com>
 
 	* RC.metadata:

@@ -2,11 +2,13 @@
       public PackageSpec () {}
 
       [DllImport("libredcarpet")]
-	  static extern int rc_package_spec_equal(RC.PackageSpec a, RC.PackageSpec b);
+	  static extern int rc_package_spec_equal(IntPtr a, IntPtr b);
 
-	  public bool Equals (RC.PackageSpec other) {
-	    int ret = rc_package_spec_equal (this, other);
-	    if (ret == 0)
-		 return false;
-	    return true;
+	  public override bool Equals (object other) {
+	      int ret = rc_package_spec_equal (this.Handle,
+                                               ((PackageSpec) other).Handle);
+	      if (ret == 0)
+                  return false;
+
+	      return true;
 	  }
