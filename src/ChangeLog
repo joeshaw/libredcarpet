@@ -1,5 +1,9 @@
 2001-03-12  Ian Peters  <itp@ximian.com>
 
+	* rc-rpmman.c (vercmp): handle the broken "mdk" stuff
+
+2001-03-12  Ian Peters  <itp@ximian.com>
+
 	* rc-rpmman.c (rc_rpmman_read_header): revert last, we'll fix it
 	in vercmp instead, otherwise users would see this in the GUI
 

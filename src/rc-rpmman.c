@@ -1730,15 +1730,27 @@ vercmp(const char * a, const char * b)
     char * one, * two;
     int rc;
     int isnum;
+    guint alen, blen;
 
     /* easy comparison to see if versions are identical */
     if (!strcmp(a, b)) return 0;
 
-    str1 = alloca(strlen(a) + 1);
-    str2 = alloca(strlen(b) + 1);
+    alen = strlen (a);
+    blen = strlen (b);
+
+    str1 = alloca(alen + 1);
+    str2 = alloca(blen + 1);
 
     strcpy(str1, a);
     strcpy(str2, b);
+
+    /* Take care of broken Mandrake releases */
+    if ((alen > 3) && !strcmp (a + alen - 3, "mdk")) {
+        str1[alen - 3] = '\0';
+    }
+    if ((blen > 3) && !strcmp (b + blen - 3, "mdk")) {
+        str2[blen - 3] = '\0';
+    }
 
     one = str1;
     two = str2;
