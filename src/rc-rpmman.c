@@ -1337,16 +1337,35 @@ rc_rpmman_read_header (RCRpmman *rpmman, Header header, RCPackage *package)
     g_free (package->summary);
     rpmman->headerGetEntry (header, RPMTAG_SUMMARY, &type, (void **)&tmpc,
                             &count);
-    if (count && (type == RPM_STRING_TYPE) && tmpc && tmpc[0])
-        package->summary = g_strdup (tmpc);
+    if (count && (type == RPM_STRING_TYPE) && tmpc && tmpc[0]) {
+        /* charset nonsense */
+        if (g_utf8_validate (tmpc, -1, NULL))
+            package->description = g_strdup (tmpc);
+        else {
+            package->summary = g_convert_with_fallback (tmpc, -1,
+                                                        "UTF-8",
+                                                        "ISO-8859-1",
+                                                        "?", NULL, NULL, NULL);
+        }
+    }
     else
         package->summary = NULL;
 
     g_free (package->description);
     rpmman->headerGetEntry (header, RPMTAG_DESCRIPTION, &type, (void **)&tmpc,
                             &count);
-    if (count && (type == RPM_STRING_TYPE) && tmpc && tmpc[0])
-        package->description = g_strdup (tmpc);
+    if (count && (type == RPM_STRING_TYPE) && tmpc && tmpc[0]) {
+        /* charset nonsense */
+        if (g_utf8_validate (tmpc, -1, NULL))
+            package->description = g_strdup (tmpc);
+        else {
+            package->description = g_convert_with_fallback (tmpc, -1,
+                                                            "UTF-8",
+                                                            "ISO-8859-1",
+                                                            "?", NULL, NULL,
+                                                            NULL);
+        }
+    }
     else
         package->description = NULL;
 }

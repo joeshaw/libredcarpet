@@ -1,3 +1,9 @@
+2003-03-10  Joe Shaw  <joe@ximian.com>
+
+	* rc-rpmman.c (rc_rpmman_read_header): Check to make sure that the
+	summary and description are valid UTF-8 and do a conversion of
+	ISO-8859-1 -> UTF-8 if not.
+
 2003-03-04  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-rpmman.c (rc_rpmman_depends_fill): Don't filter file
