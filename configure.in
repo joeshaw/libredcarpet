@@ -24,7 +24,7 @@ dnl Check for required programs
 AC_PROG_CC
 AC_ISC_POSIX
 AC_HEADER_STDC
-AC_PROG_LIBTOOL
+AM_PROG_LIBTOOL
 
 dnl endianness check, just for dobey ;-)
 AC_C_BIGENDIAN

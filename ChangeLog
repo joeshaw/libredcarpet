@@ -1,3 +1,7 @@
+2002-07-03  Joe Shaw  <joe@ximian.com>
+
+	* configure.in: It should be AM_PROG_LIBTOOL, not AC_PROG_LIBTOOL
+
 2002-06-06  Ian Peters  <itp@ximian.com>
 
 	* .cvsignore: add libredcarpet-2.0.pc
