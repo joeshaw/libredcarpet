@@ -29,21 +29,22 @@ enum _RCPackageSection {
     RC_SECTION_OFFICE = 0,
     RC_SECTION_IMAGING,
     RC_SECTION_PIM,
+    RC_SECTION_XAPP,
     RC_SECTION_GAME,
     RC_SECTION_MULTIMEDIA,
     RC_SECTION_INTERNET,
     RC_SECTION_UTIL,
     RC_SECTION_SYSTEM,
     RC_SECTION_DOC,
+    RC_SECTION_LIBRARY,
     RC_SECTION_DEVEL,
     RC_SECTION_DEVELUTIL,
-    RC_SECTION_LIBRARY,
-    RC_SECTION_XAPP,
     RC_SECTION_MISC,
     RC_SECTION_LAST
 };
 
 const gchar *rc_package_section_to_string (RCPackageSection section);
+const gchar *rc_package_section_to_user_string (RCPackageSection section);
 
 RCPackageSection rc_string_to_package_section (const gchar *section);
 

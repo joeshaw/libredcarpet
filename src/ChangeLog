@@ -1,3 +1,8 @@
+2001-03-09  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-package-section.c, rc-package-section.h: Created
+	rc_package_section_to_user_string ().
+
 2001-03-08  Ian Peters  <itp@ximian.com>
 
 	* rc-debman.c (do_unpack_read_line_cb): handle "Unpacking

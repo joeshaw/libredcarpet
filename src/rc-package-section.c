@@ -62,6 +62,45 @@ rc_package_section_to_string (RCPackageSection section)
     }
 }
 
+const gchar *
+rc_package_section_to_user_string (RCPackageSection section)
+{
+    switch (section) {
+    case RC_SECTION_OFFICE:
+        return ("Productivity Applications");
+    case RC_SECTION_IMAGING:
+        return ("Imaging");
+    case RC_SECTION_PIM:
+        return ("Personal Information Management");
+    case RC_SECTION_GAME:
+        return ("Games");
+    case RC_SECTION_MISC:
+        return ("Miscellaneous");
+    case RC_SECTION_MULTIMEDIA:
+        return ("Multimedia");
+    case RC_SECTION_INTERNET:
+        return ("Internet Applications");
+    case RC_SECTION_UTIL:
+        return ("Utilities");
+    case RC_SECTION_SYSTEM:
+        return ("System Packages");
+    case RC_SECTION_DOC:
+        return ("Documentation");
+    case RC_SECTION_DEVEL:
+        return ("Development Packages");
+    case RC_SECTION_DEVELUTIL:
+        return ("Development Utilities");
+    case RC_SECTION_LIBRARY:
+        return ("Libraries");
+    case RC_SECTION_XAPP:
+        return ("X Applications");
+    default:
+        rc_debug (RC_DEBUG_LEVEL_WARNING, "invalid section number %d\n",
+                  section);
+        return ("Miscellaneous");
+    }
+}
+
 RCPackageSection
 rc_string_to_package_section (const gchar *section)
 {
