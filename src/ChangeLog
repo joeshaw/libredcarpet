@@ -1,3 +1,7 @@
+2002-05-10  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-xml.c (rc_package_to_xml_node): Properly write out obsoletes.
+
 2002-05-09  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-package.c (rc_package_unref): Unref our channel.

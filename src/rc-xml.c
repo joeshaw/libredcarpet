@@ -1051,6 +1051,17 @@ rc_package_to_xml_node (RCPackage *package)
         }
     }
 
+    if (package->obsoletes) {
+        tmp_node = xmlNewChild (package_node, NULL, "obsoletes", NULL);
+        for (dep_iter = package->obsoletes; dep_iter;
+             dep_iter = dep_iter->next)
+        {
+            RCPackageDep *dep = (RCPackageDep *)(dep_iter->data);
+
+            xmlAddChild (tmp_node, rc_package_dep_to_xml_node (dep));
+        }
+    }
+
     if (package->provides) {
         tmp_node = xmlNewChild (package_node, NULL, "provides", NULL);
         for (dep_iter = package->provides; dep_iter;
