@@ -1,5 +1,15 @@
 2002-05-10  Jon Trowbridge  <trow@ximian.com>
 
+        * rc-queue-item.c (install_item_process): When installing,
+        uninstall any packages that explicitly conflicts with us.
+
+        * rc-world.c (rc_world_new): Initialize ->conflict_by_name.
+        (rc_world_freeze): Freeze ->conflict_by_name.
+        (rc_world_thaw): Thaw ->conflict_by_name.
+        (rc_world_add_package): Populate ->conflict_by_name.
+        (rc_world_foreach_conflicting_package): Added.  Iterate over
+        conflicts.
+
 	* rc-xml.c (rc_package_to_xml_node): Properly write out obsoletes.
 
 2002-05-09  Jon Trowbridge  <trow@ximian.com>

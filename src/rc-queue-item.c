@@ -277,6 +277,13 @@ install_item_is_satisfied (RCQueueItem *item, RCResolverContext *context)
     return rc_resolver_context_package_is_present (context, install->package);
 }
 
+static void
+build_conflict_list (RCPackage *package, RCPackageDep *dep, gpointer user_data)
+{
+    GSList **slist = user_data;
+    *slist = g_slist_prepend (*slist, package);
+}
+
 static gboolean
 install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **new_items)
 {
@@ -287,7 +294,8 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
     char *msg;
     RCPackageStatus status = rc_resolver_context_get_status (context, package);
 
-    GSList *iter;
+    GSList *iter, *conflicts;
+    RCPackageDep *pkg_dep;
 
     /* If we are trying to upgrade package A with package B and they both have the
        same version number, do nothing.  This shouldn't happen in general with
@@ -409,6 +417,26 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
         
         *new_items = g_slist_prepend (*new_items, conflict_item);
     }
+
+    /* Constuct uninstall items for things that conflict with us. */
+    conflicts = NULL;
+    pkg_dep = rc_package_dep_new_from_spec (&package->spec,
+                                            RC_RELATION_ANY);
+    rc_world_foreach_conflicting_package (rc_queue_item_get_world (item),
+                                          pkg_dep,
+                                          NULL,
+                                          build_conflict_list, &conflicts);
+
+    for (iter = conflicts; iter != NULL; iter = iter->next) {
+        RCPackage *conflicting_package = iter->data;
+        RCQueueItem *uninstall_item = rc_queue_item_new_uninstall (rc_queue_item_get_world (item),
+                                                                   conflicting_package,
+                                                                   "conflict");
+        *new_items = g_slist_prepend (*new_items, uninstall_item);
+    }
+    
+    rc_package_dep_free (pkg_dep);
+    g_slist_free (conflicts);
     
  finished:
     g_free (pkg_name);
