@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <stdio.h>
 
 #include "rc-package-spec.h"
 
@@ -115,30 +116,52 @@ gint rc_package_spec_compare (gconstpointer ptra, gconstpointer ptrb)
     RCPackageSpec *a = (RCPackageSpec *) ptra, *b = (RCPackageSpec *) ptrb;
     gint ret;
 
-#if DEBUG > 10
-    fprintf (stderr, "(%s-%d:%s-%s vs. %s-%d:%s-%s)\n", a->name, a->epoch,
+#if DEBUG > 40
+    fprintf (stderr, "(%s-%d:%s-%s vs. %s-%d:%s-%s)", a->name, a->epoch,
              a->version, a->release, b->name, b->epoch,
              b->version, b->release);
 #endif
     if (a->name || b->name) {
         ret = strcmp (a->name ? a->name : "", b->name ? b->name : "");
-        if (ret) return ret;
+        if (ret) {
+#if DEBUG > 40
+            fprintf (stderr, " -> N %s\n", ret > 0 ? ">" : "<");
+#endif
+            return ret;
+        }
     }
 
-    if (a->epoch != 0 && b->epoch && a->epoch != b->epoch) {
-        ret = a->epoch > b->epoch ? b->epoch - a->epoch : a->epoch - b->epoch;
+    if (a->epoch != b->epoch) {
+        ret = a->epoch - b->epoch;
+#if DEBUG > 40
+        fprintf (stderr, " -> E %s\n", ret > 0 ? ">" : "<");
+#endif
         return ret;
     }
 
     if (a->version || b->version) {
         ret = vercmp (a->version ? a->version : "", b->version ? b->version : "");
-        if (ret) return ret;
+        if (ret) {
+#if DEBUG > 40
+            fprintf (stderr, " -> V %s\n", ret > 0 ? ">" : "<");
+#endif
+            return ret;
+        }
     }
 
     if (a->release || b->release) {
         ret = vercmp (a->release ? a->release : "", b->release ? b->release : "");
-        if (ret) return ret;
+        if (ret) {
+#if DEBUG > 40
+            fprintf (stderr, " -> R %s\n", ret > 0 ? ">" : "<");
+#endif
+            return ret;
+        }
     }
+
+#if DEBUG > 40
+    fprintf (stderr, " -> ==\n");
+#endif
 
     /* If everything passed, then they're equal */
     return 0;
