@@ -1,6 +1,12 @@
 #include <gtk/gtk.h>
 
+#include <string.h>
+
 #include "helix-rpmman.h"
+
+void pkg_installed_cb (HelixPackman *, gchar *, gpointer);
+void install_done_cb (HelixPackman *, HelixPackmanOperationStatus);
+void remove_done_cb (HelixPackman *, HelixPackmanOperationStatus);
 
 void
 pkg_installed_cb (HelixPackman *hp, gchar *file, gpointer data)
@@ -58,8 +64,6 @@ int main (int argc, char **argv)
         HP_PACKAGE_LIST *query = NULL, *iter;
 
         if ((argc > 1) && strcmp (argv[1], "-qa")) {
-            guint i;
-
             if (argc == 5) {
                 HP_ADD_PACKAGE (query, argv[2], argv[3], argv[4]);
             } else if (argc == 4) {
@@ -88,7 +92,7 @@ int main (int argc, char **argv)
 
         HP_PACKAGE_LIST_FREE (query);
     } else if (!strncmp (argv[1], "-r", 2)) {
-        guint do_remove () {
+        static guint do_remove (void) {
             guint i;
             HP_PACKAGE_LIST *rlist = NULL;
 
@@ -117,11 +121,11 @@ int main (int argc, char **argv)
         gtk_signal_connect (GTK_OBJECT (hp), "remove_done",
                             GTK_SIGNAL_FUNC (remove_done_cb), NULL);
 
-        gtk_timeout_add (0, do_remove, NULL);
+        gtk_timeout_add (0, (GtkFunction) do_remove, NULL);
 
         gtk_main ();
     } else if (!strcmp (argv[1], "-i")) {
-        guint do_install () {
+        static guint do_install (void) {
             guint i;
             HP_FILE_LIST *ilist = NULL;
 
@@ -147,7 +151,7 @@ int main (int argc, char **argv)
         gtk_signal_connect (GTK_OBJECT (hp), "install_done",
                             GTK_SIGNAL_FUNC (install_done_cb), NULL);
 
-        gtk_timeout_add (0, do_install, NULL);
+        gtk_timeout_add (0, (GtkFunction) do_install, NULL);
 
         gtk_main ();
     } else if (!strncmp (argv[1], "-d", 2)) {
