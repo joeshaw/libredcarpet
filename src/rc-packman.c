@@ -257,12 +257,57 @@ rc_packman_query (RCPackman *p, RCPackage *pkg)
     return (_CLASS (p)->rc_packman_real_query (p, pkg));
 }
 
+RCPackageSList *
+rc_packman_query_list (RCPackman *p, RCPackageSList *pkgs)
+{
+    RCPackageSList *iter;
+
+    g_free (p->reason);
+    p->error = RC_PACKMAN_NONE;
+
+    for (iter = pkgs; iter; iter = iter->next) {
+        RCPackage *pkg = (RCPackage *)(iter->data);
+
+        rc_packman_query (p, pkg);
+
+        if (p->error) {
+            return (pkgs);
+        }
+    }
+}
+
 RCPackage *
 rc_packman_query_file (RCPackman *p, gchar *filename)
 {
     g_assert (_CLASS (p)->rc_packman_real_query_file);
 
     return (_CLASS (p)->rc_packman_real_query_file (p, filename));
+}
+
+RCPackageSList *
+rc_packman_query_file_list (RCPackman *p, GSList *filenames)
+{
+    GSList *iter;
+    RCPackageSList *ret = NULL;
+
+    g_free (p->reason);
+    p->error = RC_PACKMAN_NONE;
+
+    for (iter = filenames; iter; iter = iter->next) {
+        gchar *filename = (gchar *)(iter->data);
+        RCPackage *pkg;
+
+        pkg = rc_packman_query_file (p, filename);
+
+        if (p->error) {
+            rc_package_free (pkg);
+            return (ret);
+        }
+
+        ret = g_slist_append (ret, pkg);
+    }
+
+    return (ret);
 }
 
 RCPackageSList *

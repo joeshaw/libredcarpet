@@ -135,12 +135,16 @@ void rc_packman_remove (RCPackman *p, RCPackageSList *pkgs);
    query packages which meet that criteria. */
 RCPackage *rc_packman_query (RCPackman *p, RCPackage *pkg);
 
+RCPackageSList *rc_packman_query_list (RCPackman *p, RCPackageSList *pkgs);
+
 /* Uses the system package manager to examine a given filename, and returns
    an RCPackage with the name, version, release, epoch, and dependency fields
    filled in.  This function does not touch the system installed package
    database, so spec->installed must always be FALSE (even if the identical
    package to this file is already installed!). */
 RCPackage *rc_packman_query_file (RCPackman *p, gchar *filename);
+
+RCPackageSList *rc_packman_query_file_list (RCPackman *p, GSList *filenames);
 
 /* Queries the system package database and returns a list of all packages
    installed on the system.  This function will return all instances of a
