@@ -10,20 +10,24 @@ namespace RC {
 	public class Rollback {
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_rollback_get_actions(IntPtr when);
-
-		public static GLib.SList GetActions(System.DateTime when) {
-			IntPtr raw_ret = rc_rollback_get_actions(GLib.Marshaller.DateTimeTotime_t (when));
-			GLib.SList ret = new GLib.SList(raw_ret);
-			return ret;
-		}
-
-		[DllImport("libredcarpet")]
 		static extern void rc_rollback_restore_files(IntPtr actions);
 
 		public static void RestoreFiles(GLib.SList actions) {
 			rc_rollback_restore_files(actions.Handle);
 		}
+
+#endregion
+#region Customized extensions
+#line 1 "Rollback.custom"
+		[DllImport("libredcarpet")]
+		static extern IntPtr rc_rollback_get_actions(IntPtr when);
+
+		public static GLib.SList GetActions(System.DateTime when) {
+			IntPtr raw_ret = rc_rollback_get_actions(GLib.Marshaller.DateTimeTotime_t (when));
+			GLib.SList ret = new GLib.SList(raw_ret, typeof (RC.RollbackAction));
+			return ret;
+		}
+
 
 #endregion
 	}

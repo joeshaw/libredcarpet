@@ -1,6 +1,13 @@
 /* -*- Mode: csharp; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 
 // namespace {
+    public static uint CapabilityNone                = 0;
+    public static uint CapabilityProvideAllVersions  = (1 << 0);
+    public static uint CapabilityIgnoreAbsentEpochs  = (1 << 2);
+    public static uint CapabilityRollback            = (1 << 3);
+    public static uint CapabilityAlwaysVerifyRelease = (1 << 4);
+    public static uint CapabilityPatches             = (1 << 5);
+
     [DllImport("libredcarpet")]
     static extern IntPtr rc_packman_query_file(IntPtr raw, string filename, bool filter_file_deps);
 

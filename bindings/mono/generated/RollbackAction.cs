@@ -40,6 +40,21 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
+		static extern IntPtr rc_rollback_action_get_synth_package(IntPtr raw);
+
+		public RC.Package SynthPackage { 
+			get {
+				IntPtr raw_ret = rc_rollback_action_get_synth_package(Handle);
+				RC.Package ret;
+				if (raw_ret == IntPtr.Zero)
+					ret = null;
+				else
+					ret = new RC.Package(raw_ret);
+				return ret;
+			}
+		}
+
+		[DllImport("libredcarpet")]
 		static extern bool rc_rollback_action_is_install(IntPtr raw);
 
 		public bool IsInstall { 
