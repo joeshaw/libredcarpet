@@ -65,7 +65,10 @@ struct _RCRpmman {
     FD_t (*fdOpen)(const char *, int, mode_t);
     ssize_t (*fdRead)(void *, char *, size_t);
     int (*fdClose)(void *);
-    int (*Ferror)(FD_t);
+    /* it turns out this isn't in 3.0.3 and there's no equivalent
+     * older fd* version.  we're not really using it for anything
+     * important so i'm not going to worry about it */
+    /* int (*Ferror)(FD_t); */
 
     int (*headerGetEntry)(Header, int_32, int_32 *, void **, int_32 *);
     void (*headerFree)(Header);

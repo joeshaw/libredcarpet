@@ -1,5 +1,13 @@
 2001-04-04  Ian Peters  <itp@ximian.com>
 
+	* rc-rpmman.h, rc-rpmman.c: comment out all references to Ferror
+	for the time being.  i was only using this twice, and in both
+	places if there's an error fdOpen should just return NULL anyway,
+	so this seems harmless.  this was required because rpm 3.0.3 lacks
+	Ferror.  sigh.
+
+2001-04-04  Ian Peters  <itp@ximian.com>
+
 	* rc-packman.h, rc-packman.c: added rc_packman_set_libdir and
 	rc_libdir, which let you configure the directory that rc-debman
 	and rc-rpmman look for the rc-*-helper.so files.

@@ -46,6 +46,15 @@
 
 #undef rpmdbNextIterator
 
+/* if we're compiling against rpm 3.0.3, we won't have
+ * RPMTAG_BASENAMES, but that's not important as we only use that tag
+ * on rpm 4.x systems
+ */
+
+#ifndef RPMTAG_BASENAMES
+#define RPMTAG_BASENAMES RPMTAG_NAMES
+#endif
+
 static void rc_rpmman_class_init (RCRpmmanClass *klass);
 static void rc_rpmman_init       (RCRpmman *obj);
 
@@ -180,7 +189,8 @@ transaction_add_install_packages (RCPackman *packman,
 
         fd = rpmman->fdOpen (filename, O_RDONLY, 0);
 
-        if (fd == NULL || rpmman->Ferror (fd)) {
+        /* if (fd == NULL || rpmman->Ferror (fd)) { */
+        if (fd == NULL) {
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "unable to open %s", filename);
 
@@ -1522,7 +1532,8 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
 
     rpm_fd = rpmman->fdOpen (package->package_filename, O_RDONLY, 0);
 
-    if (!rpm_fd || rpmman->Ferror (rpm_fd)) {
+    /* if (!rpm_fd || rpmman->Ferror (rpm_fd)) { */
+    if (rpm_fd == NULL) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "unable to open %s", package->package_filename);
 
@@ -2021,7 +2032,7 @@ load_fake_syms (RCRpmman *rpmman)
     rpmman->fdOpen = &fdOpen;
     rpmman->fdRead = &fdRead;
     rpmman->fdClose = &fdClose;
-    rpmman->Ferror = &Ferror;
+    /* rpmman->Ferror = &Ferror; */
     rpmman->headerGetEntry = &headerGetEntry;
     rpmman->headerFree = &headerFree;
     rpmman->rpmReadPackageHeader = &rpmReadPackageHeader;
@@ -2083,11 +2094,13 @@ load_rpm_syms (RCRpmman *rpmman)
                           ((gpointer)&rpmman->fdClose))) {
         return (FALSE);
     }
+    /*
     if (!g_module_symbol (rpmman->rpm_lib, "Ferror",
                           ((gpointer)&rpmman->Ferror)))
     {
         return (FALSE);
     }
+    */
 
     if (!g_module_symbol (rpmman->rpm_lib, "headerGetEntry",
                           ((gpointer)&rpmman->headerGetEntry))) {
