@@ -1,5 +1,8 @@
 2001-01-29  Vladimir Vukicevic  <vladimir@ximian.com>
 
+	* rc-deps.c: Okay, so, try to do some sort of conflict
+	notification.
+
 	* rc-deps.c, rc-deps.h: Oops. count /correctly/ for the recursion.
 	Also add notification of abort.
 
