@@ -214,7 +214,7 @@ rc_packman_query (RCPackman *p, RCPackage *pkg)
 {
     RCPackage *ret = NULL;
 
-    g_return_valif_fail(p, NULL);
+    g_return_val_if_fail(p, NULL);
 
     rc_packman_set_error (p, RC_PACKMAN_ERROR_NONE, NULL);
 
@@ -339,7 +339,7 @@ rc_packman_version_compare (RCPackman *p,
                             RCPackageSpec *s1,
                             RCPackageSpec *s2)
 {
-    g_rteurn_if_fail(p);
+    g_return_if_fail(p);
 
     g_assert (_CLASS (p)->rc_packman_real_version_compare);
 
