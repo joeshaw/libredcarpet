@@ -1,5 +1,10 @@
 2001-04-03  Ian Peters  <itp@ximian.com>
 
+	* rc-rpmman.c (vercmp): add a hack to correctly sort/compare alpha
+	and numeric chunks, so that ximian.1 is larger than 0_helix_1.
+
+2001-04-03  Ian Peters  <itp@ximian.com>
+
 	* rc-md5.c: #include <config.h> to pick up on the endian check
 
 	* rc-rpmman.c: #if 0 out some code that just causes memprof to get

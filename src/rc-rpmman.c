@@ -1794,10 +1794,30 @@ vercmp(const char * a, const char * b)
         oldch2 = *str2;
         *str2 = '\0';
 
+        /* Here's how we handle comparing numeric and non-numeric
+         * segments -- non-numeric (ximian.1) always sorts higher than
+         * numeric (0_helix_1).  Original code is #if 0'd out
+         * below. */
+        if (one == str1) {
+            if (isdigit (*two)) {
+                return (1);
+            } else {
+                return (-1);
+            }
+        }
+        if (two == str2) {
+            if (isdigit (*one)) {
+                return (-1);
+            } else {
+                return (1);
+            }
+        }
+#if 0
         /* take care of the case where the two version segments are */
         /* different types: one numeric and one alpha */
         if (one == str1) return -1;	/* arbitrary */
         if (two == str2) return -1;
+#endif
 
         if (isnum) {
             /* this used to be done by converting the digit segments */
