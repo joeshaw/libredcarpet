@@ -1,3 +1,10 @@
+2002-08-06  Joe Shaw  <joe@ximian.com>
+
+	* rc-xml.c (sax_warning): Always print out SAX warnings.
+	(sax_error): Always print out SAX errors.
+	(sax_handler): Call sax_error() for error and fatalError
+	conditions.
+
 2002-08-05  Joe Shaw  <joe@ximian.com>
 
 	* rc-resolver-info.c (rc_resolver_info_merge): Need to ref the

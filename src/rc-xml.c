@@ -645,8 +645,22 @@ sax_warning(void *data, const char *msg, ...)
     va_start(args, msg);
 
     tmp = g_strdup_vprintf(msg, args);
-    if (getenv ("RC_SPEW_XML"))
-        rc_debug (RC_DEBUG_LEVEL_ALWAYS, "* Warning: %s", tmp);
+    rc_debug (RC_DEBUG_LEVEL_WARNING, "* SAX Warning: %s", tmp);
+    g_free(tmp);
+
+    va_end(args);
+}
+
+static void
+sax_error(void *data, const char *msg, ...)
+{
+    va_list args;
+    char *tmp;
+
+    va_start(args, msg);
+
+    tmp = g_strdup_vprintf(msg, args);
+    rc_debug (RC_DEBUG_LEVEL_ERROR, "* SAX Error: %s", tmp);
     g_free(tmp);
 
     va_end(args);
@@ -675,8 +689,8 @@ static xmlSAXHandler sax_handler = {
     NULL,      /* processingInstruction */
     NULL,      /* comment */
     sax_warning,      /* warning */
-    sax_warning,      /* error */
-    sax_warning,      /* fatalError */
+    sax_error,      /* error */
+    sax_error,      /* fatalError */
 };
 
 void
