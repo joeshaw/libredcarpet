@@ -52,8 +52,6 @@ struct _RCChannel {
     /* for use as pixbufs in gui.h */
     char *icon_file;
     char *title_file;
-    char *title_color;
-    char *title_bg_image;
 
     time_t last_update;
 

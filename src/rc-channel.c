@@ -51,7 +51,6 @@ rc_channel_free (RCChannel *rcc)
     g_free (rcc->unsubs_url);
     g_free (rcc->icon_file);
     g_free (rcc->title_file);
-    g_free (rcc->title_color);
     g_free (rcc);
 } /* rc_channel_free */
 
@@ -121,8 +120,6 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
         channel->file_path = xml_get_prop(node, "file_path");
 	channel->icon_file = xml_get_prop(node, "icon");
 	channel->title_file = xml_get_prop(node, "title");
-	channel->title_color = xml_get_prop(node, "bgcolor");
-	channel->title_bg_image = xml_get_prop(node, "bgimage");
 	channel->description = xml_get_prop(node, "description");
         channel->distribution = xml_get_prop(node, "distribution");
         channel->pkginfo_file = xml_get_prop(node, "pkginfo_file");
@@ -178,6 +175,76 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
 
     return cl;
 } /* rc_channel_parse_xml */
+
+#if 0
+RCChannelSList *
+rc_channel_parse_apt_sources(const char *filename)
+{
+    RCChannelSlist *cl = NULL;
+    int fd;
+    int bytes;
+    char buf[16384];
+    GByteArray *data;
+    char **lines;
+    char *l;
+    int id = -1;
+
+    fd = open(filename, O_RDONLY);
+    if (fd < 0) {
+	g_warning("Unable to open file %s", filename);
+	return NULL;
+    }
+
+    data = g_byte_array_new();
+
+    do {
+	bytes = read(fd, buf, 16384);
+	if (bytes)
+	    g_byte_array_append(data, buf, bytes);
+    } while (bytes > 0);
+
+    fclose(fd);
+    g_byte_array_append(data, "\0", 1);
+    lines = g_strsplit(data->data, "\n", 0);
+    g_byte_array_free(data);
+    
+    for (l = lines; l; l++) {
+	char **s;
+	char c;
+
+	if (*l == '#')
+	    continue;
+
+	s = g_strsplit(l, " ", 0);
+	if (g_strcasecmp(s[0], "deb") != 0) {
+	    g_strfreev(s);
+	    continue;
+	}
+
+	/* So, we need to see if the last character of the distribution field
+	   in the sources line ends with a slash. If it does, then it is an
+	   absolutely path. Otherwise, it is a distribution name. */
+	if (s[2][strlen(s[2])-1] == '/') {
+	    RCChannel *channel;
+
+	    channel = rc_channel_new();
+
+	    channel->id = id;
+	    channel->path = g_strconcat(s[1], "/", s[2], NULL);
+	    channel->name = g_strdup(channel->path);
+	    channel->description = g_strdup(channel->path);
+	    channel->pkginfo_file = g_strdup("Packages.gz");
+	    channel->pkginfo_compressed = TRUE;
+	    channel->type = RC_CHANNEL_TYPE_DEBIAN;
+
+	    id--;
+	}
+
+	/* FIXME: Write the rest of me. Bad Joey! */
+    }
+} /* rc_channel_parse_apt_sources */
+#endif	    
+
         
 int
 rc_channel_get_id_by_name(RCChannelSList *channels, char *name)
