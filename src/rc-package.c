@@ -389,7 +389,7 @@ rc_package_set_channel (RCPackage *package, RCChannel *channel)
 {
     g_return_if_fail (package != NULL);
 
-    package->channel = channel;
+    package->channel = rc_package_ref (channel);
 }
 
 const char *
