@@ -1,3 +1,11 @@
+2001-03-05  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c (transaction_add_remove_packages): comment out the
+	code paths that error out when multiple packages match the string
+	we're removing on.  Apparently, in the real world this isn't such
+	an error case.  Also, for RPM 4.0 make sure we remove all packages
+	which match the label.
+
 2001-03-04  Ian Peters  <itp@ximian.com>
 
 	* rc-line-buf.c (rc_line_buf_cb): handle G_IO_ERR in addition to

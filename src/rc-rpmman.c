@@ -286,6 +286,11 @@ transaction_add_remove_packages (RCPackman *packman,
             return (FALSE);
         }
 
+/* So, this sucks, but apparently having multiple packages that are
+ * exactly the same is a fairly common occurance in RPM land (ie, same
+ * name, version, and release).  This came up twice tonight, so I
+ * guess I'm going to have to ignore this case for now. */
+#if 0
         if (count > 1) {
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "%s refers to %d packages", package_name,
@@ -297,13 +302,16 @@ transaction_add_remove_packages (RCPackman *packman,
 
             return (FALSE);
         }
+#endif
 
-        header = rpmdbNextIterator (mi);
-        offset = rpmdbGetIteratorOffset (mi);
+        while (header = rpmdbNextIterator (mi)) {
+            header = rpmdbNextIterator (mi);
+            offset = rpmdbGetIteratorOffset (mi);
 
-        rpmtransRemovePackage (transaction, offset);
+            rpmtransRemovePackage (transaction, offset);
 
-        rpmdbFreeIterator (mi);
+            rpmdbFreeIterator (mi);
+        }
 
         g_free (package_name);
     }
@@ -357,6 +365,9 @@ transaction_add_remove_packages (RCPackman *packman,
                 }
             }
 
+/* See the comment above for the RPM 4.0 case, la la la broken
+ * libraries la la la */
+#if 0
             if (count > 1) {
                 rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                       "%s matches multiple packages",
@@ -366,6 +377,7 @@ transaction_add_remove_packages (RCPackman *packman,
 
                 return (FALSE);
             }
+#endif
 
             for (i = 0; i < dbiIndexSetCount (matches); i++) {
                 unsigned int offset = dbiIndexRecordOffset (matches, i);
