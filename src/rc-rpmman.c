@@ -1342,6 +1342,17 @@ parse_versions (char **inputs, gboolean **has_epochs, guint32 **epochs,
 }
 
 static gboolean
+rc_rpmman_parse_version (RCPackman    *packman,
+                         const gchar  *input,
+                         gboolean     *has_epoch,
+                         guint32      *epoch,
+                         gchar       **version,
+                         gchar       **release)
+{
+    return parse_version (input, has_epoch, epoch, version, release);
+}
+
+static gboolean
 in_set (gchar *item, const gchar **set) {
     const gchar **iter;
 
@@ -2433,6 +2444,7 @@ rc_rpmman_class_init (RCRpmmanClass *klass)
     packman_class->rc_packman_real_query_all = rc_rpmman_query_all;
     packman_class->rc_packman_real_query_file = rc_rpmman_query_file;
     packman_class->rc_packman_real_version_compare = rc_rpmman_version_compare;
+    packman_class->rc_packman_real_parse_version = rc_rpmman_parse_version;
     packman_class->rc_packman_real_verify = rc_rpmman_verify;
     packman_class->rc_packman_real_find_file = rc_rpmman_find_file;
     packman_class->rc_packman_real_lock = rc_rpmman_lock;

@@ -312,21 +312,6 @@ rc_world_free (RCWorld *world)
 	}
 }
 
-guint
-rc_world_sequence_number (RCWorld *world)
-{
-    g_return_val_if_fail (world != NULL, 0);
-
-    rc_world_sync (world);
-
-    if (world->changed) {
-        ++world->seq_no;
-        world->changed = FALSE;
-    }
-
-    return world->seq_no;
-}
-
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 /* Packmanish operations */
@@ -424,6 +409,21 @@ rc_world_get_system_packages (RCWorld *world)
     g_slist_free (system_packages);
 
     return TRUE;
+}
+
+guint
+rc_world_sequence_number (RCWorld *world)
+{
+    g_return_val_if_fail (world != NULL, 0);
+
+    rc_world_sync (world);
+
+    if (world->changed) {
+        ++world->seq_no;
+        world->changed = FALSE;
+    }
+
+    return world->seq_no;
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */

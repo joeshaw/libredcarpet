@@ -33,7 +33,7 @@
  */
 
 void
-rc_debman_parse_version (gchar *input, guint32 *epoch, gchar **version,
+rc_debman_parse_version (const gchar *input, guint32 *epoch, gchar **version,
                          gchar **release)
 {
     gchar *epoch_ptr = NULL;

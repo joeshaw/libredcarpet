@@ -396,6 +396,33 @@ rc_packman_version_compare (RCPackman *packman,
     return (klass->rc_packman_real_version_compare (packman, spec1, spec2));
 }
 
+gboolean
+rc_packman_parse_version (RCPackman    *packman,
+                          const gchar  *input,
+                          gboolean     *has_epoch,
+                          guint32      *epoch,
+                          char        **version,
+                          char        **release)
+{
+    RCPackmanClass *klass;
+
+    g_return_val_if_fail (packman, FALSE);
+    g_return_val_if_fail (input, FALSE);
+    g_return_val_if_fail (has_epoch, FALSE);
+    g_return_val_if_fail (epoch, FALSE);
+    g_return_val_if_fail (version, FALSE);
+    g_return_val_if_fail (release, FALSE);
+
+    rc_packman_clear_error (packman);
+
+    klass = RC_PACKMAN_GET_CLASS (packman);
+
+    g_assert (klass->rc_packman_real_parse_version);
+
+    return (klass->rc_packman_real_parse_version (
+                packman, input, has_epoch, epoch, version, release));
+}
+
 RCVerificationSList *
 rc_packman_verify (RCPackman *packman, RCPackage *package, guint32 type)
 {

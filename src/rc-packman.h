@@ -102,6 +102,13 @@ struct _RCPackmanClass {
                                             RCPackageSpec *spec1,
                                             RCPackageSpec *spec2);
 
+    gboolean (*rc_packman_real_parse_version)(RCPackman   *packman,
+                                              const gchar *input,
+                                              gboolean    *has_epoch,
+                                              guint32     *epoch,
+                                              gchar      **version,
+                                              gchar      **release);
+
     RCVerificationSList *(*rc_packman_real_verify)(RCPackman *packman,
                                                    RCPackage *package,
                                                    guint32    type);
@@ -137,6 +144,13 @@ RCPackageSList *rc_packman_query_all (RCPackman *packman);
 gint rc_packman_version_compare (RCPackman *packman,
                                  RCPackageSpec *spec1,
                                  RCPackageSpec *spec2);
+
+gboolean rc_packman_parse_version (RCPackman   *packman,
+                                   const gchar *input,
+                                   gboolean    *has_epoch,
+                                   guint32     *epoch,
+                                   gchar      **version,
+                                   gchar      **release);
 
 RCVerificationSList *rc_packman_verify (RCPackman *packman,
                                         RCPackage *package,

@@ -2992,6 +2992,24 @@ rc_debman_version_compare (RCPackman *packman,
     return (rc_packman_generic_version_compare (spec1, spec2, verrevcmp));
 }
 
+static gboolean
+rc_debman_parse_version_wrapper (RCPackman    *packman,
+                                 const gchar  *input,
+                                 gboolean     *has_epoch,
+                                 guint32      *epoch,
+                                 gchar       **version,
+                                 gchar       **release)
+{
+    /*
+     * FIXME: Eep!  This doesn't return a boolean value indicating whether
+     * it was successful!
+     */
+    rc_debman_parse_version (input, epoch, version, release);
+    *has_epoch = TRUE;
+
+    return TRUE;
+}
+
 typedef struct _DebmanFindFileInfo DebmanFindFileInfo;
 
 struct _DebmanFindFileInfo {
@@ -3207,6 +3225,7 @@ rc_debman_class_init (RCDebmanClass *klass)
     packman_class->rc_packman_real_verify = rc_debman_verify;
     packman_class->rc_packman_real_find_file = rc_debman_find_file;
     packman_class->rc_packman_real_version_compare = rc_debman_version_compare;
+    packman_class->rc_packman_real_parse_version = rc_debman_parse_version_wrapper;
     packman_class->rc_packman_real_lock = rc_debman_lock;
     packman_class->rc_packman_real_unlock = rc_debman_unlock;
     packman_class->rc_packman_real_is_database_changed =

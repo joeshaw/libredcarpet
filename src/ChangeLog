@@ -1,3 +1,22 @@
+2002-08-23  Joe Shaw  <joe@ximian.com>
+
+	* rc-debman-general.c (rc_debman_parse_version): Make input a
+	const gchar *.
+
+	* rc-packman.c (rc_packman_parse_version): Added.  Calls the
+	backend's parse_version function.
+
+	* rc-packman.h: Added rc_packman_real_parse_version function
+	pointer.
+
+	* rc-debman.c (rc_debman_parse_version_wrapper): Wraps
+	rc_debman_parse_version(), sets has_epoch to TRUE always.
+
+	* rc-rpmman.c (rc_rpmman_parse_version): Call parse_version().
+
+	* rc-world.c (rc_world_sequence_number): Move to after the
+	definition of rc_world_sync() to fix some warnings.
+
 2002-08-22  Joe Shaw  <joe@ximian.com>
 
 	* rc-world.c (rc_world_sequence_number): Call rc_world_sync()
