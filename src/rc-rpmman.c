@@ -174,6 +174,7 @@ close_database (RCRpmman *rpmman)
 
         if (rpmman->lock_fd) {
             rc_close (rpmman->lock_fd);
+            rpmman->lock_fd = 0;
         }
     }
 }

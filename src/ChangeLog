@@ -1,3 +1,9 @@
+2002-08-01  Joe Shaw  <joe@ximian.com>
+
+	* rc-rpmman.c (close_database): Reset the lock_fd to 0 after
+	closing it, so we don't go around closing other file descriptors
+	all willy nilly.
+
 2002-08-01  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c (rc_rpmman_query_file): only open the database if
