@@ -699,8 +699,9 @@ require_item_process (RCQueueItem *item,
     RCWorld *world = rc_queue_item_get_world (item);
     char *msg;
 
-    if (rc_resolver_context_requirement_is_met (context, require->dep))
+    if (rc_resolver_context_requirement_is_met (context, require->dep)) {
         goto finished;
+    }
 
     info.context = context;
     info.providers = NULL;
@@ -722,6 +723,8 @@ require_item_process (RCQueueItem *item,
         gboolean explore_uninstall_branch = TRUE;
 
         if (require->upgraded_package == NULL) {
+            RCResolverInfo *info;
+
             msg = g_strconcat ("There are no ",
                                require->remove_only ? "alternative installed" : "installable",
                                " providers of ",
@@ -730,11 +733,12 @@ require_item_process (RCQueueItem *item,
                                require->requiring_package ? 
                                rc_package_to_str_static (require->requiring_package) : NULL,
                                NULL);
-            
-            rc_resolver_context_add_info_str (context,
-                                              require->requiring_package,
+
+            info = rc_resolver_info_misc_new (require->requiring_package,
                                               RC_RESOLVER_INFO_PRIORITY_VERBOSE,
                                               msg);
+
+            rc_resolver_context_add_info (context, info);
         }
 
         /* If this is an upgrade, we might be able to avoid removing stuff by upgrading
@@ -856,6 +860,15 @@ require_item_process (RCQueueItem *item,
             *new_items = g_slist_prepend (*new_items, uninstall_item);
         } else if (branch_item) {
             *new_items = g_slist_prepend (*new_items, branch_item);
+        } else {
+            /* We can't do anything to resolve the missing requirement, so we fail. */
+            char *msg;
+
+            msg = g_strconcat ("Can't satisfy requirement '",
+                               rc_package_dep_to_string_static (require->dep), "'",
+                               NULL);
+            
+            rc_resolver_context_add_error_str (context, NULL, msg);
         }
         
     } else if (num_providers == 1) {
