@@ -1,3 +1,8 @@
+2003-03-17  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c (rc_rpmman_transact): account for packages that are
+	obsoleted when computing the total number of transaction steps
+
 2003-03-13  Jose Mercado    <jose@ximian.com>
                                                                                
     * distributions.xml: Added SLES8 and rhel 2.1AS support.

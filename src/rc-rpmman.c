@@ -426,6 +426,7 @@ struct _InstallState {
     guint install_total;
     guint install_extra;
     guint remove_total;
+    guint remove_extra;
     guint true_total;
     gboolean installing;
 };
@@ -916,6 +917,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     state.install_total = 0;
     state.install_extra = 0;
     state.remove_total = 0;
+    state.remove_extra = 0;
     state.installing = FALSE;
 
     if (rpmman->version < 40100)
@@ -985,6 +987,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         RCPackage *obsolete = (RCPackage *)(iter->data);
 
         real_remove_packages = g_slist_remove (real_remove_packages, obsolete);
+	state.remove_extra++;
     }
 
     g_slist_free (obsoleted);
@@ -1040,7 +1043,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
 
     /* trust me */
     state.true_total = state.install_total * 2 + state.install_extra +
-        state.remove_total;
+        state.remove_total + state.remove_extra;
 
     /* If there are no packages to be removed, we go right to
      * installing */
