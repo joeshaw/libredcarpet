@@ -111,6 +111,56 @@ rc_package_spec_version_to_str (RCPackageSpec *spec)
     return buf;
 }
 
+const gchar *
+rc_package_spec_to_str_static (RCPackageSpec *spec)
+{
+    static gchar *buf = NULL;
+    if (!buf) {
+        buf = g_malloc (128);
+    }
+
+    if (spec->epoch) {
+        snprintf (buf, 128, "%s%s%d:%s%s%s",
+                  (spec->name ? spec->name  : ""),
+                  (spec->version ? "-" : ""),
+                  spec->epoch,
+                  (spec->version ? spec->version : ""),
+                  (spec->release ? "-" : ""),
+                  (spec->release ? spec->release : ""));
+    } else {
+        snprintf (buf, 128, "%s%s%s%s%s",
+                  (spec->name ? spec->name  : ""),
+                  (spec->version ? "-" : ""),
+                  (spec->version ? spec->version : ""),
+                  (spec->release ? "-" : ""),
+                  (spec->release ? spec->release : ""));
+    }
+    return buf;
+}
+
+const gchar *
+rc_package_spec_version_to_str_static (RCPackageSpec *spec)
+{
+    static gchar *buf = NULL;
+    if (!buf) {
+        buf = g_malloc (128);
+    }
+
+    if (spec->epoch) {
+        snprintf (buf, 128, "%d:%s%s%s",
+                  spec->epoch,
+                  (spec->version ? spec->version : ""),
+                  (spec->release ? "-" : ""),
+                  (spec->release ? spec->release : ""));
+    } else {
+        snprintf (buf, 128, "%s%s%s",
+                  (spec->version ? spec->version : ""),
+                  (spec->release ? "-" : ""),
+                  (spec->release ? spec->release : ""));
+    }
+    return buf;
+}
+
     
 guint rc_package_spec_hash (gconstpointer ptr)
 {

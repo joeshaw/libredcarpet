@@ -1,5 +1,15 @@
 2001-07-25  Vladimir Vukicevic  <vladimir@ximian.com>
 
+	* rc-package-spec.c, rc-package-spec.h: New
+	rc_package_spec_to_str_static and version_to_str_static
+	functions.
+
+	* rc-deps.c, rc-deps.h: Use new _static functions for all
+	debugging output to avoid memory leaks.  Also plug some more
+	leaks where the RCDepProvide struct wasn't getting freed,
+	and where some deps that were created weren't being kept
+	track of.
+
 	* rc-deps.c: Fix a good chunk of memory leaks, thanks Purify!
 
 	* rc-line-buf.c: Minor array bounds read fix.
