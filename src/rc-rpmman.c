@@ -504,11 +504,11 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
                     fprintf (stderr, " > ");
                     break;
 
-                case (RPMSENSE_LESS & RPMSENSE_EQUAL):
+                case (RPMSENSE_LESS | RPMSENSE_EQUAL):
                     fprintf (stderr, " <= ");
                     break;
 
-                case (RPMSENSE_GREATER & RPMSENSE_EQUAL):
+                case (RPMSENSE_GREATER | RPMSENSE_EQUAL):
                     fprintf (stderr, " >= ");
                     break;
 
