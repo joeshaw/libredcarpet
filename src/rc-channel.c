@@ -236,6 +236,20 @@ rc_channel_get_path (const RCChannel *channel)
 }
 
 const char *
+rc_channel_get_subs_file (const RCChannel *channel)
+{
+    g_return_val_if_fail (channel != NULL, NULL);
+    return channel->subs_file;
+}
+
+const char *
+rc_channel_get_unsubs_file (const RCChannel *channel)
+{
+    g_return_val_if_fail (channel != NULL, NULL);
+    return channel->unsubs_file;
+}
+
+const char *
 rc_channel_get_icon_file (const RCChannel *channel)
 {
     g_return_val_if_fail (channel != NULL, NULL);

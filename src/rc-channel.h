@@ -78,6 +78,10 @@ time_t        rc_channel_get_last_update        (const RCChannel *channel);
 
 const char   *rc_channel_get_path               (const RCChannel *channel);
 
+const char   *rc_channel_get_subs_file          (const RCChannel *channel);
+
+const char   *rc_channel_get_unsubs_file        (const RCChannel *channel);
+
 const char   *rc_channel_get_icon_file          (const RCChannel *channel);
 
 

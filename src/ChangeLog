@@ -1,5 +1,10 @@
 2002-09-04  Jon Trowbridge  <trow@ximian.com>
 
+	* rc-channel.c (rc_channel_get_subs_file): Added an accessor for
+	the channel's subscribed file.
+	(rc_channel_get_unsubs_file): Add an accessor for the channel's
+	unsubscribed file.
+
 	* rc-package-spec.c (rc_package_spec_to_str): Produce nice-looking
 	output if the spec's version is empty. (Bug #29736)
 	(rc_package_spec_version_to_str): Be careful to not print a "-" in
