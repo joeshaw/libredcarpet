@@ -34,6 +34,7 @@ static void packman_test_query_all (RCPackman *p, gchar *buf);
 static void packman_test_query_file (RCPackman *p, gchar *buf);
 static void packman_test_quit (RCPackman *p, gchar *buf);
 static void packman_test_run (RCPackman *p, gchar *buf);
+static void packman_test_verify (RCPackman *p, gchar *buf);
 
 typedef void (*command_func)(RCPackman *p, gchar *buf);
 
@@ -69,6 +70,8 @@ Command commands[] = {
       "Add a package to be removed to the transaction", "remove <package>" },
     { "run", (command_func) packman_test_run,
       "Run the pending transaction", "run" },
+    { "verify", (command_func) packman_test_verify,
+      "Verify a package", "verify <filename>" },
     { (gchar *)NULL, (command_func)NULL, (gchar *)NULL, (gchar *)NULL }
 };
 
@@ -173,6 +176,36 @@ packman_test_query_all (RCPackman *p, gchar *buf)
     rc_package_slist_free (pkg_list);
 }
 
+const gchar *
+dep_symbol (RCPackageRelation rel)
+{
+    if (rel == RC_RELATION_ANY) {
+        return ("any");
+    }
+
+    if (rel == RC_RELATION_EQUAL) {
+        return ("==");
+    }
+
+    if (rel == RC_RELATION_LESS) {
+        return ("<<");
+    }
+
+    if (rel == RC_RELATION_GREATER) {
+        return (">>");
+    }
+
+    if (rel == (RC_RELATION_EQUAL | RC_RELATION_LESS)) {
+        return ("<=");
+    }
+
+    if (rel == (RC_RELATION_EQUAL | RC_RELATION_GREATER)) {
+        return (">=");
+    }
+
+    return ("EEK");
+}
+
 static void
 pretty_print_pkg (RCPackage *pkg)
 {
@@ -191,17 +224,20 @@ pretty_print_pkg (RCPackage *pkg)
 
     for (iter = pkg->requires; iter; iter = iter->next) {
         RCPackageDepItem *di = ((RCPackageDep *)iter->data)->data;
-        printf ("Requires: %s %d %s %s\n", di->spec.name, di->spec.epoch,
+        printf ("Requires: %s %s %d %s %s\n", di->spec.name,
+                dep_symbol (di->relation), di->spec.epoch,
                 di->spec.version, di->spec.release);
     }
     for (iter = pkg->provides; iter; iter = iter->next) {
         RCPackageDepItem *di = ((RCPackageDep *)iter->data)->data;
-        printf ("Provides: %s %d %s %s\n", di->spec.name, di->spec.epoch,
+        printf ("Provides: %s %s %d %s %s\n", di->spec.name,
+                dep_symbol (di->relation), di->spec.epoch,
                 di->spec.version, di->spec.release);
     }
     for (iter = pkg->conflicts; iter; iter = iter->next) {
         RCPackageDepItem *di = ((RCPackageDep *)iter->data)->data;
-        printf ("Conflicts: %s %d %s %s\n", di->spec.name, di->spec.epoch,
+        printf ("Conflicts: %s %s %d %s %s\n", di->spec.name,
+                dep_symbol (di->relation), di->spec.epoch,
                 di->spec.version, di->spec.release);
     }
 }
@@ -493,6 +529,72 @@ packman_test_run (RCPackman *p, gchar *line)
     transaction.remove_pkgs = NULL;
 }
 
+static void
+packman_test_verify (RCPackman *p, gchar *line)
+{
+    gchar **tokens;
+    RCVerificationSList *rcvsl;
+    RCVerificationSList *iter;
+
+    tokens = pop_token (line);
+
+    if (tokens[1]) {
+        printf ("ERROR: extraneous characters after \"%s\"\n", tokens[0]);
+        return;
+    }
+
+    rcvsl = rc_packman_verify (p, tokens[0]);
+
+    if (rc_packman_get_error (p)) {
+        printf ("ERROR: %s\n", rc_packman_get_reason (p));
+        goto END;
+    }
+
+    for (iter = rcvsl; iter; iter = iter->next) {
+        RCVerification *rcv = iter->data;
+
+        printf ("%s: ", tokens[0]);
+
+        switch (rcv->type) {
+        case RC_VERIFICATION_TYPE_MD5:
+            printf ("(md5)  ");
+            break;
+
+        case RC_VERIFICATION_TYPE_GPG:
+            printf ("(gpg)  ");
+            break;
+
+        case RC_VERIFICATION_TYPE_SIZE:
+            printf ("(size) ");
+            break;
+        }
+
+        switch (rcv->status) {
+        case RC_VERIFICATION_STATUS_PASS:
+            printf ("PASS");
+            break;
+
+        case RC_VERIFICATION_STATUS_FAIL:
+            printf ("FAIL");
+            break;
+
+        case RC_VERIFICATION_STATUS_UNDEF:
+            printf ("UNDEF");
+            break;
+        }
+
+        if (rcv->info) {
+            printf (" [%s]", rcv->info);
+        }
+        printf ("\n");
+    }
+
+    rc_verification_slist_free (rcvsl);
+
+  END:
+    g_strfreev (tokens);
+}
+
 char *
 packman_completion_generator (char *text, int state)
 {
@@ -532,7 +634,8 @@ int main (int argc, char **argv)
     char *buf;
     gboolean done = FALSE;
 
-    gtk_type_init ();
+//    gtk_type_init ();
+    gtk_init (&argc, &argv);
 
     transaction.install_pkgs = NULL;
     transaction.remove_pkgs = NULL;
