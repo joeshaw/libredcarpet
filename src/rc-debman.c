@@ -254,6 +254,266 @@ unlock_database (RCDebman *debman)
     RC_EXIT;
 }
 
+typedef struct _DebmanVerifyStatusInfo DebmanVerifyStatusInfo;
+
+struct _DebmanVerifyStatusInfo {
+    GMainLoop *loop;
+
+    guint read_line_id;
+    guint read_done_id;
+
+    int out_fd;
+
+    gboolean error;
+};
+
+static void
+verify_status_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
+{
+    gchar **tokens = NULL;
+    gchar *tmp = NULL;
+    DebmanVerifyStatusInfo *verify_status_info =
+        (DebmanVerifyStatusInfo *)data;
+    int out_fd = verify_status_info->out_fd; /* Just for sanity */
+
+    RC_ENTRY;
+
+    if (strncmp (line, "Status:", strlen ("Status:"))) {
+        /* This isn't a status line, so we don't need to do anything other than
+           to write it to the new file */
+        if (!rc_write (out_fd, line, strlen (line)) ||
+            !rc_write (out_fd, "\n", 1))
+        {
+            goto BROKEN;
+        }
+        RC_EXIT;
+        return;
+    }
+
+    tmp = g_strdup (line + strlen ("Status:"));
+    tmp = g_strchug (tmp);
+
+    tokens = g_strsplit (tmp, " ", 3);
+
+    if (tokens[3] || !tokens[2] || !tokens[1] || !tokens[0]) {
+        /* There aren't exactly 3 tokens here */
+        goto BROKEN;
+    }
+
+    /* we want the status to be ok */
+    if (strcmp (tokens[1], "ok")) {
+        goto BROKEN;
+    }
+
+    /* installed, not-installed, and config-files are ok, everything else I
+       consider problematic */
+    if (strcmp (tokens[2], "installed") &&
+        strcmp (tokens[2], "not-installed") &&
+        strcmp (tokens[2], "config-files"))
+    {
+        goto BROKEN;
+    }
+
+    /* If the package is installed, set the selection to install, and use
+       whatever middle token the user had */
+    if (!strcmp (tokens[2], "installed")) {
+        if (!strcmp (tokens[0], "install") || !strcmp (tokens[0], "hold")) {
+            if (!rc_write (out_fd, line, strlen (line)) ||
+                !rc_write (out_fd, "\n", 1))
+            {
+                goto BROKEN;
+            }
+            goto END;
+        }
+        if (!rc_write (out_fd, "Status: install ",
+                       strlen ("Status: install ")) ||
+            !rc_write (out_fd, tokens[1], strlen (tokens[1])) ||
+            !rc_write (out_fd, " installed\n", strlen (" installed\n")))
+        {
+            goto BROKEN;
+        }
+        goto END;
+    }
+
+    /* If the package is not-installed, just write the normal line if the
+       selection was purge or deinstall, otherwise set the seletion to purge.
+       Of course, use whatever middle token the user had. */
+    if (!strcmp (tokens[2], "not-installed")) {
+        if (!strcmp (tokens[0], "purge")) {
+            if (!rc_write (out_fd, line, strlen (line)) ||
+                !rc_write (out_fd, "\n", 1))
+            {
+                goto BROKEN;
+            }
+            goto END;
+        }
+        if (!strcmp (tokens[0], "deinstall")) {
+            if (!rc_write (out_fd, line, strlen (line)) ||
+                !rc_write (out_fd, "\n", 1))
+            {
+                goto BROKEN;
+            }
+            goto END;
+        }
+        if (!rc_write (out_fd, "Status: purge ", strlen ("Status: purge ")) ||
+            !rc_write (out_fd, tokens[1], strlen (tokens[1])) ||
+            !rc_write (out_fd, " not-installed\n",
+                       strlen (" not-installed\n")))
+        {
+            goto BROKEN;
+        }
+        goto END;
+    }
+
+    /* If the package is config-files only, set the selection to deinstall,
+       middle token as the user had it. */
+    if (!strcmp (tokens[2], "config-files")) {
+        if (!rc_write (out_fd, "Status: deinstall ",
+                       strlen ("Status: deinstall ")) ||
+            !rc_write (out_fd, tokens[1], strlen (tokens[1])) ||
+            !rc_write (out_fd, " config-files\n", strlen (" config-files\n")))
+        {
+            goto BROKEN;
+        }
+        goto END;
+    }
+
+  BROKEN:
+    verify_status_info->error = TRUE;
+    gtk_signal_disconnect (GTK_OBJECT (line_buf),
+                           verify_status_info->read_line_id);
+    gtk_signal_disconnect (GTK_OBJECT (line_buf),
+                           verify_status_info->read_done_id);
+    g_main_quit (verify_status_info->loop);
+
+  END:
+    g_strfreev (tokens);
+    g_free (tmp);
+
+    RC_EXIT;
+}
+
+static void
+verify_status_read_done_cb (RCLineBuf *line_buf, RCLineBufStatus status,
+                            gpointer data)
+{
+    DebmanVerifyStatusInfo *verify_status_info =
+        (DebmanVerifyStatusInfo *)data;
+
+    gtk_signal_disconnect (GTK_OBJECT (line_buf),
+                           verify_status_info->read_line_id);
+    gtk_signal_disconnect (GTK_OBJECT (line_buf),
+                           verify_status_info->read_done_id);
+
+    g_main_quit (verify_status_info->loop);
+}
+
+static gboolean
+verify_status (RCPackman *packman)
+{
+    DebmanVerifyStatusInfo verify_status_info;
+    GMainLoop *loop;
+    int in_fd, out_fd;
+    RCLineBuf *line_buf;
+    RCDebman *debman = RC_DEBMAN (packman);
+
+    RC_ENTRY;
+
+    if ((in_fd = open (debman->priv->status_file, O_RDONLY)) == -1) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
+                              "couldn't open %s for reading",
+                              debman->priv->status_file);
+
+        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+                  ": failed to open %s for reading\n",
+                  debman->priv->status_file);
+
+        RC_EXIT;
+
+        return (FALSE);
+    }
+
+    if ((out_fd = creat (debman->priv->rc_status_file, 0644)) == -1) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
+                              "couldn't open %s for writing",
+                              debman->priv->rc_status_file);
+
+        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+                  ": failed to open %s for writing\n",
+                  debman->priv->rc_status_file);
+
+        close (in_fd);
+
+        RC_EXIT;
+
+        return (FALSE);
+    }
+
+    line_buf = rc_line_buf_new ();
+    rc_line_buf_set_fd (line_buf, in_fd);
+
+    verify_status_info.out_fd = out_fd;
+    verify_status_info.error = FALSE;
+
+    loop = g_main_new (FALSE);
+    verify_status_info.loop = loop;
+
+    verify_status_info.read_line_id =
+        gtk_signal_connect (GTK_OBJECT (line_buf), "read_line",
+                            GTK_SIGNAL_FUNC (verify_status_read_line_cb),
+                            (gpointer) &verify_status_info);
+    verify_status_info.read_done_id =
+        gtk_signal_connect (GTK_OBJECT (line_buf), "read_done",
+                            GTK_SIGNAL_FUNC (verify_status_read_done_cb),
+                            (gpointer) &verify_status_info);
+
+    g_main_run (loop);
+
+    gtk_object_unref (GTK_OBJECT (line_buf));
+
+    g_main_destroy (loop);
+
+    close (in_fd);
+    close (out_fd);
+
+    if (verify_status_info.error) {
+        unlink (debman->priv->rc_status_file);
+
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
+                              "The %s file is malformed or contains errors",
+                              debman->priv->status_file);
+
+        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+                  ": couldn't parse %s\n",
+                  debman->priv->status_file);
+
+        RC_EXIT;
+
+        return (FALSE);
+    }
+
+    if (rename (debman->priv->rc_status_file, debman->priv->status_file)) {
+        unlink (debman->priv->rc_status_file);
+
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
+                              "couldn't rename %s to %s",
+                              debman->priv->rc_status_file,
+                              debman->priv->status_file);
+
+        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+                  ": couldn't rename %s\n",
+                  debman->priv->rc_status_file);
+
+        RC_EXIT;
+
+        return (FALSE);
+    }
+
+    RC_EXIT;
+
+    return (TRUE);
+}
+
 /*
   The associated detritus and cruft related to mark_purge.  Given a
   list of packages, we need to scan through /var/lib/dpkg/status, and
@@ -1034,6 +1294,10 @@ do_unpack_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
 
         if (line[0] == 'U') {
             length = strlen ("Unpacking ");
+            if (!strncmp (line + length, "replacement ",
+                          strlen ("replacement "))) {
+                length += strlen ("replacement ");
+            }
             install = TRUE;
         } else {
             length = strlen ("Purging configuration files for ");
@@ -2243,266 +2507,6 @@ rc_debman_query_file (RCPackman *packman, const gchar *filename)
     RC_EXIT;
 
     return (query_info.package_buf);
-}
-
-typedef struct _DebmanVerifyStatusInfo DebmanVerifyStatusInfo;
-
-struct _DebmanVerifyStatusInfo {
-    GMainLoop *loop;
-
-    guint read_line_id;
-    guint read_done_id;
-
-    int out_fd;
-
-    gboolean error;
-};
-
-static void
-verify_status_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
-{
-    gchar **tokens = NULL;
-    gchar *tmp = NULL;
-    DebmanVerifyStatusInfo *verify_status_info =
-        (DebmanVerifyStatusInfo *)data;
-    int out_fd = verify_status_info->out_fd; /* Just for sanity */
-
-    RC_ENTRY;
-
-    if (strncmp (line, "Status:", strlen ("Status:"))) {
-        /* This isn't a status line, so we don't need to do anything other than
-           to write it to the new file */
-        if (!rc_write (out_fd, line, strlen (line)) ||
-            !rc_write (out_fd, "\n", 1))
-        {
-            goto BROKEN;
-        }
-        RC_EXIT;
-        return;
-    }
-
-    tmp = g_strdup (line + strlen ("Status:"));
-    tmp = g_strchug (tmp);
-
-    tokens = g_strsplit (tmp, " ", 3);
-
-    if (tokens[3] || !tokens[2] || !tokens[1] || !tokens[0]) {
-        /* There aren't exactly 3 tokens here */
-        goto BROKEN;
-    }
-
-    /* we want the status to be ok */
-    if (strcmp (tokens[1], "ok")) {
-        goto BROKEN;
-    }
-
-    /* installed, not-installed, and config-files are ok, everything else I
-       consider problematic */
-    if (strcmp (tokens[2], "installed") &&
-        strcmp (tokens[2], "not-installed") &&
-        strcmp (tokens[2], "config-files"))
-    {
-        goto BROKEN;
-    }
-
-    /* If the package is installed, set the selection to install, and use
-       whatever middle token the user had */
-    if (!strcmp (tokens[2], "installed")) {
-        if (!strcmp (tokens[0], "install") || !strcmp (tokens[0], "hold")) {
-            if (!rc_write (out_fd, line, strlen (line)) ||
-                !rc_write (out_fd, "\n", 1))
-            {
-                goto BROKEN;
-            }
-            goto END;
-        }
-        if (!rc_write (out_fd, "Status: install ",
-                       strlen ("Status: install ")) ||
-            !rc_write (out_fd, tokens[1], strlen (tokens[1])) ||
-            !rc_write (out_fd, " installed\n", strlen (" installed\n")))
-        {
-            goto BROKEN;
-        }
-        goto END;
-    }
-
-    /* If the package is not-installed, just write the normal line if the
-       selection was purge or deinstall, otherwise set the seletion to purge.
-       Of course, use whatever middle token the user had. */
-    if (!strcmp (tokens[2], "not-installed")) {
-        if (!strcmp (tokens[0], "purge")) {
-            if (!rc_write (out_fd, line, strlen (line)) ||
-                !rc_write (out_fd, "\n", 1))
-            {
-                goto BROKEN;
-            }
-            goto END;
-        }
-        if (!strcmp (tokens[0], "deinstall")) {
-            if (!rc_write (out_fd, line, strlen (line)) ||
-                !rc_write (out_fd, "\n", 1))
-            {
-                goto BROKEN;
-            }
-            goto END;
-        }
-        if (!rc_write (out_fd, "Status: purge ", strlen ("Status: purge ")) ||
-            !rc_write (out_fd, tokens[1], strlen (tokens[1])) ||
-            !rc_write (out_fd, " not-installed\n",
-                       strlen (" not-installed\n")))
-        {
-            goto BROKEN;
-        }
-        goto END;
-    }
-
-    /* If the package is config-files only, set the selection to deinstall,
-       middle token as the user had it. */
-    if (!strcmp (tokens[2], "config-files")) {
-        if (!rc_write (out_fd, "Status: deinstall ",
-                       strlen ("Status: deinstall ")) ||
-            !rc_write (out_fd, tokens[1], strlen (tokens[1])) ||
-            !rc_write (out_fd, " config-files\n", strlen (" config-files\n")))
-        {
-            goto BROKEN;
-        }
-        goto END;
-    }
-
-  BROKEN:
-    verify_status_info->error = TRUE;
-    gtk_signal_disconnect (GTK_OBJECT (line_buf),
-                           verify_status_info->read_line_id);
-    gtk_signal_disconnect (GTK_OBJECT (line_buf),
-                           verify_status_info->read_done_id);
-    g_main_quit (verify_status_info->loop);
-
-  END:
-    g_strfreev (tokens);
-    g_free (tmp);
-
-    RC_EXIT;
-}
-
-static void
-verify_status_read_done_cb (RCLineBuf *line_buf, RCLineBufStatus status,
-                            gpointer data)
-{
-    DebmanVerifyStatusInfo *verify_status_info =
-        (DebmanVerifyStatusInfo *)data;
-
-    gtk_signal_disconnect (GTK_OBJECT (line_buf),
-                           verify_status_info->read_line_id);
-    gtk_signal_disconnect (GTK_OBJECT (line_buf),
-                           verify_status_info->read_done_id);
-
-    g_main_quit (verify_status_info->loop);
-}
-
-static gboolean
-verify_status (RCPackman *packman)
-{
-    DebmanVerifyStatusInfo verify_status_info;
-    GMainLoop *loop;
-    int in_fd, out_fd;
-    RCLineBuf *line_buf;
-    RCDebman *debman = RC_DEBMAN (packman);
-
-    RC_ENTRY;
-
-    if ((in_fd = open (debman->priv->status_file, O_RDONLY)) == -1) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
-                              "couldn't open %s for reading",
-                              debman->priv->status_file);
-
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
-                  ": failed to open %s for reading\n",
-                  debman->priv->status_file);
-
-        RC_EXIT;
-
-        return (FALSE);
-    }
-
-    if ((out_fd = creat (debman->priv->rc_status_file, 0644)) == -1) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
-                              "couldn't open %s for writing",
-                              debman->priv->rc_status_file);
-
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
-                  ": failed to open %s for writing\n",
-                  debman->priv->rc_status_file);
-
-        close (in_fd);
-
-        RC_EXIT;
-
-        return (FALSE);
-    }
-
-    line_buf = rc_line_buf_new ();
-    rc_line_buf_set_fd (line_buf, in_fd);
-
-    verify_status_info.out_fd = out_fd;
-    verify_status_info.error = FALSE;
-
-    loop = g_main_new (FALSE);
-    verify_status_info.loop = loop;
-
-    verify_status_info.read_line_id =
-        gtk_signal_connect (GTK_OBJECT (line_buf), "read_line",
-                            GTK_SIGNAL_FUNC (verify_status_read_line_cb),
-                            (gpointer) &verify_status_info);
-    verify_status_info.read_done_id =
-        gtk_signal_connect (GTK_OBJECT (line_buf), "read_done",
-                            GTK_SIGNAL_FUNC (verify_status_read_done_cb),
-                            (gpointer) &verify_status_info);
-
-    g_main_run (loop);
-
-    gtk_object_unref (GTK_OBJECT (line_buf));
-
-    g_main_destroy (loop);
-
-    close (in_fd);
-    close (out_fd);
-
-    if (verify_status_info.error) {
-        unlink (debman->priv->rc_status_file);
-
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
-                              "The %s file is malformed or contains errors",
-                              debman->priv->status_file);
-
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
-                  ": couldn't parse %s\n",
-                  debman->priv->status_file);
-
-        RC_EXIT;
-
-        return (FALSE);
-    }
-
-    if (rename (debman->priv->rc_status_file, debman->priv->status_file)) {
-        unlink (debman->priv->rc_status_file);
-
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
-                              "couldn't rename %s to %s",
-                              debman->priv->rc_status_file,
-                              debman->priv->status_file);
-
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
-                  ": couldn't rename %s\n",
-                  debman->priv->rc_status_file);
-
-        RC_EXIT;
-
-        return (FALSE);
-    }
-
-    RC_EXIT;
-
-    return (TRUE);
 }
 
 static RCVerificationSList *

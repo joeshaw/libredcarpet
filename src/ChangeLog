@@ -1,5 +1,12 @@
 2001-03-08  Ian Peters  <itp@ximian.com>
 
+	* rc-debman.c (do_unpack_read_line_cb): handle "Unpacking
+	replacement foo" as well as "Unpacking foo"
+	move the verify_status stuff to the top of the file to fix a
+	warning
+
+2001-03-08  Ian Peters  <itp@ximian.com>
+
 	* rc-rpmman.c (rc_rpmman_init): only open the database for writing
 	if we're root; otherwise open the database for reading only
 
