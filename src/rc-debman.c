@@ -88,7 +88,11 @@ rc_debman_do_purge (GSList *pkgs)
     } else {
         gint status;
 
-        waitpid (child, &status, 0);
+        while (!waitpid (child, &status, WNOHANG)) {
+            while (gtk_events_pending ()) {
+                gtk_main_iteration ();
+            }
+        }
 
         g_strfreev (filev);
 
@@ -147,7 +151,11 @@ rc_debman_install (RCPackman *p, GSList *pkgs)
         } else {
             gint status;
 
-            waitpid (child, &status, 0);
+            while (!waitpid (child, &status, WNOHANG)) {
+                while (gtk_events_pending ()) {
+                    gtk_main_iteration ();
+                }
+            }
 
             /* Add the last package to the list of packages unpacked (even if
                we're not completely sure it was unpacked, since purging it will
@@ -179,11 +187,21 @@ rc_debman_install (RCPackman *p, GSList *pkgs)
         } else {
             gint status;
 
-            waitpid (child, &status, 0);
+            while (!waitpid (child, &status, 0)) {
+                while (gtk_events_pending ()) {
+                    gtk_main_iteration ();
+                }
+            }
 
             if (WIFEXITED (status) && !WEXITSTATUS (status)) {
                 /* Looks like everything went ok, we're done */
-                g_slist_foreach (installed_list, (GFunc) g_free, NULL);
+
+                /* Since I got confused by this, I may as well make it clear
+                   for anyone else dealing with this -- only free the list,
+                   not the elements, because the elements of the list are
+                   pointers to memory in the list of packages passed to us, and
+                   so we're not responsible for it. */
+                g_slist_free (installed_list);
                 rc_packman_install_done (p, RC_PACKMAN_COMPLETE);
                 return;
             }
@@ -227,10 +245,14 @@ rc_debman_install (RCPackman *p, GSList *pkgs)
 
         rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED, error);
 
+        g_free (error);
+
         rc_packman_install_done (p, RC_PACKMAN_FAIL);
     }
 
-    g_slist_foreach (installed_list, (GFunc) g_free, NULL);
+    /* If you want to know why we don't free the elements of the list, read one
+       of the comments above */
+    g_slist_free (installed_list);
 } /* rc_debman_install */
 
 static void
@@ -246,6 +268,7 @@ rc_debman_remove (RCPackman *p, RCPackageSList *pkgs)
 
     ret = rc_debman_do_purge (names);
 
+    /* Only free the list, not the data */
     g_slist_free (names);
 
     if (!ret) {
@@ -255,6 +278,8 @@ rc_debman_remove (RCPackman *p, RCPackageSList *pkgs)
     }
 } /* rc_debman_remove */
 
+/* Takes a string of format [<epoch>:]<version>[-<release>], and returns those
+   three elements */
 static void
 rc_debman_parse_version (gchar *input, guint32 *epoch, gchar **version,
                          gchar **release)
@@ -281,26 +306,27 @@ rc_debman_parse_version (gchar *input, guint32 *epoch, gchar **version,
     g_strfreev (t1);
 }
 
+/* Read a line from a file.  If the returned string is non-NULL, you must free
+   it */
 static gchar *
 readline (FILE *fp) {
-    gchar *buf = g_new0 (gchar, 1024);
+    char buf[1024];
+    gchar *ret;
 
     /* FIXME: do this right, instead of like this.  You know what I mean. */
-    fgets (buf, 1024, fp);
 
-    buf = g_strchomp (buf);
-
-    if (buf && !buf[0]) {
-        g_free (buf);
-        buf = NULL;
+    if (fgets (buf, 1024, fp)) {
+        ret = g_strdup (buf);
+        ret = g_strchomp (ret);
+        return (ret);
+    } else {
+        return (NULL);
     }
-
-    return (buf);
 }
 
-/* FIXME: check this function most carefully for memory leaks when you are
-   awake next */
-
+/* Given a line from a debian control file (or from /var/lib/dpkg/status), and
+   a pointer to a RCPackageDepSList, fill in the dependency information.  It's
+   ugly but memprof says it doesn't leak. */
 static RCPackageDepSList *
 rc_debman_fill_depends (gchar *input, RCPackageDepSList *list)
 {
@@ -386,21 +412,21 @@ rc_debman_fill_depends (gchar *input, RCPackageDepSList *list)
     return (list);
 }
 
-
+/* Given a file pointer to the beginning of a block of package information,
+   fill in the data in the RCPackage fields.  If do_depends is set, also fill
+   in the dependency information. */
 static void
 rc_debman_query_helper (FILE *fp, RCPackage *pkg, gboolean do_depends)
 {
     gchar *buf;
 
-    RCPackageDepItem *item;
-    RCPackageDep *dep = NULL;
-
-    while ((buf = readline (fp))) {
+    while ((buf = readline (fp)) && buf[0]) {
         if (!strncmp (buf, "Status: install", strlen ("Status: install"))) {
             pkg->spec.installed = TRUE;
         } else if (!strncmp (buf, "Installed-Size: ",
                              strlen ("Installed-Size: "))) {
-            pkg->spec.installed_size = strtoul (buf + strlen ("Installed-Size: "),
+            pkg->spec.installed_size = strtoul (buf +
+                                                strlen ("Installed-Size: "),
                                                 NULL, 10) * 1024;
         } else if (!strncmp (buf, "Version: ", strlen ("Version: "))) {
             rc_debman_parse_version (buf + strlen ("Version: "),
@@ -446,7 +472,12 @@ rc_debman_query_helper (FILE *fp, RCPackage *pkg, gboolean do_depends)
         g_free (buf);
     }
 
+    g_free (buf);
+
     if (do_depends) {
+        RCPackageDepItem *item;
+        RCPackageDep *dep = NULL;
+
         item = rc_package_dep_item_new (pkg->spec.name, pkg->spec.epoch,
                                         pkg->spec.version, pkg->spec.release,
                                         RC_RELATION_EQUAL);
@@ -471,6 +502,7 @@ rc_debman_query (RCPackman *p, RCPackage *pkg)
 
     while ((buf = readline (fp))) {
         if (!strcmp (buf, target)) {
+            g_free (buf);
             rc_debman_query_helper (fp, pkg, FALSE);
             break;
         }
@@ -555,7 +587,11 @@ rc_debman_file_helper (RCPackman *p, gchar *filename, gboolean do_depends)
     } else {
         /* FIXME: do some error checking */
 
-        waitpid (child, NULL, 0);
+        while (!waitpid (child, NULL, WNOHANG)) {
+            while (gtk_events_pending ()) {
+                gtk_main_iteration ();
+            }
+        }
     }
 
     file = g_strconcat (path, "/control", NULL);
