@@ -33,7 +33,6 @@
 #include "rc-package-match.h"
 #include "rc-package-section.h"
 #include "rc-package.h"
-#include "rc-package-set.h"
 
 #include "rc-channel.h"
 

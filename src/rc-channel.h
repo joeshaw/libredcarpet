@@ -21,17 +21,13 @@
 #define _RC_CHANNEL_H
 
 #include <glib.h>
-
 #include <libxml/tree.h>
 
 typedef struct _RCChannel RCChannel;
-
 typedef GSList RCChannelSList;
-
 typedef void (*RCChannelFn) (RCChannel *, gpointer);
 
 #include "rc-package.h"
-#include "rc-package-set.h"
 
 /*
   HELIX   packageinfo.xml

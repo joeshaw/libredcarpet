@@ -1,3 +1,19 @@
+2003-04-16  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-package-set.h: Removed.  None of this code was being used by
+	anything
+
+	* rc-package-set.c: Ditto.
+
+	* rc-channel.c: Removed all references to rc-package-set.[ch] and
+	its contents.
+
+	* rc-channel.h: Ditto.
+
+	* rc-channel-private.h: Ditto.
+
+	* libredcarpet.h: Ditto.
+
 2003-04-15  Joe Shaw  <joe@ximian.com>
 
 	* rc-xml.c (rc_package_sax_context_parse_chunk): Check to see if

@@ -117,8 +117,6 @@ rc_channel_unref (RCChannel *channel)
 
             g_free (channel->icon_file);
             
-            rc_package_set_slist_free (channel->package_sets);
-            
             g_free (channel);
         }
     }

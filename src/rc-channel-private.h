@@ -26,6 +26,8 @@
 #ifndef __RC_CHANNEL_PRIVATE_H__
 #define __RC_CHANNEL_PRIVATE_H__
 
+#include "rc-package.h"
+
 struct _RCWorld;
 
 struct _RCChannel {
@@ -64,8 +66,6 @@ struct _RCChannel {
     gboolean pkgset_compressed;
 
     time_t last_update;
-
-    RCPackageSetSList *package_sets;
 
     void (*refresh_magic) (RCChannel *);
 
