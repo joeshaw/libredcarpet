@@ -1,3 +1,9 @@
+2003-03-13  Joe Shaw  <joe@ximian.com>
+
+	* packman_test.c (packman_test_run): Use transaction flags instead
+	of just TRUE/FALSE, handle a "repackage" flag and pass it into
+	rc_packman_transact().
+
 2003-03-13  Jon Trowbridge  <trow@ximian.com>
 
 	* dep_lint.c: Added.  Take a rc dump file and iterate across the
