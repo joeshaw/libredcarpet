@@ -1,3 +1,8 @@
+2003-10-06  Joe Shaw  <joe@ximian.com>
+
+	* rc-distman.c (rc_distman_new): Fix the case where we try to
+	instantiate a packman but no packaging backends are chosen.
+
 2003-10-03  Joe Shaw  <joe@ximian.com>
 
 	* rc-extract-packages.c (rc_extract_packages_from_undump_buffer,

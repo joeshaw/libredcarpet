@@ -43,8 +43,14 @@ rc_distman_new (void)
 
     preferred = getenv ("RC_PACKMAN_TYPE");
 
-    if (!preferred)
+    if (!preferred) {
+#ifdef DEFAULT_BACKEND
         preferred = DEFAULT_BACKEND;
+#else
+        rc_debug (RC_DEBUG_LEVEL_ALWAYS, "No packaging systems available");
+        return NULL;
+#endif
+    }
 
     if (g_strcasecmp (preferred, "dpkg") == 0) {
 #ifdef ENABLE_DPKG
