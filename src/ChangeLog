@@ -1,3 +1,9 @@
+2001-01-30  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c, rc-deps.h: More yum yum fixes. Shouldn't
+	crash now, purify is happy.. also added some _frees
+	so that we can recover that memory usage!
+
 2001-01-29  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c: ewpz. don't get stuck in an infinite iteration
