@@ -6,6 +6,26 @@
 
 2003-10-28  Joe Shaw  <joe@ximian.com>
 
+	* rc-world-store.c (rc_package_and_dep_verify_relation): Added.
+	Verifies both the dependency relationship between pad->dep and the
+	passed-in dep, but also the channel in pad->package and the
+	channel in the passed-in dep.
+	(rc_world_store_foreach_providing_fn): Change the call of
+	rc_package_dep_verify_Relation() to
+	rc_package_and_dep_verify_relation() so we can verify channels
+	too.
+
+	* rc-world.c (foreach_system_poackage_cb): Instead of calling
+	rc_world_get_best_upgrade() for rc_world_foreach_system_upgrade(),
+	iterate through them by hand and find a list of best upgrades,
+	because it's possible for packages which have exactly the same
+	version to be in more than one channel, and we need to return all
+	matches so that doing something like an update in a channel with
+	that package always works (instead of just picking one at
+	random).  Fixes #50202.
+
+2003-10-28  Joe Shaw  <joe@ximian.com>
+
 	* distributions.xml: Add support for Mandrake 9.2.
 
 2003-10-24  Joe Shaw  <joe@ximian.com>

@@ -1164,31 +1164,84 @@ rc_world_get_best_upgrade (RCWorld *world, RCPackage *package,
 
 struct SystemUpgradeInfo {
     RCWorld *world;
+    RCPackage *system_package;
+    RCPackageSList *best_upgrades;
     gboolean subscribed_only;
     RCPackagePairFn fn;
     gpointer user_data;
     int count;
 };
 
-static void
-system_upgrade_cb (gpointer key, gpointer value, gpointer user_data)
+static gboolean
+foreach_system_upgrade_cb (RCPackage *upgrade, gpointer user_data)
 {
-    RCPackage *package = value;
     struct SystemUpgradeInfo *info = user_data;
-    RCPackage *upgrade;
+    RCPackman *packman;
+    int cmp;
+
+    if (info->subscribed_only) {
+        if (!(upgrade->channel && rc_channel_is_subscribed (upgrade->channel)))
+            return TRUE;
+    }
+
+    if (rc_world_package_is_locked (info->world, upgrade))
+        return TRUE;
+
+    packman = rc_packman_get_global ();
+    g_assert (packman != NULL);
+
+    if (!info->best_upgrades)
+        info->best_upgrades = g_slist_prepend (info->best_upgrades, upgrade);
+    else {
+        /* All the versions are equal, so picking the first is fine */
+        RCPackage *best_up = info->best_upgrades->data;
+        
+        cmp = rc_packman_version_compare (packman,
+                                          RC_PACKAGE_SPEC (best_up),
+                                          RC_PACKAGE_SPEC (upgrade));
+
+        if (cmp < 0) {
+            /* We have a new best package... */
+            g_slist_free (info->best_upgrades);
+            info->best_upgrades = g_slist_prepend (NULL, upgrade);
+        } else if (cmp == 0) {
+            /* Package is exactly the same as our previous best, add it */
+            info->best_upgrades = g_slist_prepend (info->best_upgrades,
+                                                   upgrade);
+        }
+    }
+
+    return TRUE;
+}
+
+static void
+foreach_system_package_cb (gpointer key, gpointer value, gpointer user_data)
+{
+    struct SystemUpgradeInfo *info = user_data;
+    RCPackageSList *iter;
+
+    info->system_package = (RCPackage *) value;
+    info->best_upgrades = NULL;
 
     /* If the package is excluded, skip it. */
-    if (rc_world_package_is_locked (info->world, package))
+    if (rc_world_package_is_locked (info->world, info->system_package))
         return;
 
-    upgrade = rc_world_get_best_upgrade (info->world, package,
-                                         info->subscribed_only);
+    rc_world_foreach_upgrade (info->world, info->system_package,
+                              RC_CHANNEL_NON_SYSTEM,
+                              foreach_system_upgrade_cb, info);
 
-    if (upgrade) {
+    for (iter = info->best_upgrades; iter; iter = iter->next) {
+        RCPackage *upgrade = iter->data;
+
         if (info->fn)
-            info->fn (package, upgrade, info->user_data);
+            info->fn (info->system_package, upgrade, info->user_data);
+
         ++info->count;
     }
+
+    g_slist_free (info->best_upgrades);
+    info->best_upgrades = NULL;
 }
 
 static gboolean
@@ -1224,9 +1277,6 @@ build_unique_hash_cb (RCPackage *package, gpointer user_data)
  * exists an upgrade, and passes both the original package and
  * the upgrade package to the callback function.
  *
- * The upgrade package is determined by calling
- * rc_world_get_best_upgrade().
- * 
  * Return value: The number of matching packages that the callback
  * function was invoked on, or -1 in case of an error.
  **/
@@ -1254,7 +1304,7 @@ rc_world_foreach_system_upgrade (RCWorld *world,
     info.user_data = user_data;
     info.count = 0;
 
-    g_hash_table_foreach (unique_hash, system_upgrade_cb, &info);
+    g_hash_table_foreach (unique_hash, foreach_system_package_cb, &info);
 
     g_hash_table_destroy (unique_hash);
 

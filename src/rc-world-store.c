@@ -142,6 +142,22 @@ rc_package_and_dep_free (RCPackageAndDep *pad)
     }
 }
 
+/* This function also checks channels in addition to just dep relations */
+gboolean
+rc_package_and_dep_verify_relation (RCPackageAndDep *pad, RCPackageDep *dep)
+{
+    RCPackman *packman;
+
+    packman = rc_packman_get_global ();
+    g_assert (packman != NULL);
+
+    if (!rc_package_dep_verify_relation (packman, pad->dep, dep))
+        return FALSE;
+
+    return rc_channel_equal (rc_package_get_channel (pad->package),
+                             rc_package_dep_get_channel (dep));
+}
+
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 typedef struct _ChannelInfo ChannelInfo;
@@ -339,10 +355,6 @@ rc_world_store_foreach_providing_fn (RCWorld           *world,
     GSList *slist, *iter;
     int count = 0;
     GHashTable *installed;
-    RCPackman *packman;
-
-    packman = rc_packman_get_global ();
-    g_assert (packman != NULL);
     
     slist = hashed_slist_get (store->provides_by_name,
                               RC_PACKAGE_SPEC (dep)->nameq);
@@ -360,7 +372,7 @@ rc_world_store_foreach_providing_fn (RCWorld           *world,
         RCPackageAndDep *pad = iter->data;
 
         if (pad
-            && rc_package_dep_verify_relation (packman, dep, pad->dep)) {
+            && rc_package_and_dep_verify_relation (pad, dep)) {
             /* If we have multiple identical packages in RCWorld,
                we want to only include the package that is installed and
                skip the rest. */
