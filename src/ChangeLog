@@ -1,5 +1,9 @@
 2004-12-03  James Willcox  <james@ximian.com>
                                                                                         
+        * distributions.xml: add suse-91-x86_64
+
+2004-12-03  James Willcox  <james@ximian.com>
+                                                                                        
         * distributions.xml: add suse-92-i586 and suse-92-x86_64
 
 2004-12-03  Tambet Ingo  <tambet@ximian.com>
