@@ -206,6 +206,9 @@ rc_rpmman_is_database_changed (RCPackman *packman)
     RCRpmman *rpmman = RC_RPMMAN (packman);
     gchar *path;
 
+    if (!rpmman->db_clean)
+        return TRUE;
+
     path = rc_rpmman_database_filename (rpmman);
     stat (path, &buf);
     g_free (path);
@@ -391,6 +394,8 @@ open_database (RCRpmman *rpmman, gboolean write)
         rpmman->db_watcher_cb = 0;
     }
 
+    rpmman->db_clean = TRUE;
+
     return TRUE;
 
   ERROR:
@@ -412,6 +417,8 @@ open_database (RCRpmman *rpmman, gboolean write)
         g_free (db_filename);
     if (db_fd != -1)
         rc_close (db_fd);
+
+    rpmman->db_clean = FALSE;
 
     return FALSE;
 }
