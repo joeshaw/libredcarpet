@@ -1,5 +1,19 @@
 2004-10-29  James Willcox  <james@ximian.com>
 
+	* AssemblyInfo.cs:
+	* Makefile.am:
+	* libredcarpet-sharp.pc.in:
+	* libredcarpet-sharp.snk:
+
+	Add libredcarpet-sharp to the GAC.
+
+2004-10-29  James Willcox  <james@ximian.com>
+
+	* AssemblyInfo.cs:
+	* Makefile.am:
+
+2004-10-29  James Willcox  <james@ximian.com>
+
 	* Makefile.am: don't regenerate stuff automatically
 
 2004-10-29  Tambet Ingo  <tambet@ximian.com>

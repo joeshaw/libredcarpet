@@ -49,9 +49,6 @@ SHELL = @SHELL@
 top_srcdir = @top_srcdir@
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 
-assemblydir = $(libdir)
-assembly_DATA = $(ASSEMBLY)
-
 apidatadir = $(apidir)
 apidata_DATA = $(API)
 
@@ -85,5 +82,8 @@ EXTRA_DIST =				\
 dist-hook:
 	mkdir -p $(distdir)/en/RC
 	cp -r $(srcdir)/en/RC/*.xml $(distdir)/en/RC
+
+install-data-hook:
+	$(GACUTIL) /i $(ASSEMBLY) /package libredcarpet-sharp /gacdir $(libdir) /root $(DESTDIR)$(libdir)
 
 CLEANFILES = $(ASSEMBLY)

@@ -27,9 +27,8 @@ using System.Runtime.InteropServices;
 
 [assembly: ComVisible(false)]
 [assembly: AssemblyDefaultAlias("libredcarpet-sharp.dll")]
-[assembly: AssemblyInformationalVersion("0.0.0.1")]
+[assembly: AssemblyInformationalVersion("1.0")]
 [assembly: NeutralResourcesLanguage("en-US")]
 
 [assembly: AllowPartiallyTrustedCallers()]
-//[assembly: AssemblyDelaySign(true)]
-//[assembly: AssemblyKeyFile("ecma.pub")]
+[assembly: AssemblyKeyFile("libredcarpet-sharp.snk")]
