@@ -10,7 +10,12 @@ else
   packman_test =
 endif
 
-bin_PROGRAMS = pkg_to_xml pkg-vercmp cur_to_xml $(packman_test)
+bin_PROGRAMS = pkg_to_xml pkg-vercmp cur_to_xml dep_lint $(packman_test)
+
+dep_lint_SOURCES = dep_lint.c
+dep_lint_LDADD = 				\
+	$(top_builddir)/src/libredcarpet.a	\
+	$(LIBREDCARPET_LIBS)
 
 cur_to_xml_SOURCES = cur_to_xml.c
 cur_to_xml_LDADD =	\
