@@ -1,5 +1,9 @@
 2004-06-09  James Willcox  <james@ximian.com>
 
+	* rc-arch.h:  Sigh, fix the build
+
+2004-06-09  James Willcox  <james@ximian.com>
+
 	* distributions.xml:
 	* rc-arch.c:
 

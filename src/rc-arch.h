@@ -42,6 +42,7 @@ typedef enum {
     RC_ARCH_PPC64,
     RC_ARCH_S390,
     RC_ARCH_S390X,
+    RC_ARCH_IA64,
     RC_ARCH_SPARC,
     RC_ARCH_SPARC64,
 } RCArch;
