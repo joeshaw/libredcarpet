@@ -1,3 +1,14 @@
+2003-09-03  James Willcox  <james@ximian.com>
+
+	* Makefile.am:
+	* acinclude.m4:
+	* bindings/Makefile.am:
+	* bindings/python/Makefile.am:
+	* configure.in:
+	* tools/Makefile.am:
+
+	Autotoolized the python bindings.
+
 2003-04-17  Jon Trowbridge  <trow@ximian.com>
 
 	* configure.in: 1.5.0.  Welcome to the bleeding edge.

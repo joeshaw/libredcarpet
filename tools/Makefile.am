@@ -10,7 +10,7 @@ else
   packman_test =
 endif
 
-bin_PROGRAMS = pkg_to_xml pkg-vercmp cur_to_xml dep_lint $(packman_test)
+bin_PROGRAMS = pkg_to_xml pkg-vercmp cur_to_xml dep_lint
 
 dep_lint_SOURCES = dep_lint.c
 dep_lint_LDADD = 				\
@@ -26,13 +26,6 @@ pkg_to_xml_SOURCES = pkg_to_xml.c
 pkg_to_xml_LDADD =	\
 	$(top_builddir)/src/libredcarpet.a	\
 	$(LIBREDCARPET_LIBS)
-
-if ENABLE_PACKMAN_TEST
-packman_test_SOURCES = packman_test.c
-packman_test_LDADD =	\
-	$(top_builddir)/src/libredcarpet.a	\
-	$(LIBREDCARPET_LIBS) $(PACKMAN_TEST_LIBS)
-endif
 
 pkg_vercmp_SOURCES = pkg-vercmp.c
 pkg_vercmp_LDADD =	\

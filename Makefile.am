@@ -4,7 +4,7 @@
 DOC_DIR=
 # endif
 
-SUBDIRS = src dependency-tests tools $(DOC_DIR)
+SUBDIRS = src dependency-tests tools bindings $(DOC_DIR)
 
 EXTRA_DIST = libredcarpet.pc.in
 
