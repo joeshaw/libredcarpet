@@ -43,6 +43,7 @@ struct _RCResolver {
     GSList *pending_queues;
     GSList *pruned_queues;
     GSList *complete_queues;
+    GSList *deferred_queues;
     GSList *invalid_queues;
     
     int valid_solution_count;

@@ -58,7 +58,9 @@ gboolean         rc_resolver_queue_contains_only_branches (RCResolverQueue *);
 gboolean         rc_resolver_queue_process_once (RCResolverQueue *);
 void             rc_resolver_queue_process (RCResolverQueue *);
 
-void             rc_resolver_queue_split_first_branch (RCResolverQueue *, GSList **);
+void             rc_resolver_queue_split_first_branch (RCResolverQueue *,
+                                                       GSList **new_queues,
+                                                       GSList **deferred_queues);
 
 void             rc_resolver_queue_spew (RCResolverQueue *);
 

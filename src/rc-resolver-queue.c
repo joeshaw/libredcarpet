@@ -199,7 +199,7 @@ slist_max_priority (GSList *slist)
 gboolean
 rc_resolver_queue_process_once (RCResolverQueue *queue)
 {
-    GSList *iter;
+    GSList *iter, *iter2;
     GSList *new_items = NULL;
     int max_priority;
     gboolean did_something = FALSE;
@@ -240,6 +240,31 @@ rc_resolver_queue_process_once (RCResolverQueue *queue)
 
     g_slist_free (queue->items);
     queue->items = new_items;
+
+    /* 
+       Now make a second pass over the queue, removing any super-branches.
+       (If one branch contains all of the possible items of another branch,
+       the larger branch can be dropped. 
+    */
+
+    iter = queue->items;
+    while (iter != NULL) {
+        GSList *next = iter->next;
+        RCQueueItem *item = iter->data;
+        
+        if (item && rc_queue_item_type (item) == RC_QUEUE_ITEM_TYPE_BRANCH) {
+            for (iter2 = queue->items; iter2 != NULL; iter2 = iter2->next) {
+                if (iter != iter2
+                    && iter2->data
+                    && rc_queue_item_branch_contains (item, iter2->data)) {
+                    rc_queue_item_free (item);
+                    queue->items = g_slist_delete_link (queue->items, iter);
+                    break;
+                }
+            }
+        }
+        iter = next;
+    }
 
     return did_something;
 }
@@ -316,13 +341,16 @@ copy_queue_except_for_branch (RCResolverQueue *queue,
 
 void
 rc_resolver_queue_split_first_branch (RCResolverQueue *queue,
-                                      GSList **new_queues)
+                                      GSList **new_queues,
+                                      GSList **deferred_queues)
 {
-    GSList *iter;
+    GSList *iter, *iter2;
     RCQueueItem_Branch *first_branch = NULL;
+    GHashTable *to_defer = NULL;
 
     g_return_if_fail (queue != NULL);
     g_return_if_fail (new_queues != NULL);
+    g_return_if_fail (deferred_queues != NULL);
 
     for (iter = queue->items; iter != NULL && first_branch == NULL; iter = iter->next) {
         RCQueueItem *item = iter->data;
@@ -333,6 +361,53 @@ rc_resolver_queue_split_first_branch (RCResolverQueue *queue,
     if (first_branch == NULL)
         return;
 
+    /* 
+       Check for deferrable items: if we have two install items where the to-be-installed
+       packages have the same name, then we will defer the lower-priority install if
+       one of the following is true:
+       (1) Both packages have the same version
+       (2) The lower-priority channel is a previous version.
+    */
+    for (iter = first_branch->possible_items; iter != NULL; iter = iter->next) {
+        for (iter2 = iter->next; iter2 != NULL; iter2 = iter2->next) {
+            RCQueueItem *item = iter->data;
+            RCQueueItem *item2 = iter2->data;
+
+            if (rc_queue_item_type (item) == RC_QUEUE_ITEM_TYPE_INSTALL
+                && rc_queue_item_type (item2) == RC_QUEUE_ITEM_TYPE_INSTALL) {
+                RCPackage *pkg = ((RCQueueItem_Install *) item)->package;
+                RCPackage *pkg2 = ((RCQueueItem_Install *) item2)->package;
+                RCPackageSpec *spec = RC_PACKAGE_SPEC (pkg);
+                RCPackageSpec *spec2 = RC_PACKAGE_SPEC (pkg2);
+                int priority, priority2;
+
+                priority = rc_channel_get_priority (pkg->channel,
+                                                    rc_channel_subscribed (pkg->channel),
+                                                    FALSE /* ignore curr channel */);
+
+                priority2 = rc_channel_get_priority (pkg2->channel,
+                                                     rc_channel_subscribed (pkg2->channel),
+                                                     FALSE /* ditto */);
+
+                if (priority != priority2 && spec->nameq == spec2->nameq) {
+
+                    if (strcmp (spec->version, spec2->version) == 0
+                        || (priority < priority2 && rc_package_spec_compare (spec, spec2) == -1)
+                        || (priority > priority2 && rc_package_spec_compare (spec, spec2) == +1)) {
+
+                        if (to_defer == NULL)
+                            to_defer = g_hash_table_new (NULL, NULL);
+                        
+                        if (priority < priority2)
+                            g_hash_table_insert (to_defer, item, item);
+                        else /* if (priority > priority2) */
+                            g_hash_table_insert (to_defer, item2, item2);
+                    }
+                }
+            }
+        }
+    }
+
     for (iter = first_branch->possible_items; iter != NULL; iter = iter->next) {
         RCResolverQueue *new_queue;
         RCQueueItem *new_item = iter->data;
@@ -341,9 +416,16 @@ rc_resolver_queue_split_first_branch (RCResolverQueue *queue,
                                                   (RCQueueItem *) first_branch,
                                                   new_item);
 
-
-        *new_queues = g_slist_prepend (*new_queues, new_queue);
+        
+        if (to_defer && g_hash_table_lookup (to_defer, new_item)) {
+            *deferred_queues = g_slist_prepend (*deferred_queues, new_queue);
+        } else {
+            *new_queues = g_slist_prepend (*new_queues, new_queue);
+        }
     }
+
+    if (to_defer)
+        g_hash_table_destroy (to_defer);
 }
 
 void

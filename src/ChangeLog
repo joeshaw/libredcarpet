@@ -1,3 +1,39 @@
+2002-08-19  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-resolver.c (rc_resolver_free): Clean up after our deferred
+	branch list.
+	(rc_resolver_resolve_dependencies): Added deferred branching
+	support.  If we exhaust the pending queues without finding a
+	solution, try deferred queues until we find a solution (or run out
+	of deferred queues, of course).
+
+	* rc-resolver-queue.c (rc_resolver_queue_process_once): Added an
+	optimization that makes a pass over our new queue item and throws
+	out any branches that are supersets of other branches.
+	(rc_resolver_queue_split_first_branch): Added deferred branching.
+	This is an optimization where we will try to recognize branches
+	that are less likely to lead to high-scoring solutions; the
+	deferred branches are explored only if we are unable to produce a
+	valid resolution using the favored branches.
+ 	
+	* rc-queue-item.c (rc_queue_item_cmp): Added.  A comparison
+	function for queue items, so that we can sort them into a
+	canonical ordering.
+	(install_item_cmp): Implements cmp for install items.
+	(rc_queue_item_new_install): Store the cmp function in our vtable.
+	(branch_item_cmp): Implements cmp for branch items.
+	(rc_queue_item_new_branch): Store the cmp function in our vtable.
+	(uninstall_item_cmp): Implements cmp for uninstall items.
+	(rc_queue_item_new_uninstall): Store the cmp function in our
+	vtable.
+	(rc_queue_item_branch_contains): Added.  Checks if one branch item
+	is a proper subset of the other.
+	(rc_queue_item_branch_add_item): Insertion-sort the added branch
+	items instead of just prepending.
+
+	* rc-channel.c (rc_channel_get_path): Added accessor.
+	(rc_channel_get_icon_file): Added accessor.
+
 2002-08-17  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-world.c (rc_world_sequence_number): Added.  If the sequence

@@ -220,6 +220,20 @@ rc_channel_get_last_update (const RCChannel *channel)
     return channel->last_update;
 }
 
+const char *
+rc_channel_get_path (const RCChannel *channel)
+{
+    g_return_val_if_fail (channel != NULL, NULL);
+    return channel->path;
+}
+
+const char *
+rc_channel_get_icon_file (const RCChannel *channel)
+{
+    g_return_val_if_fail (channel != NULL, NULL);
+    return channel->icon_file;
+}
+
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 gboolean

@@ -29,6 +29,8 @@
 #include <string.h>
 #include "rc-world.h"
 
+#define CMP(a,b) (((a) < (b)) - ((b) < (a)))
+
 RCQueueItemType
 rc_queue_item_type (RCQueueItem *item)
 {
@@ -119,6 +121,30 @@ rc_queue_item_copy (RCQueueItem *item)
         item->copy (item, new_item);
 
     return new_item;
+}
+
+int
+rc_queue_item_cmp (const RCQueueItem *a, const RCQueueItem *b)
+{
+    int cmp;
+
+    g_return_val_if_fail (a != NULL, 0);
+    g_return_val_if_fail (b != NULL, 0);
+    
+    cmp = CMP((int)a->type, (int)b->type);
+    if (cmp)
+        return cmp;
+
+    /* If not, something is _very_ broken. */
+    g_assert (a->cmp == b->cmp);
+
+    if (a->cmp) {
+        return a->cmp (a, b);
+    }
+
+    /* If a cmp function isn't defined, we are unable to distinguish
+       between two items of the same type. */
+    return 0;
 }
 
 char *
@@ -474,6 +500,16 @@ install_item_copy (const RCQueueItem *src, RCQueueItem *dest)
     dest_install->other_penalty                  = src_install->other_penalty;
 }
 
+static int
+install_item_cmp (const RCQueueItem *item_a, const RCQueueItem *item_b)
+{
+    const RCQueueItem_Install *a = (const RCQueueItem_Install *) item_a;
+    const RCQueueItem_Install *b = (const RCQueueItem_Install *) item_b;
+
+    return rc_package_spec_compare (RC_PACKAGE_SPEC (a->package),
+                                    RC_PACKAGE_SPEC (b->package));
+}
+
 static char *
 install_item_to_string (RCQueueItem *item)
 {
@@ -516,6 +552,7 @@ rc_queue_item_new_install (RCWorld *world, RCPackage *package)
     item->process      = install_item_process;
     item->destroy      = install_item_destroy;
     item->copy         = install_item_copy;
+    item->cmp          = install_item_cmp;
     item->to_string    = install_item_to_string;
     item->is_satisfied = install_item_is_satisfied;
 
@@ -1083,6 +1120,39 @@ branch_item_copy (const RCQueueItem *src, RCQueueItem *dest)
     }
 }
 
+static int
+branch_item_cmp (const RCQueueItem *item_a, const RCQueueItem *item_b)
+{
+    const RCQueueItem_Branch *a = (const RCQueueItem_Branch *) item_a;
+    const RCQueueItem_Branch *b = (const RCQueueItem_Branch *) item_b;
+    GSList *ia, *ib;
+    int cmp;
+
+    /* First, sort by # of possible items. */
+    cmp = CMP(g_slist_length (a->possible_items), g_slist_length (b->possible_items));
+    if (cmp)
+        return cmp;
+
+    /* We can do a by-item cmp since the possible items are kept in sorted order. */
+    ia = a->possible_items;
+    ib = b->possible_items;
+    while (ia != NULL && ib != NULL) {
+        if (ia->data && ib->data) {
+            cmp = rc_queue_item_cmp (ia->data, ib->data);
+            if (cmp)
+                return cmp;
+        }
+        ia = ia->next;
+        ib = ib->next;
+    }
+
+    /* Both lists should end at the same time, since we initially
+       sorted on length. */
+    g_assert (ia == NULL && ib == NULL);
+
+    return 0;
+}
+
 static char *
 branch_item_to_string (RCQueueItem *item)
 {
@@ -1111,6 +1181,7 @@ rc_queue_item_new_branch (RCWorld *world)
     item->process   = branch_item_process;
     item->destroy   = branch_item_destroy;
     item->copy      = branch_item_copy;
+    item->cmp       = branch_item_cmp;
     item->to_string = branch_item_to_string;
 
     return item;
@@ -1129,7 +1200,11 @@ rc_queue_item_branch_add_item (RCQueueItem *item, RCQueueItem *subitem)
 
     branch = (RCQueueItem_Branch *) item;
 
-    branch->possible_items = g_slist_prepend (branch->possible_items, subitem);
+    /* We want to keep the list of possible items sorted for easy
+       comparison later. */
+    branch->possible_items = g_slist_insert_sorted (branch->possible_items,
+                                                    subitem,
+                                                    (GCompareFunc) rc_queue_item_cmp);
 }
 
 gboolean
@@ -1142,6 +1217,47 @@ rc_queue_item_branch_is_empty (RCQueueItem *item)
 
     branch = (RCQueueItem_Branch *) item;
     return branch->possible_items == NULL;
+}
+
+gboolean
+rc_queue_item_branch_contains (RCQueueItem *item,
+                               RCQueueItem *subitem)
+{
+    RCQueueItem_Branch *branch = (RCQueueItem_Branch *) item;
+    RCQueueItem_Branch *subbranch = (RCQueueItem_Branch *) subitem;
+    GSList *iter, *iter_sub;
+
+    g_return_val_if_fail (item != NULL, FALSE);
+    g_return_val_if_fail (subitem != NULL, FALSE);
+    g_return_val_if_fail (rc_queue_item_type (item) == RC_QUEUE_ITEM_TYPE_BRANCH, FALSE);
+
+    if (rc_queue_item_type (subitem) != RC_QUEUE_ITEM_TYPE_BRANCH)
+        return FALSE;
+
+    if (g_slist_length (branch->possible_items) < g_slist_length (subbranch->possible_items))
+        return FALSE;
+
+    iter = branch->possible_items;
+    iter_sub = subbranch->possible_items;
+
+    /* For every item inside the possible sub-branch, look for a matching item
+       in the branch.  If we can't find a match, fail.  (We can do this in one
+       pass since the possible_items lists are sorted)
+    */
+    while (iter_sub != NULL) {
+
+        while (iter && rc_queue_item_cmp (iter->data, iter_sub->data)) {
+                iter = iter->next;
+        }
+        
+        if (iter == NULL)
+            return FALSE;
+        
+        iter = iter->next;
+        iter_sub = iter_sub->next;
+    }
+
+    return TRUE;
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
@@ -1496,6 +1612,16 @@ uninstall_item_copy (const RCQueueItem *src, RCQueueItem *dest)
     dest_uninstall->upgraded_to               = src_uninstall->upgraded_to;
 }
 
+static int
+uninstall_item_cmp (const RCQueueItem *item_a, const RCQueueItem *item_b)
+{
+    const RCQueueItem_Uninstall *a = (const RCQueueItem_Uninstall *) item_a;
+    const RCQueueItem_Uninstall *b = (const RCQueueItem_Uninstall *) item_b;
+
+    return rc_package_spec_compare (RC_PACKAGE_SPEC (a->package),
+                                    RC_PACKAGE_SPEC (b->package));
+}
+
 static char *
 uninstall_item_to_string (RCQueueItem *item)
 {
@@ -1530,6 +1656,7 @@ rc_queue_item_new_uninstall (RCWorld *world, RCPackage *package, const char *rea
     item->process   = uninstall_item_process;
     item->destroy   = uninstall_item_destroy;
     item->copy      = uninstall_item_copy;
+    item->cmp       = uninstall_item_cmp;
     item->to_string = uninstall_item_to_string;
     
     uninstall->package = package;

@@ -58,6 +58,10 @@ rc_resolver_free (RCResolver *resolver)
                          (GFunc) rc_resolver_queue_free,
                          NULL);
 
+        g_slist_foreach (resolver->deferred_queues,
+                         (GFunc) rc_resolver_queue_free,
+                         NULL);
+
         g_slist_foreach (resolver->invalid_queues,
                          (GFunc) rc_resolver_queue_free,
                          NULL);
@@ -71,6 +75,7 @@ rc_resolver_free (RCResolver *resolver)
         g_slist_free (resolver->pending_queues);
         g_slist_free (resolver->pruned_queues);
         g_slist_free (resolver->complete_queues);
+        g_slist_free (resolver->deferred_queues);
         g_slist_free (resolver->invalid_queues);
 
         g_free (resolver);
@@ -269,10 +274,11 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
         RCResolverContext *context = queue->context;
 
         if (extremely_noisy) {
-            g_print ("%d / %d / %d / %d\n",
+            g_print ("%d / %d / %d / %d / %d\n",
                      g_slist_length (resolver->pending_queues),
                      g_slist_length (resolver->complete_queues),
                      g_slist_length (resolver->pruned_queues),
+                     g_slist_length (resolver->deferred_queues),
                      g_slist_length (resolver->invalid_queues));
         }
 
@@ -317,9 +323,23 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
             /* If our queue is isn't empty and isn't invalid, that can only mean
                one thing: we are down to nothing but branches. */
 
-            rc_resolver_queue_split_first_branch (queue, &resolver->pending_queues);
+            rc_resolver_queue_split_first_branch (queue,
+                                                  &resolver->pending_queues,
+                                                  &resolver->deferred_queues);
             rc_resolver_queue_free (queue);
             
+        }
+
+        /* If we have run out of pending queues w/o finding any solutions,
+           and if we have deferred queues, make the first deferred queue
+           pending. */
+        if (resolver->pending_queues == NULL
+            && resolver->complete_queues == NULL
+            && resolver->deferred_queues != NULL) {
+            resolver->pending_queues = g_slist_prepend (resolver->pending_queues,
+                                                        resolver->deferred_queues->data);
+            resolver->deferred_queues = g_slist_delete_link (resolver->deferred_queues,
+                                                             resolver->deferred_queues);
         }
     }
 

@@ -67,6 +67,7 @@ struct _RCQueueItem {
     gboolean (*process)      (RCQueueItem *, RCResolverContext *, GSList **);
     void     (*destroy)      (RCQueueItem *);
     void     (*copy)         (const RCQueueItem *src, RCQueueItem *dest);
+    int      (*cmp)          (const RCQueueItem *a, const RCQueueItem *b);
     char    *(*to_string)    (RCQueueItem *);
 };
 
@@ -124,6 +125,7 @@ gboolean        rc_queue_item_is_satisfied (RCQueueItem *, RCResolverContext *co
 gboolean        rc_queue_item_process      (RCQueueItem *, RCResolverContext *context, GSList **);
 void            rc_queue_item_free         (RCQueueItem *);
 RCQueueItem    *rc_queue_item_copy         (RCQueueItem *);
+int             rc_queue_item_cmp          (const RCQueueItem *a, const RCQueueItem *b);
 char           *rc_queue_item_to_string    (RCQueueItem *);
 void            rc_queue_item_add_info     (RCQueueItem *, RCResolverInfo *);
 void            rc_queue_item_log_info     (RCQueueItem *, RCResolverContext *);
@@ -145,6 +147,8 @@ void         rc_queue_item_require_set_remove_only (RCQueueItem *item);
 RCQueueItem *rc_queue_item_new_branch      (RCWorld *);
 void         rc_queue_item_branch_add_item (RCQueueItem *branch, RCQueueItem *subitem);
 gboolean     rc_queue_item_branch_is_empty (RCQueueItem *branch);
+gboolean     rc_queue_item_branch_contains (RCQueueItem *branch,
+                                            RCQueueItem *possible_subbranch);
 
 RCQueueItem *rc_queue_item_new_conflict       (RCWorld *, RCPackageDep *dep, RCPackage *package);
  
