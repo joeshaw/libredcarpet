@@ -288,11 +288,11 @@ readline (FILE *fp) {
     /* FIXME: do this right, instead of like this.  You know what I mean. */
     fgets (buf, 1024, fp);
 
+    buf = g_strchomp (buf);
+
     if (buf && !buf[0]) {
         g_free (buf);
         buf = NULL;
-    } else {
-        buf = g_strchomp (buf);
     }
 
     return (buf);
@@ -395,7 +395,7 @@ rc_debman_query_helper (FILE *fp, RCPackage *pkg, gboolean do_depends)
     RCPackageDepItem *item;
     RCPackageDep *dep = NULL;
 
-    while ((buf = readline (fp)) && buf[1]) {
+    while ((buf = readline (fp))) {
         if (!strncmp (buf, "Status: install", strlen ("Status: install"))) {
             pkg->spec.installed = TRUE;
         } else if (!strncmp (buf, "Installed-Size: ",
@@ -478,6 +478,8 @@ rc_debman_query (RCPackman *p, RCPackage *pkg)
         g_free (buf);
     }
 
+    g_free (target);
+
     fclose (fp);
     
     return (pkg);
@@ -504,12 +506,15 @@ rc_debman_depends (RCPackman *p, RCPackageSList *pkgs)
 
         while ((buf = readline (fp))) {
             if (!strcmp (buf, target)) {
+                g_free (buf);
                 rc_debman_query_helper (fp, pkg, TRUE);
                 break;
             }
 
             g_free (buf);
         }
+
+        g_free (target);
 
         fclose (fp);
     }
@@ -624,6 +629,7 @@ rc_debman_query_all (RCPackman *p)
         if (strncmp (buf, "Package: ", strlen ("Package: "))) {
             rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
                                   "Malformed /var/lib/dpkg/status file");
+            g_free (buf);
             rc_package_free (pkg);
             rc_package_slist_free (pkgs);
             return (NULL);
@@ -637,6 +643,8 @@ rc_debman_query_all (RCPackman *p)
 
         if (pkg->spec.installed) {
             pkgs = g_slist_append (pkgs, pkg);
+        } else {
+            rc_package_free (pkg);
         }
     }
 
