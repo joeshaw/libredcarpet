@@ -48,8 +48,6 @@ libredcarpet_a_SOURCES =		\
         rc-packman.c                    \
         rc-packman.h                    \
         rc-packman-private.h            \
-        rc-string.c			\
-        rc-string.h			\
         rc-debman.c                     \
         rc-debman.h                     \
         rc-md5.c                        \

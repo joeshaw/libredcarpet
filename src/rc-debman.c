@@ -36,7 +36,6 @@
 #include <sys/types.h>
 
 #include "rc-util.h"
-#include "rc-string.h"
 #include "rc-line-buf.h"
 #include "deps.h"
 

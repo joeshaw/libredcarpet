@@ -29,7 +29,6 @@
 #include <sys/stat.h>
 
 #include "rc-util.h"
-#include "rc-string.h"
 #include "zlib.h"
 
 //#include <libgnome/libgnome.h>
