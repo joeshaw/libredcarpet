@@ -1,3 +1,15 @@
+2001-09-19  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c: Call deps_find_provide after adding a non-older package
+	in deps_find_provide, since it probably just added the package that
+	we want (if we wait for the outside loop to catch it, we might add
+	a bad package);  also use rc_package_slist_sort_by_spec_reverse to
+	get the latest versions of a package first.
+
+	* rc-package.c, rc-package.h: rc_package_slist_sort_by_spec_reverse,
+	and a secial static c_sucks_rc_package_spec_compare_reverse() to
+	inverse the sense of rc_package_spec_compare.
+
 2001-09-14  Ian Peters  <itp@ximian.com>
 
 	* Makefile.am: new rpm-helper .so files

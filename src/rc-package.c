@@ -130,6 +130,17 @@ rc_package_slist_sort_by_spec (RCPackageSList *packages)
     return (g_slist_sort (packages, (GCompareFunc) rc_package_spec_compare));
 } /* rc_package_slist_sort_by_spec */
 
+static gboolean
+c_sucks_rc_package_spec_compare_reverse (gpointer a, gpointer b)
+{
+    return rc_package_spec_compare (b, a);
+}
+
+RCPackageSList *
+rc_package_slist_sort_by_spec_reverse (RCPackageSList *packages)
+{
+    return (g_slist_sort (packages, (GCompareFunc) c_sucks_rc_package_spec_compare_reverse));
+} /* rc_package_slist_sort_by_spec_reverse */
 
 static void
 util_hash_to_list (gpointer a, gpointer b, gpointer c)
