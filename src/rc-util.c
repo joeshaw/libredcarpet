@@ -581,6 +581,8 @@ rc_buffer_map_file(const char *filename)
 
     data = mmap(NULL, s.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 
+    close (fd);
+
     if (data == MAP_FAILED)
         return NULL;
 

@@ -1,5 +1,7 @@
 2002-08-26  Joe Shaw  <joe@ximian.com>
 
+	* rc-util.c (rc_buffer_map_file): Fix a nasty file descriptor leak.
+
 	* rc-world-subscriptions.c
 	(rc_world_import_subscriptions_from_xml): Make the
 	can't-subscribe-to-channel-because-it-wasn't-in-the-XML error a
