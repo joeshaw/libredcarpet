@@ -32,8 +32,6 @@
 static void rc_rpmman_class_init (RCRpmmanClass *klass);
 static void rc_rpmman_init       (RCRpmman *obj);
 
-/* static RCPackmanClass *rc_packman_parent; */
-
 static gchar *rpmroot;
 
 guint
@@ -93,7 +91,8 @@ static void * showProgress(const Header h, const rpmCallbackType what,
         if (amount == total) {
             RC_RPMMAN (ghp)->package_count++;
             rc_packman_package_installed(
-                ghp, pkgKey, RC_RPMMAN (ghp)->package_count);
+                ghp, pkgKey, RC_RPMMAN (ghp)->package_count,
+                RC_RPMMAN (ghp)->package_total);
         }
         break;
 
@@ -442,6 +441,8 @@ rc_rpmman_install (RCPackman *p, GSList *pkgs)
     int ret;
 
     length = g_slist_length (pkgs);
+
+    RC_RPMMAN (p)->package_total = length;
 
     pkgv = g_new0 (char *, length + 1);
 

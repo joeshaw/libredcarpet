@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 
 #include <sys/wait.h>
 
@@ -89,6 +90,7 @@ rc_debman_do_purge (GSList *pkgs)
     if (!(child = fork ())) {
         /* Purge the packages */
         fclose (stdout);
+        signal (SIGPIPE, SIG_DFL);
         execv ("/usr/bin/dpkg", filev);
     } else {
         gint status;
@@ -132,6 +134,7 @@ rc_debman_install (RCPackman *p, GSList *pkgs)
     pid_t child;
     gboolean remove = FALSE;
     guint pkg_count = 0;
+    guint length;
 
     /* If the list of packages is empty, let's spare ourselves the trouble of
        doing anything */
@@ -140,6 +143,8 @@ rc_debman_install (RCPackman *p, GSList *pkgs)
     }
 
     iter = pkgs;
+
+    length = g_slist_length (pkgs);
 
     while (iter && !remove) {
         gchar *filename = (gchar *)(iter->data);
@@ -154,6 +159,9 @@ rc_debman_install (RCPackman *p, GSList *pkgs)
         /* Fork off dpkg to unpack the package */
         if (!(child = fork ())) {
             fclose (stdout);
+
+            signal (SIGPIPE, SIG_DFL);
+
             execl ("/usr/bin/dpkg", "/usr/bin/dpkg", "--unpack", filename,
                    NULL);
         } else {
@@ -170,7 +178,7 @@ rc_debman_install (RCPackman *p, GSList *pkgs)
                be harmless */
             installed_list = g_slist_append (installed_list, filename);
 
-            rc_packman_package_installed (p, filename, pkg_count);
+            rc_packman_package_installed (p, filename, ++pkg_count, length);
 
             /* Check the exit status of dpkg, and abort this install if things
                have started to go wrong */
@@ -190,6 +198,7 @@ rc_debman_install (RCPackman *p, GSList *pkgs)
         if (!(child = fork ())) {
             fclose (stdout);
 
+            signal (SIGPIPE, SIG_DFL);
             execl ("/usr/bin/dpkg", "/usr/bin/dpkg", "--configure",
                    "--pending", NULL);
         } else {
@@ -474,10 +483,11 @@ rc_debman_query_helper (FILE *fp, RCPackage *pkg)
             pkg->requires = rc_debman_fill_depends (buf +
                                                     strlen ("Recommends: "),
                                                     pkg->requires);
-//        } else if (!strncmp (buf, "Suggests: ", strlen ("Suggests: "))) {
-//            pkg->requires = rc_debman_fill_depends (buf +
-//                                                    strlen ("Suggests: "),
-//                                                    pkg->requires);
+            /*
+        } else if (!strncmp (buf, "Suggests: ", strlen ("Suggests: "))) {
+            pkg->requires = rc_debman_fill_depends (buf +
+                                                    strlen ("Suggests: "),
+                                                    pkg->requires); */
         } else if (!strncmp (buf, "Pre-Depends: ", strlen ("Pre-Depends: "))) {
             pkg->requires = rc_debman_fill_depends (buf +
                                                     strlen ("Pre-Depends: "),
@@ -560,6 +570,7 @@ rc_debman_query_file (RCPackman *p, gchar *filename)
 
     if (!(child = fork())) {
         fclose (stdout);
+        signal (SIGPIPE, SIG_DFL);
         execl ("/usr/bin/dpkg-deb", "/usr/bin/dpkg-deb", "--control",
                filename, path, NULL);
     } else {

@@ -75,7 +75,7 @@ struct _RCPackmanClass {
 
     void (*pkg_progress)(RCPackman *, gchar *file, gint amount, gint total);
 
-    void (*pkg_installed)(RCPackman *, gchar *file, gint sequence);
+    void (*pkg_installed)(RCPackman *, gchar *file, gint sequence, gint total);
     void (*install_done)(RCPackman *);
 
     void (*pkg_removed)(RCPackman *, gchar *name, gint sequence);
@@ -168,7 +168,8 @@ void rc_packman_package_progress(RCPackman *p,
 
 void rc_packman_package_installed (RCPackman *p,
                                    const gchar *filename,
-                                   gint seqno);
+                                   gint seqno,
+                                   gint total);
 
 void rc_packman_install_done (RCPackman *p);
 

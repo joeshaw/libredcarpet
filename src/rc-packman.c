@@ -99,9 +99,10 @@ rc_packman_class_init (RCPackmanClass *klass)
                         GTK_RUN_LAST,
                         object_class->type,
                         GTK_SIGNAL_OFFSET (RCPackmanClass, pkg_installed),
-                        gtk_marshal_NONE__STRING_INT,
-                        GTK_TYPE_NONE, 2,
+                        gtk_marshal_NONE__STRING_INT_INT,
+                        GTK_TYPE_NONE, 3,
                         GTK_TYPE_STRING,
+                        GTK_TYPE_INT,
                         GTK_TYPE_INT);
     
     signals[INSTALL_DONE] =
@@ -367,9 +368,11 @@ rc_packman_package_progress(RCPackman *p, const gchar *filename,
 void
 rc_packman_package_installed (RCPackman *p,
                               const gchar *filename,
-                              gint seqno)
+                              gint seqno,
+                              gint total)
 {
-    gtk_signal_emit ((GtkObject *)p, signals[PKG_INSTALLED], filename, seqno);
+    gtk_signal_emit ((GtkObject *)p, signals[PKG_INSTALLED], filename, seqno,
+                     total);
     /* Why is this here? --Joe */
     while (gtk_events_pending ()) {
 	gtk_main_iteration ();

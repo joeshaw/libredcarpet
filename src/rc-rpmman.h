@@ -45,6 +45,7 @@ struct _RCRpmman {
     RCPackman parent;
 
     gint package_count;
+    gint package_total;
 };
 
 struct _RCRpmmanClass {
