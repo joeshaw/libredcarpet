@@ -1,3 +1,12 @@
+2002-08-22  Jon Trowbridge  <trow@ximian.com>
+
+	* deptestomatic.c (print_solution): Compute a checksum for each
+	solution, and compare it against the checksums of
+	previously-displayed solutions.  This allows us to flag duplicate
+	solutions when they occur.
+	(report_solutions): Pass a list for the checksums into
+	print_solution, free it when we are done.
+
 2002-08-19  Jon Trowbridge  <trow@ximian.com>
 
 	* deptestomatic.c (load_channel): Set a fake base-id when creating

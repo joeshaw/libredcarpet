@@ -312,13 +312,17 @@ print_important (gpointer user_data)
 }
 
 static void
-soln_cb (RCResolverContext *context, gpointer user_data)
+print_solution (RCResolverContext *context,
+                gint *count,
+                GSList **checksum_list)
 {
     if (rc_resolver_context_is_valid (context)) {
 
-        GList *items = NULL;
-        
-        gint *count = user_data;
+        GList *items = NULL, *iter;
+        GSList *siter;
+        guint32 checksum = 0;
+        gboolean is_dup = FALSE;
+
         g_print (">!> Solution #%d:\n", *count);
         ++*count;
         
@@ -335,7 +339,32 @@ soln_cb (RCResolverContext *context, gpointer user_data)
                                              &items);
 
         items = g_list_sort (items, (GCompareFunc) strcmp);
-        g_list_foreach (items, (GFunc) print_important, NULL);
+
+        for (iter = items; iter != NULL; iter = iter->next) {
+            char *c = iter->data;
+            if (c) {
+                while (*c) {
+                    checksum = 17 * checksum + (guint)*c;
+                    ++c;
+                }
+            }
+        }
+        g_print ("Checksum = %x\n", checksum);
+
+        for (siter = *checksum_list; siter != NULL && ! is_dup; siter = siter->next) {
+            guint32 prev_cs = GPOINTER_TO_UINT (siter->data);
+            if (prev_cs == checksum)
+                is_dup = TRUE;
+        }
+
+        if (! is_dup) {
+            g_list_foreach (items, (GFunc) print_important, NULL);
+            *checksum_list = g_slist_prepend (*checksum_list,
+                                              GUINT_TO_POINTER (checksum));
+        } else {
+            g_print (">!> This solution is a duplicate.\n");
+        }
+
         g_list_foreach (items, (GFunc) g_free, NULL);
         g_list_free (items);
 
@@ -371,12 +400,13 @@ report_solutions (RCResolver *resolver)
 {
     int count = 1;
     GSList *iter;
+    GSList *cs_list = NULL;
 
     g_return_if_fail (resolver);
     
     if (resolver->best_context) {
         g_print ("\nBest Solution:\n\n");
-        soln_cb (resolver->best_context, &count);
+        print_solution (resolver->best_context, &count, &cs_list);
 
         g_print ("\nOther Valid Solutions:\n\n");
 
@@ -384,7 +414,7 @@ report_solutions (RCResolver *resolver)
             for (iter = resolver->complete_queues; iter != NULL; iter = iter->next) {
                 RCResolverQueue *queue = iter->data;
                 if (queue->context != resolver->best_context) 
-                    soln_cb (queue->context, &count);
+                    print_solution (queue->context, &count, &cs_list);
             }
         }
     }
@@ -397,6 +427,8 @@ report_solutions (RCResolver *resolver)
             g_print ("\n");
         }
     }
+
+    g_slist_free (cs_list);
 }
 
 static void
