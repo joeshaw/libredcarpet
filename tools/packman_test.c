@@ -289,6 +289,7 @@ packman_test_query_all (RCPackman *p, char *line)
     }
 
     rc_package_slist_unref (pkg_list);
+    g_slist_free (pkg_list);
 }
 
 static void
@@ -353,12 +354,13 @@ packman_test_query (RCPackman *p, char *line)
     }
 
     rc_package_slist_unref (packages);
+    g_slist_free (packages);
 }
 
 static void
 packman_test_find_file (RCPackman *p, char *line)
 {
-    RCPackage *package;
+    RCPackageSList *packages, *iter;
     char *file;
 
     CHECK_PARAMS (line, "find");
@@ -367,15 +369,21 @@ packman_test_find_file (RCPackman *p, char *line)
 
     CHECK_EXTRA (line, "find");
 
-    package = rc_packman_find_file (p, file);
+    packages = rc_packman_find_file (p, file);
 
-    if (!package) {
+    if (!packages) {
+        printf ("No package contains the file \"%s\"\n", file);
         return;
     }
 
-    pretty_print_pkg (package);
+    for (iter = packages; iter; iter = iter->next) {
+        RCPackage *package = (RCPackage *) iter->data;
 
-    rc_package_unref (package);
+        pretty_print_pkg (package);
+    }
+
+    rc_package_slist_unref (packages);
+    g_slist_free (packages);
 }
 
 static void

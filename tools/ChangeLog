@@ -1,3 +1,10 @@
+2003-09-17  Joe Shaw  <joe@ximian.com>
+
+	* packman_test.c (packman_test_find_file): Update this for the
+	RCPackageSList API change.
+	(packman_test_query_all, packman_test_query): Free the list of
+	packages after unreffing it.
+
 2003-08-28  Joe Shaw  <joe@ximian.com>
 
 	* packman_test.c (packman_test_run): No more repackaging.
