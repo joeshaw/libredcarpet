@@ -1,3 +1,9 @@
+2002-03-18  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-resolver-info.c (rc_resolver_info_merge): Fix logic bug
+	that was causing non-duplicate _TYPE_MISC info messages to be
+	incorrectly "merged".
+
 2002-03-18  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c: minor build fixes for static linking, ie solaris

@@ -48,10 +48,15 @@ rc_resolver_info_merge (RCResolverInfo *info, RCResolverInfo *to_be_merged)
         || info->package != to_be_merged->package)
         return FALSE;
 
-    if (info->type == RC_RESOLVER_INFO_TYPE_MISC
-        && info->msg && to_be_merged->msg
-        && !strcmp (info->msg, to_be_merged->msg))
-        return TRUE;
+    /* We only merge miscellaneous info items if they have identical
+       text messages. */
+    if (info->type == RC_RESOLVER_INFO_TYPE_MISC) {
+        if (info->msg
+            && to_be_merged->msg
+            && !strcmp (info->msg, to_be_merged->msg))
+            return TRUE;
+        return FALSE;
+    }
     
     seen_pkgs = g_hash_table_new (NULL, NULL);
     for (iter = info->package_list; iter; iter = iter->next)
