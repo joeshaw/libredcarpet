@@ -192,7 +192,7 @@ parse_xml_setup (xmlNode *node)
             xmlChar *file = xml_get_prop (node, "file");
             g_assert (file);
             load_channel ("SYSTEM", file, RC_CHANNEL_TYPE_HELIX, TRUE);
-            xmlFree (file);
+            g_free (file);
         } else if (! g_strcasecmp (node->name, "channel")) {
             xmlChar *name = xml_get_prop (node, "name");
             xmlChar *file = xml_get_prop (node, "file");
@@ -200,8 +200,9 @@ parse_xml_setup (xmlNode *node)
             g_assert (name);
             g_assert (file);
             load_channel (name, file, type, FALSE);
-            xmlFree (name);
-            xmlFree (file);
+            g_free (name);
+            g_free (file);
+            g_free (type);
         } else if (! g_strcasecmp (node->name, "force-install")) {
             xmlChar *channel_name = xml_get_prop (node, "channel");
             xmlChar *package_name = xml_get_prop (node, "package");
@@ -221,8 +222,8 @@ parse_xml_setup (xmlNode *node)
                            channel_name, package_name);
             }
 
-            xmlFree (channel_name);
-            xmlFree (package_name);
+            g_free (channel_name);
+            g_free (package_name);
         } else if (! g_strcasecmp (node->name, "force-uninstall")) {
             xmlChar *package_name = xml_get_prop (node, "package");
             RCPackage *package;
@@ -239,7 +240,7 @@ parse_xml_setup (xmlNode *node)
             }
 
 
-            xmlFree (package_name);
+            g_free (package_name);
         } else {
             g_warning ("Unrecognized tag '%s' in setup", node->name);
         }
@@ -444,7 +445,7 @@ parse_xml_trial (xmlNode *node)
                 g_warning ("Unknown channel '%s' (current)", channel_name);
             }
 
-            xmlFree (channel_name);
+            g_free (channel_name);
 
         } else if (! g_strcasecmp (node->name, "subscribe")) {
 
@@ -458,7 +459,7 @@ parse_xml_trial (xmlNode *node)
                 g_warning ("Unknown channel '%s' (subscribe)", channel_name);
             }
 
-            xmlFree (channel_name);
+            g_free (channel_name);
         
         } else if (! g_strcasecmp (node->name, "install")) {
 
@@ -477,8 +478,8 @@ parse_xml_trial (xmlNode *node)
                 g_warning ("Unknown package %s::%s", channel_name, package_name);
             }
 
-            xmlFree (channel_name);
-            xmlFree (package_name);
+            g_free (channel_name);
+            g_free (package_name);
 
         } else if (! g_strcasecmp (node->name, "uninstall")) {
 
@@ -495,7 +496,7 @@ parse_xml_trial (xmlNode *node)
                 g_warning ("Unknown system package %s", package_name);
             }
 
-            xmlFree (package_name);
+            g_free (package_name);
 
         } else if (! g_strcasecmp (node->name, "upgrade")) {
             
@@ -537,7 +538,7 @@ parse_xml_test (xmlNode *node)
 
     virtual_str = xml_get_prop (node, "allow_virtual_conflicts");
     allow_virtual_conflicts = virtual_str != NULL;
-    xmlFree (virtual_str);
+    g_free (virtual_str);
 
     node = node->xmlChildrenNode;
 

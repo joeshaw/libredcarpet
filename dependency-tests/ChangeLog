@@ -1,3 +1,9 @@
+2002-08-06  Jon Trowbridge  <trow@ximian.com>
+
+	* deptestomatic.c: Fixed a tiny memory leak, and replaced some
+	xmlFrees with g_frees, since the xml_* functions
+	glib-memory-allocation-ify strings returned by libxml.
+
 2002-08-04  Ian Peters  <itp@ximian.com>
 
 	* deptestomatic.c (main): call rc_distro_parse_xml before
