@@ -1,3 +1,14 @@
+2002-08-20  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-resolver-context.c (rc_resolver_context_spew): Added. Another
+	debug-spew function that prints out a list of the packages to be
+	installed, removed and upgraded.
+
+	* rc-resolver.c (rc_resolver_resolve_dependencies): Make sure that
+	our dummy local packages channel has a non-zero cid and bid.
+	(rc_resolver_resolve_dependencies): When in extremely_noisy mode,
+	print a final total of the number of queues in each category.
+
 2002-08-19  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-xml.c (rc_channel_to_xml_node): Put the base-id in the XML.

@@ -142,6 +142,8 @@ void               rc_resolver_context_foreach_info (RCResolverContext *,
                                                      RCPackage *, int priority,
                                                      RCResolverInfoFn fn,
                                                      gpointer user_data);
+
+void               rc_resolver_context_spew         (RCResolverContext *);
 void               rc_resolver_context_spew_info    (RCResolverContext *);
 
 gboolean           rc_resolver_context_requirement_is_met (RCResolverContext *,

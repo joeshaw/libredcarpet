@@ -241,7 +241,7 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
     local_pkg_channel = rc_world_add_channel (world,
                                               "Local Packages",
                                               "local-pkg-alias-blah-blah-blah",
-                                              0, 0,
+                                              0xfefef0f0, 0xf0f0fefe,
                                               RC_CHANNEL_TYPE_UNKNOWN);
 
     initial_queue = rc_resolver_queue_new ();
@@ -360,6 +360,15 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
             resolver->deferred_queues = g_slist_delete_link (resolver->deferred_queues,
                                                              resolver->deferred_queues);
         }
+    }
+
+    if (extremely_noisy) {
+        g_print ("Final: %d / %d / %d / %d / %d\n",
+                 g_slist_length (resolver->pending_queues),
+                 g_slist_length (resolver->complete_queues),
+                 g_slist_length (resolver->pruned_queues),
+                 g_slist_length (resolver->deferred_queues),
+                 g_slist_length (resolver->invalid_queues));
     }
 
     /* Clean up our local package channel. */

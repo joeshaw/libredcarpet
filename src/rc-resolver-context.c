@@ -997,8 +997,58 @@ rc_resolver_context_foreach_info (RCResolverContext *context,
     g_slist_free (info_slist);
 }
 
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
 void
-spew_cb (RCResolverInfo *info, gpointer user_data)
+spew_pkg_cb (RCPackage *pkg,
+             RCPackageStatus status,
+             gpointer user_data)
+{
+    g_print ("  %s (%s)\n",
+             rc_package_to_str_static (pkg),
+             rc_package_status_to_string (status));
+}
+
+void
+spew_pkg2_cb (RCPackage *pkg1,
+              RCPackageStatus status1,
+              RCPackage *pkg2,
+              RCPackageStatus status2,
+              gpointer user_data)
+{
+    char *s1, *s2;
+
+    s1 = rc_package_to_str (pkg1);
+    s2 = rc_package_to_str (pkg2);
+
+    g_print ("  %s (%s) => %s (%s)\n",
+             s2,
+             rc_package_status_to_string (status2),
+             s1,
+             rc_package_status_to_string (status1));
+
+    g_free (s1);
+    g_free (s2);
+}
+
+void
+rc_resolver_context_spew (RCResolverContext *context)
+{
+    g_print ("TO INSTALL:\n");
+    rc_resolver_context_foreach_install (context, spew_pkg_cb, NULL);
+    g_print ("\n");
+
+    g_print ("TO REMOVE:\n");
+    rc_resolver_context_foreach_uninstall (context, spew_pkg_cb, NULL);
+    g_print ("\n");
+
+    g_print ("TO UPGRADE:\n");
+    rc_resolver_context_foreach_upgrade (context, spew_pkg2_cb, NULL);
+    g_print ("\n");
+}
+ 
+void
+spew_info_cb (RCResolverInfo *info, gpointer user_data)
 {
     char *msg = rc_resolver_info_to_string (info);
     if (rc_resolver_info_is_error (info))
@@ -1013,7 +1063,7 @@ void
 rc_resolver_context_spew_info (RCResolverContext *context)
 {
     g_return_if_fail (context != NULL);
-    rc_resolver_context_foreach_info (context, NULL, -1, spew_cb, NULL);
+    rc_resolver_context_foreach_info (context, NULL, -1, spew_info_cb, NULL);
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
