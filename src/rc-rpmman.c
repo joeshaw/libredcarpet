@@ -1773,8 +1773,8 @@ rc_rpmman_class_init (RCRpmmanClass *klass)
 static void
 rc_rpmman_error_cb ()
 {
-    rpm_error = rpmErrorCode ();
-    rpm_reason = rpmErrorString ();
+//    rpm_error = rpmErrorCode ();
+//    rpm_reason = rpmErrorString ();
 }
 
 static void
