@@ -1,5 +1,10 @@
 2001-08-17  Joe Shaw  <joe@ximian.com>
 
+	* rc-channel.c (rc_channel_parse_xml): Don't panic if there isn't
+	a distro_target.
+
+2001-08-17  Joe Shaw  <joe@ximian.com>
+
 	* rc-channel.c (rc_xml_node_to_subchannel): Don't puke on empty
 	subchannels.
 

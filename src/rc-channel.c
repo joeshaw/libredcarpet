@@ -236,15 +236,17 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
         channel->distro_target = NULL;
 
         tmp = xml_get_prop (node, "distro_target");
-        targets = g_strsplit (tmp, ":", 0);
-        g_free (tmp);
+        if (tmp) {
+            targets = g_strsplit (tmp, ":", 0);
+            g_free (tmp);
 
-        for (iter = targets; *iter; iter++) {
-            channel->distro_target =
-                g_slist_append (channel->distro_target, *iter);
+            for (iter = targets; iter && *iter; iter++) {
+                channel->distro_target =
+                    g_slist_append (channel->distro_target, *iter);
+            }
+
+            g_free (targets);
         }
-
-        g_free (targets);
 
         tmp = xml_get_prop(node, "subs_url");
         channel->subs_file = rc_maybe_merge_paths(channel->path, tmp);
