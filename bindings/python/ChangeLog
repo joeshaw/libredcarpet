@@ -1,3 +1,7 @@
+2004-11-16  James Willcox  <james@ximian.com>
+
+	* Makefile.am: link to libredcarpet properly, I hope
+
 2003-10-06  Joe Shaw  <joe@ximian.com>
 
 	* Makefile.am: Use $(top_srcdir) instead of ../.. for when

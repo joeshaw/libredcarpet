@@ -3,7 +3,7 @@ redcarpetdir = $(pythondir)
 
 redcarpet_LTLIBRARIES = redcarpet.la
 redcarpet_la_CFLAGS = $(LIBREDCARPET_CFLAGS) $(PYTHON_INCLUDES) -I$(top_srcdir)/src
-redcarpet_la_LDFLAGS = -avoid-version -module -L../../src ../../src/.libs/libredcarpet.so -lbz2
+redcarpet_la_LDFLAGS = -avoid-version -module -L ../../src/.libs -lredcarpet -lbz2
 redcarpet_la_LIBADD = $(LIBREDCARPET_LIBS)
 redcarpet_la_SOURCES =		\
 	pyutil.c		\
