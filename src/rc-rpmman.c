@@ -1191,6 +1191,8 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
             "/opt/gnome/sbin",
             "/opt/gnome/etc",
             "/opt/gnome/games",
+            "/usr/local/bin",   /* /usr/local shouldn't be required, but */
+            "/usr/local/sbin",  /* apparently msc linux uses it */
             NULL
         };
 
