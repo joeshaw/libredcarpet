@@ -153,6 +153,7 @@ close_database (RCRpmman *rpmman)
     if (getenv ("RC_RPM_NO_DB"))
         return;
 
+    check_database (rpmman);
     rpmman->db_watcher_cb =
         g_timeout_add (5000, (GSourceFunc) database_check_func,
                        (gpointer) rpmman);

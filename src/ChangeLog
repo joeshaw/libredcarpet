@@ -1,5 +1,12 @@
 2002-07-26  Ian Peters  <itp@ximian.com>
 
+	* rc-rpmman.c (open_database): rescan the db mtime before
+	reenabling the db watch timeout
+
+	* rc-debman.c (lock_database): ditto
+
+2002-07-26  Ian Peters  <itp@ximian.com>
+
 	* rc-packman.c, rc-packman.h: Add _lock and _unlock methods.  Add
 	a database_changed signal.
 

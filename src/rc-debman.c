@@ -260,6 +260,7 @@ unlock_database (RCDebman *debman)
         return;
     }
 
+    check_database (debman);
     debman->priv->db_watcher_cb =
         g_timeout_add (5000, (GSourceFunc) database_check_func,
                        (gpointer) debman);
