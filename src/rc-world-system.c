@@ -197,6 +197,9 @@ rc_world_system_finalize (GObject *obj)
 {
     RCWorldSystem *system = RC_WORLD_SYSTEM (obj);
 
+    if (system->database_changed_id)
+        g_signal_handler_disconnect (system, system->database_changed_id);
+
     g_object_unref (system->packman);
 
     rc_channel_unref (system->system_channel);
@@ -250,8 +253,9 @@ rc_world_system_init (RCWorldSystem *system)
 
     g_object_ref (system->packman);
 
-    g_signal_connect (system->packman, "database_changed",
-                      G_CALLBACK (database_changed_cb), system);
+    system->database_changed_id =
+        g_signal_connect (system->packman, "database_changed",
+                          G_CALLBACK (database_changed_cb), system);
 
     system->system_channel = rc_channel_new ("@system",
                                              "System Packages",

@@ -50,6 +50,8 @@ struct _RCWorldSystem {
 
     RCChannel *system_channel;
     gboolean error_flag;
+
+    guint database_changed_id;
 };
 
 struct _RCWorldSystemClass {
