@@ -1196,6 +1196,7 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
             NULL
         };
 
+#ifdef RPMTAG_BASENAMES
         gchar **basenames, **dirnames;
         guint32 *dirindexes;
 
@@ -1226,6 +1227,24 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
         names = NULL;
         free (dirnames);
         versions = NULL;
+#else
+        rpmman->headerGetEntry (header, RPMTAG_FILENAMES, NULL,
+                                (void **)&names, &count);
+
+        for (i = 0; i < count; i++) {
+            if (in_set (names[i], file_dep_set)) {
+                dep = rc_package_dep_item_new (names[i], 0, NULL, NULL,
+                                               RC_RELATION_ANY);
+
+                depl = g_slist_append (NULL, dep);
+
+                package->provides = g_slist_append (package->provides, depl);
+            }
+        }
+
+        free (names);
+        names = NULL;
+#endif
     }
 
     /* RPM doesn't do versioned provides (as of 3.0.4), so we only need to find

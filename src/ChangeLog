@@ -1,3 +1,12 @@
+2001-04-17  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c (fill_depends): when adding the contents of an RPM
+	file in the provides list, handle the rpm < 3.0.4 case where we
+	don't have RPMTAG_BASENAMES, RPMTAG_DIRNAMES, or
+	RPMTAG_DIRINDEXES.  Here we use the RPMTAG_FILENAMES tag, which
+	was renamed to RPMTAG_OLDFILENAMES in rpm 3.0.4 and above, and no
+	longer works.
+
 2001-04-16  Ian Peters  <itp@ximian.com>
 
 	* rc-line-buf.c: corrected bizarre ben-bug behaviour
