@@ -6,7 +6,7 @@ INCLUDES = 					\
 	-DG_LOG_DOMAIN=\"dependency-tests\"	\
 	-Wall
 
-noinst_PROGRAMS = deptestomatic
+check_PROGRAMS = deptestomatic
 
 deptestomatic_SOURCES = \
 	deptestomatic.c
@@ -15,3 +15,7 @@ deptestomatic_LDADD = \
 	../src/libredcarpet.a \
 	$(LIBREDCARPET_LIBS)
 
+TESTS_ENVIRONMENT = \
+	TEST_DIRECTORY="$(srcdir)/basic-exercises"
+
+TESTS = $(srcdir)/run-tests.sh 

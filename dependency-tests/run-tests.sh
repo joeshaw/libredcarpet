@@ -1,6 +1,20 @@
 #!/bin/sh
 
-cd $1
+if test "z$TEST_DIRECTORY" = "z"; then
+    TEST_DIRECTORY=$1;
+fi
+
+if test "z$TEST_DIRECTORY" = "z"; then
+    echo "run-tests.sh <directory-of-tests>";
+    exit 1;
+fi
+
+if !(test -d $TEST_DIRECTORY); then
+    echo "Can't find tests in $TEST_DIRECTORY";
+    exit 1;
+fi
+
+cd $TEST_DIRECTORY
 
 #TEST_TESTER=1
 
@@ -135,3 +149,7 @@ fi
 $SETCOLOR_NORMAL
 
 echo .
+
+if [ $failure ] || [ $crash ] ; then
+    exit 1;
+fi
