@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+
+<test>
+
+<setup>
+  <undump file="dump-rh73-2002-08-16.xml.gz"/>
+</setup>
+
+<trial>
+  <note>Trying a dep that doesn't exist.</note>
+  <solvedeps>
+    <dep name="some_dep_that_doesnt_exist"/>
+  </solvedeps>
+</trial>
+
+<trial>
+  <note>There is no gnome-core dep with epoch 0.</note>
+  <solvedeps>
+    <dep name="gnome-core" op="=" epoch="0"/>
+  </solvedeps>
+</trial>
+
+<trial>
+  <note>There is no gnome-core dep with epoch &gt; 10.</note>
+  <solvedeps>
+    <dep name="gnome-core" op="&gt;" epoch="10"/>
+  </solvedeps>
+</trial>
+
+<trial>
+  <note>Having an epoch &lt; 0 is impossible.</note>
+  <solvedeps>
+    <dep name="gnome-core" op="&lt;" epoch="0"/>
+  </solvedeps>
+</trial>
+
+</test>
