@@ -514,6 +514,201 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
                           "Unable to complete RPM transaction");
 } /* rc_rpmman_transact */
 
+static RCPackageSection
+rc_rpmman_section_to_package_section (const gchar *rpmsection)
+{
+    gchar **sections;
+
+    sections = g_strsplit (rpmsection, "/", 1);
+
+    if (!sections[0] || !sections[0][0]) {
+        return (RC_SECTION_MISC);
+    }
+
+    switch (sections[0][0]) {
+    case 'A':
+        if (!g_strcasecmp (sections[0], "Amusements")) {
+            return (RC_SECTION_GAME);
+        }
+        if (!g_strcasecmp (sections[0], "Applications")) {
+            if (!sections[1] || !sections[1][0]) {
+                return (RC_SECTION_MISC);
+            }
+
+            switch (sections[1][0]) {
+            case 'A':
+                if (!g_strcasecmp (sections[1], "Archiving")) {
+                    return (RC_SECTION_UTIL);
+                }
+                return (RC_SECTION_MISC);
+
+            case 'C':
+                if (!g_strcasecmp (sections[1], "Communications")) {
+                    return (RC_SECTION_INTERNET);
+                }
+                if (!g_strcasecmp (sections[1], "Cryptography")) {
+                    return (RC_SECTION_UTIL);
+                }
+                return (RC_SECTION_MISC);
+
+            case 'E':
+                if (!g_strcasecmp (sections[1], "Editors")) {
+                    return (RC_SECTION_UTIL);
+                }
+                if (!g_strcasecmp (sections[1], "Engineering")) {
+                    return (RC_SECTION_UTIL);
+                }
+                return (RC_SECTION_MISC);
+
+            case 'F':
+                if (!g_strcasecmp (sections[1], "File")) {
+                    return (RC_SECTION_SYSTEM);
+                }
+                if (!g_strcasecmp (sections[1], "Finance")) {
+                    return (RC_SECTION_OFFICE);
+                }
+                return (RC_SECTION_MISC);
+
+            case 'G':
+                if (!g_strcasecmp (sections[1], "Graphics")) {
+                    return (RC_SECTION_IMAGING);
+                }
+                return (RC_SECTION_MISC);
+
+            case 'I':
+                if (!g_strcasecmp (sections[1], "Internet")) {
+                    return (RC_SECTION_INTERNET);
+                }
+                return (RC_SECTION_MISC);
+
+            case 'M':
+                if (!g_strcasecmp (sections[1], "Multimedia")) {
+                    return (RC_SECTION_MULTIMEDIA);
+                }
+                return (RC_SECTION_MISC);
+
+            case 'O':
+                if (!g_strcasecmp (sections[1], "Office")) {
+                    return (RC_SECTION_OFFICE);
+                }
+                return (RC_SECTION_MISC);
+
+            case 'P':
+                if (!g_strcasecmp (sections[1], "Productivity")) {
+                    return (RC_SECTION_PIM);
+                }
+                if (!g_strcasecmp (sections[1], "Publishing")) {
+                    return (RC_SECTION_OFFICE);
+                }
+                return (RC_SECTION_MISC);
+
+            case 'S':
+                if (!g_strcasecmp (sections[1], "Sound")) {
+                    return (RC_SECTION_MULTIMEDIA);
+                }
+                if (!g_strcasecmp (sections[1], "System")) {
+                    return (RC_SECTION_SYSTEM);
+                }
+                return (RC_SECTION_MISC);
+
+            case 'T':
+                if (!g_strcasecmp (sections[1], "Text")) {
+                    return (RC_SECTION_UTIL);
+                }
+                return (RC_SECTION_MISC);
+
+            default:
+                return (RC_SECTION_MISC);
+            }
+        }
+
+    case 'D':
+        if (!g_strcasecmp (sections[0], "Documentation")) {
+            return (RC_SECTION_DOC);
+        }
+        if (!g_strcasecmp (sections[0], "Development")) {
+            if (!sections[1] || !sections[1][0]) {
+                return (RC_SECTION_MISC);
+            }
+
+            switch (sections[1][0]) {
+            case 'D':
+                if (!g_strcasecmp (sections[1], "Debuggers")) {
+                    return (RC_SECTION_DEVELUTIL);
+                }
+                return (RC_SECTION_MISC);
+
+            case 'L':
+                if (!g_strcasecmp (sections[1], "Languages")) {
+                    return (RC_SECTION_DEVELUTIL);
+                }
+                if (!g_strcasecmp (sections[1], "Libraries")) {
+                    return (RC_SECTION_DEVEL);
+                }
+                return (RC_SECTION_MISC);
+
+            case 'S':
+                if (!g_strcasecmp (sections[1], "System")) {
+                    return (RC_SECTION_DEVEL);
+                }
+                return (RC_SECTION_MISC);
+
+            case 'T':
+                if (!g_strcasecmp (sections[1], "Tools")) {
+                    return (RC_SECTION_DEVELUTIL);
+                }
+                return (RC_SECTION_MISC);
+
+            default:
+                return (RC_SECTION_MISC);
+            }
+        }
+
+    case 'L':
+        if (!g_strcasecmp (sections[0], "Libraries")) {
+            return (RC_SECTION_LIBRARY);
+        }
+        return (RC_SECTION_MISC);
+
+    case 'S':
+        if (!g_strcasecmp (sections[0], "System Environment")) {
+            return (RC_SECTION_SYSTEM);
+        }
+        return (RC_SECTION_MISC);
+
+    case 'U':
+        if (!g_strncasecmp (sections[0], "User Interface",
+                            strlen ("User Interface"))) {
+            return (RC_SECTION_XAPP);
+        }
+        return (RC_SECTION_MISC);
+
+    case 'X':
+        if (!g_strcasecmp (sections[0], "X11")) {
+            if (!sections[1] || !sections[1][0]) {
+                return (RC_SECTION_XAPP);
+            }
+
+            switch (sections[1][0]) {
+            case 'G':
+                if (!g_strcasecmp (sections[1], "Graphics")) {
+                    return (RC_SECTION_IMAGING);
+                }
+                return (RC_SECTION_XAPP);
+
+            case 'U':
+                if (!g_strcasecmp (sections[1], "Utilities")) {
+                    return (RC_SECTION_UTIL);
+                }
+                return (RC_SECTION_XAPP);
+
+            default:
+                return (RC_SECTION_MISC);
+            }
+        }
+    }
+}
+
 /* Helper function to read values out of an rpm header safely.  If any of the
    paramaters are NULL, they're ignored.  Remember, you don't need to free any
    of the elements, since they are just pointers into the rpm header structure.
@@ -587,77 +782,9 @@ rc_rpmman_read_header (Header header, gchar **name, guint32 *epoch,
                         &count);
 
         if (count && (type == RPM_STRING_TYPE) && tmpsection &&
-            tmpsection[0]) {
-            if (!g_strcasecmp (tmpsection, "Amusements/Games")) {
-                *section = RC_SECTION_GAME;
-            } else if (!g_strcasecmp (tmpsection, "Amusements/Graphics")) {
-                *section = RC_SECTION_IMAGING;
-            } else if (!g_strcasecmp (tmpsection, "Applications/Archiving")) {
-                *section = RC_SECTION_UTIL;
-            } else if (!g_strcasecmp (tmpsection,
-                                      "Applications/Communications")) {
-                *section = RC_SECTION_INTERNET;
-            } else if (!g_strcasecmp (tmpsection, "Applications/Databases")) {
-                *section = RC_SECTION_DEVELUTIL;
-            } else if (!g_strcasecmp (tmpsection, "Applications/Editors")) {
-                *section = RC_SECTION_UTIL;
-            } else if (!g_strcasecmp (tmpsection, "Applications/Emulators")) {
-                *section = RC_SECTION_GAME;
-            } else if (!g_strcasecmp (tmpsection,
-                                      "Applications/Engineering")) {
-                *section = RC_SECTION_MISC;
-            } else if (!g_strcasecmp (tmpsection, "Applications/File")) {
-                *section = RC_SECTION_UTIL;
-            } else if (!g_strcasecmp (tmpsection, "Applications/Internet")) {
-                *section = RC_SECTION_INTERNET;
-            } else if (!g_strcasecmp (tmpsection, "Applications/Multimedia")) {
-                *section = RC_SECTION_MULTIMEDIA;
-            } else if (!g_strcasecmp (tmpsection,
-                                      "Applications/Productivity")) {
-                *section = RC_SECTION_PIM;
-            } else if (!g_strcasecmp (tmpsection, "Applications/Publishing")) {
-                *section = RC_SECTION_MISC;
-            } else if (!g_strcasecmp (tmpsection, "Applications/System")) {
-                *section = RC_SECTION_SYSTEM;
-            } else if (!g_strcasecmp (tmpsection, "Applications/Text")) {
-                *section = RC_SECTION_UTIL;
-            } else if (!g_strcasecmp (tmpsection, "Development/Debuggers")) {
-                *section = RC_SECTION_DEVELUTIL;
-            } else if (!g_strcasecmp (tmpsection, "Development/Languages")) {
-                *section = RC_SECTION_DEVEL;
-            } else if (!g_strcasecmp (tmpsection, "Development/Libraries")) {
-                *section = RC_SECTION_LIBRARY;
-            } else if (!g_strcasecmp (tmpsection, "Development/System")) {
-                *section = RC_SECTION_DEVEL;
-            } else if (!g_strcasecmp (tmpsection, "Development/Tools")) {
-                *section = RC_SECTION_DEVELUTIL;
-            } else if (!g_strcasecmp (tmpsection,
-                                      "System Environment/Base")) {
-                *section = RC_SECTION_SYSTEM;
-            } else if (!g_strcasecmp (tmpsection,
-                                      "System Environment/Daemons")) {
-                *section = RC_SECTION_SYSTEM;
-            } else if (!g_strcasecmp (tmpsection,
-                                      "System Environment/Kernel")) {
-                *section = RC_SECTION_SYSTEM;
-            } else if (!g_strcasecmp (tmpsection,
-                                      "System Environment/Libraries")) {
-                *section = RC_SECTION_SYSTEM;
-            } else if (!g_strcasecmp (tmpsection,
-                                      "System Environment/Shells")) {
-                *section = RC_SECTION_SYSTEM;
-            } else if (!g_strcasecmp (tmpsection,
-                                      "User Interface/Desktops")) {
-                *section = RC_SECTION_XAPP;
-            } else if (!g_strcasecmp (tmpsection,
-                                      "User Interface/X")) {
-                *section = RC_SECTION_XAPP;
-            } else if (!g_strcasecmp (tmpsection,
-                                      "User Interface/X Hardware Support")) {
-                *section = RC_SECTION_XAPP;
-            } else {
-                *section = RC_SECTION_MISC;
-            }
+            tmpsection[0])
+        {
+            *section = rc_rpmman_section_to_package_section (tmpsection);
         } else {
             *section = RC_SECTION_MISC;
         }

@@ -1,3 +1,8 @@
+2001-02-07  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c (rc_rpmman_section_to_package_section): added.  don't look at this function
+	(rc_rpmman_read_header): use it here
+
 2001-02-06  Joe Shaw  <joe@ximian.com>
 
 	* rc-package-importance.c: Ditch RC_IMPORTANCE_NEW and RC_IMPORTANT_MAX
