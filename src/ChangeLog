@@ -1,5 +1,9 @@
 2001-07-11  Vladimir Vukicevic  <vladimir@ximian.com>
 
+	* rc-deps.c: Oops, we need to look at what a package provides,
+	not what it requires, when figuring out what other packages
+	depend on it.
+	
 	* rc-deps.c: Oops, rc_hash_table_slist_insert_unique needs
 	a comparison function argument
 
