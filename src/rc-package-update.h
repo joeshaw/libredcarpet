@@ -52,21 +52,23 @@ struct _RCPackageUpdate {
 
 RCPackageUpdate *rc_package_update_new (void);
 
-RCPackageUpdate *rc_package_update_copy (RCPackageUpdate *old);
+RCPackageUpdate *rc_package_update_copy (RCPackageUpdate *old_update);
 
-void rc_package_update_free (RCPackageUpdate *rcpu);
+void rc_package_update_free (RCPackageUpdate *update);
 
-RCPackageUpdateSList *rc_package_update_slist_copy (RCPackageUpdateSList *old);
+RCPackageUpdateSList
+*rc_package_update_slist_copy (RCPackageUpdateSList *old_update);
 
-void rc_package_update_slist_free (RCPackageUpdateSList *rcpusl);
+void rc_package_update_slist_free (RCPackageUpdateSList *update_slist);
 
-RCPackageUpdateSList *rc_package_update_slist_sort (RCPackageUpdateSList *l);
+RCPackageUpdateSList
+*rc_package_update_slist_sort (RCPackageUpdateSList *old_slist);
 
-RCPackageImportance rc_string_to_package_importance (gchar *importance);
+RCPackageImportance rc_string_to_package_importance (const gchar *importance);
 
 const gchar *rc_package_importance_to_string (RCPackageImportance importance);
 
-xmlNode *rc_package_update_to_xml_node (RCPackageUpdate *);
+xmlNode *rc_package_update_to_xml_node (RCPackageUpdate *update);
 
 RCPackageUpdate *rc_xml_node_to_package_update (const xmlNode *,
                                                 const RCPackage *package);

@@ -8,38 +8,45 @@
 RCPackageUpdate *
 rc_package_update_new ()
 {
-    RCPackageUpdate *rcpu = g_new0 (RCPackageUpdate, 1);
+    RCPackageUpdate *update = g_new0 (RCPackageUpdate, 1);
 
-    return (rcpu);
+    return (update);
 } /* rc_package_update_new */
 
 RCPackageUpdate *
-rc_package_update_copy (RCPackageUpdate *old)
+rc_package_update_copy (RCPackageUpdate *old_update)
 {
-    RCPackageUpdate *new = rc_package_update_new ();
+    RCPackageUpdate *new_update;
 
-    rc_package_spec_copy ((RCPackageSpec *) old, (RCPackageSpec *) new);
+    g_return_val_if_fail (old_update, NULL);
 
-    new->package_url = g_strdup (old->package_url);
-    new->package_size = old->package_size;
+    new_update = rc_package_update_new ();
 
-    new->installed_size = old->installed_size;
+    rc_package_spec_copy ((RCPackageSpec *) old_update,
+                          (RCPackageSpec *) new_update);
 
-    new->signature_url = g_strdup (old->signature_url);
-    new->signature_size = old->signature_size;
+    new_update->package_url = g_strdup (old_update->package_url);
+    new_update->package_size = old_update->package_size;
 
-    new->md5sum = g_strdup (old->md5sum);
+    new_update->installed_size = old_update->installed_size;
 
-    new->importance = old->importance;
+    new_update->signature_url = g_strdup (old_update->signature_url);
+    new_update->signature_size = old_update->signature_size;
 
-    new->description = g_strdup (old->description);
+    new_update->md5sum = g_strdup (old_update->md5sum);
 
-    return (new);
+    new_update->importance = old_update->importance;
+
+    new_update->description = g_strdup (old_update->description);
+
+    return (new_update);
 }
 
 void
 rc_package_update_free (RCPackageUpdate *update)
 {
+    g_return_if_fail (update);
+
     rc_package_spec_free_members(RC_PACKAGE_SPEC (update));
 
     g_free (update->package_url);
@@ -54,42 +61,45 @@ rc_package_update_free (RCPackageUpdate *update)
 } /* rc_package_update_free */
 
 RCPackageUpdateSList *
-rc_package_update_slist_copy (RCPackageUpdateSList *old)
+rc_package_update_slist_copy (RCPackageUpdateSList *old_slist)
 {
     RCPackageUpdateSList *iter;
-    RCPackageUpdateSList *new_list = NULL;
+    RCPackageUpdateSList *new_slist = NULL;
 
-    for (iter = old; iter; iter = iter->next) {
+    for (iter = old_slist; iter; iter = iter->next) {
         RCPackageUpdate *old_update = (RCPackageUpdate *)(iter->data);
-        RCPackageUpdate *new = rc_package_update_copy (old_update);
+        RCPackageUpdate *new_update = rc_package_update_copy (old_update);
 
-        new_list = g_slist_append (new_list, new);
+        new_slist = g_slist_append (new_slist, new_update);
     }
 
-    return (new_list);
+    return (new_slist);
 }
 
 void
-rc_package_update_slist_free (RCPackageUpdateSList *rcpusl)
+rc_package_update_slist_free (RCPackageUpdateSList *update_slist)
 {
-    g_slist_foreach (rcpusl, (GFunc) rc_package_update_free, NULL);
+    g_slist_foreach (update_slist, (GFunc) rc_package_update_free, NULL);
 
-    g_slist_free (rcpusl);
+    g_slist_free (update_slist);
 } /* rc_package_update_slist_free */
 
 RCPackageUpdateSList *
-rc_package_update_slist_sort (RCPackageUpdateSList *rcpusl)
+rc_package_update_slist_sort (RCPackageUpdateSList *old_slist)
 {
-    RCPackageUpdateSList *list = NULL;
+    RCPackageUpdateSList *new_slist = NULL;
 
-    list = g_slist_sort (rcpusl, (GCompareFunc) rc_package_spec_compare_name);
+    new_slist =
+        g_slist_sort (old_slist, (GCompareFunc) rc_package_spec_compare_name);
 
-    return (list);
+    return (new_slist);
 }
 
 RCPackageImportance
-rc_string_to_package_importance (gchar *importance)
+rc_string_to_package_importance (const gchar *importance)
 {
+    g_return_val_if_fail (importance, RC_IMPORTANCE_INVALID);
+    
     if (!g_strcasecmp (importance, "necessary")) {
         return (RC_IMPORTANCE_NECESSARY);
     } else if (!g_strcasecmp (importance, "urgent")) {
@@ -190,6 +200,8 @@ rc_xml_node_to_package_update (const xmlNode *node, const RCPackage *package)
     RCPackageUpdate *update;
     const xmlNode *iter;
     const gchar *url_prefix = NULL;
+
+    g_return_val_if_fail (node, NULL);
 
     /* Make sure this is an update node */
     if (g_strcasecmp (node->name, "update")) {
