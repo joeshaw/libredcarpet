@@ -836,7 +836,21 @@ require_item_process (RCQueueItem *item,
 
             if (upgrade_list) {
                 GSList *iter;
+                gchar *label, *req_str, *up_str;
+
                 branch_item = rc_queue_item_new_branch (world);
+
+                req_str = rc_package_to_str (require->requiring_package);
+                up_str  = rc_package_to_str (require->upgraded_package);
+
+                label = g_strdup_printf ("for requiring %s for %s when upgrading %s",
+                                         rc_package_dep_to_string_static (require->dep),
+                                         req_str, up_str);
+                rc_queue_item_branch_set_label (branch_item, label);
+
+                g_free (req_str);
+                g_free (up_str);
+                g_free (label);
 
                 for (iter = upgrade_list; iter != NULL; iter = iter->next) {
                     RCPackage *upgrade_package = iter->data;
@@ -1190,6 +1204,7 @@ branch_item_destroy (RCQueueItem *item)
 {
     RCQueueItem_Branch *branch = (RCQueueItem_Branch *) item;
     
+    g_free (branch->label);
     g_slist_foreach (branch->possible_items,
                      (GFunc) rc_queue_item_free, 
                      NULL);
@@ -1250,7 +1265,9 @@ branch_item_to_string (RCQueueItem *item)
     char *str, *items_str;
 
     items_str = item_slist_to_string (branch->possible_items);
-    str = g_strdup_printf ("branch\n     %s", items_str);
+    str = g_strdup_printf ("branch %s\n     %s", 
+                           branch->label ? branch->label : "",
+                           items_str);
     g_free (items_str);
 
     return str;
@@ -1275,6 +1292,19 @@ rc_queue_item_new_branch (RCWorld *world)
     item->to_string = branch_item_to_string;
 
     return item;
+}
+
+void
+rc_queue_item_branch_set_label (RCQueueItem *item, const char *str)
+{
+    RCQueueItem_Branch *branch;
+
+    g_return_if_fail (item != NULL);
+    g_return_if_fail (rc_queue_item_type (item) == RC_QUEUE_ITEM_TYPE_BRANCH);
+    
+    branch = (RCQueueItem_Branch *) item;
+    g_free (branch->label);
+    branch->label = g_strdup (str);
 }
 
 void

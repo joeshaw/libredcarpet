@@ -99,6 +99,7 @@ struct _RCQueueItem_Require {
 struct _RCQueueItem_Branch {
     RCQueueItem parent;
 
+    char   *label;
     GSList *possible_items;
 };
 
@@ -156,11 +157,12 @@ RCQueueItem *rc_queue_item_new_require         (RCWorld *, RCPackageDep *dep);
 void         rc_queue_item_require_add_package (RCQueueItem *item, RCPackage *package);
 void         rc_queue_item_require_set_remove_only (RCQueueItem *item);
 
-RCQueueItem *rc_queue_item_new_branch      (RCWorld *);
-void         rc_queue_item_branch_add_item (RCQueueItem *branch, RCQueueItem *subitem);
-gboolean     rc_queue_item_branch_is_empty (RCQueueItem *branch);
-gboolean     rc_queue_item_branch_contains (RCQueueItem *branch,
-                                            RCQueueItem *possible_subbranch);
+RCQueueItem *rc_queue_item_new_branch       (RCWorld *);
+void         rc_queue_item_branch_set_label (RCQueueItem *branch, const char *str);
+void         rc_queue_item_branch_add_item  (RCQueueItem *branch, RCQueueItem *subitem);
+gboolean     rc_queue_item_branch_is_empty  (RCQueueItem *branch);
+gboolean     rc_queue_item_branch_contains  (RCQueueItem *branch,
+                                             RCQueueItem *possible_subbranch);
 
 RCQueueItem *rc_queue_item_new_group       (RCWorld *);
 void         rc_queue_item_group_add_item  (RCQueueItem *group, RCQueueItem *subitem);
