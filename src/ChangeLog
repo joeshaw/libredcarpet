@@ -1,3 +1,11 @@
+2003-01-21  Joe Shaw  <joe@ximian.com>
+
+	* rc-rpmman.c (depends_fill_helper): We were being way too
+	aggressive with some memory management but it never seems to bite
+	us with RPM 4.  RPM 3, however, is a different matter.  Revert to
+	the previous behaviour, but use my own free_v() function instead
+	of g_strfreev() to fix the potential memory leak.
+
 2003-01-21  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-xml.c (parser_package_end): Removed all of the arch-related

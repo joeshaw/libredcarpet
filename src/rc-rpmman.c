@@ -1442,6 +1442,20 @@ in_set (gchar *item, const gchar **set) {
 }
 
 static void
+free_n (char **strv, int len)
+{
+    int i;
+
+    if (!strv)
+        return;
+
+    for (i = 0; i < len; i++)
+        g_free (strv[i]);
+
+    g_free (strv);
+}
+
+static void
 depends_fill_helper (RCRpmman *rpmman, Header header, int names_tag,
                      int versions_tag, int flags_tag, RCPackageDepSList **deps)
 {
@@ -1475,10 +1489,6 @@ depends_fill_helper (RCRpmman *rpmman, Header header, int names_tag,
         RCPackageRelation relation = RC_RELATION_ANY;
 
         if (!strncmp (names[i], "rpmlib(", strlen ("rpmlib("))) {
-            if (versions)
-                g_free (versions[i]);
-            if (releases)
-                g_free (releases[i]);
             continue;
         }
 
@@ -1503,18 +1513,13 @@ depends_fill_helper (RCRpmman *rpmman, Header header, int names_tag,
         }
 
         *deps = g_slist_prepend (*deps, dep);
-
-        if (versions)
-            g_free (versions[i]);
-        if (releases)
-            g_free (releases[i]);
     }
 
     free (names);
     free (verrels);
 
-    g_free (versions);
-    g_free (releases);
+    free_n (versions, versions_count);
+    free_n (releases, versions_count);
     g_free (epochs);
     g_free (has_epochs);
 }
