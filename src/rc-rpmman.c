@@ -47,7 +47,7 @@
  */
 
 #ifndef RPMTAG_BASENAMES
-#define RPMTAG_BASENAMES RPMTAG_NAMES
+#define RPMTAG_BASENAMES RPMTAG_NAME
 #endif
 
 static void rc_rpmman_class_init (RCRpmmanClass *klass);

@@ -1,5 +1,10 @@
 2001-04-04  Ian Peters  <itp@ximian.com>
 
+	* rc-rpmman.c: sigh, s/RPMTAG_NAMES/RPMTAG_NAME/, this is the
+	problem with editing code you can't actually compile.
+	
+2001-04-04  Ian Peters  <itp@ximian.com>
+
 	* Makefile.am: whoops, fix the rpmlead and signature references
 
 2001-04-04  Ian Peters  <itp@ximian.com>
