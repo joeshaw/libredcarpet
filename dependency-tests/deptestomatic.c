@@ -158,16 +158,29 @@ undump (const char *filename)
     g_object_unref (undump_world);
 }
 
+static RCChannel *
+get_channel (const char *channel_name)
+{
+    RCChannel *channel;
+
+    channel = rc_world_get_channel_by_id (world, channel_name);
+
+    if (!channel)
+        channel = rc_world_get_channel_by_alias (world, channel_name);
+
+    if (!channel)
+        channel = rc_world_get_channel_by_name (world, channel_name);
+
+    return channel;
+}
+
 static RCPackage *
 get_package (const char *channel_name, const char *package_name)
 {
     RCChannel *channel;
     RCPackage *package;
 
-    channel = rc_world_get_channel_by_id (world, channel_name);
-
-    if (!channel)
-        channel = rc_world_get_channel_by_name (world, channel_name);
+    channel = get_channel (channel_name);
 
     if (channel == NULL) {
         g_warning ("Can't find package '%s': channel '%s' not defined",
@@ -514,12 +527,12 @@ report_solutions (RCResolver *resolver)
     }
 
     if (resolver->deferred_queues) {
-        g_print ("There are %d deferred queues.\n",
+        g_print ("Deferred queues: %d\n",
                  g_slist_length (resolver->deferred_queues));
     }
 
     if (resolver->invalid_queues) {
-        g_print ("There are %d failed solutions.\n",
+        g_print ("Failed solutions: %d\n",
                  g_slist_length (resolver->invalid_queues));
     }
 
@@ -595,7 +608,7 @@ parse_xml_trial (xmlNode *node)
             gchar *channel_name = xml_get_prop (node, "channel");
             RCChannel *channel;
 
-            channel = rc_world_get_channel_by_name (world, channel_name);
+            channel = get_channel (channel_name);
             if (channel != NULL) {
                 rc_resolver_set_current_channel (resolver, channel);
             } else {
@@ -609,7 +622,7 @@ parse_xml_trial (xmlNode *node)
             gchar *channel_name = xml_get_prop (node, "channel");
             RCChannel *channel;
 
-            channel = rc_world_get_channel_by_name (world, channel_name);
+            channel = get_channel (channel_name);
             if (channel != NULL) {
                 rc_channel_set_subscription (channel, TRUE);
             } else {

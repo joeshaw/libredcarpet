@@ -1,5 +1,9 @@
 2003-11-11  Joe Shaw  <joe@ximian.com>
 
+	* deptestomatic.c: Also match channels against their alias.
+
+2003-11-11  Joe Shaw  <joe@ximian.com>
+
 	* deptestomatic.c (load_channel): Add an evil hack so we don't try
 	to save our subscriptions to disk.
 	(get_package): Look up the channel by both name and id.
