@@ -500,3 +500,9 @@ rc_resolver_queue_spew (RCResolverQueue *queue)
 
     g_print ("\n");
 }
+
+RCResolverContext *
+rc_resolver_queue_get_context (RCResolverQueue *queue)
+{
+    return rc_resolver_context_ref (queue->context);
+}

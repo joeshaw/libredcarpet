@@ -68,5 +68,7 @@ void             rc_resolver_queue_split_first_branch (RCResolverQueue *,
 
 void             rc_resolver_queue_spew (RCResolverQueue *);
 
+RCResolverContext *rc_resolver_queue_get_context (RCResolverQueue *);
+
 #endif /* __RC_RESOLVER_QUEUE_H__ */
 

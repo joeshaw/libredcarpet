@@ -1,3 +1,11 @@
+2004-11-30  James Willcox  <james@ximian.com>
+
+	* rc-resolver-context.c: (get_info_foreach_cb),
+	(rc_resolver_context_get_info): return a list of strings
+	* rc-resolver-context.h:
+	* rc-resolver-queue.c: (rc_resolver_queue_get_context): added
+	* rc-resolver-queue.h:
+
 2004-11-30  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-rollback.c (foreach_package_cb): Handle multiple installed
