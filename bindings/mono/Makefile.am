@@ -71,7 +71,8 @@ EXTRA_DIST =				\
 	WorldService.custom		\
 	Distro.custom			\
 	PackageSpec.custom		\
-	WorldMulti.custom
+	WorldMulti.custom		\
+	ServiceMountException.cs
 
 
 CLEANFILES = $(ASSEMBLY)
