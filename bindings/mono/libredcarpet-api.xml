@@ -1643,6 +1643,9 @@
       <method name="GetPackageType" cname="rc_distro_get_package_type">
         <return-type type="RCDistroPackageType" />
       </method>
+      <method name="GetRole" cname="rc_distro_get_role">
+        <return-type type="const-char*" />
+      </method>
       <method name="GetStatus" cname="rc_distro_get_status">
         <return-type type="RCDistroStatus" />
       </method>

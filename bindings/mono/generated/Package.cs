@@ -364,8 +364,6 @@ namespace RC {
 			rc_package_add_dummy_update(Handle, package_filename, package_size);
 		}
 
-		// public Package(IntPtr raw) : base(raw) {}
-
 		[DllImport("libredcarpet")]
 		static extern IntPtr rc_package_new();
 

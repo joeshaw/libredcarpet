@@ -68,6 +68,17 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
+		static extern IntPtr rc_distro_get_role(IntPtr raw);
+
+		public string Role { 
+			get {
+				IntPtr raw_ret = rc_distro_get_role(Handle);
+				string ret = Marshal.PtrToStringAnsi(raw_ret);
+				return ret;
+			}
+		}
+
+		[DllImport("libredcarpet")]
 		static extern int rc_distro_get_package_type(IntPtr raw);
 
 		public RC.DistroPackageType PackageType { 
