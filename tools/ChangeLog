@@ -1,3 +1,8 @@
+2003-04-17  Jon Trowbridge  <trow@ximian.com>
+
+	* dep_lint.c (try_to_install_everything): Use our new-style
+	channel wildcards.
+
 2003-04-08  Joe Shaw  <joe@ximian.com>
 
 	* pkg_to_xml.c: Nuke the RC_DISTRIBUTIONS_FILE stuff, it's in

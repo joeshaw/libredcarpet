@@ -77,7 +77,7 @@ try_to_install_everything (void)
   RCWorld *world = rc_get_world ();
 
   rc_world_foreach_package (world,
-			    RC_WORLD_ANY_NON_SYSTEM,
+			    RC_CHANNEL_NON_SYSTEM,
 			    try_to_install_cb,
 			    NULL);
 }
