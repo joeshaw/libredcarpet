@@ -749,7 +749,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
                 packman, RC_PACKMAN_ERROR_ABORT,
                 "error processing to-be-removed packages");
 
-            rpmman->rpmtransFree (install_transaction);
+            rpmman->rpmtransFree (remove_transaction);
 
             goto ERROR;
         }
