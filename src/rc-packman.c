@@ -27,8 +27,8 @@
 #include <errno.h>
 
 #include "rc-marshal.h"
-#include "rc-md5.h"
 #include "rc-packman-private.h"
+#include "rc-rollback.h"
 
 static void rc_packman_class_init (RCPackmanClass *klass);
 static void rc_packman_init       (RCPackman *obj);
@@ -47,11 +47,6 @@ enum SIGNALS {
 };
 
 static guint signals[LAST_SIGNAL] = { 0 };
-
-/* Some file #defines for transaction tracking */
-#define RC_PACKMAN_TRACKING_DIR          "/var/lib/rcd/tracking"
-#define RC_PACKMAN_TRACKING_XML          RC_PACKMAN_TRACKING_DIR"/tracking.xml"
-#define RC_PACKMAN_TRACKING_CURRENT_DIR  RC_PACKMAN_TRACKING_DIR"/current"
 
 GType
 rc_packman_get_type (void)
@@ -199,7 +194,7 @@ rc_packman_init (RCPackman *packman)
     packman->priv->capabilities = RC_PACKMAN_CAP_NONE;    
 
     packman->priv->lock_count = 0;
-    packman->priv->transaction_tracking = FALSE;
+    packman->priv->rollback_enabled = FALSE;
 }
 
 RCPackman *
@@ -209,343 +204,6 @@ rc_packman_new (void)
         RC_PACKMAN (g_object_new (rc_packman_get_type (), NULL));
 
     return packman;
-}
-
-typedef struct {
-    RCPackman *packman;
-    time_t timestamp;
-    gboolean changes;
-    xmlDoc *doc;
-} TrackingInfo;
-
-static void
-tracking_info_free (TrackingInfo *tracking_info)
-{
-    if (!tracking_info)
-        return;
-
-    if (tracking_info->packman)
-        g_object_unref (tracking_info->packman);
-
-    if (tracking_info->doc)
-        xmlFreeDoc (tracking_info->doc);
-
-    g_free (tracking_info);
-}
-
-static char *
-escape_pathname (const char *in_path)
-{
-    char *out_path;
-    char **parts;
-
-    parts = g_strsplit (in_path, "/", 0);
-    out_path = g_strjoinv ("%2F", parts);
-    g_strfreev (parts);
-
-    return out_path;
-}
-
-static xmlNode *
-file_changes_to_xml (TrackingInfo *tracking_info, RCPackage *package)
-{
-    xmlNode *changes_node = NULL;
-    RCPackageFileSList *files, *iter;
-    char *tmp;
-    
-    files = rc_packman_file_list (tracking_info->packman, package);
-
-    for (iter = files; iter; iter = iter->next) {
-        RCPackageFile *file = iter->data;
-        struct stat st;
-        xmlNode *file_node;
-        gboolean was_removed = FALSE;
-
-        file_node = xmlNewNode (NULL, "file");
-        xmlNewProp (file_node, "filename", file->filename);
-
-        errno = 0;
-        if (stat (file->filename, &st) < 0) {
-            if (errno == ENOENT) {
-                xmlNewTextChild (file_node, NULL, "was_removed", "1");
-                was_removed = TRUE;
-            } else {
-                rc_packman_set_error (tracking_info->packman,
-                                      RC_PACKMAN_ERROR_ABORT,
-                                      "Unable to stat '%s' in package '%s' "
-                                      "for transaction tracking",
-                                      file->filename,
-                                      g_quark_to_string (package->spec.nameq));
-                goto ERROR;
-            }
-        } else {
-            /* Only care about size of regular files */
-            if (S_ISREG (st.st_mode) && file->size != st.st_size) {
-                tmp = g_strdup_printf ("%ld", st.st_size);
-                xmlNewTextChild (file_node, NULL, "size", tmp);
-                g_free (tmp);
-            }
-
-            if (file->uid != st.st_uid) {
-                tmp = g_strdup_printf ("%d", st.st_uid);
-                xmlNewTextChild (file_node, NULL, "uid", tmp);
-                g_free (tmp);
-            }
-
-            if (file->gid != st.st_gid) {
-                tmp = g_strdup_printf ("%d", st.st_gid);
-                xmlNewTextChild (file_node, NULL, "gid", tmp);
-                g_free (tmp);
-            }
-
-            if (file->mode != st.st_mode) {
-                tmp = g_strdup_printf ("%d", st.st_mode);
-                xmlNewTextChild (file_node, NULL, "mode", tmp);
-                g_free (tmp);
-            }
-
-            /* Only care about mtime of regular files */
-            if (S_ISREG (st.st_mode) && file->mtime != st.st_mtime) {
-                tmp = g_strdup_printf ("%ld", st.st_mtime);
-                xmlNewTextChild (file_node, NULL, "mtime", tmp);
-                g_free (tmp);
-            }
-
-            /* Only md5sum regular files */
-            if (S_ISREG (st.st_mode)) {
-                tmp = rc_md5_digest (file->filename);
-                if (strcmp (file->md5sum, tmp) != 0)
-                    xmlNewTextChild (file_node, NULL, "md5sum", tmp);
-                g_free (tmp);
-            }
-        }
-
-        if (file_node->xmlChildrenNode) {
-            if (!was_removed) {
-                char *escapename;
-                char *newfile;
-
-                escapename = escape_pathname (file->filename);
-                newfile = g_strconcat (RC_PACKMAN_TRACKING_CURRENT_DIR"/",
-                                       escapename, NULL);
-                g_free (escapename);
-
-                if (rc_cp (file->filename, newfile) < 0) {
-                    rc_packman_set_error (tracking_info->packman,
-                                          RC_PACKMAN_ERROR_ABORT,
-                                          "Unable to copy '%s' to '%s' for "
-                                          "transaction tracking", 
-                                          file->filename, newfile);
-                    g_free (newfile);
-                    goto ERROR;
-                }
-
-                g_free (newfile);
-
-                tracking_info->changes = TRUE;
-            }
-
-            if (!changes_node)
-                changes_node = xmlNewNode (NULL, "changes");
-
-            xmlAddChild (changes_node, file_node);
-        } else {
-            xmlFreeNode (file_node);
-        }
-    }
-
-    rc_package_file_slist_free (files);
-
-    return changes_node;
-
-ERROR:
-    if (changes_node)
-        xmlFreeNode (changes_node);
-
-    rc_package_file_slist_free (files);
-
-    return NULL;
-}    
-
-static void
-add_tracked_package (TrackingInfo *tracking_info,
-                     RCPackage  *old_package,
-                     RCPackage  *new_package)
-{
-    xmlNode *root, *package_node;
-    char *tmp;
-
-    g_return_if_fail (tracking_info != NULL);
-    g_return_if_fail (old_package != NULL || new_package != NULL);
-
-    root = xmlDocGetRootElement (tracking_info->doc);
-    package_node = xmlNewNode (NULL, "package");
-    xmlAddChild (root, package_node);
-
-    tmp = g_strdup_printf ("%ld", tracking_info->timestamp);
-    xmlNewProp (package_node, "timestamp", tmp);
-    g_free (tmp);
-
-    xmlNewProp (package_node, "name",
-                old_package ? g_quark_to_string (old_package->spec.nameq) : 
-                g_quark_to_string (new_package->spec.nameq));
-
-    if (old_package) {
-        xmlNewProp (package_node, "old_version", old_package->spec.version);
-        xmlNewProp (package_node, "old_release", old_package->spec.release);
-    }
-
-    if (new_package) {
-        xmlNewProp (package_node, "new_version", new_package->spec.version);
-        xmlNewProp (package_node, "new_release", new_package->spec.release);
-    }
-
-    if (old_package) {
-        xmlNode *changes_node;
-
-        changes_node = file_changes_to_xml (tracking_info, old_package);
-
-        if (changes_node)
-            xmlAddChild (package_node, changes_node);
-    }
-
-    return;
-}        
-    
-static TrackingInfo *
-rc_packman_track_transaction (RCPackman      *packman,
-                              RCPackageSList *install_packages,
-                              RCPackageSList *remove_packages)
-{
-    TrackingInfo *tracking_info = NULL;
-    RCPackageSList *iter;
-
-    if (!rc_file_exists (RC_PACKMAN_TRACKING_DIR)) {
-        /*
-         * Make the dir restrictive; we don't know what kind of files
-         * will go in there.
-         */
-        if (rc_mkdir (RC_PACKMAN_TRACKING_DIR, 0700) < 0) {
-            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                  "Unable to create directory for "
-                                  "transaction tracking "
-                                  "'"RC_PACKMAN_TRACKING_DIR"'");
-            goto ERROR;
-        }
-    }
-
-    tracking_info = g_new0 (TrackingInfo, 1);
-    tracking_info->packman = g_object_ref (packman);
-    tracking_info->timestamp = time (NULL);
-
-    if (!rc_file_exists (RC_PACKMAN_TRACKING_XML) ||
-        !(tracking_info->doc = xmlParseFile (RC_PACKMAN_TRACKING_XML)))
-    {
-        xmlNode *root;
-
-        tracking_info->doc = xmlNewDoc ("1.0");
-        root = xmlNewNode (NULL, "transactions");
-        xmlDocSetRootElement (tracking_info->doc, root);
-    }
-
-    if (rc_file_exists (RC_PACKMAN_TRACKING_CURRENT_DIR))
-        rc_rmdir (RC_PACKMAN_TRACKING_CURRENT_DIR);
-
-    if (!rc_mkdir (RC_PACKMAN_TRACKING_CURRENT_DIR, 0700) < 0) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              "Unable to create tracking directory "
-                              RC_PACKMAN_TRACKING_CURRENT_DIR);
-        goto ERROR;
-    }
-
-    /*
-     * First walk the list of packages to be installed, see if we're
-     * doing an upgrade, get the list of files in that package and check
-     * to see if the files have changed at all.
-     */
-    for (iter = install_packages; iter; iter = iter->next) {
-        RCPackage *package_to_install = iter->data;
-        RCPackageSList *system_packages;
-        RCPackage *system_package = NULL;
-
-        system_packages = rc_packman_query (
-            packman,
-            g_quark_to_string (package_to_install->spec.nameq));
-
-
-        if (system_packages) {
-            /*
-             * FIXME: What do we do in the case when multiple packages by the
-             * same name are installed?  Right now we just pick the first one,
-             * which is probably not the right thing to do.
-             *
-             * I think that we'd probably want to track all versions and then
-             * install all the versions when we rollback and apply the changes,
-             * but we currently don't have a way of doing an install (as
-             * opposed to an upgrade) to allow this.  (Obviously this is only
-             * a problem for RPM systems; dpkg doesn't allow it)
-             */
-            system_package = system_packages->data;
-        }
-
-        add_tracked_package (tracking_info, system_package,
-                             package_to_install);
-
-        if (rc_packman_get_error (packman))
-            goto ERROR;
-    }
-
-    for (iter = remove_packages; iter; iter = iter->next) {
-        RCPackage *package_to_remove = iter->data;
-
-        add_tracked_package (tracking_info, package_to_remove, NULL);
-
-        if (rc_packman_get_error (packman))
-            goto ERROR;
-    }
-
-    return tracking_info;
-
-ERROR:
-    if (tracking_info)
-        tracking_info_free (tracking_info);
-
-    return NULL;
-}
-
-void
-rc_packman_save_tracking_info (TrackingInfo *tracking_info)
-{
-    /* 
-     * FIXME: How can we better handle errors here?  An error fucks any
-     * ability of rollback
-     */
-
-    if (xmlSaveFormatFile (RC_PACKMAN_TRACKING_XML,
-                           tracking_info->doc, 1) < 0) {
-        rc_packman_set_error (tracking_info->packman, RC_PACKMAN_ERROR_ABORT,
-                              "Unable to open '%s' for writing; transaction "
-                              "cannot be tracked");
-        return;
-    }
-
-    if (tracking_info->changes) {
-        char *tracking_dir = g_strdup_printf (RC_PACKMAN_TRACKING_DIR"/%ld",
-                                              tracking_info->timestamp);
-
-        if (rename (RC_PACKMAN_TRACKING_CURRENT_DIR, tracking_dir) < 0) {
-            rc_packman_set_error (tracking_info->packman,
-                                  RC_PACKMAN_ERROR_ABORT,
-                                  "Unable to move %s to %s for transaction "
-                                  "tracking",
-                                  RC_PACKMAN_TRACKING_CURRENT_DIR,
-                                  tracking_dir);
-        }
-
-        g_free (tracking_dir);
-    }
-    else
-        rc_rmdir (RC_PACKMAN_TRACKING_CURRENT_DIR);
 }
 
 /* Wrappers around all of the virtual functions */
@@ -558,7 +216,8 @@ rc_packman_transact (RCPackman       *packman,
 {
     RCPackmanClass *klass;
     RCPackageSList *iter;
-    TrackingInfo *tracking_info = NULL;
+    gboolean rollback_enabled;
+    RCRollbackInfo *rollback_info = NULL;
 
     g_return_if_fail (packman);
 
@@ -621,10 +280,18 @@ rc_packman_transact (RCPackman       *packman,
 
     g_assert (klass->rc_packman_real_transact);
 
-    if (packman->priv->transaction_tracking) {
-        tracking_info = rc_packman_track_transaction (packman,
-                                                      install_packages,
-                                                      remove_packages);
+#if 0
+    packman->priv->rollback_enabled = TRUE;
+#endif
+
+    rollback_enabled =
+        rc_packman_get_capabilities (packman) & RC_PACKMAN_CAP_ROLLBACK &&
+        packman->priv->rollback_enabled;
+
+    if (rollback_enabled) {
+        rollback_info = rc_rollback_info_new (packman,
+                                              install_packages,
+                                              remove_packages);
     }
 
     if (!rc_packman_get_error (packman)) {
@@ -632,13 +299,13 @@ rc_packman_transact (RCPackman       *packman,
                                          remove_packages, flags);
     }
 
-    if (packman->priv->transaction_tracking) {
+    if (rollback_enabled) {
         if (!rc_packman_get_error (packman))
-            rc_packman_save_tracking_info (tracking_info);
+            rc_rollback_info_save (rollback_info);
         else
-            rc_rmdir (RC_PACKMAN_TRACKING_CURRENT_DIR);
+            rc_rollback_info_discard (rollback_info);
 
-        tracking_info_free (tracking_info);
+        rc_rollback_info_free (rollback_info);
     }
 }
 
@@ -1075,9 +742,9 @@ rc_packman_get_repackage_dir (RCPackman *packman)
 }
 
 void
-rc_packman_set_transaction_tracking (RCPackman *packman, gboolean enabled)
+rc_packman_set_rollback_enabled (RCPackman *packman, gboolean enabled)
 {
     g_return_if_fail (packman);
 
-    packman->priv->transaction_tracking = enabled;
+    packman->priv->rollback_enabled = enabled;
 }

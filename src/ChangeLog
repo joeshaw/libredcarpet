@@ -1,3 +1,31 @@
+2003-05-08  Joe Shaw  <joe@ximian.com
+
+	Checkpoint the rollback code.
+
+	* Makefile.am: Add rc-rollback.[ch]
+
+	* rc-packman-private.h: s/transaction_tracing/rollback_enabled
+
+	* rc-packman.c: Move all the rollback stuff into rc-rollback.[ch].
+
+	* rc-rollback.c: Move the rollback code in here.  Tracks changes
+	to files on the filesystem, saves backups, and restores them.
+
+	* rc-util.c (rc_hash_values_to_list): Added.  Utility function to
+	convert the values of a GHashTable to a GSList.
+	(rc_hash_keys_to_list): Added.  Does keys.
+
+	* xml-util.c (xml_get_node): Added.  Gets an xmlNode * for a given
+	name.
+
+2003-08-08  Joe Shaw  <joe@ximian.com>
+
+	* rc-dep-or.c (rc_dep_or_dep_slist_to_string): Get rid of the weak
+	relation check.
+
+	* rc-package-dep.[ch]: Remove RC_RELATION_WEAK and cousins.
+	They're not used anywhere in libredcarpet anymore.
+
 2003-05-08  Joe Shaw  <joe@ximian.com>
 
 	* rc-arch.c: The _to_string() functiosn do a first-match, and we

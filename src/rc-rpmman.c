@@ -3723,7 +3723,7 @@ rc_rpmman_init (RCRpmman *obj)
 
     /* Repackaging was added in RPM 4.0.3, but broken until 4.0.4 */
     if (obj->version >= 40004)
-        capabilities |= RC_PACKMAN_CAP_REPACKAGING;
+        capabilities |= RC_PACKMAN_CAP_ROLLBACK;
 
     rc_packman_set_capabilities(packman, capabilities);
 

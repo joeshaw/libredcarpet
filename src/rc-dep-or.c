@@ -137,10 +137,6 @@ rc_dep_or_dep_slist_to_string (RCPackageDepSList *dep)
         RCPackageDep *pdi = (RCPackageDep *) dep->data;
         RCPackageRelation relation = rc_package_dep_get_relation (pdi);
 
-        if (relation & RC_RELATION_WEAK) {
-            g_error ("Bork bork bork! munge or dep with weak dep!");
-        }
-
         g_string_append (gstr, g_quark_to_string (
                              RC_PACKAGE_SPEC (pdi)->nameq));
 

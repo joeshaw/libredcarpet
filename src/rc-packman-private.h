@@ -38,7 +38,7 @@ struct _RCPackmanPrivate {
 
     gchar *repackage_dir;
 
-    gboolean transaction_tracking;
+    gboolean rollback_enabled;
 };
 
 void rc_packman_set_file_extension (RCPackman *packman,

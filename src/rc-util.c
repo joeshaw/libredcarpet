@@ -623,3 +623,39 @@ rc_str_case_equal (gconstpointer v1, gconstpointer v2)
 
     return g_ascii_strcasecmp (string1, string2) == 0;
 }
+
+static void
+hash_values_to_list_cb (gpointer key, gpointer value, gpointer user_data)
+{
+    GSList **list = user_data;
+
+    *list = g_slist_prepend (*list, value);
+}
+
+GSList *
+rc_hash_values_to_list (GHashTable *hash_table)
+{
+    GSList *list = NULL;
+
+    g_hash_table_foreach (hash_table, hash_values_to_list_cb, &list);
+
+    return list;
+}
+
+static void
+hash_keys_to_list_cb (gpointer key, gpointer value, gpointer user_data)
+{
+    GSList **list = user_data;
+
+    *list = g_slist_prepend (*list, key);
+}
+
+GSList *
+rc_hash_keys_to_list (GHashTable *hash_table)
+{
+    GSList *list = NULL;
+
+    g_hash_table_foreach (hash_table, hash_keys_to_list_cb, &list);
+
+    return list;
+}

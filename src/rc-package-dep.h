@@ -27,7 +27,6 @@
 #define RELATION_LESS (1 << 1)
 #define RELATION_GREATER (1 << 2)
 #define RELATION_NONE (1 << 3)
-#define RELATION_WEAK (1 << 4)
 
 /* This enum is here so that gdb can give us pretty strings */
 
@@ -41,26 +40,6 @@ typedef enum {
     RC_RELATION_GREATER_EQUAL      = RELATION_GREATER | RELATION_EQUAL,
     RC_RELATION_NOT_EQUAL          = RELATION_LESS | RELATION_GREATER,
     RC_RELATION_NONE               = RELATION_NONE,
-
-    /* A weak relation is one that has to be satisfied only if there
-     * is a strong relation in the set, or if the spec is otherwise
-     * installed/to be installed. Otherwise it should be
-     * ignored. (i.e. it should never add new packages) */
-
-    RC_RELATION_WEAK               = RELATION_WEAK,
-
-    /* Note that WEAK_ANY doesn't really make sense, since to get
-     * this, it would require an original dep of none, which no
-     * packaging system can express as a dependency */
-
-    RC_RELATION_WEAK_ANY           = RC_RELATION_ANY | RELATION_WEAK,
-    RC_RELATION_WEAK_EQUAL         = RC_RELATION_EQUAL | RELATION_WEAK,
-    RC_RELATION_WEAK_LESS          = RC_RELATION_LESS | RELATION_WEAK,
-    RC_RELATION_WEAK_LESS_EQUAL    = RC_RELATION_LESS_EQUAL | RELATION_WEAK,
-    RC_RELATION_WEAK_GREATER       = RC_RELATION_GREATER | RELATION_WEAK,
-    RC_RELATION_WEAK_GREATER_EQUAL = RC_RELATION_GREATER_EQUAL | RELATION_WEAK,
-    RC_RELATION_WEAK_NOT_EQUAL     = RC_RELATION_NOT_EQUAL | RELATION_WEAK,
-    RC_RELATION_WEAK_NONE          = RC_RELATION_NONE | RELATION_WEAK,
 } RCPackageRelation;
 
 typedef struct _RCPackageDep RCPackageDep;

@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 /* xml-util.h
- * Copyright (C) 2000-2002 Ximian, Inc.
+ * Copyright (C) 2000-2003 Ximian, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License,
@@ -17,8 +17,8 @@
  * 02111-1307, USA.
  */
 
-#ifndef __SOFTMGR_XML_UTIL_H
-#define __SOFTMGR_XML_UTIL_H
+#ifndef __XML_UTIL_H__
+#define __XML_UTIL_H__
 
 #include <glib.h>
 
@@ -45,4 +45,6 @@ gchar *xml_get_content (const xmlNode *);
 guint32 xml_get_guint32_content_default (const xmlNode *node,
                                          const guint32 def);
 
-#endif /* __SOFTMGR_XML_UTIL_H */
+xmlNode *xml_get_node (const xmlNode *node, const char *name);
+
+#endif /* __XML_UTIL_H__ */

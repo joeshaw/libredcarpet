@@ -183,3 +183,14 @@ xml_get_guint32_content_default (const xmlNode *node, const guint32 def)
         return (def);
     }
 }
+
+xmlNode *
+xml_get_node (const xmlNode *node, const char *name)
+{
+    xmlNode *iter;
+
+    for (iter = node->xmlChildrenNode; iter; iter = iter->next) {
+        if (g_strcasecmp (iter->name, name) == 0)
+            return iter;
+    }
+}

@@ -61,10 +61,6 @@ rc_package_relation_from_string (const gchar *relation)
 const gchar *
 rc_package_relation_to_string (RCPackageRelation relation, gint words)
 {
-    /* Weak relations should never find their way to the user */
-    if (relation & RC_RELATION_WEAK)
-        relation &= ~RC_RELATION_WEAK;
-
     switch (relation) {
     case RC_RELATION_ANY:
         return "(any)";
@@ -457,9 +453,6 @@ rc_package_dep_verify_relation (RCPackman    *packman,
     RCPackageSpec newprovspec;
     gint compare_ret = 0;
 
-    gint unweak_deprel = dep->relation & ~RC_RELATION_WEAK;
-    gint unweak_provrel = prov->relation & ~RC_RELATION_WEAK;
-    
     g_assert (dep);
     g_assert (prov);
 
@@ -471,13 +464,13 @@ rc_package_dep_verify_relation (RCPackman    *packman,
     /* WARNING: RC_RELATION_NONE is NOT handled */
 
     /* No specific version in the req, so return */
-    if (unweak_deprel == RC_RELATION_ANY) {
+    if (dep->relation == RC_RELATION_ANY) {
         return TRUE;
     }
 
     /* No specific version in the prov.  In RPM this means it will satisfy
      * any version, but debian it will not satisfy a versioned dep */
-    if (unweak_provrel == RC_RELATION_ANY) {
+    if (prov->relation == RC_RELATION_ANY) {
         if (rc_packman_get_capabilities(packman) &
             RC_PACKMAN_CAP_PROVIDE_ALL_VERSIONS)
         {
@@ -537,21 +530,21 @@ rc_package_dep_verify_relation (RCPackman    *packman,
 
     }
 
-    if (compare_ret < 0 && ((unweak_provrel & RC_RELATION_GREATER) ||
-                            (unweak_deprel & RC_RELATION_LESS)))
+    if (compare_ret < 0 && ((prov->relation & RC_RELATION_GREATER) ||
+                            (dep->relation & RC_RELATION_LESS)))
     {
         return TRUE;
-    } else if (compare_ret > 0 && ((unweak_provrel & RC_RELATION_LESS) ||
-                                   (unweak_deprel & RC_RELATION_GREATER)))
+    } else if (compare_ret > 0 && ((prov->relation & RC_RELATION_LESS) ||
+                                   (dep->relation & RC_RELATION_GREATER)))
     {
         return TRUE;
     } else if (compare_ret == 0 && (
-            ((unweak_provrel & RC_RELATION_EQUAL) &&
-             (unweak_deprel & RC_RELATION_EQUAL)) ||
-            ((unweak_provrel & RC_RELATION_LESS) &&
-             (unweak_deprel & RC_RELATION_LESS)) ||
-            ((unweak_provrel & RC_RELATION_GREATER) &&
-             (unweak_deprel & RC_RELATION_GREATER))))
+            ((prov->relation & RC_RELATION_EQUAL) &&
+             (dep->relation & RC_RELATION_EQUAL)) ||
+            ((prov->relation & RC_RELATION_LESS) &&
+             (dep->relation & RC_RELATION_LESS)) ||
+            ((prov->relation & RC_RELATION_GREATER) &&
+             (dep->relation & RC_RELATION_GREATER))))
     {
         return TRUE;
     }

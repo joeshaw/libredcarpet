@@ -69,11 +69,13 @@ typedef enum {
  * requires "bar >= 2.0" then both "bar 21" and "bar 1:2.0" meet the
  * requirement. (RPM)
  *
- * REPACKAGING - RPM version 4.0.4 and higher have a (mostly) working
- * repackaging feature which writes the currently installed files of a
- * package back into a package before upgrading or removing it from the
- * system.  Files are written out into the repackaging directory, which
- * can be get/set using rc_packman_{get|set}_repackage_dir(). (RPM)
+ * ROLLBACK - Supports the tracking of file changes and then rolling
+ * back transactions to an earlier state with those files as they were
+ * originally.  Note that this does not use the built-in RPM repackaging
+ * available in RPM 4.0.4 and newer since it's somewhat buggy and we
+ * have to run on RPM versions earlier than that.  Successful rollback
+ * depends on the availability of the old versions in the history sections
+ * of the packageinfo.xml files.
  *
  * ALWAYS_VERIFY_RELEASE - When verifying relations, the release field is
  * usually only compared when both the requirement specifies it.  For
@@ -88,7 +90,8 @@ typedef enum {
 #define RC_PACKMAN_CAP_NONE                  (0)
 #define RC_PACKMAN_CAP_PROVIDE_ALL_VERSIONS  (1 << 0)
 #define RC_PACKMAN_CAP_IGNORE_ABSENT_EPOCHS  (1 << 2)
-#define RC_PACKMAN_CAP_REPACKAGING           (1 << 3)
+#define RC_PACKMAN_CAP_ROLLBACK              (1 << 3)
+#define RC_PACKMAN_CAP_REPACKAGING              (1 << 3)
 #define RC_PACKMAN_CAP_ALWAYS_VERIFY_RELEASE (1 << 4)
 
 #define RC_TRANSACT_FLAG_NONE      (0)
