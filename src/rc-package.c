@@ -172,7 +172,7 @@ rc_package_to_str (RCPackage *package)
 
     str = g_strconcat (specstr,
                        package->channel ? "[" : NULL,
-                       package->channel ? package->channel->name : "",
+                       package->channel ? rc_channel_get_name (package->channel) : NULL,
                        "]",
                        NULL);
 

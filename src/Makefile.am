@@ -71,6 +71,7 @@ libredcarpettmp_a_SOURCES =		\
 	rc-verification-private.h	\
 	rc-channel.h			\
 	rc-channel.c			\
+	rc-channel-private.c		\
 	rc-xml.c			\
 	rc-xml.h			\
 	rc-util.c			\
@@ -105,6 +106,7 @@ libredcarpettmp_a_SOURCES =		\
 EXTRA_DIST =				\
 	$(rpm_sources)			\
 	$(dpkg_sources)			\
+	rc-channel-private.h		\
 	rc-dpkg-helper.c 		\
 	make_stub.sh			\
 	rc-marshal.list

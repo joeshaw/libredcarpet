@@ -28,8 +28,20 @@
 #include <config.h>
 #include "rc-world.h"
 
+#include "rc-channel-private.h"
 #include "rc-util.h"
 #include "rc-dep-or.h"
+
+struct _RCWorld {
+
+	GHashTable *packages_by_name;
+	GHashTable *provides_by_name;
+    GHashTable *requires_by_name;
+
+    int freeze_count;
+
+    GSList *channels;
+};
 
 typedef struct _RCPackageAndDep RCPackageAndDep;
 struct _RCPackageAndDep {
@@ -272,6 +284,7 @@ void
 rc_world_free (RCWorld *world)
 {
 	if (world) {
+        GSList *iter;
 
         rc_world_remove_packages (world, RC_WORLD_ANY_CHANNEL);
 
@@ -279,10 +292,111 @@ rc_world_free (RCWorld *world)
         hashed_slist_destroy (world->provides_by_name);
         hashed_slist_destroy (world->requires_by_name);
 
+        /* Free our channels */
+        for (iter = world->channels; iter != NULL; iter = iter->next) {
+            RCChannel *channel = iter->data;
+            rc_channel_free (channel);
+        }
+        g_slist_free (world->channels);
+
 		g_free (world);
 
 	}
 }
+
+RCChannel *
+rc_world_add_channel (RCWorld *world,
+                      const char *channel_name,
+                      guint32 channel_id,
+                      RCChannelType type)
+{
+    RCChannel *channel;
+
+    g_return_val_if_fail (world != NULL, NULL);
+    g_return_val_if_fail (channel_name && *channel_name, NULL);
+
+    channel = rc_channel_new ();
+    channel->id = channel_id;
+    channel->name = g_strdup (channel_name);
+    channel->type = type;
+    
+    world->channels = g_slist_prepend (world->channels,
+                                       channel);
+
+    return channel;
+}
+
+void
+rc_world_remove_channel (RCWorld *world,
+                         RCChannel *channel)
+{
+    GSList *iter;
+
+    g_return_if_fail (world != NULL);
+    g_return_if_fail (channel != NULL);
+
+    for (iter = world->channels; iter != NULL; iter = iter->next) {
+        if (iter->data == channel) {
+            rc_channel_free (channel);
+            world->channels = g_slist_delete_link (world->channels,
+                                                   iter);
+            return;
+        }
+    }
+
+    g_warning ("Couldn't remove channel '%s'", channel->name);
+}
+
+void
+rc_world_foreach_channel (RCWorld *world,
+                          RCChannelFn fn,
+                          gpointer user_data)
+{
+    GSList *iter;
+
+    g_return_if_fail (world != NULL);
+    g_return_if_fail (fn != NULL);
+
+    for (iter = world->channels; iter != NULL; iter = iter->next) {
+        fn (iter->data, user_data);
+    }
+}
+
+RCChannel *
+rc_world_get_channel_by_name (RCWorld *world,
+                              const char *channel_name)
+{
+    GSList *iter;
+
+    g_return_val_if_fail (world != NULL, NULL);
+    g_return_val_if_fail (channel_name && *channel_name, NULL);
+
+    for (iter = world->channels; iter != NULL; iter = iter->next) {
+        RCChannel *channel = iter->data;
+        if (!g_strcasecmp (channel->name, channel_name))
+            return channel;
+    }
+
+    return NULL;
+}
+
+RCChannel *
+rc_world_get_channel_by_id (RCWorld *world,
+                            guint32 channel_id)
+{
+    GSList *iter;
+
+    g_return_val_if_fail (world != NULL, NULL);
+
+    for (iter = world->channels; iter != NULL; iter = iter->next) {
+        RCChannel *channel = iter->data;
+        if (channel->id == channel_id)
+            return channel;
+    }
+
+    return NULL;
+}
+
 
 /**
  * rc_world_freeze:
@@ -889,7 +1003,7 @@ system_upgrade_cb (RCPackage *package, gpointer user_data)
 }
 
 /**
- * rc_world_foreach_system_package_with_upgrade:
+ * rc_world_foreach_system_upgrade:
  * @world: An #RCWorld.
  * @fn: A callback function.
  * @user_data: Pointer to be passed to the callback function.
@@ -905,9 +1019,9 @@ system_upgrade_cb (RCPackage *package, gpointer user_data)
  * function was invoked on, or -1 in case of an error.
  **/
 int
-rc_world_foreach_system_package_with_upgrade (RCWorld *world,
-                                              RCPackagePairFn fn,
-                                              gpointer user_data)
+rc_world_foreach_system_upgrade (RCWorld *world,
+                                 RCPackagePairFn fn,
+                                 gpointer user_data)
 {
     struct SystemUpgradeInfo info;
 

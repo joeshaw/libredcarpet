@@ -18,6 +18,9 @@
  * 02111-1307, USA.
  */
 
+#include <config.h>
+#include "rc-channel.h"
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <ctype.h>
@@ -25,8 +28,8 @@
 
 #include <libxml/tree.h>
 
+#include "rc-channel-private.h"
 #include "rc-world.h"
-#include "rc-channel.h"
 #include "rc-util.h"
 #include "rc-debug.h"
 #include "xml-util.h"
@@ -78,54 +81,30 @@ rc_channel_priority_parse (const char *priority_str)
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
-RCChannel *
-rc_channel_new (void)
+guint32
+rc_channel_get_id (const RCChannel *channel)
 {
-    RCChannel *channel;
+    g_return_val_if_fail (channel != NULL, 0);
+    
+    return channel->id;
+}
 
-    RC_ENTRY;
-
-    channel = g_new0 (RCChannel, 1);
-
-    channel->type = RC_CHANNEL_TYPE_HELIX; /* default */
-
-    channel->priority = -1;
-    channel->priority_unsubd = -1;
-    channel->priority_current = -1;
-
-    return (channel);
-
-    RC_EXIT;
-} /* rc_channel_new */
-
-void
-rc_channel_free (RCChannel *channel)
+const char *
+rc_channel_get_name (const RCChannel *channel)
 {
-    RC_ENTRY;
+    g_return_val_if_fail (channel != NULL, NULL);
 
-    g_free (channel->name);
-    g_free (channel->description);
+    return channel->name ? channel->name : "Unnamed Channel";
+}
 
-    g_slist_foreach (channel->distro_target, (GFunc)g_free, NULL);
-    g_slist_free (channel->distro_target);
+const char *
+rc_channel_get_description (const RCChannel *channel)
+{
+    g_return_val_if_fail (channel != NULL, NULL);
 
-    g_free (channel->path);
-    g_free (channel->file_path);
-
-    g_free (channel->pkginfo_file);
-    g_free (channel->pkgset_file);
-
-    g_free (channel->subs_file);
-    g_free (channel->unsubs_file);
-
-    g_free (channel->icon_file);
-
-    rc_package_set_slist_free (channel->package_sets);
-
-    g_free (channel);
-
-    RC_EXIT;
-} /* rc_channel_free */
+    return channel->description ?
+        channel->description : "No Description Available";
+}
 
 int
 rc_channel_get_priority (const RCChannel *channel,
@@ -157,19 +136,15 @@ rc_channel_get_priority (const RCChannel *channel,
     return priority;
 }
 
-/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
-
-void
-rc_channel_slist_free(RCChannelSList *channel_slist)
+RCChannelType
+rc_channel_get_type (const RCChannel *channel)
 {
-    RC_ENTRY;
+    g_return_val_if_fail (channel != NULL, RC_CHANNEL_TYPE_UNKNOWN);
 
-    g_slist_foreach(channel_slist, (GFunc) rc_channel_free, NULL);
-    
-    g_slist_free(channel_slist);
+    return channel->type;
+}
 
-    RC_EXIT;
-} /* rc_channel_slist_free */
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 RCChannelSList *
 rc_channel_parse_xml(char *xmlbuf, int compressed_length)

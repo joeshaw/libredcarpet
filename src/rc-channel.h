@@ -29,6 +29,8 @@ typedef struct _RCChannel RCChannel;
 
 typedef GSList RCChannelSList;
 
+typedef void (*RCChannelFn) (RCChannel *, gpointer);
+
 #include "rc-package.h"
 #include "rc-package-set.h"
 
@@ -45,61 +47,31 @@ typedef enum {
     RC_CHANNEL_TYPE_LAST
 } RCChannelType;
 
-struct _RCChannel {
-    guint32 id;
-    gchar *name;
-    gchar *description;
-    guint32 tier;
-                           /* priority if channel is... */
-    gint priority;         /* subscribed */
-    gint priority_unsubd;  /* unsubscribed */
-    gint priority_current; /* the current channel */
-
-    gboolean mirrored;
-    gboolean featured;
-
-    RCChannelType type;
-
-    GSList *distro_target;
-
-    gchar *path;
-    gchar *file_path;
-
-    gchar *icon_file;
-
-    gchar *subs_file;
-    gchar *unsubs_file;
-
-    gchar *pkginfo_file;
-    gboolean pkginfo_compressed;
-
-    gchar *pkgset_file;
-    gboolean pkgset_compressed;
-
-    time_t last_update;
-
-    RCPackageSetSList *package_sets;
-};
-
 int rc_channel_priority_parse (const char *);
 
-RCChannel *rc_channel_new (void);
+/* Accessors */
+ 
+guint32       rc_channel_get_id          (const RCChannel *channel);
 
-void rc_channel_free (RCChannel *rcc);
+const char   *rc_channel_get_name        (const RCChannel *channel);
 
-int rc_channel_get_priority (const RCChannel *,
-                             gboolean is_subscribed,
-                             gboolean is_current);
+const char   *rc_channel_get_description (const RCChannel *channel);
 
-void rc_channel_slist_free(RCChannelSList *rccl);
+int           rc_channel_get_priority    (const RCChannel *channel,
+                                          gboolean         is_subscribed,
+                                          gboolean         is_current);
 
-RCChannelSList *rc_channel_parse_xml(char *xmlbuf, int compressed_length);
+RCChannelType rc_channel_get_type        (const RCChannel *channel);
 
-int rc_channel_get_id_by_name(RCChannelSList *channels, char *name);
 
-RCChannel *rc_channel_get_by_id(RCChannelSList *channels, int id);
 
-RCChannel *rc_channel_get_by_name(RCChannelSList *channels, char *name);
+RCChannelSList *rc_channel_parse_xml (char *xmlbuf, int compressed_length);
+
+int rc_channel_get_id_by_name (RCChannelSList *channels, char *name);
+
+RCChannel *rc_channel_get_by_id (RCChannelSList *channels, int id);
+
+RCChannel *rc_channel_get_by_name (RCChannelSList *channels, char *name);
 
 gint rc_channel_compare_func (gconstpointer a, gconstpointer b);
 

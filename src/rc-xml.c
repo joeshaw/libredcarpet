@@ -23,6 +23,7 @@
 #include "rc-debug.h"
 #include "rc-dep-or.h"
 #include "rc-util.h"
+#include "rc-channel-private.h"
 
 /* SAX Parser */
 

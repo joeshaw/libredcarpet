@@ -36,6 +36,7 @@
 #include <stdlib.h>
 
 #include "rc-world.h"
+#include "rc-channel-private.h"
 #include "rc-debman-general.h"
 #include "rc-debug.h"
 #include "rc-util.h"

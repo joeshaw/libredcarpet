@@ -1,3 +1,39 @@
+2002-05-07  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-xml.c: Include rc-channel-private.h.
+
+	* rc-world-import.c: Include rc-channel-private.h.
+
+	* rc-world.c: Moved the RCWorld struct definition into the .c file
+	to make it opaque.
+	(rc_world_free): Free our channels.
+	(rc_world_add_channel): Added.  Creates a new channel and stores
+	it in the RCWorld.
+	(rc_world_remove_channel): Added.
+	(rc_world_foreach_channel): Added.
+	(rc_world_get_channel_by_name): Added.
+	(rc_world_get_channel_by_id): Added.
+	(rc_world_foreach_system_upgrade): Used to be called
+	rc_world_foreach_system_package_with_upgrade, but that was just
+	too long.
+	
+	* rc-package.c (rc_package_to_str): Use rc_channel_get_name
+	accessor function.
+
+	* rc-channel.c: Moved rc_channel_new and rc_channel_free to
+	rc-channel-private.c.
+	(rc_channel_get_id): Added.
+	(rc_channel_get_name): Added.
+	(rc_channel_get_description): Added.
+	(rc_channel_get_type): Added.
+	(rc_channel_slist_free): Removed.
+
+	* rc-channel-private.c (rc_channel_new): Moved from rc-channel.c.
+	(rc_channel_free): Moved from rc-channel.c.
+
+	* rc-channel-private.h: Moved the RCChannel struct into a private
+	header to make it opaque.
+
 2002-05-06  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-world.c: (hashed_slist_*): Added a set of functions for

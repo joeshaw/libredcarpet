@@ -58,6 +58,7 @@ load_channel (const char *name,
               gboolean system_packages)
 {
     RCChannel *channel;
+    RCChannelType channel_type;
     gboolean is_compressed;
     struct stat stat_buf;
     int file_size;
@@ -91,15 +92,16 @@ load_channel (const char *name,
     
     fclose (in);
 
-    channel = rc_channel_new ();
-    channel->name = g_strdup (name);
+    channel_type = RC_CHANNEL_TYPE_HELIX;
 
     if (type) {
         if (g_strcasecmp(type, "helix") == 0)
-            channel->type = RC_CHANNEL_TYPE_HELIX;
+            channel_type = RC_CHANNEL_TYPE_HELIX;
         else if (g_strcasecmp(type, "debian") == 0)
-            channel->type = RC_CHANNEL_TYPE_DEBIAN;
+            channel_type = RC_CHANNEL_TYPE_DEBIAN;
     }
+
+    channel = rc_world_add_channel (world, name, 17, channel_type);
     
     count = rc_world_parse_channel (world, channel, buffer, is_compressed ? file_size : 0);
 
@@ -500,10 +502,10 @@ parse_xml_trial (xmlNode *node)
 
             g_print (">!> Checking for upgrades...\n");
 
-            count = rc_world_foreach_system_package_with_upgrade (world,
-                                                                  trial_upgrade_cb,
-                                                                  resolver);
-
+            count = rc_world_foreach_system_upgrade (world,
+                                                     trial_upgrade_cb,
+                                                     resolver);
+            
             if (count == 0)
                 g_print (">!> System is up-to-date, no upgrades required\n");
             else
