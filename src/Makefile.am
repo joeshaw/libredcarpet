@@ -85,10 +85,13 @@ EXTRA_DIST = \
 	rc-rpm-helper.so
 
 if ENABLE_RPM
+if STATIC_RPM
+else
 rpmhelperdir = $(libdir)/redcarpet
 rpmhelper_DATA = \
 	rc-rpm-helper-with-rpmio.so	\
 	rc-rpm-helper.so
+endif
 endif
 
 if ENABLE_DPKG
@@ -125,8 +128,7 @@ if STATIC_RPM
 		rm -rf $$dir; \
 	done; \
 	ranlib libredcarpetbuild.a; \
-	mv libredcarpetbuild.a libredcarpet.a; \
-	rm -f libredcarpettmp.a
+	mv libredcarpetbuild.a libredcarpet.a;
 else
 	cp libredcarpettmp.a libredcarpet.a
 endif

@@ -1,5 +1,14 @@
 2001-04-01  Ian Peters  <itp@ximian.com>
 
+	* Makefile.am: only add rpmhelperdir and rpmhelper_DATA if
+	ENABLE_RPM and not STATIC_RPM.  don't get rid of libredcarpettmp.a
+	at the end of the libredcarpet.a STATIC_RPM case -- i don't know
+	why i did this in the first place, and now it doesn't get rebuilt
+	every time you pass over this target.  i think.  automake is still
+	my bitch.
+
+2001-04-01  Ian Peters  <itp@ximian.com>
+
 	* Makefile.am: add rc-rpmman-types.h to rpm_sources.  add
 	rc-rpm-helper-with-rpmio.so and rc-rpm-helper.so to EXTRA_DIST.
 	Get rid of helperdir and helper_DATA, and conditionally use
