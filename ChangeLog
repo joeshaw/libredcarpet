@@ -1,5 +1,9 @@
 2001-01-29  Ian Peters  <itp@ximian.com>
 
+	* configure.in: add some bz2 autoloving magic
+
+2001-01-29  Ian Peters  <itp@ximian.com>
+
 	* configure.in: remove -lbz2 from the RPMLIB_LIBS line
 
 2001-01-29  Ian Peters  <itp@ximian.com>

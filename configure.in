@@ -73,10 +73,19 @@ if test "x$enable_backend_rpm3" = "xyes"; then
       AC_MSG_ERROR(couldn't find libpopt))
   AC_CHECK_LIB(rpm, rpmdbOpen,
     AC_CHECK_HEADERS(rpm/rpmlib.h,, AC_MSG_ERROR(couldn't find rpmlib.h)),
-      AC_MSG_ERROR(couldn't find librpm), -lz -lbz2 -lpopt)
+      AC_MSG_ERROR(couldn't find librpm), -lz -lpopt)
   AC_SEARCH_LIBS(db_version, db1 db db-3.1,,
     AC_MSG_ERROR(couldn't find libdb))
-  RPMLIB_LIBS="-L$RPM_PREFIX/lib -Wl,-Bstatic -lrpm -lz -Wl,-Bdynamic -lpopt"
+
+  RPM_BZ2_P=`nm --undefined-only $RPM_PREFIX/lib/librpm.a | grep bzopen`
+
+  if test "xRPM_BZ2_P" != "x"; then
+    RPM_BZ2="-lbz2"
+  else
+    RPM_BZ2=""
+  fi
+
+  RPMLIB_LIBS="-L$RPM_PREFIX/lib -Wl,-Bstatic -lrpm -lpopt -Wl,-Bdynamic -lz $RPM_BZ2"
   RPMLIB_CFLAGS="-I$RPM_PREFIX/include/rpm"
 
   AM_CONDITIONAL(ENABLE_RPM, true)
@@ -113,7 +122,7 @@ if test "x$enable_backend_rpm4" = "xyes"; then
     AC_MSG_ERROR(broken misc.h, see README-ugid)
   fi
   AC_CHECK_LIB(db-3.1, db_version,,, -ldb1) dnl what?
-  RPMLIB_LIBS="-L$RPM_PREFIX/lib -Wl,-Bstatic -lrpm -lrpmio -lbz2 -Wl,-Bdynamic -lpopt"
+  RPMLIB_LIBS="-L$RPM_PREFIX/lib -Wl,-Bstatic -lrpm -lrpmio -lpopt -Wl,-Bdynamic -lz -lbz2"
   RPMLIB_CFLAGS="-I$RPM_PREFIX/include/rpm"
 
   AM_CONDITIONAL(ENABLE_RPM, true)
