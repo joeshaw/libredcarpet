@@ -230,6 +230,14 @@ rc_package_is_installed (RCPackage *package)
 }
 
 gboolean
+rc_package_is_local (RCPackage *package)
+{
+    g_return_val_if_fail (package != NULL, FALSE);
+
+    return package->local_package;
+}
+
+gboolean
 rc_package_is_package_set (RCPackage *package)
 {
     g_return_val_if_fail (package != NULL, FALSE);

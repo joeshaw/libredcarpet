@@ -112,6 +112,7 @@ const char *rc_package_to_str_static (RCPackage *package);
 const char *rc_package_get_name (RCPackage *package);
 
 gboolean   rc_package_is_installed     (RCPackage *package);
+gboolean   rc_package_is_local         (RCPackage *package);
 gboolean   rc_package_is_package_set   (RCPackage *package);
 gboolean   rc_package_is_synthetic     (RCPackage *package);
 gboolean   rc_package_is_install_only  (RCPackage *package);
