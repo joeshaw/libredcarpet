@@ -365,4 +365,6 @@ rc_package_slist_remove_older_duplicates (RCPackageSList *packages, RCPackageSLi
 
         dupes = dupes->next;
     }
+
+    return packages;
 }

@@ -1,5 +1,8 @@
 2001-04-22  Vladimir Vukicevic  <vladimir@ximian.com>
 
+	* rc-package.c: It helps to return a new packages array
+	from rc_package_slist_remove_older_duplicates.
+
 	* rc-package.c, rc-package.h: Added
 	rc_package_slist_remove_older_duplicates.
 
