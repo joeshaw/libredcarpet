@@ -1,3 +1,8 @@
+2002-11-21  Joe Shaw  <joe@ximian.com>
+
+	* packer.pl: Use binmode so perl 5.8.0 doesn't read in the data
+	as UTF-8.  Patch from Michael Doppler.
+
 2002-11-18  Joe Shaw  <joe@ximian.com>
 
 	* rc-xml.c (rc_package_to_xml_node): Write the description out to
