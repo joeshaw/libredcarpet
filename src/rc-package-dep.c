@@ -1,12 +1,15 @@
 #include <stdio.h>
 
-#include <libredcarpet/rc-package-dep.h>
-#include <libredcarpet/xml-util.h>
-#include <libredcarpet/rc-debug-misc.h>
+#include "rc-package-dep.h"
+#include "xml-util.h"
+#include "rc-debug-misc.h"
+#include "rc-packman.h"
 
 #include <gnome-xml/tree.h>
 
 /* #define DEBUG 50 */
+
+extern RCPackman *das_global_packman;
 
 RCPackageDepItem *
 rc_package_dep_item_new (gchar *name,
@@ -42,7 +45,7 @@ rc_package_dep_item_copy (RCPackageDepItem *rcpdi)
 {
     RCPackageDepItem *new = g_new0 (RCPackageDepItem, 1); /* That sucks */
 
-    rc_package_spec_copy ((RCPackageSpec *) rcpdi, (RCPackageSpec *) new);
+    rc_package_spec_copy ((RCPackageSpec *) new, (RCPackageSpec *) rcpdi);
 
     new->relation = rcpdi->relation;
 
@@ -252,7 +255,7 @@ rc_package_dep_item_verify_relation (RCPackageDepItem *dep,
         use_newspecspec = TRUE;
     }
 
-    compare_ret = rc_package_spec_compare (&dep->spec,
+    compare_ret = rc_packman_version_compare (das_global_packman, &dep->spec,
                                            use_newspecspec ? &newspecspec : spec);
     
     /* Note that we make the assumption that if we're in this function,
@@ -419,7 +422,7 @@ rc_package_dep_item_is_subset_real (RCPackageDepItem *a, RCPackageDepItem *b)
     if (arel == RC_RELATION_ANY && !(brel & RC_RELATION_ANY))
         return 1;              /* don't merge ANY a with !ANY b */
 
-    compare = rc_package_spec_compare (&a->spec, &b->spec);
+    compare = rc_packman_version_compare (das_global_packman, &a->spec, &b->spec);
 
     if (arel == brel) {
         gint rel = arel;

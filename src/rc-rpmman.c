@@ -35,6 +35,7 @@
 
 #include <fcntl.h>
 #include <string.h>
+#include <ctype.h>
 
 #include <rpm/rpmurl.h>
 #include <rpm/rpmmacro.h>
@@ -1073,46 +1074,6 @@ rc_rpmman_query_all (RCPackman *p)
 
 #endif /* !HAVE_RPM_4_0 */
 
-static gint
-rc_rpmman_version_compare (RCPackman *p, RCPackageSpec *s1, RCPackageSpec *s2)
-{
-    int stat;
-    gchar *v1 = s1->version, *r1 = s1->release, *v2 = s2->version,
-        *r2 = s2->release;
-
-    g_return_val_if_fail(p, -1);
-
-    /* Are we requiring that they provide strings for v1, r1, v2, and r2? If
-       so, we can just remove the following code and put some
-       g_return_val_if_fails instead. Otherwise... 
-    */
-
-    /* I don't think we should require that; this code looks correct.  Any
-       non-NULL string should be interpreted as a "later" version than a NULL
-       string. */
-
-    if (v1 && !v2)
-        return 1;
-    else if (v2 && !v1)
-        return -1;
-    else if (!v1 && !v2)
-        stat = 0;
-    else
-        stat = rpmvercmp(v1, v2);
-
-    if (stat)
-        return stat;
-    
-    if (r1 && !r2)
-        return 1;
-    else if (r2 && !r1)
-        return -1;
-    else if (!r1 && !r2)
-        return 0;
-    else
-        return rpmvercmp(r1, r2);
-}
-
 static RCVerificationSList *
 rc_rpmman_verify (RCPackman *p, RCPackage *pkg)
 {
@@ -1253,6 +1214,149 @@ rc_rpmman_verify (RCPackman *p, RCPackage *pkg)
 
     return (ret);
 } /* rc_rpmman_verify */
+
+/* This was stolen from RPM */
+/* And then slightly hacked on by me */
+/* And then hacked on more by me */
+
+/* compare alpha and numeric segments of two versions */
+/* return 1: a is newer than b */
+/*        0: a and b are the same version */
+/*       -1: b is newer than a */
+static int
+vercmp(const char * a, const char * b)
+{
+    char oldch1, oldch2;
+    char * str1, * str2;
+    char * one, * two;
+    int rc;
+    int isnum;
+
+    /* easy comparison to see if versions are identical */
+    if (!strcmp(a, b)) return 0;
+
+    /* The alloca's were silly. The loop below goes through pains
+       to ensure that the old character is restored; this just means
+       that we have to make sure that we're not passing in any
+       static strings. I think we're OK with that.
+    */
+    /* I'm not ok with it.  At least for now, it's really a pain to
+     * get random SEGV's when we pass const strings.  Defensive
+     * programming and all. */
+
+    str1 = alloca (strlen (a) + 1);
+    str2 = alloca (strlen (b) + 1);
+
+    strcpy (str1, a);
+    strcpy (str2, b);
+
+    one = str1;
+    two = str2;
+
+    /* loop through each version segment of str1 and str2 and compare them */
+    while (*one && *two) {
+        while (*one && !isalnum(*one)) one++;
+        while (*two && !isalnum(*two)) two++;
+
+        str1 = one;
+        str2 = two;
+
+        /* A number vs. word comparison always goes in favor of the word. Ie:
+           helix1 beats 1. */
+        if (!isdigit(*str1) && isdigit(*str2))
+            return 1;
+        else if (isdigit(*str1) && !isdigit(*str2))
+            return -1;
+
+        /* grab first completely alpha or completely numeric segment */
+        /* leave one and two pointing to the start of the alpha or numeric */
+        /* segment and walk str1 and str2 to end of segment */
+        if (isdigit(*str1)) {
+            while (*str1 && isdigit(*str1)) str1++;
+            while (*str2 && isdigit(*str2)) str2++;
+            isnum = 1;
+        } else {
+            while (*str1 && isalnum(*str1)) str1++;
+            while (*str2 && isalnum(*str2)) str2++;
+            isnum = 0;
+        }
+
+        /* save character at the end of the alpha or numeric segment */
+        /* so that they can be restored after the comparison */
+        oldch1 = *str1;
+        *str1 = '\0';
+        oldch2 = *str2;
+        *str2 = '\0';
+
+        /* take care of the case where the two version segments are */
+        /* different types: one numeric and one alpha */
+        if (one == str1) {
+            *str1 = oldch1;
+            *str2 = oldch2;
+            return -1;        /* arbitrary */
+        }
+        if (two == str2) {
+            *str1 = oldch1;
+            *str2 = oldch2;
+            return -1;
+        }
+
+        if (isnum) {
+            /* this used to be done by converting the digit segments */
+            /* to ints using atoi() - it's changed because long  */
+            /* digit segments can overflow an int - this should fix that. */
+
+            /* throw away any leading zeros - it's a number, right? */
+            while (*one == '0') one++;
+            while (*two == '0') two++;
+
+            /* whichever number has more digits wins */
+            if (strlen(one) > strlen(two)) {
+                *str1 = oldch1;
+                *str2 = oldch2;
+                return 1;
+            }
+            if (strlen(two) > strlen(one)) {
+                *str1 = oldch1;
+                *str2 = oldch2;
+                return -1;
+            }
+        }
+
+        /* strcmp will return which one is greater - even if the two */
+        /* segments are alpha or if they are numeric.  don't return  */
+        /* if they are equal because there might be more segments to */
+        /* compare */
+        rc = strcmp(one, two);
+        if (rc) {
+            *str1 = oldch1;
+            *str2 = oldch2;
+            return rc;
+        }
+
+        /* restore character that was replaced by null above */
+        *str1 = oldch1;
+        one = str1;
+        *str2 = oldch2;
+        two = str2;
+    }
+
+    /* this catches the case where all numeric and alpha segments have */
+    /* compared identically but the segment sepparating characters were */
+    /* different */
+    if ((!*one) && (!*two)) return 0;
+
+    /* whichever version still has characters left over wins */
+ if (!*one) return -1; else return 1;
+}
+
+static gint
+rc_rpmman_version_compare (RCPackman *packman,
+                           RCPackageSpec *spec1,
+                           RCPackageSpec *spec2)
+{
+    return (rc_packman_generic_version_compare (spec1, spec2, vercmp));
+}
 
 static void
 rc_rpmman_destroy (GtkObject *obj)

@@ -22,8 +22,8 @@ rc_package_update_copy (RCPackageUpdate *old_update)
 
     new_update = rc_package_update_new ();
 
-    rc_package_spec_copy ((RCPackageSpec *) old_update,
-                          (RCPackageSpec *) new_update);
+    rc_package_spec_copy ((RCPackageSpec *) new_update,
+                          (RCPackageSpec *) old_update);
 
     new_update->package_url = g_strdup (old_update->package_url);
     new_update->package_size = old_update->package_size;

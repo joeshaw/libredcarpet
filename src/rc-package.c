@@ -1,276 +1,115 @@
 /* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
-/*
- * rc-package.c: Dealing with individual packages...
+/* rc-package.c
  *
- * Copyright (C) 2000 Helix Code, Inc.
+ * Copyright (C) 2000, 2001 Ximian, Inc.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+ * 02111-1307, USA.
  */
 
-#include <libredcarpet/rc-package.h>
-#include <libredcarpet/xml-util.h>
+#include "rc-package.h"
+#include "xml-util.h"
 
-#include <gnome-xml/tree.h>
-
-const gchar *
-rc_package_section_to_string (RCPackageSection section)
-{
-    switch (section) {
-    case SECTION_OFFICE:
-        return ("SECTION_OFFICE");
-        break;
-    case SECTION_IMAGING:
-        return ("SECTION_IMAGINE");
-        break;
-    case SECTION_PIM:
-        return ("SECTION_PIM");
-        break;
-    case SECTION_GAME:
-        return ("SECTION_GAME");
-        break;
-    case SECTION_MULTIMEDIA:
-        return ("SECTION_MULTIMEDIA");
-        break;
-    case SECTION_INTERNET:
-        return ("SECTION_INTERNET");
-        break;
-    case SECTION_UTIL:
-        return ("SECTION_UTIL");
-        break;
-    case SECTION_SYSTEM:
-        return ("SECTION_SYSTEM");
-        break;
-    case SECTION_DOC:
-        return ("SECTION_DOC");
-        break;
-    case SECTION_DEVEL:
-        return ("SECTION_DEVEL");
-        break;
-    case SECTION_DEVELUTIL:
-        return ("SECTION_DEVELUTIL");
-        break;
-    case SECTION_LIBRARY:
-        return ("SECTION_LIBRARY");
-        break;
-    case SECTION_XAPP:
-        return ("SECTION_XAPP");
-        break;
-    default:
-        return ("SECTION_MISC");
-        break;
-    }
-}
-
-RCPackageSection
-rc_string_to_package_section (gchar *section)
-{
-    if (!strcmp (section, "SECTION_OFFICE")) {
-        return (SECTION_OFFICE);
-    } else if (!strcmp (section, "SECTION_IMAGING")) {
-        return (SECTION_IMAGING);
-    } else if (!strcmp (section, "SECTION_PIM")) {
-        return (SECTION_PIM);
-    } else if (!strcmp (section, "SECTION_GAME")) {
-        return (SECTION_GAME);
-    } else if (!strcmp (section, "SECTION_MULTIMEDIA")) {
-        return (SECTION_MULTIMEDIA);
-    } else if (!strcmp (section, "SECTION_INTERNET")) {
-        return (SECTION_INTERNET);
-    } else if (!strcmp (section, "SECTION_UTIL")) {
-        return (SECTION_UTIL);
-    } else if (!strcmp (section, "SECTION_SYSTEM")) {
-        return (SECTION_SYSTEM);
-    } else if (!strcmp (section, "SECTION_DOC")) {
-        return (SECTION_DOC);
-    } else if (!strcmp (section, "SECTION_DEVEL")) {
-        return (SECTION_DEVEL);
-    } else if (!strcmp (section, "SECTION_DEVELUTIL")) {
-        return (SECTION_DEVELUTIL);
-    } else if (!strcmp (section, "SECTION_LIBRARY")) {
-        return (SECTION_LIBRARY);
-    } else if (!strcmp (section, "SECTION_XAPP")) {
-        return (SECTION_XAPP);
-    } else {
-        return (SECTION_MISC);
-    }
-}
+#include <string.h>
 
 RCPackage *
 rc_package_new (void)
 {
-    RCPackage *rcp = g_new0 (RCPackage, 1);
+    RCPackage *package = g_new0 (RCPackage, 1);
 
-    return (rcp);
+    return (package);
 } /* rc_package_new */
 
 RCPackage *
-rc_package_copy (RCPackage *old_pkg)
+rc_package_copy (RCPackage *old_package)
 {
-    RCPackage *pkg = rc_package_new ();
+    RCPackage *package;
 
-    g_return_val_if_fail (old_pkg, NULL);
+    g_return_val_if_fail (old_package, NULL);
 
-    rc_package_spec_copy ((RCPackageSpec *)old_pkg, (RCPackageSpec *)pkg);
+    package = rc_package_new ();
 
-    pkg->section = old_pkg->section;
+    rc_package_spec_copy (RC_PACKAGE_SPEC (package),
+                          RC_PACKAGE_SPEC (old_package));
 
-    pkg->installed = old_pkg->installed;
+    package->section = old_package->section;
 
-    pkg->installed_size = old_pkg->installed_size;
+    package->installed = old_package->installed;
 
-    pkg->subchannel = old_pkg->subchannel;
+    package->installed_size = old_package->installed_size;
 
-    pkg->requires = rc_package_dep_slist_copy (old_pkg->requires);
-    pkg->provides = rc_package_dep_slist_copy (old_pkg->provides);
-    pkg->conflicts = rc_package_dep_slist_copy (old_pkg->conflicts);
+    package->subchannel = old_package->subchannel;
 
-    pkg->suggests = rc_package_dep_slist_copy (old_pkg->suggests);
-    pkg->recommends = rc_package_dep_slist_copy (old_pkg->recommends);
+    package->requires = rc_package_dep_slist_copy (old_package->requires);
+    package->provides = rc_package_dep_slist_copy (old_package->provides);
+    package->conflicts = rc_package_dep_slist_copy (old_package->conflicts);
 
-    pkg->summary = g_strdup (old_pkg->summary);
-    pkg->description = g_strdup (old_pkg->description);
+    package->suggests = rc_package_dep_slist_copy (old_package->suggests);
+    package->recommends = rc_package_dep_slist_copy (old_package->recommends);
 
-    pkg->history = rc_package_update_slist_copy (old_pkg->history);
+    package->summary = g_strdup (old_package->summary);
+    package->description = g_strdup (old_package->description);
 
-    pkg->hold = old_pkg->hold;
+    package->history = rc_package_update_slist_copy (old_package->history);
 
-    pkg->package_filename = g_strdup (old_pkg->package_filename);
-    pkg->signature_filename = g_strdup (old_pkg->signature_filename);
+    package->hold = old_package->hold;
 
-    return (pkg);
-}
+    package->package_filename = g_strdup (old_package->package_filename);
+    package->signature_filename = g_strdup (old_package->signature_filename);
+
+    return (package);
+} /* rc_package_copy */
 
 void
-rc_package_free (RCPackage *rcp)
+rc_package_free (RCPackage *package)
 {
-    g_return_if_fail (rcp);
+    g_return_if_fail (package);
 
-    rc_package_spec_free_members (RC_PACKAGE_SPEC (rcp));
+    rc_package_spec_free_members (RC_PACKAGE_SPEC (package));
 
-    rc_package_dep_slist_free (rcp->requires);
-    rc_package_dep_slist_free (rcp->provides);
-    rc_package_dep_slist_free (rcp->conflicts);
+    rc_package_dep_slist_free (package->requires);
+    rc_package_dep_slist_free (package->provides);
+    rc_package_dep_slist_free (package->conflicts);
 
-    rc_package_dep_slist_free (rcp->suggests);
-    rc_package_dep_slist_free (rcp->recommends);
+    rc_package_dep_slist_free (package->suggests);
+    rc_package_dep_slist_free (package->recommends);
 
-    g_free (rcp->summary);
-    g_free (rcp->description);
+    g_free (package->summary);
+    g_free (package->description);
 
-    rc_package_update_slist_free (rcp->history);
+    rc_package_update_slist_free (package->history);
 
-    g_free (rcp->package_filename);
-    g_free (rcp->signature_filename);
+    g_free (package->package_filename);
+    g_free (package->signature_filename);
 
-    g_free (rcp);
+    g_free (package);
 } /* rc_package_free */
 
 void
-rc_package_slist_free (RCPackageSList *rcpsl)
+rc_package_slist_free (RCPackageSList *packages)
 {
-    g_slist_foreach (rcpsl, (GFunc) rc_package_free, NULL);
+    g_slist_foreach (packages, (GFunc) rc_package_free, NULL);
 
-    g_slist_free (rcpsl);
+    g_slist_free (packages);
 } /* rc_package_slist_free */
 
 RCPackageUpdateSList *
-rc_package_slist_sort (RCPackageSList *rcpusl)
+rc_package_slist_sort_by_name (RCPackageSList *packages)
 {
-    return (g_slist_sort (rcpusl,
-                          (GCompareFunc) rc_package_spec_compare_name));
-}
-
-RCPackageImportance 
-rc_package_get_highest_importance(RCPackage *package)
-{
-    GSList *i;
-    RCPackageImportance highest = RC_IMPORTANCE_INVALID;
-
-    /* FIXME: This probably isn't the right value to return, but
-       I can't think of anything better to return. */
-    g_return_val_if_fail(package, RC_IMPORTANCE_INVALID);
-
-    i = package->history;
-    while (i) {
-	RCPackageUpdate *up = i->data;
-
-	if (up->importance == RC_IMPORTANCE_MAX)
-	    highest = RC_IMPORTANCE_NECESSARY;
-	else if (up->importance < highest || highest == RC_IMPORTANCE_INVALID)
-	    highest = up->importance;
-
-	i = i->next;
-    }
-
-    return highest;
-} /* rc_package_get_highest_importance */
-
-RCPackageImportance 
-rc_package_get_highest_importance_from_current(RCPackage *package,
-					       RCPackageSList *system_pkgs)
-{
-    GSList *i;
-    RCPackage *system_package = NULL;
-    RCPackageImportance highest = RC_IMPORTANCE_INVALID;
-
-    /* FIXME: This probably isn't the right value to return, but
-       I can't think of anything better to return. */
-    g_return_val_if_fail(package, RC_IMPORTANCE_INVALID);
-
-    i = system_pkgs;
-    while (i) {
-	RCPackageSpec *s = i->data;
-
-	if (g_strcasecmp(s->name, RC_PACKAGE_SPEC(package)->name) == 0) {
-	    system_package = (RCPackage *) s;
-	    break;
-	}
-
-	i = i->next;
-    }
-
-    if (!system_package)
-	return RC_IMPORTANCE_INVALID;
-
-    i = package->history;
-    while (i) {
-	RCPackageUpdate *up = i->data;
-
-	if (rc_package_spec_compare(
-	    RC_PACKAGE_SPEC(up), RC_PACKAGE_SPEC(system_package)) > 0) {
-	    if (up->importance == RC_IMPORTANCE_MAX)
-		highest = RC_IMPORTANCE_NECESSARY;
-	    else if (up->importance < highest || 
-		     highest == RC_IMPORTANCE_INVALID)
-		highest = up->importance;
-	}
-	
-	i = i->next;
-    }
-
-    return highest;
-} /* rc_package_get_highest_importance_from_current */
-
-gint
-rc_package_compare_func (gconstpointer a, gconstpointer b)
-{
-    RCPackage *one = (RCPackage *)(a);
-    RCPackage *two = (RCPackage *)(b);
-
-    return rc_package_spec_compare (&one->spec, &two->spec);
-}
+    return (g_slist_sort (packages, (GCompareFunc) strcmp));
+} /* rc_package_slist_sort_by_name */
 
 static void
 util_hash_to_list (gpointer a, gpointer b, gpointer c)

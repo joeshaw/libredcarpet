@@ -47,6 +47,8 @@ libredcarpet_a_SOURCES =		\
 	rc-package-set.h		\
 	rc-package.c			\
 	rc-package.h			\
+	rc-package-section.c		\
+	rc-package-section.h		\
 	rc-verification.c		\
 	rc-verification.h		\
 	rc-verification-private.h	\

@@ -1,3 +1,61 @@
+2001-01-18  Ian Peters  <itp@helixcode.com>
+
+	* rc-package-section.c, rc-package-section.h: added.  Some stuff
+	moved out of rc-package.[ch]
+
+	* Makefile.am: add rc-package-section.[ch] to
+	libredcarpet_a_SOURCES
+
+	* rc-packman-private.h, rc-packman.c
+	(rc_packman_generic_version_compare): Added.  Compares to
+	RCPackageSpec's given a strcmp-like comparison function
+
+	* rc-rpmman.c (vercmp): added.  The hacked up vercmp function
+	originally stolen from rpm, freshly moved from rc-package-spec.c,
+	with a few more changes
+	(rc_rpmman_version_compare): added.  Call
+	rc_packman_generic_version_compare with vercmp
+
+	* rc-debman.c (verrevcmp): added.  Stolen from dpkg, much like
+	vercmp from rpm
+	(rc_debman_version_compare): added.  Call
+	rc_packman_generic_version_compare with verrevcmp
+	(rc_debman_class_init): insert rc_debman_version_compare into
+	packman_class
+
+	* rc-debman-general.c (rc_debman_parse_version): alloca the input
+	before we modify it to protect against const strings, changes as
+	appropriate.  Find the /last/, not the first '-' when we split
+	version and release apart, bug discoverd in gdm
+	2.0-0.beta4-helix1.12.
+
+	* rc-channel.c, rc-channel.h (rc_find_best_package): moved to
+	gui-channel.c
+
+	* rc-package-spec.c, rc-package-spec.h (rc_package_spec_compare):
+	removed.  This isn't possible to get right without knowing which
+	backend we're using, which is why it's in the RCPackman now.
+	(rc_package_spec_copy): get the order right -- dest, src
+
+	* rc-package-info.c (debian_packages_helper): fix call to
+	rc_package_spec_copy
+
+	* rc-package-update.c (rc_package_update_copy): fix call to
+	rc_package_spec_copy
+
+	* rc-package.h, rc-package.c: fix some naming conventions, rename
+	rc_package_slist_sort to rc_package_slist_sort_by_name for
+	clarity.  Break out the RCPackageSection stuff, as above
+	(rc_package_compare_func): removed, unused and broken
+
+	* rc-deps.h, rc-deps.c (rc_dep_resolution_new): add an RCPackman
+	to the interface, which sets das_global_packman variable -- gross
+	hack to deal with the broken design.  Change all calls to
+	rc_package_spec_compare to rc_packman_compare_version
+
+	* rc-package-dep.c: extern das_global_packman, change all calls to
+	rc_package_spec_compare to rc_packman_compare_version
+
 2001-01-16  Ian Peters  <itp@helixcode.com>
 
 	* rc-debman.c: Fix a couple cases where I forgot to update a

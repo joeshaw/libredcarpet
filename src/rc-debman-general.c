@@ -40,28 +40,33 @@ rc_debman_parse_version (gchar *input, guint32 *epoch, gchar **version,
     gchar *epoch_ptr = NULL;
     gchar *version_ptr = NULL;
     gchar *release_ptr = NULL;
+    gchar *working;
 
     gchar *tmp;
 
     RC_ENTRY;
 
+    working = alloca (strlen (input) + 1);
+
+    strcpy (working, input);
+
     *epoch = 0;
     *version = NULL;
     *release = NULL;
 
-    tmp = strchr (input, ':');
+    tmp = strchr (working, ':');
 
     if (tmp) {
         /* There's an epoch */
         *tmp = '\0';
-        epoch_ptr = input;
+        epoch_ptr = working;
         version_ptr = tmp + 1;
     } else {
         /* The string begins with a version */
-        version_ptr = input;
+        version_ptr = working;
     }
 
-    tmp = strchr (version_ptr, '-');
+    tmp = strrchr (version_ptr, '-');
 
     if (tmp) {
         /* There's a release */
@@ -77,14 +82,6 @@ rc_debman_parse_version (gchar *input, guint32 *epoch, gchar **version,
 
     if (release_ptr) {
         *release = g_strdup (release_ptr);
-    }
-
-    if (version_ptr != input) {
-        *(version_ptr - 1) = ':';
-    }
-
-    if (release_ptr) {
-        *(release_ptr - 1) = '-';
     }
 
     rc_debug (RC_DEBUG_LEVEL_DEBUG, "-- parsed %s into %d %s %s\n",

@@ -37,4 +37,9 @@ void rc_packman_clear_error (RCPackman *packman);
 void rc_packman_set_error (RCPackman *packman, RCPackmanError error,
                            const gchar *format, ...);
 
+gint rc_packman_generic_version_compare (
+    RCPackageSpec *spec1, RCPackageSpec *spec2,
+    int (*vercmp)(const char *, const char *));
+                                         
+
 #endif

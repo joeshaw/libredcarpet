@@ -2309,6 +2309,48 @@ rc_debman_verify (RCPackman *packman, RCPackage *package)
     return (ret);
 }
 
+/* I stole this code from dpkg, and good GOD is it ugly.  I want to
+ * vomit.  From now on, every day I shall fall to my knees in the
+ * morning and thank the heavens that I don't work on dpkg. */
+
+static int verrevcmp(const char *val, const char *ref) {
+    int vc, rc;
+    long vl, rl;
+    const char *vp, *rp;
+
+    if (!val) val= "";
+    if (!ref) ref= "";
+    for (;;) {
+        vp= val;  while (*vp && !isdigit(*vp)) vp++;
+        rp= ref;  while (*rp && !isdigit(*rp)) rp++;
+        for (;;) {
+            vc= val == vp ? 0 : *val++;
+            rc= ref == rp ? 0 : *ref++;
+            if (!rc && !vc) break;
+            /* assumes ASCII character set */
+            if (vc && !isalpha(vc)) vc += 256;
+            if (rc && !isalpha(rc)) rc += 256;
+            if (vc != rc) return vc - rc;
+        }
+        val= vp;
+        ref= rp;
+        vl=0;  if (isdigit(*vp)) vl= strtol(val,(char**)&val,10);
+        rl=0;  if (isdigit(*rp)) rl= strtol(ref,(char**)&ref,10);
+        if (vl != rl) return vl - rl;
+        if (!*val && !*ref) return 0;
+        if (!*val) return -1;
+        if (!*ref) return +1;
+    }
+}
+
+static gint
+rc_debman_version_compare (RCPackman *packman,
+                           RCPackageSpec *spec1,
+                           RCPackageSpec *spec2)
+{
+    return (rc_packman_generic_version_compare (spec1, spec2, verrevcmp));
+}
+
 typedef struct _DebmanFindFileInfo DebmanFindFileInfo;
 
 struct _DebmanFindFileInfo {
@@ -2521,6 +2563,7 @@ rc_debman_class_init (RCDebmanClass *klass)
     packman_class->rc_packman_real_query_all = rc_debman_query_all;
     packman_class->rc_packman_real_verify = rc_debman_verify;
     packman_class->rc_packman_real_find_file = rc_debman_find_file;
+    packman_class->rc_packman_real_version_compare = rc_debman_version_compare;
 
     putenv ("DEBIAN_FRONTEND=noninteractive");
 

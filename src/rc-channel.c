@@ -450,42 +450,6 @@ rc_channel_get_subchannel (RCChannel *channel, guint preference)
     return (NULL);
 }
 
-RCPackage *
-rc_find_best_package (RCPackageDepItem *pdep, RCChannelSList *chs, gint user_pref)
-{
-    RCPackage *ret = NULL;
-    RCPackageDep *dep = rc_package_dep_new_with_item (pdep);
-
-    while (chs) {
-        RCChannel *ch = (RCChannel *) chs->data;
-        RCPackage *found;
-        found = pkginfo_find_package_with_constraint (ch,
-                                                      pdep->spec.name,
-                                                      user_pref,
-                                                      dep,
-                                                      FALSE);
-#if 0
-        if (!found) {
-            found = g_hash_table_lookup (ch->dep_table,
-                                         &pdep->spec);
-        }
-#endif
-        if (found) {
-            if (ret) {
-                if (rc_package_spec_compare (&found->spec, &ret->spec) > 0) {
-                    ret = found;
-                }
-            } else {
-                ret = found;
-            }
-        }
-        chs = chs->next;
-    }
-
-    g_slist_free (dep);
-    return ret;
-}
-
 static void
 my_little_helper (gchar *key, RCPackage *package, xmlNode *subchannel_node)
 {

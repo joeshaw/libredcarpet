@@ -22,6 +22,7 @@
 #include "rc-packman-private.h"
 
 #include <stdarg.h>
+#include <ctype.h>
 
 static void rc_packman_class_init (RCPackmanClass *klass);
 static void rc_packman_init       (RCPackman *obj);
@@ -446,4 +447,50 @@ rc_packman_get_reason (RCPackman *packman)
     }
 
     return (NULL);
+}
+
+gint
+rc_packman_generic_version_compare (RCPackageSpec *spec1,
+                                    RCPackageSpec *spec2,
+                                    int (*vercmp)(const char *, const char *))
+{
+    gint rc;
+
+    g_assert (spec1);
+    g_assert (spec2);
+
+    rc = spec1->epoch - spec2->epoch;
+
+    if (rc) {
+        return (rc);
+    }
+
+    if (spec1->name || spec2->name) {
+        rc = strcmp (spec1->name ? spec1->name : "",
+                     spec2->name ? spec2->name : "");
+
+        if (rc) {
+            return (rc);
+        }
+    }
+
+    if (spec1->version || spec2->version) {
+        rc = vercmp (spec1->version ? spec1->version : "",
+                     spec2->version ? spec2->version : "");
+
+        if (rc) {
+            return (rc);
+        }
+    }
+
+    if (spec1->release || spec2->release) {
+        rc = vercmp (spec1->release ? spec1->release : "",
+                     spec2->release ? spec2->release : "");
+
+        if (rc) {
+            return (rc);
+        }
+    }
+
+    return (0);
 }
