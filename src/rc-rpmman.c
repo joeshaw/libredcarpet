@@ -200,6 +200,12 @@ transact_cb (const Header h, const rpmCallbackType what,
     case RPMCALLBACK_UNINST_STOP:
     case RPMCALLBACK_UNINST_PROGRESS:
     case RPMCALLBACK_TRANS_STOP:
+#if 0
+    case RPMCALLBACK_UNPACK_ERROR:
+    case RPMCALLBACK_CPIO_ERROR:
+#else
+    default:
+#endif
         /* ignore */
         break;
     }

@@ -1,4 +1,4 @@
-#include <gtk/gtk.h>
+#include <glib.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -22,8 +22,8 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 
-#include <readline.h>
-#include <history.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 
 static void packman_test_clear (RCPackman *p, gchar *buf);
 static void packman_test_find_file (RCPackman *p, gchar *buf);
@@ -227,8 +227,11 @@ print_pkg_list_header ()
 static void
 print_pkg (RCPackage *pkg)
 {
+#if 0
     printf ("%-30.30s%-8d%-15.15s%-15.15s\n", pkg->spec.name, pkg->spec.epoch,
             pkg->spec.version, pkg->spec.release);
+#endif
+    printf ("%s\n", rc_package_spec_to_str_static (RC_PACKAGE_SPEC (pkg)));
 }
 
 static void
@@ -249,7 +252,7 @@ packman_test_query_all (RCPackman *p, char *line)
         print_pkg (pkg);
     }
 
-    rc_package_slist_free (pkg_list);
+    rc_package_slist_unref (pkg_list);
 }
 
 static void
@@ -308,7 +311,7 @@ packman_test_make_pkg (RCPackman *p, char *name, char *line)
                 PACKMAN_TEST_ERROR,
                 "must provide attributes as <attribute>=<value>");
             g_strfreev (parts);
-            rc_package_free (pkg);
+            rc_package_unref (pkg);
             return (NULL);
         }
 
@@ -334,7 +337,7 @@ packman_test_make_pkg (RCPackman *p, char *name, char *line)
             PACKMAN_TEST_ERROR,
             "unknown attribute \"%s\"", parts[0]);
         g_strfreev (parts);
-        rc_package_free (pkg);
+        rc_package_unref (pkg);
         return (NULL);
     }
 
@@ -365,7 +368,7 @@ packman_test_query (RCPackman *p, char *line)
         printf ("Package \"%s\" not found\n", pkg->spec.name);
     }
 
-    rc_package_free (pkg);
+    rc_package_unref (pkg);
 }
 
 static void
@@ -388,7 +391,7 @@ packman_test_find_file (RCPackman *p, char *line)
 
     pretty_print_pkg (package);
 
-    rc_package_free (package);
+    rc_package_unref (package);
 }
 
 static void
@@ -419,7 +422,7 @@ packman_test_query_file (RCPackman *p, char *line)
 
     pretty_print_pkg (pkg);
 
-    rc_package_free (pkg);
+    rc_package_unref (pkg);
 }
 
 static void
@@ -525,7 +528,7 @@ packman_test_remove (RCPackman *p, char *line)
         packman_test_print (
             PACKMAN_TEST_ERROR,
             "package \"%s\" is not installed", pkg->spec.name);
-        rc_package_free (pkg);
+        rc_package_unref (pkg);
     }
 }
 
@@ -534,10 +537,10 @@ packman_test_clear (RCPackman *p, char *line)
 {
     CHECK_EXTRA (line, "clear");
 
-    rc_package_slist_free (transaction.install_pkgs);
+    rc_package_slist_unref (transaction.install_pkgs);
     transaction.install_pkgs = NULL;
 
-    rc_package_slist_free (transaction.remove_pkgs);
+    rc_package_slist_unref (transaction.remove_pkgs);
     transaction.remove_pkgs = NULL;
 
     printf ("Transaction cleared\n");
@@ -577,15 +580,15 @@ packman_test_run (RCPackman *p, char *line)
             "%s", rc_packman_get_reason (p));
     }
 
-    rc_package_slist_free (transaction.install_pkgs);
+    rc_package_slist_unref (transaction.install_pkgs);
     transaction.install_pkgs = NULL;
 
-    rc_package_slist_free (transaction.remove_pkgs);
+    rc_package_slist_unref (transaction.remove_pkgs);
     transaction.remove_pkgs = NULL;
 }
 
 char *
-packman_completion_generator (char *text, int state)
+packman_completion_generator (const char *text, int state)
 {
     static int list_index, len;
     char *name;
@@ -611,7 +614,7 @@ packman_completion (char *text, int start, int end)
     char **matches = NULL;
 
     if (start == 0) {
-        matches = completion_matches (text, packman_completion_generator);
+        matches = rl_completion_matches (text, packman_completion_generator);
     }
 
     return matches;
@@ -622,7 +625,7 @@ int main (int argc, char **argv)
     RCPackman *p;
     gboolean done = FALSE;
 
-    gtk_init (&argc, &argv);
+    g_type_init ();
 
     transaction.install_pkgs = NULL;
     transaction.remove_pkgs = NULL;
@@ -634,14 +637,14 @@ int main (int argc, char **argv)
         exit (-1);
     }
 
-    gtk_signal_connect (GTK_OBJECT (p), "transact_start",
-                        GTK_SIGNAL_FUNC (transact_start_cb), NULL);
-    gtk_signal_connect (GTK_OBJECT (p), "transact_step",
-                        GTK_SIGNAL_FUNC (transact_step_cb), NULL);
-    gtk_signal_connect (GTK_OBJECT (p), "transact_progress",
-                        GTK_SIGNAL_FUNC (transact_progress_cb), NULL);
-    gtk_signal_connect (GTK_OBJECT (p), "transact_done",
-                        GTK_SIGNAL_FUNC (transact_done_cb), NULL);
+    g_signal_connect (p, "transact_start",
+                      (GCallback) transact_start_cb, NULL);
+    g_signal_connect (p, "transact_step",
+                      (GCallback) transact_step_cb, NULL);
+    g_signal_connect (p, "transact_progress",
+                      (GCallback) transact_progress_cb, NULL);
+    g_signal_connect (p, "transact_done",
+                      (GCallback) transact_done_cb, NULL);
 
     rl_readline_name = "packman_test";
     rl_attempted_completion_function = (CPPFunction *)packman_completion;
@@ -685,7 +688,7 @@ int main (int argc, char **argv)
         free (buf);
     }
 
-    gtk_object_unref (GTK_OBJECT (p));
+    g_object_unref (p);
 
     return (0);
 }

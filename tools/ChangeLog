@@ -1,0 +1,8 @@
+2002-06-06  Ian Peters  <itp@ximian.com>
+
+	* packman_test.c: updated to work with HEAD
+
+	* Makefile.am: build packman_test
+
+	* .cvsignore: add packman_test
+

@@ -1,5 +1,13 @@
 2002-06-06  Ian Peters  <itp@ximian.com>
 
+	* rc-debman.c (mark_status_read_line_cb): remove an unused
+	variable
+
+	* rc-rpmman.c (transact_cb): handle two more enum cases to kill a
+	warning
+
+2002-06-06  Ian Peters  <itp@ximian.com>
+
 	* rc-rpmman.c: no more RC_RPM4, now check #if RPM_VERSION >= 40000
 
 2002-06-05  Ian Peters  <itp@ximian.com>

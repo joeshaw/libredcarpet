@@ -601,7 +601,6 @@ static void
 mark_status_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
 {
     DebmanMarkStatusInfo *mark_status_info = (DebmanMarkStatusInfo *)data;
-    RCPackage *package;
 
     /* If rewrite_status is set (we encountered a package we're
      * removing) and this is a status line, write out our new status
