@@ -95,6 +95,8 @@ RCDistroChunk distro_figurers[] = {
       func_string_in_file, "/etc/mandrake-release", "7.0", NULL, 0 },
     { "mandrake-71-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/mandrake-release", "7.1", NULL, 0 },
+    { "mandrake-72-i386", RC_ARCH_IA32,
+      func_string_in_file, "/etc/mandrake-release", "7.2", NULL, 0 },
 
     { "debian-22-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/debian_version", "2.2", NULL, 0 },
@@ -123,6 +125,7 @@ RCDistroType distro_types[] = {
 
     { "mandrake-70-i386", NULL, "Linux Mandrake", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
     { "mandrake-71-i386", NULL, "Linux Mandrake", "7.1", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
+    { "mandrake-72-i386", NULL, "Linux Mandrake", "7.2", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
 
     { "debian-sid-i386", NULL, "Debian GNU/Linux", "sid", RC_PKG_DPKG, RC_ARCH_IA32, "gdmrunlevel=2,3,4,5 restartgdm" },
     { "debian-woody-i386", NULL, "Debian GNU/Linux", "woody", RC_PKG_DPKG, RC_ARCH_IA32, "gdmrunlevel=2,3,4,5 restartgdm" },
