@@ -1072,11 +1072,25 @@ branch_item_process (RCQueueItem *item,
     branch_count = g_slist_length (live_branches);
 
     if (branch_count == 0) {
+
         /* Do nothing */
+
     } else if (branch_count == 1) {
 
-        RCQueueItem *new_item = rc_queue_item_copy (live_branches->data);
-        *new_items = g_slist_prepend (*new_items, new_item);
+        /* If we just have one possible item, process it. */
+        did_something = rc_queue_item_process (live_branches->data,
+                                               context,
+                                               new_items);
+        
+        /* Set the item pointer to NULL inside of our original branch
+           item, since our call to rc_queue_item_process is now
+           responsible for freeing it. */
+        for (iter = branch->possible_items; iter != NULL; iter = iter->next) {
+            if (iter->data == live_branches->data) {
+                iter->data = NULL;
+                break;
+            }
+        }
 
     } else if (branch_count == g_slist_length (branch->possible_items)) {
         /* Nothing was eliminated, so just pass the branch through (and set it to

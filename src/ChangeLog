@@ -1,3 +1,9 @@
+2002-08-22  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-queue-item.c (branch_item_process): An optimization: Instead
+	of processing a 1-item branch into that item, simply execute the
+	item immediately.
+
 2002-08-20  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-queue-item.c (require_item_process): Don't skip exploring the
