@@ -198,12 +198,54 @@ rc_world_store_find_channel_info (RCWorldStore *store, RCChannel *channel)
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
+typedef struct {
+    RCWorld *old_world;
+    RCWorld *new_world;
+} DupInfo;
+
+static gboolean
+package_dup_fn (RCPackage *package,
+                gpointer user_data)
+{
+    DupInfo *info = user_data;
+    rc_world_store_add_package (RC_WORLD_STORE (info->new_world), package);
+
+    return TRUE;
+}
+
+static gboolean
+channel_dup_fn (RCChannel *channel,
+                gpointer user_data)
+{
+    DupInfo *info = user_data;
+
+    rc_world_store_add_channel (RC_WORLD_STORE (info->new_world), channel);
+    rc_world_foreach_package (info->old_world, channel,
+                              package_dup_fn,
+                              info);
+
+    return TRUE;
+}
+
 static RCWorld *
 rc_world_store_dup_fn (RCWorld *old_world)
 {
     RCWorld *new_world;
+    DupInfo info;
+    GSList *l;
 
     new_world = g_object_new (G_TYPE_FROM_INSTANCE (old_world), NULL);
+
+    info.old_world = old_world;
+    info.new_world = new_world;
+    
+    rc_world_foreach_channel (old_world,
+                              channel_dup_fn,
+                              &info);
+    for (l = RC_WORLD_STORE (old_world)->locks; l; l = l->next) {
+        rc_world_store_add_lock (RC_WORLD_STORE (new_world),
+                                 (RCPackageMatch *)l->data);
+    }    
 
     return new_world;
 }

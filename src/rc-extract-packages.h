@@ -57,6 +57,10 @@ gint rc_extract_packages_from_debian_file   (const char *filename,
                                              RCPackageFn callback,
                                              gpointer user_data);
 
+RCPackage * rc_extract_yum_package          (const guint8 *data, int len,
+                                             RCPackman *packman,
+                                             char *url);
+
 gint rc_extract_packages_from_aptrpm_buffer (const guint8 *data, int len,
                                              RCPackman *packman,
                                              RCChannel *channel,

@@ -1,3 +1,15 @@
+2004-06-17  James Willcox  <james@ximian.com>
+
+	* rc-channel.h:
+	* rc-extract-channels.c: (rc_extract_channels_from_helix_buffer):
+	* rc-extract-packages.c: (rc_extract_yum_package):
+	* rc-extract-packages.h:
+	* rc-world-store.c: (package_dup_fn), (channel_dup_fn),
+	(rc_world_store_dup_fn):
+
+	Fix rc_world_dup(), and add a function for 'extracting' a yum
+	package (it basically just loads the rpm header).
+
 2004-06-17  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-debug.h: Make it #include'able from C++.

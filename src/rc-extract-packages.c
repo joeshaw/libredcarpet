@@ -369,6 +369,61 @@ rc_extract_packages_from_debian_file (const char *filename,
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
+RCPackage *
+rc_extract_yum_package (const guint8 *data, int len,
+                        RCPackman *packman, char *url)
+{
+#ifndef  ENABLE_RPM
+    /* We can't support yum without rpm support */
+    rc_debug (RC_DEBUG_LEVEL_ERROR, "RPM support is not enabled");
+    return NULL;
+#else
+    RCRpmman *rpmman;
+    Header h;
+    RCPackage *p;
+    RCPackageUpdate *pu;
+    char *tmpc;
+    int typ, n;
+
+    g_return_val_if_fail (packman != NULL, NULL);
+
+    if (!g_type_is_a (G_TYPE_FROM_INSTANCE (packman), RC_TYPE_RPMMAN)) {
+        rc_debug (RC_DEBUG_LEVEL_ERROR,
+                  "yum support is not available on non-RPM systems");
+        return NULL;
+    }
+
+    rpmman = RC_RPMMAN (packman);
+    
+    h = rpmman->headerLoad (data);
+
+    if (h == NULL) {
+        rc_debug (RC_DEBUG_LEVEL_ERROR,
+                  "Unable to get header from headerCopyLoad!");
+        return NULL;
+    }
+
+    rpmman->headerGetEntry (h, RPMTAG_ARCH, &typ, (void **) &tmpc, &n);
+
+    p = rc_package_new ();
+
+    rc_rpmman_read_header (rpmman, h, p);
+    rc_rpmman_depends_fill (rpmman, h, p);
+
+    pu = rc_package_update_new ();
+    rc_package_spec_copy (RC_PACKAGE_SPEC (pu), RC_PACKAGE_SPEC (p));
+    pu->importance = RC_IMPORTANCE_SUGGESTED;
+    pu->description = g_strdup ("No information available.");
+    pu->package_url = url;
+    
+    p->history = g_slist_append (p->history, pu);
+
+    rpmman->headerFree (h);
+
+    return p;
+#endif  
+}
+
 gint
 rc_extract_packages_from_aptrpm_buffer (const guint8 *data, int len,
                                         RCPackman *packman,

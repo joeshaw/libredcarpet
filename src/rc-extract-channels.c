@@ -106,6 +106,8 @@ rc_extract_channels_from_helix_buffer (const guint8 *data, int len,
                 type = RC_CHANNEL_TYPE_DEBIAN;
             else if (g_strcasecmp (tmp, "aptrpm") == 0)
                 type = RC_CHANNEL_TYPE_APTRPM;
+            else if (g_strcasecmp (tmp, "yum") == 0)
+                type = RC_CHANNEL_TYPE_YUM;
             else
                 type = RC_CHANNEL_TYPE_UNKNOWN;
             g_free (tmp);
