@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+
+<test>
+
+<setup>
+  <undump file="rc-minimal-dump.xml.gz"/>
+</setup>
+
+<trial>
+  <note>This is a hard resolution problem.</note>
+  <solvedeps>
+    <dep name="gtkhtml-devel" op="&gt;=" version="1.0.3"/>
+    <dep name="gal-devel" op="&gt;=" version="0.19.2"/>
+    <dep name="bonobo-devel" op="&gt;=" version="1.0.3"/>
+    <dep name="bonobo-conf-devel" op="&gt;=" version="0.12"/>
+    <dep name="oaf-devel" op="&gt;=" version="0.6.2"/>
+    <dep name="gdk-pixbuf-devel" op="&gt;=" version="0.9.0"/>
+    <dep name="gnome-vfs-devel" op="&gt;=" version="1.0.0"/>
+    <dep name="libglade-devel" op="&gt;=" version="0.14"/>
+    <dep name="GConf-devel" op="&gt;=" version="0.6"/>
+    <dep name="ORBit-devel" op="&gt;=" version="0.5.10"/>
+    <dep name="gnome-print-devel" op="&gt;=" version="0.25"/>
+    <dep name="libxml-devel" op="&gt;=" version="1.8.16"/>
+    <dep name="intltool" op="&gt;=" version="0.17"/>
+    <dep name="gtk+-devel" op="&gt;=" version="1.2.9"/>
+    <dep name="mozilla-nspr-devel" op="&gt;=" epoch="35" version="1.0.0"/>
+    <dep name="mozilla-nss-devel" op="&gt;=" epoch="34" version="1.0.0"/>
+  </solvedeps>
+</trial>
+
+</test>
