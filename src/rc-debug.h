@@ -24,6 +24,10 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 typedef enum {
     RC_DEBUG_LEVEL_ALWAYS   = -1,
     RC_DEBUG_LEVEL_NONE     = 0,
@@ -68,4 +72,8 @@ rc_debug_helper (const char *format,
 
 #endif
 
-#endif
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif /* _RC_DEBUG_H */

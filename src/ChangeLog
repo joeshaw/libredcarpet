@@ -1,3 +1,7 @@
+2004-06-17  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-debug.h: Make it #include'able from C++.
+
 2004-06-11  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-world-service.c (rc_world_service_register): Don't assume
