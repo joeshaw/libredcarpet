@@ -635,9 +635,10 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
                 state.install_extra++;
             }
 
-            rc_package_unref (file_package);
             rc_package_slist_unref (packages);
         }
+
+        rc_package_unref (file_package);
     }
 
     /* trust me */

@@ -1,3 +1,8 @@
+2002-07-25  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c (rc_rpmman_transact): fix a small memory leak caught
+	by Jon
+
 2002-07-25  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-queue-item.c (conflict_process_cb): If this is actually an
