@@ -1,5 +1,15 @@
 2001-09-21  Ian Peters  <itp@ximian.com>
 
+	* rc-rpmman.c: caught one of the odd counting cases -- in the case
+	of an install of an already installed package, we'll get a
+	configure, remove, and install callback event -- unless the
+	package of the same version is already installed, in which case
+	the remove event doesn't occur.  Note that this shouldn't happen
+	in the RC gui anyway, so it's probably a dependency bug as well,
+	but for correctness...
+
+2001-09-21  Ian Peters  <itp@ximian.com>
+
 	* rc-rpmman.c: check what version of RPM we're using before we add
 	a self-dependency -- RPM 4.0 and beyond don't need this
 

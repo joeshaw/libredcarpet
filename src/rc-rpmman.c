@@ -596,20 +596,32 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
 
     for (iter = install_packages; iter; iter = iter->next) {
         RCPackage *package = (RCPackage *)(iter->data);
+        RCPackage *file_package, *inst_package;
 
-        package = rc_packman_query_file (packman, package->package_filename);
+        file_package =
+            rc_packman_query_file (packman, package->package_filename);
 
-        package->spec.epoch = 0;
+        inst_package = rc_package_copy (file_package);
+
+        inst_package->spec.epoch = 0;
         g_free (package->spec.version);
-        package->spec.version = NULL;
+        inst_package->spec.version = NULL;
         g_free (package->spec.release);
-        package->spec.release = NULL;
+        inst_package->spec.release = NULL;
 
-        if ((package = rc_packman_query (packman, package))->installed) {
+        inst_package = rc_packman_query (packman, inst_package);
+
+        if (inst_package->installed &&
+            rc_packman_version_compare (
+                packman,
+                RC_PACKAGE_SPEC (file_package),
+                RC_PACKAGE_SPEC (inst_package)))
+        {
             state.install_extra++;
         }
 
-        rc_package_free (package);
+        rc_package_free (file_package);
+        rc_package_free (inst_package);
     }
 
     state.true_total = state.install_total * 2 + state.install_extra +
