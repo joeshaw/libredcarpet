@@ -417,6 +417,14 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     guint extras = 0;
     RCPackageSList *iter;
     struct rpmDependencyConflict *conflicts;
+    int transaction_flags, problem_filter;
+
+    install_flags = 0; /* Nothing interesting to do here */
+    problem_filter =
+        RPMPROB_FILTER_REPLACEPKG |
+        RPMPROB_FILTER_REPLACEOLDFILES |
+        RPMPROB_FILTER_REPLACENEWFILES |
+        RPMPROB_FILTER_OLDPACKAGE;
 
     transaction = rpmtransCreateSet (RC_RPMMAN (packman)->db,
                                      RC_RPMMAN (packman)->rpmroot);
@@ -490,7 +498,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     rpm_reason = NULL;
 
     rc = rpmRunTransactions (transaction, transact_cb, (void *) state,
-                             NULL, &probs, 0, 0);
+                             NULL, &probs, transaction_flags, problem_filter);
 
     if (rc) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
