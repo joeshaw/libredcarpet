@@ -1,3 +1,9 @@
+2003-10-15  Joe Shaw  <joe@ximian.com>
+
+	* rc-world.c (rc_world_foreach_system_upgrade): Create a unique
+	hash of packages, so if foo 1.0 and foo 2.0 are both installed,
+	we'll only try to get an upgrade for foo 2.0.
+
 2003-10-10  Joe Shaw  <joe@ximian.com>
 
 	* rc-queue-item.c (install_item_process): When creating uninstall

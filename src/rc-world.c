@@ -1170,15 +1170,16 @@ struct SystemUpgradeInfo {
     int count;
 };
 
-static gboolean
-system_upgrade_cb (RCPackage *package, gpointer user_data)
+static void
+system_upgrade_cb (gpointer key, gpointer value, gpointer user_data)
 {
+    RCPackage *package = value;
     struct SystemUpgradeInfo *info = user_data;
     RCPackage *upgrade;
 
     /* If the package is excluded, skip it. */
     if (rc_world_package_is_locked (info->world, package))
-        return TRUE;
+        return;
 
     upgrade = rc_world_get_best_upgrade (info->world, package,
                                          info->subscribed_only);
@@ -1188,6 +1189,27 @@ system_upgrade_cb (RCPackage *package, gpointer user_data)
             info->fn (package, upgrade, info->user_data);
         ++info->count;
     }
+}
+
+static gboolean
+build_unique_hash_cb (RCPackage *package, gpointer user_data)
+{
+    GHashTable *unique_hash = user_data;
+    RCPackman *packman = rc_packman_get_global ();
+    RCPackage *old_package;
+
+    old_package = g_hash_table_lookup (unique_hash,
+                                       GINT_TO_POINTER (package->spec.nameq));
+
+    if (old_package) {
+        if (rc_packman_version_compare (packman,
+                                        RC_PACKAGE_SPEC (package),
+                                        RC_PACKAGE_SPEC (old_package)) <= 0)
+            return TRUE;
+    }
+
+    g_hash_table_replace (unique_hash, GINT_TO_POINTER (package->spec.nameq),
+                          package);
 
     return TRUE;
 }
@@ -1215,20 +1237,27 @@ rc_world_foreach_system_upgrade (RCWorld *world,
                                  gpointer user_data)
 {
     struct SystemUpgradeInfo info;
+    GHashTable *unique_hash;
 
     g_return_val_if_fail (world != NULL, -1);
 
+    unique_hash = g_hash_table_new (NULL, NULL);
+
     /* rc_world_foreach_package calls rc_world_sync */
-    
+
+    rc_world_foreach_package (world, RC_CHANNEL_SYSTEM,
+                              build_unique_hash_cb, unique_hash);
+
     info.world = world;
     info.subscribed_only = subscribed_only;
     info.fn = fn;
     info.user_data = user_data;
     info.count = 0;
 
-    rc_world_foreach_package (world, RC_CHANNEL_SYSTEM,
-                              system_upgrade_cb, &info);
-    
+    g_hash_table_foreach (unique_hash, system_upgrade_cb, &info);
+
+    g_hash_table_destroy (unique_hash);
+
     return info.count;
 }
 
