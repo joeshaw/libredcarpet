@@ -84,6 +84,9 @@ RCDistroChunk distro_figurers[] = {
     { "turbolinux-60-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/turbolinux-release", "6.0", NULL, 0 },
 
+    { "caldera-24-i386", RC_ARCH_IA32,
+      func_string_in_file, "/etc/.issue", "2.4", NULL, 0 },
+
     { "suse-63-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/SuSE-release", "6.3", NULL, 0 },
     { "suse-64-i386", RC_ARCH_IA32,
