@@ -472,58 +472,63 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     if (rpmdepCheck (transaction, &conflicts, &rc) || rc) {
         struct rpmDependencyConflict *conflict = conflicts;
         guint count;
-
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              "dependencies are not met");
+        GString *dep_info = g_string_new ("");
 
         for (count = 0; count < rc; count++) {
-            fprintf (stderr, "%s", conflict->byName);
+            g_string_sprintfa (dep_info, "\n%s", conflict->byName);
             if (conflict->byVersion && conflict->byVersion[0]) {
-                fprintf (stderr, "-%s", conflict->byVersion);
+                g_string_sprintfa (dep_info, "-%s", conflict->byVersion);
                 if (conflict->byRelease && conflict->byRelease[0]) {
-                    fprintf (stderr, "-%s", conflict->byRelease);
+                    g_string_sprintfa (dep_info, "-%s", conflict->byRelease);
                 }
             }
 
-            fprintf (stderr, " %s ", conflict->sense ? "conflicts with" :
-                     "requires");
+            g_string_sprintfa (
+                dep_info, " %s ",
+                conflict->sense ? "conflicts with" : "requires");
 
-            fprintf (stderr, "%s", conflict->needsName);
+            g_string_sprintfa (dep_info, "%s", conflict->needsName);
 
             if (conflict->needsVersion && conflict->needsVersion[0]) {
                 switch (conflict->needsFlags) {
                 case RPMSENSE_LESS:
-                    fprintf (stderr, " < ");
+                    g_string_sprintfa (dep_info, " < ");
                     break;
 
                 case RPMSENSE_EQUAL:
-                    fprintf (stderr, " = ");
+                    g_string_sprintfa (dep_info, " = ");
                     break;
 
                 case RPMSENSE_GREATER:
-                    fprintf (stderr, " > ");
+                    g_string_sprintfa (dep_info, " > ");
                     break;
 
                 case (RPMSENSE_LESS | RPMSENSE_EQUAL):
-                    fprintf (stderr, " <= ");
+                    g_string_sprintfa (dep_info, " <= ");
                     break;
 
                 case (RPMSENSE_GREATER | RPMSENSE_EQUAL):
-                    fprintf (stderr, " >= ");
+                    g_string_sprintfa (dep_info, " >= ");
                     break;
 
                 default:
-                    fprintf (stderr, " ?? ");
+                    g_string_sprintfa (dep_info, " ?? ");
                     break;
                 }
 
-                fprintf (stderr, "%s", conflict->needsVersion);
+                g_string_sprintfa (dep_info, "%s", conflict->needsVersion);
             }
-
-            fprintf (stderr, "\n");
 
             conflict++;
         }
+
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              dep_info->str);
+
+        g_string_free (dep_info, TRUE);
+
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "dependencies are not met");
 
         rpmdepFreeConflicts (conflicts, rc);
 
