@@ -1,3 +1,8 @@
+2001-08-16  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-package-dep.c: Add print statements for RELATION_NOT_EQUAL
+	and RELATION_NONE
+
 2001-08-15  Joe Shaw  <joe@ximian.com>
 
 	* Merge the redcarpet-parternet branch into HEAD.

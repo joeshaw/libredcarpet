@@ -337,6 +337,10 @@ rc_string_to_package_relation (const gchar *relation)
         return (RC_RELATION_GREATER);
     } else if (!strcmp (relation, ">=")) {
         return (RC_RELATION_GREATER_EQUAL);
+    } else if (!strcmp (relation, "!=")) {
+        return (RC_RELATION_NOT_EQUAL);
+    } else if (!strcmp (relation, "!!")) {
+        return (RC_RELATION_NONE);
     } else {
         return (RC_RELATION_INVALID);
     }
@@ -381,6 +385,9 @@ rc_package_relation_to_string (RCPackageRelation relation, gint words)
         break;
     case RC_RELATION_NOT_EQUAL:
         return (words == 1 ? "not equal to" : "!=");
+        break;
+    case RC_RELATION_NONE:
+        return (words == 1 ? "not installed" : "!!");
         break;
     default:
         return ("(invalid)");
