@@ -76,7 +76,7 @@ if test "x$enable_backend_rpm3" = "xyes"; then
       AC_MSG_ERROR(couldn't find librpm), -lz -lbz2 -lpopt)
   AC_SEARCH_LIBS(db_version, db1 db db-3.1,,
     AC_MSG_ERROR(couldn't find libdb))
-  RPMLIB_LIBS="-L$RPM_PREFIX/lib -Wl,-Bstatic -lrpm -lbz2 -lz -Wl,-Bdynamic -lpopt"
+  RPMLIB_LIBS="-L$RPM_PREFIX/lib -Wl,-Bstatic -lrpm -lz -Wl,-Bdynamic -lpopt"
   RPMLIB_CFLAGS="-I$RPM_PREFIX/include/rpm"
 
   AM_CONDITIONAL(ENABLE_RPM, true)

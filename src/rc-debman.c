@@ -916,9 +916,16 @@ make_unpack_commands (gchar **command, RCPackageSList *packages)
     GSList *line = NULL;
     guint line_length = 0;
 
+    glong arg_max;
+
     GSList *ret = NULL;
 
     RC_ENTRY;
+
+    arg_max = sysconf (_SC_ARG_MAX);
+    if (arg_max == -1) {
+        arg_max = 16384;
+    }
 
     iter1 = packages;
 
@@ -938,11 +945,7 @@ make_unpack_commands (gchar **command, RCPackageSList *packages)
             line_length -= 1;
         }
 
-        /* FIXME: I've picked 16384 as a somewhat arbitrary value that
-         * should be safe on Linux and yet not suck too much.  Some
-         * day I shall slog through Stevens and find out the right
-         * number to put here. */
-        if (line_length + filename_length > 16384) {
+        if (line_length + filename_length > arg_max) {
             lines = g_slist_append (lines, line);
             line = NULL;
         } else {
