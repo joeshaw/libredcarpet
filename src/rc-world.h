@@ -48,21 +48,19 @@ struct _RCWorld {
 RCWorld   *rc_get_world (void);
 
 RCWorld   *rc_world_new  (void);
-void       rc_world_free (RCWorld *);
+void       rc_world_free (RCWorld *world);
 
-void       rc_world_freeze (RCWorld *);
-void       rc_world_thaw   (RCWorld *);
-void       rc_world_add_package (RCWorld *, RCPackage *);
-void       rc_world_add_packages_from_slist (RCWorld *, RCPackageSList *package_list);
-guint      rc_world_add_packages_from_xml (RCWorld *, RCChannel *, xmlNode *node);
+void       rc_world_freeze (RCWorld *world);
+void       rc_world_thaw   (RCWorld *world);
+void       rc_world_add_package (RCWorld *world, RCPackage *pkg);
 
-void       rc_world_remove_package  (RCWorld *, RCPackage *);
-void       rc_world_remove_packages (RCWorld *, RCChannel *);
+void       rc_world_remove_package  (RCWorld *world, RCPackage *package);
+void       rc_world_remove_packages (RCWorld *world, RCChannel *package);
 
-RCPackage *rc_world_find_installed_version (RCWorld *, RCPackage *);
+RCPackage *rc_world_find_installed_version (RCWorld *world, RCPackage *package);
 
-RCPackage *rc_world_get_package                 (RCWorld *, RCChannel *, const char *name);
-RCPackage *rc_world_get_package_with_constraint (RCWorld *, RCChannel *, const char *name,
+RCPackage *rc_world_get_package                 (RCWorld *world, RCChannel *channel, const char *name);
+RCPackage *rc_world_get_package_with_constraint (RCWorld *world, RCChannel *channel, const char *name,
                                                  RCPackageDep *constraint, gboolean is_and);
 
 int        rc_world_foreach_package (RCWorld *world, RCChannel *channel,

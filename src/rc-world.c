@@ -57,6 +57,17 @@ channel_match (const RCChannel *a, const RCChannel *b)
     return a == b;
 }
 
+/**
+ * rc_get_world:
+ * 
+ * This is a convenience function for applications that want
+ * to use a single global #RCWorld for storing its state.
+ * A new #RCWorld object is constructed and returned the first
+ * time the function is called, and that same #RCWorld is
+ * returned by all subsequent calls.
+ * 
+ * Return value: the global #RCWorld
+ **/
 RCWorld *
 rc_get_world (void)
 {
@@ -68,6 +79,13 @@ rc_get_world (void)
     return world;
 }
 
+/**
+ * rc_world_new:
+ * 
+ * Creates a new #RCWorld.
+ * 
+ * Return value: a new #RCWorld
+ **/
 RCWorld *
 rc_world_new (void)
 {
@@ -80,17 +98,42 @@ rc_world_new (void)
 	return world;
 }
 
+/**
+ * rc_world_free:
+ * @world: an #RCWorld
+ * 
+ * Destroys the #RCWorld, freeing all associated memory.
+ * This function is a no-op if @world is %NULL.
+ **/
 void
 rc_world_free (RCWorld *world)
 {
 	if (world) {
 
-        /* FIXME: Leaks everything */
+        /* FIXME: Leaks almost everything */
+
+        g_hash_table_destroy (world->packages_by_name);
+        g_hash_table_destroy (world->provides_by_name);
+        g_hash_table_destroy (world->requires_by_name);
+
 		g_free (world);
 
 	}
 }
 
+/**
+ * rc_world_freeze:
+ * @world: An #RCWorld.
+ * 
+ * Freezes the hash tables inside of an #RCWorld, which
+ * can improve performance if you need to add a
+ * large number of packages to @world via
+ * multiple calls to rc_world_add_package() more
+ * efficient.  Be sure to call rc_world_thaw() after you
+ * are done modifying the #RCWorld and before making any
+ * queries against it.
+ * 
+ **/
 void
 rc_world_freeze (RCWorld *world)
 {
@@ -107,6 +150,15 @@ rc_world_freeze (RCWorld *world)
     }
 }
 
+/**
+ * rc_world_thaw:
+ * @world: An #RCWorld.
+ * 
+ * Thaws the hash tables inside of #RCWorld.  This function
+ * should always be called before making queries against
+ * @world.
+ * 
+ **/
 void
 rc_world_thaw (RCWorld *world)
 {
@@ -124,6 +176,15 @@ rc_world_thaw (RCWorld *world)
     }
 }
 
+/**
+ * rc_world_add_package:
+ * @world: An #RCWorld.
+ * @package: An #RCPackage to be added to @world.
+ * 
+ * Stores @package inside of @world and indexes all of its
+ * dependency information for fast look-ups later on.
+ * 
+ **/
 void
 rc_world_add_package (RCWorld *world, RCPackage *package)
 {
@@ -181,52 +242,6 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
 
 }
 
-void
-rc_world_add_packages_from_slist (RCWorld *world,
-                                  RCPackageSList *slist)
-{
-    g_return_if_fail (world != NULL);
-    
-    rc_world_freeze (world);
-    while (slist) {
-        rc_world_add_package (world, (RCPackage *) slist->data);
-        slist = slist->next;
-    }
-    rc_world_thaw (world);
-}
-
-guint
-rc_world_add_packages_from_xml (RCWorld *world, RCChannel *channel, xmlNode *node)
-{
-    RCPackage *package;
-    guint count = 0;
-    
-    g_return_val_if_fail (world != NULL, 0);
-
-    rc_world_freeze (world);
-
-    while (node && g_strcasecmp (node->name, "package"))
-        node = node->xmlChildrenNode;
-
-    while (node) {
-
-        if (! g_strcasecmp (node->name, "package")) {
-
-            package = rc_xml_node_to_package (node, channel);
-            if (package) {
-                rc_world_add_package (world, package);
-                ++count;
-            }
-            
-        } 
-
-        node = node->next;
-    }
-
-    rc_world_thaw (world);
-
-    return count;
-}
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
@@ -367,9 +382,22 @@ remove_package_struct_cb (gpointer key, gpointer val, gpointer user_data)
     return remove_package_structs_generic (slist, package, NULL);
 }
 
+/**
+ * rc_world_remove_package:
+ * @world: An #RCWorld.
+ * @package: An #RCPackage that is stored in @world.
+ * 
+ * Removes the #RCPackage @package from @world.  
+ *
+ * As currently
+ * implemented, this function is not very efficient; if you need
+ * to remove a large number of packages, use rc_world_remove_packages()
+ * if possible.
+ * 
+ **/
 void
 rc_world_remove_package (RCWorld *world,
-                          RCPackage *package)
+                         RCPackage *package)
 {
     g_return_if_fail (world != NULL);
     g_return_if_fail (package != NULL);
@@ -407,6 +435,18 @@ remove_package_struct_by_channel_cb (gpointer key, gpointer val, gpointer user_d
     return remove_package_structs_generic (slist, NULL, channel);
 }
 
+/**
+ * rc_world_remove_packages:
+ * @world:  An #RCWorld.
+ * @channel: An #RCChannel or a channel wildcard.
+ * 
+ * Removes all of the packages from @world whose
+ * channel matches @channel. 
+ * 
+ * This function should be favored over rc_world_remove_package() when
+ * removing a large number of packages simulatenously.
+ * 
+ **/
 void
 rc_world_remove_packages (RCWorld *world,
                           RCChannel *channel)
@@ -424,6 +464,18 @@ rc_world_remove_packages (RCWorld *world,
                                  channel);
 }
 
+/**
+ * rc_world_find_installed_version:
+ * @world: An #RCWorld.
+ * @package: An #RCPackage.
+ * 
+ * Searches @world for an installed package with the same
+ * name as @package.
+ * 
+ * 
+ * Return value: The installed package.  If no such
+ * package exists, returns %NULL.
+ **/
 RCPackage *
 rc_world_find_installed_version (RCWorld *world,
                                  RCPackage *package)
@@ -448,6 +500,19 @@ rc_world_find_installed_version (RCWorld *world,
     return NULL;
 }
 
+/**
+ * rc_world_get_package:
+ * @world: An #RCWorld.
+ * @channel: A non-wildcard #RCChannel.
+ * @name: The name of a package.
+ * 
+ * Searches @world for a package in the specified channel
+ * with the specified name.  @channel must be an actual
+ * channel, not a wildcard.
+ * 
+ * Return value: The matching package, or %NULL if no such
+ * package exists.
+ **/
 RCPackage *
 rc_world_get_package (RCWorld *world,
                       RCChannel *channel,
@@ -471,6 +536,25 @@ rc_world_get_package (RCWorld *world,
     return NULL;
 }
 
+/**
+ * rc_world_get_package_with_constraint:
+ * @world: An #RCWorld.
+ * @channel: A non-wildcard #RCChannel.
+ * @name: The name of a package.
+ * @constraint: An #RCPackageDep with package version information.
+ * @is_and: An unused argument that is ignored.
+ * 
+ * Searches @world for a package in the specified channel
+ * with the specified name, and whose version information is
+ * exactly equal to that in @constraint.
+ *
+ * @channel must be an actual channel, not a wildcard.
+ * If @constraint is %NULL, using this function is equivalent
+ * to calling rc_world_get_package().
+ * 
+ * Return value: The matching package, or %NULL if no such
+ * package exists.
+ **/
 RCPackage *
 rc_world_get_package_with_constraint (RCWorld *world,
                                       RCChannel *channel,
@@ -523,6 +607,20 @@ foreach_package_cb (gpointer key, gpointer val, gpointer user_data)
     }
 }
 
+/**
+ * rc_world_foreach_package:
+ * @world: An #RCWorld.
+ * @channel: An #RCChannel or channel wildcard.
+ * @fn: A callback function.
+ * @user_data: Pointer passed to the callback function.
+ * 
+ * Iterates across all of the packages stored in @world whose
+ * channel matches @channel, invoking the callback function
+ * @fn on each one.
+ * 
+ * Return value: The number of matching packages that the callback
+ * function was invoked on, or -1 in case of an error.
+ **/
 int
 rc_world_foreach_package (RCWorld *world,
                           RCChannel *channel,
@@ -545,6 +643,21 @@ rc_world_foreach_package (RCWorld *world,
     return info.count;
 }
 
+/**
+ * rc_world_foreach_package_by_name:
+ * @world: An #RCWorld.
+ * @name: The name of a package.
+ * @channel: An #RCChannel or channel wildcard.
+ * @fn: A callback function.
+ * @user_data: Pointer passed to the callback function.
+ * 
+ * Iterates across all of the packages stored in @world
+ * whose channel matches @channel and whose name matches @name,
+ * invoking the callback function @fn on each one.
+ * 
+ * Return value: The number of matching packages that the
+ * callback function was invoked on, or -1 in case of an error.
+ **/
 int
 rc_world_foreach_package_by_name (RCWorld *world,
                                   const char *name,
@@ -606,6 +719,23 @@ foreach_upgrade_cb (RCPackage *package, gpointer user_data)
     }
 }
 
+/**
+ * rc_world_foreach_upgrade:
+ * @world: An #RCWorld.
+ * @package: An #RCPackage.
+ * @channel: An #RCChannel or channel wildcard.
+ * @fn: A callback function.
+ * @user_data: Pointer passed to the callback function. 
+ * 
+ * Searchs @world for all packages whose channel matches
+ * @channel and that are an upgrade for @package.
+ * (To be precise, an upgrade is a package with the same
+ * name as @package but with a greater version number.)
+ * 
+ * Return value: The number of matching packages
+ * that the callback functions was invoked on, or
+ * -1 in the case of an error.
+ **/
 int
 rc_world_foreach_upgrade (RCWorld *world,
                           RCPackage *package,
@@ -641,6 +771,25 @@ get_best_upgrade_cb (RCPackage *package, gpointer user_data)
     }
 }
 
+/**
+ * rc_world_get_best_upgrade:
+ * @world: An #RCWorld.
+ * @package: A #RCPackage.
+ * 
+ * Searches @world for the package in any non-system channel and
+ * returns the package it finds that has the highest version number
+ * of all of the possibilities with the same name as @package.
+ *
+ * If @world does not contain any like-named packages with
+ * higher version numbers that @package, %NULL is returned.
+ *
+ * If @world contains two or more non-system packages with identical
+ * version numbers that are greater than that of @package, one
+ * of the higher-versioned packages will be chosen at random to
+ * be returned.
+ * 
+ * Return value: the highest-versioned upgrade for @package.
+ **/
 RCPackage *
 rc_world_get_best_upgrade (RCWorld *world, RCPackage *package)
 {
@@ -681,6 +830,22 @@ system_upgrade_cb (RCPackage *package, gpointer user_data)
     }
 }
 
+/**
+ * rc_world_foreach_system_package_with_upgrade:
+ * @world: An #RCWorld.
+ * @fn: A callback function.
+ * @user_data: Pointer to be passed to the callback function.
+ *
+ * Iterates across all system packages in @world for which there
+ * exists an upgrade, and passes both the original package and
+ * the upgrade package to the callback function.
+ *
+ * The upgrade package is determined by calling
+ * rc_world_get_best_upgrade().
+ * 
+ * Return value: The number of matching packages that the callback
+ * function was invoked on, or -1 in case of an error.
+ **/
 int
 rc_world_foreach_system_package_with_upgrade (RCWorld *world,
                                               RCPackagePairFn fn,
@@ -703,6 +868,31 @@ rc_world_foreach_system_package_with_upgrade (RCWorld *world,
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
+/**
+ * rc_world_foreach_providing_package:
+ * @world: An #RCWorld.
+ * @dep: An #RCPackageDep.
+ * @channel: An #RCChannel or channel wildcard.
+ * @fn: A callback function.
+ * @user_data: Pointer to be passed to the callback function.
+ * 
+ * Iterates across all packages in @world whose channel matches
+ * @channel and which provides a token that satisfied the
+ * dependency @dep.  The package and the provided token are
+ * passed to the callback function.
+ *
+ * If one package provides multiple tokens that satisfy @dep,
+ * the callback function will be invoked multiple times, one
+ * for each token.
+ *
+ * If @dep is an or-dependency, we iterate across all package/provide
+ * pairs that satisfy any part of the or-dependency.  In this case, it
+ * is possible for the callback to be invoked on same package/provide
+ * pair multiple times.
+ * 
+ * Return value: The number of times that the callback
+ * function was invoked, or -1 in case of an error.
+ **/
 int
 rc_world_foreach_providing_package (RCWorld *world, RCPackageDep *dep,
                                     RCChannel *channel,
@@ -764,6 +954,25 @@ rc_world_foreach_providing_package (RCWorld *world, RCPackageDep *dep,
     return count;
 }
 
+/**
+ * rc_world_check_providing_package:
+ * @world: An #RCWorld.
+ * @dep: An #RCPackageDep.
+ * @channel: An #RCChannel or channel wildcard.
+ * @filter_dups_of_installed: If %TRUE, we skip uninstalled versions of installed packages.
+ * This is the default behavior for the other rc_world_* iterator functions.
+ * @fn: A callback function.
+ * @user_data: Pointer to be passed to the callback function.
+ * 
+ * This function behaves almost exactly the same as rc_world_foreach_providing_package,
+ * except in two ways.  It allows iteration over all packages in all channels, without
+ * skipping uninstalled versions of installed packages, by passing %FALSE in for the
+ * @filter_dups_of_installed argument.  Also, the callback function returns a #gboolean
+ * and the iteratior will terminate if it returns %FALSE.
+ * 
+ * Return value: Returns %TRUE if the iteration was prematurely terminated by the
+ * callback function, and %FALSE otherwise.
+ **/
 gboolean
 rc_world_check_providing_package (RCWorld *world, RCPackageDep *dep,
                                   RCChannel *channel, gboolean filter_dups_of_installed,
@@ -829,6 +1038,31 @@ rc_world_check_providing_package (RCWorld *world, RCPackageDep *dep,
     return ret;
 }
 
+/**
+ * rc_world_foreach_requiring_package:
+ * @world: An #RCWorld.
+ * @dep: An #RCPackageDep.
+ * @channel: An #RCChannel or channel wildcard.
+ * @fn: A callback function.
+ * @user_data: Pointer to be passed to the callback function.
+ * 
+ * Iterates across all packages in @world whose channel matches
+ * @channel and which provides a token that satisfied the
+ * requirement @dep.  The package and the provided token are
+ * passed to the callback function.
+ *
+ * If one package provides multiple tokens that satisfy @dep,
+ * the callback function will be invoked multiple times, one
+ * for each token.
+ *
+ * If @dep is an or-dependency, we iterate across all package/provide
+ * pairs that satisfy any part of the or-dependency.  In this case, it
+ * is possible for the callback to be invoked on same package/provide
+ * pair multiple times.
+ * 
+ * Return value: The number of times that the callback
+ * function was invoked, or -1 in case of an error.
+ **/
 int
 rc_world_foreach_requiring_package (RCWorld *world, RCPackageDep *dep,
                                     RCChannel *channel,
@@ -943,6 +1177,16 @@ foreach_requires_by_name_cb (gpointer key, gpointer val, gpointer user_data)
     fprintf (out, "\n");
 }
 
+/**
+ * rc_world_spew:
+ * @world: An #RCWorld.
+ * @out: A file handle
+ * 
+ * Dumps the entire state of the #RCWorld out to the file
+ * handle in a quasi-human-readable format.  This can be
+ * useful for debugging in certain contexts.
+ *
+ **/
 void
 rc_world_spew (RCWorld *world, FILE *out)
 {

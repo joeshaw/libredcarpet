@@ -56,6 +56,53 @@ static guint rc_world_parse_helix (RCWorld *, RCChannel *, gchar *);
 static guint rc_world_parse_debian (RCWorld *, RCChannel *, gchar *);
 static guint rc_world_parse_redhat (RCWorld *, RCChannel *, gchar *);
 
+void
+rc_world_add_packages_from_slist (RCWorld *world,
+                                  RCPackageSList *slist)
+{
+    g_return_if_fail (world != NULL);
+    
+    rc_world_freeze (world);
+    while (slist) {
+        rc_world_add_package (world, (RCPackage *) slist->data);
+        slist = slist->next;
+    }
+    rc_world_thaw (world);
+}
+
+guint
+rc_world_add_packages_from_xml (RCWorld *world, RCChannel *channel, xmlNode *node)
+{
+    RCPackage *package;
+    guint count = 0;
+    
+    g_return_val_if_fail (world != NULL, 0);
+
+    rc_world_freeze (world);
+
+    while (node && g_strcasecmp (node->name, "package"))
+        node = node->xmlChildrenNode;
+
+    while (node) {
+
+        if (! g_strcasecmp (node->name, "package")) {
+
+            package = rc_xml_node_to_package (node, channel);
+            if (package) {
+                rc_world_add_package (world, package);
+                ++count;
+            }
+            
+        } 
+
+        node = node->next;
+    }
+
+    rc_world_thaw (world);
+
+    return count;
+}
+
 guint
 rc_world_parse_channel (RCWorld *world,
                         RCChannel *channel, 

@@ -24,6 +24,7 @@
 #include "rc-package.h"
 #include "rc-pretty-name.h"
 #include "xml-util.h"
+#include "gnome-xml/xmlmemory.h"
 
 RCPackage *
 rc_package_new (void)
@@ -304,14 +305,23 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
             package->suggests = g_slist_reverse (package->suggests);
 
         } else if (!g_strcasecmp (iter->name, "conflicts")) {
-            const xmlNode *iter2;
+            xmlNode *iter2;
 
             iter2 = iter->xmlChildrenNode;
 
             while (iter2) {
-                package->conflicts =
-                    g_slist_prepend (package->conflicts,
-                                     rc_xml_node_to_package_dep (iter2));
+                RCPackageDep *dep = rc_xml_node_to_package_dep (iter2);
+                xmlChar *obs = xmlGetProp (iter2, "obsoletes");
+                                
+                if (obs) {
+                    package->obsoletes =
+                        g_slist_prepend (package->obsoletes, dep);
+                    xmlFree (obs);
+                } else {
+                    package->conflicts =
+                        g_slist_prepend (package->conflicts, dep);
+                }
+                
                 iter2 = iter2->next;
             }
 

@@ -1,3 +1,17 @@
+2002-04-09  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-package.c (rc_xml_node_to_package): Check if the "obsoletes"
+	property is set in a RCPackageDep in the conflict section.  If so,
+	treat it like an obsolete.
+
+	* rc-world.c: Moved rc_world_add_packages_from_xml and
+	rc_world_add_packages_from_slist to rc-world-import.c.  Added some
+	gtk-doc docs.
+
+	* rc-world-import.c (rc_world_add_packages_from_xml): Moved here
+	from rc-world.c.
+	(rc_world_add_packages_from_slist): Moved here from rc-world.c.
+
 2002-03-29  Peter Bowen  <pzb@ximian.com>
 
 	* rc-rpmman.c (rc_rpmman_version_compare): always use epochs in
