@@ -213,7 +213,7 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
         RCChannel *channel;
 
         /* Skip comments */
-        if (node->type == XML_COMMENT_NODE) {
+        if (node->type == XML_COMMENT_NODE || node->type == XML_TEXT_NODE) {
             node = node->next;
             continue;
         }
