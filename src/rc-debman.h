@@ -53,4 +53,9 @@ guint rc_debman_get_type (void);
 
 RCDebman *rc_debman_new (void);
 
+void rc_debman_parse_version (gchar *input, guint32 *epoch, gchar **version,
+                              gchar **release);
+RCPackageDepSList *rc_debman_fill_depends (gchar *input,
+                                           RCPackageDepSList *list);
+
 #endif /* _RC_DEBMAN_H */

@@ -113,11 +113,13 @@ package_accept (gchar *line, RCPackageSList *pkgs)
     return (NULL);
 }
 
-/* Scan through the /var/lib/dpkg/status file, rewriting it to
+/* Scan through the /var/lib/dpkg/status file, writing it out as
    /var/lib/dpkg/status.redcarpet, rewriting the Status: line of any package
    in remove_pkgs from "install ok installed" to "purge ok installed" to tell
    dpkg that we're going to eventually remove it.  This lets dpkg remove it
-   itself if we are installing a package that conflicts with it. */
+   itself if we are installing a package that conflicts with it.
+
+   This system sucks hard. */
 static gboolean
 mark_purge (RCPackman *p, RCPackageSList *remove_pkgs)
 {
@@ -153,7 +155,7 @@ mark_purge (RCPackman *p, RCPackageSList *remove_pkgs)
                 gchar *error;
 
                 error = g_strdup_printf ("Package %s is not installed "
-                                         "correctly (\"%s\"", package_name,
+                                         "correctly (\"%s\")", package_name,
                                          status);
                 rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
                                       error);
@@ -616,7 +618,7 @@ rc_debman_transact (RCPackman *p, GSList *install_pkgs,
 
 /* Takes a string of format [<epoch>:]<version>[-<release>], and returns those
    three elements, if they exist */
-static void
+void
 rc_debman_parse_version (gchar *input, guint32 *epoch, gchar **version,
                          gchar **release)
 {
@@ -651,7 +653,7 @@ rc_debman_parse_version (gchar *input, guint32 *epoch, gchar **version,
 /* Given a line from a debian control file (or from /var/lib/dpkg/status), and
    a pointer to a RCPackageDepSList, fill in the dependency information.  It's
    ugly but memprof says it doesn't leak. */
-static RCPackageDepSList *
+RCPackageDepSList *
 rc_debman_fill_depends (gchar *input, RCPackageDepSList *list)
 {
     gchar **deps;
@@ -660,49 +662,90 @@ rc_debman_fill_depends (gchar *input, RCPackageDepSList *list)
     /* All evidence indicates that the fields are comma-space separated, but if
        that ever turns out to be incorrect, we'll have to do this part more
        carefully. */
-    deps = g_strsplit (input, ", ", 0);
+    /* Evidence has turned out incorrect; there can be arbitrary whitespace
+       inserted anywhere within the depends fields -- or lack of said
+       whitespace. Man, Debian is like a piece of bad fruit -- it looks great
+       on the outside, but when you dig into it, you see the rot ;-) - vlad */
+    /* Note that this can probably be made much prettier if we use the GNU
+       regexp package; but I have no idea how much slower/faster that would
+       be. - vlad */
+
+    deps = g_strsplit (input, ",", 0);
 
     for (i = 0; deps[i]; i++) {
-        gchar **elems = g_strsplit (deps[i], " | ", 0);
+        gchar **elems;
         guint j;
         RCPackageDep *dep = NULL;
+        gchar *curdep;
+
+        curdep = g_strstrip (deps[i]);
+        elems = g_strsplit (curdep, "|", 0);
 
         /* For the most part, there's only one element per dep, except for the
            rare case of OR'd deps. */
         for (j = 0; elems[j]; j++) {
             RCPackageDepItem *depi;
-            gchar **parts;
+            gchar *curelem;
+            gchar *s1, *s2;
 
+            gchar *depname = NULL, *deprel = NULL, *depvers = NULL;
+
+            curelem = g_strstrip (elems[j]);
             /* A space separates the name of the dep from the relationship and
                version. */
-            parts = g_strsplit (elems[j], " ", 1);
+            /* No. "alsa-headers(<<0.5)" is perfectly valid. We have to parse
+             * this by hand */
 
-            if (!parts[1]) {
+            /* First we grab the dep name */
+            s1 = curelem;
+            while (*s1 && !isspace(*s1) && *s1 != '(') s1++;
+            /* s1 now points to the first character after the full name */
+            depname = g_malloc (s1 - curelem + 1);
+            strncpy (depname, curelem, s1 - curelem);
+            depname[s1 - curelem] = '\0';
+
+            if (*s1) {          /* we have a relation */
+                /* Skip until the opening brace */
+                while (*s1 && *s1 != '(') s1++;
+                s1++; /* skip the brace */
+                while (*s1 && isspace(*s1)) s1++; /* skip spaces before rel */
+                s2 = s1;
+                while (*s2 == '=' || *s2 == '>' || *s2 == '<') s2++;
+                /* s2 now points to the first char after the relation */
+                deprel = g_malloc (s2 - s1 + 1);
+                strncpy (deprel, s1, s2 - s1);
+                deprel[s2 - s1] = '\0';
+
+                while (*s2 && isspace (*s2)) s2++;
+                /* Now we have the version string start */
+                s1 = s2;
+                while (*s2 && !isspace (*s2) && *s2 != ')') s2++;
+                depvers = g_malloc (s2 - s1 + 1);
+                strncpy (depvers, s1, s2 - s1);
+                depvers[s2 - s1] = '\0';
+
+                /* We really shouldn't ignore the rest of the string, but we
+                   do. */
+                /* There shouldn't be anything after this, except a closing
+                   paren */
+            }
+
+            if (!deprel) {
                 /* There's no version in this dependency, just a name. */
-                depi = rc_package_dep_item_new (parts[0], 0, NULL, NULL,
+#if DEBUG > 10
+                fprintf (stderr, "debian_dephelper: Adding dep '%s'\n", depname);
+#endif
+                depi = rc_package_dep_item_new (depname, 0, NULL, NULL,
                                                 RC_RELATION_ANY);
             } else {
                 /* We've got to parse the rest of this mess. */
-                gchar *relstring, *verstring;
                 guint relation = RC_RELATION_ANY;
-                guint32 epoch;
+                gint32 epoch;
                 gchar *version, *release;
-
-                if (parts[1][1] == '=') {
-                    relstring = g_strndup (parts[1] + 1, 1);
-                    verstring = g_strndup (parts[1] + 2,
-                                           strlen (parts[1] + 2) - 1);
-                } else {
-                    relstring = g_strndup (parts[1] + 1, 2);
-                    verstring = g_strndup (parts[1] + 3,
-                                           strlen (parts[1] + 3) - 1);
-                }
-
-                verstring = g_strstrip (verstring);
 
                 /* The possible relations are "=", ">>", "<<", ">=", and "<=",
                    decide which apply */
-                switch (relstring[0]) {
+                switch (deprel[0]) {
                 case '=':
                     relation = RC_RELATION_EQUAL;
                     break;
@@ -714,26 +757,24 @@ rc_debman_fill_depends (gchar *input, RCPackageDepSList *list)
                     break;
                 }
 
-                if (relstring[1] && (relstring[1] == '=')) {
+                if (deprel[1] && (deprel[1] == '=')) {
                     relation |= RC_RELATION_EQUAL;
                 }
 
-                g_free (relstring);
+                g_free (deprel);
 
                 /* Break the single version string up */
-                rc_debman_parse_version (verstring, &epoch, &version,
+                rc_debman_parse_version (depvers, &epoch, &version,
                                          &release);
 
-                g_free (verstring);
+                g_free (depvers);
 
-                depi = rc_package_dep_item_new (parts[0], epoch, version,
+                depi = rc_package_dep_item_new (depname, epoch, version,
                                                 release, relation);
 
                 g_free (version);
                 g_free (release);
             }
-
-            g_strfreev (parts);
 
             dep = g_slist_append (dep, depi);
         }
