@@ -17,17 +17,23 @@ rpm_sources2 = $(rpm_sources)
 endif
 
 libredcarpet_a_SOURCES =		\
-        channel.c                       \
-        channel.h                       \
-        common.c                        \
-        common.h                        \
+	rc-package-spec.c		\
+	rc-package-spec.h		\
+	rc-package-dep.c		\
+	rc-package-dep.h		\
+	rc-package-update.c		\
+	rc-package-update.h		\
+	rc-package.c			\
+	rc-package.h			\
+	rc-channel.h			\
+	rc-channel.c			\
+	rc-util.c			\
+	rc-util.h			\
         deps.c                          \
         deps.h                          \
         deps-private.h                  \
         distro.c                        \
         distro.h                        \
-        packagespec.c                   \
-        packagespec.h                   \
         pkginfo.c                       \
         pkginfo.h                       \
         helix-packman-helper.h          \

@@ -23,7 +23,7 @@
 
 #include <gtk/gtk.h>
 
-#include "common.h"
+#include "rc-package.h"
 
 #define GTK_TYPE_RC_PACKMAN        (rc_packman_get_type ())
 #define RC_PACKMAN(obj)            (GTK_CHECK_CAST ((obj), \

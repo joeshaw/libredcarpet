@@ -31,6 +31,8 @@
 
 #include <sys/wait.h>
 
+#include "rc-util.h"
+
 static void rc_debman_class_init (RCDebmanClass *klass);
 static void rc_debman_init       (RCDebman *obj);
 
