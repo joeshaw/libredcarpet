@@ -107,8 +107,26 @@ undump (const char *filename)
 {
     char *buffer = NULL;
     gsize len;
+    gboolean is_compressed;
+
+    is_compressed =  g_pattern_match_simple ("*.gz", filename);
 
     if (g_file_get_contents (filename, &buffer, &len, NULL)) {
+        
+        if (is_compressed) {
+            GByteArray *un_z = NULL;
+            if (rc_uncompress_memory (buffer, len, &un_z)) {
+                rc_debug (RC_DEBUG_LEVEL_WARNING,
+                          "Uncompression of '%s' failed",
+                          filename);
+                return;
+            }
+
+            g_free (buffer);
+            buffer = un_z->data;
+            g_byte_array_free (un_z, FALSE);
+        }
+        
         rc_world_undump (world, buffer);
         g_free (buffer);
     } else {
@@ -507,6 +525,19 @@ parse_xml_trial (xmlNode *node)
             else
                 g_print (">!> Upgrading %d package%s\n",
                          count, count > 1 ? "s" : "");
+
+        } else if (! g_strcasecmp (node->name, "solvedeps")) {
+
+            xmlNode *iter = node->xmlChildrenNode;
+
+            while (iter != NULL) {
+                RCPackageDep *dep = rc_xml_node_to_package_dep (iter);
+                /* We just skip over anything that doesn't look like a
+                   dep. */
+                if (dep)
+                    rc_resolver_add_extra_dependency (resolver, dep);
+                iter = iter->next;
+            }
 
         } else {
             g_warning ("Unknown tag '%s' in trial", node->name);

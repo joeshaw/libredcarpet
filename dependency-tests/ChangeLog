@@ -1,3 +1,9 @@
+2002-08-16  Jon Trowbridge  <trow@ximian.com>
+
+	* deptestomatic.c (undump): Added support for undumping compressed
+	files.
+	(parse_xml_trial): Added "solvedeps" testing.
+
 2002-08-15  Jon Trowbridge  <trow@ximian.com>
 
 	* deptestomatic.c (soln_cb): Use the rc_resolver_context_*_count
