@@ -29,6 +29,7 @@
 
 #include "packman.h"
 #include "pyutil.h"
+#include "package.h"
 
 typedef struct {
   PyObject_HEAD;
@@ -44,6 +45,85 @@ static PyTypeObject PyPackman_type_info = {
 };
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+static PyObject *
+PyPackman_transact (PyObject *self, PyObject *args)
+{
+	RCPackman *packman = PyPackman_get_packman (self);
+	RCPackageSList *install_packages;
+	RCPackageSList *remove_packages;
+	PyObject *inst, *rem;
+	int flags;
+
+	if (! PyArg_ParseTuple (args, "O!O!i",
+					    &PyList_Type, &inst,
+					    &PyList_Type, &rem,
+					    &flags))
+		return NULL;
+
+	install_packages = PyList_to_rc_package_slist (inst);
+	remove_packages = PyList_to_rc_package_slist (rem);
+
+	rc_packman_transact (packman, install_packages, remove_packages, flags);
+
+	rc_package_slist_unref (install_packages);
+	rc_package_slist_unref (remove_packages);
+	Py_INCREF (Py_None);
+	return Py_None;
+}
+
+static PyObject *
+PyPackman_query_file (PyObject *self, PyObject *args)
+{
+	RCPackman *packman = PyPackman_get_packman (self);
+	RCPackage *package;
+	char *filename;
+
+	if (! PyArg_ParseTuple (args, "s", &filename))
+		return NULL;
+
+	package = rc_packman_query_file (packman, filename);
+	if (package == NULL) {
+		Py_INCREF (Py_None);
+		return Py_None;
+	}
+
+	return PyPackage_new (package);
+}
+
+static PyObject *
+PyPackman_query (PyObject *self, PyObject *args)
+{
+	RCPackman *packman = PyPackman_get_packman (self);
+	RCPackageSList *slist;
+	char *name;
+
+	if (! PyArg_ParseTuple (args, "s", &name))
+		return NULL;
+
+	slist = rc_packman_query (packman, name);
+	if (slist == NULL) {
+		Py_INCREF (Py_None);
+		return Py_None;
+	}
+
+	return rc_package_slist_to_PyList (slist);
+}
+
+static PyObject *
+PyPackman_query_all (PyObject *self, PyObject *args)
+{
+	RCPackman *packman = PyPackman_get_packman (self);
+	RCPackageSList *slist;
+
+	slist = rc_packman_query_all (packman);
+	if (slist == NULL) {
+		Py_INCREF (Py_None);
+		return Py_None;
+	}
+
+	return rc_package_slist_to_PyList (slist);
+}
 
 static PyObject *
 PyPackman_parse_version (PyObject *self, PyObject *args)
@@ -73,6 +153,25 @@ PyPackman_parse_version (PyObject *self, PyObject *args)
   g_free (release);
 
   return retval;
+}
+
+static PyObject *
+PyPackman_find_file (PyObject *self, PyObject *args)
+{
+	RCPackman *packman = PyPackman_get_packman (self);
+	RCPackage *package;
+	char *filename;
+
+	if (! PyArg_ParseTuple (args, "s", &filename))
+		return NULL;
+
+	package = rc_packman_find_file (packman, filename);
+	if (package == NULL) {
+		Py_INCREF (Py_None);
+		return Py_None;
+	}
+
+	return PyPackage_new (package);
 }
 
 static PyObject *
@@ -126,8 +225,34 @@ PyPackman_get_reason (PyObject *self, PyObject *args)
   return Py_BuildValue ("s", rc_packman_get_reason (packman));
 }
 
+static PyObject *
+PyPackman_get_repackage_dir (PyObject *self, PyObject *args)
+{
+	RCPackman *packman = PyPackman_get_packman (self);
+	return Py_BuildValue ("s", rc_packman_get_repackage_dir (packman));
+}
+
+static PyObject *
+PyPackman_set_repackage_dir (PyObject *self, PyObject *args)
+{
+	RCPackman *packman = PyPackman_get_packman (self);
+	char *str;
+
+	if (! PyArg_ParseTuple (args, "s", &str))
+		return NULL;
+
+	rc_packman_set_repackage_dir (packman, str);
+	Py_INCREF (Py_None);
+	return Py_None;
+}
+
 static PyMethodDef PyPackman_methods[] = {
+  { "transact",            PyPackman_transact,            METH_VARARGS },
+  { "query_file",          PyPackman_query_file,          METH_VARARGS },
+  { "query",               PyPackman_query,               METH_VARARGS },
+  { "query_all",           PyPackman_query_all,           METH_NOARGS  },
   { "parse_version",       PyPackman_parse_version,       METH_VARARGS },
+  { "find_file",           PyPackman_find_file,           METH_VARARGS },
   { "is_locked",           PyPackman_is_locked,           METH_NOARGS  },
   { "lock",                PyPackman_lock,                METH_NOARGS  },
   { "unlock",              PyPackman_unlock,              METH_NOARGS  },
@@ -135,6 +260,8 @@ static PyMethodDef PyPackman_methods[] = {
   { "get_file_extension",  PyPackman_get_file_extension,  METH_NOARGS  },
   { "get_error",           PyPackman_get_error,           METH_NOARGS  },
   { "get_reason",          PyPackman_get_reason,          METH_NOARGS  },
+  { "get_repackage_dir",   PyPackman_get_repackage_dir,   METH_NOARGS  },
+  { "set_repackage_dir",   PyPackman_set_repackage_dir,   METH_VARARGS },
   { NULL, NULL }
 };
 
@@ -177,6 +304,13 @@ PyPackman_register (PyObject *dict)
   PyPackman_type_info.tp_methods = PyPackman_methods;
 
   pyutil_register_type (dict, &PyPackman_type_info);
+
+  pyutil_register_int_constant (dict, "TRANSACT_FLAG_NONE",
+						  RC_TRANSACT_FLAG_NONE);
+  pyutil_register_int_constant (dict, "TRANSACT_FLAG_NO_ACT",
+						  RC_TRANSACT_FLAG_NO_ACT);
+  pyutil_register_int_constant (dict, "TRANSACT_FLAG_REPACKAGE",
+						  RC_TRANSACT_FLAG_REPACKAGE);
 }
 
 int

@@ -28,7 +28,13 @@
 
 #include <Python.h>
 
+#include "package.h"
 #include "packman.h"
+#include "channel.h"
+#include "world.h"
+#include "resolver-info.h"
+#include "resolver-context.h"
+#include "resolver.h"
 
 static PyMethodDef redcarpet_methods[] = {
 
@@ -42,8 +48,14 @@ static InitFns redcarpet_init_fns[] = {
 
 typedef void (*RegistrationFn) (PyObject *dict);
 static RegistrationFn redcarpet_registration_fns[] = {
-  PyPackman_register,
-  NULL
+	PyPackage_register,
+	PyPackman_register,
+	PyChannel_register,
+	PyWorld_register,
+	PyResolverInfo_register,
+	PyResolverContext_register,
+	PyResolver_register,
+	NULL
 };
 
 void

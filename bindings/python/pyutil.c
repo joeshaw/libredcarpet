@@ -77,3 +77,9 @@ pyutil_register_type (PyObject *dict,
   PyType_Ready (type);
   PyDict_SetItemString (dict, type->tp_name, (PyObject *) type);
 }
+
+void
+pyutil_register_int_constant (PyObject *dict, const char *name, int value)
+{
+	PyDict_SetItemString (dict, (char *) name, PyInt_FromLong(value));
+}

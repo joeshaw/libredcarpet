@@ -22,7 +22,13 @@ other_libdirs  = ["../../src"]
  
 
 py_tsar_sources = [ "pyutil.c",
+                    "package.c",
                     "packman.c",
+                    "channel.c",
+                    "world.c",
+                    "resolver-info.c",
+                    "resolver-context.c",
+                    "resolver.c",
                     "redcarpet.c",
                     ]
 

@@ -1,12 +1,10 @@
-/* This is -*- C -*- */
-/* vim: set sw=2: */
-/* $Id$ */
-
+/* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
- * pyutil.h
+ * channel.c
  *
- * Copyright (C) 2002 Ximian, Inc.
+ * Copyright (C) 2003 The Free Software Foundation, Inc.
  *
+ * Developed by Tambet Ingo <tambet@ximian.com>
  */
 
 /*
@@ -26,17 +24,19 @@
  * USA.
  */
 
-#ifndef __PYUTIL_H__
-#define __PYUTIL_H__
+#ifndef __CHANNEL_H__
+#define __CHANNEL_H__
 
 #include <Python.h>
+#include <libredcarpet.h>
 
-void pyutil_register_type (PyObject *dict,
-			   PyTypeObject *type);
+void       PyChannel_register    (PyObject *dict);
 
-void pyutil_register_int_constant (PyObject *dict,
-							const char *name,
-							int value);
+int        PyChannel_check       (PyObject *obj);
 
-#endif /* __PYUTIL_H__ */
+PyObject  *PyChannel_new         (RCChannel *channel);
+RCChannel *PyChannel_get_channel (PyObject *obj);
+RCChannelSList *PyList_to_rc_channel_slist (PyObject *py_list);
+PyObject       *rc_channel_slist_to_PyList (RCChannelSList *slist);
 
+#endif /* __CHANNEL_H__ */

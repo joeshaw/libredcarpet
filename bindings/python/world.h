@@ -1,12 +1,10 @@
-/* This is -*- C -*- */
-/* vim: set sw=2: */
-/* $Id$ */
-
+/* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
- * pyutil.h
+ * world.c
  *
- * Copyright (C) 2002 Ximian, Inc.
+ * Copyright (C) 2003 The Free Software Foundation, Inc.
  *
+ * Developed by Tambet Ingo <tambet@ximian.com>
  */
 
 /*
@@ -26,17 +24,17 @@
  * USA.
  */
 
-#ifndef __PYUTIL_H__
-#define __PYUTIL_H__
+#ifndef __WORLD_H__
+#define __WORLD_H__
 
 #include <Python.h>
+#include <libredcarpet.h>
 
-void pyutil_register_type (PyObject *dict,
-			   PyTypeObject *type);
+void       PyWorld_register    (PyObject *dict);
 
-void pyutil_register_int_constant (PyObject *dict,
-							const char *name,
-							int value);
+int        PyWorld_check       (PyObject *obj);
 
-#endif /* __PYUTIL_H__ */
+PyObject  *PyWorld_new         (RCWorld *world);
+RCWorld   *PyWorld_get_world   (PyObject *obj);
 
+#endif /* __WORLD_H__ */

@@ -1,12 +1,10 @@
-/* This is -*- C -*- */
-/* vim: set sw=2: */
-/* $Id$ */
-
+/* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
- * pyutil.h
+ * resolver-info.c
  *
- * Copyright (C) 2002 Ximian, Inc.
+ * Copyright (C) 2003 The Free Software Foundation, Inc.
  *
+ * Developed by Tambet Ingo <tambet@ximian.com>
  */
 
 /*
@@ -26,17 +24,16 @@
  * USA.
  */
 
-#ifndef __PYUTIL_H__
-#define __PYUTIL_H__
+#ifndef __RESOLVER_INFO_H__
+#define __RESOLVER_INFO_H__
 
 #include <Python.h>
+#include <libredcarpet.h>
 
-void pyutil_register_type (PyObject *dict,
-			   PyTypeObject *type);
+void       PyResolverInfo_register (PyObject *dict);
+int        PyResolverInfo_check    (PyObject *obj);
+PyObject  *PyResolverInfo_new      (RCResolverInfo *info);
 
-void pyutil_register_int_constant (PyObject *dict,
-							const char *name,
-							int value);
+RCResolverInfo *PyResolverInfo_get_resolver_info (PyObject *obj);
 
-#endif /* __PYUTIL_H__ */
-
+#endif /* __RESOLVER_INFO_H__ */
