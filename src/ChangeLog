@@ -1,4 +1,6 @@
-2001-07-27  unknown  <vladimir@ximian.com>
+2001-07-27  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c: Oops, sort a list correctly
 
 	* rc-deps-private.h, rc-deps.c: Don't blindly reject
 	all but the first package in a list
