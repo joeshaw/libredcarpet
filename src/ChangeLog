@@ -1,3 +1,10 @@
+2002-04-18  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-queue-item.c (rc_queue_item_branch_is_empty): Added.
+	(require_item_process): If none of the potential upgrades are
+	actually installable, we have no choice but to just go ahead and
+	remove the package in question.
+
 2002-04-16  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-package.c (rc_package_to_xml_node): Restored.

@@ -758,6 +758,30 @@ require_item_process (RCQueueItem *item,
             } /* if (upgrade_list) ... */
 
             if (upgrade_list != NULL
+                && rc_queue_item_branch_is_empty (branch_item)) {
+
+                GSList *iter;
+
+                for (iter = upgrade_list; iter != NULL; iter = iter->next) {
+                    char *str;
+                    char *p1, *p2;
+                    p1 = rc_package_to_str (require->requiring_package);
+                    p2 = rc_package_to_str ((RCPackage *) iter->data);
+                    str = g_strconcat ("Upgrade to ", p2, " to avoid removing ", p1, 
+                                       " is not possible.",
+                                       NULL);
+                    g_free (p1);
+                    g_free (p2);
+
+                    rc_resolver_context_add_info_str (context,
+                                                      require->requiring_package,
+                                                      RC_RESOLVER_INFO_PRIORITY_VERBOSE,
+                                                      str);
+
+                    explore_uninstall_branch = TRUE;
+                }
+                
+            } else if (upgrade_list != NULL
                 && explore_uninstall_branch
                 && codependent_packages (require->requiring_package,
                                          require->upgraded_package)) {
@@ -1042,6 +1066,18 @@ rc_queue_item_branch_add_item (RCQueueItem *item, RCQueueItem *subitem)
     branch = (RCQueueItem_Branch *) item;
 
     branch->possible_items = g_slist_prepend (branch->possible_items, subitem);
+}
+
+gboolean
+rc_queue_item_branch_is_empty (RCQueueItem *item)
+{
+    RCQueueItem_Branch *branch;
+
+    g_return_val_if_fail (item != NULL, TRUE);
+    g_return_val_if_fail (rc_queue_item_type (item) == RC_QUEUE_ITEM_TYPE_BRANCH, TRUE);
+
+    branch = (RCQueueItem_Branch *) item;
+    return branch->possible_items == NULL;
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */

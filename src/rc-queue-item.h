@@ -146,6 +146,7 @@ void         rc_queue_item_require_set_remove_only (RCQueueItem *item);
 
 RCQueueItem *rc_queue_item_new_branch      (RCWorld *);
 void         rc_queue_item_branch_add_item (RCQueueItem *branch, RCQueueItem *subitem);
+gboolean     rc_queue_item_branch_is_empty (RCQueueItem *branch);
 
 RCQueueItem *rc_queue_item_new_conflict       (RCWorld *, RCPackageDep *dep, RCPackage *package);
  
