@@ -102,10 +102,17 @@ rc_world_system_transact (RCWorld *world,
                           RCPackageSList *remove_packages,
                           int flags)
 {
-    rc_packman_transact (rc_packman_get_global (),
+    RCPackman *packman = rc_packman_get_global ();
+
+    g_assert (packman != NULL);
+
+    rc_packman_transact (packman,
                          install_packages,
                          remove_packages,
                          flags);
+
+    if (rc_packman_get_error (packman))
+        return FALSE;
 
     rc_world_refresh (world);
 
