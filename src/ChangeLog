@@ -1,3 +1,20 @@
+2003-09-23  Joe Shaw  <joe@ximian.com>
+
+	* rc-queue-item.c (require_process_cb): Ref the package before
+	putting it in the unique hash table.
+	(require_item_process): Call g_hash_table_new_full() and pass in
+	rc_package_unref() as the key destroy function.
+	(uninstall_item_destory): Unref the package.
+	(rc_queue_item_new_uninstall): Ref the package.
+
+	* rc-resolver-context.c (rc_resolver_context_unref): If
+	last_checked_package is set, unref it.
+	(rc_resolver_context_get_status): Unref the old
+	last_checked_package, ref the new one.
+
+	* rc-world-system.c (rc_world_system_foreach_providing): Set the
+	installed bit to TRUE and set the channel to the system channel.
+
 2003-09-22  Joe Shaw  <joe@ximian.com>
 
 	* rc-world-local-dir.c (rc_world_local_dir_assemble_fn): Use else

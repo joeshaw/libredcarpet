@@ -145,6 +145,10 @@ rc_world_system_foreach_providing (RCWorld *world,
     for (iter = packages; iter; iter = iter->next) {
         RCPackage *package = iter->data;
 
+        package->installed = TRUE;
+        package->channel = 
+            rc_channel_ref (RC_WORLD_SYSTEM (world)->system_channel);
+
         if (callback) {
             if (!callback (package, RC_PACKAGE_SPEC (dep), user_data)) {
                 count = -1;

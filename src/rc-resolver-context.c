@@ -115,6 +115,9 @@ rc_resolver_context_unref (RCResolverContext *context)
 
             g_hash_table_destroy (context->status);
 
+            if (context->last_checked_package)
+                rc_package_unref (context->last_checked_package);
+
             g_list_foreach (context->log,
                             (GFunc) rc_resolver_info_free, NULL);
             g_list_free (context->log);
@@ -192,7 +195,10 @@ rc_resolver_context_get_status (RCResolverContext *context,
             ? RC_PACKAGE_STATUS_INSTALLED : RC_PACKAGE_STATUS_UNINSTALLED;
     }
 
-    context->last_checked_package = package;
+    if (context->last_checked_package)
+        rc_package_unref (context->last_checked_package);
+
+    context->last_checked_package = rc_package_ref (package);
     context->last_checked_status = status;
 
     return status;

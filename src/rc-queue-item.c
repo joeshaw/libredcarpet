@@ -741,7 +741,8 @@ require_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data)
         && ! rc_world_package_is_locked (info->world, package)) {
 
         info->providers = g_slist_prepend (info->providers, package);
-        g_hash_table_insert (info->uniq, package, GINT_TO_POINTER (1));
+        g_hash_table_insert (info->uniq, rc_package_ref (package),
+                             GINT_TO_POINTER (1));
     }
 
     return TRUE;
@@ -847,8 +848,10 @@ require_item_process (RCQueueItem *item,
     info.context = context;
     info.world = world;
     info.providers = NULL;
-    info.uniq = g_hash_table_new (rc_package_spec_hash,
-                                  rc_package_spec_equal);
+    info.uniq = g_hash_table_new_full (rc_package_spec_hash,
+                                       rc_package_spec_equal,
+                                       (GDestroyNotify) rc_package_unref,
+                                       NULL);
 
     if (! require->remove_only) {
         
@@ -2075,6 +2078,8 @@ static void
 uninstall_item_destroy (RCQueueItem *item)
 {
     RCQueueItem_Uninstall *uninstall = (RCQueueItem_Uninstall *) item;
+
+    rc_package_unref (uninstall->package);
     rc_package_dep_unref (uninstall->dep_leading_to_uninstall);
     g_free (uninstall->reason);
 }
@@ -2141,7 +2146,7 @@ rc_queue_item_new_uninstall (RCWorld *world, RCPackage *package, const char *rea
     item->cmp       = uninstall_item_cmp;
     item->to_string = uninstall_item_to_string;
     
-    uninstall->package = package;
+    uninstall->package = rc_package_ref (package);
     uninstall->reason = g_strdup (reason);
 
     return item;
