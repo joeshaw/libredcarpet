@@ -1,3 +1,7 @@
+2001-02-08  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c: Okay, so even more fixications. Will test on redhat.
+
 2001-02-07  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.h: oops, this one too
