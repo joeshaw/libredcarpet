@@ -43,6 +43,6 @@ RCPackageDep *rc_dep_or_new_provide (RCDepOr *dor);
 void rc_dep_or_free (RCDepOr *dor);
 
 gchar *rc_dep_or_dep_slist_to_string (RCPackageDepSList *dep);
-RCPackageDepSList *rc_dep_string_to_or_dep_slist (gchar *munged);
+RCPackageDepSList *rc_dep_string_to_or_dep_slist (const gchar *munged);
 
 #endif /* _RC_DEP_OR_H_ */

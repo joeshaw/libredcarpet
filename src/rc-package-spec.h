@@ -34,9 +34,8 @@ typedef enum {
     RC_PACKAGE_SPEC_TYPE_VIRTUAL
 } RCPackageSpecType;
 
-/* Make sure name is always the first element of this struct */
 struct _RCPackageSpec {
-    gchar *name;
+    GQuark nameq;
     gchar *version;
     gchar *release;
     guint has_epoch : 1;
@@ -94,13 +93,8 @@ gint rc_package_spec_equal (gconstpointer a, gconstpointer b) {
         return (FALSE);
     }
 
-    if (one->name && two->name) {
-        if (strcmp (one->name, two->name)) {
-            return (FALSE);
-        }
-    } else if (one->name || two->name) {
-        return (FALSE);
-    }
+    if (one->nameq != two->nameq)
+        return FALSE;
 
     if (one->version && two->version) {
         if (strcmp (one->version, two->version)) {

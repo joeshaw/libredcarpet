@@ -1,3 +1,100 @@
+2002-08-09  Ian Peters  <itp@ximian.com>
+
+	* rc-package-spec.h (struct _RCPackageSpec): removed the name
+	field in favor of the nameq, a GQuark.  Note to the reader: every
+	place in this entry that I say GQuark fixup, I mean: did the right
+	thing, whether that means directly comparing two GQuarks for
+	equality, g_quark_[to|from|try]_string, etc
+	(rc_package_spec_equal): no need for a strcmp, just compare the
+	two quarks
+
+	* rc-package-spec.c (rc_package_spec_init): really obvious name ->
+	nameq changes, I'm not going to enumerate them
+
+	* rc-package-dep.c: Our global_deps table is now keyed on the name
+	quark, not the name, so some of the hash table logic in _unref,
+	_new, and _new_from_spec is dramatically simpler, since we don't
+	have allocated keys.
+	(rc_package_dep_verify_relation): GQuark fixup
+
+	* rc-dep-or.h (rc_dep_string_to_or_dep_slist): take a const gchar
+	*, not gchar *
+
+	* rc-dep-or.c (rc_dep_or_dep_slist_to_string): GQuark fixup
+
+	* rc-package.c (rc_package_slist_sort_by_name): GQuark fixup
+	(rc_package_slist_find_duplicates): GQuark fixup
+
+	* rc-packman.c (rc_packman_transact): GQuark fixup
+	(rc_packman_generic_version_compare): GQuark fixup
+
+	* rc-rpmman.c (rc_package_to_rpm_name): GQuark fixup
+	(rc_rpmman_transact): GQuark fixup
+	(rc_rpmman_read_header): GQuark fixup
+	(rc_rpmman_depends_fill): GQuark fixup
+	(rc_rpmman_version_compare): GQuark fixup
+
+	* rc-debman.c (hash_destroy_pair): the key is a GQuark
+	(hash_destroy): my hash should be NULL, NULL now
+	(package_accept): GQuark fixup
+	(query_all_read_line_cb): GQuark fixup
+	(rc_debman_query_all_real): GQuark fixup
+	(rc_debman_query): GQuark fixup
+	(rc_debman_init): my hash is NULL, NULL now
+
+	* rc-queue-item.c (codependent_packages): GQuark fixup
+
+	* rc-resolver-context.c (uninstall_pkg_cb): GQuark fixup.  Also,
+	my hash is keyed on GQuarks now.
+	(rc_resolver_context_foreach_uninstall): make my hash NULL, NULL
+	now to be keyed on GQuarks
+	(dup_name_check_cb): GQuark fixup
+
+	* rc-resolver-info.c (rc_resolver_info_packages_to_string): GQuark
+	fixup
+	(rc_resolver_info_mentions): GQuark fixup
+
+	* rc-world-info.c (add_package_to_world): key is a GQuark
+	(rc_world_add_packages_from_xml): my little
+	temporary hash table is keyed on GQuarks now, etc
+	(debian_packages_helper): GQuark fixup
+
+	* rc-world.c (struct _SListAnchor): key is a GQuark
+	(hashed_slist_new): my hash table is direct, not str
+	(hashed_slist_add): key is a GQuark, GINT_TO_POINTER wrap the
+	quark when playing with the hash
+	(hashed_slist_get): key is a GQuark, GINT_TO_POINTER wrap the
+	quark...
+	(hashed_slist_foreach_cb): GINT_TO_POINTER
+	(foreach_remove_func): don't free the key, it's not allocated
+	anymore
+	(rc_world_add_package): hashed_slist_add gets a GQuark
+	(rc_world_find_installed_version): hashed_slist_get needs a GQuark
+	(rc_world_get_package): hashed_slist_get needs a GQuark
+	(rc_world_guess_package_channel): hashed_slist_get needs a GQuark
+	(rc_world_foreach_package_by_name): hashed_slist_get needs a
+	GQuark
+	(rc_world_foreach_upgrade): GQuark fixup
+	(rc_world_foreach_providing_package): GQuark fixup,
+	hashed_slist_get needs a GQuark
+	(rc_world_check_providing_package): GQuark fixup, hashed_slist_get
+	needs a GQuark
+	(rc_world_foreach_requiring_package): hashed_slist_get needs a
+	GQuark
+	(rc_world_foreach_conflicting_package): hashed_slist_get needs a
+	GQuark
+
+	* rc-xml.c (struct _RCPackageSAXContext): our hash table is by
+	GQuark
+	(parser_history_start): GQuark fixup
+	(parser_package_end): GQuark fixup, hash table changes
+	(package_slist_build): key is a GQuark
+	(rc_package_sax_context_new): hash table is NULL, NULL
+	(rc_xml_node_to_package): GQuark fixup
+	(rc_xml_node_to_package_update): GQuark fixup
+	(rc_package_to_xml_node): GQuark fixup
+	(rc_package_dep_to_xml_node): GQuark fixup
+
 2002-08-09  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-resolver-context.c (rc_resolver_context_upgrade_package):

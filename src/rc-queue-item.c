@@ -665,8 +665,8 @@ look_for_upgrades_cb (RCPackage *package, gpointer user_data)
 static gboolean
 codependent_packages (RCPackage *pkg1, RCPackage *pkg2)
 {
-    const char *name1 = pkg1->spec.name;
-    const char *name2 = pkg2->spec.name;
+    const char *name1 = g_quark_to_string (pkg1->spec.nameq);
+    const char *name2 = g_quark_to_string (pkg2->spec.nameq);
     int len1 = strlen (name1), len2 = strlen (name2);
 
     if (len2 < len1) {

@@ -460,9 +460,9 @@ rc_package_to_rpm_name (RCPackage *package)
     gchar *ret = NULL;
 
     g_assert (package);
-    g_assert (package->spec.name);
+    g_assert (package->spec.nameq);
 
-    ret = g_strdup (package->spec.name);
+    ret = g_strdup (g_quark_to_string (package->spec.nameq));
 
     if (package->spec.version) {
         gchar *tmp = g_strconcat (ret, "-", package->spec.version, NULL);
@@ -738,7 +738,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
                         RCPackageDep *prov;
 
                         prov = rc_package_dep_new (
-                            remove_package->spec.name,
+                            g_quark_to_string (remove_package->spec.nameq),
                             remove_package->spec.has_epoch,
                             remove_package->spec.epoch,
                             remove_package->spec.version,
@@ -792,7 +792,8 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         file_package =
             rc_packman_query_file (packman, package->package_filename);
 
-        packages = rc_packman_query (packman, file_package->spec.name);
+        packages = rc_packman_query (
+            packman, g_quark_to_string (file_package->spec.nameq));
         if (packages) {
             inst_package = packages->data;
 
@@ -1202,13 +1203,12 @@ rc_rpmman_read_header (RCRpmman *rpmman, Header header, RCPackage *package)
     char *tmpc;
     guint32 *tmpi;
 
-    g_free (package->spec.name);
     rpmman->headerGetEntry (header, RPMTAG_NAME, &type, (void **)&tmpc,
                             &count);
     if (count && (type == RPM_STRING_TYPE) && tmpc && tmpc[0])
-        package->spec.name = g_strdup (tmpc);
+        package->spec.nameq = g_quark_from_string (tmpc);
     else
-        package->spec.name = NULL;
+        package->spec.nameq = 0;
 
     rpmman->headerGetEntry (header, RPMTAG_EPOCH, &type, (void **)&tmpi,
                             &count);
@@ -1435,7 +1435,7 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
 
     /* Shouldn't ever ask for dependencies unless you know what you really
        want (name, version, release) */
-    g_assert (package->spec.name);
+    g_assert (package->spec.nameq);
     g_assert (package->spec.version);
     g_assert (package->spec.release);
 
@@ -1460,7 +1460,8 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
      * ourselves */
     if (rpmman->version < 40000) {
         dep = rc_package_dep_new (
-            package->spec.name, package->spec.has_epoch, package->spec.epoch,
+            g_quark_to_string (package->spec.nameq),
+            package->spec.has_epoch, package->spec.epoch,
             package->spec.version, package->spec.release, RC_RELATION_EQUAL,
             FALSE, FALSE);
         provides = g_slist_prepend (provides, dep);
@@ -2228,9 +2229,12 @@ rc_rpmman_version_compare (RCPackman *packman,
     g_assert (spec1);
     g_assert (spec2);
     
-    if (spec1->name || spec2->name) {
-        rc = strcmp (spec1->name ? spec1->name : "",
-                     spec2->name ? spec2->name : "");
+    if (spec1->nameq || spec2->nameq) {
+        if (spec1->nameq == spec2->nameq)
+            rc = 0;
+        else
+            rc = strcmp (spec1->nameq ? g_quark_to_string (spec1->nameq) : "",
+                         spec2->nameq ? g_quark_to_string (spec2->nameq) : "");
     }
     if (rc) return rc;
     

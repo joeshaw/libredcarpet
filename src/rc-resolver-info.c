@@ -241,7 +241,7 @@ rc_resolver_info_packages_to_string (RCResolverInfo *info,
     i = 0;
     for (iter = info->package_list; iter != NULL; iter = iter->next) {
         RCPackage *pkg = iter->data;
-        strv[i] = names_only ? pkg->spec.name : rc_package_spec_to_str (&pkg->spec);
+        strv[i] = names_only ? (char *)g_quark_to_string (pkg->spec.nameq) : rc_package_spec_to_str (&pkg->spec);
         ++i;
     }
 
@@ -265,7 +265,7 @@ rc_resolver_info_is_about (RCResolverInfo *info,
     g_return_val_if_fail (info != NULL, FALSE);
     g_return_val_if_fail (package != NULL, FALSE);
 
-    return info->package && !strcmp (package->spec.name, info->package->spec.name);
+    return info->package && (package->spec.nameq == info->package->spec.nameq);
 }
 
 gboolean
@@ -285,7 +285,7 @@ rc_resolver_info_mentions (RCResolverInfo *info,
     iter = info->package_list;
     while (iter != NULL) {
         RCPackage *this_pkg = iter->data;
-        if (this_pkg && !strcmp (package->spec.name, this_pkg->spec.name))
+        if (this_pkg && (package->spec.nameq == this_pkg->spec.nameq))
             return TRUE;
         iter = iter->next;
     }

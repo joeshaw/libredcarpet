@@ -126,22 +126,21 @@ rc_package_dep_unref (RCPackageDep *dep)
             /* Remove this dep from the hash table */
             g_assert (global_deps);
 
-            list = g_hash_table_lookup (global_deps, dep->spec.name);
+            list = g_hash_table_lookup (global_deps,
+                                        GINT_TO_POINTER (dep->spec.nameq));
             g_assert (list);
             list = g_slist_remove (list, dep);
 
             /* If there's still data in the list (ie, there are still
              * other deps with the same spec.name), we need to replace
-             * it in the hash, -by some other deps spec.name-, since
-             * we're about to potentially free the key.  Otherwise, we
-             * need to pull it from the hash. */
+             * it in the hash.  Otherwise, we need to pull it from the
+             * hash. */
             if (list)
-                g_hash_table_replace (
-                    global_deps,
-                    ((RCPackageDep *)(list->data))->spec.name,
-                    list);
+                g_hash_table_replace (global_deps,
+                                      GINT_TO_POINTER (dep->spec.nameq), list);
             else
-                g_hash_table_remove (global_deps, dep->spec.name);
+                g_hash_table_remove (global_deps,
+                                     GINT_TO_POINTER (dep->spec.nameq));
 
             /* Free the dep */
             rc_package_spec_free_members (RC_PACKAGE_SPEC (dep));
@@ -227,9 +226,10 @@ rc_package_dep_new (const gchar       *name,
     GSList *list;
 
     if (!global_deps)
-        global_deps = g_hash_table_new (g_str_hash, g_str_equal);
+        global_deps = g_hash_table_new (NULL, NULL);
 
-    list = g_hash_table_lookup (global_deps, name);
+    list = g_hash_table_lookup (global_deps,
+                                GINT_TO_POINTER (g_quark_try_string (name)));
 
     if (!list) {
         /* We haven't even created an RCPackageDep with the same name yet.
@@ -240,7 +240,8 @@ rc_package_dep_new (const gchar       *name,
         dep = dep_new (name, has_epoch, epoch, version, release, relation,
                        is_pre, is_or);
         list = g_slist_append (NULL, dep);
-        g_hash_table_insert (global_deps, dep->spec.name, list);
+        g_hash_table_insert (global_deps, GINT_TO_POINTER (dep->spec.nameq),
+                             list);
 
         return dep;
     } else {
@@ -268,10 +269,8 @@ rc_package_dep_new (const gchar       *name,
         dep = dep_new (name, has_epoch, epoch, version, release, relation,
                        is_pre, is_or);
         list = g_slist_prepend (list, dep);
-        g_hash_table_replace (
-            global_deps,
-            ((RCPackageDep *)(list->data))->spec.name,
-            list);
+        g_hash_table_replace (global_deps, GINT_TO_POINTER (dep->spec.nameq),
+                              list);
 
         return dep;
     }
@@ -284,8 +283,8 @@ rc_package_dep_new_from_spec (RCPackageSpec     *spec,
                               gboolean           is_or)
 {
     return rc_package_dep_new (
-        spec->name, spec->has_epoch, spec->epoch, spec->version,
-        spec->release, relation, is_pre, is_or);
+        g_quark_to_string (spec->nameq), spec->has_epoch, spec->epoch,
+        spec->version, spec->release, relation, is_pre, is_or);
 }
 
 RCPackageRelation
@@ -440,7 +439,7 @@ rc_package_dep_verify_relation (RCPackageDep *dep,
     g_assert (prov);
 
     /* No dependency can be met by a different token name */
-    if (strcmp(dep->spec.name, prov->spec.name)) {
+    if (dep->spec.nameq != prov->spec.nameq) {
         return FALSE;
     }
 
@@ -472,7 +471,7 @@ rc_package_dep_verify_relation (RCPackageDep *dep,
         newprovspec.has_epoch = prov->spec.has_epoch;
         newdepspec.version = newprovspec.version = NULL;
         newdepspec.release = newprovspec.release = NULL;
-        newdepspec.name = newprovspec.name = NULL;
+        newdepspec.nameq = newprovspec.nameq = 0;
         compare_ret = rc_packman_version_compare (das_global_packman, 
                                                   &newprovspec, &newdepspec);
     } else if (prov->spec.has_epoch && prov->spec.epoch > 0 ) {
@@ -498,7 +497,7 @@ rc_package_dep_verify_relation (RCPackageDep *dep,
         } else {
             newdepspec.release = newprovspec.release = NULL;
         }
-        newdepspec.name = newprovspec.name = NULL;
+        newdepspec.nameq = newprovspec.nameq = 0;
         compare_ret = rc_packman_version_compare (das_global_packman,
                                                   &newprovspec, &newdepspec);
     }

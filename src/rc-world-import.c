@@ -250,7 +250,7 @@ rc_world_add_packages_from_slist (RCWorld *world,
 }
 
 static void
-add_package_to_world (gchar *name, RCPackage *package,
+add_package_to_world (GQuark name, RCPackage *package,
                       RCWorld *world)
 {
     rc_world_add_package (world, package);
@@ -280,7 +280,7 @@ rc_world_add_packages_from_xml (RCWorld *world,
         node = node->xmlChildrenNode;
     }
 
-    packages = g_hash_table_new (g_str_hash, g_str_equal);
+    packages = g_hash_table_new (NULL, NULL);
 
     compat_arch_list = rc_arch_get_compat_list (rc_arch_get_system_arch ());
 
@@ -294,7 +294,8 @@ rc_world_add_packages_from_xml (RCWorld *world,
                 RCPackage *old = NULL;
                 gboolean add = TRUE;
 
-                if ((old = g_hash_table_lookup (packages, package->spec.name)))
+                if ((old = g_hash_table_lookup (
+                         packages, GINT_TO_POINTER (package->spec.nameq))))
                 {
                     gint old_score, new_score;
 
@@ -304,14 +305,16 @@ rc_world_add_packages_from_xml (RCWorld *world,
                                                           package->arch);
 
                     if (new_score < old_score) {
-                        g_hash_table_remove (packages, old->spec.name);
+                        g_hash_table_remove (
+                            packages, GINT_TO_POINTER (old->spec.nameq));
                         rc_package_unref (old);
                     } else
                         add = FALSE;
                 }
 
                 if (add)
-                    g_hash_table_insert (packages, package->spec.name,
+                    g_hash_table_insert (packages,
+                                         GINT_TO_POINTER (package->spec.nameq),
                                          package);
                 else
                     rc_package_unref (package);
@@ -529,8 +532,10 @@ debian_packages_helper (gchar *mbuf, RCPackage *pkg, gchar *url_prefix)
             while (*p != ':') *p++ = tolower(*p);
 
         if (!strncmp (buf, "package: ", strlen ("package: "))) {
-            pkg->spec.name = g_strndup (buf + strlen ("package: "),
-                                        ilen - strlen ("package: "));
+            gchar *tmp =  g_strndup (buf + strlen ("package: "),
+                                     ilen - strlen ("package: "));
+            pkg->spec.nameq = g_quark_from_string (tmp);
+            g_free (tmp);
         } else if (!strncmp (buf, "installed-size: ", strlen ("installed-size: "))) {
             up->installed_size = strtoul (buf +
                                           strlen ("installed-size: "),

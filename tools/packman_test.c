@@ -285,7 +285,8 @@ packman_test_query_all (RCPackman *p, char *line)
 static void
 pretty_print_pkg (RCPackage *pkg)
 {
-    printf ("%-15s%-25.25s%-15s%-25d\n", "Name:", pkg->spec.name,
+    printf ("%-15s%-25.25s%-15s%-25d\n", "Name:",
+            g_quark_to_string (pkg->spec.nameq),
             "Epoch:", pkg->spec.epoch);
     printf ("%-15s%-25.25s%-15s%-25.25s\n", "Version:", pkg->spec.version,
             "Release:", pkg->spec.release);
@@ -541,7 +542,8 @@ packman_test_list (RCPackman *p, char *line)
     for (iter = transaction.remove_pkgs; iter; iter = iter->next) {
         RCPackage *pkg = (RCPackage *)(iter->data);
 
-        printf (" Remove: %s %d %s %s\n", pkg->spec.name, pkg->spec.epoch,
+        printf (" Remove: %s %d %s %s\n",
+                g_quark_to_string (pkg->spec.nameq), pkg->spec.epoch,
                 pkg->spec.version, pkg->spec.release);
     }
 }

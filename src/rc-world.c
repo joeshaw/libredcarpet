@@ -97,14 +97,14 @@ rc_package_and_dep_free (RCPackageAndDep *pad)
 
 typedef struct _SListAnchor SListAnchor;
 struct _SListAnchor {
-    char *key;
+    GQuark key;
     GSList *slist;
 };
 
 static GHashTable *
 hashed_slist_new (void)
 {
-    return g_hash_table_new (g_str_hash, g_str_equal);
+    return g_hash_table_new (NULL, NULL);
 }
 
 static void
@@ -115,17 +115,17 @@ hashed_slist_destroy (GHashTable *hash)
 
 static void
 hashed_slist_add (GHashTable *hash,
-                  const char *key,
+                  GQuark key,
                   gpointer val)
 {
     SListAnchor *anchor;
 
-    anchor = g_hash_table_lookup (hash, key);
+    anchor = g_hash_table_lookup (hash, GINT_TO_POINTER (key));
 
     if (anchor == NULL) {
         anchor = g_new0 (SListAnchor, 1);
-        anchor->key = g_strdup (key);
-        g_hash_table_insert (hash, anchor->key, anchor);
+        anchor->key = key;
+        g_hash_table_insert (hash, GINT_TO_POINTER (anchor->key), anchor);
     }
 
     anchor->slist = g_slist_prepend (anchor->slist, val);
@@ -133,11 +133,11 @@ hashed_slist_add (GHashTable *hash,
 
 static GSList *
 hashed_slist_get (GHashTable *hash,
-                  const char *key)
+                  GQuark key)
 {
     SListAnchor *anchor;
 
-    anchor = g_hash_table_lookup (hash, key);
+    anchor = g_hash_table_lookup (hash, GINT_TO_POINTER (key));
     return anchor ? anchor->slist : NULL;
 }
 
@@ -154,7 +154,7 @@ hashed_slist_foreach_cb (gpointer key, gpointer val, gpointer user_data)
     struct ForeachInfo *info = user_data;
 
     while (iter) {
-        info->fn (anchor->key, iter->data, info->user_data);
+        info->fn (GINT_TO_POINTER (anchor->key), iter->data, info->user_data);
         iter = iter->next;
     }
 }
@@ -195,7 +195,6 @@ foreach_remove_func (gpointer key, gpointer val, gpointer user_data)
     }
 
     if (anchor->slist == NULL) {
-        g_free (anchor->key);
         g_free (anchor);
         return TRUE;
     }
@@ -703,7 +702,7 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
 
     /* Store all of our packages in a hash by name. */
     hashed_slist_add (world->packages_by_name,
-                      package->spec.name,
+                      package->spec.nameq,
                       package);
 
     /* Store all of the package's provides in a hash by name.
@@ -711,7 +710,7 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
 
     pad = rc_package_and_dep_new_package (package);
     hashed_slist_add (world->provides_by_name,
-                      RC_PACKAGE_SPEC (pad->dep)->name,
+                      RC_PACKAGE_SPEC (pad->dep)->nameq,
                       pad);
 
     if (package->provides_a)
@@ -720,7 +719,7 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
                 package, package->provides_a->data[i]);
 
             hashed_slist_add (world->provides_by_name,
-                              RC_PACKAGE_SPEC (pad->dep)->name,
+                              RC_PACKAGE_SPEC (pad->dep)->nameq,
                               pad);
         }
 
@@ -732,7 +731,7 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
                 package, package->requires_a->data[i]);
 
             hashed_slist_add (world->requires_by_name,
-                              RC_PACKAGE_SPEC (pad->dep)->name,
+                              RC_PACKAGE_SPEC (pad->dep)->nameq,
                               pad);
         }
 
@@ -744,7 +743,7 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
                 package, package->conflicts_a->data[i]);
 
             hashed_slist_add (world->conflicts_by_name,
-                              RC_PACKAGE_SPEC (pad->dep)->name,
+                              RC_PACKAGE_SPEC (pad->dep)->nameq,
                               pad);
         }
 
@@ -911,7 +910,7 @@ rc_world_find_installed_version (RCWorld *world,
     rc_world_sync (world);
 
     iter = hashed_slist_get (world->packages_by_name,
-                             package->spec.name);
+                             package->spec.nameq);
     
     while (iter != NULL) {
         RCPackage *this_package = iter->data;
@@ -952,7 +951,8 @@ rc_world_get_package (RCWorld *world,
 
     rc_world_conditional_sync (world, channel);
 
-    slist = hashed_slist_get (world->packages_by_name, name);
+    slist = hashed_slist_get (world->packages_by_name,
+                              g_quark_try_string (name));
     while (slist) {
         RCPackage *package = slist->data;
         if (package && package->channel == channel)
@@ -1048,7 +1048,7 @@ rc_world_guess_package_channel (RCWorld *world,
        over the channel data --- not the installed packages. */
 
     iter = hashed_slist_get (world->packages_by_name,
-                             RC_PACKAGE_SPEC (package)->name);
+                             RC_PACKAGE_SPEC (package)->nameq);
 
     while (iter != NULL) {
         RCPackage *iter_pkg = iter->data;
@@ -1163,7 +1163,8 @@ rc_world_foreach_package_by_name (RCWorld *world,
 
     rc_world_conditional_sync (world, channel);
 
-    slist = hashed_slist_get (world->packages_by_name, name);
+    slist = hashed_slist_get (world->packages_by_name,
+                              g_quark_try_string (name));
 
     installed = g_hash_table_new (rc_package_spec_hash,
                                   rc_package_spec_equal);
@@ -1247,7 +1248,7 @@ rc_world_foreach_upgrade (RCWorld *world,
     info.count = 0;
 
     rc_world_foreach_package_by_name (world,
-                                      package->spec.name,
+                                      g_quark_to_string (package->spec.nameq),
                                       channel,
                                       foreach_upgrade_cb,
                                       &info);
@@ -1417,7 +1418,8 @@ rc_world_foreach_providing_package (RCWorld *world, RCPackageDep *dep,
 
     if (rc_package_dep_is_or (dep)) {
         RCPackageDepSList *deps, *iter;
-        deps = rc_dep_string_to_or_dep_slist (RC_PACKAGE_SPEC (dep)->name);
+        deps = rc_dep_string_to_or_dep_slist (
+            g_quark_to_string (RC_PACKAGE_SPEC (dep)->nameq));
         for (iter = deps; iter != NULL; iter = iter->next) {
             count += rc_world_foreach_providing_package (world, iter->data,
                                                          channel, fn, user_data);
@@ -1429,7 +1431,7 @@ rc_world_foreach_providing_package (RCWorld *world, RCPackageDep *dep,
     rc_world_conditional_sync (world, channel);
 
     slist = hashed_slist_get (world->provides_by_name,
-                              RC_PACKAGE_SPEC (dep)->name);
+                              RC_PACKAGE_SPEC (dep)->nameq);
 
     installed = g_hash_table_new (rc_package_spec_hash,
                                   rc_package_spec_equal);
@@ -1501,7 +1503,8 @@ rc_world_check_providing_package (RCWorld *world, RCPackageDep *dep,
     if (rc_package_dep_is_or (dep)) {
         RCPackageDepSList *deps, *iter;
         gboolean terminated = FALSE;
-        deps = rc_dep_string_to_or_dep_slist (RC_PACKAGE_SPEC (dep)->name);
+        deps = rc_dep_string_to_or_dep_slist (
+            g_quark_to_string (RC_PACKAGE_SPEC (dep)->nameq));
         for (iter = deps; iter != NULL && !terminated; iter = iter->next) {
             terminated = rc_world_check_providing_package (world, iter->data,
                                                            channel, filter_dups_of_installed,
@@ -1514,7 +1517,7 @@ rc_world_check_providing_package (RCWorld *world, RCPackageDep *dep,
     rc_world_conditional_sync (world, channel);
 
     slist = hashed_slist_get (world->provides_by_name,
-                              RC_PACKAGE_SPEC (dep)->name);
+                              RC_PACKAGE_SPEC (dep)->nameq);
 
     installed = g_hash_table_new (rc_package_spec_hash,
                                   rc_package_spec_equal);
@@ -1592,7 +1595,7 @@ rc_world_foreach_requiring_package (RCWorld *world, RCPackageDep *dep,
     rc_world_conditional_sync (world, channel);
 
     slist = hashed_slist_get (world->requires_by_name,
-                              RC_PACKAGE_SPEC (dep)->name);
+                              RC_PACKAGE_SPEC (dep)->nameq);
 
     installed = g_hash_table_new (rc_package_spec_hash,
                                   rc_package_spec_equal);
@@ -1641,7 +1644,7 @@ rc_world_foreach_conflicting_package (RCWorld *world, RCPackageDep *dep,
     rc_world_conditional_sync (world, channel);
 
     slist = hashed_slist_get (world->conflicts_by_name,
-                              RC_PACKAGE_SPEC (dep)->name);
+                              RC_PACKAGE_SPEC (dep)->nameq);
 
     installed = g_hash_table_new (rc_package_spec_hash,
                                   rc_package_spec_equal);

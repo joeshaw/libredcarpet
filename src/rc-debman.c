@@ -161,7 +161,7 @@ i18n_fixer ()
 */
 
 static void
-hash_destroy_pair (gchar *key, RCPackage *package)
+hash_destroy_pair (GQuark name, RCPackage *package)
 {
     rc_package_unref (package);
 }
@@ -174,7 +174,7 @@ hash_destroy (RCDebman *debman)
                           (GHFunc) hash_destroy_pair, NULL);
     g_hash_table_destroy (debman->priv->package_hash);
 
-    debman->priv->package_hash = g_hash_table_new (g_str_hash, g_str_equal);
+    debman->priv->package_hash = g_hash_table_new (NULL, NULL);
     debman->priv->hash_valid = FALSE;
 }
 
@@ -600,6 +600,7 @@ package_accept (gchar *line, RCPackageSList *packages)
 {
     RCPackageSList *iter;
     gchar *name;
+    GQuark nameq;
 
     if (strncmp (line, "Package:", strlen ("Package:")) != 0) {
         return NULL;
@@ -610,12 +611,14 @@ package_accept (gchar *line, RCPackageSList *packages)
         name++;
     }
 
+    nameq = g_quark_try_string (name);
+
     for (iter = packages; iter; iter = iter->next) {
         RCPackage *package = (RCPackage *)(iter->data);
 
-        if (!(strcmp (name, package->spec.name))) {
+        if (package->spec.nameq == nameq) {
             rc_debug (RC_DEBUG_LEVEL_DEBUG,
-                      __FUNCTION__ ": found package %s\n", package->spec.name);
+                      __FUNCTION__ ": found package %s\n", name);
 
             return (package);
         }
@@ -2426,7 +2429,7 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
         while (isspace (*ptr)) {
             ptr++;
         }
-        query_info->package_buf->spec.name = g_strdup (ptr);
+        query_info->package_buf->spec.nameq = g_quark_from_string (ptr);
 
         return;
     }
@@ -2704,7 +2707,7 @@ rc_debman_query_all_real (RCPackman *packman)
 
         if (package->installed) {
             g_hash_table_insert (debman->priv->package_hash,
-                                 (gpointer) package->spec.name,
+                                 GINT_TO_POINTER (package->spec.nameq),
                                  (gpointer) package);
         } else {
             rc_package_unref (package);
@@ -2719,7 +2722,7 @@ rc_debman_query_all_real (RCPackman *packman)
 }
 
 static void
-package_list_append (gchar *name, RCPackage *package,
+package_list_append (GQuark name, RCPackage *package,
                      RCPackageSList **package_list)
 {
     *package_list = g_slist_prepend (*package_list, rc_package_copy (package));
@@ -2751,8 +2754,9 @@ rc_debman_query (RCPackman *packman, const char *name)
         rc_debman_query_all_real (packman);
     }
 
-    package = g_hash_table_lookup (debman->priv->package_hash,
-                                   (gconstpointer) name);
+    package = g_hash_table_lookup (
+        debman->priv->package_hash,
+        GINT_TO_POINTER (g_quark_try_string (name)));
 
     if (package) {
         ret = g_slist_append (NULL, package);
@@ -3248,7 +3252,7 @@ rc_debman_init (RCDebman *debman)
 
     debman->priv->lock_fd = -1;
 
-    debman->priv->package_hash = g_hash_table_new (g_str_hash, g_str_equal);
+    debman->priv->package_hash = g_hash_table_new (NULL, NULL);
     debman->priv->hash_valid = FALSE;
 
     if (getenv ("RC_DEBMAN_STATUS_FILE")) {

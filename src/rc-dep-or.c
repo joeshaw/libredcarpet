@@ -140,7 +140,8 @@ rc_dep_or_dep_slist_to_string (RCPackageDepSList *dep)
             g_error ("Bork bork bork! munge or dep with weak dep!");
         }
 
-        g_string_append (gstr, RC_PACKAGE_SPEC (pdi)->name);
+        g_string_append (gstr, g_quark_to_string (
+                             RC_PACKAGE_SPEC (pdi)->nameq));
 
         if (relation != RC_RELATION_ANY) {
             const gchar *rel = rc_package_relation_to_string (relation, FALSE);
@@ -178,9 +179,9 @@ rc_dep_or_dep_slist_to_string (RCPackageDepSList *dep)
 }
 
 RCPackageDepSList *
-rc_dep_string_to_or_dep_slist (gchar *munged)
+rc_dep_string_to_or_dep_slist (const gchar *munged)
 {
-    gchar *s, *p, *zz;
+    const gchar *s, *p, *zz;
     RCPackageDepSList *out_dep = NULL;
     gboolean have_more = TRUE;
 

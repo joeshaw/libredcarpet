@@ -265,7 +265,10 @@ rc_package_slist_sort_by_name (RCPackageSList *packages)
 
 static int pretty_name_package_strcmp (const RCPackage *a, const RCPackage *b)
 {
-    return g_strcasecmp (rc_pretty_name_lookup (a->spec.name), rc_pretty_name_lookup (b->spec.name));
+    return g_strcasecmp (rc_pretty_name_lookup (
+                             g_quark_to_string (a->spec.nameq)),
+                         rc_pretty_name_lookup (
+                             g_quark_to_string (b->spec.nameq)));
 }
 
 RCPackageUpdateSList *
@@ -357,7 +360,7 @@ rc_package_slist_find_duplicates (RCPackageSList *pkgs)
         RCPackage *cur_pkg = (RCPackage *) iter->data;
 
         if (prev_pkg) {
-            if (!strcmp (prev_pkg->spec.name, cur_pkg->spec.name)) {
+            if (prev_pkg->spec.nameq == cur_pkg->spec.nameq) {
                 if (!cur_dupes) {
                     cur_dupes = g_slist_append (cur_dupes, prev_pkg);
                 }

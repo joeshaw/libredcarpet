@@ -238,7 +238,7 @@ rc_packman_transact (RCPackman *packman, RCPackageSList *install_packages,
             rc_packman_set_error (
                 packman, RC_PACKMAN_ERROR_ABORT,
                 "multiple requests to install package '%s'",
-                pkg->spec.name);
+                g_quark_to_string (pkg->spec.nameq));
             return;
         }
 
@@ -250,7 +250,7 @@ rc_packman_transact (RCPackman *packman, RCPackageSList *install_packages,
             rc_packman_set_error (
                 packman, RC_PACKMAN_ERROR_ABORT,
                 "requests to install and remove package '%s'",
-                pkg->spec.name);
+                g_quark_to_string (pkg->spec.nameq));
             return;
         }
     }
@@ -270,7 +270,7 @@ rc_packman_transact (RCPackman *packman, RCPackageSList *install_packages,
             rc_packman_set_error (
                 packman, RC_PACKMAN_ERROR_ABORT,
                 "multiple requests to remove package '%s'",
-                pkg->spec.name);
+                g_quark_to_string (pkg->spec.nameq));
             return;
         }
     }
@@ -623,12 +623,17 @@ rc_packman_generic_version_compare (RCPackageSpec *spec1,
         return (rc);
     }
 
-    if (spec1->name || spec2->name) {
-        rc = strcmp (spec1->name ? spec1->name : "",
-                     spec2->name ? spec2->name : "");
+    if (spec1->nameq != spec2->nameq) {
+        const char *one, *two;
+
+        one = g_quark_to_string (spec1->nameq);
+        two = g_quark_to_string (spec2->nameq);
+
+        rc = strcmp (one ? one : "",
+                     two ? two : "");
 
         if (rc) {
-            return (rc);
+            return rc;
         }
     }
 

@@ -39,7 +39,7 @@ rc_package_spec_init (RCPackageSpec *rcps,
 {
     g_assert (rcps);
 
-    rcps->name = g_strdup (name);
+    rcps->nameq = g_quark_from_string (name);
     rcps->has_epoch = has_epoch ? 1 : 0;
     rcps->epoch = epoch;
     rcps->version = g_strdup (version);
@@ -50,15 +50,14 @@ rc_package_spec_init (RCPackageSpec *rcps,
 void
 rc_package_spec_copy (RCPackageSpec *new, RCPackageSpec *old)
 {
-    rc_package_spec_init (new, old->name, old->has_epoch, old->epoch,
-                          old->version, old->release);
+    rc_package_spec_init (new, g_quark_to_string (old->nameq), old->has_epoch,
+                          old->epoch, old->version, old->release);
     new->type = old->type;
 }
 
 void
 rc_package_spec_free_members (RCPackageSpec *rcps)
 {
-    g_free (rcps->name);
     g_free (rcps->version);
     g_free (rcps->release);
 } /* rc_package_spec_free_members */
@@ -88,7 +87,7 @@ rc_package_spec_get_type (RCWorld *world, RCPackageSpec *spec)
 
     if (spec->type == RC_PACKAGE_SPEC_TYPE_UNKNOWN) {
 
-        if (*spec->name == '/') {
+        if (*g_quark_to_string (spec->nameq) == '/') {
 
             spec->type = RC_PACKAGE_SPEC_TYPE_FILE;
 
@@ -99,7 +98,7 @@ rc_package_spec_get_type (RCWorld *world, RCPackageSpec *spec)
             info.flag = FALSE;
 
             rc_world_foreach_package_by_name (world,
-                                              spec->name,
+                                              g_quark_to_string (spec->nameq),
                                               RC_WORLD_ANY_CHANNEL,
                                               spec_type_cb, &info);
 
@@ -123,7 +122,8 @@ rc_package_spec_compare_name (void *a, void *b)
     one = (RCPackageSpec *) a;
     two = (RCPackageSpec *) b;
 
-    return (strcmp (one->name, two->name));
+    return (strcmp (g_quark_to_string (one->nameq),
+                    g_quark_to_string (two->nameq)));
 }
 
 gchar *
@@ -162,7 +162,7 @@ gchar *
 rc_package_spec_to_str (RCPackageSpec *spec)
 {
     return (g_strdup_printf (
-                "%s-%s", spec->name,
+                "%s-%s", g_quark_to_string (spec->nameq),
                 rc_package_spec_version_to_str_static (spec)));
 }
 
@@ -186,7 +186,7 @@ guint rc_package_spec_hash (gconstpointer ptr)
     const char *spec_strs[3], *p;
     int i;
 
-    spec_strs[0] = spec->name;
+    spec_strs[0] = g_quark_to_string (spec->nameq);
     spec_strs[1] = spec->version;
     spec_strs[2] = spec->release;
 
@@ -224,13 +224,8 @@ gint rc_package_spec_equal (gconstpointer a, gconstpointer b)
         return (FALSE);
     }
 
-    if (one->name && two->name) {
-        if (strcmp (one->name, two->name)) {
-            return (FALSE);
-        }
-    } else if (one->name || two->name) {
-        return (FALSE);
-    }
+    if (one->nameq != two->nameq)
+        return FALSE;
 
     if (one->version && two->version) {
         if (strcmp (one->version, two->version)) {
@@ -276,8 +271,8 @@ spec_find_by_name (gconstpointer a, gconstpointer b)
     const RCPackageSpec *s = (const RCPackageSpec *) a;
     const gchar *name = (const gchar *) b;
 
-    if (s->name) {
-        return strcmp (s->name, name);
+    if (s->nameq) {
+        return strcmp (g_quark_to_string (s->nameq), name);
     } else {
         return -1;
     }

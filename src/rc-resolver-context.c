@@ -607,7 +607,7 @@ uninstall_pkg_cb (RCPackage *package,
 
     if ((status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED
          || status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE)
-        && g_hash_table_lookup (info->upgrade_hash, package->spec.name) == NULL) {
+        && g_hash_table_lookup (info->upgrade_hash, GINT_TO_POINTER (package->spec.nameq)) == NULL) {
         if (info->fn)
             info->fn (package, status, info->user_data);
         ++info->count;
@@ -624,7 +624,7 @@ build_upgrade_hash_cb (RCPackage *package_add,
     GHashTable *upgrade_hash = user_data;
 
     g_hash_table_insert (upgrade_hash,
-                         package_del->spec.name,
+                         GINT_TO_POINTER (package_del->spec.nameq),
                          package_del);
 }
 
@@ -639,7 +639,7 @@ rc_resolver_context_foreach_uninstall (RCResolverContext *context,
     
     info.fn = fn;
     info.user_data = user_data;
-    info.upgrade_hash = g_hash_table_new (g_str_hash, g_str_equal);
+    info.upgrade_hash = g_hash_table_new (NULL, NULL);
     info.count = 0;
 
     rc_resolver_context_foreach_upgrade (context,
@@ -1094,7 +1094,7 @@ dup_name_check_cb (RCPackage *package, RCPackageStatus status, gpointer user_dat
 
     if (! info->flag
         && status == RC_PACKAGE_STATUS_TO_BE_INSTALLED
-        && ! strcmp (info->spec->name, package->spec.name)
+        && info->spec->nameq == package->spec.nameq
         && rc_package_spec_not_equal (info->spec, & package->spec)) {
         info->flag = TRUE;
     }

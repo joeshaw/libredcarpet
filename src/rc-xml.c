@@ -42,7 +42,7 @@ struct _RCPackageSAXContext {
     xmlParserCtxt *xml_context;
     RCPackageSAXContextState state;
 
-    /* Hash of RCPackage by package->spec.name */
+    /* Hash of RCPackage by package->spec.nameq */
     GHashTable *packages;
 
     GSList *compat_arch_list;
@@ -199,8 +199,7 @@ parser_history_start(RCPackageSAXContext *ctx,
         g_assert(ctx->current_update == NULL);
 
         ctx->current_update = rc_package_update_new();
-        ctx->current_update->spec.name = g_strdup(
-            ctx->current_package->spec.name);
+        ctx->current_update->spec.nameq = ctx->current_package->spec.nameq;
         
         ctx->state = PARSER_UPDATE;
     }
@@ -350,8 +349,8 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
                 RCPackageDep *dep = iter->data;
                 
                 if (rc_package_dep_get_relation (dep) == RC_RELATION_EQUAL &&
-                    !strcmp(RC_PACKAGE_SPEC (dep)->name,
-                            ctx->current_package->spec.name))
+                    (RC_PACKAGE_SPEC (dep)->nameq ==
+                     ctx->current_package->spec.nameq))
                 {
                     ctx->current_package->spec.epoch =
                         RC_PACKAGE_SPEC (dep)->epoch;
@@ -401,8 +400,9 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
             gboolean add = TRUE;
 
             if ((old_package =
-                 g_hash_table_lookup (ctx->packages,
-                                      ctx->current_package->spec.name)))
+                 g_hash_table_lookup (
+                     ctx->packages,
+                     GINT_TO_POINTER (ctx->current_package->spec.nameq))))
             {
                 gint new_score, old_score;
 
@@ -411,17 +411,19 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
                 old_score = rc_arch_get_compat_score (
                     ctx->compat_arch_list, old_package->arch);
                 if (new_score < old_score) {
-                    g_hash_table_remove (ctx->packages,
-                                         old_package->spec.name);
+                    g_hash_table_remove (
+                        ctx->packages,
+                        GINT_TO_POINTER (old_package->spec.nameq));
                     rc_package_unref (old_package);
                 } else
                     add = FALSE;
             }
 
             if (add)
-                g_hash_table_insert (ctx->packages,
-                                     ctx->current_package->spec.name,
-                                     ctx->current_package);
+                g_hash_table_insert (
+                    ctx->packages,
+                    GINT_TO_POINTER (ctx->current_package->spec.nameq),
+                    ctx->current_package);
             else
                 rc_package_unref (ctx->current_package);
         }
@@ -430,7 +432,9 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
         ctx->state = PARSER_TOPLEVEL;
     }
     else if (!strcmp(name, "name")) {
-        ctx->current_package->spec.name = g_strstrip (ctx->text_buffer);
+        ctx->current_package->spec.nameq =
+            g_quark_from_string (g_strstrip (ctx->text_buffer));
+        g_free (ctx->text_buffer);
         ctx->text_buffer = NULL;
     } else if (!strcmp(name, "summary")) {
         ctx->current_package->summary = g_strstrip (ctx->text_buffer);
@@ -702,7 +706,7 @@ rc_package_sax_context_parse_chunk(RCPackageSAXContext *ctx,
 }
 
 static void
-package_slist_build (gchar *name, RCPackage *package,
+package_slist_build (GQuark name, RCPackage *package,
                      RCPackageSList **package_list)
 {
     *package_list = g_slist_prepend (*package_list, package);
@@ -750,7 +754,7 @@ rc_package_sax_context_new(RCChannel *channel)
     ctx = g_new0(RCPackageSAXContext, 1);
     ctx->channel = channel;
 
-    ctx->packages = g_hash_table_new (g_str_hash, g_str_equal);
+    ctx->packages = g_hash_table_new (NULL, NULL);
 
     ctx->compat_arch_list =
         rc_arch_get_compat_list (rc_arch_get_system_arch ());
@@ -946,7 +950,9 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
         gboolean extracted_deps = FALSE;
 
         if (!g_strcasecmp (iter->name, "name")) {
-            package->spec.name = xml_get_content (iter);
+            gchar *tmp = xml_get_content (iter);
+            package->spec.nameq = g_quark_from_string (tmp);
+            g_free (tmp);
         } else if (!g_strcasecmp (iter->name, "epoch")) {
             epoch = xml_get_content (iter);
         } else if (!g_strcasecmp (iter->name, "version")) {
@@ -1063,7 +1069,7 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
                 RCPackageDep *dep = package->provides_a->data[i];
             
                 if (rc_package_dep_get_relation (dep) == RC_RELATION_EQUAL &&
-                    !strcmp (RC_PACKAGE_SPEC (dep)->name, package->spec.name))
+                    (RC_PACKAGE_SPEC (dep)->nameq == package->spec.nameq))
                 {
                     package->spec.epoch =
                         RC_PACKAGE_SPEC (dep)->epoch;
@@ -1174,7 +1180,7 @@ rc_xml_node_to_package_update (const xmlNode *node, const RCPackage *package)
 
     update->package = package;
     
-    update->spec.name = g_strdup (package->spec.name);
+    update->spec.nameq = package->spec.nameq;
 
     if (package->channel && package->channel->file_path)
     {
@@ -1310,7 +1316,8 @@ rc_package_to_xml_node (RCPackage *package)
 
     package_node = xmlNewNode (NULL, "package");
 
-    xmlNewTextChild (package_node, NULL, "name", package->spec.name);
+    xmlNewTextChild (package_node, NULL, "name",
+                     g_quark_to_string (package->spec.nameq));
 
     if (package->spec.has_epoch) {
         g_snprintf (buffer, 128, "%d", package->spec.epoch);
@@ -1438,7 +1445,7 @@ rc_package_dep_to_xml_node (RCPackageDep *dep_item)
     if (rc_package_dep_is_or (dep_item)) {
         RCPackageDepSList *dep_or_slist;
         dep_or_slist = rc_dep_string_to_or_dep_slist (
-            RC_PACKAGE_SPEC (dep_item)->name);
+            g_quark_to_string (RC_PACKAGE_SPEC (dep_item)->nameq));
         dep_node = rc_package_dep_or_slist_to_xml_node (dep_or_slist);
         rc_package_dep_slist_free (dep_or_slist);
         return dep_node;
@@ -1446,7 +1453,8 @@ rc_package_dep_to_xml_node (RCPackageDep *dep_item)
 
     dep_node = xmlNewNode (NULL, "dep");
 
-    xmlSetProp (dep_node, "name", RC_PACKAGE_SPEC (dep_item)->name);
+    xmlSetProp (dep_node, "name",
+                g_quark_to_string (RC_PACKAGE_SPEC (dep_item)->nameq));
 
     if (rc_package_dep_get_relation (dep_item) != RC_RELATION_ANY) {
         xmlSetProp (dep_node, "op",
