@@ -221,6 +221,7 @@ rc_dep_string_to_or_dep_slist (gchar *munged)
         cur_item->spec.name = name;
 
         if (p) {
+            guint epoch;
             char *e;
             char op[4];
             char *vstr;
@@ -247,9 +248,10 @@ rc_dep_string_to_or_dep_slist (gchar *munged)
 
             /* e .. p is the epoch:version-release */
             vstr = g_strndup (e, p - e);
-            rc_debman_parse_version (vstr, &cur_item->spec.epoch,
+            rc_debman_parse_version (vstr, &epoch,
                                      &cur_item->spec.version,
                                      &cur_item->spec.release);
+            cur_item->spec.epoch = epoch;
             g_free (vstr);
         }
 

@@ -38,11 +38,11 @@ typedef enum {
 /* Make sure name is always the first element of this struct */
 struct _RCPackageSpec {
     gchar *name;
-    guint32 epoch;
     gchar *version;
     gchar *release;
-    guint type : 2;
     guint has_epoch : 1;
+    guint epoch : 29;
+    guint type : 2;
 };
 
 #define RC_PACKAGE_SPEC(item) ((RCPackageSpec *)(item))

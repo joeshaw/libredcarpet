@@ -541,9 +541,11 @@ debian_packages_helper (gchar *mbuf, RCPackage *pkg, gchar *url_prefix)
                 }
             }
         } else if (!strncmp (buf, "version: ", strlen ("version: "))) {
+            guint epoch;
             rc_debman_parse_version (buf + strlen ("Version: "),
-                                     &pkg->spec.epoch, &pkg->spec.version,
+                                     &epoch, &pkg->spec.version,
                                      &pkg->spec.release);
+            pkg->spec.epoch = epoch;
         } else if (!strncmp (buf, "section: ", strlen ("section: "))) {
             gchar **tokens = g_strsplit (buf + strlen ("section: "), "/", -1);
             gint i = 0;

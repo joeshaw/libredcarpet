@@ -102,6 +102,4 @@ RCChannel *rc_channel_get_by_name (RCChannelSList *channels, char *name);
 
 gint rc_channel_compare_func (gconstpointer a, gconstpointer b);
 
-guint rc_xml_node_to_channel (RCChannel *, xmlNode *);
-
 #endif /* _RC_CHANNEL_H */

@@ -77,7 +77,7 @@ typedef void (*RCPackageAndDepFn) (RCPackage *, RCPackageDep *, gpointer);
 /* THE SPEC MUST BE FIRST */
 struct _RCPackageDep {
     RCPackageSpec spec;
-    RCPackageRelation relation;
+    gint relation : 28;
     guint is_or : 1;
     guint pre   : 1;
 };

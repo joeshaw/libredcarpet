@@ -171,7 +171,5 @@ int        rc_world_foreach_conflicting_package (RCWorld *world,
 
 void       rc_world_spew (RCWorld *world, FILE *out);
 
-char      *rc_world_dump (RCWorld *world);
-
 #endif /* __RC_WORLD_H__ */
 

@@ -1489,7 +1489,7 @@ rc_rpmman_query_file (RCPackman *packman, const gchar *filename)
 
         return NULL;
     }
-
+    
     package = rc_package_new ();
 
     rc_rpmman_read_header (rpmman, header, package);

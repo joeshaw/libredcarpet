@@ -44,6 +44,7 @@ libredcarpet_public_headers = 		\
 	rc-package-section.h		\
 	rc-world.h			\
 	rc-world-import.h		\
+	rc-world-dump.h			\
 	rc-world-subscriptions.h	\
 	rc-resolver-info.h		\
 	rc-resolver-context.h		\
@@ -77,6 +78,7 @@ libredcarpettmp_a_SOURCES =		\
 	rc-package-section.c		\
 	rc-world.c			\
 	rc-world-import.c		\
+	rc-world-dump.c			\
 	rc-world-subscriptions.c	\
 	rc-resolver-info.c		\
 	rc-resolver-context.c		\

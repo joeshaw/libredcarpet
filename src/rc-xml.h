@@ -42,6 +42,7 @@ RCPackageDep *rc_xml_node_to_package_dep (const xmlNode *node);
 RCPackageUpdate *rc_xml_node_to_package_update (const xmlNode *node, 
 						const RCPackage *package);
 
+xmlNode *rc_channel_to_xml_node (RCChannel *channel);
 xmlNode *rc_package_to_xml_node (RCPackage *package);
 xmlNode *rc_package_dep_or_slist_to_xml_node (RCPackageDepSList *dep);
 xmlNode *rc_package_dep_to_xml_node (RCPackageDep *dep_item);

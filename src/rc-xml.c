@@ -858,9 +858,11 @@ rc_xml_node_to_package_dep_internal (const xmlNode *node)
     dep_item->spec.name = xml_get_prop (node, "name");
     tmp = xml_get_prop (node, "op");
     if (tmp) {
+        guint epoch;
         dep_item->relation = rc_string_to_package_relation (tmp);
-        if (xml_get_guint32_value (node, "epoch", &dep_item->spec.epoch)) {
+        if (xml_get_guint32_value (node, "epoch", &epoch)) {
             dep_item->spec.has_epoch = 1;
+            dep_item->spec.epoch = epoch;
         }
         dep_item->spec.version =
             xml_get_prop (node, "version");
@@ -991,6 +993,32 @@ rc_xml_node_to_package_update (const xmlNode *node, const RCPackage *package)
 }
 
 /* ------ */
+
+xmlNode *
+rc_channel_to_xml_node (RCChannel *channel)
+{
+    xmlNode *node;
+    char *tmp;
+
+    g_return_val_if_fail (channel != NULL, NULL);
+
+    node = xmlNewNode (NULL, "channel");
+
+    tmp = g_strdup_printf ("%d", rc_channel_get_id (channel));
+    xmlNewProp (node, "id", tmp);
+    g_free (tmp);
+
+    xmlNewProp (node, "name", rc_channel_get_name (channel));
+
+    if (rc_channel_get_alias (channel))
+        xmlNewProp (node, "alias", rc_channel_get_alias (channel));
+
+    tmp = g_strdup_printf ("%d", rc_channel_subscribed (channel) ? 1 : 0);
+    xmlNewProp (node, "subscribed", tmp);
+    g_free (tmp);
+
+    return node;
+}
 
 xmlNode *
 rc_package_to_xml_node (RCPackage *package)

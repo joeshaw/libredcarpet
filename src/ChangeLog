@@ -1,3 +1,37 @@
+2002-07-25  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-xml.c (rc_channel_to_xml_node): Added.
+
+	* rc-channel.h: Removed the prototype for rc_xml_node_to_channel,
+	which doesn't actually exist.
+
+	* rc-package-dep.h: Make the relation a 28-bit bitfield,
+	shaving a few bytes off of our struct.
+
+	* rc-package-spec.h: Make the epoch a 29-bit bitfield, shaving
+	a few bytes off of our struct.
+
+	* rc-dep-or.c (rc_dep_string_to_or_dep_slist): The epoch is now a
+	bitfield, so we can't take the address of it.
+
+	* rc-world-import.c (debian_packages_helper): The epoch is now
+	a bitfield, so we can't take the address of it.
+
+	* rc-world.c: (rc_world_dump): Moved to rc-world-dump.c, renamed
+	rc_world_dump_to_xml.
+
+	* rc-world-dump.c (rc_world_dump_to_xml): Added.  Basically a
+	slightly revised version of the rc_world_dump function that used
+	to be in rc-world.c.
+	(rc_world_dump): Added.  A convenience routine that writes the xml
+	to a buffer.
+	(rc_world_undump_from_xml): Added.  Reassembles the dump
+	information into the world.
+	(rc_world_undump): Added.  A convenience routine that reads the
+	xml from a buffer.
+
+	* libredcarpet.h: Added #include "rc-world-dump.h"
+
 2002-07-25  Ian Peters  <itp@ximian.com>
 
 	* rc-packman.c, rc-packman.h: rc_packman_query now returns an
