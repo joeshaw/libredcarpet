@@ -212,6 +212,32 @@ int main (int argc, char **argv)
         }
 
         HP_PACKAGE_LIST_FREE (dlist);
+    } else if (!strncmp (argv[1], "-t", 2)) {
+        HP_PACKAGE_LIST *list = NULL;
+
+        HP_ADD_PACKAGE (list, "joe-testpkg", "3.0", "1");
+
+        list = helix_packman_depends (hp, list);
+
+        list = helix_packman_query (hp, list);
+
+        list = helix_packman_depends (hp, list);
+
+        debug_helix_packman_package_dump (list->data);
+
+        HP_PACKAGE_LIST_FREE (list);
+    } else if (!strncmp (argv[1], "-fd", 3)) {
+        HP_FILE_LIST *flist = NULL;
+        HP_PACKAGE_LIST *dlist = NULL;
+
+        HP_ADD_FILE (flist, argv[2]);
+
+        dlist = helix_packman_depends_files (hp, flist);
+
+        debug_helix_packman_package_dump (dlist->data);
+
+        HP_FILE_LIST_FREE (flist);
+        HP_PACKAGE_LIST_FREE (dlist);
     }
 
     return (0);
