@@ -466,6 +466,12 @@ rc_package_dep_item_is_subset_real (RCPackageDepItem *a, RCPackageDepItem *b)
     if ((arel ^ brel) & RC_RELATION_WEAK)
         return -1;
 
+    /* On rpm systems, we don't bother merging two relations with
+     * different epochs; the semtantics are too bizzare
+     */
+    if (rpmish && (a->spec.epoch != b->spec.epoch))
+        return -1;
+
     if (brel == RC_RELATION_ANY && !(arel & RC_RELATION_NONE))
         return 0;               /* merge ANY b with a */
     if (arel == RC_RELATION_ANY && !(brel & RC_RELATION_ANY))
