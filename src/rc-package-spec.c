@@ -167,6 +167,26 @@ gint rc_package_spec_equal (gconstpointer ptra, gconstpointer ptrb)
     return TRUE;
 }
 
+void rc_package_spec_copy (RCPackageSpec *src, RCPackageSpec *dst)
+{
+    g_return_if_fail (src != NULL);
+    g_return_if_fail (dst != NULL);
+
+    if (dst->name) g_free (dst->name);
+    if (dst->version) g_free (dst->version);
+    if (dst->release) g_free (dst->release);
+
+    dst->name = g_strdup (src->name);
+    dst->version = g_strdup (src->version);
+    dst->release = g_strdup (src->release);
+    dst->epoch = src->epoch;
+    dst->section = src->section;
+    dst->installed = src->installed;
+    dst->installed_size = src->installed_size;
+    dst->channel = src->channel;
+    dst->subchannel = src->subchannel;
+}
+
 /* This was stolen from RPM */
 /* And then slightly hacked on by me */
 
@@ -283,3 +303,4 @@ vercmp(char * a, char * b)
     /* whichever version still has characters left over wins */
     if (!*one) return -1; else return 1;
 }
+

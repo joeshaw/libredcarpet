@@ -36,7 +36,7 @@ RCChannel *
 rc_channel_new (void)
 {
     RCChannel *rcc = g_new0 (RCChannel, 1);
-
+    rcc->type = RC_CHANNEL_TYPE_HELIX; /* default */
     return (rcc);
 } /* rc_channel_new */
 
@@ -118,12 +118,21 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
 
         channel->name = xml_get_prop(node, "name");
         channel->path = xml_get_prop(node, "path");
+        channel->file_path = xml_get_prop(node, "file_path");
 	channel->icon_file = xml_get_prop(node, "icon");
 	channel->title_file = xml_get_prop(node, "title");
 	channel->title_color = xml_get_prop(node, "bgcolor");
 	channel->title_bg_image = xml_get_prop(node, "bgimage");
 	channel->description = xml_get_prop(node, "description");
         channel->distribution = xml_get_prop(node, "distribution");
+        channel->pkginfo_file = xml_get_prop(node, "pkginfo_file");
+        tmp = xml_get_prop(node, "pkginfo_compressed");
+        if (tmp) {
+            channel->pkginfo_compressed = TRUE;
+            g_free (tmp);
+        } else {
+            channel->pkginfo_compressed = FALSE;
+        }
         tmp = xml_get_prop (node, "major");
         channel->major = atoi (tmp);
         g_free (tmp);
@@ -139,7 +148,25 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
 	if (tmp)
 	    channel->last_update = atol(tmp);
 	g_free(tmp);
+        tmp = xml_get_prop(node, "type");
+        if (tmp) {
+            if (g_strcasecmp (tmp, "helix") == 0)
+                channel->type = RC_CHANNEL_TYPE_HELIX;
+            else if (g_strcasecmp (tmp, "debian") == 0)
+                channel->type = RC_CHANNEL_TYPE_DEBIAN;
+            else if (g_strcasecmp (tmp, "redhat") == 0)
+                channel->type = RC_CHANNEL_TYPE_REDHAT;
+            else
+                channel->type = RC_CHANNEL_TYPE_UNKNOWN;
+            g_free (tmp);
+        }
 
+        if (channel->pkginfo_file == NULL) {
+            /* default */
+            channel->pkginfo_file = g_strdup ("packageinfo.xml.gz");
+            channel->pkginfo_compressed = TRUE;
+        }
+        
         cl = g_slist_append(cl, channel);
 
         node = node->next;

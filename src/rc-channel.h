@@ -9,7 +9,7 @@ struct _RCSubchannel {
     gchar *name;
     guint32 preference;
 
-    RCPackageHashTableBySpec *packages;
+    RCPackageHashTableByString *packages;
 };
 
 RCSubchannel *rc_subchannel_new (void);
@@ -20,6 +20,14 @@ typedef GSList RCSubchannelSList;
 
 void rc_subchannel_slist_free(RCSubchannelSList *rcsl);
 
+typedef enum _RCChannelType {
+    RC_CHANNEL_TYPE_HELIX,      /* packageinfo.xml */
+    RC_CHANNEL_TYPE_DEBIAN,     /* debian Packages.gz */
+    RC_CHANNEL_TYPE_REDHAT,     /* redhat up2date RDF */
+    RC_CHANNEL_TYPE_UNKNOWN,
+    RC_CHANNEL_TYPE_LAST
+} RCChannelType;
+
 typedef struct _RCChannel RCChannel;
 
 struct _RCChannel {
@@ -27,16 +35,22 @@ struct _RCChannel {
     gchar *name;
     gchar *description;
 
+    RCChannelType type;
+
     gchar *distribution;
     guint major, minor;
 
     gchar *path;
+    gchar *file_path;
+
+    gchar *pkginfo_file;
+    gboolean pkginfo_compressed;
 
     gchar *subs_url;
     gchar *unsubs_url;
 
     /* for use as pixbufs in gui.h */
-	char *icon_file;
+    char *icon_file;
     char *title_file;
     char *title_color;
     char *title_bg_image;
