@@ -112,15 +112,18 @@ rc_world_system_transact (RCWorld *world,
 }
 
 static gboolean
-rc_world_system_assemble (RCWorldService *service)
+rc_world_system_assemble (RCWorldService *service, GError **error)
 {
     RCWorldSystem *system = RC_WORLD_SYSTEM (service);
 
     /* Load the system packages */
     system->error_flag = ! rc_world_system_load_packages (system);
 
-    if (system->error_flag)
+    if (system->error_flag) {
+        g_set_error (error, RC_ERROR, RC_ERROR,
+                     "Unable to load system packages");
         return FALSE;
+    }
 
     service->name = g_strdup ("System");
     service->unique_id = g_strdup ("@system");
@@ -234,7 +237,7 @@ rc_world_system_new (void)
     RCWorldSystem *system;
     system = g_object_new (RC_TYPE_WORLD_SYSTEM, NULL);
 
-    rc_world_system_assemble ((RCWorldService *) system);
+    rc_world_system_assemble ((RCWorldService *) system, NULL);
 
     if (system->error_flag) {
         g_object_unref (system);

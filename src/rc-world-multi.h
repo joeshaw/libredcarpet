@@ -78,7 +78,8 @@ RCWorldService *rc_world_multi_lookup_service_by_id (RCWorldMulti *,
                                                      const char *id);
 
 gboolean rc_world_multi_mount_service (RCWorldMulti *,
-                                       const char *url);
+                                       const char *url,
+                                       GError **error);
 
 #endif /* __RC_WORLD_MULTI_MULTI_H__ */
 

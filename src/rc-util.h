@@ -118,5 +118,9 @@ gboolean rc_str_case_equal (gconstpointer v1, gconstpointer v2);
 
 GSList *rc_hash_values_to_list (GHashTable *hash_table);
 GSList *rc_hash_keys_to_list   (GHashTable *hash_table);
+
+/* For use of GErrors throughout libredcarpet */
+#define RC_ERROR rc_error_quark()
+GQuark rc_error_quark(void);
  
 #endif

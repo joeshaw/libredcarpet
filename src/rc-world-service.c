@@ -170,7 +170,7 @@ rc_world_service_lookup (const char *scheme)
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 RCWorld *
-rc_world_service_mount (const char *url)
+rc_world_service_mount (const char *url, GError **error)
 {
     char *endptr;
     char *scheme;
@@ -183,23 +183,30 @@ rc_world_service_mount (const char *url)
     endptr = strchr (url, ':');
 
     if (!endptr) {
-        rc_debug (RC_DEBUG_LEVEL_WARNING, "Invalid service URI: %s", url);
+        g_set_error (error, RC_ERROR, RC_ERROR,
+                     "Invalid service URI: %s", url);
         return NULL;
     }
 
     scheme = g_strndup (url, endptr - url);
     world_type = rc_world_service_lookup (scheme);
-    g_free (scheme);
 
-    if (!world_type)
+    if (!world_type) {
+        g_set_error (error, RC_ERROR, RC_ERROR,
+                     "Don't know how to handle URI scheme '%s'", scheme);
+        g_free (scheme);
+        
         return NULL;
+    }
+
+    g_free (scheme);
 
     worldserv = g_object_new (world_type, NULL);
     worldserv->url = g_strdup (url);
 
     klass = RC_WORLD_SERVICE_GET_CLASS (worldserv);
     if (klass->assemble_fn) {
-        if (!klass->assemble_fn (worldserv)) {
+        if (!klass->assemble_fn (worldserv, error)) {
             g_object_unref (worldserv);
             return NULL;
         }

@@ -969,18 +969,26 @@ rc_world_multi_lookup_service_by_id (RCWorldMulti *multi, const char *id)
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
     
 gboolean
-rc_world_multi_mount_service (RCWorldMulti *multi, const char *url)
+rc_world_multi_mount_service (RCWorldMulti  *multi,
+                              const char    *url,
+                              GError       **error)
 {
+    RCWorldService *existing_service;
     RCWorld *world;
 
     g_return_val_if_fail (RC_IS_WORLD_MULTI (multi), FALSE);
     g_return_val_if_fail (url && *url, FALSE);
 
     /* Check to see if this service is already mounted */
-    if (rc_world_multi_lookup_service (multi, url))
+    existing_service = rc_world_multi_lookup_service (multi, url);
+    if (existing_service) {
+        g_set_error (error, RC_ERROR, RC_ERROR,
+                     "A service with id '%s' is already mounted",
+                     existing_service->unique_id);
         return FALSE;
+    }
 
-    world = rc_world_service_mount (url);
+    world = rc_world_service_mount (url, error);
 
     if (world) {
         gboolean success;
@@ -988,6 +996,9 @@ rc_world_multi_mount_service (RCWorldMulti *multi, const char *url)
         /* We can't check this until after we've already mounted, bah. */
         if (rc_world_multi_lookup_service_by_id (multi,
                                                  RC_WORLD_SERVICE (world)->unique_id)) {
+            g_set_error (error, RC_ERROR, RC_ERROR,
+                         "A service with id '%s' is already mounted",
+                         RC_WORLD_SERVICE (world)->unique_id);
             success = FALSE;
         } else {
             rc_world_multi_add_subworld (multi, world);

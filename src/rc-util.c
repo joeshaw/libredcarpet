@@ -911,3 +911,16 @@ rc_hash_keys_to_list (GHashTable *hash_table)
  
     return list;
 }
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+GQuark
+rc_error_quark (void)
+{
+    static GQuark quark;
+
+    if (!quark)
+        quark = g_quark_from_static_string ("rc_error");
+
+    return quark;
+}

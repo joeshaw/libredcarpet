@@ -43,7 +43,8 @@
 typedef struct _RCWorldService RCWorldService;
 typedef struct _RCWorldServiceClass RCWorldServiceClass;
 
-typedef gboolean (*RCWorldServiceAssembleFn) (RCWorldService *worldserv);
+typedef gboolean (*RCWorldServiceAssembleFn) (RCWorldService  *worldserv,
+                                              GError         **error);
 
 
 struct _RCWorldService {
@@ -75,7 +76,7 @@ GType rc_world_service_lookup     (const char *scheme);
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
-RCWorld  *rc_world_service_mount (const char *url);
+RCWorld  *rc_world_service_mount (const char *url, GError **error);
 
 #endif /* __RC_WORLD_SERVICE_H__ */
 

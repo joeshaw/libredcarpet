@@ -178,7 +178,7 @@ extract_value (char *token)
 }
 
 static gboolean
-rc_world_local_dir_assemble_fn (RCWorldService *service)
+rc_world_local_dir_assemble_fn (RCWorldService *service, GError **error)
 {
     RCWorldLocalDir *ldir = RC_WORLD_LOCAL_DIR (service);
     char *query_part, *path;
@@ -193,6 +193,8 @@ rc_world_local_dir_assemble_fn (RCWorldService *service)
         path = g_strdup (service->url + 7);
 
     if (!g_file_test (path, G_FILE_TEST_IS_DIR)) {
+        g_set_error (error, RC_ERROR, RC_ERROR,
+                     "%s does not exist", path);
         g_free (path);
         return FALSE;
     }

@@ -189,20 +189,24 @@ rc_world_synthetic_transact (RCWorld *world,
 }
 
 static gboolean
-rc_world_synthetic_assemble (RCWorldService *service)
+rc_world_synthetic_assemble (RCWorldService *service, GError **error)
 {
     RCWorldSynthetic *synth = RC_WORLD_SYNTHETIC (service);
     char *cptr;
 
-    if (synth->error_flag)
+    if (synth->error_flag) {
+        /* Lame */
+        g_set_error (error, RC_ERROR, RC_ERROR,
+                     "Unable to read synthetic package DB");
         return FALSE;
+    }
 
     cptr = strchr (service->url, ':');
     if (cptr == NULL)
-        return FALSE;
+        goto malformed_url;
     ++cptr;
     if (! *cptr)
-        return FALSE;
+        goto malformed_url;
 
     if (*cptr == '/')
         synth->database_fn = g_strdup (cptr);
@@ -219,6 +223,11 @@ rc_world_synthetic_assemble (RCWorldService *service)
     rc_world_synthetic_load_packages (synth);
 
     return TRUE;
+
+malformed_url:
+    g_set_error (error, RC_ERROR, RC_ERROR,
+                 "Malformed synthetic URL");
+    return FALSE;
 }
 
 static void
@@ -303,7 +312,7 @@ rc_world_synthetic_new (void)
     RCWorldSynthetic *synth;
     synth = g_object_new (RC_TYPE_WORLD_SYNTHETIC, NULL);
 
-    rc_world_synthetic_assemble ((RCWorldService *) synth);
+    rc_world_synthetic_assemble ((RCWorldService *) synth, NULL);
 
     if (synth->error_flag) {
         g_object_unref (synth);

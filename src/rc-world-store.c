@@ -166,6 +166,7 @@ channel_info_free (ChannelInfo *info)
     }
 }
 
+#if 0
 static ChannelInfo *
 rc_world_store_find_channel_info (RCWorldStore *store, RCChannel *channel)
 {
@@ -177,7 +178,7 @@ rc_world_store_find_channel_info (RCWorldStore *store, RCChannel *channel)
     }
     return NULL;
 }
-
+#endif
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 

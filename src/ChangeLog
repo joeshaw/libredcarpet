@@ -1,5 +1,28 @@
 2003-09-09  Joe Shaw  <joe@ximian.com>
 
+	* rc-util.c (rc_error_quark): Added.  Gets a quark for use with
+	GError.
+
+	* rc-world-local-dir.c (rc_world_local_dir_assemble_fn): Take a
+	GError argument and set it if the directory doesn't exist.
+
+	* rc-world-multi.c (rc_world_multi_mount_service): Take a GError
+	argument and set it if the service can't be mounted for whatever
+	reason.
+
+	* rc-world-service. (rc_world_service_mount): Take a GError
+	argument and set it if the URI can't be parsed or handled by any
+	service.
+
+	* rc-world-synthetic.c (rc_world_synthetic_assemble): Take a
+	GError argument and set it if the synthetic DB can't be loaded or
+	the URI is malformed.
+
+	* rc-world-system.c (rc_world_system_assemble): Take a GError
+	argument and set it if the system DB can't be loaded.
+
+2003-09-09  Joe Shaw  <joe@ximian.com>
+
 	* rc-package-set.[ch]: Kill off this very, very old and
 	confusingly irrelevant code.
 
