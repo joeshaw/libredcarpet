@@ -838,10 +838,16 @@ rc_world_get_package_with_constraint (RCWorld *world,
     return pkg;
 }
 
+typedef struct {
+    RCPackage *package;
+
+    RCChannel *guess;
+} GuessInfo;
+
 static gboolean
 guess_cb (RCPackage *package, gpointer user_data)
 {
-    RCChannel **guess = user_data;
+    GuessInfo *info = user_data;
     GSList *iter;
 
     if (!package->channel)
@@ -851,9 +857,9 @@ guess_cb (RCPackage *package, gpointer user_data)
         RCPackageUpdate *update = iter->data;
 
         if (rc_package_spec_equal (RC_PACKAGE_SPEC (update),
-                                   RC_PACKAGE_SPEC (package)))
+                                   RC_PACKAGE_SPEC (info->package)))
         {
-            *guess = package->channel;
+            info->guess = package->channel;
             return FALSE;
         }
     }
@@ -879,7 +885,7 @@ RCChannel *
 rc_world_guess_package_channel (RCWorld *world,
                                 RCPackage *package)
 {
-    RCChannel *guess = NULL;
+    GuessInfo info;
 
     g_return_val_if_fail (world != NULL, NULL);
     g_return_val_if_fail (package != NULL, NULL);
@@ -892,12 +898,15 @@ rc_world_guess_package_channel (RCWorld *world,
     /* We don't need to call rc_world_sync, because we are searching
        over the channel data --- not the installed packages. */
 
+    info.package = package;
+    info.guess = NULL;
+
     rc_world_foreach_package_by_name (world,
                                       g_quark_to_string (package->spec.nameq),
                                       RC_CHANNEL_NON_SYSTEM,
-                                      guess_cb, &guess);
+                                      guess_cb, &info);
 
-    return guess;
+    return info.guess;
 }
 
 /**
