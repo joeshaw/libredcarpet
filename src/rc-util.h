@@ -49,4 +49,11 @@ gint rc_mkdir(const char *dir, guint mode);
 
 gboolean rc_file_exists (const char *filename);
 
+/* Check if the URL is relative or absolute */
+gboolean rc_url_is_absolute (const char *url);
+
+/* Build a URL given the info, checking if rest_url is absolute */
+gchar *rc_build_url (const gchar *method, const gchar *host,
+                     const gchar *path, const gchar *rest_url);
+
 #endif

@@ -147,3 +147,53 @@ rc_file_exists (const char *filename)
  
     return (access (filename, F_OK) == 0); 
 } 
+
+gboolean
+rc_url_is_absolute (const char *url)
+{
+    if (g_strncasecmp (url, "http:", 5) == 0 ||
+        g_strncasecmp (url, "ftp:", 4) == 0 ||
+        g_strncasecmp (url, "file:", 5) == 0)
+    {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+gchar *
+rc_build_url (const gchar *method, const gchar *host, const gchar *path, const gchar *rest_url)
+{
+    if (rest_url && rc_url_is_absolute (rest_url)) {
+        return g_strdup (rest_url);
+    }
+
+    if (rest_url && *rest_url == '/') {
+        if (host) {
+            return g_strdup_printf ("%s://%s%s", method ? method : "http", host, rest_url);
+        } else {
+            return g_strdup_printf ("%s:%s", method ? method : "http", rest_url);
+        }
+    }
+
+    if (path && rc_url_is_absolute (path) && rest_url) {
+        return g_strdup_printf ("%s/%s", path, rest_url);
+    }
+
+    if (host && path && rest_url) {
+        return g_strdup_printf ("%s://%s%s%s/%s", method ? method : "http", host,
+                                *path == '/' ? "" : "/", path, rest_url);
+    } else if (host && path) {
+        return g_strdup_printf ("%s://%s%s%s/", method ? method : "http", host,
+                                *path == '/' ? "" : "/", path);
+    } else if (path && rest_url) {
+        return g_strdup_printf ("%s:%s%s/%s", method ? method : "http",
+                                *path == '/' ? "" : "/", path, rest_url);
+    } else if (host && rest_url) {
+        return g_strdup_printf ("%s://%s/%s", method ? method : "http",
+                                host, rest_url);
+    }
+
+    g_assert_not_reached ();
+    return NULL;
+}
