@@ -9,3 +9,4 @@
 #undef ENABLE_RPM
 #undef STATIC_RPM
 #undef RC_RPM4
+#undef STRICT_RPM_ORDER

@@ -1,3 +1,11 @@
+2002-04-12  Peter Bowen  <pzb@ximian.com>
+
+	* rc-distro.c: YDL2.2, MDK8.2, SuSE 8.0, RHL7.3, and Debian 3.0 support
+
+	* rc-rpmman.c (vercmp): use STRICT_RPM_VERCMP define to decide sort
+				order for alpha and numeric chars and whether
+				we string "mdk" from the end of strings
+
 2002-04-11  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-queue-item.c (install_item_process): Check to make sure that

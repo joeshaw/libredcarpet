@@ -2006,6 +2006,7 @@ vercmp(const char * a, const char * b)
     strcpy(str1, a);
     strcpy(str2, b);
 
+#ifndef STRICT_RPM_ORDER
     /* Take care of broken Mandrake releases */
     if ((alen > 3) && !strcmp (a + alen - 3, "mdk")) {
         str1[alen - 3] = '\0';
@@ -2013,6 +2014,7 @@ vercmp(const char * a, const char * b)
     if ((blen > 3) && !strcmp (b + blen - 3, "mdk")) {
         str2[blen - 3] = '\0';
     }
+#endif
 
     one = str1;
     two = str2;
@@ -2045,17 +2047,22 @@ vercmp(const char * a, const char * b)
         oldch2 = *str2;
         *str2 = '\0';
 
-	/* This should only happen if someone is changing the string */
-	/* behind our back.  It should be a _very_ rare race condition */
+        /* This should only happen if someone is changing the string */
+        /* behind our back.  It should be a _very_ rare race condition */
         if (one == str1) return -1; /* arbitrary */
 
         /* take care of the case where the two version segments are */
         /* different types: one numeric and one alpha */
 
-	/* Here's how we handle comparing numeric and non-numeric
-	 * segments -- non-numeric (ximian.1) always sorts higher than
-	 * numeric (0_helix_1). */
-        if (two == str2) return (isnum ? -1 : 1);
+        /* Here's how we handle comparing numeric and non-numeric
+         * segments -- non-numeric (ximian.1) always sorts higher than
+         * numeric (0_helix_1). */
+        if (two == str2)
+#ifdef STRICT_RPM_ORDER
+            return (isnum ? 1 : -1);
+#else
+            return (isnum ? -1 : 1);
+#endif
 
         if (isnum) {
             /* this used to be done by converting the digit segments */
@@ -2120,9 +2127,9 @@ rc_rpmman_version_compare (RCPackman *packman,
     if (spec1->epoch && spec2->epoch) {
         rc = spec1->epoch - spec2->epoch;
     } else if (spec1->epoch && spec1->epoch > 0) {
-	    rc = 1;
+        rc = 1;
     } else if (spec2->epoch && spec2->epoch > 0) {
-	    rc = -1;
+        rc = -1;
     }
     if (rc) return rc;
 

@@ -84,26 +84,19 @@ static gboolean func_sys (gpointer arg1,  /* prog to call, with args */
  */
 
 RCDistroChunk distro_figurers[] = {
-#if 0
-    /* scyld needs to come before redhat, since they include a redhat-release */
-    { "scyld-20-i386", RC_ARCH_IA32,
-      func_string_in_file, "/etc/scyld-release", "Scyld Beowulf release 2", NULL, 0 },
-#endif
-
     { "linuxppc-2000-ppc", RC_ARCH_PPC,
       func_string_in_file, "/etc/redhat-release", "LinuxPPC 2000", NULL, 0 },
     { "linuxppc-2000q4-ppc", RC_ARCH_PPC,
       func_string_in_file, "/etc/redhat-release", "Linux/PPC 2000 Q4", NULL, 0 },
 
     { "yellowdog-12-ppc", RC_ARCH_PPC,
-      func_string_in_file, "/etc/yellowdog-release", "Champion Server release 1.2",
-      NULL, 0 },
+      func_string_in_file, "/etc/yellowdog-release", "1.2", NULL, 0 },
     { "yellowdog-20-ppc", RC_ARCH_PPC,
-      func_string_in_file, "/etc/yellowdog-release", "Yellow Dog Linux release 2.0 (Pomona)",
-      NULL, 0 },
+      func_string_in_file, "/etc/yellowdog-release", "2.0", NULL, 0 },
     { "yellowdog-21-ppc", RC_ARCH_PPC,
-      func_string_in_file, "/etc/yellowdog-release", "Yellow Dog Linux release 2.1 (Fuji)",
-      NULL, 0 },
+      func_string_in_file, "/etc/yellowdog-release", "2.1", NULL, 0 },
+    { "yellowdog-22-ppc", RC_ARCH_PPC,
+      func_string_in_file, "/etc/yellowdog-release", "2.2", NULL, 0 },
 
     { "mandrake-70-i586", RC_ARCH_IA32,
       func_string_in_file, "/etc/mandrake-release", "7.0", NULL, 0 },
@@ -115,6 +108,8 @@ RCDistroChunk distro_figurers[] = {
       func_string_in_file, "/etc/mandrake-release", "8.0", NULL, 0 },
     { "mandrake-81-i586", RC_ARCH_IA32,
       func_string_in_file, "/etc/mandrake-release", "8.1", NULL, 0 },
+    { "mandrake-82-i586", RC_ARCH_IA32,
+      func_string_in_file, "/etc/mandrake-release", "8.2", NULL, 0 },
 
     { "redhat-60-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/redhat-release", "6.0", NULL, 0 },
@@ -128,6 +123,8 @@ RCDistroChunk distro_figurers[] = {
       func_string_in_file, "/etc/redhat-release", "7.1", NULL, 0 },
     { "redhat-72-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/redhat-release", "7.2", NULL, 0 },
+    { "redhat-73-i386", RC_ARCH_IA32,
+      func_string_in_file, "/etc/redhat-release", "7.3", NULL, 0 },
 
     { "turbolinux-60-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/turbolinux-release", "6.0", NULL, 0 },
@@ -146,15 +143,26 @@ RCDistroChunk distro_figurers[] = {
       func_string_in_file, "/etc/SuSE-release", "7.2", NULL, 0 },
     { "suse-73-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/SuSE-release", "7.3", NULL, 0 },
+    { "suse-80-i386", RC_ARCH_IA32,
+      func_string_in_file, "/etc/SuSE-release", "8.0", NULL, 0 },
 
     { "debian-potato-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/debian_version", "2.2", NULL, 0},
+    { "debian-potato-i386", RC_ARCH_IA32,
+      func_string_in_file, "/etc/debian_version", "potato", NULL, 0},
+    { "debian-woody-i386", RC_ARCH_IA32,
+      func_string_in_file, "/etc/debian_version", "3.0", NULL, 0},
     { "debian-woody-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/debian_version", "woody", NULL, 0},
+    { "debian-testing-i386", RC_ARCH_IA32,
+      func_string_in_file, "/etc/debian_version", "testing", NULL, 0},
+/* When debian comes up with the next name, put it here and uncomment */
+/*    { "debian-testing-i386", RC_ARCH_IA32,
+      func_string_in_file, "/etc/debain_version", "TOYSTORY", NULL, 0}, */
     { "debian-sid-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/debian_version", "sid", NULL, 0},
-    { "debian-woody-i386", RC_ARCH_IA32,
-      func_string_in_file, "/etc/debian_version", "testing", NULL, 0},
+    { "debian-sid-i386", RC_ARCH_IA32,
+      func_string_in_file, "/etc/debian_version", "unstable", NULL, 0},
 
     { "solaris-7-sun4", RC_ARCH_SPARC,
       func_sys, "uname -s", "SunOS", (gpointer) 0, CHECK_OP_AND,
@@ -174,10 +182,7 @@ RCDistroType distro_types[] = {
     { "redhat-70-i386", NULL, "Red Hat Linux", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
     { "redhat-71-i386", NULL, "Red Hat Linux", "7.1", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
     { "redhat-72-i386", NULL, "Red Hat Linux", "7.2", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
-
-#if 0
-    { "scyld-20-i386", NULL, "Scyld Beowulf", "2.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
-#endif
+    { "redhat-73-i386", NULL, "Red Hat Linux", "7.3", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
 
     { "turbolinux-60-i386", NULL, "TurboLinux", "6.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
     { "turbolinux-70-i386", NULL, "TurboLinux", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
@@ -188,14 +193,17 @@ RCDistroType distro_types[] = {
     { "suse-71-i386", NULL, "SuSE", "7.1", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
     { "suse-72-i386", NULL, "SuSE", "7.2", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
     { "suse-73-i386", NULL, "SuSE", "7.3", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "suse-80-i386", NULL, "SuSE", "8.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
 
     { "mandrake-70-i586", NULL, "Linux Mandrake", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
     { "mandrake-71-i586", NULL, "Linux Mandrake", "7.1", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
     { "mandrake-72-i586", NULL, "Linux Mandrake", "7.2", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
     { "mandrake-80-i586", NULL, "Linux Mandrake", "8.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
     { "mandrake-81-i586", NULL, "Linux Mandrake", "8.1", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "mandrake-82-i586", NULL, "Linux Mandrake", "8.2", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
 
     { "debian-sid-i386", NULL, "Debian GNU/Linux", "sid", RC_PKG_DPKG, RC_ARCH_IA32, NULL },
+    { "debian-testing-i386", NULL, "Debian GNU/Linux", "testing", RC_PKG_DPKG, RC_ARCH_IA32, NULL },
     { "debian-woody-i386", NULL, "Debian GNU/Linux", "woody", RC_PKG_DPKG, RC_ARCH_IA32, NULL },
     { "debian-potato-i386", NULL, "Debian GNU/Linux", "potato", RC_PKG_DPKG, RC_ARCH_IA32, NULL },
 
@@ -205,6 +213,7 @@ RCDistroType distro_types[] = {
     { "yellowdog-12-ppc", NULL, "Yellow Dog Linux", "1.2", RC_PKG_RPM, RC_ARCH_PPC, "gdm-runlevel=5, non-gdm-runlevel=3" },
     { "yellowdog-20-ppc", NULL, "Yellow Dog Linux", "2.0", RC_PKG_RPM, RC_ARCH_PPC, "gdm-runlevel=5, non-gdm-runlevel=3" },
     { "yellowdog-21-ppc", NULL, "Yellow Dog Linux", "2.1", RC_PKG_RPM, RC_ARCH_PPC, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "yellowdog-22-ppc", NULL, "Yellow Dog Linux", "2.2", RC_PKG_RPM, RC_ARCH_PPC, "gdm-runlevel=5, non-gdm-runlevel=3" },
 
     { "solaris-7-sun4", NULL, "Sun Solaris 7", "7", RC_PKG_RPM, RC_ARCH_SPARC, "" },
     { "solaris-8-sun4", NULL, "Sun Solaris 8", "8", RC_PKG_RPM, RC_ARCH_SPARC, "" },

@@ -1,3 +1,10 @@
+2002-04-12  Peter Bowen  <pzb@ximian.com>
+
+	* configure.in: add --enable-string-rpm-vercmp option to use rpmlib 
+			compatible version compares
+
+	* acconfig.h: add STRICT_RPM_VERCMP as for configure to define
+
 2002-03-01  Jon Trowbridge  <trow@ximian.com>
 
 	* Makefile.am: Don't add doc to SUBDIRS if the gtk-docs aren't
