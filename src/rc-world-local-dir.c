@@ -208,7 +208,9 @@ rc_world_local_dir_assemble_fn (RCWorldService *service, GError **error)
         for (t = tokens; t && *t; t++) {
             if (g_strncasecmp (*t, "name", 4) == 0) {
                 name = extract_value (*t);
-            } else if (g_strncasecmp (*t, "alias", 5) == 0) {
+            }
+            
+            if (g_strncasecmp (*t, "alias", 5) == 0) {
                 alias = extract_value (*t);
             }
         }
@@ -221,7 +223,7 @@ rc_world_local_dir_assemble_fn (RCWorldService *service, GError **error)
         alias = g_path_get_basename (path);
 
     service->name = name;
-    service->unique_id = alias;
+    service->unique_id = g_strdup (path);
 
     ldir->path = path;
     ldir->alias = g_path_get_basename (path);

@@ -1,5 +1,12 @@
 2003-09-10  Joe Shaw  <joe@ximian.com>
 
+	* rc-world-local-dir.c (rc_world_local_dir_assemble_fn): name and
+	alias aren't mutually exclusive, so don't use an else if.  Set the
+	service's unique ID to the path, not the alias so you can't mount
+	the same directory multiple times.
+
+2003-09-10  Joe Shaw  <joe@ximian.com>
+
 	* rc-world.c (rc_world_refresh_begin): New function which just
 	sets world->refresh_pending to TRUE.
 	(rc_world_refresh): Don't set refresh_pending to TRUE
