@@ -131,6 +131,12 @@ void               rc_resolver_context_spew_info    (RCResolverContext *);
 
 gboolean           rc_resolver_context_requirement_is_met (RCResolverContext *,
                                                            RCPackageDep *dep);
+gboolean           rc_resolver_context_requirement_is_possible (RCResolverContext *,
+                                                                RCPackageDep *dep);
+
+gboolean           rc_resolver_context_package_is_possible (RCResolverContext *,
+                                                            RCPackage *);
+
 gboolean           rc_resolver_context_is_parallel_install (RCResolverContext *,
                                                             RCPackage *);
 

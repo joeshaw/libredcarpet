@@ -31,12 +31,6 @@
 #include "rc-util.h"
 #include "rc-deps-util.h"
 
-typedef struct _RCPackageAndSpec RCPackageAndSpec;
-struct _RCPackageAndSpec {
-    RCPackage *package;
-    RCPackageSpec *spec;
-};
-
 typedef struct _RCPackageAndDep RCPackageAndDep;
 struct _RCPackageAndDep {
     RCPackage *package;
@@ -114,7 +108,6 @@ void
 rc_world_add_package (RCWorld *world, RCPackage *package)
 {
     const RCPackageDepSList *iter;
-    RCPackageAndSpec *pas;
     RCPackageAndDep *pad;
 
     g_return_if_fail (world != NULL);
@@ -129,26 +122,27 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
     /* Store all of the package's provides in a hash by name.
        Packages implicitly provide themselves. */
 
-    pas = g_new0 (RCPackageAndSpec, 1);
-    pas->package = package;
-    pas->spec = &package->spec;
-    package->spec.type = RC_PACKAGE_SPEC_TYPE_PACKAGE;
+    pad = g_new0 (RCPackageAndDep, 1);
+    pad->package = package;
+    pad->dep = rc_package_dep_new_from_spec (&package->spec,
+                                             RC_RELATION_EQUAL);
+    pad->dep->spec.type = RC_PACKAGE_SPEC_TYPE_PACKAGE;
 
     rc_hash_table_slist_insert (world->provides_by_name,
-                                pas->spec->name,
-                                pas);
+                                pad->dep->spec.name,
+                                pad);
 
     for (iter = package->provides; iter != NULL; iter = iter->next) {
 
         RCPackageDep *dep = (RCPackageDep *) iter->data;
 
-        pas = g_new0 (RCPackageAndSpec, 1);
-        pas->package = package;
-        pas->spec = &dep->spec;
+        pad = g_new0 (RCPackageAndDep, 1);
+        pad->package = package;
+        pad->dep = dep;
 
         rc_hash_table_slist_insert (world->provides_by_name,
-                                    pas->spec->name,
-                                    pas);
+                                    dep->spec.name,
+                                    pad);
     }
 
     /* Store all of the package's requires in a hash by name. */
@@ -564,25 +558,25 @@ rc_world_foreach_providing_package (RCWorld *world, RCPackageDep *dep,
                                   rc_package_spec_equal);
 
     for (iter = slist; iter != NULL; iter = iter->next) {
-        RCPackageAndSpec *pas = iter->data;
-        if (pas && pas->package && rc_package_is_installed (pas->package))
-            g_hash_table_insert (installed, & pas->package->spec, pas);
+        RCPackageAndDep *pad = iter->data;
+        if (pad && pad->package && rc_package_is_installed (pad->package))
+            g_hash_table_insert (installed, & pad->package->spec, pad);
     }
 
     for (iter = slist; iter != NULL; iter = iter->next) {
-        RCPackageAndSpec *pas = iter->data;
+        RCPackageAndDep *pad = iter->data;
 
-        if (pas
-            && (channel == RC_WORLD_ANY_CHANNEL || pas->package->channel == channel)
-            && rc_package_dep_verify_relation (dep, pas->spec)) {
+        if (pad
+            && (channel == RC_WORLD_ANY_CHANNEL || pad->package->channel == channel)
+            && rc_package_dep_verify_relation (dep, &pad->dep->spec)) {
 
             /* If we have multiple identical packages in RCWorld, we want to only
                include the package that is installed and skip the rest. */
-            if (rc_package_is_installed (pas->package)
-                || g_hash_table_lookup (installed, & pas->package->spec) == NULL) {
+            if (rc_package_is_installed (pad->package)
+                || g_hash_table_lookup (installed, & pad->package->spec) == NULL) {
                 
                 if (fn)
-                    fn (pas->package, pas->spec, user_data);
+                    fn (pad->package, &pad->dep->spec, user_data);
                 ++count;
             }
         }
@@ -597,7 +591,7 @@ rc_world_foreach_providing_package (RCWorld *world, RCPackageDep *dep,
 
 gboolean
 rc_world_check_providing_package (RCWorld *world, RCPackageDep *dep,
-                                  RCChannel *channel,
+                                  RCChannel *channel, gboolean filter_dups_of_installed,
                                   RCPackageAndSpecCheckFn fn, gpointer user_data)
 {
     GSList *slist, *iter;
@@ -614,7 +608,8 @@ rc_world_check_providing_package (RCWorld *world, RCPackageDep *dep,
         deps = rc_dep_string_to_or_dep_slist (dep->spec.name);
         for (iter = deps; iter != NULL && !terminated; iter = iter->next) {
             terminated = rc_world_check_providing_package (world, iter->data,
-                                                           channel, fn, user_data);
+                                                           channel, filter_dups_of_installed,
+                                                           fn, user_data);
         }
         rc_package_dep_slist_free (deps);
         return terminated;
@@ -626,24 +621,27 @@ rc_world_check_providing_package (RCWorld *world, RCPackageDep *dep,
     installed = g_hash_table_new (rc_package_spec_hash,
                                   rc_package_spec_equal);
 
-    for (iter = slist; iter != NULL; iter = iter->next) {
-        RCPackageAndSpec *pas = iter->data;
-        if (pas && pas->package && rc_package_is_installed (pas->package))
-            g_hash_table_insert (installed, & pas->package->spec, pas);
+    if (filter_dups_of_installed) {
+        for (iter = slist; iter != NULL; iter = iter->next) {
+            RCPackageAndDep *pad = iter->data;
+            if (pad && pad->package && rc_package_is_installed (pad->package))
+                g_hash_table_insert (installed, & pad->package->spec, pad);
+        }
     }
 
     for (iter = slist; iter != NULL; iter = iter->next) {
-        RCPackageAndSpec *pas = slist->data;
+        RCPackageAndDep *pad = iter->data;
 
-        if (pas
-            && (channel == RC_WORLD_ANY_CHANNEL || pas->package->channel == channel)
-            && rc_package_dep_verify_relation (dep, pas->spec)) {
+        if (pad
+            && (channel == RC_WORLD_ANY_CHANNEL || pad->package->channel == channel)
+            && rc_package_dep_verify_relation (dep, &pad->dep->spec)) {
 
             /* Skip uninstalled dups */
-            if (rc_package_is_installed (pas->package)
-                || g_hash_table_lookup (installed, & pas->package->spec) == NULL) {
+            if ((! filter_dups_of_installed) 
+                || rc_package_is_installed (pad->package)
+                || (g_hash_table_lookup (installed, & pad->package->spec) == NULL) ) {
 
-                if (! fn (pas->package, pas->spec, user_data)) {
+                if (! fn (pad->package, &pad->dep->spec, user_data)) {
                     ret = TRUE;
                     break;
                 }
@@ -731,13 +729,13 @@ foreach_provides_by_name_cb (gpointer key, gpointer val, gpointer user_data)
     char *name = key;
     GSList *iter = val;
 
-    fprintf (out, "SPC %s: ", name);
+    fprintf (out, "PRV %s: ", name);
     while (iter) {
-        RCPackageAndSpec *pas = iter->data;
-        if (pas) {
-            fprintf (out, rc_package_spec_to_str_static (& pas->package->spec));
+        RCPackageAndDep *pad = iter->data;
+        if (pad) {
+            fprintf (out, rc_package_to_str_static (pad->package));
             fprintf (out, "/");
-            fprintf (out, rc_package_spec_to_str_static (pas->spec));
+            fprintf (out, rc_package_dep_to_str_static (pad->dep));
             fprintf (out, " ");
         } else {
             fprintf (out, "(null) ");

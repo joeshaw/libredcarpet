@@ -583,8 +583,10 @@ look_for_upgrades_cb (RCPackage *package, gpointer user_data)
 }
 
 static gboolean
-codependent_pair (const char *name1, const char *name2)
+codependent_packages (RCPackage *pkg1, RCPackage *pkg2)
 {
+    const char *name1 = pkg1->spec.name;
+    const char *name2 = pkg2->spec.name;
     int len1 = strlen (name1), len2 = strlen (name2);
 
     if (len2 < len1) {
@@ -645,9 +647,9 @@ require_item_process (RCQueueItem *item,
             msg = g_strconcat ("There are no ",
                                require->remove_only ? "alternative installed" : "installable",
                                " providers of ",
-                               rc_package_relation_to_string (require->dep->relation, 0),
-                               " ",
-                               rc_package_spec_to_str_static (& require->dep->spec),
+                               rc_package_dep_to_str_static (require->dep),
+                               " for ",
+                               rc_package_to_str_static (require->requiring_package),
                                NULL);
             
             rc_resolver_context_add_info_str (context,
@@ -673,28 +675,53 @@ require_item_process (RCQueueItem *item,
 
                 for (iter = upgrade_list; iter != NULL; iter = iter->next) {
                     RCPackage *upgrade_package = iter->data;
-                    RCQueueItem *install_item = rc_queue_item_new_install (upgrade_package);
+                    RCQueueItem *install_item;
                     RCResolverInfo *upgrade_info;
 
-                    rc_queue_item_install_set_upgrade_package (install_item,
-                                                               require->requiring_package);
-                    rc_queue_item_branch_add_item (branch_item, install_item);
+                    if (rc_resolver_context_package_is_possible (context, upgrade_package)) {
                     
-                    upgrade_info = rc_resolver_info_needed_by_new (upgrade_package);
-                    rc_resolver_info_needed_add (upgrade_info, require->upgraded_package);
-                    rc_queue_item_add_info (install_item, upgrade_info);
-                }
-            }
+                        install_item = rc_queue_item_new_install (upgrade_package);
+                    
+                        rc_queue_item_install_set_upgrade_package (install_item,
+                                                                   require->requiring_package);
+                        rc_queue_item_branch_add_item (branch_item, install_item);
+                        
+                        upgrade_info = rc_resolver_info_needed_by_new (upgrade_package);
+                        rc_resolver_info_needed_add (upgrade_info, require->upgraded_package);
+                        rc_queue_item_add_info (install_item, upgrade_info);
+
+                        /* If an upgrade package has its requirements met,
+                           don't do the uninstall branch.
+                           FIXME: should we also look at conflicts here?
+                        */
+                        if (explore_uninstall_branch) {
+                            GSList *req_iter = upgrade_package->requires;
+                            while (req_iter) {
+                                RCPackageDep *req = req_iter->data;
+                                if (! rc_resolver_context_requirement_is_met (context, req))
+                                    break;
+                                
+                                req_iter = req_iter->next;
+                            }
+                            if (req_iter == NULL) {
+                                explore_uninstall_branch = FALSE;
+                            }
+                        }
+                        
+                    } /* if (rc_resolver_context_package_is_possible ( ... */
+                } /* for (iter = upgrade_list; ... */
+            } /* if (upgrade_list) ... */
 
             if (upgrade_list != NULL
-                && codependent_pair (require->requiring_package->spec.name,
-                                     require->upgraded_package->spec.name)) {
+                && explore_uninstall_branch
+                && codependent_packages (require->requiring_package,
+                                         require->upgraded_package)) {
                 explore_uninstall_branch = FALSE;
             }
-
+            
             g_slist_free (upgrade_list);
         }
-
+            
         if (explore_uninstall_branch) {
             RCResolverInfo *log_info;
             uninstall_item = rc_queue_item_new_uninstall (require->requiring_package,
@@ -706,11 +733,11 @@ require_item_process (RCQueueItem *item,
                                                             require->lost_package);
                 rc_queue_item_add_info (uninstall_item, log_info);
             }
-
+            
             if (require->remove_only)
                 rc_queue_item_uninstall_set_remove_only (uninstall_item);
         }
-
+        
         if (uninstall_item && branch_item) {
             rc_queue_item_branch_add_item (branch_item, uninstall_item);            
             *new_items = g_slist_prepend (*new_items, branch_item);
@@ -719,7 +746,7 @@ require_item_process (RCQueueItem *item,
         } else if (branch_item) {
             *new_items = g_slist_prepend (*new_items, branch_item);
         }
-
+        
     } else if (num_providers == 1) {
         
         RCQueueItem *install_item = rc_queue_item_new_install ((RCPackage *) info.providers->data);
@@ -727,7 +754,7 @@ require_item_process (RCQueueItem *item,
 
         rc_queue_item_install_add_needed_by (install_item,
                                              require->requiring_package);
-
+        
         *new_items = g_slist_prepend (*new_items, install_item);
 
     } else if (num_providers > 1) {

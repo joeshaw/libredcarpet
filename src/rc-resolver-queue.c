@@ -179,13 +179,14 @@ rc_resolver_queue_process_once (RCResolverQueue *queue)
     GSList *iter;
     GSList *new_items = NULL;
     int max_priority;
-    gboolean did_something = TRUE;
+    gboolean did_something = FALSE;
 
     g_return_val_if_fail (queue != NULL, FALSE);
 
-    while ( did_something && (max_priority = slist_max_priority (queue->items)) >= 0 ) {
+    while ( (max_priority = slist_max_priority (queue->items)) >= 0
+            && rc_resolver_context_is_valid (queue->context) ) {
         
-        did_something = FALSE;
+        gboolean did_something_recently = FALSE;
         
         for (iter = queue->items;
              iter != NULL && rc_resolver_context_is_valid (queue->context);
@@ -195,11 +196,14 @@ rc_resolver_queue_process_once (RCResolverQueue *queue)
             
             if (item && item->priority == max_priority) {
                 if (rc_queue_item_process (item, queue->context, &new_items)) {
-                    did_something = TRUE;
+                    did_something_recently = TRUE;
                 }
                 iter->data = NULL;
             }
         }
+
+        if (did_something_recently)
+            did_something = TRUE;
     }
 
     g_slist_free (queue->items);
@@ -328,8 +332,10 @@ rc_resolver_queue_spew (RCResolverQueue *queue)
     
         for (iter = queue->items; iter != NULL; iter = iter->next) {
             RCQueueItem *item = (RCQueueItem *) iter->data;
-            char *str = rc_queue_item_to_string (item);
-            g_print ("  %s\n", str);
+            if (item) {
+                char *str = rc_queue_item_to_string (item);
+                g_print ("  %s\n", str);
+            }
         }
 
     }

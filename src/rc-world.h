@@ -75,7 +75,7 @@ int        rc_world_foreach_providing_package (RCWorld *world, RCPackageDep *dep
                                                RCPackageAndSpecFn fn, gpointer user_data);
 
 gboolean   rc_world_check_providing_package   (RCWorld *world, RCPackageDep *dep, 
-                                               RCChannel *channel,
+                                               RCChannel *channel, gboolean filter_dups_of_installed,
                                                RCPackageAndSpecCheckFn fn, gpointer user_data);
 
 int        rc_world_foreach_requiring_package (RCWorld *world, RCPackageSpec *spec,

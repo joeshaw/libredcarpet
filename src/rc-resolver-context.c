@@ -758,9 +758,61 @@ rc_resolver_context_requirement_is_met (RCResolverContext *context,
     info.context = context;
     info.flag = FALSE;
 
-    rc_world_check_providing_package (world, dep, RC_WORLD_ANY_CHANNEL, requirement_met_cb, &info);
+    rc_world_check_providing_package (world, dep, RC_WORLD_ANY_CHANNEL, FALSE, requirement_met_cb, &info);
     
     return info.flag;
+}
+
+static gboolean
+requirement_possible_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data)
+{
+    struct RequirementMetInfo *info = user_data;
+    RCPackageStatus status = rc_resolver_context_get_status (info->context, package);
+
+    if (status != RC_PACKAGE_STATUS_TO_BE_UNINSTALLED) {
+            info->flag = TRUE;
+    }
+
+    return ! info->flag;
+}
+
+gboolean
+rc_resolver_context_requirement_is_possible (RCResolverContext *context,
+                                             RCPackageDep *dep)
+{
+    RCWorld *world;
+    struct RequirementMetInfo info;
+
+    g_return_val_if_fail (context != NULL, FALSE);
+    g_return_val_if_fail (dep != NULL, FALSE);
+
+    world = rc_get_world ();
+
+    info.context = context;
+    info.flag = FALSE;
+
+    rc_world_check_providing_package (world, dep, RC_WORLD_ANY_CHANNEL, FALSE, requirement_possible_cb, &info);
+    
+    return info.flag;
+}
+
+gboolean
+rc_resolver_context_package_is_possible (RCResolverContext *context,
+                                         RCPackage *package)
+{
+    GSList *iter;
+
+    g_return_val_if_fail (context != NULL, FALSE);
+    g_return_val_if_fail (package != NULL, FALSE);
+
+    for (iter = package->requires; iter != NULL; iter = iter->next) {
+        RCPackageDep *dep = iter->data;
+        if (! rc_resolver_context_requirement_is_possible (context, dep)) {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
 }
 
 struct DupNameCheckInfo {

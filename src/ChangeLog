@@ -1,3 +1,21 @@
+2002-03-08  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-queue-item.c (require_item_process): Don't search our
+	"uninstall" branch if it looks like the upgrade will install
+	cleanly.  Filter out uninstallable upgrades.  (Fixes case #39)
+
+	* rc-resolver-context.c
+	(rc_resolver_context_requirement_is_possible): Added.
+
+	* rc-world.c (rc_world_add_package): Track provides as
+	RCPackageDeps, not RCPackageSpecs.
+	(rc_world_foreach_providing_package): Provides are now
+	RCPackageDeps.
+	(rc_world_check_providing_package): Provides are now
+	RCPackageDeps.  Added "filter_dups_of_installed" flag.  Fixed
+	idiotic bug of the century: we were looking at the first list
+	element repeatedly, instead of actually iterating.  Doh!
+
 2002-03-08  Ian Peters  <itp@ximian.com>
 
 	* rc-deps-util.c (free_package_hash_helper): not needed
