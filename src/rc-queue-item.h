@@ -129,6 +129,7 @@ struct _RCQueueItem_Uninstall {
     guint explicitly_requested : 1;
     guint remove_only          : 1;
     guint due_to_obsolete      : 1;
+    guint unlink               : 1;
 };
 
 RCQueueItemType rc_queue_item_type         (RCQueueItem *);
@@ -174,6 +175,7 @@ void         rc_queue_item_uninstall_set_dep         (RCQueueItem *item, RCPacka
 void         rc_queue_item_uninstall_set_remove_only (RCQueueItem *item);
 void         rc_queue_item_uninstall_set_upgraded_to (RCQueueItem *item, RCPackage *packageo);
 void         rc_queue_item_uninstall_set_explicitly_requested (RCQueueItem *item);
+void         rc_queue_item_uninstall_set_unlink      (RCQueueItem *item);
 
 
 

@@ -50,6 +50,8 @@ struct _RCWorld {
 
     RCPackman *packman;
 
+    gchar *synthetic_package_db;
+
     /* The sequence numbers gets incremented every
        time the RCWorld is changed. */
 
@@ -311,10 +313,12 @@ rc_world_get_system_packages (RCWorld *world)
     }
 
     rc_world_remove_packages (world, RC_CHANNEL_SYSTEM);
-    rc_world_add_packages_from_slist (world, system_packages);
 
+    rc_world_add_packages_from_slist (world, system_packages);
     rc_package_slist_unref (system_packages);
     g_slist_free (system_packages);
+
+    rc_world_load_synthetic_packages (world);
 
     return TRUE;
 }
@@ -495,6 +499,8 @@ rc_world_free (RCWorld *world)
             rc_package_match_free (lock);
         }
         g_slist_free (world->locks);
+
+        g_free (world->synthetic_package_db);
 
 		g_free (world);
 
@@ -1247,6 +1253,94 @@ rc_world_remove_packages (RCWorld *world,
                                  channel);
 
 }
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+void
+rc_world_set_synthetic_package_db (RCWorld *world,
+                                   const char *filename)
+{
+    g_return_if_fail (world != NULL);
+    g_return_if_fail (filename && *filename);
+    g_return_if_fail (world->synthetic_package_db == NULL);
+    
+    world->synthetic_package_db = g_strdup (filename);
+}
+
+gboolean
+rc_world_load_synthetic_packages (RCWorld *world)
+{
+    char *file_contents;
+
+    g_return_val_if_fail (world != NULL, FALSE);
+
+    if (world->synthetic_package_db == NULL)
+        return TRUE;
+
+    if (! g_file_test (world->synthetic_package_db, G_FILE_TEST_EXISTS))
+        return TRUE;
+
+    if (! g_file_get_contents (world->synthetic_package_db,
+                               &file_contents, NULL, NULL)) {
+        rc_debug (RC_DEBUG_LEVEL_WARNING,
+                  "Couldn't read synthetic package db '%s'",
+                  world->synthetic_package_db);
+        return FALSE;
+    }
+
+    rc_world_add_packages_from_buffer (world, RC_CHANNEL_SYSTEM,
+                                       file_contents,
+                                       0 /* not compressed */);
+
+    g_free (file_contents);
+
+    return TRUE;
+}
+
+static void
+save_synthetic_packages_cb (RCPackage *package, gpointer user_data)
+{
+    xmlNode *parent = user_data;
+
+    if (rc_package_is_synthetic (package)) {
+        xmlNode *package_node = rc_package_to_xml_node (package);
+        xmlAddChild (parent, package_node);
+    }
+}
+
+gboolean
+rc_world_save_synthetic_packages (RCWorld *world)
+{
+    xmlDoc *doc;
+    xmlNode *root;
+    FILE *out;
+
+    g_return_val_if_fail (world != NULL, FALSE);
+
+    if (world->synthetic_package_db == NULL)
+        return TRUE;
+
+    out = fopen (world->synthetic_package_db, "w");
+    if (out == NULL) /* FIXME: better error handling needed */
+        return FALSE;
+
+    doc = xmlNewDoc ("1.0");
+    root = xmlNewNode (NULL, "synthetic_packages");
+    xmlDocSetRootElement (doc, root);
+
+    rc_world_foreach_package (world,
+                              RC_CHANNEL_SYSTEM,
+                              save_synthetic_packages_cb,
+                              root);
+
+    xmlDocDump (out, doc);
+    fclose (out);
+
+    return TRUE;
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
 
 /**
  * rc_world_find_installed_version:
@@ -2122,8 +2216,148 @@ rc_world_foreach_conflicting_package (RCWorld          *world,
     return count;
 }
 
+struct SingleProviderInfo {
+    RCPackage *package;
+    RCChannel *channel;
+    int count;
+};
+
+static void
+single_provider_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data)
+{
+    struct SingleProviderInfo *info = user_data;
+
+    if (! rc_channel_equal (package->channel, info->channel))
+        return;
+
+    if (info->package == NULL) {
+        
+        info->package = package;
+        info->count = 1;
+
+    } else if (rc_package_spec_not_equal (RC_PACKAGE_SPEC (package),
+                                          RC_PACKAGE_SPEC (info->package))) {
+        ++info->count;
+    }
+}
+
+gboolean
+rc_world_get_single_provider (RCWorld *world,
+                              RCPackageDep *dep,
+                              RCChannel *channel,
+                              RCPackage **package)
+{
+    struct SingleProviderInfo info;
+
+    g_return_val_if_fail (world != NULL, FALSE);
+    g_return_val_if_fail (dep != NULL, FALSE);
+
+    info.package = NULL;
+    info.channel = channel;
+    info.count = 0;
+
+    rc_world_foreach_providing_package (world, dep,
+                                        single_provider_cb,
+                                        &info);
+
+    if (info.count != 1)
+        return FALSE;
+
+    if (package)
+        *package = info.package;
+
+    return TRUE;
+}
+
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
+void
+rc_world_transact (RCWorld *world,
+                   RCPackageSList *install_packages,
+                   RCPackageSList *remove_packages,
+                   int flags)
+{
+    RCPackman *packman;
+    RCPackageSList *syn_install_packages = NULL;
+    RCPackageSList *syn_remove_packages = NULL;
+    RCPackageSList *real_install_packages = NULL;
+    RCPackageSList *real_remove_packages = NULL;
+    GSList *iter;
+
+    g_return_if_fail (world != NULL);
+
+    /* FIXME: we need to respect the flags and not write out the
+       synthetic packages in the case of a dry-run, no-act etc. */
+    
+    packman = rc_world_get_packman (world);
+    g_return_if_fail (packman != NULL);
+
+    for (iter = install_packages; iter != NULL; iter = iter->next) {
+        RCPackage *package = iter->data;
+
+        if (rc_package_is_synthetic (package))
+            syn_install_packages = g_slist_prepend (syn_install_packages,
+                                                    rc_package_ref (package));
+        else
+            real_install_packages = g_slist_prepend (real_install_packages,
+                                                     rc_package_ref (package));
+    }
+
+    for (iter = remove_packages; iter != NULL; iter = iter->next) {
+        RCPackage *package = iter->data;
+
+        if (rc_package_is_synthetic (package))
+            syn_remove_packages = g_slist_prepend (syn_remove_packages,
+                                                   rc_package_ref (package));
+        else
+            real_remove_packages = g_slist_prepend (real_remove_packages,
+                                                    rc_package_ref (package));
+    }
+
+    if (syn_install_packages || syn_remove_packages) {
+
+        for (iter = syn_install_packages; iter != NULL; iter = iter->next) {
+            RCPackage *package = iter->data;
+            RCPackage *sys_package = rc_package_copy (package);
+
+            rc_channel_unref (sys_package->channel);
+            sys_package->channel = RC_CHANNEL_SYSTEM;
+            rc_world_add_package (world, sys_package);
+            rc_package_unref (sys_package);
+        }
+
+        for (iter = syn_remove_packages; iter != NULL; iter = iter->next) {
+            RCPackage *package = iter->data;
+            RCPackage *sys_package;
+            sys_package = rc_world_find_installed_version (world, package);
+            if (sys_package)
+                rc_world_remove_package (world, sys_package);
+        }
+
+        /* FIXME: check for errors */
+        rc_world_save_synthetic_packages (world);
+    }
+
+    rc_packman_transact (packman,
+                         real_install_packages,
+                         real_remove_packages,
+                         flags);
+
+    rc_package_slist_unref (syn_install_packages);
+    g_slist_free (syn_install_packages);
+
+    rc_package_slist_unref (syn_remove_packages);
+    g_slist_free (syn_remove_packages);
+
+    rc_package_slist_unref (real_install_packages);
+    g_slist_free (real_install_packages);
+
+    rc_package_slist_unref (real_remove_packages);
+    g_slist_free (real_remove_packages);
+}
+
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 static void
 foreach_package_by_name_cb (gpointer key, gpointer val, gpointer user_data)

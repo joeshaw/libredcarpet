@@ -126,6 +126,17 @@ void       rc_world_remove_packages (RCWorld *world,
                                      RCChannel *channel);
 
 
+/* Synthetic packages */
+
+void       rc_world_set_synthetic_package_db (RCWorld *world,
+                                              const char *filename);
+
+gboolean   rc_world_load_synthetic_packages  (RCWorld *world);
+
+gboolean   rc_world_save_synthetic_packages  (RCWorld *world);
+
+
+
 /* Single package queries */
 
 RCPackage *rc_world_find_installed_version      (RCWorld *world, 
@@ -201,6 +212,18 @@ int        rc_world_foreach_conflicting_package (RCWorld *world,
                                                  RCPackageDep *dep,
                                                  RCPackageAndDepFn fn, 
                                                  gpointer user_data);
+
+gboolean   rc_world_get_single_provider (RCWorld *world,
+                                         RCPackageDep *dep,
+                                         RCChannel *channel,
+                                         RCPackage **package);
+
+/* Transacting */
+
+void      rc_world_transact (RCWorld *world,
+                             RCPackageSList *install_packages,
+                             RCPackageSList *remove_packages,
+                             int flags);
 
 
 /* Debugging output */

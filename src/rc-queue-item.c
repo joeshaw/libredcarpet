@@ -455,6 +455,20 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
             }
         }
 
+    /* Construct require items for each of the package's children.  We duplicate
+       a bit of code here, which kind of sucks. */
+    if (package->children_a)
+        for (i = 0; i < package->children_a->len; i++) {
+            RCPackageDep *dep = package->children_a->data[i];
+
+            if (!rc_resolver_context_requirement_is_met (context, dep)) {
+                RCQueueItem *req_item = rc_queue_item_new_require (rc_queue_item_get_world (item), dep);
+                rc_queue_item_require_add_package (req_item, package);
+            
+                *new_items = g_slist_prepend (*new_items, req_item);
+            }
+        }
+
     /* Construct conflict items for each of the package's conflicts. */
     if (package->conflicts_a)
         for (i = 0; i < package->conflicts_a->len; i++) {
@@ -1935,6 +1949,28 @@ uninstall_item_process (RCQueueItem *item,
                 rc_world_foreach_requiring_package (world, dep, 
                                                     uninstall_process_cb, &info);
             }
+
+        /* unlink any children */
+        if (uninstall->package->children_a)
+            for (i = 0; i < uninstall->package->children_a->len; ++i) {
+                RCPackageDep *dep = uninstall->package->children_a->data[i];
+                RCPackage *child;
+                RCQueueItem *uninstall_item;
+
+                if (rc_world_get_single_provider (world, dep,
+                                                  RC_CHANNEL_SYSTEM,
+                                                  &child)) {
+                    
+                    uninstall_item = rc_queue_item_new_uninstall (world, child,
+                                                                  "package-set-fu");
+                    rc_queue_item_uninstall_set_unlink (uninstall_item);
+
+                    *new_items = g_slist_prepend (*new_items, uninstall_item);
+
+                } else {
+                    g_assert_not_reached (); /* FIXME! */
+                }
+            }
     }
     
     g_free (pkg_str);
@@ -2064,4 +2100,15 @@ rc_queue_item_uninstall_set_upgraded_to (RCQueueItem *item,
 
     g_assert (uninstall->upgraded_to == NULL);
     uninstall->upgraded_to = package;
+}
+
+void
+rc_queue_item_uninstall_set_unlink (RCQueueItem *item)
+{
+    RCQueueItem_Uninstall *uninstall = (RCQueueItem_Uninstall *) item;
+
+    g_return_if_fail (item != NULL);
+    g_return_if_fail (rc_queue_item_type (item) == RC_QUEUE_ITEM_TYPE_UNINSTALL);
+
+    uninstall->unlink = TRUE;
 }

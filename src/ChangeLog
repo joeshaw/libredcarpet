@@ -1,3 +1,45 @@
+2003-04-18  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-world.c (rc_world_get_system_packages): Load the installed
+	synthetic packages along with the system packages.
+	(rc_world_set_synthetic_package_db): Added.  Sets the filename of
+	the synthetic package database.
+	(rc_world_load_synthetic_packages): Load the packages from the
+	synthetic package database into the world.
+	(rc_world_save_synthetic_packages): Write the installed synthetic
+	packages out to the synthetic package database.
+	(rc_world_get_single_provider): A convenience function -- find the
+	package that provides a dep, as long as there is exactly one
+	match.
+	(rc_world_transact): Added.  This is a wrapper around
+	rc_packman_transact that filters out and handles the installation
+	and removal of synthetic packages.
+
+	* rc-world-import.c (rc_world_add_packages_from_buffer): Handle
+	the case of adding packages to the system.
+	(refresh_channel_from_dir): If we find a file with the extension
+	'.synpkg' in the mounted directory, try to read package XML from
+	it.  If the file contains package XML describing a synthetic
+	package, create an RCPackage and add it to the channel.
+
+	* rc-queue-item.c (install_item_process): Treat child deps as
+	requires when installing.
+	(uninstall_item_process): Unlink any children when uninstalling.
+	(rc_queue_item_uninstall_set_unlink): Added.
+
+	* rc-xml.c: We are calling the subitems in a package set
+	the 'children'... I had been inconsistent on this before.
+	
+	* rc-package.c (rc_package_copy): Added.
+	(rc_package_is_package_set): We aren't a package set if the child
+	array exists but has length 0.
+	(rc_package_is_synthetic): Added.  Currently the only synthetic
+	packages we have are package sets.
+
+	* rc-package-update.c (rc_package_update_copy): This function
+	was mentioned in the header, but wasn't defined.  Go figure.
+	(rc_package_update_slist_copy): Ditto.
+
 2003-04-17  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-debman.c (query_all_read_line_cb): Initialize the provides

@@ -68,7 +68,7 @@ struct _RCPackage {
     RCPackageDepArray *obsoletes_a;
 
     /* For package sets */
-    RCPackageDepArray *contains_a;
+    RCPackageDepArray *children_a;
 
     /* These are here to make the debian folks happy */
     RCPackageDepArray *suggests_a;
@@ -94,6 +94,7 @@ struct _RCPackage {
 RCPackage *rc_package_new (void);
 RCPackage *rc_package_ref   (RCPackage *package);
 void       rc_package_unref (RCPackage *package);
+RCPackage *rc_package_copy  (RCPackage *package);
 
 void       rc_package_spew_leaks (void);
 
@@ -102,6 +103,8 @@ const char *rc_package_to_str_static (RCPackage *package);
 
 gboolean   rc_package_is_installed     (RCPackage *package);
 gboolean   rc_package_is_package_set   (RCPackage *package);
+gboolean   rc_package_is_synthetic     (RCPackage *package);
+
 RCPackage *rc_package_get_best_upgrade (RCPackage *package,
                                         gboolean subscribed_only);
 

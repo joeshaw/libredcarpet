@@ -83,7 +83,7 @@ rc_package_unref (RCPackage *package)
             rc_package_dep_array_free (package->conflicts_a);
             rc_package_dep_array_free (package->obsoletes_a);
 
-            rc_package_dep_array_free (package->contains_a);
+            rc_package_dep_array_free (package->children_a);
 
             rc_package_dep_array_free (package->suggests_a);
             rc_package_dep_array_free (package->recommends_a);
@@ -103,6 +103,45 @@ rc_package_unref (RCPackage *package)
         }
     }
 } /* rc_package_unref */
+
+RCPackage *
+rc_package_copy (RCPackage *src)
+{
+    RCPackage *dest;
+
+    if (src == NULL)
+        return NULL;
+
+    dest = rc_package_new ();
+
+    rc_package_spec_copy (&dest->spec, &src->spec);
+
+    dest->arch           = src->arch;
+    dest->section        = src->section;
+    dest->file_size      = src->file_size;
+    dest->installed_size = src->installed_size;
+    dest->channel        = rc_channel_ref (src->channel);
+
+    dest->requires_a   = rc_package_dep_array_copy (src->requires_a);
+    dest->provides_a   = rc_package_dep_array_copy (src->provides_a);
+    dest->conflicts_a  = rc_package_dep_array_copy (src->conflicts_a);
+    dest->obsoletes_a  = rc_package_dep_array_copy (src->obsoletes_a);
+    dest->children_a   = rc_package_dep_array_copy (src->children_a);
+    dest->suggests_a   = rc_package_dep_array_copy (src->suggests_a);
+    dest->recommends_a = rc_package_dep_array_copy (src->recommends_a);
+
+    dest->pretty_name = g_strdup (src->pretty_name);
+    dest->summary     = g_strdup (src->summary);
+    dest->description = g_strdup (dest->description);
+
+    dest->history = rc_package_update_slist_copy (src->history);
+
+    dest->installed     = src->installed;
+    dest->local_package = src->local_package;
+    dest->hold          = src->hold;
+
+    return dest;
+}
 
 #ifdef RC_PACKAGE_FIND_LEAKS
 static void
@@ -173,7 +212,15 @@ rc_package_is_package_set (RCPackage *package)
 {
     g_return_val_if_fail (package != NULL, FALSE);
 
-    return package->contains_a != NULL;
+    return package->children_a != NULL && package->children_a->len > 0;
+}
+
+gboolean
+rc_package_is_synthetic (RCPackage *package)
+{
+    g_return_val_if_fail (package != NULL, FALSE);
+
+    return rc_package_is_package_set (package);
 }
 
 RCPackage *

@@ -49,7 +49,7 @@ struct _RCPackageSAXContext {
     RCPackageDepSList *current_requires;
     RCPackageDepSList *current_provides;
     RCPackageDepSList *current_conflicts;
-    RCPackageDepSList *current_contains;
+    RCPackageDepSList *current_children;
     RCPackageDepSList *current_recommends;
     RCPackageDepSList *current_suggests;
     RCPackageDepSList *current_obsoletes;
@@ -118,7 +118,7 @@ parser_toplevel_start(RCPackageSAXContext *ctx,
         ctx->current_requires = NULL;
         ctx->current_provides = NULL;
         ctx->current_conflicts = NULL;
-        ctx->current_contains = NULL;
+        ctx->current_children = NULL;
         ctx->current_recommends = NULL;
         ctx->current_suggests = NULL;
         ctx->current_obsoletes = NULL;
@@ -195,10 +195,10 @@ parser_package_start(RCPackageSAXContext *ctx,
         ctx->current_dep_list = ctx->toplevel_dep_list =
             &ctx->current_provides;
     }
-    else if (!strcmp(name, "contains")) {
+    else if (!strcmp(name, "children")) {
         ctx->state = PARSER_DEP;
         ctx->current_dep_list = ctx->toplevel_dep_list =
-            &ctx->current_contains;
+            &ctx->current_children;
     } 
     else {
         if (getenv ("RC_SPEW_XML"))
@@ -405,9 +405,9 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
             rc_package_dep_array_from_slist (
                 &ctx->current_obsoletes);
 
-        ctx->current_package->contains_a =
+        ctx->current_package->children_a =
             rc_package_dep_array_from_slist (
-                &ctx->current_contains);
+                &ctx->current_children);
 
         ctx->current_package->suggests_a =
             rc_package_dep_array_from_slist (
@@ -763,7 +763,7 @@ struct DepTable {
     RCPackageDepSList *provides;
     RCPackageDepSList *conflicts;
     RCPackageDepSList *obsoletes;
-    RCPackageDepSList *contains;
+    RCPackageDepSList *children;
     RCPackageDepSList *suggests;
     RCPackageDepSList *recommends;
 };
@@ -910,7 +910,7 @@ extract_dep_info (const xmlNode *iter, struct DepTable *dep_table)
 
         dep_table->provides = g_slist_reverse (dep_table->provides);
 
-    } else if (!g_strcasecmp (iter->name, "contains")) {
+    } else if (!g_strcasecmp (iter->name, "children")) {
         const xmlNode *iter2;
 
         iter2 = iter->xmlChildrenNode;
@@ -921,13 +921,13 @@ extract_dep_info (const xmlNode *iter, struct DepTable *dep_table)
                 continue;
             }
 
-            dep_table->contains = 
-                g_slist_prepend (dep_table->contains,
+            dep_table->children = 
+                g_slist_prepend (dep_table->children,
                                  rc_xml_node_to_package_dep (iter2));
             iter2 = iter2->next;
         }
 
-        dep_table->contains = g_slist_reverse (dep_table->contains);
+        dep_table->children = g_slist_reverse (dep_table->children);
     }
 }
 
@@ -948,7 +948,7 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
     dep_table.requires = NULL;
     dep_table.provides = NULL;
     dep_table.conflicts = NULL;
-    dep_table.contains = NULL;
+    dep_table.children = NULL;
     dep_table.obsoletes = NULL;
     dep_table.suggests = NULL;
     dep_table.recommends = NULL;
@@ -1041,8 +1041,8 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
         rc_package_dep_array_from_slist (&dep_table.conflicts);
     package->obsoletes_a =
         rc_package_dep_array_from_slist (&dep_table.obsoletes);
-    package->contains_a = 
-        rc_package_dep_array_from_slist (&dep_table.contains);
+    package->children_a = 
+        rc_package_dep_array_from_slist (&dep_table.children);
     package->suggests_a =
         rc_package_dep_array_from_slist (&dep_table.suggests);
     package->recommends_a =
@@ -1422,10 +1422,10 @@ rc_package_to_xml_node (RCPackage *package)
         }
     }
 
-    if (package->contains_a) {
-        tmp_node = xmlNewChild (deps_node, NULL, "contains", NULL);
-        for (i = 0; i < package->contains_a->len; i++) {
-            RCPackageDep *dep = package->contains_a->data[i];
+    if (package->children_a) {
+        tmp_node = xmlNewChild (deps_node, NULL, "children", NULL);
+        for (i = 0; i < package->children_a->len; i++) {
+            RCPackageDep *dep = package->children_a->data[i];
 
             xmlAddChild (tmp_node, rc_package_dep_to_xml_node (dep));
         }

@@ -294,6 +294,7 @@ rc_world_add_packages_from_buffer (RCWorld *world,
     const char *buf;
     GByteArray *byte_array = NULL;
     guint count = -1;
+    RCChannelType type;
 
     g_return_val_if_fail (world != NULL, FALSE);
     g_return_val_if_fail (tbuf != NULL, FALSE);
@@ -309,7 +310,12 @@ rc_world_add_packages_from_buffer (RCWorld *world,
         buf = tbuf;
     }
 
-    switch (channel->type) {
+    if (channel == RC_CHANNEL_SYSTEM)
+        type = RC_CHANNEL_TYPE_HELIX;
+    else
+        type = channel->type;
+
+    switch (type) {
     case RC_CHANNEL_TYPE_HELIX:
         count = rc_world_parse_helix (world, channel, buf);
         break;
@@ -689,11 +695,47 @@ refresh_channel_from_dir (RCChannel *channel)
         rc_world_remove_packages (world, channel);
     
         while ( (filename = g_dir_read_name (dir)) ) {
-            RCPackage *pkg;
+            RCPackage *pkg = NULL;
             gchar *full_path = g_strconcat (directory, "/", filename, NULL);
+            char *ext;
+
+            ext = strrchr (full_path, '.');
+
+            /* Read the synthetic package XML */
+            if (ext && !strcmp (ext, ".synpkg")) {
+                char *buf;
+                RCPackageSAXContext *ctx;
+                RCPackageSList *packages;
+                
+                if (g_file_get_contents (full_path, &buf, NULL, NULL)) {
+                    
+                    ctx = rc_package_sax_context_new (RC_CHANNEL_SYSTEM);
+                    rc_package_sax_context_parse_chunk (ctx, buf, strlen (buf));
+                    g_free (buf);
+                    packages = rc_package_sax_context_done (ctx);
+
+                    /* This is stupid. */
+                    g_assert (g_slist_length (packages) <= 1);
+
+                    if (packages)
+                        pkg = packages->data;
+
+                    if (pkg && ! rc_package_is_synthetic (pkg)) {
+                        rc_debug (RC_DEBUG_LEVEL_WARNING,
+                                  "Found non-synthetic package in '%s' - ignoring",
+                                  full_path);
+                        rc_package_unref (pkg);
+                        pkg = NULL;
+                    }
+
+                    g_slist_free (packages);
+                }
+
+            } else {
             
-            pkg = rc_packman_query_file (rc_world_get_packman (world),
-                                         full_path);
+                pkg = rc_packman_query_file (rc_world_get_packman (world),
+                                             full_path);
+            }
             
             if (pkg) {
                 gpointer nameq = GINT_TO_POINTER (RC_PACKAGE_SPEC (pkg)->nameq);
