@@ -192,6 +192,9 @@ rc_xml_node_to_package_update (const xmlNode *node, const RCPackage *package)
             g_free (tmp);
         } else if (!g_strcasecmp (iter->name, "description")) {
             update->description = xml_get_content (iter);
+        } else if (!g_strcasecmp (iter->name, "hid")) {
+            update->hid =
+                xml_get_guint32_content_default (iter, 0);
         } else {
             /* FIXME: should we complain to the user at this point?  This
                should really never happen. */

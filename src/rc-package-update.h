@@ -52,6 +52,8 @@ struct _RCPackageUpdate {
     RCPackageImportance importance;
 
     gchar *description;
+
+    guint hid;
 };
 
 RCPackageUpdate *rc_package_update_new (void);

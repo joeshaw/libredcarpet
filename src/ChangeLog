@@ -1,3 +1,9 @@
+2001-10-24  Joe Shaw  <joe@ximian.com>
+
+	* rc-package-update.c (rc_xml_node_to_package_update): Get the
+	HID.
+	* rc-package-update.h (RCPackageUpdate): add the HID.
+
 2001-10-17  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-util.c: oops, really make it work
