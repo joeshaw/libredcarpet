@@ -79,31 +79,13 @@ libredcarpettmp_a_SOURCES =		\
 	$(rpm_sources2)
 
 EXTRA_DIST = \
-	$(rpm_sources) $(dpkg_sources) rc-dpkg-helper.c \
-	[rpm].so.0 \
-	[rpm_rpmio].so.0 \
-	[rpm_rpmio_rpmdb]-4.0.3.so \
-	[rpm_rpmio_rpmdb].so
-
-if ENABLE_RPM
-if STATIC_RPM
-else
-rpmhelperdir = $(libdir)/redcarpet
-rpmhelper_DATA = \
-	[rpm].so.0 \
-	[rpm_rpmio].so.0 \
-	[rpm_rpmio_rpmdb]-4.0.3.so \
-	[rpm_rpmio_rpmdb].so
-endif
-endif
+	$(rpm_sources) $(dpkg_sources) rc-dpkg-helper.c make_stub.sh
 
 if ENABLE_DPKG
 dpkghelperdir = $(libdir)/redcarpet
 dpkghelper_DATA = \
 	rc-dpkg-helper.so
 endif
-
-all-local: rc-dpkg-helper.so libredcarpet.a
 
 rc-dpkg-helper.so: $(srcdir)/rc-dpkg-helper.c
 if ENABLE_DPKG
@@ -112,6 +94,29 @@ if ENABLE_DPKG
 else
 	touch rc-dpkg-helper.so
 endif
+
+if ENABLE_RPM
+rpmhelperdir = $(libdir)/redcarpet
+rpmhelper_DATA = \
+	{rpm}.so.0 \
+	{rpm_rpmio}.so.0 \
+	{rpm_rpmio_rpmdb}-4.0.3.so \
+	{rpm_rpmio_rpmdb}.so
+endif
+
+{rpm}.so.0:
+	./make_stub.sh {rpm}.so.0 librpm.so.0 rpm
+
+{rpm_rpmio}.so.0:
+	./make_stub.sh {rpm_rpmio}.so.0 librpm.so.0 rpm librpmio.so.0 rpmio
+
+{rpm_rpmio_rpmdb}-4.0.3.so:
+	./make_stub.sh {rpm_rpmio_rpmdb}-4.0.3.so librpm-4.0.3.so rpm librpmio-4.0.3.so rpmio librpmdb-4.0.3.so rpmdb
+
+{rpm_rpmio_rpmdb}.so:
+	./make_stub.sh {rpm_rpmio_rpmdb}.so librpm.so rpm librpmio.so rpmio librpmdb.so rpmdb
+
+all-local: libredcarpet.a
 
 libredcarpet.a: libredcarpettmp.a
 if STATIC_RPM
@@ -137,5 +142,4 @@ else
 endif
 
 clean-local:
-	rm -f rc-dpkg-helper.so	\
 	rm -f libredcarpet.a
