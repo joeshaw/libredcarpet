@@ -69,7 +69,6 @@ rc_world_dump_to_xml (RCWorld *world,
                       xmlNode *extra_xml)
 {
     xmlNode *parent;
-    xmlNode *info;
     xmlNode *system_packages;
     AddChannelClosure closure;
    

@@ -44,8 +44,6 @@ rc_debman_parse_version (gchar *input, guint32 *epoch, gchar **version,
 
     gchar *tmp;
 
-    RC_ENTRY;
-
     working = alloca (strlen (input) + 1);
 
     strcpy (working, input);
@@ -85,8 +83,6 @@ rc_debman_parse_version (gchar *input, guint32 *epoch, gchar **version,
     }
 //    rc_debug (RC_DEBUG_LEVEL_DEBUG, "-- parsed %s into %d %s %s\n",
 //              input, *epoch, *version, *release);
-
-    RC_EXIT;
 }
 
 /*
@@ -101,8 +97,6 @@ rc_debman_fill_depends (gchar *input)
     RCPackageDepSList *list = NULL;
     gchar **deps;
     guint i;
-
-    RC_ENTRY;
 
     /* All evidence indicates that the fields are comma-space separated, but if
        that ever turns out to be incorrect, we'll have to do this part more
@@ -235,8 +229,6 @@ rc_debman_fill_depends (gchar *input)
     }
 
     g_strfreev (deps);
-
-    RC_EXIT;
 
     return (list);
 }

@@ -346,24 +346,17 @@ int
 rc_channel_get_id_by_name (RCChannelSList *channels, char *name)
 {
     RCChannelSList *iter;
-
-    RC_ENTRY;
       
     iter = channels;
 
     while (iter) {
         RCChannel *channel = iter->data;
 
-        if (g_strcasecmp (channel->name, name) == 0) {
-            RC_EXIT;
-
+        if (g_strcasecmp (channel->name, name) == 0)
             return channel->id;
-        }
 
         iter = iter->next;
     }
-
-    RC_EXIT;
 
     return (-1);
 } /* rc_channel_get_id_by_name */
@@ -373,23 +366,16 @@ rc_channel_get_by_id (RCChannelSList *channels, int id)
 {
     RCChannelSList *iter;
     
-    RC_ENTRY;
-    
     iter = channels;
 
     while (iter) {
         RCChannel *channel = iter->data;
 
-        if (channel->id == id) {
-            RC_EXIT;
-
+        if (channel->id == id)
             return (channel);
-        }
 
         iter = iter->next;
     }
-
-    RC_EXIT;
 
     return (NULL);
 } /* rc_channel_get_by_id */
@@ -400,12 +386,9 @@ rc_channel_get_by_name(RCChannelSList *channels, char *name)
     int id;
     RCChannel *channel;
     
-    RC_ENTRY;
-    
     id = rc_channel_get_id_by_name(channels, name);
     channel = rc_channel_get_by_id(channels, id);
 
-    RC_EXIT;
     return channel;
 } /* rc_channel_get_by_name */
 

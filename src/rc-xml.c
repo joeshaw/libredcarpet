@@ -1091,7 +1091,7 @@ sanitize_string (const char *str)
 
     if (dup) {
         for (c = dup; *c; ++c) {
-            if ((gint)*c > 0x7f)
+            if ((guint)*c > 0x7f)
                 *c = '_';
         }
     }

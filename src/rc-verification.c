@@ -48,11 +48,7 @@ rc_verification_new ()
 {
     RCVerification *new;
 
-    RC_ENTRY;
-
     new = g_new0 (RCVerification, 1);
-
-    RC_EXIT;
 
     return (new);
 } /* rc_verification_new */
@@ -60,25 +56,17 @@ rc_verification_new ()
 void
 rc_verification_free (RCVerification *verification)
 {
-    RC_ENTRY;
-
     g_free (verification->info);
 
     g_free (verification);
-
-    RC_EXIT;
 } /* rc_verification_free */
 
 void
 rc_verification_slist_free (RCVerificationSList *verification_list)
 {
-    RC_ENTRY;
-
     g_slist_foreach (verification_list, (GFunc) rc_verification_free, NULL);
 
     g_slist_free (verification_list);
-
-    RC_EXIT;
 } /* rc_verification_slist_free */
 
 typedef struct _GPGInfo GPGInfo;
@@ -98,8 +86,6 @@ gpg_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
     GPGInfo *gpg_info = (GPGInfo *)data;
     const gchar *ptr;
 
-    RC_ENTRY;
-
     rc_debug (RC_DEBUG_LEVEL_DEBUG, __FUNCTION__ ": got \"%s\"\n", line);
 
     ptr = line + strlen ("[GNUPG:] ");
@@ -117,8 +103,6 @@ gpg_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
             gpg_info->verification->info = g_strdup (ptr + 1);
         }
 
-        RC_EXIT;
-
         return;
     }
 
@@ -135,8 +119,6 @@ gpg_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
             gpg_info->verification->info = g_strdup (ptr + 1);
         }
 
-        RC_EXIT;
-
         return;
     }
 
@@ -145,8 +127,6 @@ gpg_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
                   ": error checking GPG signature\n");
 
         gpg_info->verification->status = RC_VERIFICATION_STATUS_UNDEF;
-
-        RC_EXIT;
 
         return;
     }
@@ -157,14 +137,10 @@ gpg_read_done_cb (RCLineBuf *line_buf, RCLineBufStatus status, gpointer data)
 {
     GPGInfo *gpg_info = (GPGInfo *)data;
 
-    RC_ENTRY;
-
     g_signal_handler_disconnect (line_buf, gpg_info->read_line_id);
     g_signal_handler_disconnect (line_buf, gpg_info->read_done_id);
 
     g_main_quit (gpg_info->loop);
-
-    RC_EXIT;
 } /* gpg_read_done_cb */
 
 RCVerification *
@@ -180,8 +156,6 @@ rc_verify_gpg (gchar *file, gchar *sig)
     gchar *gpg_command;
     RCVerification *verification;
     gchar *gpgdir;
-
-    RC_ENTRY;
 
     verification = rc_verification_new ();
 
@@ -224,8 +198,6 @@ rc_verify_gpg (gchar *file, gchar *sig)
                 "gpg was unable to create ~/.gnupg");
 
             g_free (gpgdir);
-
-            RC_EXIT;
 
             return (verification);
         }
@@ -322,12 +294,8 @@ rc_verify_gpg (gchar *file, gchar *sig)
         verification->status = RC_VERIFICATION_STATUS_UNDEF;
         verification->info = g_strdup ("gpg returned an unknown error code");
 
-        RC_EXIT;
-
         return (verification);
     }
-
-    RC_EXIT;
 
     return (gpg_info.verification);
 } /* rc_verify_gpg */
@@ -337,8 +305,6 @@ rc_verify_md5 (gchar *filename, guint8 *md5)
 {
     guint8 *cmd5;
     RCVerification *verification;
-
-    RC_ENTRY;
 
     cmd5 = rc_md5 (filename);
 
@@ -358,8 +324,6 @@ rc_verify_md5 (gchar *filename, guint8 *md5)
 
     g_free (cmd5);
 
-    RC_EXIT;
-
     return (verification);
 } /* rc_verify_md5 */
 
@@ -368,8 +332,6 @@ rc_verify_md5_string (gchar *filename, gchar *md5)
 {
     gchar *cmd5;
     RCVerification *verification;
-
-    RC_ENTRY;
 
     cmd5 = rc_md5_string (filename);
 
@@ -398,8 +360,6 @@ rc_verify_size (gchar *filename, guint32 size)
     struct stat buf;
     RCVerification *verification;
 
-    RC_ENTRY;
-
     verification = rc_verification_new ();
 
     verification->type = RC_VERIFICATION_TYPE_SIZE;
@@ -409,8 +369,6 @@ rc_verify_size (gchar *filename, guint32 size)
                   ": couldn't stat file\n");
 
         verification->status = RC_VERIFICATION_STATUS_UNDEF;
-
-        RC_EXIT;
 
         return (verification);
     }
@@ -424,8 +382,6 @@ rc_verify_size (gchar *filename, guint32 size)
 
         verification->status = RC_VERIFICATION_STATUS_FAIL;
     }
-
-    RC_EXIT;
 
     return (verification);
 } /* rc_verify_size */

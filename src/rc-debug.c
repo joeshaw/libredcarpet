@@ -1,6 +1,5 @@
-/* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 /* rc-debug.c
- * Copyright (C) 2000, 2001 Ximian, Inc.
+ * Copyright (C) 2000-2002 Ximian, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -25,71 +24,102 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-static RCDebugLevel display_level = RC_DEBUG_LEVEL_MESSAGE;
-static RCDebugLevel log_level     = RC_DEBUG_LEVEL_DEBUG;
+typedef struct _RCDebugHandler RCDebugHandler;
 
-static FILE *log_file = NULL;
-static RCDebugFn debug_handler_fn = NULL;
-static gpointer debug_handler_user_data = NULL;
+struct _RCDebugHandler {
+    RCDebugFn    fn;
+    RCDebugLevel level;
+    gpointer     user_data;
+    guint        id;
+};
 
-guint
-rc_debug_get_display_level ()
-{
-    return (display_level);
-}
-
-void
-rc_debug_set_display_level (guint level)
-{
-    display_level = level;
-}
+static GSList *handlers = NULL;
 
 guint
-rc_debug_get_log_level ()
+rc_debug_add_handler (RCDebugFn    fn,
+                      RCDebugLevel level,
+                      gpointer     user_data)
 {
-    return (log_level);
+    RCDebugHandler *handler;
+
+    g_assert (fn);
+
+    handler = g_new0 (RCDebugHandler, 1);
+
+    handler->fn = fn;
+    handler->level = level;
+    handler->user_data = user_data;
+
+    if (handlers)
+        handler->id = ((RCDebugHandler *) handlers->data)->id + 1;
+    else
+        handler->id = 1;
+
+    handlers = g_slist_prepend (handlers, handler);
+
+    return handler->id;
 }
 
 void
-rc_debug_set_log_level (guint level)
+rc_debug_remove_handler (guint id)
 {
-    log_level = level;
+    GSList *iter;
+
+    iter = handlers;
+    while (iter) {
+        RCDebugHandler *handler = (RCDebugHandler *)iter->data;
+
+        if (handler->id == id) {
+            handlers = g_slist_remove_link (handlers, iter);
+            g_free (handler);
+            return;
+        }
+
+        iter = iter->next;
+    }
+
+    rc_debug (RC_DEBUG_LEVEL_WARNING, "Couldn't find debug handler %d", id);
 }
 
-void
-rc_debug_set_display_handler (RCDebugFn fn,
-                              gpointer user_data)
-{
-    debug_handler_fn = fn;
-    debug_handler_user_data = user_data;
-}
-
-void
-rc_debug_set_log_file (FILE *file)
-{
-    log_file = file;
-}
-
-void
-rc_debug (RCDebugLevel level, const gchar *format, ...)
+const char *
+rc_debug_helper (const char *format,
+                 ...)
 {
     va_list args;
+    static char *str = NULL;
+
+    if (str)
+        g_free (str);
+
+    va_start (args, format);
+    str = g_strdup_vprintf (format, args);
+    va_end (args);
+
+    return str;
+}
+
+void
+rc_debug_full (RCDebugLevel  level,
+               const char   *format,
+               ...)
+{
+    va_list args;
+    GSList *iter;
     char *str;
 
     va_start (args, format);
     str = g_strdup_vprintf (format, args);
     va_end (args);
 
-    if (level <= display_level) {
+    iter = handlers;
+    while (iter) {
+        RCDebugHandler *handler = (RCDebugHandler *)iter->data;
 
-        if (debug_handler_fn == NULL)
-            fputs (str, stderr);
-        else
-            debug_handler_fn (str, level, debug_handler_user_data);
-    }
+        if ((handler->level == RC_DEBUG_LEVEL_ALWAYS) ||
+            (level <= handler->level))
+            handler->fn (str, level, handler->user_data);
 
-    if (level <= log_level && log_file) {
-        fputs (str, log_file);
+        iter = iter->next;
     }
 
     g_free (str);

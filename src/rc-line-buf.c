@@ -51,8 +51,6 @@ rc_line_buf_get_type (void)
 {
     static GType type = 0;
 
-    RC_ENTRY;
-
     if (!type) {
         static GTypeInfo type_info = {
             sizeof (RCLineBufClass),
@@ -70,8 +68,6 @@ rc_line_buf_get_type (void)
                                        0);
     }
 
-    RC_EXIT;
-
     return (type);
 } /* rc_line_buf_get_type */
 
@@ -79,8 +75,6 @@ static void
 rc_line_buf_finalize (GObject *obj)
 {
     RCLineBuf *line_buf;
-
-    RC_ENTRY;
 
     line_buf = RC_LINE_BUF (obj);
 
@@ -101,8 +95,6 @@ rc_line_buf_finalize (GObject *obj)
 
     if (parent_class->finalize)
         parent_class->finalize (obj);
-
-    RC_EXIT;
 } /* rc_line_buf_finalize */
 
 #if 0
@@ -110,8 +102,6 @@ static void
 rc_line_buf_set_arg (GtkObject *object, GtkArg *arg, guint arg_id)
 {
     RCLineBuf *line_buf;
-
-    RC_ENTRY;
 
     line_buf = RC_LINE_BUF (object);
 
@@ -129,8 +119,6 @@ static void
 rc_line_buf_get_arg (GtkObject *object, GtkArg *arg, guint arg_id)
 {
     RCLineBuf *line_buf;
-
-    RC_ENTRY;
 
     line_buf = RC_LINE_BUF (object);
 
@@ -151,8 +139,6 @@ static void
 rc_line_buf_class_init (RCLineBufClass *klass)
 {
     GObjectClass *object_class = (GObjectClass *) klass;
-
-    RC_ENTRY;
 
     object_class->finalize = rc_line_buf_finalize;
 
@@ -192,22 +178,16 @@ rc_line_buf_class_init (RCLineBufClass *klass)
                              GTK_ARG_READWRITE,
                              ARG_FD);
 #endif
-
-    RC_EXIT;
 } /* rc_line_buf_class_init */
 
 static void
 rc_line_buf_init (RCLineBuf *obj)
 {
-    RC_ENTRY;
-
     obj->priv = g_new (RCLineBufPrivate, 1);
 
     obj->priv->channel = NULL;
     obj->priv->cb_id = 0;
     obj->priv->buf = g_string_new ("");
-
-    RC_EXIT;
 } /* rc_line_buf_init */
 
 static gboolean
@@ -220,8 +200,6 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
     guint base = 0;
     gchar buf[BUF_SIZE + 1];
 
-    RC_ENTRY;
-
     if (condition & (G_IO_IN | G_IO_PRI)) {
         switch (g_io_channel_read (source, buf, BUF_SIZE, &bytes_read)) {
 
@@ -230,8 +208,6 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
                called if there's no data waiting? */
             rc_debug (RC_DEBUG_LEVEL_WARNING,
                       "%s: got G_IO_ERROR_AGAIN, bork bork?\n", __FUNCTION__);
-
-            RC_EXIT;
 
             return (TRUE);
 
@@ -250,8 +226,6 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
                so... */
             g_source_remove (line_buf->priv->cb_id);
             line_buf->priv->cb_id = 0;
-
-            RC_EXIT;
 
             return (FALSE);
 
@@ -272,8 +246,6 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
                    oh-what-the-fuck bug, so */
                 g_source_remove (line_buf->priv->cb_id);
                 line_buf->priv->cb_id = 0;
-
-                RC_EXIT;
 
                 return (FALSE);
             }
@@ -313,8 +285,6 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
             line_buf->priv->buf = g_string_append (line_buf->priv->buf,
                                                    buf + base);
 
-            RC_EXIT;
-
             return (TRUE);
         }
     } else {
@@ -329,14 +299,10 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
                   "done here\n", __FUNCTION__);
 #endif
 
-        RC_EXIT;
-
         return (FALSE);
     }
 
     g_assert_not_reached ();
-
-    RC_EXIT;
 
     return (FALSE);
 } /* rc_line_buf_cb */
@@ -346,11 +312,7 @@ rc_line_buf_new ()
 {
     RCLineBuf *line_buf;
 
-    RC_ENTRY;
-
     line_buf = RC_LINE_BUF (g_object_new (rc_line_buf_get_type (), NULL));
-
-    RC_EXIT;
 
     return (line_buf);
 } /* rc_line_buf_new */
@@ -358,8 +320,6 @@ rc_line_buf_new ()
 void
 rc_line_buf_set_fd (RCLineBuf *line_buf, int fd)
 {
-    RC_ENTRY;
-
     if (line_buf->priv->cb_id) {
         g_source_remove (line_buf->priv->cb_id);
     }
@@ -379,8 +339,6 @@ rc_line_buf_set_fd (RCLineBuf *line_buf, int fd)
                                             G_IO_IN | G_IO_HUP | G_IO_ERR,
                                             (GIOFunc) rc_line_buf_cb,
                                             (gpointer) line_buf);
-
-    RC_EXIT;
 } /* rc_line_buf_set_fd */
 
 gchar *
@@ -388,13 +346,9 @@ rc_line_buf_get_buf (RCLineBuf *line_buf)
 {
     gchar *tmp;
 
-    RC_ENTRY;
-
     tmp = g_strdup (line_buf->priv->buf->str);
 
     g_string_truncate (line_buf->priv->buf, 0);
-
-    RC_EXIT;
 
     return (tmp);
 } /* rc_line_buf_get_buf */

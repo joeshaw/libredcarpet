@@ -1,6 +1,5 @@
-/* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 /* rc-debug.h
- * Copyright (C) 2000, 2001 Ximian, Inc.
+ * Copyright (C) 2000-2002 Ximian, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -26,16 +25,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#ifdef EXTRA_DEBUGGING
-#define RC_ENTRY fprintf (stderr, "==> %s (%s, line %d)\n", __FUNCTION__, \
-                          __FILE__, __LINE__);
-#define RC_EXIT  fprintf (stderr, "<== %s (%s, line %d)\n", __FUNCTION__, \
-                          __FILE__, __LINE__);
-#else
-#define RC_ENTRY ;
-#define RC_EXIT ;
-#endif
-
 typedef enum {
     RC_DEBUG_LEVEL_ALWAYS   = -1,
     RC_DEBUG_LEVEL_NONE     = 0,
@@ -47,22 +36,37 @@ typedef enum {
     RC_DEBUG_LEVEL_DEBUG    = 6,
 } RCDebugLevel;
 
-typedef void (*RCDebugFn) (const char   *debug_message,
-                           RCDebugLevel  level,
-                           gpointer      user_data);
+typedef void (*RCDebugFn) (const char *message,
+                           RCDebugLevel level,
+                           gpointer user_data);
 
-guint rc_debug_get_display_level (void);
+guint
+rc_debug_add_handler (RCDebugFn fn,
+                      RCDebugLevel level,
+                      gpointer user_data);
 
-void rc_debug_set_display_level (guint level);
+void
+rc_debug_remove_handler (guint id);
 
-void rc_debug_set_display_handler (RCDebugFn fn, gpointer user_data);
+void
+rc_debug_full (RCDebugLevel  level,
+               const char   *format,
+               ...);
 
-guint rc_debug_get_log_level (void);
+#ifdef RC_DEBUG_VERBOSE
 
-void rc_debug_set_log_level (guint level);
+const char *
+rc_debug_helper (const char *format,
+                 ...);
 
-void rc_debug_set_log_file (FILE *file);
+#define rc_debug(level, format...) \
+        rc_debug_full(level, "%s (%s, %s:%d)", rc_debug_helper (format), \
+                      __FUNCTION__, __FILE__, __LINE__)
 
-void rc_debug (RCDebugLevel level, const gchar *format, ...);
+#else
+
+#define rc_debug rc_debug_full
+
+#endif
 
 #endif

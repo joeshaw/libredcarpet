@@ -1,5 +1,20 @@
 2002-07-30  Ian Peters  <itp@ximian.com>
 
+	* rc-channel.c, rc-debman-general.c, rc-line-buf.c,
+	rc-verification.c: get rid of some RC_[ENTRY/EXIT]
+
+	* rc-xml.c (sanitize_string): s/gint/guint to make this comparison
+	meaningful
+
+	* rc-world-dump.c (rc_world_dump_to_xml): get rid of unused info
+	variable
+
+	* rc-debug.h, rc-debug.c: overhauled a little more.  If
+	RC_DEBUG_VERBOSE is defined, all rc_debug calls will also print
+	file, function, and line information
+
+2002-07-30  Ian Peters  <itp@ximian.com>
+
 	* rc-packman.c, rc-packman.h, rc-rpmman.c, rc-debman.c:
 	s/_check_database/_is_database_changed, because it was bugging me
 	just that much
