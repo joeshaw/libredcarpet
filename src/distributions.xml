@@ -210,6 +210,42 @@
                         <file source="/etc/redhat-release" substring="Red Hat Enterprise Linux WS release 2.1 (Tampa)"/>
                 </detect>
         </distro>
+	<distro>
+		<name>Red Hat Enterprise Linux AS</name>
+		<version>3</version>
+		<arch>i386</arch>
+		<type>rpm</type>
+		<target>rhel-3as-i386</target>
+		<status>supported</status>
+		<enddate>0</enddate>
+		<detect>
+			<file source="/etc/redhat-release" substring="Red Hat Enterprise Linux AS release 3 (Taroon)"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>Red Hat Enterprise Linux ES</name>
+		<version>3</version>
+		<arch>i386</arch>
+		<type>rpm</type>
+		<target>rhel-3es-i386</target>
+		<status>supported</status>
+		<enddate>0</enddate>
+		<detect>
+			<file source="/etc/redhat-release" substring="Red Hat Enterprise Linux ES release 3 (Taroon)"/>
+		</detect>
+	</distro>
+	<distro>
+   		<name>Red Hat Enterprise Linux WS</name>
+   		<version>3</version>
+   		<arch>i386</arch>
+   		<type>rpm</type>
+   		<target>rhel-3ws-i386</target>
+   		<status>supported</status>
+   		<enddate>0</enddate>
+   		<detect>
+			<file source="/etc/redhat-release" substring="Red Hat Enterprise Linux WS release 3 (Taroon)"/>
+		</detect>
+	</distro>
 
 	<distro>
 		<name>Red Hat Linux</name>

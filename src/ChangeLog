@@ -1,10 +1,20 @@
-2003-13-21  Joe Shaw  <joe@ximian.com>
+2003-10-24  Joe Shaw  <joe@ximian.com>
+
+	* distributions.xml: Add support for RHEL 3 AS, ES, and WS.
+
+	* Makefile.am: Build two stubs for RPM 4.1: ones linked against
+	libpopt.so.1 (SuSE) and ones against libpopt.so.0 (everyone else).
+
+	* rc-rpmman.c (write_objects, rc_rpmman_init): Split the RPM 4.1
+	stubs in two.
+
+2003-10-21  Joe Shaw  <joe@ximian.com>
 
 	* rc-rpmman.c (rc_rpmman_depends_fill): Raise the debug level of
 	the UTF-8 filename warning from WARNING to INFO since it seems to
 	scare people and it's not that important.
 
-2003-13-20  Joe Shaw  <joe@ximian.com>
+2003-10-20  Joe Shaw  <joe@ximian.com>
 
 	* rc-rpmman.c (load_fake_syms): Fix a typo on gnameToGid() in the
 	static linking case.
