@@ -57,11 +57,11 @@ rc_channel_priority_parse (const char *priority_str)
     gboolean is_numeric = TRUE;
 
     if (priority_str && *priority_str) {
-
         c = priority_str;
         while (*c && is_numeric) {
             if (! isdigit (*c))
                 is_numeric = FALSE;
+            c++;
         }
         if (is_numeric) {
             return atoi (priority_str);
@@ -613,7 +613,6 @@ guint
 rc_xml_node_to_channel (RCChannel *channel, xmlNode *node)
 {
     xmlNode *iter;
-    char *priority_str;
 
     if (g_strcasecmp (node->name, "channel")) {
         return (1);

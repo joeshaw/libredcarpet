@@ -1,3 +1,8 @@
+2002-03-11  Joe Shaw  <joe@ximian.com>
+
+	* rc-channel.c (rc_channel_priority_parse): Step through the
+	priority_str so we don't infinitely loop.
+
 2002-03-10  Peter Bowen  <pzb@ximian.com>
 
 	* rc-package-dep.c: (rc_package_dep_verify_relation): Fix dumb typo 
