@@ -1008,8 +1008,11 @@ rc_rpmman_query_all (RCPackman *p)
         rc_rpmman_depends_fill (hdr, pkg);
 
         list = g_slist_append (list, pkg);
-
+#if 0
+	/* So, this line seems to have issues. It frees data that the package
+	   needs, and doing so ends up corrupting the linked list. Ick. */
         headerFree(hdr);
+#endif
     }
 
     rpmdbClose (db);
