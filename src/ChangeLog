@@ -1,3 +1,12 @@
+2003-09-22  Joe Shaw  <joe@ximian.com>
+
+	* rc-world-multi.c (rc_world_multi_add_subworld): Add some code to
+	check to see if any other services have the same name and then
+	differentiate them with a number.  Kind of ugly code, could
+	probably be virtualized at some point.  Also, always append to the
+	list of subworlds, not prepend, since it makes more sense and it's
+	not particularly long list.
+
 2003-09-19  Joe Shaw  <joe@ximian.com>
 
 	* rc-world-multi.c (touch_all_sequence_numbers): Touches all four

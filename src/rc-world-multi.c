@@ -786,17 +786,66 @@ touch_all_sequence_numbers (RCWorldMulti *multi)
     rc_world_touch_lock_sequence_number (RC_WORLD (multi));
 }
 
+typedef struct {
+    int depth;
+    RCWorldMulti *multi;
+    RCWorld *subworld;
+    char *name;
+} NameConflictInfo;
+
+static gboolean
+service_name_conflict_cb (RCWorld *subworld, gpointer user_data)
+{
+    NameConflictInfo *info = user_data;
+
+    if (!g_strcasecmp (RC_WORLD_SERVICE (subworld)->name, info->name)) {
+        info->depth++;
+        g_free (info->name);
+        info->name = g_strdup_printf ("%s (%d)",
+                                      RC_WORLD_SERVICE (info->subworld)->name,
+                                      info->depth);
+        rc_world_multi_foreach_subworld_by_type (info->multi,
+                                                 RC_TYPE_WORLD_SERVICE,
+                                                 service_name_conflict_cb,
+                                                 info);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 void
 rc_world_multi_add_subworld (RCWorldMulti *multi,
                              RCWorld      *subworld)
 {
     SubworldInfo *info;
+    NameConflictInfo conflict_info;
 
     g_return_if_fail (multi != NULL && RC_IS_WORLD_MULTI (multi));
     g_return_if_fail (subworld != NULL && RC_IS_WORLD (subworld));
 
+    /* 
+     * If we're adding a service, make sure that the name of the service
+     * doesn't conflict with any other.
+     */
+    if (g_type_is_a (G_TYPE_FROM_INSTANCE (subworld), RC_TYPE_WORLD_SERVICE)) {
+        RCWorldService *service = RC_WORLD_SERVICE (subworld);
+
+        conflict_info.depth = 0;
+        conflict_info.multi = multi;
+        conflict_info.subworld = subworld;
+        conflict_info.name = g_strdup (service->name);
+
+        rc_world_multi_foreach_subworld_by_type (multi, RC_TYPE_WORLD_SERVICE,
+                                                 service_name_conflict_cb,
+                                                 &conflict_info);
+
+        g_free (service->name);
+        service->name = conflict_info.name;
+    }
+
     info = subworld_info_new (subworld, multi);
-    multi->subworlds = g_slist_prepend (multi->subworlds, info);
+    multi->subworlds = g_slist_append (multi->subworlds, info);
 
     touch_all_sequence_numbers (multi);
 }
