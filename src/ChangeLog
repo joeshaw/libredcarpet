@@ -1,5 +1,10 @@
 2002-10-10  Joe Shaw  <joe@ximian.com>
 
+	* rc-rpmman.h (RCRpmman): rpmDefineMacro() actually takes a
+	MacroContext *.  Fixes the build against 3.0.6.
+
+2002-10-10  Joe Shaw  <joe@ximian.com>
+
 	* rc-packman.[ch]: Change the "perform" gboolean on
 	rc_packman_transact() to be a bitfield.  Create the
 	RC_TRANSACT_FLAG_NO_ACT and RC_TRANSACT_FLAG_REPACKAGE flags.  Add
