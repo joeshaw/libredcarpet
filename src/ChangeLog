@@ -1,3 +1,8 @@
+2001-05-07  Joe Shaw  <joe@ximian.com>
+
+	* rc-md5.c (rc_md5): Close the file descriptor when we're done. Plugs
+	the infamous fd leak.
+
 2001-05-01  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c: Oops. fix bug where some dependants weren't getting

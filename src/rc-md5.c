@@ -330,6 +330,8 @@ rc_md5 (const gchar *filename)
 
     MD5Final (buf, &context);
 
+    close(fd);
+
     return (buf);
 }
 
