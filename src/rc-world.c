@@ -354,11 +354,10 @@ rc_world_refresh (RCWorld *world)
 
     klass = RC_WORLD_GET_CLASS (world);
 
-    world->refresh_pending = TRUE;
-
     if (klass->refresh_fn)
         return klass->refresh_fn (world);
     else {
+        rc_world_refresh_begin (world);
         rc_world_refresh_complete (world);
         return NULL;
     }
@@ -380,6 +379,15 @@ rc_world_is_refreshing (RCWorld *world)
 }
 
 void
+rc_world_refresh_begin (RCWorld *world)
+{
+    g_return_if_fail (RC_IS_WORLD (world));
+    g_return_if_fail (!world->refresh_pending);
+
+    world->refresh_pending = TRUE;
+}
+
+void
 rc_world_refresh_complete (RCWorld *world)
 {
     g_return_if_fail (world != NULL && RC_IS_WORLD (world));
@@ -387,24 +395,6 @@ rc_world_refresh_complete (RCWorld *world)
 
     world->refresh_pending = FALSE;
     g_signal_emit (world, signals[REFRESHED], 0);
-
-#if 0
-    /* If the world that just finished refreshing is the global
-       world, store new_world.  new_world will become the global
-       world the next time that rc_sync_world() is called. */
-
-    if (das_global_world == world
-        && das_refreshed_global_world != new_world) {
-
-        if (new_world)
-            g_object_ref (new_world);
-
-        if (das_refreshed_global_world)
-            g_object_unref (das_refreshed_global_world);
-
-        das_refreshed_global_world = new_world;
-    }
-#endif
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */

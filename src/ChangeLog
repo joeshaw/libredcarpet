@@ -1,5 +1,32 @@
 2003-09-10  Joe Shaw  <joe@ximian.com>
 
+	* rc-world.c (rc_world_refresh_begin): New function which just
+	sets world->refresh_pending to TRUE.
+	(rc_world_refresh): Don't set refresh_pending to TRUE
+	before calling the refresh_fn.  If we don't have a refresh_fn,
+	call it immediately before calling rc_world_refresh_complete().
+	(rc_world_refresh_complete): Remove some dead #if 0ed code.
+
+	* rc-world-multi.c (RefreshInfo): Move multi_pending out of here
+	and into the main RCWorldMulti object.
+	(rc_world_multi_cut_over_to_new_subworlds): Unref and set the
+	multi_pending to NULL after we've cut over.
+	(refresh_info_free): Don't do it here.
+	(rc_world_multi_refresh_fn): Make the multi world more robust
+	against simultaneous refreshes.  If another refresh is already
+	running, just return the multi_pending as our own pending.  If we
+	don't have any subworlds, just call rc_world_refresh_begin() and
+	rc_world_refresh_complete() and return NULL.  Otherwise, start the
+	multi_pending immediately.
+
+	* rc-world-synthetic.c (rc_world_synthetic_refresh): Call
+	rc_world_refresh_begin() before loading the synthetic packages.
+
+	* rc-world-system.c (rc_world_system_refresh): Call
+	rc_world_refresh_begin() before loading the system packages.
+
+2003-09-10  Joe Shaw  <joe@ximian.com>
+
 	* rc-world-multi.c (rc_world_multi_cut_over_to_new_subworlds):
 	Return a gboolean indicating whether we've cut over or not.
 	(refresh_info_free): Disconnect the refreshed and update signals.

@@ -189,7 +189,8 @@ RCPending *rc_world_refresh          (RCWorld *);
 gboolean   rc_world_has_refresh      (RCWorld *);
 gboolean   rc_world_is_refreshing    (RCWorld *);
 
-/* This function is for RCWorld-implementers only!  Don't call it! */
+/* These functions are for RCWorld-implementers only!  Don't call them! */
+void       rc_world_refresh_begin    (RCWorld *);
 void       rc_world_refresh_complete (RCWorld *);
 
 guint      rc_world_get_package_sequence_number      (RCWorld *world);

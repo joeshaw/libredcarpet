@@ -72,6 +72,7 @@ rc_world_system_load_packages (RCWorldSystem *system)
 static RCPending *
 rc_world_system_refresh (RCWorld *world)
 {
+    rc_world_refresh_begin (world);
     rc_world_system_load_packages (RC_WORLD_SYSTEM (world));
     rc_world_refresh_complete (world);
     return NULL;

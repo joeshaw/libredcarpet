@@ -26,6 +26,7 @@
 #ifndef __RC_WORLD_MULTI_H__
 #define __RC_WORLD_MULTI_H__
 
+#include "rc-pending.h"
 #include "rc-world.h"
 #include "rc-world-service.h"
 
@@ -49,6 +50,7 @@ struct _RCWorldMulti {
     GHashTable *mounts;
     GSList *subworlds;
 
+    RCPending *multi_pending;
     GSList *subworld_pendings;
 };
 

@@ -192,7 +192,6 @@ typedef struct {
     RCWorld *refreshed_subworld;
     RCWorldMulti *multi;
 
-    RCPending *multi_pending;
     RCPending *subworld_pending;
 
     guint refreshed_id;
@@ -243,6 +242,9 @@ rc_world_multi_cut_over_to_new_subworlds (RCWorldMulti *multi)
     g_slist_free (multi->subworld_pendings);
     multi->subworld_pendings = NULL;
 
+    g_object_unref (multi->multi_pending);
+    multi->multi_pending = NULL;
+
     rc_world_refresh_complete (RC_WORLD (multi));
 
     return TRUE;
@@ -265,9 +267,6 @@ refresh_info_free (RefreshInfo *refresh_info)
     g_object_unref (refresh_info->refreshed_subworld);
     g_object_unref (refresh_info->multi);
 
-    if (refresh_info->multi_pending)
-        g_object_unref (refresh_info->multi_pending);
-
     if (refresh_info->subworld_pending)
         g_object_unref (refresh_info->subworld_pending);
 
@@ -279,6 +278,7 @@ refreshed_cb (RCWorld *refreshed_subworld, gpointer user_data)
 {
     RefreshInfo *refresh_info = user_data;
     SubworldInfo *info;
+    RCPending *multi_pending = NULL;
 
     info =
         rc_world_multi_find_subworld_info_by_subworld (refresh_info->multi,
@@ -289,10 +289,18 @@ refreshed_cb (RCWorld *refreshed_subworld, gpointer user_data)
     /* This subworld is ready to be switched over */
     info->refreshed_ready = TRUE;
 
+    /*
+     * Assign to a local variable and ref it because the following function
+     * will unref it and remove it.
+     */
+    if (refresh_info->multi->multi_pending != NULL)
+        multi_pending = g_object_ref (refresh_info->multi->multi_pending);
+
     if (rc_world_multi_cut_over_to_new_subworlds (refresh_info->multi) &&
-        refresh_info->multi_pending != NULL)
+        multi_pending != NULL)
     {
-        rc_pending_finished (refresh_info->multi_pending, 0);
+        rc_pending_finished (multi_pending, 0);
+        g_object_unref (multi_pending);
     }
 
     refresh_info_free (refresh_info);
@@ -322,11 +330,12 @@ pending_update_cb (RCPending *pending, gpointer user_data)
         }
     }
 
-    if (rc_pending_is_active (refresh_info->multi_pending) &&
-        rc_pending_get_status (refresh_info->multi_pending) !=
+    if (rc_pending_is_active (refresh_info->multi->multi_pending) &&
+        rc_pending_get_status (refresh_info->multi->multi_pending) !=
         RC_PENDING_STATUS_PRE_BEGIN)
     {
-        rc_pending_update (refresh_info->multi_pending, percent_complete);
+        rc_pending_update (refresh_info->multi->multi_pending,
+                           percent_complete);
     }
 }
 
@@ -335,8 +344,23 @@ rc_world_multi_refresh_fn (RCWorld *world)
 {
     RCWorldMulti *multi = RC_WORLD_MULTI (world);
     GSList *iter;
-    RCPending *pending = NULL;
-    
+
+    /* Another refresh is already running */
+    if (rc_world_is_refreshing (world))
+        return multi->multi_pending;
+
+    /* If we don't have any subworlds to refresh, just return NULL */
+    if (!multi->subworlds) {
+        rc_world_refresh_begin (world);
+        rc_world_refresh_complete (world);
+        return NULL;
+    }
+
+    multi->multi_pending = rc_pending_new ("Refreshing multi world");
+    rc_pending_begin (multi->multi_pending);
+
+    rc_world_refresh_begin (world);
+
     for (iter = multi->subworlds; iter; iter = iter->next) {
         SubworldInfo *info = iter->data;
         RefreshInfo *refresh_info;
@@ -363,15 +387,7 @@ rc_world_multi_refresh_fn (RCWorld *world)
         subworld_pending = rc_world_refresh (info->refreshed_subworld);
 
         if (subworld_pending) {
-            if (!pending) {
-                pending = rc_pending_new ("Refreshing multi world");
-                refresh_info->multi_pending = pending;
-                rc_pending_begin (pending);
-            } else
-                refresh_info->multi_pending = g_object_ref (pending);
-
-            refresh_info->subworld_pending =
-                g_object_ref (subworld_pending);
+            refresh_info->subworld_pending = g_object_ref (subworld_pending);
 
             multi->subworld_pendings =
                 g_slist_prepend (multi->subworld_pendings,
@@ -387,7 +403,7 @@ rc_world_multi_refresh_fn (RCWorld *world)
 
     rc_world_multi_cut_over_to_new_subworlds (multi);
 
-    return pending;
+    return multi->multi_pending;
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */

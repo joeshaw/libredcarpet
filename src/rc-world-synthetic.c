@@ -137,6 +137,7 @@ rc_world_synthetic_save_packages (RCWorldSynthetic *synth)
 static RCPending *
 rc_world_synthetic_refresh (RCWorld *world)
 {
+    rc_world_refresh_begin (world);
     rc_world_synthetic_load_packages (RC_WORLD_SYNTHETIC (world));
     rc_world_refresh_complete (world);
     return NULL;
