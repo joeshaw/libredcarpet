@@ -1084,6 +1084,28 @@ rc_resolver_context_foreach_info (RCResolverContext *context,
     g_slist_free (info_slist);
 }
 
+static void
+get_info_foreach_cb (RCResolverInfo *info, gpointer user_data)
+{
+    GString *string = user_data;
+
+    if (rc_resolver_info_is_important (info)) {
+        char *msg = rc_resolver_info_to_string (info);
+
+        g_string_append_printf (string, "\n%s", msg);
+        g_free (msg);
+    }
+}
+
+char *
+rc_resolver_context_get_info (RCResolverContext *ctx)
+{
+    GString *string = g_string_new ("");
+    rc_resolver_context_foreach_info (ctx, NULL, -1, get_info_foreach_cb, 
+                                      string);
+    return g_string_free (string, FALSE);
+}
+
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 void

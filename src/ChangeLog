@@ -1,3 +1,14 @@
+2004-08-18  James Willcox  <james@ximian.com>
+
+	* rc-resolver-context.c: (get_info_foreach_cb),
+	(rc_resolver_context_get_info):
+	* rc-resolver-context.h:
+	* rc-resolver.c: (rc_resolver_get_best_context),
+	(rc_resolver_get_invalid_queues):
+	* rc-resolver.h:
+
+	Add some more API for mono bindings.
+
 2004-08-06  James Willcox  <james@ximian.com>
 
       * distributions.xml:  Apparently there is also no i686 sles9.  Oops.

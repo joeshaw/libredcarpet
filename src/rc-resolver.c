@@ -520,6 +520,13 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
 RCResolverContext *
 rc_resolver_get_best_context (RCResolver *resolver)
 {
-	return resolver->best_context;
+    return resolver->best_context;
 }
+
+GSList *
+rc_resolver_get_invalid_queues (RCResolver *resolver)
+{
+    return resolver->invalid_queues;
+}
+
 

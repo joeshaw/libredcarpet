@@ -81,6 +81,7 @@ void        rc_resolver_add_extra_conflict                 (RCResolver *, RCPack
 void        rc_resolver_verify_system          (RCResolver *);
 void        rc_resolver_resolve_dependencies   (RCResolver *);
 RCResolverContext *rc_resolver_get_best_context (RCResolver *);
+GSList            *rc_resolver_get_invalid_queues (RCResolver *);
 
 #endif /* __RC_RESOLVER_H__ */
 
