@@ -1,3 +1,12 @@
+2004-04-01  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-packman.c (rc_packman_finalize): Set the file extension to NULL.
+
+	* rc-rpmman.c (rc_rpmman_database_filename): RPM leaks the value
+	of rpmGetPath in most versions, so keep around a static pointer to
+	our built path and just return that if it's set so we don't leak
+	all the time.  Make the function return const. 
+
 2004-02-19  Joe Shaw  <joe@ximian.com>
 
 	* rc-arch.c (arch_table): Detect "ix86" as RC_ARCH_I386.  OpenPKG

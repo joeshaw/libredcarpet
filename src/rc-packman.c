@@ -77,6 +77,7 @@ rc_packman_finalize (GObject *obj)
 {
     RCPackman *packman = RC_PACKMAN (obj);
 
+    rc_packman_set_file_extension (packman, NULL);
     g_free (packman->priv->reason);
 
     g_free (packman->priv);

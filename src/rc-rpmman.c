@@ -174,13 +174,16 @@ rc_rpm_read (RCRpmman *rpmman, void *buf, size_t size, size_t nmemb, FD_t fd)
     }
 }
 
-static gchar *
+static const gchar *
 rc_rpmman_database_filename (RCRpmman *rpmman)
 {
     const char *dbpath;
     const char *dbfile;
     int lasti;
-    gchar *path;
+    static gchar *path = NULL;
+
+    if (path)
+        return path;
 
     dbpath = rpmman->rpmGetPath ("%{_dbpath}", NULL);
 
@@ -204,14 +207,13 @@ rc_rpmman_is_database_changed (RCPackman *packman)
 {
     struct stat buf;
     RCRpmman *rpmman = RC_RPMMAN (packman);
-    gchar *path;
+    const gchar *path;
 
     if (!rpmman->db_clean)
         return TRUE;
 
     path = rc_rpmman_database_filename (rpmman);
     stat (path, &buf);
-    g_free (path);
 
     if (buf.st_mtime != rpmman->db_mtime) {
         rpmman->db_mtime = buf.st_mtime;
@@ -275,7 +277,7 @@ open_database (RCRpmman *rpmman, gboolean write)
     gboolean root;
     struct flock fl;
     int db_fd = -1;
-    gchar *db_filename = NULL;
+    const gchar *db_filename = NULL;
 
 #if 0
     if (getenv ("RC_RPM_NO_DB"))
@@ -372,9 +374,6 @@ open_database (RCRpmman *rpmman, gboolean write)
         }
     }
 
-    g_free (db_filename);
-    db_filename = NULL;
-
     if (root && rpmman->version >= 40003) {
         if (!(rpmman->rpmExpandNumeric ("%{?__dbi_cdb:1}"))) {
             int i;
@@ -413,8 +412,6 @@ open_database (RCRpmman *rpmman, gboolean write)
         rpmman->rpmts = NULL;
     }
 
-    if (db_filename)
-        g_free (db_filename);
     if (db_fd != -1)
         rc_close (db_fd);
 
