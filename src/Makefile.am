@@ -55,7 +55,7 @@ libredcarpet_a_SOURCES =		\
         rc-deps.c                       \
         rc-deps.h                       \
 	rc-deps-util.c			\
-	rc-deps.util.h			\
+	rc-deps-util.h			\
         rc-distman.c                    \
         rc-distman.h                    \
         rc-packman.c                    \
