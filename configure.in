@@ -138,15 +138,6 @@ then
     AC_SUBST(RPM_STATIC_LIBS)
   fi
 
-  dnl Ordering for numbers vs letters
-  AC_ARG_ENABLE(strict-rpm-order,
-    [  --enable-strict-rpm-order     order packages with rpmlib ordering],
-    strict_rpm_order=yes, strict_rpm_order=no)
-
-  if test "x$strict_rpm_order" = "xyes"; then
-    AC_DEFINE(STRICT_RPM_ORDER)
-  fi
-
   dnl Find the RPM headers
   save_CPPFLAGS="$CPPFLAGS"
   RPMLIB_CFLAGS="-I$RPM_PREFIX/include/rpm-$RPM_MAJOR_VERSION.$RPM_MINOR_VERSION.$RPM_MICRO_VERSION"

@@ -1,3 +1,8 @@
+2003-09-23  Joe Shaw  <joe@ximian.com>
+
+	* configure.in: Get rid of --enable-strict-rpm-order, we always
+	use it now.
+
 2003-09-05  James Willcox  <james@ximian.com>
 
 	* bindings/python/package-file.c: (PyPackageFile_tp_str):
