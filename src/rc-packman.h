@@ -167,7 +167,7 @@ gchar *rc_packman_get_reason (RCPackman *p);
 
 /* Wrappers to emit signals */
 
-void rc_packman_config_progress (RCPackman *p, gint amount, gint total);
+void rc_packman_configure_progress (RCPackman *p, gint amount, gint total);
 
 void rc_packman_configure_step (RCPackman *p, gint seqno, gint total);
 

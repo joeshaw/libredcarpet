@@ -98,7 +98,7 @@ hash_destroy (RCDebman *d)
  * grab it afterwords is probably the most broken thing I've ever heard of.
  */
 
-static int
+static gboolean
 lock_database (RCDebman *p)
 {
     int fd;
@@ -113,7 +113,7 @@ lock_database (RCDebman *p)
                               "Unable to lock /var/lib/dpkg/lock.  Perhaps "
                               "another process is accessing the dpkg "
                               "database?");
-        return (0);
+        return (FALSE);
     }
 
     fl.l_type = F_WRLCK;
@@ -128,13 +128,13 @@ lock_database (RCDebman *p)
                                   "Perhaps another process is accessing the "
                                   "dpkg database?");
             close (fd);
-            return (0);
+            return (FALSE);
         }
     }
 
     p->lock_fd = fd;
 
-    return (1);
+    return (TRUE);
 }
 
 static void
@@ -679,6 +679,8 @@ do_configure_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
 {
     DebmanDoConfigureInfo *ddci = (DebmanDoConfigureInfo *)data;
 
+    printf ("DEBMAN: %s\n", line);
+
     if (!strncmp (line, "Setting up ", strlen ("Setting up "))) {
         rc_packman_configure_step (ddci->pman, ++ddci->dis->seqno,
                                    ddci->dis->total);
@@ -710,9 +712,20 @@ do_configure (RCPackman *p, DebmanInstallState *dis)
     DebmanDoConfigureInfo ddci;
     GMainLoop *loop;
 
+#if 0
+    int wfds[2];
+    GIOChannel *channel;
+#endif
+
     pipe (rfds);
     fcntl (rfds[0], F_SETFL, O_NONBLOCK);
     fcntl (rfds[1], F_SETFL, O_NONBLOCK);
+
+#if 0
+    pipe (wfds);
+    fcntl (wfds[0], F_SETFL, O_NONBLOCK);
+    fcntl (wfds[1], F_SETFL, O_NONBLOCK);
+#endif
 
     unlock_database (RC_DEBMAN (p));
 
@@ -738,7 +751,13 @@ do_configure (RCPackman *p, DebmanInstallState *dis)
 
         fflush (stdout);
         close (rfds[0]);
-        dup2 (rfds[1], 1);
+        dup2 (rfds[1], STDOUT_FILENO);
+
+#if 0
+        fflush (stdin);
+        close (wfds[1]);
+        dup2 (wfds[0], STDIN_FILENO);
+#endif
 
         fclose (stderr);
 
@@ -748,6 +767,7 @@ do_configure (RCPackman *p, DebmanInstallState *dis)
 
     default:
         close (rfds[1]);
+        close (wfds[0]);
 
         loop = g_main_new (FALSE);
 
@@ -757,12 +777,20 @@ do_configure (RCPackman *p, DebmanInstallState *dis)
 
         lb = rc_line_buf_new ();
 
+#if 0
+        channel = g_io_channel_unix_new (wfds[1]);
+#endif
+
         gtk_signal_connect (GTK_OBJECT (lb), "read_line",
                             GTK_SIGNAL_FUNC (do_configure_read_line_cb),
                             (gpointer) &ddci);
         gtk_signal_connect (GTK_OBJECT (lb), "read_done",
                             GTK_SIGNAL_FUNC (do_configure_read_done_cb),
                             (gpointer) &ddci);
+
+#if 0
+        g_io_add_watch (channel, G_IO_OUT, (GIOFunc) test_func, NULL);
+#endif
 
         rc_line_buf_set_fd (lb, rfds[0]);
 
@@ -1514,7 +1542,16 @@ rc_debman_init (RCDebman *obj)
 
     obj->lock_fd = -1;
 
-    lock_database (obj);
+    if (!(lock_database (obj))) {
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_FATAL,
+                              "The dpkg database (/var/lib/dpkg/status) is "
+                              "currently locked by another process.  Without "
+                              "this lock, this application cannot safely "
+                              "operate on your system, and will exit.  "
+                              "Please end any other program accessing the "
+                              "database (such as dpkg, dselect, or apt), and "
+                              "try again.");
+    }
 
     obj->pkg_hash = g_hash_table_new (g_str_hash, g_str_equal);
     obj->hash_valid = FALSE;

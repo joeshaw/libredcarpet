@@ -1093,20 +1093,17 @@ rc_rpmman_version_compare (RCPackman *p, RCPackageSpec *s1, RCPackageSpec *s2)
         return rpmvercmp(r1, r2);
 }
 
-/* FIXME FIXME FIXME: the strfreev is leaking all over the place, need to fix
-   that shit nowish but I need sleep */
-
-/* FIXME: need to write this ;) */
+#if 0
 static gboolean
 rc_rpmman_verify (RCPackman *p, RCPackage *d)
 {
     return (TRUE);
 } /* rc_rpmman_verify */
+#endif
 
 static void
 rc_rpmman_class_init (RCRpmmanClass *klass)
 {
-/*    GtkObjectClass *object_class = (GtkObjectClass *) klass; */
     RCPackmanClass *hpc = (RCPackmanClass *) klass;
 
     hpc->rc_packman_real_transact = rc_rpmman_transact;
@@ -1114,7 +1111,6 @@ rc_rpmman_class_init (RCRpmmanClass *klass)
     hpc->rc_packman_real_query_all = rc_rpmman_query_all;
     hpc->rc_packman_real_query_file = rc_rpmman_query_file;
     hpc->rc_packman_real_version_compare = rc_rpmman_version_compare;
-//    hpc->rc_packman_real_verify = rc_rpmman_verify;
 } /* rc_rpmman_class_init */
 
 static void
@@ -1140,21 +1136,6 @@ rc_rpmman_init (RCRpmman *obj)
     p->pre_config = TRUE;
     p->pkg_progress = TRUE;
     p->post_config = FALSE;
-
-    /* FIXME: is this really what we want to do? */
-
-    /* Probably not, at least not this simplistically */
-
-    /*
-    if (rpmdbOpen (rpmroot, &db, O_RDONLY, 0644)) {
-        if (rpmdbInit (rpmroot, 0644)) {
-            g_assert_not_reached ();
-        }
-    }
-
-    rpmdbClose (db);
-    */
-
 } /* rc_rpmman_init */
 
 RCRpmman *

@@ -379,10 +379,6 @@ void
 rc_packman_configure_progress (RCPackman *p, gint amount, gint total)
 {
     g_return_if_fail (p);
-
-    while (gtk_events_pending ()) {
-        gtk_main_iteration ();
-    }
 }
 
 void
@@ -399,10 +395,6 @@ rc_packman_configure_done (RCPackman *p)
     g_return_if_fail (p);
 
     gtk_signal_emit ((GtkObject *)p, signals[CONFIGURE_DONE]);
-
-    while (gtk_events_pending ()) {
-	gtk_main_iteration ();
-    }
 }
 
 void
