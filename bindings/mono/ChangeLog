@@ -1,3 +1,10 @@
+2004-12-10  James Willcox  <james@ximian.com>
+
+	* Package.custom:
+	* generated/Package.cs:
+
+	Add a Id property.
+
 2004-12-10  Tambet Ingo  <tambet@ximian.com>
 
 	* libredcarpet-api.xml: Regenerate.

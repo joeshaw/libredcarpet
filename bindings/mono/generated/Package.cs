@@ -375,6 +375,14 @@ namespace RC {
 #endregion
 #region Customized extensions
 #line 1 "Package.custom"
+    
+    private string id;
+
+    public string Id {
+        get { return id; }
+        set { id = value; }
+    }
+
     [DllImport("libredcarpet")]
     static extern IntPtr rc_package_get_updates(IntPtr raw);
 
