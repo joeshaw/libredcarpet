@@ -44,11 +44,9 @@ int main (int argc, char **argv)
 {
     HelixPackman *hp;
 
-    /*
     fclose (stderr);
 
     stderr = fopen ("/dev/null", "a+");
-    */
 
     gtk_type_init ();
 
