@@ -3,7 +3,7 @@
 	* rc-xml.c (RCPackageSAXContext): Add an obsoletes list.
 	(parser_package_start): If the tag is named "conflicts", check to
 	see if there is an obsoletes attribute and set the dep list to be
-	the obsoletes temporary list.  This handles the
+	the temporary obsoletes list.  This handles the
 	<conflicts obsoletes="1">...</conflicts> case.
 	(parse_dep_attrs): Change to return a gboolean on whether or not
 	the dep is actually an obsolete.  This handles the
