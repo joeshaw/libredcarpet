@@ -77,6 +77,7 @@ sax_end_document(void *data)
     ctx->processing = FALSE;
 
     g_free (ctx->text_buffer);
+    ctx->text_buffer = NULL;
 
 } /* sax_end_document */
 

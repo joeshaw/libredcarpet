@@ -1,5 +1,8 @@
 2002-05-02  Jon Trowbridge  <trow@ximian.com>
 
+	* rc-xml.c (sax_end_document): Set ctx->text_buffer to NULL so
+	that we won't double-free it.
+
 	* rc-xml.c (sax_end_document): Just to be sure, free
 	->text_buffer.
 	(parser_package_end): Set our package variables using a
