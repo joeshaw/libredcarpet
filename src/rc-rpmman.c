@@ -464,7 +464,11 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     int transaction_flags, problem_filter;
     RCRpmman *rpmman = RC_RPMMAN (packman);
 
-    transaction_flags = 0; /* Nothing interesting to do here */
+    if (getenv ("RC_JUST_KIDDING"))
+        transaction_flags = RPMTRANS_FLAG_TEST;
+    else
+        transaction_flags = 0; /* Nothing interesting to do here */
+
     problem_filter =
         RPMPROB_FILTER_REPLACEPKG |
         RPMPROB_FILTER_REPLACEOLDFILES |

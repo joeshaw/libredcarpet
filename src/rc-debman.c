@@ -1477,11 +1477,13 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
         int master, slave;
         int status;
 
-        /* So this is a crufy hack, but I need something to replace
-         * the --no-act with, and there doesn't seem to be a --yes-act
-         * option.  Since --abort-after=50 is the default, this should
-         * be harmless, no? */
-         argv[1] = "--abort-after=50";
+        if (!getenv ("RC_JUST_KIDDING")) {
+            /* So this is a crufy hack, but I need something to replace
+             * the --no-act with, and there doesn't seem to be a --yes-act
+             * option.  Since --abort-after=50 is the default, this should
+             * be harmless, no? */
+            argv[1] = "--abort-after=50";
+        }
 
         if (!rc_file_exists ("/usr/bin/dpkg")) {
             rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ ": /usr/bin/dpkg "
