@@ -54,6 +54,7 @@
 
 #include "rc-world.h"
 #include "rc-world-import.h"
+#include "rc-world-subscriptions.h"
 
 #include "rc-xml.h"
 

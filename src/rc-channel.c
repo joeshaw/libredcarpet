@@ -205,6 +205,13 @@ rc_channel_get_pkginfo_compressed (const RCChannel *channel)
     return channel->pkginfo_compressed;
 }
 
+time_t
+rc_channel_get_last_update (const RCChannel *channel)
+{
+    g_return_val_if_fail (channel != NULL, (time_t) 0);
+    return channel->last_update;
+}
+
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 gboolean

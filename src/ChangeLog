@@ -1,3 +1,13 @@
+2002-05-29  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-world-subscriptions.c: Added.  Functions for
+	importing/exporting the RCWorld's subscription data to/from XML.
+
+	* rc-world-import.c (rc_world_add_packages_from_buffer): Added.  We
+	want to make maximum use of our cool SAX parser.
+
+	* rc-channel.c (rc_channel_get_last_update): Added.
+
 2002-05-28  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-world-import.c (rc_world_add_channels_from_xml): Added.

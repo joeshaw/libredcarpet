@@ -258,7 +258,9 @@ rc_world_add_packages_from_slist (RCWorld *world,
 }
 
 guint
-rc_world_add_packages_from_xml (RCWorld *world, RCChannel *channel, xmlNode *node)
+rc_world_add_packages_from_xml (RCWorld *world,
+                                RCChannel *channel,
+                                xmlNode *node)
 {
     RCPackage *package;
     guint count = 0;
@@ -302,13 +304,10 @@ rc_world_add_channel_from_buffer (RCWorld *world,
                                   const char *channel_name,
                                   guint32 channel_id,
                                   RCChannelType type,
-                                  gchar *tbuf, 
-                                  int compressed_length)
+                                  gchar *tbuf,
+                                  gint compressed_length)
 {
     RCChannel *channel;
-    gchar *buf;
-    GByteArray *byte_array = NULL;
-    guint count = 0;
 
     g_return_val_if_fail (world != NULL, NULL);
     g_return_val_if_fail (channel_name && *channel_name, NULL);
@@ -319,10 +318,30 @@ rc_world_add_channel_from_buffer (RCWorld *world,
                                     channel_id,
                                     type);
 
+    rc_world_add_packages_from_buffer (world, 
+                                       channel,
+                                       tbuf,
+                                       compressed_length);
+    return channel;
+}
+
+void
+rc_world_add_packages_from_buffer (RCWorld *world,
+                                   RCChannel *channel,
+                                   gchar *tbuf, 
+                                   int compressed_length)
+{
+    gchar *buf;
+    GByteArray *byte_array = NULL;
+    guint count = 0;
+
+    g_return_if_fail (world != NULL);
+    g_return_if_fail (tbuf != NULL);
+
     if (compressed_length) {
         if (rc_uncompress_memory (tbuf, compressed_length, &byte_array)) {
             g_warning ("Uncompression failed");
-            return NULL;
+            return;
         }
 
         buf = byte_array->data;
@@ -348,8 +367,6 @@ rc_world_add_channel_from_buffer (RCWorld *world,
     if (byte_array) {
         g_byte_array_free (byte_array, TRUE);
     }
-
-    return channel;
 }
 
 static guint

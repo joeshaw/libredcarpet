@@ -71,6 +71,8 @@ const char   *rc_channel_get_pkginfo_file       (const RCChannel *channel);
 
 gboolean      rc_channel_get_pkginfo_compressed (const RCChannel *channel);
 
+time_t        rc_channel_get_last_update        (const RCChannel *channel);
+
 
 /* Subscription management */
 
