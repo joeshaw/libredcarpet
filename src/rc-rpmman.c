@@ -1999,7 +1999,7 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
                     provides = g_slist_prepend (provides, dep);
                 }
             } else {
-                rc_debug (RC_DEBUG_LEVEL_WARNING,
+                rc_debug (RC_DEBUG_LEVEL_INFO,
                           "File '%s' is not valid UTF-8; dropping it from "
                           "the list of file provides", tmp);
             }
