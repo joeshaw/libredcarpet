@@ -96,7 +96,6 @@ rc_channel_free (RCChannel *rcc)
     g_free (rcc->unsubs_url);
 
     g_free (rcc->icon_file);
-    g_free (rcc->title_file);
 
     rc_subchannel_slist_free (rcc->subchannels);
 
@@ -170,7 +169,6 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
         channel->path = xml_get_prop(node, "path");
         channel->file_path = xml_get_prop(node, "file_path");
         channel->icon_file = xml_get_prop(node, "icon");
-        channel->title_file = xml_get_prop(node, "title");
         channel->description = xml_get_prop(node, "description");
         channel->distro_target = xml_get_prop(node, "distro_target");
         channel->pkginfo_file = xml_get_prop(node, "pkginfo_file");

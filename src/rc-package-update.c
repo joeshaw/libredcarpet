@@ -142,6 +142,12 @@ rc_package_update_to_xml_node (RCPackageUpdate *update)
 
     update_node = xmlNewNode (NULL, "update");
 
+    if (update->spec.epoch) {
+	    tmp_string = g_strdup_printf("%d", update->spec.epoch);
+	    xmlNewTextChild (update_node, NULL, "epoch", tmp_string);
+	    g_free(tmp_string);
+    }
+
     xmlNewTextChild (update_node, NULL, "version", update->spec.version);
 
     xmlNewTextChild (update_node, NULL, "release", update->spec.release);

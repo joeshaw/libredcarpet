@@ -71,6 +71,7 @@ struct _RCChannel {
 
     gboolean mirrored;
     gboolean available_select;
+    gboolean featured;
 
     RCChannelType type;
 
@@ -87,7 +88,6 @@ struct _RCChannel {
 
     /* for use as pixbufs in gui.h */
     gchar *icon_file;
-    gchar *title_file;
 
     time_t last_update;
 
