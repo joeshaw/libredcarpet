@@ -1,3 +1,19 @@
+2002-07-04  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-world.c: Added "own_dep" flag to the RCPackageAndDep struct.
+	(rc_package_and_dep_new_package): Set own_dep to TRUE, since we
+	create the RCPackageDep ourselves.
+	(rc_package_and_dep_new_pair): Just use the passed-in RCPackageDep
+	pointer and set own_dep to FALSE.  We used to copy the object, but
+	that ended up consuming a lot of memory unnecessarily.
+	(rc_package_and_dep_free): Only free the RCPackageDep if own_dep
+	is TRUE.
+
+	* rc-distro.c (rc_figure_distro): Fixed a small memory leak.
+
+	* rc-world-import.c (rc_world_add_channels_from_xml): Fixed a
+	small memory leak.
+
 2002-07-02  Joe Shaw  <joe@ximian.com>
 
 	* rc-line-buf.c (rc_line_buf_class_init): Set the parameter type

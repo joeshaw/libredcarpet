@@ -52,6 +52,7 @@ typedef struct _RCPackageAndDep RCPackageAndDep;
 struct _RCPackageAndDep {
     RCPackage *package;
     RCPackageDep *dep;
+    guint own_dep : 1;
 };
 
 static RCPackageAndDep *
@@ -64,6 +65,7 @@ rc_package_and_dep_new_package (RCPackage *package)
     pad->dep = rc_package_dep_new_from_spec (&package->spec,
                                              RC_RELATION_EQUAL);
     pad->dep->spec.type = RC_PACKAGE_SPEC_TYPE_PACKAGE;
+    pad->own_dep = TRUE;
 
     return pad;
 }
@@ -75,7 +77,8 @@ rc_package_and_dep_new_pair (RCPackage *package, RCPackageDep *dep)
 
     pad = g_new0 (RCPackageAndDep, 1);
     pad->package = rc_package_ref (package);
-    pad->dep = rc_package_dep_copy (dep);
+    pad->dep = dep;
+    pad->own_dep = FALSE;
 
     return pad;
 }
@@ -84,7 +87,8 @@ void
 rc_package_and_dep_free (RCPackageAndDep *pad)
 {
     if (pad) {
-        rc_package_dep_free (pad->dep);
+        if (pad->own_dep)
+            rc_package_dep_free (pad->dep);
         rc_package_unref (pad->package);
         g_free (pad);
     }

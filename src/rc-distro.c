@@ -511,6 +511,7 @@ rc_figure_distro (void)
                 g_hash_table_insert(
                     dtype->extra_hash, g_strstrip(parseit[0]), 
                     g_strstrip(parseit[1]));
+                g_strfreev(parseit);
             }
             g_strfreev(options);
         }

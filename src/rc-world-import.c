@@ -139,6 +139,7 @@ rc_world_add_channels_from_xml (RCWorld *world,
             }
 
             channel = rc_world_add_channel (world, name, id, type);
+            g_free (name);
 
             channel->path = xml_get_prop(node, "path");
 
