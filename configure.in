@@ -50,50 +50,23 @@ fi
 
 AC_ARG_WITH(rpm-prefix,
 [  --with-rpm-prefix=DIR   prefix where rpm header files are installed (/usr)],
-,[with_rpm_prefix=/usr])
-
-dnl RPM (any version)
-RPM_PREFIX="$with_rpm_prefix"
-AC_SUBST(RPM_PREFIX)
+,[RPM_PREFIX=/usr])
 
 AM_CONDITIONAL(ENABLE_RPM, false)
-ENABLE_RPM=no
-AC_SUBST(ENABLE_RPM)
+
+AC_SUBST(RPMLIB_CFLAGS)
 
 dnl RPMv3
 if test "x$enable_backend_rpm3" = "xyes"; then
   save_CPPFLAGS="$CPPFLAGS"
   CPPFLAGS="$CPPFLAGS -I$RPM_PREFIX/include/rpm"
 
-  AC_CHECK_LIB(z, gzopen,
-    AC_CHECK_HEADERS(zlib.h,, AC_MSG_ERROR(couldn't find libz headers)),
-      AC_MSG_ERROR(couldn't find libz))
-  AC_CHECK_LIB(popt, poptGetArgs,
-    AC_CHECK_HEADERS(popt.h,, AC_MSG_ERROR(couldn't find libpopt headers)),
-      AC_MSG_ERROR(couldn't find libpopt))
-  AC_CHECK_LIB(rpm, rpmdbOpen,
-    AC_CHECK_HEADERS(rpm/rpmlib.h,, AC_MSG_ERROR(couldn't find rpmlib.h)),
-      AC_MSG_ERROR(couldn't find librpm), -lz -lpopt)
-  AC_SEARCH_LIBS(db_version, db1 db db-3.1,,
-    AC_MSG_ERROR(couldn't find libdb))
+  AC_CHECK_HEADERS(rpm/rpmlib.h,, AC_MSG_ERROR(couldn't find rpmlib.h))
 
-  RPM_BZ2_P=`nm --undefined-only $RPM_PREFIX/lib/librpm.a | grep bzopen`
-
-  if test "xRPM_BZ2_P" != "x"; then
-    RPM_BZ2="-lbz2"
-  else
-    RPM_BZ2=""
-  fi
-
-  RPMLIB_LIBS="-L$RPM_PREFIX/lib -Wl,-Bstatic -lrpm -Wl,-Bdynamic -lpopt -lz $RPM_BZ2"
   RPMLIB_CFLAGS="-I$RPM_PREFIX/include/rpm"
 
   AM_CONDITIONAL(ENABLE_RPM, true)
-  ENABLE_RPM=yes
   AC_DEFINE(ENABLE_RPM)
-
-  AC_SUBST(RPMLIB_LIBS)
-  AC_SUBST(RPMLIB_CFLAGS)
 
   CPPFLAGS="$save_CPPFLAGS"
 fi
@@ -103,45 +76,23 @@ if test "x$enable_backend_rpm4" = "xyes"; then
   save_CPPFLAGS="$CPPFLAGS"
   CPPFLAGS="$CPPFLAGS -I$RPM_PREFIX/include/rpm"
 
-  AC_CHECK_LIB(z, gzopen,
-    AC_CHECK_HEADERS(zlib.h,, AC_MSG_ERROR(couldn't find libz headers)),
-      AC_MSG_ERROR(couldn't find libz))
-  AC_CHECK_LIB(bz2, BZ2_bzopen,
-    AC_CHECK_HEADERS(bzlib.h,, AC_MSG_ERROR(couldn't find libbz headers)),
-      AC_MSG_ERROR(couldn't find libbz))
-  AC_CHECK_LIB(popt, poptGetArgs,
-    AC_CHECK_HEADERS(popt.h,, AC_MSG_ERROR(couldn't find libpopt headers)),
-      AC_MSG_ERROR(couldn't find libpopt))
-  AC_CHECK_LIB(rpmio, Fopen,
-    AC_CHECK_HEADERS(rpm/rpmio.h,, AC_MSG_ERROR(couldn't find rpmio.h)),
-      AC_MSG_ERROR(couldn't find librpmio), -lz -lbz2 -lpopt)
-  AC_CHECK_LIB(rpm, rpmdbOpen,
-    AC_CHECK_HEADERS(rpm/rpmlib.h,, AC_MSG_ERROR(couldn't find rpmlib.h)),
-      AC_MSG_ERROR(couldn't find librpm), -lz -lbz2 -lpopt -lrpmio)
+  AC_CHECK_HEADERS(rpm/rpmio.h,, AC_MSG_ERROR(couldn't find rpmio.h))
+  AC_CHECK_HEADERS(rpm/rpmlib.h,, AC_MSG_ERROR(couldn't find rpmlib.h))
   if grep -q ugid.h "$RPM_PREFIX/include/rpm/misc.h"; then
     if test \! -r /usr/include/rpm/ugid.h ; then
       AC_MSG_ERROR(broken misc.h, see README-ugid)
     fi
   fi
-  AC_CHECK_LIB(db-3.1, db_version,,, -ldb1) dnl what?
-  RPMLIB_LIBS="-L$RPM_PREFIX/lib -Wl,-Bstatic -lrpm -lrpmio -Wl,-Bdynamic -lpopt -lz -lbz2"
+
   RPMLIB_CFLAGS="-I$RPM_PREFIX/include/rpm"
 
   AM_CONDITIONAL(ENABLE_RPM, true)
-  ENABLE_RPM=yes
   AC_DEFINE(ENABLE_RPM)
-
-  AC_SUBST(RPMLIB_LIBS)
-  AC_SUBST(RPMLIB_CFLAGS)
-
-  AC_DEFINE(HAVE_RPM_4_0)
 
   CPPFLAGS="$save_CPPFLAGS"
 fi
 
 AM_CONDITIONAL(ENABLE_DPKG, false)
-ENABLE_DPKG=no
-AC_SUBST(ENABLE_DPKG)
 
 dnl DPKG
 if test "x$enable_backend_dpkg" = "xyes"; then
@@ -154,7 +105,6 @@ if test "x$enable_backend_dpkg" = "xyes"; then
   fi
 
   AM_CONDITIONAL(ENABLE_DPKG, true)
-  ENABLE_DPKG=yes
   AC_DEFINE(ENABLE_DPKG)
 fi
 
