@@ -29,16 +29,12 @@
 #include <rpm/misc.h>
 #include <rpm/header.h>
 
-#if 0
-#    define RPM_ROOTDIR "/home/itp/rpm"
-#else
-#    define RPM_ROOTDIR "/"
-#endif
-
 static void rc_rpmman_class_init (RCRpmmanClass *klass);
 static void rc_rpmman_init       (RCRpmman *obj);
 
 /* static RCPackmanClass *rc_packman_parent; */
+
+static gchar *rpmroot;
 
 guint
 rc_rpmman_get_type (void)
@@ -469,7 +465,7 @@ rc_rpmman_install (RCPackman *p, GSList *pkgs)
 
     RC_RPMMAN (p)->package_count = 0;
 
-    ret = rpmInstall (RPM_ROOTDIR, (const char **)pkgv, 0,
+    ret = rpmInstall (rpmroot, (const char **)pkgv, 0,
                       INSTALL_NOORDER | INSTALL_UPGRADE | INSTALL_NODEPS, 0,
                       NULL);
 
@@ -538,7 +534,7 @@ rc_rpmman_remove (RCPackman *p, RCPackageSList *pkgs)
         iter = iter->next;
     }
 
-    ret = rpmErase (RPM_ROOTDIR, (const char **)pkgv, 0, 0);
+    ret = rpmErase (rpmroot, (const char **)pkgv, 0, 0);
 
     /* Once again, duck around the g_strfreev for anality */
 
@@ -645,7 +641,7 @@ rc_rpmman_query (RCPackman *p, RCPackage *pkg)
     dbiIndexSet matches;
     guint i;
 
-    if (rpmdbOpen (RPM_ROOTDIR, &db, O_RDONLY, 0444)) {
+    if (rpmdbOpen (rpmroot, &db, O_RDONLY, 0444)) {
         rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
                               "Unable to open RPM database");
         return (pkg);
@@ -752,7 +748,7 @@ rc_rpmman_query_all (RCPackman *p)
     RCPackageSList *list = NULL;
     guint recno;
 
-    if (rpmdbOpen (RPM_ROOTDIR, &db, O_RDONLY, 0444)) {
+    if (rpmdbOpen (rpmroot, &db, O_RDONLY, 0444)) {
         rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
                               "Unable to open RPM database");
         return (NULL);
@@ -1069,7 +1065,7 @@ rc_rpmman_depends (RCPackman *p, RCPackageSList *pkgs)
     RCPackageSList *iter;
     rpmdb db;
 
-    if (rpmdbOpen (RPM_ROOTDIR, &db, O_RDONLY, 0444)) {
+    if (rpmdbOpen (rpmroot, &db, O_RDONLY, 0444)) {
         g_free (p->reason);
         p->reason = g_strdup ("Unable to open RPM database");
         return (NULL);
@@ -1210,15 +1206,25 @@ rc_rpmman_init (RCRpmman *obj)
       rpmdb db;
     */
 
+    gchar *tmp;
+
     rpmReadConfigFiles( NULL, NULL );
+
+    tmp = getenv ("RC_RPM_ROOT");
+
+    if (tmp) {
+        rpmroot = g_strdup (tmp);
+    } else {
+        rpmroot = g_strdup ("/");
+    }
 
     /* FIXME: is this really what we want to do? */
 
     /* Probably not, at least not this simplistically */
 
     /* 
-       if (rpmdbOpen (RPM_ROOTDIR, &db, O_RDONLY, 0644)) {
-       if (rpmdbInit (RPM_ROOTDIR, 0644)) {
+       if (rpmdbOpen (rpmroot, &db, O_RDONLY, 0644)) {
+       if (rpmdbInit (rpmroot, 0644)) {
        g_assert_not_reached ();
        }
        }
