@@ -261,7 +261,6 @@ rc_world_add_packages_from_xml (RCWorld *world,
 {
     RCPackage *package;
     guint count = 0;
-    GHashTable *packages;
 
     g_return_val_if_fail (world != NULL, 0);
 
@@ -275,8 +274,6 @@ rc_world_add_packages_from_xml (RCWorld *world,
 
         node = node->xmlChildrenNode;
     }
-
-    packages = g_hash_table_new (NULL, NULL);
 
     while (node) {
         if (! g_strcasecmp (node->name, "package")) {

@@ -1,3 +1,8 @@
+2003-01-22  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-world-import.c (rc_world_add_packages_from_xml): Removed
+	GHashTable *packages, which is no longer being used for anything.
+
 2003-01-21  Joe Shaw  <joe@ximian.com>
 
 	* rc-rpmman.c (depends_fill_helper): We were being way too
