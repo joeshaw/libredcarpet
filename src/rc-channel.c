@@ -528,11 +528,11 @@ rc_xml_node_to_subchannel (xmlNode *node, const RCChannel *channel)
             const RCPackageDep *dep = (RCPackageDep *)(prov_iter->data);
 
             rc_hash_table_slist_insert_unique (subchannel->dep_table,
-                                               &dep->spec, package, NULL);
+                                               (gpointer) &dep->spec, package, NULL);
             rc_hash_table_slist_insert_unique (subchannel->dep_name_table,
                                                dep->spec.name, package, NULL);
         }
-            
+
         g_hash_table_insert (subchannel->packages,
                              (gpointer) package->spec.name,
                              (gpointer) package);
