@@ -1,3 +1,8 @@
+2001-07-27  unknown  <vladimir@ximian.com>
+
+	* rc-deps-private.h, rc-deps.c: Don't blindly reject
+	all but the first package in a list
+
 2001-07-26  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-distro.c: Add solaris 5.7
