@@ -104,6 +104,8 @@ struct _RCQueueItem_Conflict {
 
     RCPackageDep *dep;
     RCPackage *conflicting_package;
+
+    guint actually_an_obsolete : 1;
 };
 
 struct _RCQueueItem_Uninstall {
@@ -113,7 +115,9 @@ struct _RCQueueItem_Uninstall {
     char *reason;
     RCPackageDep *dep_leading_to_uninstall;
     RCPackage *upgraded_to;
-    guint remove_only : 1;
+
+    guint remove_only     : 1;
+    guint due_to_obsolete : 1;
 };
 
 RCQueueItemType rc_queue_item_type         (RCQueueItem *);

@@ -45,6 +45,9 @@ rc_package_status_to_string (RCPackageStatus status)
         return "to be installed";
     case RC_PACKAGE_STATUS_TO_BE_UNINSTALLED:
         return "to be uninstalled";
+    case RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE:
+        return "to be uninstalled due to obsolete";
+
     default:
         return "Huh?";
     }
@@ -152,7 +155,8 @@ rc_resolver_context_set_status (RCResolverContext *context,
     old_status = rc_resolver_context_get_status (context, package);
 
     if (status == RC_PACKAGE_STATUS_TO_BE_INSTALLED 
-        || status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED) {
+        || status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED
+        || status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE) {
 
         if (status != old_status) {
             g_hash_table_insert (context->status,
@@ -223,7 +227,8 @@ rc_resolver_context_install_package (RCResolverContext *context,
 
     status = rc_resolver_context_get_status (context, package);
 
-    if (status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED) {
+    if (status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED
+        || status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE) {
         msg = g_strconcat ("Can't install ",
                            rc_package_spec_to_str_static (& package->spec),
                            " since it is already marked as needing to be uninstalled",
@@ -301,7 +306,8 @@ rc_resolver_context_upgrade_package (RCResolverContext *context,
 
     status = rc_resolver_context_get_status (context, package);
 
-    if (status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED)
+    if (status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED
+        || status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE)
         return FALSE;
 
     if (status == RC_PACKAGE_STATUS_TO_BE_INSTALLED)
@@ -335,9 +341,10 @@ rc_resolver_context_upgrade_package (RCResolverContext *context,
 gboolean
 rc_resolver_context_uninstall_package (RCResolverContext *context,
                                        RCPackage *package,
-                                       gboolean part_of_upgrade)
+                                       gboolean part_of_upgrade,
+                                       gboolean due_to_obsolete)
 {
-    RCPackageStatus status;
+    RCPackageStatus status, new_status;
     char *msg;
 
     g_return_val_if_fail (context != NULL, FALSE);
@@ -372,8 +379,12 @@ rc_resolver_context_uninstall_package (RCResolverContext *context,
     if (status == RC_PACKAGE_STATUS_TO_BE_INSTALLED)
         return TRUE;
 
-    rc_resolver_context_set_status (context, package,
-                                    RC_PACKAGE_STATUS_TO_BE_UNINSTALLED);
+    if (due_to_obsolete)
+        new_status = RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE;
+    else
+        new_status = RC_PACKAGE_STATUS_TO_BE_UNINSTALLED;
+
+    rc_resolver_context_set_status (context, package, new_status);
 
     if (status == RC_PACKAGE_STATUS_INSTALLED
         && ! part_of_upgrade) {
@@ -413,7 +424,8 @@ rc_resolver_context_package_is_absent (RCResolverContext *context,
     g_return_val_if_fail (status != RC_PACKAGE_STATUS_UNKNOWN, FALSE);
 
     return status == RC_PACKAGE_STATUS_UNINSTALLED
-        || status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED;
+        || status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED
+        || status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE;
 }
 
 struct MarkedPackageInfo {
@@ -571,7 +583,8 @@ uninstall_pkg_cb (RCPackage *package,
 {
     struct UninstallInfo *info = user_data;
 
-    if (status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED
+    if ((status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED
+         || status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE)
         && g_hash_table_lookup (info->upgrade_hash, package->spec.name) == NULL) {
         if (info->fn)
             info->fn (package, status, info->user_data);
@@ -784,7 +797,8 @@ requirement_possible_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_
     struct RequirementMetInfo *info = user_data;
     RCPackageStatus status = rc_resolver_context_get_status (info->context, package);
 
-    if (status != RC_PACKAGE_STATUS_TO_BE_UNINSTALLED) {
+    if (status != RC_PACKAGE_STATUS_TO_BE_UNINSTALLED
+        && status != RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE) {
             info->flag = TRUE;
     }
 

@@ -1,5 +1,37 @@
 2002-03-27  Jon Trowbridge  <trow@ximian.com>
 
+	* rc-queue-item.c (install_item_process): Add support for
+	_DUE_TO_OBSOLETE.  If the conflict item is generated from an
+	obsolete, flag it as such.
+	(require_process_cb): Add support for _DUE_TO_OBSOLETE.
+	(conflict_process_cb): If the conflict comes from an obsolete,
+	flag the uninstall items as such.  Add support for
+	_DUE_TO_OBSOLETE.
+	(conflict_item_process): If the conflict item comes from an
+	obsolete, set a flag in the ConflictProcessInfo struct.
+	(uninstall_item_process): Pass a flag to
+	rc_resolver_context_uninstall_package which indicates whether or
+	not the uninstall is due to an obsolete.
+
+	* rc-resolver-context.c (rc_package_status_to_string): Add support
+	for _DUE_TO_OBSOLETE.
+	(rc_resolver_context_set_status): Add support for
+	_DUE_TO_OBSOLETE.
+	(rc_resolver_context_install_package): Add support for
+	_DUE_TO_OBSOLETE.
+	(rc_resolver_context_upgrade_package): Add support for
+	_DUE_TO_OBSOLETE.
+	(rc_resolver_context_uninstall_package): Added an argument to
+	indicate whether or not this uninstall is due to an obsolete.
+	Change the status accordingly.
+	(rc_resolver_context_package_is_absent): Add support for
+	_DUE_TO_OBSOLETE.
+	(uninstall_pkg_cb): Add support for _DUE_TO_OBSOLETE.
+	(requirement_possible_cb): Add support for _DUE_TO_OBSOLETE.
+
+	* rc-resolver-context.h: Added new element to RCPackageSpec enum:
+	RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE.
+
 	* rc-package.h: Added a list of obsoletes to the RCPackage struct.
 
 	* rc-package.c (rc_package_copy): Copy the list of obsoletes.

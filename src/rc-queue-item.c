@@ -294,7 +294,9 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
         GSList *iter;
         for (iter = install->needed_by; iter != NULL && !still_needed; iter = iter->next) {
             RCPackage *needer = iter->data;
-            if (rc_resolver_context_get_status (context, needer) != RC_PACKAGE_STATUS_TO_BE_UNINSTALLED)
+            RCPackageStatus status = rc_resolver_context_get_status (context, needer);
+            if (status != RC_PACKAGE_STATUS_TO_BE_UNINSTALLED
+                && status != RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE)
                 still_needed = TRUE;
         }
 
@@ -389,6 +391,7 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
         RCPackageDep *dep = iter->data;
         RCQueueItem *conflict_item = rc_queue_item_new_conflict (rc_queue_item_get_world (item),
                                                                  dep, package);
+        ((RCQueueItem_Conflict *)conflict_item)->actually_an_obsolete = TRUE;
         
         *new_items = g_slist_prepend (*new_items, conflict_item);
     }
@@ -588,8 +591,12 @@ static void
 require_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data)
 {
     struct RequireProcessInfo *info = user_data;
+    RCPackageStatus status;
 
-    if (rc_resolver_context_get_status (info->context, package) != RC_PACKAGE_STATUS_TO_BE_UNINSTALLED
+    status = rc_resolver_context_get_status (info->context, package);
+
+    if (status != RC_PACKAGE_STATUS_TO_BE_UNINSTALLED
+        && status != RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE
         && ! rc_resolver_context_is_parallel_install (info->context, package)
         && g_hash_table_lookup (info->uniq, package) == NULL
         && rc_resolver_context_package_is_possible (info->context, package)) {
@@ -1034,6 +1041,8 @@ struct ConflictProcessInfo {
 
     char *pkg_str;
     char *dep_str;
+
+    guint actually_an_obsolete : 1;
 };
 
 static void
@@ -1064,6 +1073,8 @@ conflict_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data
 
         uninstall = rc_queue_item_new_uninstall (info->world, package, "conflict");
         rc_queue_item_uninstall_set_dep (uninstall, info->dep);
+
+        ((RCQueueItem_Uninstall *)uninstall)->due_to_obsolete = info->actually_an_obsolete;
         
         log_info = rc_resolver_info_conflicts_with_new (package, info->conflicting_package);
         rc_queue_item_add_info (uninstall, log_info);
@@ -1106,6 +1117,7 @@ conflict_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data
         break;
 
     case RC_PACKAGE_STATUS_TO_BE_UNINSTALLED:
+    case RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE:
         /* This is the easy case -- we do nothing. */
         break;
 
@@ -1127,16 +1139,18 @@ conflict_item_process (RCQueueItem *item,
 
     struct ConflictProcessInfo info;
 
-    info.world = rc_queue_item_get_world (item);
-    info.conflicting_package = conflict->conflicting_package;
-    info.dep = conflict->dep;
-    info.context = context;
-    info.new_items = new_items;
-    info.pkg_str = rc_package_spec_to_str (& conflict->conflicting_package->spec);
-    info.dep_str = g_strconcat (rc_package_relation_to_string (conflict->dep->relation, 0),
-                                " ",
-                                rc_package_spec_to_str_static (& conflict->dep->spec),
-                                NULL);
+    info.world                = rc_queue_item_get_world (item);
+    info.conflicting_package  = conflict->conflicting_package;
+    info.dep                  = conflict->dep;
+    info.context              = context;
+    info.new_items            = new_items;
+    info.pkg_str              = rc_package_spec_to_str (& conflict->conflicting_package->spec);
+    info.dep_str              = g_strconcat (rc_package_relation_to_string (conflict->dep->relation, 0),
+                                             " ",
+                                             rc_package_spec_to_str_static (& conflict->dep->spec),
+                                             NULL);
+    info.actually_an_obsolete = conflict->actually_an_obsolete;
+
 
     rc_world_foreach_providing_package (world, conflict->dep,
                                         RC_WORLD_ANY_CHANNEL,
@@ -1268,7 +1282,8 @@ uninstall_item_process (RCQueueItem *item,
 
     rc_resolver_context_uninstall_package (context,
                                            uninstall->package,
-                                           uninstall->upgraded_to != NULL);
+                                           uninstall->upgraded_to != NULL,
+                                           uninstall->due_to_obsolete);
         
     if (status == RC_PACKAGE_STATUS_INSTALLED) {
 

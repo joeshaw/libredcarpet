@@ -37,7 +37,8 @@ typedef enum {
     RC_PACKAGE_STATUS_INSTALLED,
     RC_PACKAGE_STATUS_UNINSTALLED,
     RC_PACKAGE_STATUS_TO_BE_INSTALLED,
-    RC_PACKAGE_STATUS_TO_BE_UNINSTALLED
+    RC_PACKAGE_STATUS_TO_BE_UNINSTALLED,
+    RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE
 } RCPackageStatus;
 
 typedef struct _RCResolverContext RCResolverContext;
@@ -100,7 +101,8 @@ gboolean           rc_resolver_context_install_package (RCResolverContext *, RCP
 gboolean           rc_resolver_context_upgrade_package (RCResolverContext *, RCPackage *,
                                                         int other_penalty);
 gboolean           rc_resolver_context_uninstall_package (RCResolverContext *, RCPackage *,
-                                                          gboolean part_of_upgrade);
+                                                          gboolean part_of_upgrade,
+                                                          gboolean due_to_obsolete);
 
 gboolean           rc_resolver_context_package_is_present (RCResolverContext *, RCPackage *);
 gboolean           rc_resolver_context_package_is_absent  (RCResolverContext *, RCPackage *);
