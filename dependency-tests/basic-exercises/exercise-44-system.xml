@@ -33981,9 +33981,9 @@ meaningful symbols and offsets.</description>
         <dep name="libc.so.6"/>
         <dep name="ld-linux.so.2"/>
       </requires>
-      <conflicts>
+      <obsoletes>
         <dep name="kernel-utils"/>
-      </conflicts>
+      </obsoletes>
       <provides>
         <dep name="/usr/bin/ksymoops"/>
         <dep name="ksymoops" op="=" version="2.4.1" release="1"/>
