@@ -18,10 +18,10 @@
  * 02111-1307, USA.
  */
 
+#include <string.h>
+
 #include "rc-package.h"
 #include "xml-util.h"
-
-#include <string.h>
 
 RCPackage *
 rc_package_new (void)

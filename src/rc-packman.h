@@ -23,9 +23,6 @@
 
 #include <gtk/gtk.h>
 
-#include "rc-package.h"
-#include "rc-verification.h"
-
 #define RC_TYPE_PACKMAN            (rc_packman_get_type ())
 #define RC_PACKMAN(obj)            (GTK_CHECK_CAST ((obj), \
                                     RC_TYPE_PACKMAN, RCPackman))
@@ -40,7 +37,6 @@
 
 typedef struct _RCPackman        RCPackman;
 typedef struct _RCPackmanClass   RCPackmanClass;
-typedef struct _RCPackmanPrivate RCPackmanPrivate;
     
 typedef enum _RCPackmanError RCPackmanError;
 
@@ -61,6 +57,10 @@ enum _RCPackmanFeatures {
     RC_PACKMAN_FEATURE_CONFIG_PROGRESS = 1 << 2,
     RC_PACKMAN_FEATURE_PKG_PROGRESS    = 1 << 3,
 };
+
+#include "rc-packman-private.h"
+#include "rc-package.h"
+#include "rc-verification.h"
 
 struct _RCPackman {
     GtkObject parent;

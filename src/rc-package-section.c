@@ -18,10 +18,10 @@
  * 02111-1307, USA.
  */
 
+#include <string.h>
+
 #include "rc-package-section.h"
 #include "rc-debug.h"
-
-#include <string.h>
 
 const gchar *
 rc_package_section_to_string (RCPackageSection section)

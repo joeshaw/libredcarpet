@@ -18,11 +18,12 @@
  * 02111-1307, USA.
  */
 
-#include "rc-packman.h"
-#include "rc-packman-private.h"
-
+#include <gtk/gtk.h>
 #include <stdarg.h>
 #include <ctype.h>
+
+#include "rc-packman.h"
+#include "rc-packman-private.h"
 
 static void rc_packman_class_init (RCPackmanClass *klass);
 static void rc_packman_init       (RCPackman *obj);

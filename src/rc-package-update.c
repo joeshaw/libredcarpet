@@ -18,12 +18,13 @@
  * 02111-1307, USA.
  */
 
+#include <glib.h>
 #include <stdlib.h>
 
 #include <gnome-xml/tree.h>
 
-#include <libredcarpet/rc-package-update.h>
-#include <libredcarpet/xml-util.h>
+#include "rc-package-update.h"
+#include "xml-util.h"
 
 RCPackageUpdate *
 rc_package_update_new ()

@@ -21,9 +21,9 @@
 #include <stdio.h>
 
 #include "rc-package-dep.h"
-#include "xml-util.h"
 #include "rc-debug-misc.h"
 #include "rc-packman.h"
+#include "xml-util.h"
 
 #include <gnome-xml/tree.h>
 

@@ -19,10 +19,10 @@
  */
 
 #include "config.h"
+
 #include <stdlib.h>
 
 #include "rc-distro.h"
-
 #include "rc-distman.h"
 
 #ifdef WITH_DPKG

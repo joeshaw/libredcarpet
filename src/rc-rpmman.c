@@ -20,6 +20,16 @@
 
 #include <config.h>
 
+#include <fcntl.h>
+#include <string.h>
+#include <ctype.h>
+
+#include <rpm/rpmurl.h>
+#include <rpm/rpmmacro.h>
+#include <rpm/misc.h>
+#include <rpm/header.h>
+#include <rpm/rpmlib.h>
+
 #include "rc-packman-private.h"
 #include "rc-rpmman.h"
 #include "rc-util.h"
@@ -32,16 +42,6 @@
 #include "rpmlead-3-0-x.h"
 #include "signature-3-0-x.h"
 #endif
-
-#include <fcntl.h>
-#include <string.h>
-#include <ctype.h>
-
-#include <rpm/rpmurl.h>
-#include <rpm/rpmmacro.h>
-#include <rpm/misc.h>
-#include <rpm/header.h>
-#include <rpm/rpmlib.h>
 
 static void rc_rpmman_class_init (RCRpmmanClass *klass);
 static void rc_rpmman_init       (RCRpmman *obj);

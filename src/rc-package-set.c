@@ -21,9 +21,9 @@
 #include <glib.h>
 #include <string.h>
 
-#include <libredcarpet/rc-package-set.h>
-#include <libredcarpet/rc-util.h>
-#include <libredcarpet/xml-util.h>
+#include "rc-package-set.h"
+#include "rc-util.h"
+#include "xml-util.h"
 
 RCPackageSet *
 rc_package_set_new ()

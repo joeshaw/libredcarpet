@@ -18,13 +18,6 @@
  * 02111-1307, USA.
  */
 
-#include "rc-debug.h"
-#include "rc-verification.h"
-#include "rc-verification-private.h"
-#include "rc-util.h"
-#include "rc-line-buf.h"
-#include "rc-md5.h"
-
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
@@ -34,9 +27,15 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 
+#include "rc-debug.h"
+#include "rc-verification.h"
+#include "rc-verification-private.h"
+#include "rc-util.h"
+#include "rc-line-buf.h"
+#include "rc-md5.h"
+
 #ifndef SHAREDIR
 #error "SHAREDIR not defined"
-// #define SHAREDIR "/home/itp/gnome/red-carpet/share/redcarpet/"
 #endif
 
 RCVerification *

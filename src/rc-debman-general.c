@@ -19,14 +19,13 @@
  */
 
 #include <glib.h>
+#include <string.h>
+#include <stdlib.h>
+#include <ctype.h>
 
 #include "rc-debman-general.h"
 #include "rc-debug.h"
 #include "rc-package.h"
-
-#include <string.h>
-#include <stdlib.h>
-#include <ctype.h>
 
 /*
  * Takes a string of format [<epoch>:]<version>[-<release>], and returns those

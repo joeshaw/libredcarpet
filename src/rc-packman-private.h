@@ -21,6 +21,11 @@
 #ifndef _RC_PACKMAN_PRIVATE_H
 #define _RC_PACKMAN_PRIVATE_H
 
+#include <gtk/gtk.h>
+
+typedef struct _RCPackmanPrivate RCPackmanPrivate;
+
+#include "rc-package-spec.h"
 #include "rc-packman.h"
 
 struct _RCPackmanPrivate {

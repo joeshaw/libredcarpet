@@ -21,6 +21,10 @@
 #ifndef _RC_DEBMAN_PRIVATE_H
 #define _RC_DEBMAN_PRIVATE_H
 
+#include <glib.h>
+
+typedef struct _RCDebmanPrivate RCDebmanPrivate;
+
 struct _RCDebmanPrivate {
     int lock_fd;
 

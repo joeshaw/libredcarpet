@@ -27,7 +27,7 @@ typedef struct _RCPackageSet RCPackageSet;
 
 typedef GSList RCPackageSetSList;
 
-#include <libredcarpet/rc-package.h>
+#include "rc-package.h"
 
 struct _RCPackageSet {
     gchar *name;

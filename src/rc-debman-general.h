@@ -21,6 +21,8 @@
 #ifndef _RC_DEBMAN_GENERAL_H
 #define _RC_DEBMAN_GENERAL_H
 
+#include <glib.h>
+
 #include "rc-package.h"
 #include "rc-package-dep.h"
 

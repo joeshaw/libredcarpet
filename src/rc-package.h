@@ -23,6 +23,8 @@
 
 #include <glib.h>
 
+#include <gnome-xml/tree.h>
+
 typedef struct _RCPackage RCPackage;
 
 typedef GSList RCPackageSList;
@@ -38,8 +40,6 @@ typedef GHashTable RCPackageHashTableBySpec;
 #include "rc-package-dep.h"
 #include "rc-package-update.h"
 #include "rc-channel.h"
-
-#include <gnome-xml/tree.h>
 
 struct _RCPackage {
     RCPackageSpec spec;

@@ -21,6 +21,8 @@
 #ifndef _RC_LINE_BUF_PRIVATE_H
 #define _RC_LINE_BUF_PRIVATE_H
 
+#include <glib.h>
+
 struct _RCLineBufPrivate {
     GIOChannel *channel;
 

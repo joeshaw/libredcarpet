@@ -24,11 +24,11 @@
 
 #include <gnome-xml/tree.h>
 
-#include "xml-util.h"
 #include "rc-channel.h"
 #include "rc-util.h"
 #include "rc-package-info.h"
 #include "rc-debug.h"
+#include "xml-util.h"
 
 RCSubchannel *
 rc_subchannel_new (void)

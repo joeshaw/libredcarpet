@@ -1,3 +1,16 @@
+2001-01-22  Ian Peters  <itp@helixcode.com>
+
+	* rc-channel.c, rc-channel.h, rc-debman-general.c,
+	rc-debman-general.h, rc-debman-private.h, rc-debman.h,
+	rc-debug-misc.c, rc-distman.c, rc-line-buf-private.h,
+	rc-line-buf.c, rc-pakcage-dep.c, rc-package-importance.c,
+	rc-package-info.c, rc-package-section.c, rc-package-set.c,
+	rc-package-set.h, rc-package-spec.c, rc-package-update.c,
+	rc-package-update.h, rc-package.c, rc-package.h,
+	rc-packman-private.h, rc-packman.c, rc-packman.h, rc-rpmman.c,
+	rc-rpmman.h, rc-util.c, rc-verification.c, xml-util.h: fixed some
+	include files
+
 2001-01-21  Ian Peters  <itp@helixcode.com>
 
 	* libredcarpet.h: this hasn't been maintained in a while, so I

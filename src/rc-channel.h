@@ -23,6 +23,8 @@
 
 #include <glib.h>
 
+#include <gnome-xml/tree.h>
+
 typedef struct _RCSubchannel RCSubchannel;
 
 typedef GSList RCSubchannelSList;
@@ -32,8 +34,6 @@ typedef enum _RCChannelType RCChannelType;
 typedef struct _RCChannel RCChannel;
 
 typedef GSList RCChannelSList;
-
-#include <gnome-xml/tree.h>
 
 #include "rc-package.h"
 #include "rc-package-set.h"

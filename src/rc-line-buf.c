@@ -18,11 +18,13 @@
  * 02111-1307, USA.
  */
 
-#define BUF_SIZE 1023
+#include <gtk/gtk.h>
 
 #include "rc-debug.h"
 #include "rc-line-buf.h"
 #include "rc-line-buf-private.h"
+
+#define BUF_SIZE 1023
 
 static void rc_line_buf_class_init (RCLineBufClass *klass);
 static void rc_line_buf_init       (RCLineBuf *obj);

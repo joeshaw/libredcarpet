@@ -22,6 +22,9 @@
 #define _RC_PACKAGE_UPDATE_H
 
 #include <glib.h>
+#include <time.h>
+
+#include <gnome-xml/tree.h>
 
 typedef struct _RCPackageUpdate RCPackageUpdate;
 
@@ -30,10 +33,6 @@ typedef GSList RCPackageUpdateSList;
 #include "rc-package.h"
 #include "rc-package-spec.h"
 #include "rc-package-importance.h"
-
-#include <gnome-xml/tree.h>
-
-#include <time.h>
 
 struct _RCPackageUpdate {
     RCPackageSpec spec;

@@ -21,9 +21,11 @@
 #ifndef _RC_DEBMAN_H
 #define _RC_DEBMAN_H
 
+#include <glib.h>
 #include <gtk/gtk.h>
 
-#include <libredcarpet/rc-packman.h>
+#include "rc-packman.h"
+#include "rc-debman-private.h"
 
 #define GTK_TYPE_RC_DEBMAN        (rc_debman_get_type ())
 #define RC_DEBMAN(obj)            (GTK_CHECK_CAST ((obj), \
@@ -38,7 +40,6 @@
 
 typedef struct _RCDebman        RCDebman;
 typedef struct _RCDebmanClass   RCDebmanClass;
-typedef struct _RCDebmanPrivate RCDebmanPrivate;
 
 struct _RCDebman {
     RCPackman parent;

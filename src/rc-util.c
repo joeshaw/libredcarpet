@@ -23,14 +23,12 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <zlib.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
 
 #include "rc-util.h"
-#include "zlib.h"
-
-//#include <libgnome/libgnome.h>
 
 gint
 rc_mkdir(const char *dir, guint mode)

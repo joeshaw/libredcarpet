@@ -18,12 +18,13 @@
  * 02111-1307, USA.
  */
 
+#include <glib.h>
 #include <ctype.h>
 #include <stdio.h>
 
 /* #define DEBUG 50 */
 
-#include <libredcarpet/rc-package-spec.h>
+#include "rc-package-spec.h"
 
 void
 rc_package_spec_init (RCPackageSpec *rcps,
