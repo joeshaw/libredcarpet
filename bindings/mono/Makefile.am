@@ -75,7 +75,10 @@ EXTRA_DIST =				\
 	PackageSpec.custom		\
 	WorldMulti.custom		\
 	ServiceMountException.cs	\
-	PackageDepArray.custom
+	PackageDepArray.custom		\
+	PackageMatch.custom		\
+	Package.custom			\
+	PackageUpdate.custom
 
 dist-hook:
 	mkdir -p $(distdir)/en/RC
