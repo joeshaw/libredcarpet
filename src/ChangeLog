@@ -1,3 +1,8 @@
+2003-06-10  Joe Shaw  <joe@ximian.com>
+
+	* rc-util.c (rc_parse_xml_from_file): Only unmap the buffer if we
+	successfully mapped it.
+
 2003-06-06  Joe Shaw  <joe@ximian.com>
 
 	* rc-debman.c (query_all_read_line_cb): Fix some undefined C

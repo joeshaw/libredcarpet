@@ -663,9 +663,10 @@ rc_parse_xml_from_file (const char *filename)
     g_return_val_if_fail (filename && *filename, NULL);
 
     buf = rc_buffer_map_file (filename);
-    if (buf)
+    if (buf) {
         doc = xmlParseMemory (buf->data, buf->size);
-    rc_buffer_unmap_file (buf);
+        rc_buffer_unmap_file (buf);
+    }
 
     return doc;
 }
