@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 /*
  * rc-package.c: Dealing with individual packages...
  *
@@ -297,6 +298,15 @@ rc_package_hash_table_by_string_to_list (RCPackageHashTableByString *ht)
 
     return l;
 }
+
+RCPackageUpdate *
+rc_package_get_latest_update(RCPackage *package)
+{
+    g_return_if_fail(package);
+    g_return_if_fail(package->history);
+
+    return (RCPackageUpdate *) package->history->data;
+} /* rc_package_get_latest_update */
 
 xmlNode *
 rc_package_to_xml_node (RCPackage *package)

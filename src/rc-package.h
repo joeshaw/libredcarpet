@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 /*
  * rc-package.h: Dealing with individual packages...
  *
@@ -126,6 +127,8 @@ gint rc_package_compare_func (gconstpointer a, gconstpointer b);
 
 RCPackageSList *rc_package_hash_table_by_spec_to_list (RCPackageHashTableBySpec *ht);
 RCPackageSList *rc_package_hash_table_by_string_to_list (RCPackageHashTableBySpec *ht);
+
+RCPackageUpdate *rc_package_get_latest_update(RCPackage *package);
 
 xmlNode *rc_package_to_xml_node (RCPackage *);
 
