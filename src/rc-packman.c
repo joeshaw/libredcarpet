@@ -222,13 +222,6 @@ rc_packman_query (RCPackman *packman, RCPackage *package)
 
     rc_packman_clear_error (packman);
 
-/*
-    if (packman->priv->busy) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL, NULL);
-        return (package);
-    }
-*/
-
     klass = RC_PACKMAN_GET_CLASS (packman);
 
     g_assert (klass->rc_packman_real_query);
@@ -266,13 +259,6 @@ rc_packman_query_file (RCPackman *packman, const gchar *filename)
     g_return_val_if_fail (packman, NULL);
 
     rc_packman_clear_error (packman);
-
-/*
-    if (packman->priv->busy) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL, NULL);
-        return (NULL);
-    }
-*/
 
     klass = RC_PACKMAN_GET_CLASS (packman);
 
@@ -317,13 +303,6 @@ rc_packman_query_all (RCPackman *packman)
 
     rc_packman_clear_error (packman);
 
-/*
-    if (packman->priv->busy) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL, NULL);
-        return (NULL);
-    }
-*/
-
     klass = RC_PACKMAN_GET_CLASS (packman);
 
     g_assert (klass->rc_packman_real_query_all);
@@ -358,13 +337,6 @@ rc_packman_verify (RCPackman *packman, RCPackage *package)
 
     rc_packman_clear_error (packman);
 
-/*
-    if (packman->priv->busy) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL, NULL);
-        return (NULL);
-    }
-*/
-
     klass = RC_PACKMAN_GET_CLASS (packman);
 
     g_assert (klass->rc_packman_real_verify);
@@ -380,13 +352,6 @@ rc_packman_find_file (RCPackman *packman, const gchar *filename)
     g_return_val_if_fail (packman, NULL);
 
     rc_packman_clear_error (packman);
-
-/*
-    if (packman->priv->busy) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL, NULL);
-        return (NULL);
-    }
-*/
 
     klass = RC_PACKMAN_GET_CLASS (packman);
 

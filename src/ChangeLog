@@ -1,5 +1,13 @@
 2001-01-23  Ian Peters  <itp@ximian.com>
 
+	* rc-packman.c (rc_packman_query): remove busy check
+	(rc_packman_query_file): remove busy check
+	(rc_packman_query_all): remove busy check
+	(rc_packman_verify): remove busy check
+	(rc_packman_find_file): remove busy check
+
+2001-01-23  Ian Peters  <itp@ximian.com>
+
 	* rc-rpmman.c: add install_extra to InstallState
 	(transact_cb): add the install_extra to the transaction total.
 	Only switch to the configuring state if we're installing things.
