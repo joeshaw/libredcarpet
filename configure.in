@@ -56,7 +56,7 @@ fi
 
 AM_CONDITIONAL(ENABLE_RPM, false)
 AM_CONDITIONAL(STATIC_RPM, false)
-AM_CONDITIONAL(ENABLE_DPKG, false);
+AM_CONDITIONAL(ENABLE_DPKG, false)
 
 if test "x$enable_backend_rpm" = "xyes";
 then
