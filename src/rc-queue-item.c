@@ -399,7 +399,6 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
             rc_queue_item_uninstall_set_explicitly_requested (uninstall_item);
 
         *new_items = g_slist_prepend (*new_items, uninstall_item);
-
     }
 
     /* Log which packages need this install */
@@ -596,7 +595,9 @@ rc_queue_item_new_install (RCWorld *world, RCPackage *package)
     install->package = package;
 
     upgrades = rc_world_find_installed_version (rc_queue_item_get_world (item), package);
-    if (upgrades && upgrades != package)
+    if (upgrades
+        && ! rc_package_spec_equal (RC_PACKAGE_SPEC (upgrades),
+                                    RC_PACKAGE_SPEC (package)))
         rc_queue_item_install_set_upgrade_package (item, upgrades);
 
     return item;

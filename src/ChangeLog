@@ -1,3 +1,10 @@
+2003-04-22  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-queue-item.c (rc_queue_item_new_install): When comparing
+	the to-be-installed version with an already-installed version,
+	actually use rc_package_spec_equal instead of comparing the
+	pointers.
+
 2003-04-21  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-queue-item.c (install_item_process): Do the right thing if we
