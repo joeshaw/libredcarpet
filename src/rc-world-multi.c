@@ -961,23 +961,33 @@ rc_world_multi_foreach_subworld (RCWorldMulti *multi,
                                  gpointer user_data)
 {
     GSList *iter;
+    GSList *copied_subworlds = NULL;
     int count = 0;
 
     g_return_val_if_fail (multi != NULL && RC_IS_WORLD_MULTI (multi), -1);
+    g_return_val_if_fail (callback != NULL, -1);
 
-    iter = multi->subworlds;
-    while (iter != NULL) {
+    /* Make a ref'ed copy of subworlds for case where user callback is
+       running main loop and a refresh starts at that time. */
+
+    for (iter = multi->subworlds; iter != NULL; iter = iter->next) {
         SubworldInfo *info = iter->data;
-        iter = iter->next;
-        if (callback) {
-            if (! callback (info->subworld, user_data)) {
-                count = -1;
-                break;
-            } else
-                ++count;
-        }
+        copied_subworlds = g_slist_prepend (copied_subworlds,
+                                            g_object_ref (info->subworld));
     }
-    
+
+    for (iter = copied_subworlds; iter != NULL; iter = iter->next) {
+        RCWorld *world = iter->data;
+        if (! callback (world, user_data)) {
+            count = -1;
+            break;
+        } else
+            ++count;
+    }
+
+    g_slist_foreach (copied_subworlds, (GFunc) g_object_unref, NULL);
+    g_slist_free (copied_subworlds);
+
     return count;
 }
 

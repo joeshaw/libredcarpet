@@ -1,3 +1,9 @@
+2005-03-24  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-world-multi.c (rc_world_multi_foreach_subworld): Make a private
+	referenced copy of subworlds before calling callback to avoid race
+	conditions.
+
 2005-03-17  Tambet Ingo  <tambet@ximian.com>
 
 	* distributions.xml: Fix sles-9 target.
