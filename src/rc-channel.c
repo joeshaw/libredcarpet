@@ -54,7 +54,8 @@ rc_subchannel_free (RCSubchannel *rcs)
 
     /* Everything in this table is a pointer into the elements of the packages
        hash table, so it'll get free'd in a second or two */
-    g_hash_table_destroy (rcs->dep_table);
+    if (rcs->dep_table)
+        g_hash_table_destroy (rcs->dep_table);
 
     g_hash_table_foreach_remove (rcs->packages, (GHRFunc)remove_helper, NULL);
 
