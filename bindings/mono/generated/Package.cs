@@ -404,9 +404,9 @@ namespace RC {
     }
 
     [DllImport("libredcarpet")]
-        static extern IntPtr rc_package_ref(IntPtr raw);
+    static extern IntPtr rc_package_ref(IntPtr raw);
 
-    protected Package (IntPtr raw, bool owned_ref) : base (raw) {
+    public Package (IntPtr raw, bool owned_ref) : base (raw) {
         if (!owned_ref)
             rc_package_ref (Handle);
     }

@@ -1,3 +1,12 @@
+2004-12-16  Tambet Ingo  <tambet@ximian.com>
+
+	* RC.metadata: Hide Packman.QueryFile.
+
+	* Packman.custom: Implement QueryFile manually so we can call
+	the right constructor for package.
+
+	* Package.custom: Make constructor (IntPtr, bool) public.
+
 2004-12-10  James Willcox  <james@ximian.com>
 
 	* Package.custom:
