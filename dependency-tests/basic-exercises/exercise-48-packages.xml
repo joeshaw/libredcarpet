@@ -1,0 +1,4 @@
+<channel><subchannel><packages>
+<package><name>c</name><version>1.0</version><release>1</release><summary>Unknown</summary><description>Unknown</description><arch>noarch</arch><section>devel</section><filesize>1156</filesize><installedsize>0</installedsize><deps><requires/><conflicts><dep name="a"/></conflicts><obsoletes/><provides><dep name="c" op="=" version="1.0" release="1"/></provides></deps></package>
+<package><name>d</name><version>1.0</version><release>1</release><summary>Unknown</summary><description>Unknown</description><arch>noarch</arch><section>devel</section><filesize>1155</filesize><installedsize>0</installedsize><deps><requires/><conflicts/><obsoletes><dep name="a"/></obsoletes><provides><dep name="d" op="=" version="1.0" release="1"/></provides></deps></package>
+</packages></subchannel></channel>
