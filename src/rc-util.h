@@ -63,21 +63,4 @@ gchar *rc_build_url (const gchar *method, const gchar *host,
 gint rc_uncompress_memory (guint8 *input_buffer, guint32 input_length,
                            GByteArray **out_ba);
 
-
-typedef struct _RCLineBuf RCLineBuf;
-struct _RCLineBuf {
-    FILE *fp;
-    int fp_length;
-    gchar *save_buf;
-    size_t save_buf_len;
-    gchar *save_buf_base;
-    size_t save_buf_base_len;
-
-    int eof;
-};
-
-RCLineBuf *rc_line_buf_new (FILE *fp);
-gchar *rc_line_buf_read (RCLineBuf *lb);
-void rc_line_buf_destroy (RCLineBuf *lb);
-
 #endif

@@ -100,6 +100,9 @@ transact_cb (const Header h, const rpmCallbackType what,
                 state->configuring = FALSE;
                 state->seqno = 0;
                 rc_packman_configure_done (state->p);
+                rc_packman_transaction_step (state->p, 0,
+                                             state->install_total +
+                                             state->remove_total);
             }
         } else {
             rc_packman_transaction_step (state->p, ++state->seqno,
@@ -351,6 +354,8 @@ rc_rpmman_transact (RCPackman *p, GSList *install_pkgs,
     state->seqno = 0;
     state->install_total = g_slist_length (install_pkgs);
     state->remove_total = g_slist_length (remove_pkgs);
+
+    rc_packman_configure_step (p, 0, state->install_total);
 
     rc = rpmRunTransactions (transaction, transact_cb, (void *) state,
                              NULL, &probs, 0, 0);

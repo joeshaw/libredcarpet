@@ -14,6 +14,13 @@
 
 #include <rc-distman.h>
 
+/* DEBUG ONLY */
+#include <rc-util.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <fcntl.h>
+
 #include <readline.h>
 #include <history.h>
 
@@ -290,6 +297,10 @@ packman_test_query_file (RCPackman *p, gchar *line)
 
     pkg = rc_packman_query_file (p, tokens[0]);
 
+    if (!pkg) {
+        return;
+    }
+
     pretty_print_pkg (pkg);
 
     rc_package_free (pkg);
@@ -464,6 +475,39 @@ packman_test_run (RCPackman *p, gchar *line)
     transaction.remove_pkgs = NULL;
 }
 
+char *
+packman_completion_generator (char *text, int state)
+{
+    static int list_index, len;
+    char *name;
+
+    if (state == 0) {
+        list_index = 0;
+        len = strlen (text);
+    }
+
+    while ((name = commands[list_index].name) != NULL) {
+        list_index++;
+        if (strncmp (name, text, len) == 0) {
+            return (strdup (name));
+        }
+    }
+
+    return NULL;
+}
+
+char **
+packman_completion (char *text, int start, int end)
+{
+    char **matches = NULL;
+
+    if (start == 0) {
+        matches = completion_matches (text, packman_completion_generator);
+    }
+
+    return matches;
+}
+
 int main (int argc, char **argv)
 {
     RCPackman *p;
@@ -490,6 +534,9 @@ int main (int argc, char **argv)
     gtk_signal_connect (GTK_OBJECT (p), "configure_done",
                         GTK_SIGNAL_FUNC (configure_done_cb), NULL);
 
+    rl_readline_name = "packman_test";
+    rl_attempted_completion_function = (CPPFunction *)packman_completion;
+
     while (!done) {
         gchar **tokens;
         guint i;
@@ -500,6 +547,11 @@ int main (int argc, char **argv)
         if (!buf) {
             printf ("\n");
             done = TRUE;
+            continue;
+        }
+
+        if (!*buf) {
+            free (buf);
             continue;
         }
 
@@ -520,7 +572,7 @@ int main (int argc, char **argv)
         }
 
         g_strfreev (tokens);
-        g_free (buf);
+        free (buf);
     }
 
     gtk_object_destroy (GTK_OBJECT (p));

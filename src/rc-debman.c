@@ -32,9 +32,12 @@
 #include <errno.h>
 #include <ctype.h>
 #include <sys/wait.h>
+#include <sys/time.h>
+#include <sys/types.h>
 
 #include "rc-util.h"
 #include "rc-string.h"
+#include "rc-line-buf.h"
 #include "deps.h"
 
 static void rc_debman_class_init (RCDebmanClass *klass);
@@ -67,7 +70,13 @@ rc_debman_get_type (void)
     }
 
     return type;
-} /* rc_debman_get_type */
+}
+
+/*
+ * These functions are used to cleanly destroy the hash table in an RCDebman,
+ * either after an rc_packman_transact, when we need to invalidate the hash
+ * table, or at object destroy
+ */
 
 static void
 hash_destroy_pair (gchar *key, RCPackage *pkg)
@@ -84,122 +93,11 @@ hash_destroy (RCDebman *d)
     d->hash_valid = FALSE;
 }
 
-/* Since I only want to scan through /var/lib/dpkg/status once, I need a
-   shorthand way to match potentially many strings.  Returns the name of the
-   package that matched, or NULL if none did. */
-static gchar *
-package_accept (gchar *line, RCPackageSList *pkgs)
-{
-    RCPackageSList *iter;
-    gchar *pn;
-
-    if (strncmp (line, "Package:", strlen ("Package:")) != 0) {
-        return NULL;
-    }
-
-    pn = line + strlen ("Package: ");
-
-    for (iter = pkgs; iter; iter = iter->next) {
-        RCPackage *pkg = (RCPackage *)(iter->data);
-
-        if (!(strcmp (pn, pkg->spec.name))) {
-            return (pkg->spec.name);
-        }
-    }
-
-    return (NULL);
-}
-
-/* Scan through the /var/lib/dpkg/status file, writing it out as
-   /var/lib/dpkg/status.redcarpet, rewriting the Status: line of any package
-   in remove_pkgs from "install ok installed" to "purge ok installed" to tell
-   dpkg that we're going to eventually remove it.  This lets dpkg remove it
-   itself if we are installing a package that conflicts with it.
-
-   This system sucks hard. */
-static gboolean
-mark_purge (RCPackman *p, RCPackageSList *remove_pkgs)
-{
-    FILE *in_fp, *out_fp;
-    gchar *line;
-    RCLineBuf *lb;
-
-    g_return_val_if_fail (g_slist_length (remove_pkgs) > 0, TRUE);
-
-    if (!(in_fp = fopen (status_file, "r"))) {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
-                              "Unable to open /var/lib/dpkg/status for "
-                              "reading");
-        return (FALSE);
-    }
-
-    if (!(out_fp = fopen (rc_status_file, "w"))) {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
-                              "Unable to open /var/lib/dpkg/status.redcarpet "
-                              "for writing");
-        fclose (in_fp);
-        return (FALSE);
-    }
-
-    lb = rc_line_buf_new (in_fp);
-    while ((line = rc_line_buf_read (lb))) {
-        gchar *package_name;
-
-        fprintf (out_fp, "%s\n", line);
-
-        if ((package_name = package_accept (line, remove_pkgs))) {
-            gchar *status = rc_line_buf_read (lb);
-
-            if (strcmp (status, "Status: install ok installed")) {
-                gchar *error;
-
-                error = g_strdup_printf ("Package %s is not installed "
-                                         "correctly (\"%s\")", package_name,
-                                         status);
-                rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
-                                      error);
-                g_free (error);
-
-                fclose (in_fp);
-                g_free (status);
-                g_free (line);
-
-                return (FALSE);
-            }
-
-            g_free (status);
-
-            fprintf (out_fp, "Status: purge ok installed\n");
-        }
-
-        g_free (line);
-    }
-    rc_line_buf_destroy (lb);
-
-    fclose (out_fp);
-    fclose (in_fp);
-
-    if (rename (rc_status_file, status_file)) {
-        unlink (rc_status_file);
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
-                              "Unable to rename "
-                              "RC status file");
-        return (FALSE);
-    }
-
-    return (TRUE);
-}
-
-typedef struct _InstallState InstallState;
-
-struct _InstallState {
-    guint seqno;
-    guint total;
-};
-
 /* Lock the dpkg database.  Too bad this just doesn't work (and doesn't work
-   in apt or dselect either).  Releasing the lock to call dpkg and trying to
-   grab it afterwords is probably the most broken thing I've ever heard of. */
+ * in apt or dselect either).  Releasing the lock to call dpkg and trying to
+ * grab it afterwords is probably the most broken thing I've ever heard of.
+ */
+
 static int
 lock_database (RCDebman *p)
 {
@@ -246,26 +144,234 @@ unlock_database (RCDebman *p)
     p->lock_fd = -1;
 }
 
-/* basically fork dpkg --purge --pending.  Parses stdout to emit transaction
-   steps as appropriate */
+/*
+ * Since I only want to scan through /var/lib/dpkg/status once, I need a
+ * shorthand way to match potentially many strings.  Returns the name of the
+ * package that matched, or NULL if none did.
+ */
+
+static gchar *
+package_accept (gchar *line, RCPackageSList *pkgs)
+{
+    RCPackageSList *iter;
+    gchar *pn;
+
+    if (strncmp (line, "Package:", strlen ("Package:")) != 0) {
+        return NULL;
+    }
+
+    pn = line + strlen ("Package: ");
+
+    for (iter = pkgs; iter; iter = iter->next) {
+        RCPackage *pkg = (RCPackage *)(iter->data);
+
+        if (!(strcmp (pn, pkg->spec.name))) {
+            return (pkg->spec.name);
+        }
+    }
+
+    return (NULL);
+}
+
+/*
+ * The associated detritus and cruft related to mark_purge.  Given a list of
+ * packages, we need to scan through /var/lib/dpkg/status, and change the
+ * "install ok installed" string to "purge ok installed", to let dpkg know that
+ * we're going to be removing this package soon.
+ */
+
+typedef struct _DebmanMarkPurgeInfo DebmanMarkPurgeInfo;
+
+struct _DebmanMarkPurgeInfo {
+    gboolean rewrite;
+    int out_fd;
+    RCPackageSList *remove_pkgs;
+    GMainLoop *loop;
+};
+
+static void
+mark_purge_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
+{
+    DebmanMarkPurgeInfo *dmpi = (DebmanMarkPurgeInfo *)data;
+
+    /* Is this a status line we want to fixicate? */
+    if (dmpi->rewrite && !strncmp (line, "Status:", strlen ("Status:"))) {
+        write (dmpi->out_fd, "Status: purge ok installed\n",
+               strlen ("Status: purge ok installed\n"));
+
+        dmpi->rewrite = FALSE;
+
+        goto END;
+    }
+
+    if (dmpi->rewrite &&
+        ((line && !line[0]) ||
+         (!strncmp (line, "Package:", strlen ("Package:")))))
+    {
+        /* FIXME: somehow this is malformed */
+        dmpi->rewrite = FALSE;
+
+        goto END;
+    }
+
+    write (dmpi->out_fd, line, strlen (line));
+    write (dmpi->out_fd, "\n", 1);
+
+    if (package_accept (line, dmpi->remove_pkgs)) {
+        dmpi->rewrite = TRUE;
+    }
+
+  END:
+    g_free (line);
+    return;
+}
+
+static void
+mark_purge_read_done_cb (RCLineBuf *lb, gpointer data)
+{
+    DebmanMarkPurgeInfo *dmpi = (DebmanMarkPurgeInfo *)data;
+
+    gtk_signal_disconnect_by_func (GTK_OBJECT (lb),
+                                   GTK_SIGNAL_FUNC (mark_purge_read_line_cb),
+                                   data);
+    gtk_signal_disconnect_by_func (GTK_OBJECT (lb),
+                                   GTK_SIGNAL_FUNC (mark_purge_read_done_cb),
+                                   data);
+
+    g_main_quit (dmpi->loop);
+}
+
 static gboolean
-do_purge (RCPackman *p, InstallState *state)
+mark_purge (RCPackman *p, RCPackageSList *remove_pkgs)
+{
+    DebmanMarkPurgeInfo dmpi;
+    GMainLoop *loop;
+    int in_fd, out_fd;
+    RCLineBuf *lb;
+
+    g_return_val_if_fail (g_slist_length (remove_pkgs) > 0, TRUE);
+
+    if ((in_fd = open (status_file, O_RDONLY)) == -1) {
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
+                              "Unable to open /var/lib/dpkg/status for "
+                              "reading");
+        return (FALSE);
+    }
+
+    if ((out_fd = creat (rc_status_file, 644)) == -1) {
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
+                              "Unable to open /var/lib/dpkg/status.redcarpet "
+                              "for writing");
+        close (in_fd);
+        return (FALSE);
+    }
+
+    loop = g_main_new (FALSE);
+
+    dmpi.rewrite = FALSE;
+    dmpi.out_fd = out_fd;
+    dmpi.remove_pkgs = remove_pkgs;
+    dmpi.loop = loop;
+
+    lb = rc_line_buf_new ();
+
+    gtk_signal_connect (GTK_OBJECT (lb), "read_line",
+                        (GtkSignalFunc) mark_purge_read_line_cb,
+                        (gpointer) &dmpi);
+    gtk_signal_connect (GTK_OBJECT (lb), "read_done",
+                        (GtkSignalFunc) mark_purge_read_done_cb,
+                        (gpointer) &dmpi);
+
+    rc_line_buf_set_fd (lb, in_fd);
+
+    g_main_run (loop);
+
+//    gtk_object_destroy (GTK_OBJECT (lb));
+    gtk_object_unref (GTK_OBJECT (lb));
+
+    g_main_destroy (loop);
+
+    close (in_fd);
+    close (out_fd);
+
+    if (rename (rc_status_file, status_file)) {
+        unlink (rc_status_file);
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
+                              "Unable to rename RC status file");
+        return (FALSE);
+    }
+
+    return (TRUE);
+}
+
+/*
+ * This little guy gets remembered through the transaction, so that I can emit
+ * signals with the appropriate values when necessary
+ */
+
+typedef struct _DebmanInstallState DebmanInstallState;
+
+struct _DebmanInstallState {
+    guint seqno;
+    guint total;
+};
+
+/*
+ * All of the crap to handle do_purge.  Basically just fork dpkg --purge
+ * --pending, and sniff the output for any interesting strings
+ */
+
+struct _DebmanDoPurgeInfo {
+    RCPackman *pman;
+    GMainLoop *loop;
+    DebmanInstallState *dis;
+};
+
+typedef struct _DebmanDoPurgeInfo DebmanDoPurgeInfo;
+
+static void
+do_purge_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
+{
+    DebmanDoPurgeInfo *ddpi = (DebmanDoPurgeInfo *)data;
+
+    if (!strncmp (line, "Removing", strlen ("Removing"))) {
+        rc_packman_transaction_step (ddpi->pman, ++ddpi->dis->seqno,
+                                     ddpi->dis->total);
+    }
+
+    g_free (line);
+}
+
+static void
+do_purge_read_done_cb (RCLineBuf *lb, gpointer data)
+{
+    DebmanDoPurgeInfo *ddpi = (DebmanDoPurgeInfo *)data;
+
+    gtk_signal_disconnect_by_func (GTK_OBJECT (lb),
+                                   GTK_SIGNAL_FUNC (do_purge_read_line_cb),
+                                   data);
+    gtk_signal_disconnect_by_func (GTK_OBJECT (lb),
+                                   GTK_SIGNAL_FUNC (do_purge_read_done_cb),
+                                   data);
+
+    g_main_quit (ddpi->loop);
+}
+
+static gboolean
+do_purge (RCPackman *p, DebmanInstallState *dis)
 {
     pid_t child;       /* The pid of the child process */
     int status;        /* The return value of dpkg */
-    int fds[2];        /* The ends of the pipe */
-    gchar *buf = NULL; /* The buffer of shit read from the pipe */
-    gchar single[2];   /* A character read from the pipe */
+    int rfds[2];        /* The ends of the pipe */
+    RCLineBuf *lb;
+    DebmanDoPurgeInfo ddpi;
+    GMainLoop *loop;
 
-    pipe (fds);
-    fcntl (fds[0], F_SETFL, O_NONBLOCK);
-    fcntl (fds[1], F_SETFL, O_NONBLOCK);
+    pipe (rfds);
+    fcntl (rfds[0], F_SETFL, O_NONBLOCK);
+    fcntl (rfds[1], F_SETFL, O_NONBLOCK);
 
     unlock_database (RC_DEBMAN (p));
-
-#ifdef DEBUG
-        fprintf (stderr, "rc-debman: /usr/bin/dpkg --purge --pending\n--- log ---\n");
-#endif
 
     child = fork ();
 
@@ -276,8 +382,8 @@ do_purge (RCPackman *p, InstallState *state)
                               "packages.  Packages were marked for removal, "
                               "but were not removed.  To remedy this, run the "
                               "command 'dpkg --purge --pending' as root.");
-        close (fds[0]);
-        close (fds[1]);
+        close (rfds[0]);
+        close (rfds[1]);
         return (FALSE);
         break;
 
@@ -285,8 +391,8 @@ do_purge (RCPackman *p, InstallState *state)
         signal (SIGPIPE, SIG_DFL);
 
         fflush (stdout);
-        close (fds[0]);
-        dup2 (fds[1], 1);
+        close (rfds[0]);
+        dup2 (rfds[1], 1);
 
         fclose (stderr);
 
@@ -294,37 +400,35 @@ do_purge (RCPackman *p, InstallState *state)
         break;
 
     default:
-        close (fds[1]);
-        single[1] = '\000';
-        while ((status = read (fds[0], single, 1))) {
-            if (status == 1) {
-#ifdef DEBUG
-                fputc (single[0], stderr);
-#endif
-                if (single[0] == '\n' && buf) {
-                    if (!strncmp (buf, "Removing", strlen ("Removing"))) {
-                        rc_packman_transaction_step (p, ++state->seqno,
-                                                     state->total);
-                    }
+        close (rfds[1]);
 
-                    g_free (buf);
-                    buf = NULL;
-                } else {
-                    if (buf) {
-                        gchar *tmp = g_strconcat (buf, single, NULL);
-                        g_free (buf);
-                        buf = tmp;
-                    } else {
-                        buf = g_strdup (single);
-                    }
-                }
-            }
+        loop = g_main_new (FALSE);
 
-            while (gtk_events_pending ()) {
-                gtk_main_iteration ();
-            }
-        }
-        waitpid (child, &status, WNOHANG);
+        ddpi.pman = p;
+        ddpi.loop = loop;
+        ddpi.dis = dis;
+
+        lb = rc_line_buf_new ();
+
+        gtk_signal_connect (GTK_OBJECT (lb), "read_line",
+                            GTK_SIGNAL_FUNC (do_purge_read_line_cb),
+                            (gpointer) &ddpi);
+        gtk_signal_connect (GTK_OBJECT (lb), "read_done",
+                            GTK_SIGNAL_FUNC (do_purge_read_done_cb),
+                            (gpointer) &ddpi);
+
+        rc_line_buf_set_fd (lb, rfds[0]);
+
+        g_main_run (loop);
+
+//        gtk_object_destroy (GTK_OBJECT (lb));
+        gtk_object_unref (GTK_OBJECT (lb));
+
+        g_main_destroy (loop);
+
+        close (rfds[0]);
+
+        waitpid (child, &status, 0);
         break;
     }
 
@@ -332,15 +436,8 @@ do_purge (RCPackman *p, InstallState *state)
         /* FIXME: need to handle this */
     }
 
-#ifdef DEBUG
-    fprintf (stderr, "--- end ---\n");
-#endif
-
-
-    close (fds[0]);
-    g_free (buf);
-
     if (!(WIFEXITED (status)) || WEXITSTATUS (status)) {
+        printf ("Fwoops!\n");
         rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
                               "Unable to run dpkg to finish purging selected "
                               "packages.  Packages were marked for removal, "
@@ -352,173 +449,279 @@ do_purge (RCPackman *p, InstallState *state)
     return (TRUE);
 }
 
-/* Fork dpkg to unpack the selected packages.  Parses the output to emit
-   transaction steps (both for unpacked packages and for packages that dpkg
-   finishes the purge on to put new ones in their place. */
-static gboolean
-do_unpack (RCPackman *p, GSList *pkgs, InstallState *state)
+/*
+ * Given a command, a list of permanent arguments, and a list of transient
+ * arguments, construct a list of execv-able arrays of command, pargs, and
+ * some subset of the other args such that the entire command is <4k
+ */
+
+static GSList *
+make_4k_commands (gchar *command, GSList *pargs, GSList *args)
 {
-    guint num_pkgs;    /* The number of packages to install */
-    gchar **argv;      /* The command to exec */
-    GSList *iter;      /* To iterate over the pkgs list */
-    int fds[2];        /* both ends of the pipe */
-    pid_t child;       /* The pid of the forked child */
-    gchar single[2];   /* To read a character at a time from the pipe */
-    int status;        /* The return value of the forked process */
-    gchar *buf = NULL; /* The buffer of crap read from the pipe */
-    guint i;
+    GSList *iter1, *iter2;
+    GSList *ret = NULL;
+    GArray *buf = NULL;
+    guint buf_size = 0;
 
-    num_pkgs = g_slist_length (pkgs);
+    iter1 = args;
 
-    g_return_val_if_fail (num_pkgs > 0, TRUE);
+    while (iter1) {
+        gchar *arg = g_strdup ((gchar *)(iter1->data));
+        guint arg_size = strlen (arg) + 1;
 
-    argv = g_new0 (gchar *, num_pkgs + 3);
+        if (!buf) {
+            gchar *tcommand = g_strdup (command);
 
-#ifdef DEBUG
-    fprintf (stderr, "rc-debman: /usr/bin/dpkg --unpack ");
-#endif
+            buf = g_array_new (TRUE, FALSE, sizeof (gchar *));
+            buf = g_array_append_val (buf, tcommand);
+            buf_size += strlen (command);
 
-    argv[0] = g_strdup ("/usr/bin/dpkg");
-    argv[1] = g_strdup ("--unpack");
+            for (iter2 = pargs; iter2; iter2 = iter2->next) {
+                gchar *parg = g_strdup ((gchar *)(iter2->data));
+                buf = g_array_append_val (buf, parg);
+                buf_size += strlen (parg) + 1;
+            }
+        }
 
-    i = 2;
-
-    for (iter = pkgs; iter; iter = iter->next) {
-        argv[i++] = g_strdup ((gchar *)(iter->data));
-#ifdef DEBUG
-        fprintf (stderr, "%s ", argv[i-1]);
-#endif
+        if (buf_size + arg_size > 4096) {
+            ret = g_slist_append (ret, buf->data);
+            g_array_free (buf, FALSE);
+            g_free (arg);
+            buf = NULL;
+        } else {
+            buf = g_array_append_val (buf, arg);
+            iter1 = iter1->next;
+        }
     }
 
-#ifdef DEBUG
-    fprintf (stderr, "\n--- log ---\n");
-#endif
+    if (buf) {
+        ret = g_slist_append (ret, buf->data);
+        g_array_free (buf, FALSE);
+        buf = NULL;
+    }
 
-    pipe (fds);
-    fcntl (fds[0], F_SETFL, O_NONBLOCK);
-    fcntl (fds[1], F_SETFL, O_NONBLOCK);
+    return (ret);
+}
 
-    unlock_database (RC_DEBMAN (p));
+/*
+ * All of the do_unpack flotsam.  Given a bunch of packages, calls dpkg
+ * --unpack on them in groups until they're all unpacked.  Once again, monitors
+ * dpkg output for useful strings.
+ */
 
-    child = fork ();
+typedef DebmanDoPurgeInfo DebmanDoUnpackInfo;
 
-    switch (child) {
-    case -1:
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
-                              "Unable to fork and exec dpkg to unpack "
-                              "selected packages.");
-        g_strfreev (argv);
-        close (fds[0]);
-        close (fds[1]);
-        return (FALSE);
-        break;
+static void
+do_unpack_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
+{
+    DebmanDoUnpackInfo *ddui = (DebmanDoUnpackInfo *)data;
 
-    case 0:
-        signal (SIGPIPE, SIG_DFL); /* All hail dpkg */
+    if (!strncmp (line, "Unpacking", strlen ("Unpacking")) ||
+        !strncmp (line, "Purging", strlen ("Purging")))
+    {
+        rc_packman_transaction_step (ddui->pman, ++ddui->dis->seqno,
+                                     ddui->dis->total);
+    }
 
-        fflush (stdout);   /* Flush stdout, and then set up stdout to write */
-        close (fds[0]);    /* to one end of our pipe.  Then we do the nasty */
-        dup2 (fds[1], 1);  /* parse the output hack.  Ick. */
+    g_free (line);
+}
 
-        fclose (stderr);
+static void
+do_unpack_read_done_cb (RCLineBuf *lb, gpointer data)
+{
+    DebmanDoUnpackInfo *ddui = (DebmanDoUnpackInfo *)data;
 
-        execv ("/usr/bin/dpkg", argv);
-        break;
+    gtk_signal_disconnect_by_func (GTK_OBJECT (lb),
+                                   GTK_SIGNAL_FUNC (do_unpack_read_line_cb),
+                                   data);
+    gtk_signal_disconnect_by_func (GTK_OBJECT (lb),
+                                   GTK_SIGNAL_FUNC (do_unpack_read_done_cb),
+                                   data);
 
-    default:
-        close (fds[1]);
-        single[1] = '\000';
-        while ((status = read (fds[0], single, 1))) {
-            if (status == 1) {
-#ifdef DEBUG
-                fputc (single[0], stderr);
-#endif
-                if (single[0] == '\n') {
-                    if ((!strncmp (buf, "Unpacking", strlen ("Unpacking"))) ||
-                        (!strncmp (buf, "Purging ", strlen ("Purging")))) {
-                        rc_packman_transaction_step (p, ++state->seqno,
-                                                     state->total);
-                    }
+    g_main_quit (ddui->loop);
+}
 
-                    g_free (buf);
-                    buf = NULL;
-                } else {
-                    if (buf) {
-                        gchar *tmp = g_strconcat (buf, single, NULL);
-                        g_free (buf);
-                        buf = tmp;
-                    } else {
-                        buf = g_strdup (single);
-                    }
+static gboolean
+do_unpack (RCPackman *p, GSList *pkgs, DebmanInstallState *dis)
+{
+    GSList *argvl;
+    GSList *pargs;
+    GSList *iter;
+
+    g_return_val_if_fail (g_slist_length (pkgs) > 0, TRUE);
+
+    pargs = g_slist_append (NULL, g_strdup ("--unpack"));
+
+    argvl = make_4k_commands ("/usr/bin/dpkg", pargs, pkgs);
+
+    g_slist_foreach (pargs, (GFunc) g_free, NULL);
+    g_slist_free (pargs);
+
+    for (iter = argvl; iter; iter = iter->next) {
+        gchar **argv = (gchar **)(iter->data);
+
+        int rfds[2];
+        pid_t child;
+        int status;
+        RCLineBuf *lb;
+        GMainLoop *loop;
+        DebmanDoUnpackInfo ddui;
+
+        pipe (rfds);
+        fcntl (rfds[0], F_SETFL, O_NONBLOCK);
+        fcntl (rfds[1], F_SETFL, O_NONBLOCK);
+
+        /* The locking in Debian sucks ass */
+        unlock_database (RC_DEBMAN (p));
+
+        child = fork ();
+
+        switch (child) {
+        case -1:
+            rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
+                                  "Unable to fork and exec dpkg to unpack "
+                                  "selected packages.");
+            close (rfds[0]);
+            close (rfds[1]);
+
+            g_slist_foreach (argvl, (GFunc) g_strfreev, NULL);
+            g_slist_free (argvl);
+
+            return (FALSE);
+            break;
+
+        case 0:
+            signal (SIGPIPE, SIG_DFL);
+
+            close (rfds[0]);
+
+            fflush (stdout);
+            dup2 (rfds[1], STDOUT_FILENO);
+            close (rfds[1]);
+
+            fclose (stderr);
+
+            execv ("/usr/bin/dpkg", argv);
+            break;
+
+        default:
+            close (rfds[1]);
+
+            loop = g_main_new (FALSE);
+
+            lb = rc_line_buf_new ();
+
+            ddui.pman = p;
+            ddui.loop = loop;
+            ddui.dis = dis;
+
+            gtk_signal_connect (GTK_OBJECT (lb), "read_line",
+                                GTK_SIGNAL_FUNC (do_unpack_read_line_cb),
+                                (gpointer) &ddui);
+            gtk_signal_connect (GTK_OBJECT (lb), "read_done",
+                                GTK_SIGNAL_FUNC (do_unpack_read_done_cb),
+                                (gpointer) &ddui);
+
+            rc_line_buf_set_fd (lb, rfds[0]);
+
+            g_main_run (loop);
+            
+//            gtk_object_destroy (GTK_OBJECT (lb));
+            gtk_object_unref (GTK_OBJECT (lb));
+
+            g_main_destroy (loop);
+
+            waitpid (child, &status, 0);
+
+            if (!(WIFEXITED (status)) || WEXITSTATUS (status)) {
+                gchar *error, *tmp;
+                GSList *iter;
+
+                error = g_strdup ("dpkg failed to unpack all of the selected "
+                                  "packages.  The following packages may have "
+                                  "been left in an inconsistant state, and "
+                                  "should be checked by hand:");
+
+                for (iter = pkgs; iter; iter = iter->next) {
+                    tmp = g_strconcat (error, " ", (gchar *)(iter->data),
+                                       NULL);
+                    g_free (error);
+                    error = tmp;
                 }
+
+                rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL, error);
+
+                g_free (error);
+
+                return (FALSE);
             }
 
-            while (gtk_events_pending ()) {
-                gtk_main_iteration ();
-            }
+            close (rfds[0]);
+
+            break;
         }
 
-        waitpid (child, &status, 0);
-        break;
-    }
-
-    if (!(lock_database (RC_DEBMAN (p)))) {
-        /* FIXME: need to handle this */
-    }
-
-#ifdef DEBUG
-    fprintf (stderr, "--- end ---\n");
-#endif
-
-    close (fds[0]);
-    g_free (buf);
-    g_strfreev (argv);
-
-    if (!(WIFEXITED (status)) || WEXITSTATUS (status)) {
-        gchar *error, *tmp;
-        GSList *iter;
-
-        error = g_strdup ("dpkg failed to unpack all of the selected "
-                          "packages.  The following packages may have been "
-                          "left in an inconsistant state, and should be "
-                          "checked by hand:");
-
-        for (iter = pkgs; iter; iter = iter->next) {
-            tmp = g_strconcat (error, " ", (gchar *)(iter->data), NULL);
-            g_free (error);
-            error = tmp;
+        if (!(lock_database (RC_DEBMAN (p)))) {
+            /* FIXME: need to handle this */
         }
-
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL, error);
-
-        g_free (error);
-
-        return (FALSE);
     }
+
+    g_slist_foreach (argvl, (GFunc) g_strfreev, NULL);
+    g_slist_free (argvl);
 
     return (TRUE);
 }
 
-/* Fork dpkg to configure the packages we've unpacked.  Emits configure step
-   signals when appropriate. */
+/*
+ * The do_configure crowd.  Very similar to do_purge, just calls dpkg
+ * --configure --pending.  Also sniffs the out.
+ */
+
+typedef DebmanDoPurgeInfo DebmanDoConfigureInfo;
+
+static void
+do_configure_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
+{
+    DebmanDoConfigureInfo *ddci = (DebmanDoConfigureInfo *)data;
+
+    if (!strncmp (line, "Setting up ", strlen ("Setting up "))) {
+        rc_packman_configure_step (ddci->pman, ++ddci->dis->seqno,
+                                   ddci->dis->total);
+    }
+
+    g_free (line);
+}
+
+static void
+do_configure_read_done_cb (RCLineBuf *lb, gpointer data)
+{
+    DebmanDoConfigureInfo *ddci = (DebmanDoConfigureInfo *)data;
+
+    gtk_signal_disconnect_by_func (GTK_OBJECT (lb),
+                                   GTK_SIGNAL_FUNC (do_configure_read_line_cb),
+                                   data);
+    gtk_signal_disconnect_by_func (GTK_OBJECT (lb),
+                                   GTK_SIGNAL_FUNC (do_configure_read_done_cb),
+                                   data);
+
+    g_main_quit (ddci->loop);
+}
+
 static gboolean
-do_configure (RCPackman *p, InstallState *state)
+do_configure (RCPackman *p, DebmanInstallState *dis)
 {
     pid_t child;
     int status;
-    int fds[2];
-    gchar single[2];
-    gchar *buf = NULL;
+    int rfds[2];
+    RCLineBuf *lb;
+    DebmanDoConfigureInfo ddci;
+    GMainLoop *loop;
 
-    pipe (fds);
-    fcntl (fds[0], F_SETFL, O_NONBLOCK);
-    fcntl (fds[1], F_SETFL, O_NONBLOCK);
+    pipe (rfds);
+    fcntl (rfds[0], F_SETFL, O_NONBLOCK);
+    fcntl (rfds[1], F_SETFL, O_NONBLOCK);
 
     unlock_database (RC_DEBMAN (p));
-
-#ifdef DEBUG
-    fprintf (stderr, "rc-debman: /usr/bin/dpkg --configure --pending\n--- log ---\n");
-#endif
 
     child = fork ();
 
@@ -529,8 +732,9 @@ do_configure (RCPackman *p, InstallState *state)
                               "packages.  You will need to configure them by "
                               "hand by running the command `dpkg --configure "
                               "--pending` as root");
-        close (fds[0]);
-        close (fds[1]);
+        close (rfds[0]);
+        close (rfds[1]);
+
         return (FALSE);
         break;
 
@@ -538,8 +742,8 @@ do_configure (RCPackman *p, InstallState *state)
         signal (SIGPIPE, SIG_DFL);
 
         fflush (stdout);
-        close (fds[0]);
-        dup2 (fds[1], 1);
+        close (rfds[0]);
+        dup2 (rfds[1], 1);
 
         fclose (stderr);
 
@@ -548,36 +752,33 @@ do_configure (RCPackman *p, InstallState *state)
         break;
 
     default:
-        close (fds[1]);
-        single[1] = '\000';
-        while ((status = read (fds[0], single, 1))) {
-            if (status == 1) {
-#ifdef DEBUG
-                fputc (single[0], stderr);
-#endif
-                if (single[0] == '\n') {
-                    if (buf && (!strncmp (buf, "Setting up ",
-                                   strlen ("Setting up ")))) {
-                        rc_packman_configure_step (p, ++state->seqno,
-                                                   state->total);
-                    }
+        close (rfds[1]);
 
-                    g_free (buf);
-                    buf = NULL;
-                } else {
-                    if (buf) {
-                        gchar *tmp = g_strconcat (buf, single, NULL);
-                        g_free (buf);
-                        buf = tmp;
-                    } else {
-                        buf = g_strdup (single);
-                    }
-                }
-            }
-            while (gtk_events_pending ()) {
-                gtk_main_iteration ();
-            }
-        }
+        loop = g_main_new (FALSE);
+
+        ddci.pman = p;
+        ddci.loop = loop;
+        ddci.dis = dis;
+
+        lb = rc_line_buf_new ();
+
+        gtk_signal_connect (GTK_OBJECT (lb), "read_line",
+                            GTK_SIGNAL_FUNC (do_configure_read_line_cb),
+                            (gpointer) &ddci);
+        gtk_signal_connect (GTK_OBJECT (lb), "read_done",
+                            GTK_SIGNAL_FUNC (do_configure_read_done_cb),
+                            (gpointer) &ddci);
+
+        rc_line_buf_set_fd (lb, rfds[0]);
+
+        g_main_run (loop);
+
+//        gtk_object_destroy (GTK_OBJECT (lb));
+        gtk_object_unref (GTK_OBJECT (lb));
+
+        g_main_destroy (loop);
+
+        close (rfds[0]);
 
         waitpid (child, &status, 0);
         break;
@@ -586,13 +787,6 @@ do_configure (RCPackman *p, InstallState *state)
     if (!(lock_database (RC_DEBMAN (p)))) {
         /* FIXME: need to handle this */
     }
-
-#ifdef DEBUG
-    fprintf (stderr, "--- end ---\n");
-#endif
-
-    close (fds[0]);
-    g_free (buf);
 
     if (!(WIFEXITED (status)) || WEXITSTATUS (status)) {
         rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
@@ -606,59 +800,64 @@ do_configure (RCPackman *p, InstallState *state)
     return (TRUE);
 }
 
+/*
+ * Combine the last four code blocks into a useful transaction.
+ */
+
 static void
 rc_debman_transact (RCPackman *p, GSList *install_pkgs,
                     RCPackageSList *remove_pkgs)
 {
-    InstallState *state = g_new0 (InstallState, 1);
+    DebmanInstallState *dis = g_new0 (DebmanInstallState, 1);
 
-    state->total = g_slist_length (install_pkgs) +
+    dis->total = g_slist_length (install_pkgs) +
         g_slist_length (remove_pkgs);
 
-    /* Mark the packages which are eventually to be removed in
-       /var/lib/dpkg/status.  We do this so that dpkg will feel free to replace
-       them as necessary, without fucking up the dependencies.  We'll just
-       --purge --pending at the end to make sure everything gets cleaned up. */
     if (remove_pkgs) {
         if (!(mark_purge (p, remove_pkgs))) {
             goto END;
         }
     }
 
-    /* Now let's unpack the packages which are to be installed.  This stage may
-       result in some of the packages marked for purging being removed, so we
-       catch that, too, and generate a transaction step signal. */
+    rc_packman_transaction_step (p, 0, dis->total);
+
     if (install_pkgs) {
-        if (!(do_unpack (p, install_pkgs, state))) {
+        if (!(do_unpack (p, install_pkgs, dis))) {
             goto END;
         }
     }
 
-    /* And now, of course, clean out any old packages which didn't get purged
-       by dpkg in the course of installing new things */
-    if (remove_pkgs && (state->seqno < state->total)) {
-        if (!(do_purge (p, state))) {
+    if (remove_pkgs && (dis->seqno < dis->total)) {
+        if (!(do_purge (p, dis))) {
             goto END;
         }
     }
 
-    state->total = g_slist_length (install_pkgs);
-    state->seqno = 0;
+    rc_packman_transaction_done (p);
 
-    /* We need to --configure the unpacked packages here */
     if (install_pkgs) {
-        if (!(do_configure (p, state))) {
+        dis->total = g_slist_length (install_pkgs);
+        dis->seqno = 0;
+
+        rc_packman_configure_step (p, 0, dis->total);
+
+        if (!(do_configure (p, dis))) {
             goto END;
         }
+
+        rc_packman_configure_done (p);
     }
 
   END:
-    g_free (state);
+    g_free (dis);
     hash_destroy (RC_DEBMAN (p));
 }
 
-/* Takes a string of format [<epoch>:]<version>[-<release>], and returns those
-   three elements, if they exist */
+/*
+ * Takes a string of format [<epoch>:]<version>[-<release>], and returns those
+ * three elements, if they exist
+ */
+
 void
 rc_debman_parse_version (gchar *input, guint32 *epoch, gchar **version,
                          gchar **release)
@@ -691,9 +890,12 @@ rc_debman_parse_version (gchar *input, guint32 *epoch, gchar **version,
     g_strfreev (t1);
 }
 
-/* Given a line from a debian control file (or from /var/lib/dpkg/status), and
-   a pointer to a RCPackageDepSList, fill in the dependency information.  It's
-   ugly but memprof says it doesn't leak. */
+/*
+ * Given a line from a debian control file (or from /var/lib/dpkg/status), and
+ * a pointer to a RCPackageDepSList, fill in the dependency information.  It's
+ * ugly but memprof says it doesn't leak.
+ */
+
 RCPackageDepSList *
 rc_debman_fill_depends (gchar *input, RCPackageDepSList *list)
 {
@@ -827,232 +1029,308 @@ rc_debman_fill_depends (gchar *input, RCPackageDepSList *list)
     return (list);
 }
 
-/* Given a file pointer to the beginning of a block of package information,
-   fill in the data in the RCPackage fields. */
-static void
-rc_debman_query_helper (RCLineBuf *lb, RCPackage **old_pkg)
+/*
+ * The query_all associated cruft
+ */
+
+typedef struct _DebmanQueryInfo DebmanQueryInfo;
+
+struct _DebmanQueryInfo {
+    RCPackage *buf_pkg;
+    GString *desc_buf;
+    RCPackageSList *pkgs;
+    gboolean error;
+    GMainLoop *loop;
+};
+
+static gchar *
+get_description (GString *str)
 {
-    gchar *buf;
-    RCPackageDepItem *item;
-    RCPackageDep *dep = NULL;
-    gboolean desc = FALSE;
-    RCPackage *pkg = rc_package_new ();
+    gchar *ret;
 
-    while ((buf = rc_line_buf_read (lb)) && buf[0]) {
-        if (!strncmp (buf, "Status: install ok installed",
-                      strlen ("Status: install ok installed"))) {
-            pkg->spec.installed = TRUE;
-        } else if (!strncmp (buf, "Installed-Size: ",
-                             strlen ("Installed-Size: "))) {
-            pkg->spec.installed_size = strtoul (buf +
-                                                strlen ("Installed-Size: "),
-                                                NULL, 10) * 1024;
-        } else if (!strncmp (buf, "Description: ", strlen ("Description: "))) {
-            pkg->summary = g_strdup (buf + strlen ("Description: "));
-            desc = TRUE;
-        } else if (!strncmp (buf, " ", strlen (" ")) && desc) {
-            gchar *buf2;
+    str = g_string_truncate (str, str->len - 1);
+    ret = str->str;
+    g_string_free (str, FALSE);
 
-            if (!strcmp (buf, " .")) {
-                buf2 = g_strdup ("\n");
-            } else {
-                buf2 = g_strdup (buf);
-            }
+    return (ret);
+}
 
-            if (pkg->description) {
-                gchar *tmp = g_strconcat (pkg->description,
-                                          buf2 + strlen (" "), "\n", NULL);
-                g_free (pkg->description);
-                pkg->description = tmp;
-            } else {
-                pkg->description = g_strconcat (buf2 + strlen (" "), "\n",
-                                                NULL);
-            }
+static void
+query_all_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
+{
+    DebmanQueryInfo *dqi = (DebmanQueryInfo *)data;
 
-            g_free (buf2);
-        } else if (!strncmp (buf, "Version: ", strlen ("Version: "))) {
-            rc_debman_parse_version (buf + strlen ("Version: "),
-                                     &pkg->spec.epoch, &pkg->spec.version,
-                                     &pkg->spec.release);
-        } else if (!strncmp (buf, "Section: ", strlen ("Section: "))) {
-            gchar **tokens = g_strsplit (buf + strlen ("Section: "), "/", -1);
-            gint i = 0;
-            gchar *sec;
-            while (tokens[i+1] != NULL) i++;
-            sec = g_strchomp (tokens[i]);
-            if (!g_strcasecmp (sec, "admin")) {
-                pkg->spec.section = SECTION_SYSTEM;
-            } else if (!g_strcasecmp (sec, "base")) {
-                pkg->spec.section = SECTION_SYSTEM;
-            } else if (!g_strcasecmp (sec, "comm")) {
-                pkg->spec.section = SECTION_INTERNET;
-            } else if (!g_strcasecmp (sec, "devel")) {
-                pkg->spec.section = SECTION_DEVEL;
-            } else if (!g_strcasecmp (sec, "doc")) {
-                pkg->spec.section = SECTION_DOC;
-            } else if (!g_strcasecmp (sec, "editors")) {
-                pkg->spec.section = SECTION_UTIL;
-            } else if (!g_strcasecmp (sec, "electronics")) {
-                pkg->spec.section = SECTION_MISC;
-            } else if (!g_strcasecmp (sec, "games")) {
-                pkg->spec.section = SECTION_GAME;
-            } else if (!g_strcasecmp (sec, "graphics")) {
-                pkg->spec.section = SECTION_IMAGING;
-            } else if (!g_strcasecmp (sec, "hamradio")) {
-                pkg->spec.section = SECTION_MISC;
-            } else if (!g_strcasecmp (sec, "interpreters")) {
-                pkg->spec.section = SECTION_DEVELUTIL;
-            } else if (!g_strcasecmp (sec, "libs")) {
-                pkg->spec.section = SECTION_LIBRARY;
-            } else if (!g_strcasecmp (sec, "mail")) {
-                pkg->spec.section = SECTION_PIM;
-            } else if (!g_strcasecmp (sec, "math")) {
-                pkg->spec.section = SECTION_MISC;
-            } else if (!g_strcasecmp (sec, "misc")) {
-                pkg->spec.section = SECTION_MISC;
-            } else if (!g_strcasecmp (sec, "net")) {
-                pkg->spec.section = SECTION_INTERNET;
-            } else if (!g_strcasecmp (sec, "news")) {
-                pkg->spec.section = SECTION_INTERNET;
-            } else if (!g_strcasecmp (sec, "oldlibs")) {
-                pkg->spec.section = SECTION_LIBRARY;
-            } else if (!g_strcasecmp (sec, "otherosfs")) {
-                pkg->spec.section = SECTION_MISC;
-            } else if (!g_strcasecmp (sec, "science")) {
-                pkg->spec.section = SECTION_MISC;
-            } else if (!g_strcasecmp (sec, "shells")) {
-                pkg->spec.section = SECTION_SYSTEM;
-            } else if (!g_strcasecmp (sec, "sound")) {
-                pkg->spec.section = SECTION_MULTIMEDIA;
-            } else if (!g_strcasecmp (sec, "tex")) {
-                pkg->spec.section = SECTION_MISC;
-            } else if (!g_strcasecmp (sec, "text")) {
-                pkg->spec.section = SECTION_UTIL;
-            } else if (!g_strcasecmp (sec, "utils")) {
-                pkg->spec.section = SECTION_UTIL;
-            } else if (!g_strcasecmp (sec, "web")) {
-                pkg->spec.section = SECTION_INTERNET;
-            } else if (!g_strcasecmp (sec, "x11")) {
-                pkg->spec.section = SECTION_XAPP;
-            } else {
-                pkg->spec.section = SECTION_MISC;
-            }
-            g_strfreev (tokens);
-        } else if (!strncmp (buf, "Depends: ", strlen ("Depends: "))) {
-            pkg->requires = rc_debman_fill_depends (buf + strlen ("Depends: "),
-                                                    pkg->requires);
-        } else if (!strncmp (buf, "Recommends: ", strlen ("Recommends: "))) {
-            pkg->recommends = rc_debman_fill_depends (buf +
-                                                    strlen ("Recommends: "),
-                                                    pkg->recommends);
-        } else if (!strncmp (buf, "Suggests: ", strlen ("Suggests: "))) {
-            pkg->suggests = rc_debman_fill_depends (buf +
-                                                    strlen ("Suggests: "),
-                                                    pkg->suggests);
-        } else if (!strncmp (buf, "Pre-Depends: ", strlen ("Pre-Depends: "))) {
-            pkg->requires = rc_debman_fill_depends (buf +
-                                                    strlen ("Pre-Depends: "),
-                                                    pkg->requires);
-        } else if (!strncmp (buf, "Conflicts: ", strlen ("Conflicts: "))) {
-            pkg->conflicts = rc_debman_fill_depends (buf +
-                                                     strlen ("Conflicts: "),
-                                                     pkg->conflicts);
-            /*
-        } else if (!strncmp (buf, "Replaces: ", strlen ("Replaces: "))) {
-            pkg->conflicts = rc_debman_fill_depends (buf +
-                                                     strlen ("Replaces: "),
-                                                     pkg->conflicts);
-            */
-        } else if (!strncmp (buf, "Provides: ", strlen ("Provides: "))) {
-            pkg->provides = rc_debman_fill_depends (buf +
-                                                    strlen ("Provides: "),
-                                                    pkg->provides);
+    /* This is a blank line which terminates a package section in
+       /var/lib/dpkg/status, so save out our current buffer */
+    if (!line[0]) {
+        if (dqi->desc_buf && dqi->desc_buf->len) {
+            dqi->buf_pkg->description = get_description (dqi->desc_buf);
+            dqi->desc_buf = NULL;
         }
 
-        g_free (buf);
+        dqi->pkgs = g_slist_append (dqi->pkgs, dqi->buf_pkg);
+
+        dqi->buf_pkg = NULL;
+        goto END;
     }
 
-    g_free (buf);
-
-    /* Trim the trailing \n in the description */
-    if (pkg->description) {
-        guint length = strlen (pkg->description);
-        if (length > 1) {
-            pkg->description[length - 2] = '\0';
+    /* This is the beginning of a package section, so start up a new buffer
+       and set the package name */
+    if (!strncmp (line, "Package:", strlen ("Package:"))) {
+        /* Better make sure this isn't a malformed /var/lib/dpkg/status file,
+           so check to make sure we cleanly finished the last package */
+        if (dqi->buf_pkg) {
+            dqi->error = TRUE;
+            /* FIXME: must do something smart here */
+            goto END;
         }
+
+        dqi->buf_pkg = rc_package_new ();
+        dqi->buf_pkg->spec.name = g_strdup (line + strlen ("Package:"));
+        dqi->buf_pkg->spec.name = g_strchug (dqi->buf_pkg->spec.name);
+
+//        dqi->desc_buf = g_string_new (NULL);
+        goto END;
     }
 
-    if (!(strcmp ((*old_pkg)->spec.name, "gaim"))) {
-        sleep (1);
+    /* Check if this is a Status: line -- the only status we recognize is
+       "install ok installed".  RCDebman should reset any selections at
+       initialization, so that we don't have to worry about things like
+       "purge ok installed". */
+    if (!strcmp (line, "Status: install ok installed")) {
+        dqi->buf_pkg->spec.installed = TRUE;
+        goto END;
     }
 
-    /* Check and see if this is what I was looking for */
-    if ((!((*old_pkg)->spec.version) ||
-         !strcmp ((*old_pkg)->spec.version, pkg->spec.version)) &&
-        (!((*old_pkg)->spec.release) ||
-         !strcmp ((*old_pkg)->spec.release, pkg->spec.release))) {
-
-        pkg->spec.name = g_strdup ((*old_pkg)->spec.name);
-        /* Make sure to provide myself, for the dep code! */
-        item = rc_package_dep_item_new (pkg->spec.name, pkg->spec.epoch,
-                                        pkg->spec.version, pkg->spec.release,
-                                        RC_RELATION_EQUAL);
-        dep = g_slist_append (NULL, item);
-        pkg->provides = g_slist_append (pkg->provides, dep);
-
-        rc_package_free (*old_pkg);
-        *old_pkg = pkg;
-    } else {
-        rc_package_free (pkg);
+    if (!strncmp (line, "Installed-Size:", strlen ("Installed-Size:"))) {
+        dqi->buf_pkg->spec.installed_size =
+            strtoul (line + strlen ("Installed-Size:"), NULL, 10) * 1024;
+        goto END;
     }
+
+    if (!strncmp (line, "Description:", strlen ("Description:"))) {
+        dqi->buf_pkg->summary = g_strdup (line + strlen ("Description:"));
+        dqi->buf_pkg->summary = g_strchug (dqi->buf_pkg->summary);
+        /* After Description: comes the long description */
+        dqi->desc_buf = g_string_new (NULL);
+        goto END;
+    }
+
+    if ((line[0] == ' ') && dqi->desc_buf) {
+        if ((line[1] != '.') || line[2]) {
+            dqi->desc_buf = g_string_append (dqi->desc_buf, line + 1);
+        }
+        dqi->desc_buf = g_string_append (dqi->desc_buf, "\n");
+        goto END;
+    }
+
+    if (!strncmp (line, "Version:", strlen ("Version:"))) {
+        gchar *tmp = g_strchug (g_strdup (line + strlen ("Version:")));
+        rc_debman_parse_version (tmp, &dqi->buf_pkg->spec.epoch,
+                                 &dqi->buf_pkg->spec.version,
+                                 &dqi->buf_pkg->spec.release);
+        g_free (tmp);
+        goto END;
+    }
+
+    if (!strncmp (line, "Section:", strlen ("Section:"))) {
+        gchar *tmp = g_strchug (g_strdup (line + strlen ("Section:")));
+        gchar *sec = strstr (tmp, "/");
+
+        if (!sec) {
+            sec = tmp;
+        } else {
+            sec++;
+        }
+
+        if (!g_strcasecmp (sec, "admin")) {
+            dqi->buf_pkg->spec.section = SECTION_SYSTEM;
+        } else if (!g_strcasecmp (sec, "base")) {
+            dqi->buf_pkg->spec.section = SECTION_SYSTEM;
+        } else if (!g_strcasecmp (sec, "comm")) {
+            dqi->buf_pkg->spec.section = SECTION_INTERNET;
+        } else if (!g_strcasecmp (sec, "devel")) {
+            dqi->buf_pkg->spec.section = SECTION_DEVEL;
+        } else if (!g_strcasecmp (sec, "doc")) {
+            dqi->buf_pkg->spec.section = SECTION_DOC;
+        } else if (!g_strcasecmp (sec, "editors")) {
+            dqi->buf_pkg->spec.section = SECTION_UTIL;
+        } else if (!g_strcasecmp (sec, "electronics")) {
+            dqi->buf_pkg->spec.section = SECTION_MISC;
+        } else if (!g_strcasecmp (sec, "games")) {
+            dqi->buf_pkg->spec.section = SECTION_GAME;
+        } else if (!g_strcasecmp (sec, "graphics")) {
+            dqi->buf_pkg->spec.section = SECTION_IMAGING;
+        } else if (!g_strcasecmp (sec, "hamradio")) {
+            dqi->buf_pkg->spec.section = SECTION_MISC;
+        } else if (!g_strcasecmp (sec, "interpreters")) {
+            dqi->buf_pkg->spec.section = SECTION_DEVELUTIL;
+        } else if (!g_strcasecmp (sec, "libs")) {
+            dqi->buf_pkg->spec.section = SECTION_LIBRARY;
+        } else if (!g_strcasecmp (sec, "mail")) {
+            dqi->buf_pkg->spec.section = SECTION_PIM;
+        } else if (!g_strcasecmp (sec, "math")) {
+            dqi->buf_pkg->spec.section = SECTION_MISC;
+        } else if (!g_strcasecmp (sec, "misc")) {
+            dqi->buf_pkg->spec.section = SECTION_MISC;
+        } else if (!g_strcasecmp (sec, "net")) {
+            dqi->buf_pkg->spec.section = SECTION_INTERNET;
+        } else if (!g_strcasecmp (sec, "news")) {
+            dqi->buf_pkg->spec.section = SECTION_INTERNET;
+        } else if (!g_strcasecmp (sec, "oldlibs")) {
+            dqi->buf_pkg->spec.section = SECTION_LIBRARY;
+        } else if (!g_strcasecmp (sec, "otherosfs")) {
+            dqi->buf_pkg->spec.section = SECTION_MISC;
+        } else if (!g_strcasecmp (sec, "science")) {
+            dqi->buf_pkg->spec.section = SECTION_MISC;
+        } else if (!g_strcasecmp (sec, "shells")) {
+            dqi->buf_pkg->spec.section = SECTION_SYSTEM;
+        } else if (!g_strcasecmp (sec, "sound")) {
+            dqi->buf_pkg->spec.section = SECTION_MULTIMEDIA;
+        } else if (!g_strcasecmp (sec, "tex")) {
+            dqi->buf_pkg->spec.section = SECTION_MISC;
+        } else if (!g_strcasecmp (sec, "text")) {
+            dqi->buf_pkg->spec.section = SECTION_UTIL;
+        } else if (!g_strcasecmp (sec, "utils")) {
+            dqi->buf_pkg->spec.section = SECTION_UTIL;
+        } else if (!g_strcasecmp (sec, "web")) {
+            dqi->buf_pkg->spec.section = SECTION_INTERNET;
+        } else if (!g_strcasecmp (sec, "x11")) {
+            dqi->buf_pkg->spec.section = SECTION_XAPP;
+        } else {
+            dqi->buf_pkg->spec.section = SECTION_MISC;
+        }
+
+        g_free (tmp);
+        goto END;
+    }
+
+    if (!strncmp (line, "Depends:", strlen ("Depends:"))) {
+        gchar *tmp = g_strchug (g_strdup (line + strlen ("Depends:")));
+        dqi->buf_pkg->requires =
+            rc_debman_fill_depends (tmp, dqi->buf_pkg->requires);
+        g_free (tmp);
+        goto END;
+    }
+
+    if (!strncmp (line, "Recommends:", strlen ("Recommends:"))) {
+        gchar *tmp = g_strchug (g_strdup (line + strlen ("Recommends:")));
+        dqi->buf_pkg->recommends =
+            rc_debman_fill_depends (tmp, dqi->buf_pkg->recommends);
+        g_free (tmp);
+        goto END;
+    }
+
+    if (!strncmp (line, "Suggests:", strlen ("Suggests:"))) {
+        gchar *tmp = g_strchug (g_strdup (line + strlen ("Suggests:")));
+        dqi->buf_pkg->suggests =
+            rc_debman_fill_depends (tmp, dqi->buf_pkg->suggests);
+        g_free (tmp);
+        goto END;
+    }
+
+    if (!strncmp (line, "Pre-Depends:", strlen ("Pre-Depends:"))) {
+        gchar *tmp = g_strchug (g_strdup (line + strlen ("Pre-Depends:")));
+        dqi->buf_pkg->requires =
+            rc_debman_fill_depends (tmp, dqi->buf_pkg->requires);
+        g_free (tmp);
+        goto END;
+    }
+
+    if (!strncmp (line, "Conflicts:", strlen ("Conflicts:"))) {
+        gchar *tmp = g_strchug (g_strdup (line + strlen ("Conflicts:")));
+        dqi->buf_pkg->conflicts =
+            rc_debman_fill_depends (tmp, dqi->buf_pkg->conflicts);
+        g_free (tmp);
+        goto END;
+    }
+
+    if (!strncmp (line, "Provides:", strlen ("Provides:"))) {
+        gchar *tmp = g_strchug (g_strdup (line + strlen ("Provides:")));
+        dqi->buf_pkg->provides =
+            rc_debman_fill_depends (tmp, dqi->buf_pkg->provides);
+        g_free (tmp);
+        goto END;
+    }
+
+  END:
+    g_free (line);
+    return;
+}
+
+static void
+query_all_read_done_cb (RCLineBuf *lb, gpointer data)
+{
+    DebmanQueryInfo *dqi = (DebmanQueryInfo *)data;
+
+    gtk_signal_disconnect_by_func (GTK_OBJECT (lb),
+                                   GTK_SIGNAL_FUNC (query_all_read_line_cb),
+                                   data);
+    gtk_signal_disconnect_by_func (GTK_OBJECT (lb),
+                                   GTK_SIGNAL_FUNC (query_all_read_done_cb),
+                                   data);
+
+    g_main_quit (dqi->loop);
 }
 
 static void
 rc_debman_query_all_real (RCPackman *p)
 {
-    FILE *fp;
-    gchar *buf;
+    int fd;
     RCLineBuf *lb;
     RCDebman *d = RC_DEBMAN (p);
+    DebmanQueryInfo dqi;
+    RCPackageSList *iter;
+    GMainLoop *loop;
 
-    if (!(fp = fopen ("/var/lib/dpkg/status", "r"))) {
+    if (!(fd = open ("/var/lib/dpkg/status", O_RDONLY))) {
         rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
                               "Unable to open /var/lib/dpkg/status");
         return;
     }
 
-    lb = rc_line_buf_new (fp);
+    loop = g_main_new (FALSE);
 
-    while ((buf = rc_line_buf_read (lb))) {
-        RCPackage *pkg = rc_package_new ();
+    dqi.pkgs = NULL;
+    dqi.buf_pkg = NULL;
+    dqi.desc_buf = NULL;
+    dqi.error = FALSE;
+    dqi.loop = loop;
 
-        if (strncmp (buf, "Package: ", strlen ("Package: "))) {
-            rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
-                                  "Malformed /var/lib/dpkg/status file");
-            g_free (buf);
-            rc_package_free (pkg);
-            return;
-        }
+    lb = rc_line_buf_new ();
 
-        pkg->spec.name = g_strdup (buf + strlen ("Package: "));
+    gtk_signal_connect (GTK_OBJECT (lb), "read_line",
+                        GTK_SIGNAL_FUNC (query_all_read_line_cb),
+                        (gpointer) &dqi);
+    gtk_signal_connect (GTK_OBJECT (lb), "read_done",
+                        GTK_SIGNAL_FUNC (query_all_read_done_cb),
+                        (gpointer) &dqi);
 
-        g_free (buf);
+    rc_line_buf_set_fd (lb, fd);
 
-        rc_debman_query_helper (lb, &pkg);
+    g_main_run (loop);
+
+//    gtk_object_destroy (GTK_OBJECT (lb));
+    gtk_object_unref (GTK_OBJECT (lb));
+
+    g_main_destroy (loop);
+
+    for (iter = dqi.pkgs; iter; iter = iter->next) {
+        RCPackage *pkg = (RCPackage *)(iter->data);
 
         if (pkg->spec.installed) {
-            g_hash_table_insert (d->pkg_hash,
-                                 (gpointer) pkg->spec.name,
+            g_hash_table_insert (d->pkg_hash, (gpointer) pkg->spec.name,
                                  (gpointer) pkg);
         } else {
             rc_package_free (pkg);
         }
     }
 
+    g_slist_free (dqi.pkgs);
+
     d->hash_valid = TRUE;
 
-    rc_line_buf_destroy (lb);
-    fclose (fp);
+    close (fd);
 }
 
 static void
@@ -1076,47 +1354,6 @@ rc_debman_query_all (RCPackman *p)
     return pkgs;
 }
 
-#if 0
-static RCPackage *
-rc_debman_query_real (RCPackman *p, RCPackage *pkg)
-{
-    FILE *fp;
-    gchar *buf;
-    gchar *target;
-    RCLineBuf *lb;
-
-    if (!(fp = fopen (status_file, "r"))) {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
-                              "Unable to open /var/lib/dpkg/status");
-        return (pkg);
-    }
-
-    pkg->spec.installed = FALSE;
-
-    g_assert (pkg);
-    g_assert (pkg->spec.name);
-
-    target = g_strconcat ("Package: ", pkg->spec.name, NULL);
-
-    lb = rc_line_buf_new (fp);
-    while ((buf = rc_line_buf_read (lb))) {
-        if (!strcmp (buf, target)) {
-            g_free (buf);
-            rc_debman_query_helper (lb, &pkg);
-            break;
-        }
-
-        g_free (buf);
-    }
-    rc_line_buf_destroy (lb);
-
-    g_free (target);
-    fclose (fp);
-    
-    return (pkg);
-}
-#endif
-
 static RCPackage *
 rc_debman_query (RCPackman *p, RCPackage *pkg)
 {
@@ -1127,9 +1364,6 @@ rc_debman_query (RCPackman *p, RCPackage *pkg)
     g_assert (pkg->spec.name);
 
     if (!d->hash_valid) {
-#if 0
-        return (rc_debman_query_real (p, pkg));
-#endif
         rc_debman_query_all_real (p);
     }
 
@@ -1150,62 +1384,96 @@ rc_debman_query (RCPackman *p, RCPackage *pkg)
 static RCPackage *
 rc_debman_query_file (RCPackman *p, gchar *filename)
 {
-    gchar *file;
+    int rfds[2];
     pid_t child;
-    FILE *fp;
-    RCPackage *pkg = rc_package_new ();
-    gchar *buf;
-    gchar *path;
+    int status;
     RCLineBuf *lb;
+    DebmanQueryInfo dqi;
+    GMainLoop *loop;
 
-    path = rc_mktmpdir (NULL);
+    pipe (rfds);
+    fcntl (rfds[0], F_SETFL, O_NONBLOCK);
+    fcntl (rfds[1], F_SETFL, O_NONBLOCK);
 
-    if (!(child = fork())) {
-        fclose (stdout);
-        fclose (stderr);
-        signal (SIGPIPE, SIG_DFL);
-        execl ("/usr/bin/dpkg-deb", "/usr/bin/dpkg-deb", "--control",
-               filename, path, NULL);
-    } else {
-        /* FIXME: do some error checking */
+    child = fork ();
 
-        while (!waitpid (child, NULL, WNOHANG)) {
-            while (gtk_events_pending ()) {
-                gtk_main_iteration ();
-            }
-        }
-    }
-
-    file = g_strconcat (path, "/control", NULL);
-
-    if (!(fp = fopen (file, "r"))) {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
-                              "Unable to open package control file");
-        rc_rmdir (path);
-        g_free (path);
-        g_free (file);
+    switch (child) {
+    case -1:
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
+                              "Unable to fork and exec dpkg-deb to query "
+                              "file");
+        close (rfds[0]);
+        close (rfds[1]);
         return (NULL);
+        break;
+
+    case 0:
+        signal (SIGPIPE, SIG_DFL);
+
+        close (rfds[0]);
+
+        fflush (stdout);
+        dup2 (rfds[1], STDOUT_FILENO);
+        close (rfds[1]);
+
+        fclose (stderr);
+
+        execl ("/usr/bin/dpkg-deb", "/usr/bin/dpkg-deb", "-f", filename, NULL);
+        break;
+
+    default:
+        close (rfds[1]);
+
+        loop = g_main_new (FALSE);
+
+        dqi.buf_pkg = NULL;
+        dqi.desc_buf = NULL;
+        dqi.pkgs = NULL;
+        dqi.error = FALSE;
+        dqi.loop = loop;
+
+        lb = rc_line_buf_new ();
+
+        gtk_signal_connect (GTK_OBJECT (lb), "read_line",
+                            GTK_SIGNAL_FUNC (query_all_read_line_cb),
+                            (gpointer) &dqi);
+        gtk_signal_connect (GTK_OBJECT (lb), "read_done",
+                            GTK_SIGNAL_FUNC (query_all_read_done_cb),
+                            (gpointer) &dqi);
+
+        rc_line_buf_set_fd (lb, rfds[0]);
+
+        g_main_run (loop);
+
+//        gtk_object_destroy (GTK_OBJECT (lb));
+        gtk_object_unref (GTK_OBJECT (lb));
+
+        g_main_destroy (loop);
+
+        waitpid (child, &status, 0);
+
+        close (rfds[0]);
+
+        if (!(WIFEXITED (status)) ||
+            WEXITSTATUS (status) ||
+            !dqi.buf_pkg)
+        {
+            rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+                                  "There was an error running the dpkg-deb "
+                                  "command to query the file.");
+            return (NULL);
+        }
+
+        if (dqi.desc_buf) {
+            dqi.buf_pkg->description = get_description (dqi.desc_buf);
+            dqi.desc_buf = NULL;
+        }
+
+        return (dqi.buf_pkg);
     }
 
-    
-    g_free (file);
-
-    lb = rc_line_buf_new (fp);
-    buf = rc_line_buf_read (lb);
-
-    pkg->spec.name = g_strdup (buf + strlen ("Package: "));
-
-    g_free (buf);
-
-    rc_debman_query_helper (lb, &pkg);
-    rc_line_buf_destroy (lb);
-    fclose (fp);
-
-    rc_rmdir (path);
-
-    g_free (path);
-
-    return (pkg);
+    /* Not reached */
+    return (NULL);
 }
 
 static void
@@ -1239,7 +1507,7 @@ rc_debman_class_init (RCDebmanClass *klass)
     putenv ("DEBIAN_FRONTEND=noninteractive");
 
     deps_conflicts_use_virtual_packages (FALSE);
-} /* rc_debman_class_init */
+}
 
 static void
 rc_debman_init (RCDebman *obj)
@@ -1256,7 +1524,7 @@ rc_debman_init (RCDebman *obj)
 
     obj->pkg_hash = g_hash_table_new (g_str_hash, g_str_equal);
     obj->hash_valid = FALSE;
-} /* rc_debman_init */
+}
 
 RCDebman *
 rc_debman_new (void)
@@ -1275,4 +1543,4 @@ rc_debman_new (void)
     }
 
     return new;
-} /* rc_debman_new */
+}

@@ -54,6 +54,8 @@ libredcarpet_a_SOURCES =		\
         rc-md5-private.h                \
         xml-util.c                      \
         xml-util.h                      \
+	rc-line-buf.c			\
+	rc-line-buf.h			\
         $(rpm_sources2)
 
 #	rc-crypto.c			\
