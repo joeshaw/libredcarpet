@@ -1,3 +1,8 @@
+2001-04-19  unknown  <vladimir@ximian.com>
+
+	* rc-deps.c: don't make a conflict in some cases, but wait until
+	the end to see if it can indeed be provided
+
 2001-04-18  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c (split_rpm): close the payload file when we're done
