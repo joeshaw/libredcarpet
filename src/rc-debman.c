@@ -2537,10 +2537,10 @@ rc_debman_verify (RCPackman *packman, RCPackage *package)
         return (NULL);
     }
 
-    if (update && update->package_filename && (update->package_size > 0)) {
+    if (update && package->package_filename && (update->package_size > 0)) {
         RCVerification *verification;
 
-        verification = rc_verify_size (update->package_filename,
+        verification = rc_verify_size (package->package_filename,
                                        update->package_size);
 
         ret = g_slist_append (ret, verification);
