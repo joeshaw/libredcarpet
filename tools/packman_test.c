@@ -65,11 +65,11 @@ int main (int argc, char **argv)
 
         if ((argc > 1) && strcmp (argv[1], "-qa")) {
             if (argc == 5) {
-                HP_ADD_PACKAGE (query, argv[2], argv[3], argv[4]);
+                HP_ADD_PACKAGE (query, argv[2], argv[3], argv[4], 0);
             } else if (argc == 4) {
-                HP_ADD_PACKAGE (query, argv[2], argv[3], NULL);
+                HP_ADD_PACKAGE (query, argv[2], argv[3], NULL, 0);
             } else {
-                HP_ADD_PACKAGE (query, argv[2], NULL, NULL);
+                HP_ADD_PACKAGE (query, argv[2], NULL, NULL, 0);
             }
 
             if (!query) {
@@ -97,7 +97,7 @@ int main (int argc, char **argv)
             HP_PACKAGE_LIST *rlist = NULL;
 
             for (i = 2; i < argc; i++) {
-                HP_ADD_PACKAGE (rlist, argv[i], NULL, NULL);
+                HP_ADD_PACKAGE (rlist, argv[i], NULL, NULL, 0);
             }
 
             if (!rlist) {
@@ -165,11 +165,11 @@ int main (int argc, char **argv)
         }
 
         if (argc == 3) {
-            HP_ADD_PACKAGE (dlist, argv[2], NULL, NULL);
+            HP_ADD_PACKAGE (dlist, argv[2], NULL, NULL, 0);
         } else if (argc == 4) {
-            HP_ADD_PACKAGE (dlist, argv[2], argv[3], NULL);
+            HP_ADD_PACKAGE (dlist, argv[2], argv[3], NULL, 0);
         } else {
-            HP_ADD_PACKAGE (dlist, argv[2], argv[3], argv[4]);
+            HP_ADD_PACKAGE (dlist, argv[2], argv[3], argv[4], 0);
         }
 
         dlist = helix_packman_depends (hp, dlist);
@@ -215,7 +215,7 @@ int main (int argc, char **argv)
     } else if (!strncmp (argv[1], "-t", 2)) {
         HP_PACKAGE_LIST *list = NULL;
 
-        HP_ADD_PACKAGE (list, "joe-testpkg", "3.0", "1");
+        HP_ADD_PACKAGE (list, "joe-testpkg", "3.0", "1", 0);
 
         list = helix_packman_depends (hp, list);
 
