@@ -1,3 +1,8 @@
+2003-05-08  Joe Shaw  <joe@ximian.com>
+
+	* rc-arch.c: The _to_string() functiosn do a first-match, and we
+	want to prefer "noarch" to "all".
+
 2003-05-05  Joe Shaw  <joe@ximian.com>
 
 	* rc-package-file.c (rc_package_file_free,
