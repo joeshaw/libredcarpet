@@ -1,3 +1,8 @@
+2002-09-23  Ian Peters  <itp@ximian.com>
+
+	* rc-arch.c (rc_arch_get_system_arch): handle a wider range of
+	uname return values
+
 2002-09-20  Joe Shaw  <joe@ximian.com>
 
 	* rc-distro.c (sax_end_element): Check to make sure the arch score

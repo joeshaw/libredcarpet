@@ -118,7 +118,7 @@ rc_arch_get_system_arch (void)
     static RCArch arch;
 
     if (!checked) {
-        if (uname (&buf))
+        if (uname (&buf) < 0)
             arch = RC_ARCH_UNKNOWN;
         else
             arch = rc_arch_from_string (buf.machine);
