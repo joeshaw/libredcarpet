@@ -1,5 +1,11 @@
 2003-09-23  Joe Shaw  <joe@ximian.com>
 
+	* rc-rpmman.c (vercmp): Remove #ifdefs for STRICT_RPM_ORDER.
+	Ximian's packages are all fixed now and the order is defined in
+	newer RPM versions.  Patch from Peter Bowen (pzb@ximian.com).
+
+2003-09-23  Joe Shaw  <joe@ximian.com>
+
 	* rc-queue-item.c (install_item_process): We need to call
 	rc_world_foreach_conflicting_package() on everything that we
 	provide, not just our name.

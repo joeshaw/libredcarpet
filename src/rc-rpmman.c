@@ -2540,16 +2540,6 @@ vercmp(const char * a, const char * b)
     strcpy(str1, a);
     strcpy(str2, b);
 
-#ifndef STRICT_RPM_ORDER
-    /* Take care of broken Mandrake releases */
-    if ((alen > 3) && !strcmp (a + alen - 3, "mdk")) {
-        str1[alen - 3] = '\0';
-    }
-    if ((blen > 3) && !strcmp (b + blen - 3, "mdk")) {
-        str2[blen - 3] = '\0';
-    }
-#endif
-
     one = str1;
     two = str2;
 
@@ -2589,14 +2579,10 @@ vercmp(const char * a, const char * b)
         /* different types: one numeric and one alpha */
 
         /* Here's how we handle comparing numeric and non-numeric
-         * segments -- non-numeric (ximian.1) always sorts higher than
-         * numeric (0_helix_1). */
+         * segments -- non-numeric (ximian.1) always sorts lower than
+         * numeric (0.ximian.6.1). */
         if (two == str2)
-#ifdef STRICT_RPM_ORDER
             return (isnum ? 1 : -1);
-#else
-            return (isnum ? -1 : 1);
-#endif
 
         if (isnum) {
             /* this used to be done by converting the digit segments */
@@ -2654,13 +2640,6 @@ rc_rpmman_version_compare (RCPackman *packman,
     }
     if (rc) return rc;
     
-    /* WARNING: This is partially broken, because you cannot
-     * tell the difference between an epoch of zero and no epoch */
-    /* NOTE: when the code is changed, foo->spec.epoch will be an
-     * existance test for the epoch and foo->spec.epoch > 0 will 
-     * be a test for > 0.  Right now these are the same, but
-     * please leave the code as-is. */
-
     if (spec1->has_epoch && spec2->has_epoch) {
         rc = spec1->epoch - spec2->epoch;
     } else if (spec1->has_epoch && spec1->epoch > 0) {
