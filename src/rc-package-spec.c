@@ -27,15 +27,11 @@
 #include "rc-package-spec.h"
 #include "rc-packman.h"
 
+/* This is quite stupid, but required for bindings. */
 RCPackageSpec *
-rc_package_spec_new (const gchar *name,
-                     gboolean has_epoch,
-                     guint32 epoch,
-                     const gchar *version,
-                     const gchar *release)
+rc_package_spec_new (void)
 {
-    RCPackageSpec *spec = g_new0 (RCPackageSpec, 1);
-    rc_package_spec_init (spec, name, has_epoch, epoch, version, release);
+    return g_new0 (RCPackageSpec, 1);
 }
 
 void

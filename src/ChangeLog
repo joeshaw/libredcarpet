@@ -1,3 +1,9 @@
+2004-12-03  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-package-spec.h: 
+	* rc-package-spec.c (rc_package_spec_new): Remove arguments. This was
+	needed so that wrappers could have required default constructor.
+
 2004-12-01  Peter Teichman <peter@ximian.com>
 
 	* rc-package-dep.c: (rc_package_relation_from_string),
