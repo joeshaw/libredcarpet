@@ -143,7 +143,7 @@ rc_pending_class_init (RCPendingClass *klass)
         g_signal_new ("message",
                       G_TYPE_FROM_CLASS (klass),
                       G_SIGNAL_RUN_FIRST,
-                      G_STRUCT_OFFSET (RCPendingClass, complete),
+                      G_STRUCT_OFFSET (RCPendingClass, message),
                       NULL, NULL,
                       rc_marshal_VOID__VOID,
                       G_TYPE_NONE, 0);

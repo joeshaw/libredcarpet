@@ -197,10 +197,11 @@ rc_world_synthetic_assemble (RCWorldService *service)
     ++cptr;
     if (! *cptr)
         return FALSE;
-    /* We append an extra '/' to the beginning of the file name so
-       that something broken like 'synthetic:foo/bar' gets treated
-       as '/foo/bar' and isn't relative to the cwd. */
-    synth->database_fn = g_strconcat ("/", cptr, NULL);
+
+    if (*cptr == '/')
+        synth->database_fn = g_strdup (cptr);
+    else
+        synth->database_fn = g_strconcat ("/", cptr, NULL);
     
     service->name = g_strdup ("Synthetic");
     service->unique_id = g_strdup ("@synthetic");
