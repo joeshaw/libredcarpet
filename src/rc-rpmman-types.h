@@ -32,4 +32,31 @@ typedef struct {
     const char *indexname;
 } rc_dbiIndex;
 
+/* not in rpm < 3.0.4, I think */
+
+typedef struct rc_FDIO_s rc_FDIO_t;
+
+struct rc_FDIO_s {
+  void *        read;
+  void *       write;
+  void *        seek;
+  void *       close;
+
+  void *         _fdref;
+  void *       _fdderef;
+  void *         _fdnew;
+  void *      _fileno;
+
+  void *        _open;
+  void *       _fopen;
+  void *     _ffileno;
+  void *      _fflush;
+
+  void *       _mkdir;
+  void *       _chdir;
+  void *       _rmdir;
+  void *      _rename;
+  void *      _unlink;
+};
+
 #endif

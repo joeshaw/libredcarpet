@@ -2078,16 +2078,26 @@ load_rpm_syms (RCRpmman *rpmman)
     if (!g_module_symbol (rpmman->rpm_lib, "fdOpen",
                           ((gpointer)&rpmman->rc_fdOpen)))
     {
-        return (FALSE);
-    }
-    if (!g_module_symbol (rpmman->rpm_lib, "fdRead",
-                          ((gpointer)&rpmman->rc_fdRead)))
-    {
-        return (FALSE);
-    }
-    if (!g_module_symbol (rpmman->rpm_lib, "fdClose",
-                          ((gpointer)&rpmman->rc_fdClose))) {
-        return (FALSE);
+        rc_FDIO_t *fdio;
+
+        if (!g_module_symbol (rpmman->rpm_lib, "fdio",
+                              ((gpointer)&fdio))) {
+            return (FALSE);
+        }
+
+        rpmman->rc_fdOpen = fdio->_open;
+        rpmman->rc_fdRead = fdio->read;
+        rpmman->rc_fdClose = fdio->close;
+    } else {
+        if (!g_module_symbol (rpmman->rpm_lib, "fdRead",
+                              ((gpointer)&rpmman->rc_fdRead)))
+        {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "fdClose",
+                              ((gpointer)&rpmman->rc_fdClose))) {
+            return (FALSE);
+        }
     }
     /*
     if (!g_module_symbol (rpmman->rpm_lib, "Ferror",

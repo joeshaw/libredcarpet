@@ -1,3 +1,10 @@
+2001-04-10  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman-types.h: the borrowed FDIO struct from rpmio.h
+
+	* rc-rpmman.c: if we can't get fdOpen, maybe that's because fdOpen
+	is actually fdio->_open.  did you ever think of that?
+
 2001-04-09  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c: oops, fix an infinite loop case..
