@@ -1,5 +1,18 @@
 2002-03-05  Jon Trowbridge  <trow@ximian.com>
 
+	* rc-queue-item.h: Add concept of priority to queue items.	
+
+	* rc-queue-item.c (package_slist_to_string): Added back.
+	(install_item_to_string): Made more verbose.
+	(rc_queue_item_new_uninstall): Boost the priority of uninstall
+	items, so that they get processed first.
+	(install_item_process): If we have ->needed_by packages, and if
+	they are all marked as to-be-uninstalled, do nothing.  (This fixes
+	verification case #37.)
+
+	* rc-resolver-queue.c (rc_resolver_queue_process_once): Process
+	items in order of priority.
+
 	* rc-world.c (rc_world_remove_package): Added.  Allows a single
 	package to be removed from the RCWorld.
 	(remove_packages_generic): Added.  This is a static function for

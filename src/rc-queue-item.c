@@ -231,6 +231,32 @@ dep_slist_to_string (GSList *slist)
     return str;
 }
 
+static char *
+package_slist_to_string (GSList *slist)
+{
+    char **strv, *str;
+    int i;
+
+    if (slist == NULL)
+        return g_strdup ("(none)");
+
+    strv = g_new0 (char *, g_slist_length (slist)+1);
+    
+    i = 0;
+    while (slist) {
+        RCPackage *pkg = slist->data;
+        strv[i] = rc_package_to_str (pkg);
+        slist = slist->next;
+        ++i;
+    }
+
+    str = g_strjoinv (", ", strv);
+
+    g_strfreev (strv);
+
+    return str;
+}
+
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 static gboolean
@@ -251,6 +277,19 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
     RCPackageStatus status = rc_resolver_context_get_status (context, package);
 
     GSList *iter;
+
+    if (install->needed_by) {
+        gboolean still_needed = FALSE;
+        GSList *iter;
+        for (iter = install->needed_by; iter != NULL && !still_needed; iter = iter->next) {
+            RCPackage *needer = iter->data;
+            if (rc_resolver_context_get_status (context, needer) != RC_PACKAGE_STATUS_TO_BE_UNINSTALLED)
+                still_needed = TRUE;
+        }
+
+        if (! still_needed)
+            goto finished;
+    }
 
     if (install->upgrades == NULL) {
 
@@ -366,10 +405,24 @@ static char *
 install_item_to_string (RCQueueItem *item)
 {
     RCQueueItem_Install *install = (RCQueueItem_Install *) item;
+    char *pkg_str = NULL, *dep_str = NULL, *str;
+    
+    if (install->deps_satisfied_by_this_install)
+        dep_str = dep_slist_to_string (install->deps_satisfied_by_this_install);
 
-    return g_strconcat ("install ",
-                        rc_package_to_str_static (install->package),
-                        NULL);
+    if (install->needed_by)
+        pkg_str = package_slist_to_string (install->needed_by);
+
+    str = g_strconcat ("install ",
+                       rc_package_to_str_static (install->package),
+                       pkg_str ? " needed by ": NULL,
+                       pkg_str,
+                       dep_str ? " (" : NULL,
+                       dep_str,
+                       ")",
+                       NULL);
+
+    return str;
 }
 
 RCQueueItem *
@@ -1251,6 +1304,7 @@ rc_queue_item_new_uninstall (RCPackage *package, const char *reason)
     item = (RCQueueItem *) uninstall;
 
     item->type      = RC_QUEUE_ITEM_TYPE_UNINSTALL;
+    item->priority  = 100;
     item->size      = sizeof (RCQueueItem_Uninstall);
     item->process   = uninstall_item_process;
     item->destroy   = uninstall_item_destroy;

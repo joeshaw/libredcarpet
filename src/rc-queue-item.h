@@ -52,6 +52,7 @@ typedef struct _RCQueueItem_Uninstall RCQueueItem_Uninstall;
 
 struct _RCQueueItem {
     RCQueueItemType type;
+    int priority;
     size_t size;
     GSList *pending_info;
 
