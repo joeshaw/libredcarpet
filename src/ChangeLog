@@ -1,6 +1,7 @@
 2003-10-24  Joe Shaw  <joe@ximian.com>
 
-	* distributions.xml: Add support for RHEL 3 AS, ES, and WS.
+	* distributions.xml: Add support for RHEL 3 AS, ES, and WS and
+	SuSE 9.0.
 
 	* Makefile.am: Build two stubs for RPM 4.1: ones linked against
 	libpopt.so.1 (SuSE) and ones against libpopt.so.0 (everyone else).
