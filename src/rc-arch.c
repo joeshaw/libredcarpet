@@ -52,6 +52,7 @@ static RCArchAndName arch_table[] = {
     { "ppc64",   RC_ARCH_PPC64 },
     { "s390",    RC_ARCH_S390 },
     { "s390x",   RC_ARCH_S390X },
+    { "ia64",    RC_ARCH_IA64 },
     { "sparc",   RC_ARCH_SPARC },
     { "sun4c",   RC_ARCH_SPARC },
     { "sun4d",   RC_ARCH_SPARC },

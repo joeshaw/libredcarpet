@@ -472,6 +472,116 @@
                         <file source="/etc/SuSE-release" substring="SLES-8"/>
                 </detect>
         </distro>
+        <distro>
+                <name>SuSE Linux Enterprise Server</name>
+                <version>9</version>
+                <arch>i386</arch>
+                <type>rpm</type>
+                <target>sles-9-i386</target>
+                <status>supported</status>
+                <detect>
+                        <file source="/etc/SuSE-release" substring="SUSE LINUX Enterprise Server 9"/>
+                </detect>
+        </distro>
+        <distro>
+                <name>SuSE Linux Enterprise Server</name>
+                <version>9</version>
+                <arch>i686</arch>
+                <type>rpm</type>
+                <target>sles-9-i686</target>
+                <status>supported</status>
+                <detect>
+                        <file source="/etc/SuSE-release" substring="SUSE LINUX Enterprise Server 9"/>
+                </detect>
+        </distro>
+        <distro>
+                <name>SuSE Linux Enterprise Server</name>
+                <version>9</version>
+                <arch>ia64</arch>
+                <type>rpm</type>
+                <target>sles-9-ia64</target>
+                <status>supported</status>
+                <detect>
+                        <file source="/etc/SuSE-release" substring="SUSE LINUX Enterprise Server 9"/>
+                </detect>
+        </distro>
+        <distro>
+                <name>SuSE Linux Enterprise Server</name>
+                <version>9</version>
+                <arch>ppc64</arch>
+                <type>rpm</type>
+                <target>sles-9-ppc64</target>
+                <status>supported</status>
+                <detect>
+                        <file source="/etc/SuSE-release" substring="SUSE LINUX Enterprise Server 9"/>
+                </detect>
+        </distro>
+        <distro>
+                <name>SuSE Linux Enterprise Server</name>
+                <version>9</version>
+                <arch>ppc</arch>
+                <type>rpm</type>
+                <target>sles-9-ppc</target>
+                <status>supported</status>
+                <detect>
+                        <file source="/etc/SuSE-release" substring="SUSE LINUX Enterprise Server 9"/>
+                </detect>
+        </distro>
+        <distro>
+                <name>SuSE Linux Enterprise Server</name>
+                <version>9</version>
+                <arch>s390</arch>
+                <type>rpm</type>
+                <target>sles-9-s390</target>
+                <status>supported</status>
+                <detect>
+                        <file source="/etc/SuSE-release" substring="SUSE LINUX Enterprise Server 9"/>
+                </detect>
+        </distro>
+        <distro>
+                <name>SuSE Linux Enterprise Server</name>
+                <version>9</version>
+                <arch>s390x</arch>
+                <type>rpm</type>
+                <target>sles-9-s390x</target>
+                <status>supported</status>
+                <detect>
+                        <file source="/etc/SuSE-release" substring="SUSE LINUX Enterprise Server 9"/>
+                </detect>
+        </distro>
+        <distro>
+                <name>SuSE Linux Enterprise Server</name>
+                <version>9</version>
+                <arch>x86_64</arch>
+                <type>rpm</type>
+                <target>sles-9-x86_64</target>
+                <status>supported</status>
+                <detect>
+                        <file source="/etc/SuSE-release" substring="SUSE LINUX Enterprise Server 9"/>
+                </detect>
+        </distro>
+        <distro>
+                <name>Novell Linux Desktop</name>
+                <version>9</version>
+                <arch>i586</arch>
+                <type>rpm</type>
+                <target>nld-9-i586</target>
+                <status>supported</status>
+                <detect>
+                        <file source="/etc/novell-release" substring="Novell Linux Desktop 9"/>
+                </detect>
+        </distro>
+        <distro>
+                <name>Novell Linux Desktop</name>
+                <version>9</version>
+                <arch>x86_64</arch>
+                <type>rpm</type>
+                <target>nld-9-x86_64</target>
+                <status>supported</status>
+                <detect>
+                        <file source="/etc/SuSE-release" substring="Novell Linux Desktop 9"/>
+                </detect>
+        </distro>
 
 	<distro>
 		<name>SuSE Linux</name>

@@ -1,3 +1,10 @@
+2004-06-09  James Willcox  <james@ximian.com>
+
+	* distributions.xml:
+	* rc-arch.c:
+
+	Support SuSE Linux Enterprise Server 9, and Novell Linux Desktop
+
 2004-06-04  James Willcox  <james@ximian.com>
 
 	* rc-rpmman.c: (rc_rpmman_read_header):
