@@ -102,6 +102,8 @@ RCDistroChunk distro_figurers[] = {
       func_string_in_file, "/etc/debian_version", "woody", NULL, 0 },
     { "debian-sid-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/debian_version", "sid", NULL, 0 },
+    { "debian-sid-i386", RC_ARCH_IA32,
+      func_string_in_file, "/etc/debian_version", "unstable", NULL, 0 },
     { NULL }
 };
 

@@ -45,6 +45,10 @@ rc_distman_new (void)
 
     dtype = rc_figure_distro ();
 
+    if (!dtype) {
+        g_error ("I can't figure out what distribution you're on!\n");
+    }
+
     env = getenv("RC_PACKMAN_TYPE");
     if (env && g_strcasecmp(env, "dpkg") == 0) {
 #ifdef WITH_DPKG
