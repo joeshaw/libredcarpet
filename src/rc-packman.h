@@ -112,6 +112,8 @@ struct _RCPackmanClass {
     gboolean (*rc_packman_real_lock)(RCPackman *packman);
 
     void (*rc_packman_real_unlock)(RCPackman *packman);
+
+    gboolean (*rc_packman_real_check_database)(RCPackman *packman);
 };
 
 GType rc_packman_get_type (void);
@@ -145,6 +147,8 @@ RCPackage *rc_packman_find_file (RCPackman *packman, const gchar *filename);
 gboolean rc_packman_lock (RCPackman *packman);
 
 void rc_packman_unlock (RCPackman *packman);
+
+gboolean rc_packman_check_database (RCPackman *packman);
 
 const gchar *rc_packman_get_file_extension(RCPackman *packman);
 

@@ -1,3 +1,12 @@
+2002-07-26  Ian Peters  <itp@ximian.com>
+
+	* rc-packman.c, rc-packman.h (rc_packman_check_database): added
+
+	* rc-rpmman.c: expose check_database for manual checking, keep the
+	timeout with signal emmission as well
+
+	* rc-debman.c: ditto
+
 2002-07-26  Joe Shaw  <joe@ximian.com>
 
 	* rc-world.c (rc_world_register_packman): Connect to the packman's
