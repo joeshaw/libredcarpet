@@ -164,7 +164,8 @@ rc_world_synthetic_transact (RCWorld *world,
     RCPackageSList *iter;
     gboolean retval;
 
-    /* FIXME: don't ignore the flags */
+    if (flags & RC_TRANSACT_FLAG_NO_ACT)
+        return TRUE;
 
     for (iter = install_packages; iter != NULL; iter = iter->next) {
         RCPackage *pkg = iter->data;

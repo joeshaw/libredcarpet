@@ -59,14 +59,12 @@ gint rc_cp (const char *fromfile, const char *tofile);
 guint32 rc_string_to_guint32_with_default(const char *n, guint32 def);
 
 
-/* Wrappers around libz's compression/uncompression functions. */
+/* Wrappers around zlib/bzip2 compression/uncompression functions. */
 
 gint     rc_uncompress_memory       (const guint8 *input_buffer,
                                      guint32       input_length,
                                      GByteArray  **out_ba);
-gint     rc_compress_memory         (const guint8 *input_buffer,
-                                     guint32       input_length,
-                                     GByteArray  **out_ba);
+
 gboolean rc_memory_looks_compressed (const guint8 *buffer,
                                      guint32       size);
 

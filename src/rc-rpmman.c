@@ -77,9 +77,6 @@
 #define RPMTAG_DIRNAMES   1118
 #define RPMTAG_REMOVETID  1129
 
-/* Repackaging was added in RPM 4.0.3, but broken until 4.0.4. */
-#define RPMTRANS_FLAG_REPACKAGE (1 << 10)
-
 /* rpmRC for RPM 4.0.3 and 4.0.4 */
 #define RPMRC_OK        0
 #define RPMRC_BADMAGIC  1
@@ -333,8 +330,7 @@ open_database (RCRpmman *rpmman, gboolean write)
 
         /*
          * We don't want to use RPM >= 4.1's built-in digest/signature
-         * checking because repackaged RPMs have invalid signatures and
-         * we do the checking ourselves.
+         * checking because we do the checking ourselves.
          */
         rpmman->rpmtsSetVSFlags (rpmman->rpmts,
                                  rpmman->rpmtsVSFlags (rpmman->rpmts) |
@@ -533,8 +529,7 @@ rc_rpmman_read_package_file (RCRpmman *rpmman, const char *filename)
 
         /*
          * We don't want to use RPM >= 4.1's built-in digest/signature
-         * checking because repackaged RPMs have invalid signatures and
-         * we do the checking ourselves.
+         * checking because we do the checking ourselves.
          */
         rpmman->rpmtsSetVSFlags (ts, rpmman->rpmtsVSFlags (ts) |
                                  _RPMVSF_NODIGESTS | _RPMVSF_NOSIGNATURES);
@@ -1053,29 +1048,6 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
 
     if (getenv ("RC_JUST_KIDDING") || flags & RC_TRANSACT_FLAG_NO_ACT)
         transaction_flags |= RPMTRANS_FLAG_TEST;
-
-    /*
-     * Repackaging was added in RPM 4.0.3, but broken until 4.0.4.
-     *
-     * FIXME: Should we warn or abort or do something if we don't support
-     * repackaging?
-     */
-    if (rpmman->version >= 40004) {
-        if (flags & RC_TRANSACT_FLAG_REPACKAGE) {
-            const char *repackage_dir;
-            char *macro;
-
-            repackage_dir = rc_packman_get_repackage_dir (packman);
-            if (!repackage_dir)
-                repackage_dir = "/tmp";
-
-            macro = g_strconcat ("_repackage_dir ", repackage_dir, NULL);
-            rpmman->rpmDefineMacro (NULL, macro, RMIL_GLOBAL);
-            g_free (macro);
-
-            transaction_flags |= RPMTRANS_FLAG_REPACKAGE;
-        }
-    }
 
     problem_filter =
         /* This isn't really a problem, and we'll trust RC to do the
@@ -2292,39 +2264,6 @@ rc_rpmman_query_all (RCPackman *packman)
 }
 
 static gboolean
-rc_rpmman_package_is_repackaged (RCPackman *packman, RCPackage *package)
-{
-    RCRpmman *rpmman = RC_RPMMAN (packman);
-    HeaderInfo *hi;
-    Header header = NULL;
-    char *buf;
-    guint32 count;
-
-    if (!package->package_filename) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              "no file name specified");
-        return FALSE;
-    }
-
-    hi = rc_rpmman_read_package_file (rpmman, package->package_filename);
-
-    if (!hi) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                              "unable to open %s", package->package_filename);
-        return FALSE;
-    }
-
-    header = hi->headers->data;
-
-    rpmman->headerGetEntry (header, RPMTAG_REMOVETID, NULL,
-                            (void **) &buf, &count);
-
-    rc_rpmman_header_info_free (rpmman, hi);
-
-    return count > 0 ? TRUE : FALSE;
-}
-
-static gboolean
 split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
            gchar **payload_filename, guint8 **md5sum, guint32 *size)
 {
@@ -2494,13 +2433,6 @@ rc_rpmman_verify (RCPackman *packman, RCPackage *package, guint32 type)
     guint8 *md5sum = NULL;
     guint32 size;
 
-    /*
-     * Repackaged RPMs don't have correct md5sums, signatures, or file
-     * sizes, so just skip over verification if it is.
-     */
-    if (rc_rpmman_package_is_repackaged (packman, package))
-        return NULL;
-    
     if (!split_rpm (packman, package, &signature_filename, &payload_filename,
                     &md5sum, &size))
     {
@@ -3745,13 +3677,10 @@ rc_rpmman_init (RCRpmman *obj)
     rc_packman_set_file_extension(packman, "rpm");
 
     capabilities = RC_PACKMAN_CAP_PROVIDE_ALL_VERSIONS |
-        RC_PACKMAN_CAP_IGNORE_ABSENT_EPOCHS;
+        RC_PACKMAN_CAP_IGNORE_ABSENT_EPOCHS |
+        RC_PACKMAN_CAP_ROLLBACK;
 
-    /* Repackaging was added in RPM 4.0.3, but broken until 4.0.4 */
-    if (obj->version >= 40004)
-        capabilities |= RC_PACKMAN_CAP_ROLLBACK;
-
-    rc_packman_set_capabilities(packman, capabilities);
+    rc_packman_set_capabilities (packman, capabilities);
 
     obj->db_status = RC_RPMMAN_DB_NONE;
 

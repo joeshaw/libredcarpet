@@ -1,5 +1,22 @@
 2003-08-25  Joe Shaw  <joe@ximian.com>
 
+	* rc-packman-private.h: Remove the repackage_dir field.
+
+	* rc-packman.c (rc_packman_finalize, rc_packman_init): Don't deal
+	with the repackage_dir field.
+	(rc_packman_set_repackage_dir, rc_packman_get_repackage_dir):
+	Delete these.
+
+	* rc-rpmman.c: Don't do any repackaging stuff anymore, we don't
+	need it.
+	(rc_rpmman_init): Always set the rollback capability.
+
+	* rc-util.c (rc_compress_memory): Remove this.  Use
+	rc_gzip_memory() or rc_bzip2_memory() directly.
+
+	* rc-world-synthetic.c (rc_world_synthetic_transact): Obey the
+	NO_ACT flag.
+
 	* rc-world.c (rc_world_guess_package_channel): We need to check
 	against the actual package, not the list of matching packages.
 

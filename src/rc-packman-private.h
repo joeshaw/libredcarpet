@@ -36,8 +36,6 @@ struct _RCPackmanPrivate {
     
     gint lock_count;
 
-    gchar *repackage_dir;
-
     gboolean rollback_enabled;
 };
 

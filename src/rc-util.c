@@ -721,15 +721,6 @@ rc_uncompress_memory (const guint8 *input_buffer, guint32 input_length,
         return -1;
 }
 
-gint
-rc_compress_memory (const guint8 *input_buffer,
-                    guint32       input_length,
-                    GByteArray  **out_ba)
-{
-    /* FIXME: Is this what we want to do here? */
-    return rc_gzip_memory (input_buffer, input_length, out_ba);
-}
-
 gboolean
 rc_memory_looks_compressed (const guint8 *buffer, guint32 size)
 {

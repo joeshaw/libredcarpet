@@ -95,7 +95,6 @@ typedef enum {
 
 #define RC_TRANSACT_FLAG_NONE      (0)
 #define RC_TRANSACT_FLAG_NO_ACT    (1 << 0)
-#define RC_TRANSACT_FLAG_REPACKAGE (1 << 1)
 
 #include "rc-package.h"
 #include "rc-package-file.h"
@@ -217,13 +216,7 @@ guint rc_packman_get_error (RCPackman *packman);
 
 const gchar *rc_packman_get_reason (RCPackman *packman);
 
-void rc_packman_set_repackage_dir (RCPackman *packman,
-                                   const gchar *repackage_dir);
-
-const gchar *rc_packman_get_repackage_dir (RCPackman *packman);
-
-void rc_packman_set_transaction_tracking (RCPackman *packman,
-                                          gboolean   enabled);
+void rc_packman_set_rollback_enabled (RCPackman *packman, gboolean enabled);
 
 RCPackman *rc_packman_get_global (void);
 void       rc_packman_set_global (RCPackman *packman);
