@@ -1,3 +1,9 @@
+2003-04-30  Joe Shaw  <joe@ximian.com>
+
+	* packman_test.c (packman_test_file_list): Show a lot more
+	information about the files in a package if "dump" is passed as
+	the second paramater to the command.
+
 2003-04-25  Joe Shaw  <joe@ximian.com>
 
 	* packman_test.c: Add a "file_list" command which lists the files

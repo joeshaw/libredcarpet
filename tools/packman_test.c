@@ -417,19 +417,33 @@ packman_test_file_list (RCPackman *p, char *line)
     RCPackageFileSList *files;
     GSList *iter;
     char *name;
+    char *dump;
+    gboolean do_dump = FALSE;
 
     CHECK_PARAMS (line, "file_list");
 
     line = pop_token (line, &name);
+    line = pop_token (line, &dump);
 
-    packages = rc_packman_query (p, name);
+    if (dump && !strcmp (dump, "dump"))
+        do_dump = TRUE;
 
-    if (!packages) {
-        printf ("No package matching name \"%s\" found\n", name);
-        return;
+    package = rc_packman_query_file (p, name);
+
+    if (package)
+        package->package_filename = g_strdup (name);
+    else {
+        packages = rc_packman_query (p, name);
+        
+        if (!packages) {
+            printf ("No package matching name \"%s\" found\n", name);
+            return;
+        }
+
+        package = rc_package_ref (packages->data);
+        rc_package_slist_unref (packages);
+        g_slist_free (packages);
     }
-
-    package = packages->data;
 
     files = rc_packman_file_list (p, package);
 
@@ -442,9 +456,46 @@ packman_test_file_list (RCPackman *p, char *line)
         RCPackageFile *file = (RCPackageFile *) iter->data;
 
         printf ("%s\n", file->filename);
+
+        if (do_dump) {
+            printf ("    size:   %d\n", file->size);
+            printf ("    md5sum: %s\n", file->md5sum);
+            printf ("    uid:    %d\n", file->uid);
+            printf ("    gid:    %d\n", file->gid);
+            printf ("    mode:   %d [0%o] ",
+                    file->mode, file->mode & (S_IRWXU | S_IRWXG | S_IRWXO));
+
+            if (S_ISREG (file->mode))
+                printf ("(regular file) ");
+
+            if (S_ISDIR (file->mode))
+                printf ("(directory) ");
+
+            if (S_ISCHR (file->mode))
+                printf ("(character device) ");
+
+            if (S_ISBLK (file->mode))
+                printf ("(block device) ");
+            
+            if (S_ISFIFO (file->mode))
+                printf ("(fifo) ");
+
+            if (S_ISLNK (file->mode))
+                printf ("(symbolic link) ");
+
+            if (S_ISSOCK (file->mode))
+                printf ("(socket) ");
+
+            printf ("\n");
+
+            printf ("    mtime:  %d\n", file->mtime);
+            printf ("    ghost:  %s\n", file->ghost ? "yes" : "no");
+
+            printf ("\n");
+        }
     }
 
-    // rc_package_slist_unref (packages);
+    rc_package_unref (package);
 }
 
 
