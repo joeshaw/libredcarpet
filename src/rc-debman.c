@@ -528,7 +528,7 @@ rc_debman_query_helper (FILE *fp, RCPackage *pkg)
             } else if (!g_strcasecmp (sec, "libs")) {
                 pkg->spec.section = SECTION_LIBRARY;
             } else if (!g_strcasecmp (sec, "mail")) {
-                pkg->spec.section = SECTION_INTERNET;
+                pkg->spec.section = SECTION_PIM;
             } else if (!g_strcasecmp (sec, "math")) {
                 pkg->spec.section = SECTION_MISC;
             } else if (!g_strcasecmp (sec, "misc")) {
