@@ -3,6 +3,8 @@
 	* rc-package-match.c (rc_package_match_new): Initialize the
 	->importance field to RC_IMPORTANCE_INVALID.
 	(rc_package_match_equal): Added.
+	(rc_package_match_test): Handle the case of packages whose channel
+	is NULL.
 
 	* rc-world.c (rc_world_add_lock): Append to the list of locks.
 	This is less annoying, since newly-added locks show up at the end

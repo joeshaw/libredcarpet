@@ -205,9 +205,10 @@ rc_package_match_test (RCPackageMatch *match,
   g_return_val_if_fail (match != NULL, FALSE);
   g_return_val_if_fail (pkg != NULL, FALSE);
   
-  if (match->channel &&
-      rc_channel_get_id (match->channel) != rc_channel_get_id (pkg->channel))
-    return FALSE;
+  if (match->channel) {
+    if (pkg->channel == NULL || rc_channel_get_id (match->channel) != rc_channel_get_id (pkg->channel))
+      return FALSE;
+  }
 
   pkg_name = g_quark_to_string (RC_PACKAGE_SPEC (pkg)->nameq);
 
