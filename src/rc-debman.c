@@ -241,12 +241,14 @@ rc_debman_install (RCPackman *p, GSList *pkgs)
         /* Looks like the purge went ok, so all we did was fail to install.
            Let the people know the truth and bow out gracefully. */
         rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT, "Error installing "
-                              "packages, all packages were purged.");
+                              "packages.  All packages were purged.");
         rc_packman_install_done (p);
     } else {
         /* Ok, if we got here, we're fucked.  Hard.  So grab the wife and kids
            and get the hell out of Dodge. */
-        gchar *error = g_strdup ("The following packages may have been left in an inconsistant state:");
+        gchar *error = g_strdup ("Error installing packages.  The following "
+                                 "packages may have been left in an "
+                                 "inconsistant state:");
 
         for (iter = remove_list; iter; iter = iter->next) {
             gchar *tmp = g_strconcat (error, " ", (gchar *)(iter->data), NULL);
@@ -293,7 +295,7 @@ rc_debman_remove (RCPackman *p, RCPackageSList *pkgs)
 } /* rc_debman_remove */
 
 /* Takes a string of format [<epoch>:]<version>[-<release>], and returns those
-   three elements */
+   three elements, if they exist */
 static void
 rc_debman_parse_version (gchar *input, guint32 *epoch, gchar **version,
                          gchar **release)
@@ -304,16 +306,22 @@ rc_debman_parse_version (gchar *input, guint32 *epoch, gchar **version,
     *version = NULL;
     *release = NULL;
 
+    /* Check if there's an epoch set */
     t1 = g_strsplit (input, ":", 1);
 
     if (t1[1]) {
+        /* There is an epoch */
         *epoch = strtoul (t1[0], NULL, 10);
+        /* Split the version and release */
         t2 = g_strsplit (t1[1], "-", 1);
     } else {
+        /* No epoch, split the version and release */
         t2 = g_strsplit (t1[0], "-", 1);
     }
 
+    /* Version definitely gets set to something */
     *version = g_strdup (t2[0]);
+    /* Set release (this may be dup'ing NULL) */
     *release = g_strdup (t2[1]);
 
     g_strfreev (t2);
@@ -321,7 +329,7 @@ rc_debman_parse_version (gchar *input, guint32 *epoch, gchar **version,
 }
 
 /* Read a line from a file.  If the returned string is non-NULL, you must free
-   it */
+   it.  Return NULL only on EOF, and return "" for blank lines. */
 static gchar *
 readline (FILE *fp) {
     char buf[1024];
@@ -347,6 +355,9 @@ rc_debman_fill_depends (gchar *input, RCPackageDepSList *list)
     gchar **deps;
     guint i;
 
+    /* All evidence indicates that the fields are comma-space separated, but if
+       that ever turns out to be incorrect, we'll have to do this part more
+       carefully. */
     deps = g_strsplit (input, ", ", 0);
 
     for (i = 0; deps[i]; i++) {
@@ -354,16 +365,22 @@ rc_debman_fill_depends (gchar *input, RCPackageDepSList *list)
         guint j;
         RCPackageDep *dep = NULL;
 
+        /* For the most part, there's only one element per dep, except for the
+           rare case of OR'd deps. */
         for (j = 0; elems[j]; j++) {
             RCPackageDepItem *depi;
             gchar **parts;
 
+            /* A space separates the name of the dep from the relationship and
+               version. */
             parts = g_strsplit (elems[j], " ", 1);
 
             if (!parts[1]) {
+                /* There's no version in this dependency, just a name. */
                 depi = rc_package_dep_item_new (parts[0], 0, NULL, NULL,
                                                 RC_RELATION_ANY);
             } else {
+                /* We've got to parse the rest of this mess. */
                 gchar *relstring, *verstring;
                 guint relation = RC_RELATION_ANY;
                 guint32 epoch;
@@ -381,6 +398,8 @@ rc_debman_fill_depends (gchar *input, RCPackageDepSList *list)
 
                 verstring = g_strstrip (verstring);
 
+                /* The possible relations are "=", ">>", "<<", ">=", and "<=",
+                   decide which apply */
                 switch (relstring[0]) {
                 case '=':
                     relation = RC_RELATION_EQUAL;
@@ -399,6 +418,7 @@ rc_debman_fill_depends (gchar *input, RCPackageDepSList *list)
 
                 g_free (relstring);
 
+                /* Break the single version string up */
                 rc_debman_parse_version (verstring, &epoch, &version,
                                          &release);
 
@@ -448,7 +468,6 @@ rc_debman_query_helper (FILE *fp, RCPackage *pkg)
                                      &pkg->spec.epoch, &pkg->spec.version,
                                      &pkg->spec.release);
         } else if (!strncmp (buf, "Depends: ", strlen ("Depends: "))) {
-            /* Do the dependencies */
             pkg->requires = rc_debman_fill_depends (buf + strlen ("Depends: "),
                                                     pkg->requires);
         } else if (!strncmp (buf, "Recommends: ", strlen ("Recommends: "))) {
@@ -482,6 +501,7 @@ rc_debman_query_helper (FILE *fp, RCPackage *pkg)
 
     g_free (buf);
 
+    /* Make sure to provide myself, for the dep code! */
     item = rc_package_dep_item_new (pkg->spec.name, pkg->spec.epoch,
                                     pkg->spec.version, pkg->spec.release,
                                     RC_RELATION_EQUAL);
@@ -632,6 +652,8 @@ rc_debman_class_init (RCDebmanClass *klass)
     rcpc->rc_packman_real_query = rc_debman_query;
     rcpc->rc_packman_real_query_file = rc_debman_query_file;
     rcpc->rc_packman_real_query_all = rc_debman_query_all;
+
+    putenv ("DEBIAN_FRONTEND=noninteractive");
 } /* rc_debman_class_init */
 
 static void
