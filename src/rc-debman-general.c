@@ -1,28 +1,31 @@
-/*
- * rc-debman-general.c: Things that are useful even if dpkg support isn't enabled
+/* rc-debman-general.c
+ * Copyright (C) 2000, 2001 Helix Code Inc.
+ * Copyright (C) 2001 Ximian Inc.
  *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
  *
- *  Copyright (C) 2000 Helix Code Inc.
- *  Copyright (C) 2001 Ximian Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+ * 02111-1307, USA.
  */
 
 #include <glib.h>
 
-#include <libredcarpet/rc-debman-general.h>
+#include "rc-debman-general.h"
+#include "rc-debug.h"
+
+#include <string.h>
+#include <stdlib.h>
+#include <ctype.h>
 
 /*
  * Takes a string of format [<epoch>:]<version>[-<release>], and returns those
@@ -33,32 +36,64 @@ void
 rc_debman_parse_version (gchar *input, guint32 *epoch, gchar **version,
                          gchar **release)
 {
-    gchar **t1, **t2;
+    gchar *epoch_ptr = NULL;
+    gchar *version_ptr = NULL;
+    gchar *release_ptr = NULL;
+
+    gchar *tmp;
+
+    fprintf (stderr, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n");
+
+    RC_ENTRY;
+
+    fprintf (stderr, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n");
 
     *epoch = 0;
     *version = NULL;
     *release = NULL;
 
-    /* Check if there's an epoch set */
-    t1 = g_strsplit (input, ":", 1);
+    tmp = strchr (input, ':');
 
-    if (t1[1]) {
-        /* There is an epoch */
-        *epoch = strtoul (t1[0], NULL, 10);
-        /* Split the version and release */
-        t2 = g_strsplit (t1[1], "-", 1);
+    if (tmp) {
+        /* There's an epoch */
+        *tmp = '\0';
+        epoch_ptr = input;
+        version_ptr = tmp + 1;
     } else {
-        /* No epoch, split the version and release */
-        t2 = g_strsplit (t1[0], "-", 1);
+        /* The string begins with a version */
+        version_ptr = input;
     }
 
-    /* Version definitely gets set to something */
-    *version = g_strdup (t2[0]);
-    /* Set release (this may be dup'ing NULL) */
-    *release = g_strdup (t2[1]);
+    tmp = strchr (version_ptr, '-');
 
-    g_strfreev (t2);
-    g_strfreev (t1);
+    if (tmp) {
+        /* There's a release */
+        *tmp = '\0';
+        release_ptr = tmp + 1;
+    }
+
+    if (epoch_ptr) {
+        *epoch = strtoul (epoch_ptr, NULL, 10);
+    }
+
+    *version = g_strdup (version_ptr);
+
+    if (release_ptr) {
+        *release = g_strdup (release_ptr);
+    }
+
+    if (version_ptr != input) {
+        *(version_ptr - 1) = ':';
+    }
+
+    if (release_ptr) {
+        *(release_ptr - 1) = '-';
+    }
+
+    rc_debug (RC_DEBUG_LEVEL_DEBUG, "%s: parsed %s into %d %s %s\n",
+              input, epoch, version, release);
+
+    RC_EXIT;
 }
 
 /*
@@ -72,6 +107,8 @@ rc_debman_fill_depends (gchar *input, RCPackageDepSList *list)
 {
     gchar **deps;
     guint i;
+
+    RC_ENTRY;
 
     /* All evidence indicates that the fields are comma-space separated, but if
        that ever turns out to be incorrect, we'll have to do this part more
@@ -197,6 +234,7 @@ rc_debman_fill_depends (gchar *input, RCPackageDepSList *list)
 
     g_strfreev (deps);
 
+    RC_EXIT;
+
     return (list);
 }
-

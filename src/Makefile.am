@@ -4,6 +4,7 @@ INCLUDES =				\
 	$(RPMLIB_CFLAGS)		\
 	$(GTK_CFLAGS)			\
 	$(XML_CFLAGS)			\
+	$(BUILD_CFLAGS)			\
 	-DG_LOG_DOMAIN=\"libredcarpet\" \
 	-DSHAREDIR=\""$(datadir)/redcarpet"\"
 
