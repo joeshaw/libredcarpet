@@ -1,5 +1,10 @@
 2001-01-21  Ian Peters  <itp@helixcode.com>
 
+	* libredcarpet.h: this hasn't been maintained in a while, so I
+	just fixed it
+
+2001-01-21  Ian Peters  <itp@helixcode.com>
+
 	* rc-dpkg-helper.c: moved from dpkg-helper.c
 
 	* Makefile.am: s/dpkg-helper/rc-dpkg-helper/g

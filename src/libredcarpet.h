@@ -21,19 +21,34 @@
 #ifndef _LIBREDCARPET_H
 #define _LIBREDCARPET_H
 
-#include "rc-deps.h"
-#include "rc-distro.h"
-#include "rc-package-info.h"
-#include "rc-channel.h"
 #include "rc-debug.h"
-#include "rc-distman.h"
-#include "rc-md5.h"
-#include "rc-package-dep.h"
-#include "rc-package-spec.h"
-#include "rc-package-update.h"
-#include "rc-package.h"
-#include "rc-packman.h"
+
 #include "rc-util.h"
-#include "xml-util.h"
+
+#include "rc-line-buf.h"
+
+#include "rc-package-spec.h"
+#include "rc-package-importance.h"
+#include "rc-package-update.h"
+#include "rc-package-dep.h"
+#include "rc-package-section.h"
+#include "rc-package.h"
+#include "rc-package-set.h"
+
+#include "rc-channel.h"
+
+#include "rc-package-info.h"
+
+#include "rc-deps.h"
+
+#include "rc-distro.h"
+
+#include "rc-md5.h"
+#include "rc-verification.h"
+
+#include "rc-debman-general.h"
+
+#include "rc-packman.h"
+#include "rc-distman.h"
 
 #endif
