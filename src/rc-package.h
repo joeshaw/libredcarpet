@@ -46,6 +46,9 @@ struct _RCPackage {
     gchar *description;
 
     RCPackageUpdateSList *history;
+
+    /* Don't upgrade this package */
+    gboolean hold;
 };
 
 /* Used if key is a string, i.e. name */
