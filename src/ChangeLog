@@ -1,3 +1,27 @@
+2001-03-30  Ian Peters  <itp@ximian.com>
+
+	* Makefile.am: dist rpm-sucks-with-rpmio.so and
+	rpm-sucks-without-rpmio.so
+
+	* rc-rpmman.h: include gmodule.h.  Make major_, minor_, and
+	micro_version gint instead of guint.  Optionally include a GModule
+	for the rpm_lib if we're using the dlopen hack.
+
+	* rc-rpmman.c: if RC_NO_RPM_DB is set, don't try to close the
+	database on destroy.  Possibly g_module_close the rpm_lib on
+	destroy.  Store the rpm_lib GModule in the rpmman struct.
+	g_module_open rpm-sucks-with-rpmio.so or
+	rpm-sucks-without-rpmio.so, not librpm.so and librpmio.so
+	directly.
+	(parse_rpm_version): correctly rip a version string, like x.y.z,
+	into major, minor, and micro parts.
+
+	* rpm-sucks-with-rpmio.so, rpm-sucks-without-rpmio.so: little
+	shared objects that link against the assorted rpm libraries.
+	These are generated with:
+		ld -shared -o rpm-sucks-with[out]-rpmio.so \
+		-lrpm [-lrpmio] -lpopt
+
 2001-03-30  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c: Got rid of a stray fprintf

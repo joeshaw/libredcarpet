@@ -21,6 +21,7 @@
 #ifndef _RC_RPMMAN_H
 #define _RC_RPMMAN_H
 
+#include <gmodule.h>
 #include <gtk/gtk.h>
 
 #include <rpm/rpmlib.h>
@@ -49,9 +50,13 @@ struct _RCRpmman {
 
     gchar *rpmroot;
 
-    guint major_version;
-    guint minor_version;
-    guint micro_version;
+    gint major_version;
+    gint minor_version;
+    gint micro_version;
+
+#ifndef STATIC_RPM
+    GModule *rpm_lib;
+#endif
 
     /*
      * Common functions
@@ -87,17 +92,6 @@ struct _RCRpmman {
     const char * (*rpmProblemString)(rpmProblem);
 
     /*
-     * RPMv4 only functions
-     */
-
-    rc_rpmdbMatchIterator (*rpmdbInitIterator)(rpmdb, int, const void *,
-                                               size_t);
-    int (*rpmdbGetIteratorCount)(rc_rpmdbMatchIterator);
-    void (*rpmdbFreeIterator)(rc_rpmdbMatchIterator);
-    Header (*rpmdbNextIterator)(rc_rpmdbMatchIterator);
-    unsigned int (*rpmdbGetIteratorOffset)(rc_rpmdbMatchIterator);
-
-    /*
      * RPMv3 only functions
      */
 
@@ -110,6 +104,17 @@ struct _RCRpmman {
     unsigned int (*dbiIndexSetCount)(rc_dbiIndexSet);
     unsigned int (*dbiIndexRecordOffset)(rc_dbiIndexSet, int);
     void (*dbiFreeIndexRecord)(rc_dbiIndexSet);
+
+    /*
+     * RPMv4 only functions
+     */
+
+    rc_rpmdbMatchIterator (*rpmdbInitIterator)(rpmdb, int, const void *,
+                                               size_t);
+    int (*rpmdbGetIteratorCount)(rc_rpmdbMatchIterator);
+    void (*rpmdbFreeIterator)(rc_rpmdbMatchIterator);
+    Header (*rpmdbNextIterator)(rc_rpmdbMatchIterator);
+    unsigned int (*rpmdbGetIteratorOffset)(rc_rpmdbMatchIterator);
 };
 
 struct _RCRpmmanClass {

@@ -1955,9 +1955,13 @@ rc_rpmman_destroy (GtkObject *obj)
 {
     RCRpmman *rpmman = RC_RPMMAN (obj);
 
-    g_free (rpmman->rpmroot);
+    if (!getenv ("RC_NO_RPM_DB")) {
+        rpmman->rpmdbClose (rpmman->db);
+    }
 
-    rpmman->rpmdbClose (rpmman->db);
+#ifndef STATIC_RPM
+    g_module_close (rpmman->rpm_lib);
+#endif
 
     if (GTK_OBJECT_CLASS (parent_class)->destroy)
         (* GTK_OBJECT_CLASS (parent_class)->destroy) (obj);
@@ -2026,153 +2030,159 @@ load_fake_syms (RCRpmman *rpmman)
 #else
 
 static gboolean
-load_rpm_syms (RCRpmman *rpmman, GModule *rpm_lib, GModule *rpmio_lib)
+load_rpm_syms (RCRpmman *rpmman)
 {
-    if (!g_module_symbol (rpmio_lib, "fdOpen", ((gpointer)&rpmman->fdOpen))) {
+    if (!g_module_symbol (rpmman->rpm_lib, "fdOpen",
+                          ((gpointer)&rpmman->fdOpen)))
+    {
         return (FALSE);
     }
-    if (!g_module_symbol (rpmio_lib, "fdRead", ((gpointer)&rpmman->fdRead))) {
+    if (!g_module_symbol (rpmman->rpm_lib, "fdRead",
+                          ((gpointer)&rpmman->fdRead)))
+    {
         return (FALSE);
     }
-    if (!g_module_symbol (rpmio_lib, "fdClose",
+    if (!g_module_symbol (rpmman->rpm_lib, "fdClose",
                           ((gpointer)&rpmman->fdClose))) {
         return (FALSE);
     }
-    if (!g_module_symbol (rpmio_lib, "Ferror", ((gpointer)&rpmman->Ferror))) {
+    if (!g_module_symbol (rpmman->rpm_lib, "Ferror",
+                          ((gpointer)&rpmman->Ferror)))
+    {
         return (FALSE);
     }
 
-    if (!g_module_symbol (rpm_lib, "headerGetEntry",
+    if (!g_module_symbol (rpmman->rpm_lib, "headerGetEntry",
                           ((gpointer)&rpmman->headerGetEntry))) {
         return (FALSE);
     }
-    if (!g_module_symbol (rpm_lib, "headerFree",
+    if (!g_module_symbol (rpmman->rpm_lib, "headerFree",
                           ((gpointer)&rpmman->headerFree))) {
         return (FALSE);
     }
 
-    if (!g_module_symbol (rpm_lib, "rpmReadPackageHeader",
+    if (!g_module_symbol (rpmman->rpm_lib, "rpmReadPackageHeader",
                           ((gpointer)&rpmman->rpmReadPackageHeader))) {
         return (FALSE);
     }
-    if (!g_module_symbol (rpm_lib, "rpmtransAddPackage",
+    if (!g_module_symbol (rpmman->rpm_lib, "rpmtransAddPackage",
                           ((gpointer)&rpmman->rpmtransAddPackage))) {
         return (FALSE);
     }
-    if (!g_module_symbol (rpm_lib, "rpmtransRemovePackage",
+    if (!g_module_symbol (rpmman->rpm_lib, "rpmtransRemovePackage",
                           ((gpointer)&rpmman->rpmtransRemovePackage))) {
         return (FALSE);
     }
-    if (!g_module_symbol (rpm_lib, "rpmtransCreateSet",
+    if (!g_module_symbol (rpmman->rpm_lib, "rpmtransCreateSet",
                           ((gpointer)&rpmman->rpmtransCreateSet))) {
         return (FALSE);
     }
-    if (!g_module_symbol (rpm_lib, "rpmtransFree",
+    if (!g_module_symbol (rpmman->rpm_lib, "rpmtransFree",
                           ((gpointer)&rpmman->rpmtransFree))) {
         return (FALSE);
     }
-    if (!g_module_symbol (rpm_lib, "rpmdepCheck",
+    if (!g_module_symbol (rpmman->rpm_lib, "rpmdepCheck",
                           ((gpointer)&rpmman->rpmdepCheck))) {
         return (FALSE);
     }
-    if (!g_module_symbol (rpm_lib, "rpmdepFreeConflicts",
+    if (!g_module_symbol (rpmman->rpm_lib, "rpmdepFreeConflicts",
                           ((gpointer)&rpmman->rpmdepFreeConflicts))) {
         return (FALSE);
     }
-    if (!g_module_symbol (rpm_lib, "rpmdepOrder",
+    if (!g_module_symbol (rpmman->rpm_lib, "rpmdepOrder",
                           ((gpointer)&rpmman->rpmdepOrder))) {
         return (FALSE);
     }
-    if (!g_module_symbol (rpm_lib, "rpmRunTransactions",
+    if (!g_module_symbol (rpmman->rpm_lib, "rpmRunTransactions",
                           ((gpointer)&rpmman->rpmRunTransactions))) {
         return (FALSE);
     }
-    if (!g_module_symbol (rpm_lib, "rpmProblemSetFree",
+    if (!g_module_symbol (rpmman->rpm_lib, "rpmProblemSetFree",
                           ((gpointer)&rpmman->rpmProblemSetFree))) {
         return (FALSE);
     }
-    if (!g_module_symbol (rpm_lib, "readLead",
+    if (!g_module_symbol (rpmman->rpm_lib, "readLead",
                           ((gpointer)&rpmman->readLead))) {
         return (FALSE);
     }
-    if (!g_module_symbol (rpm_lib, "rpmReadSignature",
+    if (!g_module_symbol (rpmman->rpm_lib, "rpmReadSignature",
                           ((gpointer)&rpmman->rpmReadSignature))) {
         return (FALSE);
     }
-    if (!g_module_symbol (rpm_lib, "rpmReadConfigFiles",
+    if (!g_module_symbol (rpmman->rpm_lib, "rpmReadConfigFiles",
                           ((gpointer)&rpmman->rpmReadConfigFiles))) {
         return (FALSE);
     }
-    if (!g_module_symbol (rpm_lib, "rpmdbOpen",
+    if (!g_module_symbol (rpmman->rpm_lib, "rpmdbOpen",
                           ((gpointer)&rpmman->rpmdbOpen))) {
         return (FALSE);
     }
-    if (!g_module_symbol (rpm_lib, "rpmdbClose",
+    if (!g_module_symbol (rpmman->rpm_lib, "rpmdbClose",
                           ((gpointer)&rpmman->rpmdbClose))) {
         return (FALSE);
     }
-    if (!g_module_symbol (rpm_lib, "rpmProblemString",
+    if (!g_module_symbol (rpmman->rpm_lib, "rpmProblemString",
                           ((gpointer)&rpmman->rpmProblemString))) {
         return (FALSE);
     }
 
     if (rpmman->major_version == 4) {
-        if (!g_module_symbol (rpm_lib, "rpmdbInitIterator",
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmdbInitIterator",
                               ((gpointer)&rpmman->rpmdbInitIterator))) {
             return (FALSE);
         }
-        if (!g_module_symbol (rpm_lib, "rpmdbGetIteratorCount",
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmdbGetIteratorCount",
                               ((gpointer)&rpmman->rpmdbGetIteratorCount))) {
             return (FALSE);
         }
-        if (!g_module_symbol (rpm_lib, "rpmdbFreeIterator",
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmdbFreeIterator",
                               ((gpointer)&rpmman->rpmdbFreeIterator))) {
             return (FALSE);
         }
-        if (!g_module_symbol (rpm_lib, "XrpmdbNextIterator",
+        if (!g_module_symbol (rpmman->rpm_lib, "XrpmdbNextIterator",
                               ((gpointer)&rpmman->rpmdbNextIterator))) {
             return (FALSE);
         }
-        if (!g_module_symbol (rpm_lib, "rpmdbGetIteratorOffset",
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmdbGetIteratorOffset",
                               ((gpointer)&rpmman->rpmdbGetIteratorOffset))) {
             return (FALSE);
         }
     }
 
     if (rpmman->major_version == 3) {
-        if (!g_module_symbol (rpm_lib, "rpmdbFirstRecNum",
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmdbFirstRecNum",
                               ((gpointer)&rpmman->rpmdbFirstRecNum))) {
             return (FALSE);
         }
-        if (!g_module_symbol (rpm_lib, "rpmdbNextRecNum",
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmdbNextRecNum",
                               ((gpointer)&rpmman->rpmdbNextRecNum))) {
             return (FALSE);
         }
-        if (!g_module_symbol (rpm_lib, "rpmdbFindByLabel",
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmdbFindByLabel",
                               ((gpointer)&rpmman->rpmdbFindByLabel))) {
             return (FALSE);
         }
-        if (!g_module_symbol (rpm_lib, "rpmdbFindPackage",
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmdbFindPackage",
                               ((gpointer)&rpmman->rpmdbFindPackage))) {
             return (FALSE);
         }
-        if (!g_module_symbol (rpm_lib, "rpmdbFindByFile",
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmdbFindByFile",
                               ((gpointer)&rpmman->rpmdbFindByFile))) {
             return (FALSE);
         }
-        if (!g_module_symbol (rpm_lib, "rpmdbGetRecord",
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmdbGetRecord",
                               ((gpointer)&rpmman->rpmdbGetRecord))) {
             return (FALSE);
         }
-        if (!g_module_symbol (rpm_lib, "dbiIndexSetCount",
+        if (!g_module_symbol (rpmman->rpm_lib, "dbiIndexSetCount",
                               ((gpointer)&rpmman->dbiIndexSetCount))) {
             return (FALSE);
         }
-        if (!g_module_symbol (rpm_lib, "dbiIndexRecordOffset",
+        if (!g_module_symbol (rpmman->rpm_lib, "dbiIndexRecordOffset",
                               ((gpointer)&rpmman->dbiIndexRecordOffset))) {
             return (FALSE);
         }
-        if (!g_module_symbol (rpm_lib, "dbiFreeIndexRecord",
+        if (!g_module_symbol (rpmman->rpm_lib, "dbiFreeIndexRecord",
                               ((gpointer)&rpmman->dbiFreeIndexRecord))) {
             return (FALSE);
         }
@@ -2184,80 +2194,87 @@ load_rpm_syms (RCRpmman *rpmman, GModule *rpm_lib, GModule *rpmio_lib)
 #endif
 
 static void
+parse_rpm_version (RCRpmman *rpmman, const gchar *version)
+{
+    const char *nptr = version;
+    char *endptr = NULL;
+
+    rpmman->major_version = -1;
+    rpmman->minor_version = -1;
+    rpmman->micro_version = -1;
+
+    if (nptr && *nptr) {
+        rpmman->major_version = strtoul (nptr, &endptr, 10);
+        nptr = endptr;
+        while (*nptr && !isalnum (*nptr)) {
+            nptr++;
+        }
+    }
+    if (nptr && *nptr) {
+        rpmman->minor_version = strtoul (nptr, &endptr, 10);
+        nptr = endptr;
+        while (*nptr && !isalnum (*nptr)) {
+            nptr++;
+        }
+    }
+    if (nptr && *nptr) {
+        rpmman->micro_version = strtoul (nptr, &endptr, 10);
+    }
+}
+
+static void
 rc_rpmman_init (RCRpmman *obj)
 {
     RCPackman *packman = RC_PACKMAN (obj);
     gchar *tmp;
     int flags;
     GModule *rpm_lib;
-    GModule *rpmio_lib;
     gchar **rpm_version;
 
 #ifdef STATIC_RPM
+
     extern char *RPMVERSION;
 
-    obj->major_version = RPMVERSION[0] - 48;
-    obj->minor_version = RPMVERSION[2] - 48;
-    obj->micro_version = RPMVERSION[4] - 48;
+    parse_rpm_version (obj, RPMVERSION);
 
     load_fake_syms (obj);
+
 #else
+
     if (!g_module_supported ()) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
                               "dynamic module loading not supported");
         return;
     }
 
-    rpmio_lib = g_module_open ("/usr/lib/librpmio.so.0.0.0",
-                               G_MODULE_BIND_LAZY);
+    obj->rpm_lib = g_module_open (LIBDIR "/rpm-sucks-with-rpmio.so", 0);
 
-    rpm_lib = g_module_open ("/usr/lib/librpm.so.0.0.0", G_MODULE_BIND_LAZY);
+    if (!obj->rpm_lib) {
+        obj->rpm_lib = g_module_open (LIBDIR "/rpm-sucks-without-rpmio.so", 0);
+    }
 
-    if (!rpm_lib) {
+    if (!obj->rpm_lib) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
                               "unable to open rpm library");
         return;
     }
 
-    if (!(g_module_symbol (rpm_lib, "fdOpen",
-                           ((gpointer)&obj->fdOpen)))) {
-        /* Let's hope we've got rpmio somewhere too then */
-
-        if (!rpmio_lib) {
-            rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
-                                  "unable to open rpmio library");
-            g_module_close (rpm_lib);
-            return;
-        }
-    } else {
-        /* I guess the rpmio syms are in librpm */
-        rpmio_lib = rpm_lib;
-    }
-
-    if (!(g_module_symbol (rpm_lib, "RPMVERSION", ((gpointer)&rpm_version)))) {
+    if (!(g_module_symbol (obj->rpm_lib, "RPMVERSION",
+                           ((gpointer)&rpm_version))))
+    {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
                               "unable to determine rpm version");
-        if (rpmio_lib != rpm_lib) {
-            g_module_close (rpmio_lib);
-        }
-        g_module_close (rpm_lib);
         return;
     }
 
-    /* Ok, let's parse the version and see what we're dealing with */
-    obj->major_version = (*rpm_version)[0] - 48;
-    obj->minor_version = (*rpm_version)[2] - 48;
-    obj->micro_version = (*rpm_version)[4] - 48;
+    parse_rpm_version (obj, *rpm_version);
 
-    if (!load_rpm_syms (obj, rpm_lib, rpmio_lib)) {
+    if (!load_rpm_syms (obj)) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
                               "unable to load all symbols from rpm library");
-        if (rpmio_lib != rpm_lib) {
-            g_module_close (rpmio_lib);
-        }
-        g_module_close (rpm_lib);
         return;
     }
+
 #endif
 
     obj->rpmReadConfigFiles (NULL, NULL);
@@ -2265,9 +2282,9 @@ rc_rpmman_init (RCRpmman *obj)
     tmp = getenv ("RC_RPM_ROOT");
 
     if (tmp) {
-        obj->rpmroot = g_strdup (tmp);
+        obj->rpmroot = tmp;
     } else {
-        obj->rpmroot = g_strdup ("/");
+        obj->rpmroot = "/";
     }
 
     /* If we're not root we can't open the database for writing */
