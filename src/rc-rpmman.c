@@ -238,6 +238,7 @@ open_database (RCRpmman *rpmman, gboolean write)
     }
 
     rc_close (db_fd);
+    db_fd = -1;
 
     if (write) {
         rpmman->lock_fd = open (db_filename, O_RDWR);
@@ -263,6 +264,7 @@ open_database (RCRpmman *rpmman, gboolean write)
     }
 
     g_free (db_filename);
+    db_filename = NULL;
 
     if (root && rpmman->version >= 40003) {
         if (!(rpmman->rpmExpandNumeric ("%{?__dbi_cdb:1}"))) {
@@ -285,6 +287,10 @@ open_database (RCRpmman *rpmman, gboolean write)
     rc_packman_set_error (RC_PACKMAN (rpmman), RC_PACKMAN_ERROR_ABORT,
                           "unable to open RPM database");
     rpmman->db_status = RC_RPMMAN_DB_NONE;
+    if (db_filename)
+        g_free (db_filename);
+    if (db_fd != -1)
+        rc_close (db_fd);
     return FALSE;
 }
 
