@@ -1,5 +1,7 @@
 2004-10-29  Tambet Ingo  <tambet@ximian.com>
 
+	* generated/*.cs Add generated files to CVS.
+
 	* PackageDepArray.custom: Remove.
 
 	* libredcarpet-api.xml: Regenerated.
