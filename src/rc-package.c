@@ -234,7 +234,8 @@ rc_package_slist_copy (RCPackageSList *packages)
     RCPackageSList *iter, *ret = NULL;
 
     for (iter = packages; iter; iter = iter->next) {
-        ret = g_slist_prepend (ret, (RCPackage *)(iter->data));
+        ret = g_slist_prepend (ret,
+                               rc_package_copy ((RCPackage *)(iter->data)));
     }
 
     ret = g_slist_reverse (ret);
