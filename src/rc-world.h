@@ -29,6 +29,7 @@
 #include "rc-packman.h"
 #include "rc-package.h"
 #include "rc-channel.h"
+#include "rc-package-match.h"
 
 typedef struct _RCWorld RCWorld;
 
@@ -85,6 +86,25 @@ RCChannel *rc_world_get_channel_by_base_id (RCWorld   *world,
                                             guint32    base_id);
 
 
+/* Package Locks */
+
+/* The world assumes ownership of the RCPackageMatch. */
+void       rc_world_add_lock (RCWorld        *world,
+                              RCPackageMatch *lock);
+
+void       rc_world_remove_lock (RCWorld        *world,
+                                 RCPackageMatch *lock);
+
+void       rc_world_clear_locks (RCWorld *world);
+
+void       rc_world_foreach_lock (RCWorld         *world,
+                                  RCPackageMatchFn fn,
+                                  gpointer         user_data);
+
+gboolean   rc_world_package_is_locked (RCWorld   *world,
+                                       RCPackage *package);
+
+
 /* Add/remove package operations */
 
 void       rc_world_freeze          (RCWorld *world);
@@ -122,22 +142,27 @@ RCChannel *rc_world_guess_package_channel (RCWorld *world,
 
 /* Iterate across packages */
 
-int        rc_world_foreach_package         (RCWorld *world,
-                                             RCChannel *channel,
-                                             RCPackageFn fn,
-                                             gpointer user_data);
+int        rc_world_foreach_package          (RCWorld *world,
+                                              RCChannel *channel,
+                                              RCPackageFn fn,
+                                              gpointer user_data);
 
-int        rc_world_foreach_package_by_name (RCWorld *world,
-                                             const char *name,
-                                             RCChannel *channel,
-                                             RCPackageFn fn,
-                                             gpointer user_data);
+int        rc_world_foreach_package_by_name  (RCWorld *world,
+                                              const char *name,
+                                              RCChannel *channel,
+                                              RCPackageFn fn,
+                                              gpointer user_data);
 
-int        rc_world_foreach_upgrade         (RCWorld *world,
-                                             RCPackage *package,
-                                             RCChannel *channel,
-                                             RCPackageFn fn,
-                                             gpointer user_data);
+int        rc_world_foreach_package_by_match (RCWorld        *world,
+                                              RCPackageMatch *match,
+                                              RCPackageFn     fn,
+                                              gpointer        user_data);
+
+int        rc_world_foreach_upgrade          (RCWorld *world,
+                                              RCPackage *package,
+                                              RCChannel *channel,
+                                              RCPackageFn fn,
+                                              gpointer user_data);
 
 RCPackage *rc_world_get_best_upgrade        (RCWorld *world,
                                              RCPackage *package,

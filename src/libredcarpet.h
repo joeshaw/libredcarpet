@@ -30,6 +30,7 @@
 #include "rc-package-importance.h"
 #include "rc-package-update.h"
 #include "rc-package-dep.h"
+#include "rc-package-match.h"
 #include "rc-package-section.h"
 #include "rc-package.h"
 #include "rc-package-set.h"

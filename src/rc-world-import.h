@@ -52,5 +52,10 @@ gboolean rc_world_add_packages_from_buffer (RCWorld *world,
                                             gchar *buf,
                                             gint compressed_length);
 
+RCChannel * rc_world_add_channel_from_directory (RCWorld *world,
+                                                 const char *channel_name,
+                                                 const char *alias,
+                                                 const char *directory);
+
 #endif /* __RC_WORLD_IMPORT_H__ */
 

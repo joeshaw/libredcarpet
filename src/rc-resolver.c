@@ -298,7 +298,7 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
     local_pkg_channel = rc_world_add_channel (world,
                                               "Local Packages",
                                               "local-pkg-alias-blah-blah-blah",
-                                              0xfefef0f0, 0xf0f0fefe,
+                                              0, 0,
                                               RC_CHANNEL_TYPE_UNKNOWN);
 
     initial_queue = rc_resolver_queue_new ();

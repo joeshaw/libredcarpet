@@ -67,9 +67,12 @@ struct _RCChannel {
 
     RCPackageSetSList *package_sets;
 
+    void (*refresh_magic) (RCChannel *);
+
     gboolean mirrored   : 1;
     gboolean featured   : 1;
     gboolean subscribed : 1;
+    gboolean transient  : 1;
 };
 
 RCChannel *rc_channel_new  (void);

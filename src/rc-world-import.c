@@ -725,3 +725,144 @@ rc_world_parse_redhat (RCWorld *world, RCChannel *rcc, char *buf)
     g_warning ("No redhat channel support!");
     return 0;
 }
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+static void
+set_pkg_file_cb (RCPackage *pkg,
+                 gpointer   user_data)
+{
+    RCPackageUpdate *update = rc_package_get_latest_update (pkg);
+
+    g_free (pkg->package_filename);
+    pkg->package_filename = g_strconcat ((gchar *) user_data,
+                                         "/",
+                                         update->package_url,
+                                         NULL);
+    pkg->local_package = FALSE;
+}
+
+static void
+refresh_channel_from_dir (RCChannel *channel)
+{
+    RCWorld *world = rc_get_world ();
+    const char *directory;
+    const char *filename;
+    char *pkginfo_file;
+    gboolean is_compressed = FALSE;
+
+    directory = rc_channel_get_description (channel);
+
+    /* Check if there is a file named packageinfo.xml.gz or
+       packageinfo.xml is in the directory. */
+    pkginfo_file = g_strconcat (directory, "/packageinfo.xml.gz", NULL);
+    if (g_file_test (pkginfo_file, G_FILE_TEST_EXISTS)) {
+        is_compressed = TRUE;
+    } else {
+        g_free (pkginfo_file);
+        pkginfo_file = g_strconcat (directory, "/packageinfo.xml", NULL);
+        if (! g_file_test (pkginfo_file, G_FILE_TEST_EXISTS)) {
+            g_free (pkginfo_file);
+            pkginfo_file = NULL;
+        }
+    }
+
+    if (pkginfo_file) {
+
+        /* Read the package info from the packageinfo.xml file. */
+        
+        RCBuffer *buf;
+        buf = rc_buffer_map_file (pkginfo_file);
+        if (buf == NULL)
+            goto cleanup;
+
+        channel->type = RC_CHANNEL_TYPE_HELIX;
+
+        rc_world_remove_packages (world, channel);
+
+        rc_world_add_packages_from_buffer (world,
+                                           channel,
+                                           buf->data,
+                                           is_compressed ? buf->size : 0);
+        rc_buffer_unmap_file (buf);
+
+        rc_world_foreach_package (world,
+                                  channel,
+                                  set_pkg_file_cb,
+                                  (gpointer) directory);
+
+    } else {
+
+        /* Walk the directory and scan each file, checking to see
+           if it is a package. */
+
+        GDir *dir;
+
+        dir = g_dir_open (directory, 0, NULL);
+        if (dir == NULL)
+            goto cleanup;
+
+        rc_world_remove_packages (world, channel);
+    
+        while ( (filename = g_dir_read_name (dir)) ) {
+            RCPackage *pkg;
+            gchar *full_path = g_strconcat (directory, "/", filename, NULL);
+            
+            pkg = rc_packman_query_file (rc_world_get_packman (world),
+                                         full_path);
+            
+            if (pkg) {
+                RCPackageUpdate *update;
+                
+                pkg->channel = rc_channel_ref (channel);
+                pkg->package_filename = g_strdup (full_path);
+                pkg->local_package = FALSE;
+                
+                update = rc_package_update_new ();
+                rc_package_spec_copy (RC_PACKAGE_SPEC (update),
+                                      RC_PACKAGE_SPEC (pkg));
+                pkg->history = g_slist_prepend (pkg->history, update);
+                
+                rc_world_add_package (world, pkg);
+                rc_package_unref (pkg);
+            }
+            
+            g_free (full_path);
+        }
+        
+        g_dir_close (dir);
+    }
+
+ cleanup:
+    g_free (pkginfo_file);
+}
+
+RCChannel *
+rc_world_add_channel_from_directory (RCWorld *world,
+                                     const char *channel_name,
+                                     const char *alias,
+                                     const char *directory)
+{
+    RCChannel *channel;
+
+    g_return_val_if_fail (world != NULL, NULL);
+    g_return_val_if_fail (channel_name && *channel_name, NULL);
+    g_return_val_if_fail (alias != NULL, NULL);
+    g_return_val_if_fail (directory != NULL, NULL);
+
+
+    channel = rc_world_add_channel (world,
+                                    channel_name,
+                                    alias,
+                                    0, 0,
+                                    RC_CHANNEL_TYPE_UNKNOWN);
+
+    channel->description = g_strdup (directory);
+    channel->refresh_magic = refresh_channel_from_dir;
+    channel->transient = TRUE;
+    channel->subscribed = TRUE;
+
+    refresh_channel_from_dir (channel);
+
+    return channel;
+}

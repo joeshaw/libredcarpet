@@ -58,6 +58,7 @@ libredcarpet_public_headers = 		\
 	rc-package.h			\
 	rc-package-dep.h		\
 	rc-package-importance.h		\
+	rc-package-match.h		\
 	rc-package-set.h		\
 	rc-package-spec.h		\
 	rc-package-update.h		\
@@ -99,6 +100,7 @@ libredcarpettmp_a_SOURCES =		\
 	rc-package.c			\
 	rc-package-dep.c		\
 	rc-package-importance.c		\
+	rc-package-match.c		\
 	rc-package-set.c		\
 	rc-package-spec.c		\
 	rc-package-update.c		\

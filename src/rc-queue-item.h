@@ -82,6 +82,8 @@ struct _RCQueueItem_Install {
     GSList *needed_by;
     int channel_priority;
     int other_penalty;
+
+    guint explicitly_requested : 1;
 };
 
 struct _RCQueueItem_Require {
@@ -123,8 +125,9 @@ struct _RCQueueItem_Uninstall {
     RCPackageDep *dep_leading_to_uninstall;
     RCPackage *upgraded_to;
 
-    guint remove_only     : 1;
-    guint due_to_obsolete : 1;
+    guint explicitly_requested : 1;
+    guint remove_only          : 1;
+    guint due_to_obsolete      : 1;
 };
 
 RCQueueItemType rc_queue_item_type         (RCQueueItem *);
@@ -147,6 +150,7 @@ void         rc_queue_item_install_set_channel_priority (RCQueueItem *item, int)
 int          rc_queue_item_install_get_channel_priority (RCQueueItem *item);
 void         rc_queue_item_install_set_other_penalty    (RCQueueItem *item, int);
 int          rc_queue_item_install_get_other_penalty    (RCQueueItem *item);
+void         rc_queue_item_install_set_explicitly_requested (RCQueueItem *item);
 
 RCQueueItem *rc_queue_item_new_require         (RCWorld *, RCPackageDep *dep);
 void         rc_queue_item_require_add_package (RCQueueItem *item, RCPackage *package);
@@ -163,11 +167,11 @@ void         rc_queue_item_group_add_item  (RCQueueItem *group, RCQueueItem *sub
 
 RCQueueItem *rc_queue_item_new_conflict       (RCWorld *, RCPackageDep *dep, RCPackage *package);
  
-RCQueueItem *rc_queue_item_new_uninstall                (RCWorld *, RCPackage *package, const char *reason);
-void         rc_queue_item_uninstall_set_dep            (RCQueueItem *item, RCPackageDep *dep);
-void         rc_queue_item_uninstall_set_remove_only    (RCQueueItem *item);
-void         rc_queue_item_uninstall_set_upgraded_to    (RCQueueItem *item, RCPackage *packageo);
-
+RCQueueItem *rc_queue_item_new_uninstall             (RCWorld *, RCPackage *package, const char *reason);
+void         rc_queue_item_uninstall_set_dep         (RCQueueItem *item, RCPackageDep *dep);
+void         rc_queue_item_uninstall_set_remove_only (RCQueueItem *item);
+void         rc_queue_item_uninstall_set_upgraded_to (RCQueueItem *item, RCPackage *packageo);
+void         rc_queue_item_uninstall_set_explicitly_requested (RCQueueItem *item);
 
 
 

@@ -78,6 +78,7 @@ rc_resolver_queue_add_package_to_install (RCResolverQueue *queue,
 
     item = rc_queue_item_new_install (rc_resolver_context_get_world (queue->context),
                                       package);
+    rc_queue_item_install_set_explicitly_requested (item);
 
     rc_resolver_queue_add_item (queue, item);
 }
@@ -99,6 +100,8 @@ rc_resolver_queue_add_package_to_remove (RCResolverQueue *queue,
                                         package, "user request");
     if (remove_only_mode)
         rc_queue_item_uninstall_set_remove_only (item);
+
+    rc_queue_item_uninstall_set_explicitly_requested (item);
 
     rc_resolver_queue_add_item (queue, item);
 }

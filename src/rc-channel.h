@@ -103,6 +103,11 @@ int rc_channel_package_count (const RCChannel *channel);
 
 /* Other */
 
+gboolean rc_channel_has_refresh_magic (RCChannel *);
+gboolean rc_channel_use_refresh_magic (RCChannel *);
+
+gboolean rc_channel_get_transient (RCChannel *);
+
 int rc_channel_get_id_by_name (RCChannelSList *channels, char *name);
 
 RCChannel *rc_channel_get_by_id (RCChannelSList *channels, int id);

@@ -395,6 +395,9 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
                                                       install->upgrades, "upgrade");
         rc_queue_item_uninstall_set_upgraded_to (uninstall_item, package);
 
+        if (install->explicitly_requested)
+            rc_queue_item_uninstall_set_explicitly_requested (uninstall_item);
+
         *new_items = g_slist_prepend (*new_items, uninstall_item);
 
     }
@@ -690,10 +693,24 @@ rc_queue_item_install_get_other_penalty (RCQueueItem *item)
     return install->other_penalty;
 }
 
+void
+rc_queue_item_install_set_explicitly_requested (RCQueueItem *item)
+{
+    RCQueueItem_Install *install;
+
+    g_return_if_fail (item != NULL);
+    g_return_if_fail (rc_queue_item_type (item) == RC_QUEUE_ITEM_TYPE_INSTALL);
+
+    install = (RCQueueItem_Install *) item;
+
+    install->explicitly_requested = TRUE;
+}
+
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 struct RequireProcessInfo {
     RCResolverContext *context;
+    RCWorld *world;
     GSList *providers;
     GHashTable *uniq;
 };
@@ -709,7 +726,8 @@ require_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data)
     if ((! rc_package_status_is_to_be_uninstalled (status))
         && ! rc_resolver_context_is_parallel_install (info->context, package)
         && g_hash_table_lookup (info->uniq, package) == NULL
-        && rc_resolver_context_package_is_possible (info->context, package)) {
+        && rc_resolver_context_package_is_possible (info->context, package)
+        && ! rc_world_package_is_locked (info->world, package)) {
 
         info->providers = g_slist_prepend (info->providers, package);
         g_hash_table_insert (info->uniq, package, GINT_TO_POINTER (1));
@@ -767,6 +785,7 @@ require_item_process (RCQueueItem *item,
     }
 
     info.context = context;
+    info.world = world;
     info.providers = NULL;
     info.uniq = g_hash_table_new (rc_package_spec_hash,
                                   rc_package_spec_equal);
@@ -803,7 +822,7 @@ require_item_process (RCQueueItem *item,
 
             rc_resolver_context_add_info (context, info);
         }
-
+        
         /* If this is an upgrade, we might be able to avoid removing stuff by upgrading
            it instead. */
         if (require->upgraded_package && require->requiring_package) {
@@ -1788,6 +1807,14 @@ uninstall_item_process (RCQueueItem *item,
         
     if (status == RC_PACKAGE_STATUS_INSTALLED) {
 
+        if (! uninstall->explicitly_requested
+            && rc_world_package_is_locked (world, uninstall->package)) {
+            gchar *msg;
+            msg = g_strconcat (pkg_str, " is locked, and cannot be uninstalled.", NULL);
+            rc_resolver_context_add_error_str (context, uninstall->package, msg);
+            return TRUE;
+        }
+
         rc_resolver_context_set_status (context, uninstall->package,
                                         RC_PACKAGE_STATUS_TO_BE_UNINSTALLED);
 
@@ -1917,6 +1944,17 @@ rc_queue_item_uninstall_set_dep (RCQueueItem *item, RCPackageDep *dep)
     g_return_if_fail (dep != NULL);
 
     uninstall->dep_leading_to_uninstall = dep;
+}
+
+void
+rc_queue_item_uninstall_set_explicitly_requested (RCQueueItem *item)
+{
+    RCQueueItem_Uninstall *uninstall = (RCQueueItem_Uninstall *) item;
+
+    g_return_if_fail (item != NULL);
+    g_return_if_fail (rc_queue_item_type (item) == RC_QUEUE_ITEM_TYPE_UNINSTALL);
+
+    uninstall->explicitly_requested = TRUE;
 }
 
 void

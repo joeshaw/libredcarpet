@@ -104,6 +104,9 @@ to_xml_cb (RCChannel *channel,
 
     if (! rc_channel_subscribed (channel))
         return;
+
+    if (rc_channel_get_transient (channel))
+        return;
     
     node = xmlNewChild (root, NULL, "channel", NULL);
 

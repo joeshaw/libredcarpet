@@ -1,3 +1,67 @@
+2002-10-10  Jon Trowbridge  <trow@ximian.com>
+
+	* Makefile.am: Added rc-package-match.c and rc-package-match.h to
+	the build.
+
+	* libredcarpet.h: Added rc-package-match.h.
+
+	* rc-world-import.c (rc_world_add_channel_from_directory): Added.
+	Allows the contents of a directory full of packages to be added to
+	the world as a custom channel.
+
+	* rc-world-subscriptions.c (to_xml_cb): Don't write out
+	subscription XML for transient channels.
+
+	* rc-resolver.c (rc_resolver_resolve_dependencies): Set the
+	channel id and base id to zero when we create our local packages
+	channel.  (They will now get replaced by valid unused ids by
+	rc_world_add_channel.)
+
+	* rc-resolver-queue.c (rc_resolver_queue_add_package_to_install):
+	Flag the initial install items as explicitly requested.
+	(rc_resolver_queue_add_package_to_remove): Flag the initial remove
+	items as explicitly requested.
+
+	* rc-queue-item.c (install_item_process): If this install was
+	explicitly requested and is an upgrade, flag the uninstall half of
+	the operation as also being explicitly requested.
+	(rc_queue_item_install_set_explicitly_requested): Added.
+	(require_process_cb): Don't consider the provider if it is locked.
+	(require_item_process): Pass the world via the info struct.  (We
+	need it when checking if packages are locked.)
+	(uninstall_item_process): Fail if we are trying to uninstall a
+	locked package and it hasn't been explicitly requested.
+	(rc_queue_item_uninstall_set_explicitly_requested): Added.
+
+	* rc-world.c (rc_world_free): Free our package locks.
+	(rc_world_add_channel): If the channel_id or base_id is zero,
+	generate a valid, unused id.  Flag TYPE_UNKNOWN channels as
+	transient.
+	(rc_world_add_lock): Added.
+	(rc_world_remove_lock): Added.
+	(rc_world_clear_locks): Added.
+	(rc_world_foreach_lock): Added.
+	(rc_world_package_is_locked): Added.
+	(rc_world_add_package): Treat "recommends" as requires.  This is
+	what Debian policy says we should do.
+	(rc_world_foreach_package_by_match): Added.
+	(foreach_upgrade_cb): Don't show locked packages when iterating
+	available upgrades.
+	(get_best_upgrade_cb): Don't consider locked packages when looking
+	for the best upgrade.
+	(system_upgrade_cb): Skip locked packages when look for system
+	upgrades.
+
+	* rc-package-match.h:
+	* rc-package-match.c: Added.
+
+	* rc-channel.c (rc_channel_has_refresh_magic): Added.
+	(rc_channel_use_refresh_magic): Added.
+	(rc_channel_get_transient): Added.
+
+	* rc-channel-private.h: Added refresh_magic hook and transient
+	flag to RCChannel struct.
+
 2002-10-01  Joe Shaw  <joe@ximian.com>
 
 	* rc-util.c (rc_rmdir): If S_ISSOCK is defined, remove any sockets

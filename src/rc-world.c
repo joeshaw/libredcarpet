@@ -46,6 +46,7 @@ struct _RCWorld {
     int freeze_count;
 
     GSList *channels;
+    GSList *locks;
 
     RCPackman *packman;
 
@@ -485,12 +486,45 @@ rc_world_free (RCWorld *world)
         }
         g_slist_free (world->channels);
 
+        /* Free our locks */
+        for (iter = world->locks; iter != NULL; iter = iter->next) {
+            RCPackageMatch *lock = iter->data;
+            rc_package_match_free (lock);
+        }
+        g_slist_free (world->locks);
+
 		g_free (world);
 
 	}
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+static gboolean
+have_cid (RCWorld *world, guint32 cid)
+{
+    GSList *iter = world->channels;
+    while (iter) {
+        RCChannel *channel = iter->data;
+        if (cid == rc_channel_get_id (channel))
+            return TRUE;
+        iter = iter->next;
+    }
+    return FALSE;
+}
+
+static gboolean
+have_bid (RCWorld *world, guint32 bid)
+{
+    GSList *iter = world->channels;
+    while (iter) {
+        RCChannel *channel = iter->data;
+        if (bid == rc_channel_get_base_id (channel))
+            return TRUE;
+        iter = iter->next;
+    }
+    return FALSE;
+}
 
 RCChannel *
 rc_world_add_channel (RCWorld *world,
@@ -500,22 +534,42 @@ rc_world_add_channel (RCWorld *world,
                       guint32 base_id,
                       RCChannelType type)
 {
+    static guint32 assigned_cid = 0x70000000;
+    static guint32 assigned_bid = 0x70000000;
     RCChannel *channel;
+    gboolean is_transient;
 
     g_return_val_if_fail (world != NULL, NULL);
     g_return_val_if_fail (channel_name && *channel_name, NULL);
     g_return_val_if_fail (alias, NULL);
 
+    is_transient = (type == RC_CHANNEL_TYPE_UNKNOWN);
+
     rc_world_touch_channel_sequence_number (world);
+
+    if (channel_id == 0) {
+        while (have_cid (world, assigned_cid))
+            ++assigned_cid;
+        channel_id = assigned_cid;
+        ++assigned_cid;
+    }
+
+    if (base_id == 0) {
+        while (have_bid (world, assigned_bid))
+            ++assigned_bid;
+        base_id = assigned_bid;
+        ++assigned_bid;
+    }
 
     channel = rc_channel_new ();
 
-    channel->world   = world;
-    channel->id      = channel_id;
-    channel->base_id = base_id;
-    channel->name    = g_strdup (channel_name);
-    channel->alias   = g_strdup (alias);
-    channel->type    = type;
+    channel->world     = world;
+    channel->id        = channel_id;
+    channel->base_id   = base_id;
+    channel->name      = g_strdup (channel_name);
+    channel->alias     = g_strdup (alias);
+    channel->type      = type;
+    channel->transient = is_transient;
     
     world->channels = g_slist_prepend (world->channels,
                                        channel);
@@ -650,6 +704,82 @@ rc_world_get_channel_by_base_id (RCWorld *world,
     }
 
     return NULL;
+}
+
+void
+rc_world_add_lock (RCWorld        *world,
+                   RCPackageMatch *lock)
+{
+    g_return_if_fail (world != NULL);
+    g_return_if_fail (lock != NULL);
+
+    world->locks = g_slist_prepend (world->locks, lock);
+}
+
+void
+rc_world_remove_lock (RCWorld        *world,
+                      RCPackageMatch *lock)
+{
+    g_return_if_fail (world != NULL);
+    g_return_if_fail (lock != NULL);
+
+    world->locks = g_slist_remove (world->locks, lock);
+}
+
+void
+rc_world_clear_locks (RCWorld *world)
+{
+    GSList *iter;
+
+    g_return_if_fail (world != NULL);
+
+    for (iter = world->locks; iter != NULL; iter = iter->next) {
+        RCPackageMatch *lock = iter->data;
+        rc_package_match_free (lock);
+    }
+
+    g_slist_free (world->locks);
+    world->locks = NULL;
+}
+
+void
+rc_world_foreach_lock (RCWorld         *world,
+                       RCPackageMatchFn fn,
+                       gpointer         user_data)
+{
+    GSList *iter;
+    
+    g_return_if_fail (world != NULL);
+
+    if (fn == NULL)
+        return;
+
+    for (iter = world->locks; iter != NULL; iter = iter->next) {
+        RCPackageMatch *lock = iter->data;
+        fn (lock, user_data);
+    }
+}
+
+gboolean
+rc_world_package_is_locked (RCWorld   *world,
+                            RCPackage *package)
+{
+    GSList *iter;
+
+    g_return_val_if_fail (world != NULL, FALSE);
+    g_return_val_if_fail (package != NULL, FALSE);
+
+    if (package->hold)
+        return TRUE;
+
+    for (iter = world->locks; iter != NULL; iter = iter->next) {
+        RCPackageMatch *lock = iter->data;
+        
+        if (rc_package_match_test (lock, package, world))
+            return TRUE;
+    }
+    
+    return FALSE;
 }
 
 
@@ -820,6 +950,18 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
         for (i = 0; i < package->requires_a->len; i++) {
             pad = rc_package_and_dep_new_pair (
                 package, package->requires_a->data[i]);
+
+            hashed_slist_add (world->requires_by_name,
+                              RC_PACKAGE_SPEC (pad->dep)->nameq,
+                              pad);
+        }
+
+    /* "Recommends" are treated as requirements. */
+
+    if (package->recommends_a)
+        for (i = 0; i < package->recommends_a->len; i++) {
+            pad = rc_package_and_dep_new_pair (
+                package, package->recommends_a->data[i]);
 
             hashed_slist_add (world->requires_by_name,
                               RC_PACKAGE_SPEC (pad->dep)->nameq,
@@ -1288,6 +1430,56 @@ rc_world_foreach_package_by_name (RCWorld *world,
     return count;
 }
 
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+struct ForeachMatchInfo {
+    RCWorld *world;
+    RCPackageMatch *match;
+    RCPackageFn fn;
+    gpointer user_data;
+    int count;
+};
+
+void
+foreach_match_fn (RCPackage *pkg,
+                  gpointer   user_data)
+{
+    struct ForeachMatchInfo *info = user_data;
+
+    if (rc_package_match_test (info->match, pkg, info->world)) {
+        if (info->fn)
+            info->fn (pkg, info->user_data);
+        ++info->count;
+    }
+}
+
+int
+rc_world_foreach_package_by_match (RCWorld        *world,
+                                   RCPackageMatch *match,
+                                   RCPackageFn     fn,
+                                   gpointer        user_data)
+{
+    struct ForeachMatchInfo info;
+
+    g_return_val_if_fail (world != NULL, -1);
+    g_return_val_if_fail (match != NULL, -1);
+
+    info.world = world;
+    info.match = match;
+    info.fn = fn;
+    info.user_data = user_data;
+    info.count = 0;
+
+    rc_world_foreach_package (world,
+                              RC_WORLD_ANY_CHANNEL,
+                              foreach_match_fn, 
+                              &info);
+
+    return info.count;
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
 struct ForeachUpgradeInfo {
     RCPackage *original_package;
     RCPackageFn fn;
@@ -1303,12 +1495,15 @@ foreach_upgrade_cb (RCPackage *package, gpointer user_data)
 
     if (rc_packman_version_compare (
             info->world->packman, RC_PACKAGE_SPEC (info->original_package),
-            RC_PACKAGE_SPEC (package)) < 0)
-    {
-        if (info->fn)
-            info->fn (package, info->user_data);
-        ++info->count;
-    }
+            RC_PACKAGE_SPEC (package)) >= 0)
+        return;
+
+    if (rc_world_package_is_locked (info->world, package))
+        return;
+
+    if (info->fn)
+        info->fn (package, info->user_data);
+    ++info->count;
 }
 
 /**
@@ -1371,6 +1566,9 @@ get_best_upgrade_cb (RCPackage *package, gpointer user_data)
     if (info->subscribed_only)
         if (!(package->channel && rc_channel_subscribed (package->channel)))
             return;
+
+    if (rc_world_package_is_locked (info->world, package))
+        return;
 
     if (rc_packman_version_compare (
             info->world->packman, RC_PACKAGE_SPEC (info->best_upgrade),
@@ -1435,8 +1633,14 @@ static void
 system_upgrade_cb (RCPackage *package, gpointer user_data)
 {
     struct SystemUpgradeInfo *info = user_data;
-    RCPackage *upgrade = rc_world_get_best_upgrade (info->world, package,
-                                                    TRUE);
+    RCPackage *upgrade;
+
+    /* If the package is excluded, skip it. */
+    if (rc_world_package_is_locked (info->world, package))
+        return;
+
+    upgrade = rc_world_get_best_upgrade (info->world, package,
+                                         TRUE);
 
     if (upgrade) {
         if (info->fn)

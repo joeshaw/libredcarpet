@@ -377,7 +377,36 @@ rc_channel_parse_apt_sources(const char *filename)
 	/* FIXME: Write the rest of me. Bad Joey! */
     }
 } /* rc_channel_parse_apt_sources */
-#endif	    
+#endif
+
+gboolean
+rc_channel_has_refresh_magic (RCChannel *channel)
+{
+    g_return_val_if_fail (channel != NULL, FALSE);
+
+    return channel->refresh_magic != NULL;
+}
+
+gboolean
+rc_channel_use_refresh_magic (RCChannel *channel)
+{
+    g_return_val_if_fail (channel != NULL, FALSE);
+
+    if (channel->refresh_magic) {
+        channel->refresh_magic (channel);
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+gboolean
+rc_channel_get_transient (RCChannel *channel)
+{
+    g_return_val_if_fail (channel != NULL, FALSE);
+
+    return channel->transient;
+}
 
 int
 rc_channel_get_id_by_name (RCChannelSList *channels, char *name)
