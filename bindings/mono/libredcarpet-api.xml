@@ -1741,6 +1741,9 @@
       <method name="GetId" cname="rc_package_get_id">
         <return-type type="char*" />
       </method>
+      <method name="GetInstallOnly" cname="rc_package_get_install_only">
+        <return-type type="gboolean" />
+      </method>
       <method name="GetInstalledSize" cname="rc_package_get_installed_size">
         <return-type type="guint32" />
       </method>
@@ -1794,9 +1797,6 @@
         <parameters>
           <parameter type="RCPackageHashTableBySpec*" name="ht" />
         </parameters>
-      </method>
-      <method name="IsInstallOnly" cname="rc_package_is_install_only">
-        <return-type type="gboolean" />
       </method>
       <method name="IsInstalled" cname="rc_package_is_installed">
         <return-type type="gboolean" />
@@ -1879,6 +1879,12 @@
         <return-type type="void" />
         <parameters>
           <parameter type="const-char*" name="id" />
+        </parameters>
+      </method>
+      <method name="SetInstallOnly" cname="rc_package_set_install_only">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="gboolean" name="val" />
         </parameters>
       </method>
       <method name="SetInstalledSize" cname="rc_package_set_installed_size">
@@ -3329,6 +3335,9 @@
       <field cname="type" type="RCVerificationType" />
       <field cname="status" type="RCVerificationStatus" />
       <field cname="info" type="gchar*" />
+      <method name="Cleanup" cname="rc_verification_cleanup" shared="true">
+        <return-type type="void" />
+      </method>
       <method name="Free" cname="rc_verification_free">
         <return-type type="void" />
       </method>

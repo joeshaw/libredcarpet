@@ -66,6 +66,13 @@ namespace RC {
 			}
 		}
 
+		[DllImport("libredcarpet")]
+		static extern void rc_verification_cleanup();
+
+		public static void Cleanup() {
+			rc_verification_cleanup();
+		}
+
 		private static GLib.GType GType {
 			get { return GLib.GType.Pointer; }
 		}

@@ -202,7 +202,7 @@
         writer.WriteElementString ("filesize", System.Xml.XmlConvert.ToString (this.FileSize));
         writer.WriteElementString ("installedsize", System.Xml.XmlConvert.ToString (this.InstalledSize));
 
-        if (this.IsInstallOnly)
+        if (this.InstallOnly)
             writer.WriteElementString ("install_only", "1");
 
         if (this.IsPackageSet)

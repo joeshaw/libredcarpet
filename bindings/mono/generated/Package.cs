@@ -188,17 +188,6 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern bool rc_package_is_install_only(IntPtr raw);
-
-		public bool IsInstallOnly { 
-			get {
-				bool raw_ret = rc_package_is_install_only(Handle);
-				bool ret = raw_ret;
-				return ret;
-			}
-		}
-
-		[DllImport("libredcarpet")]
 		static extern IntPtr rc_package_to_str(IntPtr raw);
 
 		public override string ToString() {
@@ -246,6 +235,23 @@ namespace RC {
 			IntPtr raw_ret = rc_package_hash_table_by_string_to_list(ht);
 			GLib.SList ret = new GLib.SList(raw_ret);
 			return ret;
+		}
+
+		[DllImport("libredcarpet")]
+		static extern bool rc_package_get_install_only(IntPtr raw);
+
+		[DllImport("libredcarpet")]
+		static extern void rc_package_set_install_only(IntPtr raw, bool val);
+
+		public bool InstallOnly { 
+			get {
+				bool raw_ret = rc_package_get_install_only(Handle);
+				bool ret = raw_ret;
+				return ret;
+			}
+			set {
+				rc_package_set_install_only(Handle, value);
+			}
 		}
 
 		[DllImport("libredcarpet")]
@@ -590,7 +596,7 @@ namespace RC {
         writer.WriteElementString ("filesize", System.Xml.XmlConvert.ToString (this.FileSize));
         writer.WriteElementString ("installedsize", System.Xml.XmlConvert.ToString (this.InstalledSize));
 
-        if (this.IsInstallOnly)
+        if (this.InstallOnly)
             writer.WriteElementString ("install_only", "1");
 
         if (this.IsPackageSet)
