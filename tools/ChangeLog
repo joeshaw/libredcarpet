@@ -1,3 +1,7 @@
+2003-05-21  Joe Shaw  <joe@ximian.com>
+
+	* pkg_to_xml.c: Add a rc_debug handler is RC_DEBUG is set
+
 2003-04-30  Joe Shaw  <joe@ximian.com>
 
 	* packman_test.c (packman_test_file_list): Show a lot more

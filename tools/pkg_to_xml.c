@@ -25,9 +25,15 @@
 
 #include "libredcarpet.h"
 
-int main (int argc, char *argv[])
+static void
+debug_message_handler (const char *str, RCDebugLevel level, gpointer user_data)
 {
-    char *distro_xml;
+    printf ("%s\n", str);
+}
+
+int
+main (int argc, char *argv[])
+{
     RCPackman *packman;
     xmlDoc *doc = NULL;
     xmlNode *root;
@@ -35,6 +41,12 @@ int main (int argc, char *argv[])
     int i;
     
     g_type_init ();
+
+    if (getenv ("RC_DEBUG")) {
+        rc_debug_add_handler (debug_message_handler,
+                              RC_DEBUG_LEVEL_ALWAYS,
+                              NULL);
+    }
 
     if (!rc_distro_parse_xml (NULL, 0)) {
         g_printerr ("Unable to parse internal distribution info\n");
