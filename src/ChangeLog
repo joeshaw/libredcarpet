@@ -1,3 +1,8 @@
+2001-03-12  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c (rc_rpmman_read_header): handle the broken "mdk"
+	parts of the release when dealing with Mandrake, sigh
+
 2001-03-09  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c (rc_rpmman_transact): cast the transact_cb to

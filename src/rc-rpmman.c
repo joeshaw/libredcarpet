@@ -908,8 +908,22 @@ rc_rpmman_read_header (Header header, gchar **name, guint32 *epoch,
 
         headerGetEntry (header, RPMTAG_RELEASE, &type, (void **)&tmprel, &count);
 
+        /* So there's magic involved in getting the release because
+         * Mandrake sucks and puts "mdk" at the end of all of their
+         * release fields.  RPM can't sort this correctly; rpmvercmp
+         * always returns -1 no matter what order options are given in
+         * if the numeric and alphabetic fields don't line up.
+         * Solution?  Let's just drop the "mdk" part. */
+
         if (count && (type == RPM_STRING_TYPE) && tmprel && tmprel[0]) {
-            *release = g_strdup (tmprel);
+            guint length = strlen (tmprel);
+
+            if (!strcmp (tmprel + (length - 3), "mdk")) {
+                /* This is a broken Mandrake release */
+                length -= 3;
+            }
+
+            *release = g_strndup (tmprel, length);
         }
     }
 
