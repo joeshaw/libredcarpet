@@ -1,5 +1,14 @@
 2002-11-14  Joe Shaw  <joe@ximian.com>
 
+	* rc-debman.c (rc_debman_is_database_changed): Destroy our cache
+	of packages when the db changes out from underneath us.
+	(unlock_database, rc_debman_init): Make the timeouts 5 seconds,
+	like the RPM backend.
+
+	* rc-rpmman.c (open_database): Fix an occasional glib warning.
+
+2002-11-14  Joe Shaw  <joe@ximian.com>
+
 	* rc-package-dep.c (rc_package_dep_verify_relation): Go back to
 	evaluating the version and release separately as that wasn't quite
 	right, instead use the capability as to whether we should always

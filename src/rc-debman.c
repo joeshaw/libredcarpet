@@ -111,33 +111,6 @@ dump_argv (int level, gchar **argv)
     rc_debug (level, "\n");
 } /* dump_argv */
 
-static gboolean
-rc_debman_is_database_changed (RCPackman *packman)
-{
-    struct stat buf;
-    RCDebman *debman = RC_DEBMAN (packman);
-
-    stat ("/var/lib/dpkg/status", &buf);
-
-    if (buf.st_mtime != debman->priv->db_mtime) {
-        debman->priv->db_mtime = buf.st_mtime;
-        return TRUE;
-    }
-
-    return FALSE;
-}
-
-static gboolean
-database_check_func (RCDebman *debman)
-{
-    RCPackman *packman;
-
-    if (rc_debman_is_database_changed (packman = RC_PACKMAN (debman)))
-        g_signal_emit_by_name (packman, "database_changed");
-
-    return TRUE;
-}
-
 /*
   Go Wichert, go Wichert
 */
@@ -176,6 +149,34 @@ hash_destroy (RCDebman *debman)
 
     debman->priv->package_hash = g_hash_table_new (NULL, NULL);
     debman->priv->hash_valid = FALSE;
+}
+
+static gboolean
+rc_debman_is_database_changed (RCPackman *packman)
+{
+    struct stat buf;
+    RCDebman *debman = RC_DEBMAN (packman);
+
+    stat ("/var/lib/dpkg/status", &buf);
+
+    if (buf.st_mtime != debman->priv->db_mtime) {
+        debman->priv->db_mtime = buf.st_mtime;
+        hash_destroy (debman);
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static gboolean
+database_check_func (RCDebman *debman)
+{
+    RCPackman *packman;
+
+    if (rc_debman_is_database_changed (packman = RC_PACKMAN (debman)))
+        g_signal_emit_by_name (packman, "database_changed");
+
+    return TRUE;
 }
 
 /*
@@ -267,7 +268,7 @@ unlock_database (RCDebman *debman)
 
     rc_debman_is_database_changed (RC_PACKMAN (debman));
     debman->priv->db_watcher_cb =
-        g_timeout_add (300000, (GSourceFunc) database_check_func,
+        g_timeout_add (5000, (GSourceFunc) database_check_func,
                        (gpointer) debman);
 
     if (!rc_close (debman->priv->lock_fd)) {
@@ -3359,7 +3360,7 @@ rc_debman_init (RCDebman *debman)
     debman->priv->db_mtime = 0;
     rc_debman_is_database_changed (packman);
     debman->priv->db_watcher_cb =
-        g_timeout_add (300000, (GSourceFunc) database_check_func,
+        g_timeout_add (5000, (GSourceFunc) database_check_func,
                        (gpointer) debman);
 
     if (geteuid ()) {

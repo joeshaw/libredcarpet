@@ -316,8 +316,10 @@ open_database (RCRpmman *rpmman, gboolean write)
         }
     }
 
-    g_source_remove (rpmman->db_watcher_cb);
-    rpmman->db_watcher_cb = 0;
+    if (rpmman->db_watcher_cb) {
+        g_source_remove (rpmman->db_watcher_cb);
+        rpmman->db_watcher_cb = 0;
+    }
 
     return TRUE;
 
