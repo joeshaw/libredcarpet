@@ -197,8 +197,10 @@ rc_world_system_finalize (GObject *obj)
 {
     RCWorldSystem *system = RC_WORLD_SYSTEM (obj);
 
-    if (system->database_changed_id)
-        g_signal_handler_disconnect (system, system->database_changed_id);
+    if (system->database_changed_id) {
+        g_signal_handler_disconnect (system->packman,
+                                     system->database_changed_id);
+    }
 
     g_object_unref (system->packman);
 

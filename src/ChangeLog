@@ -1,5 +1,10 @@
 2003-09-30  Joe Shaw  <joe@ximian.com>
 
+	* rc-world-system.c (rc_world_system_finalize): Fix a
+	thinko... the signal is on the packman, not the system world.
+
+2003-09-30  Joe Shaw  <joe@ximian.com>
+
 	* rc-world-system.c (rc_world_system_finalize): Disconnect from
 	the packman's database_changed signal when we are finalized.
 	(rc_world_system_init): Save the signal connection id to the
