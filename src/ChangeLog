@@ -1,5 +1,16 @@
 2002-06-04  Ian Peters  <itp@ximian.com>
 
+	* rc-world-import.c (debian_packages_helper): this package update,
+	like all of them in debian, has an epoch
+	* rc-xml.c (parse_dep_attrs): set has_epoch when we find an epoch
+	(rc_xml_node_to_package): has_epoch isn't always 1, it depends on
+	the update spec
+	(rc_xml_node_to_package_dep_internal): don't blindly check for an
+	epoch with a default value, check if there is one instead, and set
+	has_epoch appropriately
+
+2002-06-04  Ian Peters  <itp@ximian.com>
+
 	* rc-package-spec.h (struct _RCPackageSpec): add a has_epoch
 	bitfield
 	(rc_package_spec_init): take a has_epoch parameter

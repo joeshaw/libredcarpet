@@ -173,6 +173,7 @@ parse_dep_attrs(RCPackageDep *dep, const xmlChar **attrs)
     gboolean op_present = FALSE;
     /* Temporary variables dependent upon the presense of an 'op' attribute */
     guint32 tmp_epoch = 0;
+    gboolean has_epoch = 0;
     char *tmp_version = NULL;
     char *tmp_release = NULL;
 
@@ -188,9 +189,10 @@ parse_dep_attrs(RCPackageDep *dep, const xmlChar **attrs)
             op_present = TRUE;
             dep->relation = rc_string_to_package_relation(value);
         }
-        else if (!strcmp(attr, "epoch"))
+        else if (!strcmp(attr, "epoch")) {
             tmp_epoch = rc_string_to_guint32_with_default(value, 0);
-        else if (!strcmp(attr, "version"))
+            has_epoch = 1;
+        } else if (!strcmp(attr, "version"))
             tmp_version = g_strdup(value);
         else if (!strcmp(attr, "release"))
             tmp_release = g_strdup(value);
@@ -202,7 +204,7 @@ parse_dep_attrs(RCPackageDep *dep, const xmlChar **attrs)
 
     if (op_present) {
         dep->spec.epoch = tmp_epoch;
-        dep->spec.has_epoch = 1;
+        dep->spec.has_epoch = has_epoch;
         dep->spec.version = tmp_version;
         dep->spec.release = tmp_release;
     }
@@ -808,7 +810,7 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
         RCPackageUpdate *update = package->history->data;
 
         package->spec.epoch   = update->spec.epoch;
-        package->spec.has_epoch = 1;
+        package->spec.has_epoch = update->spec.has_epoch;
         package->spec.version = g_strdup (update->spec.version);
         package->spec.release = g_strdup (update->spec.release);
 
@@ -853,9 +855,9 @@ rc_xml_node_to_package_dep_internal (const xmlNode *node)
     tmp = xml_get_prop (node, "op");
     if (tmp) {
         dep_item->relation = rc_string_to_package_relation (tmp);
-        dep_item->spec.epoch =
-            xml_get_guint32_value_default (node, "epoch", 0);
-        dep_item->spec.has_epoch = 1;
+        if (xml_get_guint32_value (node, "epoch", &dep_item->spec.epoch)) {
+            dep_item->spec.has_epoch = 1;
+        }
         dep_item->spec.version =
             xml_get_prop (node, "version");
         dep_item->spec.release =

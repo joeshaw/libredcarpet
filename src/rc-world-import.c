@@ -465,6 +465,8 @@ debian_packages_helper (gchar *mbuf, RCPackage *pkg, gchar *url_prefix)
     int ilen;
 
     up = rc_package_update_new ();
+    /* All debian packages "have" epochs */
+    up->spec.has_epoch = 1;
 
     while (1) {
         /* FIXME -- handle all empty line with spaces */
