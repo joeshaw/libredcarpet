@@ -66,4 +66,15 @@ libredcarpet_a_SOURCES =		\
 #	rc-crypto.c			\
 #	rc-crypto.h			\
 
-EXTRA_DIST = $(rpm_sources)
+EXTRA_DIST = $(rpm_sources) dpkg-helper.c
+
+helperdir = $(datadir)/redcarpet
+helper_DATA = \
+	dpkg-helper.so
+
+all-local: dpkg-helper.so
+
+dpkg-helper.so: dpkg-helper.c
+	gcc -fPIC -c -o dpkg-helper.o dpkg-helper.c
+	ld -soname dpkg-helper -shared -o dpkg-helper.so dpkg-helper.o
+
