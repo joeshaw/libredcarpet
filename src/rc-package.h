@@ -83,8 +83,9 @@ struct _RCPackage {
     gchar *package_filename;
     gchar *signature_filename;
 
-    guint installed : 1;
-    guint hold      : 1; /* Don't upgrade this package */
+    guint installed     : 1;
+    guint local_package : 1;
+    guint hold          : 1; /* Don't upgrade this package */
 };
 
 RCPackage *rc_package_new (void);

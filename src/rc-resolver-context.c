@@ -273,9 +273,13 @@ rc_resolver_context_install_package (RCResolverContext *context,
         ++context->install_count;
         context->download_size += package->file_size;
         context->install_size += package->installed_size;
-        
-        priority = rc_resolver_context_get_channel_priority (context,
-                                                             package->channel);
+
+        if (package->local_package)
+            priority = 0;
+        else {
+            priority = rc_resolver_context_get_channel_priority (
+                context, package->channel);
+        }
 
         if (priority < context->min_priority)
             context->min_priority = priority;
@@ -319,9 +323,13 @@ rc_resolver_context_upgrade_package (RCResolverContext *context,
         context->download_size += package->file_size;
         /* We should change installed_size to reflect the difference in
            installed size between the old and new versions. */
-        
-        priority = rc_resolver_context_get_channel_priority (context,
-                                                             package->channel);
+
+        if (package->local_package)
+            priority = 0;
+        else {
+            priority = rc_resolver_context_get_channel_priority (
+                context, package->channel);
+        }
 
         if (priority < context->min_priority)
             context->min_priority = priority;

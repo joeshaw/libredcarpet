@@ -84,7 +84,7 @@ rc_resolver_info_copy (RCResolverInfo *info)
     cpy = g_new0 (RCResolverInfo, 1);
 
     cpy->type         = info->type;
-    cpy->package      = info->package;
+    cpy->package      = rc_package_ref (info->package);
     cpy->priority     = info->priority;
     cpy->package_list = NULL;
     cpy->msg          = g_strdup (info->msg);
@@ -92,8 +92,10 @@ rc_resolver_info_copy (RCResolverInfo *info)
     cpy->is_important = info->is_important;
 
     for (iter = info->package_list; iter != NULL; iter = iter->next) {
+        RCPackage *p = (RCPackage *) iter->data;
+
         cpy->package_list = g_slist_prepend (cpy->package_list,
-                                             iter->data);
+                                             rc_package_ref (p));
     }
     cpy->package_list = g_slist_reverse (cpy->package_list);
 
@@ -104,7 +106,9 @@ void
 rc_resolver_info_free (RCResolverInfo *info)
 {
     if (info) {
+        rc_package_slist_unref (info->package_list);
         g_slist_free (info->package_list);
+        rc_package_unref (info->package);
         g_free (info->msg);
         g_free (info);
     }
@@ -257,7 +261,7 @@ rc_resolver_info_add_related_package (RCResolverInfo *info,
     if (! rc_resolver_info_mentions (info, package)) {
 
         info->package_list = g_slist_prepend (info->package_list,
-                                              package);
+                                              rc_package_ref (package));
     }
 }
 
@@ -305,7 +309,7 @@ rc_resolver_info_misc_new (RCPackage *package,
     info = g_new0 (RCResolverInfo, 1);
 
     info->type     = RC_RESOLVER_INFO_TYPE_MISC;
-    info->package  = package;
+    info->package  = rc_package_ref (package);
     info->priority = priority;
     info->msg      = msg;
 
@@ -346,7 +350,7 @@ rc_resolver_info_needed_by_new (RCPackage *package)
     info = g_new0 (RCResolverInfo, 1);
 
     info->type     = RC_RESOLVER_INFO_TYPE_NEEDED_BY;
-    info->package  = package;
+    info->package  = rc_package_ref (package);
     info->priority = RC_RESOLVER_INFO_PRIORITY_USER;
 
     return info;
@@ -361,7 +365,7 @@ rc_resolver_info_needed_add (RCResolverInfo *info,
     g_return_if_fail (needed_by != NULL);
 
     info->package_list = g_slist_prepend (info->package_list,
-                                          needed_by);
+                                          rc_package_ref (needed_by));
 }
 
 void
@@ -372,8 +376,10 @@ rc_resolver_info_needed_add_slist (RCResolverInfo *info,
     g_return_if_fail (info->type == RC_RESOLVER_INFO_TYPE_NEEDED_BY);
 
     while (slist) {
+        RCPackage *p = (RCPackage *) slist->data;
+
         info->package_list = g_slist_prepend (info->package_list,
-                                              (RCPackage *) slist->data);
+                                              rc_package_ref (p));
         slist = slist->next;
     }
 }
@@ -390,11 +396,11 @@ rc_resolver_info_conflicts_with_new (RCPackage *package,
     info = g_new0 (RCResolverInfo, 1);
     
     info->type     = RC_RESOLVER_INFO_TYPE_CONFLICTS_WITH;
-    info->package  = package;
+    info->package  = rc_package_ref (package);
     info->priority = RC_RESOLVER_INFO_PRIORITY_USER;
 
     info->package_list = g_slist_prepend (info->package_list,
-                                          conflicts_with);
+                                          rc_package_ref (conflicts_with));
 
     return info;
 }
@@ -411,11 +417,11 @@ rc_resolver_info_obsoletes_new (RCPackage *package,
     info = g_new0 (RCResolverInfo, 1);
     
     info->type     = RC_RESOLVER_INFO_TYPE_OBSOLETES;
-    info->package  = package;
+    info->package  = rc_package_ref (package);
     info->priority = RC_RESOLVER_INFO_PRIORITY_USER;
 
     info->package_list = g_slist_prepend (info->package_list,
-                                          obsoletes);
+                                          rc_package_ref (obsoletes));
 
     return info;
 }
@@ -432,11 +438,11 @@ rc_resolver_info_depends_on_new (RCPackage *package,
     info = g_new0 (RCResolverInfo, 1);
     
     info->type     = RC_RESOLVER_INFO_TYPE_DEPENDS_ON;
-    info->package  = package;
+    info->package  = rc_package_ref (package);
     info->priority = RC_RESOLVER_INFO_PRIORITY_USER;
 
     info->package_list = g_slist_prepend (info->package_list,
-                                          dependency);
+                                          rc_package_ref (dependency));
 
     return info;
 }

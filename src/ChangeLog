@@ -1,3 +1,18 @@
+2002-08-05  Joe Shaw  <joe@ximian.com>
+
+	* rc-package.c (rc_package_is_installed): If local_package is set,
+	always return FALSE.
+
+	* rc-package.h: Add a local_package bit
+
+	* rc-packman.c (rc_packman_query_file): Set the local_package bit.
+
+	* rc-resolver-context.c (rc_resolver_context_install_package,
+	rc_resolver_context_upgrade_package): If the local_package bit is
+	set, set the priority to 0.
+
+	* rc-resolver-info.c: Ref and unref RCPackages throughout.
+
 2002-08-04  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-world-dump.c (rc_world_undump_from_xml): Extract the

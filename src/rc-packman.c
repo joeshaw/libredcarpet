@@ -329,12 +329,17 @@ rc_packman_query_file (RCPackman *packman, const gchar *filename)
 
     package = klass->rc_packman_real_query_file (packman, filename);
 
-    /* Get the file size if the rc_packman_real_query_file didn't do
-       so already. */
-    if (package && package->file_size == 0) {
-        struct stat statbuf;
-        if (stat (filename, &statbuf) == 0)
-            package->file_size = statbuf.st_size;
+    if (package) {
+        /* Get the file size if the rc_packman_real_query_file didn't do
+           so already. */
+        if (package->file_size == 0) {
+            struct stat statbuf;
+            if (stat (filename, &statbuf) == 0)
+                package->file_size = statbuf.st_size;
+        }
+
+        /* Set the local package bit */
+        package->local_package = TRUE;
     }
 
     return package;

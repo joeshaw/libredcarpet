@@ -205,7 +205,10 @@ rc_package_is_installed (RCPackage *package)
 {
     g_return_val_if_fail (package != NULL, FALSE);
 
-    return package->channel == NULL || package->installed;
+    if (package->local_package)
+        return FALSE;
+    else
+        return package->channel == NULL || package->installed;
 }
 
 RCPackage *
