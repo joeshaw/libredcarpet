@@ -32,7 +32,7 @@
 
 #include <gnome-xml/tree.h>
 
-#define DEBUG 50 
+#undef DEBUG
 
 #if defined(ENABLE_RPM3) || defined(ENABLE_RPM4)
 static gboolean rpmish = TRUE;
