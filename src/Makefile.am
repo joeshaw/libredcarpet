@@ -100,6 +100,8 @@ libredcarpettmp_a_SOURCES =		\
 	rc-distro.c			\
 	rc-dep-or.c			\
         rc-distman.c                    \
+	rc-marshal.c			\
+	rc-marshal.h			\
         rc-packman.c                    \
         rc-packman-private.h            \
         rc-md5.c                        \
@@ -208,19 +210,13 @@ distributions-xml.h: distributions.xml packer.pl
 ### Deal with auto-generating the signal marshallers
 ###
 
-rc-marshal.h: stamp-rc-marshal.h
-	@true   
-
-rc-marshal.c: stamp-rc-marshal.c
-	@true
-
-stamp-rc-marshal.h: rc-marshal.list
+rc-marshal.h: rc-marshal.list
 	cd $(srcdir) \
 	&& glib-genmarshal --prefix=rc_marshal rc-marshal.list --header >> xgen-gmh \
 	&& (cmp -s xgen-gmh rc-marshal.h || cp xgen-gmh rc-marshal.h) \
 	&& rm -f xgen-gmh xgen-gmh~
 
-stamp-rc-marshal.c: rc-marshal.list
+rc-marshal.c: rc-marshal.list
 	cd $(srcdir) \
 	&& glib-genmarshal --prefix=rc_marshal rc-marshal.list --body >> xgen-gmc \
 	&& (cmp -s xgen-gmc rc-marshal.c || cp xgen-gmc rc-marshal.c) \
@@ -229,3 +225,4 @@ stamp-rc-marshal.c: rc-marshal.list
 clean-local:
 	rm -f libredcarpet.a
 	rm -f distributions-xml.h
+	rm -f rc-marshal.c rc-marshal.h
