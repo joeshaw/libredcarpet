@@ -1,3 +1,7 @@
+2002-09-09  Joe Shaw  <joe@ximian.com>
+
+	* rc-rpmman.c: Add some missing header includes.
+
 2002-09-06  Joe Shaw  <joe@ximian.com>
 
 	* rc-rpmman.c (rc_rpmman_verify): Fix a typo.  We want a bitwise

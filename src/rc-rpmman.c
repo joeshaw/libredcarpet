@@ -25,6 +25,9 @@
 #include <string.h>
 #include <ctype.h>
 #include <libgen.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include <rpm/rpmlib.h>
 #include <rpm/rpmmacro.h>
