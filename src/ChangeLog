@@ -1,5 +1,19 @@
 2001-07-11  Ian Peters  <itp@ximian.com>
 
+	* rc-debman.c: added the fake version hack to the mark purge step,
+	now renamed to mark_status.  This should make RC more resilient in
+	the face of strangely ordered packages.
+
+	* rc-distro.c: applied patch from Rodney to add support for
+	Mandrake 8.0, SuSE 7.1, and LinuxPPC 2000 Q4.
+
+	* rc-package-info.c (debian_packages_helper): correctly offset the
+	buf pointer by the length of the initial string when calling
+	rc_debman_fill_depends so we stop getting completely bogus
+	dependency information.
+
+2001-07-11  Ian Peters  <itp@ximian.com>
+
 	* rc-debman-general.h: rc_debman_fill_depends no longer takes a
 	list to append to, but instead returns a new list
 

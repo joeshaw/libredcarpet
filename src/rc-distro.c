@@ -90,9 +90,14 @@ RCDistroChunk distro_figurers[] = {
 
     { "linuxppc-2000-ppc", RC_ARCH_PPC,
       func_string_in_file, "/etc/redhat-release", "LinuxPPC 2000", NULL, 0 },
+    { "linuxppc-2000q4-ppc", RC_ARCH_PPC,
+      func_string_in_file, "/etc/redhat-release", "Linux/PPC 2000 Q4", NULL, 0 },
 
     { "yellowdog-12-ppc", RC_ARCH_PPC,
       func_string_in_file, "/etc/yellowdog-release", "Champion Server release 1.2",
+      NULL, 0 },
+    { "yellowdog-20-ppc", RC_ARCH_PPC,
+      func_string_in_file, "/etc/yellowdog-release", "Yellow Dog Linux release 2.0 (Pomona)",
       NULL, 0 },
 
     { "mandrake-70-i586", RC_ARCH_IA32,
@@ -101,6 +106,8 @@ RCDistroChunk distro_figurers[] = {
       func_string_in_file, "/etc/mandrake-release", "7.1", NULL, 0 },
     { "mandrake-72-i586", RC_ARCH_IA32,
       func_string_in_file, "/etc/mandrake-release", "7.2", NULL, 0 },
+    { "mandrake-80-i586", RC_ARCH_IA32,
+      func_string_in_file, "/etc/mandrake-release", "8.0", NULL, 0 },
 
     { "redhat-60-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/redhat-release", "6.0", NULL, 0 },
@@ -122,6 +129,8 @@ RCDistroChunk distro_figurers[] = {
       func_string_in_file, "/etc/SuSE-release", "6.4", NULL, 0 },
     { "suse-70-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/SuSE-release", "7.0", NULL, 0 },
+    { "suse-71-i386", RC_ARCH_IA32,
+      func_string_in_file, "/etc/SuSE-release", "7.1", NULL, 0 },
 
     { "debian-potato-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/debian_version", "2.2", NULL, 0},
@@ -153,18 +162,22 @@ RCDistroType distro_types[] = {
     { "suse-63-i386", NULL, "SuSE", "6.3", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=3, non-gdm-runlevel=2" },
     { "suse-64-i386", NULL, "SuSE", "6.4", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=3, non-gdm-runlevel=2" },
     { "suse-70-i386", NULL, "SuSE", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=3, non-gdm-runlevel=2" },
+    { "suse-71-i386", NULL, "SuSE", "7.1", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
 
     { "mandrake-70-i586", NULL, "Linux Mandrake", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
     { "mandrake-71-i586", NULL, "Linux Mandrake", "7.1", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
     { "mandrake-72-i586", NULL, "Linux Mandrake", "7.2", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "mandrake-80-i586", NULL, "Linux Mandrake", "8.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
 
     { "debian-sid-i386", NULL, "Debian GNU/Linux", "sid", RC_PKG_DPKG, RC_ARCH_IA32, NULL },
     { "debian-woody-i386", NULL, "Debian GNU/Linux", "woody", RC_PKG_DPKG, RC_ARCH_IA32, NULL },
     { "debian-potato-i386", NULL, "Debian GNU/Linux", "potato", RC_PKG_DPKG, RC_ARCH_IA32, NULL },
 
     { "linuxppc-2000-ppc", NULL, "LinuxPPC", "2000", RC_PKG_RPM, RC_ARCH_PPC, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "linuxppc-2000q4-ppc", NULL, "Linux/PPC", "2000 Q4", RC_PKG_RPM, RC_ARCH_PPC, "gdm-runlevel=5, non-gdm-runlevel=3" },
 
     { "yellowdog-12-ppc", NULL, "Yellow Dog Linux", "1.2", RC_PKG_RPM, RC_ARCH_PPC, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "yellowdog-20-ppc", NULL, "Yellow Dog Linux", "2.0", RC_PKG_RPM, RC_ARCH_PPC, "gdm-runlevel=5, non-gdm-runlevel=3" },
 
     { "solaris-8-sun4", NULL, "Sun Solaris 8", "8", RC_PKG_RPM, RC_ARCH_SPARC, "" },
 

@@ -523,7 +523,7 @@ verify_status (RCPackman *packman)
 }
 
 /*
-  The associated detritus and cruft related to mark_purge.  Given a
+  The associated detritus and cruft related to mark_status.  Given a
   list of packages, we need to scan through /var/lib/dpkg/status, and
   change the "install ok installed" string to "purge ok installed", to
   let dpkg know that we're going to be removing this package soon.
@@ -531,11 +531,11 @@ verify_status (RCPackman *packman)
 
 /*
   Since I only want to scan through /var/lib/dpkg/status once, I need
-  a shorthand way to match potentially many strings.  Returns the name
-  of the package that matched, or NULL if none did.
+  a shorthand way to match potentially many strings.  Returns the
+  package that matched, or NULL if none did.
 */
 
-static const gchar *
+static RCPackage *
 package_accept (gchar *line, RCPackageSList *packages)
 {
     RCPackageSList *iter;
@@ -557,16 +557,16 @@ package_accept (gchar *line, RCPackageSList *packages)
             rc_debug (RC_DEBUG_LEVEL_DEBUG,
                       __FUNCTION__ ": found package %s\n", package->spec.name);
 
-            return (package->spec.name);
+            return (package);
         }
     }
 
     return (NULL);
 }
 
-typedef struct _DebmanMarkPurgeInfo DebmanMarkPurgeInfo;
+typedef struct _DebmanMarkStatusInfo DebmanMarkStatusInfo;
 
-struct _DebmanMarkPurgeInfo {
+struct _DebmanMarkStatusInfo {
     GMainLoop *loop;
 
     RCDebman *debman;
@@ -576,37 +576,73 @@ struct _DebmanMarkPurgeInfo {
 
     int out_fd;
 
+    RCPackageSList *install_packages;
     RCPackageSList *remove_packages;
 
-    gboolean rewrite;
+    gboolean rewrite_status;
+    gboolean rewrite_version;
+    char *new_version;
     gboolean error;
 };
 
 static void
-mark_purge_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
+mark_status_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
 {
-    DebmanMarkPurgeInfo *mark_purge_info = (DebmanMarkPurgeInfo *)data;
+    DebmanMarkStatusInfo *mark_status_info = (DebmanMarkStatusInfo *)data;
+    RCPackage *package;
 
-    /* If rewrite is set (we encountered a package we want to rewrite)
-     * and this is a status line, write out our new status line */
-    if (mark_purge_info->rewrite &&
+    /* If rewrite_status is set (we encountered a package we're
+     * removing) and this is a status line, write out our new status
+     * line */
+    if (mark_status_info->rewrite_status &&
         !strncasecmp (line, "Status:", strlen ("Status:")))
     {
-        if (!rc_write (mark_purge_info->out_fd, "Status: purge ok installed\n",
+        if (!rc_write (mark_status_info->out_fd, "Status: purge ok installed\n",
                        strlen ("Status: purge ok installed\n")))
         {
             rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
                       ": failed to write new status line, aborting\n");
 
             rc_packman_set_error
-                (RC_PACKMAN (mark_purge_info->debman), RC_PACKMAN_ERROR_ABORT,
+                (RC_PACKMAN (mark_status_info->debman), RC_PACKMAN_ERROR_ABORT,
                  "write to %s failed",
-                 mark_purge_info->debman->priv->rc_status_file);
+                 mark_status_info->debman->priv->rc_status_file);
 
             goto BROKEN;
         }
 
-        mark_purge_info->rewrite = FALSE;
+        mark_status_info->rewrite_status = FALSE;
+
+        return;
+    }
+
+    /* If rewrite_version is set (we encountered a package we're
+     * upgrading) and this is a version line, write out our new
+     * version */
+    if (mark_status_info->rewrite_version &&
+        !strncasecmp (line, "Version:", strlen ("Version:")))
+    {
+        char *version_line;
+
+        version_line = g_strdup_printf (
+            "Version: %s\n", mark_status_info->new_version);
+        g_free (mark_status_info->new_version);
+
+        if (!rc_write (mark_status_info->out_fd, version_line,
+                       strlen (version_line)))
+        {
+            rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+                      ": failed to write new version line, aborting\n");
+
+            rc_packman_set_error (
+                RC_PACKMAN (mark_status_info->debman), RC_PACKMAN_ERROR_ABORT,
+                "write to %s failed",
+                mark_status_info->debman->priv->rc_status_file);
+
+            goto BROKEN;
+        }
+
+        mark_status_info->rewrite_version = FALSE;
 
         return;
     }
@@ -615,80 +651,91 @@ mark_purge_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
      * the fields and didn't encounter a status line (we got to a
      * blank line or another Package: line), something is really
      * wrong */
-    if (mark_purge_info->rewrite &&
-        ((line && !line[0]) ||
-         (!strncasecmp (line, "Package:", strlen ("Package:")))))
+    if (mark_status_info->rewrite_status &&
+        ((line && !line[0]) || (!strncasecmp (
+                                    line, "Package:", strlen ("Package:")))))
     {
         rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
-                  ": package section had no Status: line, aborting\n");
+                  ": package section had no Status/Version line, aborting\n");
 
-        rc_packman_set_error (RC_PACKMAN (mark_purge_info->debman),
+        rc_packman_set_error (RC_PACKMAN (mark_status_info->debman),
                               RC_PACKMAN_ERROR_ABORT,
                               "%s appears to be malformed",
-                              mark_purge_info->debman->priv->status_file);
+                              mark_status_info->debman->priv->status_file);
 
         goto BROKEN;
     }
 
     /* Nothing interesting is happening here, so just write out the
      * old data */
-    if (!rc_write (mark_purge_info->out_fd, line, strlen (line)) ||
-        !rc_write (mark_purge_info->out_fd, "\n", 1))
+    if (!rc_write (mark_status_info->out_fd, line, strlen (line)) ||
+        !rc_write (mark_status_info->out_fd, "\n", 1))
     {
         rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
                   ": failed to write old line, aborting\n");
 
-        rc_packman_set_error (RC_PACKMAN (mark_purge_info->debman),
+        rc_packman_set_error (RC_PACKMAN (mark_status_info->debman),
                               RC_PACKMAN_ERROR_ABORT,
                               "write to %s failed",
-                              mark_purge_info->debman->priv->rc_status_file);
+                              mark_status_info->debman->priv->rc_status_file);
 
         goto BROKEN;
     }
 
-    /* Check if this marks the beginning of a package whose status we
-     * need to change */
-    if (package_accept (line, mark_purge_info->remove_packages)) {
-        mark_purge_info->rewrite = TRUE;
+    /* Check if this marks the beginning of a package whose status or
+     * version we need to change */
+    if (package_accept (line, mark_status_info->remove_packages)) {
+        mark_status_info->rewrite_status = TRUE;
+    }
+
+    if ((package = package_accept (line, mark_status_info->install_packages))) {
+        char *version;
+
+        version = rc_package_spec_version_to_str (
+            (RCPackageSpec *)package);
+
+        mark_status_info->rewrite_version = TRUE;
+        mark_status_info->new_version = version;
     }
 
     return;
 
   BROKEN:
-    mark_purge_info->error = TRUE;
+    mark_status_info->error = TRUE;
 
     gtk_signal_disconnect (GTK_OBJECT (line_buf),
-                           mark_purge_info->read_line_id);
+                           mark_status_info->read_line_id);
     gtk_signal_disconnect (GTK_OBJECT (line_buf),
-                           mark_purge_info->read_done_id);
+                           mark_status_info->read_done_id);
 
-    g_main_quit (mark_purge_info->loop);
+    g_main_quit (mark_status_info->loop);
 }
 
 static void
-mark_purge_read_done_cb (RCLineBuf *line_buf, RCLineBufStatus status,
+mark_status_read_done_cb (RCLineBuf *line_buf, RCLineBufStatus status,
                          gpointer data)
 {
-    DebmanMarkPurgeInfo *mark_purge_info = (DebmanMarkPurgeInfo *)data;
+    DebmanMarkStatusInfo *mark_status_info = (DebmanMarkStatusInfo *)data;
 
     gtk_signal_disconnect (GTK_OBJECT (line_buf),
-                           mark_purge_info->read_line_id);
+                           mark_status_info->read_line_id);
     gtk_signal_disconnect (GTK_OBJECT (line_buf),
-                           mark_purge_info->read_done_id);
+                           mark_status_info->read_done_id);
 
-    g_main_quit (mark_purge_info->loop);
+    g_main_quit (mark_status_info->loop);
 }
 
 static gboolean
-mark_purge (RCPackman *packman, RCPackageSList *remove_packages)
+mark_status (RCPackman *packman, RCPackageSList *install_packages,
+            RCPackageSList *remove_packages)
 {
     RCDebman *debman = RC_DEBMAN (packman);
-    DebmanMarkPurgeInfo mark_purge_info;
+    DebmanMarkStatusInfo mark_status_info;
     GMainLoop *loop;
     int in_fd, out_fd;
     RCLineBuf *line_buf;
 
-    g_return_val_if_fail (remove_packages, TRUE);
+//    g_return_val_if_fail (remove_packages, TRUE);
 
     if ((in_fd = open (debman->priv->status_file, O_RDONLY)) == -1) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
@@ -718,24 +765,26 @@ mark_purge (RCPackman *packman, RCPackageSList *remove_packages)
 
     loop = g_main_new (FALSE);
 
-    mark_purge_info.rewrite = FALSE;
-    mark_purge_info.error = FALSE;
-    mark_purge_info.out_fd = out_fd;
-    mark_purge_info.remove_packages = remove_packages;
-    mark_purge_info.loop = loop;
-    mark_purge_info.debman = RC_DEBMAN (packman);
+    mark_status_info.rewrite_status = FALSE;
+    mark_status_info.rewrite_version = FALSE;
+    mark_status_info.error = FALSE;
+    mark_status_info.out_fd = out_fd;
+    mark_status_info.install_packages = install_packages;
+    mark_status_info.remove_packages = remove_packages;
+    mark_status_info.loop = loop;
+    mark_status_info.debman = RC_DEBMAN (packman);
 
     line_buf = rc_line_buf_new ();
     rc_line_buf_set_fd (line_buf, in_fd);
 
-    mark_purge_info.read_line_id =
+    mark_status_info.read_line_id =
         gtk_signal_connect (GTK_OBJECT (line_buf), "read_line",
-                            GTK_SIGNAL_FUNC (mark_purge_read_line_cb),
-                            (gpointer) &mark_purge_info);
-    mark_purge_info.read_done_id =
+                            GTK_SIGNAL_FUNC (mark_status_read_line_cb),
+                            (gpointer) &mark_status_info);
+    mark_status_info.read_done_id =
         gtk_signal_connect (GTK_OBJECT (line_buf), "read_done",
-                            GTK_SIGNAL_FUNC (mark_purge_read_done_cb),
-                            (gpointer) &mark_purge_info);
+                            GTK_SIGNAL_FUNC (mark_status_read_done_cb),
+                            (gpointer) &mark_status_info);
 
     g_main_run (loop);
 
@@ -746,7 +795,7 @@ mark_purge (RCPackman *packman, RCPackageSList *remove_packages)
     close (in_fd);
     close (out_fd);
 
-    if (mark_purge_info.error) {
+    if (mark_status_info.error) {
         unlink (debman->priv->rc_status_file);
 
         goto FAILED;
@@ -767,7 +816,7 @@ mark_purge (RCPackman *packman, RCPackageSList *remove_packages)
 
   FAILED:
     rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                          "Unable to mark packages for removal");
+                          "Unable to update status database");
 
     return (FALSE);
 }
@@ -2070,7 +2119,7 @@ rc_debman_transact (RCPackman *packman, RCPackageSList *install_packages,
 {
     DebmanInstallState *install_state = g_new0 (DebmanInstallState, 1);
 
-/*    order_packages (install_packages); */
+//    order_packages (install_packages);
 
     install_state->total = (g_slist_length (install_packages) * 2) +
         g_slist_length (remove_packages);
@@ -2079,19 +2128,17 @@ rc_debman_transact (RCPackman *packman, RCPackageSList *install_packages,
     gtk_signal_emit_by_name (GTK_OBJECT (packman), "transact_start",
                              install_state->total);
 
-    if (remove_packages) {
-        rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ \
-                  ": about to mark for purge\n");
+    rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ \
+              ": about to update status file\n");
 
-        if (!(mark_purge (packman, remove_packages))) {
-            rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
-                      ": mark for purge failed\n");
+    if (!(mark_status (packman, install_packages, remove_packages))) {
+        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+                  ": update of status database failed\n");
 
-            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                  "Unable to mark packages for removal");
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "Unable to update status database");
 
-            goto END;
-        }
+        goto END;
     }
 
     if (install_packages) {
@@ -2203,8 +2250,8 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
                 query_info->desc_buf = NULL;
             }
 
-            query_info->packages = g_slist_append (query_info->packages,
-                                                   query_info->package_buf);
+            query_info->packages = g_slist_prepend (query_info->packages,
+                                                    query_info->package_buf);
             query_info->package_buf = NULL;
 
             return;
@@ -2509,10 +2556,10 @@ rc_debman_query_all_real (RCPackman *packman)
 
         if (package->installed) {
             package->provides =
-                g_slist_append (package->provides,
-                                rc_package_dep_new_from_spec (
-                                    &package->spec,
-                                    RC_RELATION_EQUAL));
+                g_slist_prepend (package->provides,
+                                 rc_package_dep_new_from_spec (
+                                     &package->spec,
+                                     RC_RELATION_EQUAL));
             g_hash_table_insert (debman->priv->package_hash,
                                  (gpointer) package->spec.name,
                                  (gpointer) package);
@@ -2532,7 +2579,7 @@ static void
 package_list_append (gchar *name, RCPackage *package,
                      RCPackageSList **package_list)
 {
-    *package_list = g_slist_append (*package_list, rc_package_copy (package));
+    *package_list = g_slist_prepend (*package_list, rc_package_copy (package));
 }
 
 static RCPackageSList *
@@ -2699,7 +2746,7 @@ rc_debman_query_file (RCPackman *packman, const gchar *filename)
         RC_RELATION_EQUAL);
 
     query_info.package_buf->provides =
-        g_slist_append (query_info.package_buf->provides, dep);
+        g_slist_prepend (query_info.package_buf->provides, dep);
 
     return (query_info.package_buf);
 }
