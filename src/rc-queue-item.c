@@ -289,6 +289,20 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
 
     GSList *iter;
 
+    /* If we are trying to upgrade package A with package B and they both have the
+       same version number, do nothing.  This shouldn't happen in general with
+       red-carpet, but can come up with the installer & autopull. */
+    if (install->upgrades
+        && rc_package_spec_equal (&install->package->spec, &install->upgrades->spec)) {
+        RCResolverInfo *info;
+        msg = g_strdup_printf ("Skipping %s: already installed", pkg_name);
+        info = rc_resolver_info_misc_new (install->package, 
+                                          RC_RESOLVER_INFO_PRIORITY_VERBOSE,
+                                          msg);
+        rc_resolver_context_add_info (context, info);
+        goto finished;
+    }
+
     if (install->needed_by) {
         gboolean still_needed = FALSE;
         GSList *iter;

@@ -1,3 +1,11 @@
+2002-04-11  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-queue-item.c (install_item_process): Check to make sure that
+	a package with the same version number isn't already installed.
+	If it is, do nothing.  (Previously this case got treated like an
+	upgrade, and we would try to add and remove the same package,
+	which is not cool.)
+
 2002-04-09  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-package.c (rc_xml_node_to_package): Check if the "obsoletes"
