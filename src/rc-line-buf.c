@@ -182,9 +182,9 @@ rc_line_buf_class_init (RCLineBufClass *klass)
                       G_SIGNAL_RUN_LAST,
                       G_STRUCT_OFFSET (RCLineBufClass, read_done),
                       NULL, NULL,
-                      rc_marshal_VOID__ENUM,
+                      rc_marshal_VOID__INT,
                       G_TYPE_NONE, 1,
-                      G_TYPE_ENUM);
+                      G_TYPE_INT);
 
 #if 0
     gtk_object_add_arg_type ("RCLineBuf::fd",

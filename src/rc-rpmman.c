@@ -1880,8 +1880,6 @@ split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
 
         close (signature_fd);
     } else {
-        g_free (*signature_filename);
-
         *signature_filename = NULL;
     }
 

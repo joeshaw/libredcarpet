@@ -1,3 +1,10 @@
+2002-07-02  Joe Shaw  <joe@ximian.com>
+
+	* rc-line-buf.c (rc_line_buf_class_init): Set the parameter type
+	to INT from ENUM, since the latter wasn't working.
+
+	* rc-rpmman.c (split_rpm): Don't free uninitialized memory.  Doh.
+
 2002-07-01  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-world.c (rc_world_guess_package_channel): Added.  Guesses
