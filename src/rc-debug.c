@@ -85,7 +85,7 @@ rc_debug (RCDebugLevel level, const gchar *format, ...)
         if (debug_handler_fn == NULL)
             fputs (str, stderr);
         else
-            debug_handler_fn (str, debug_handler_user_data);
+            debug_handler_fn (str, level, debug_handler_user_data);
     }
 
     if (level <= log_level && log_file) {

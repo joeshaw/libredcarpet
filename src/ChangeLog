@@ -1,3 +1,8 @@
+2002-07-22  Joe Shaw  <joe@ximian.com>
+
+	* rc-debug.c (rc_debug): Changed the signature of the RCDebugFn
+	callback to pass in the level of the current message.
+
 2002-07-21  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-resolver-context.c (rc_resolver_context_uninstall_package):
