@@ -60,5 +60,5 @@ doc_DATA =				\
 	libredcarpet-sharp-docs.tree	\
 	libredcarpet-sharp-docs.source
 
-EXTRA_DIST = libredcarpet-sharp.pc.in
+EXTRA_DIST = libredcarpet-sharp.pc.in libredcarpet-sources.xml
 CLEANFILES = $(ASSEMBLY)
