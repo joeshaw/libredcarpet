@@ -4,6 +4,6 @@
 #undef HAVE_LC_MESSAGES
 #undef HAVE_STPCPY
 
-#undef HAVE_RPM_4_0
-#undef ENABLE_RPM
 #undef ENABLE_DPKG
+#undef ENABLE_RPM
+#undef STATIC_RPM

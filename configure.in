@@ -27,42 +27,43 @@ AC_HEADER_STDC
 AC_ARG_PROGRAM
 AC_PROG_LIBTOOL
 
-dnl gtk
-AM_PATH_GTK(1.2.0)
-
 dnl glib???
 AM_PATH_GLIB(1.2.0)
+
+dnl gtk
+AM_PATH_GTK(1.2.0)
 
 dnl Check for libz to handle compressed xml files
 AC_CHECK_LIB(z, inflate)
 
 dnl The available backends
-AC_ARG_ENABLE(backend-rpm3, [  --enable-backend-rpm3   include RPMv3 backend],
-  enable_backend_rpm3=yes, enable_backend_rpm3=no)
-AC_ARG_ENABLE(backend-rpm4, [  --enable-backend-rpm4   include RPMv4 backend],
-  enable_backend_rpm4=yes, enable_backend_rpm4=no)
 AC_ARG_ENABLE(backend-dpkg, [  --enable-backend-dpkg   include DPKG backend],
   enable_backend_dpkg=yes, enable_backend_dpkg=no)
+AC_ARG_ENABLE(backend-rpm,  [  --enable-backend-rpm     include RPM backend],
+  enable_backend_rpm=yes, enable_backend_rpm=no)
+AC_ARG_ENABLE(backend-rpm3-static,  [  --enable-backend-rpm3-static include static RPM3 backend],
+  enable_backend_rpm3_static=yes, enable_backend_rpm3_static=no)
 
-if test "x$enable_backend_rpm3" != "xyes" -a "x$enable_backend_rpm4" != "xyes" -a "x$enable_backend_dpkg" != "xyes";
+if test "x$enable_backend_dpkg" != "xyes" -a "x$enable_backend_rpm" != "xyes" -a "x$enable_backend_rpm3_static" != "xyes";
 then
   AC_WARN([no backends were specified])
 fi
 
-if test "x$enable_backend_rpm3" = "xyes" -a "x$enable_backend_rpm4" = "xyes";
+if test "x$enable_backend_rpm" = "xyes" -a "x$enable_backend_rpm3_static" = "xyes";
 then
-  AC_ERROR([rpm3 and rpm4 may not be concurrently used])
+  AC_ERROR([dynamic and static rpm backends may not both be compiled in])
 fi
 
 AC_ARG_WITH(rpm-prefix,
 [  --with-rpm-prefix=DIR   prefix where rpm header files are installed (/usr)], [RPM_PREFIX=$withval], [RPM_PREFIX=/usr])
 
 AM_CONDITIONAL(ENABLE_RPM, false)
+AM_CONDITIONAL(STATIC_RPM, false)
 
 AC_SUBST(RPMLIB_CFLAGS)
 
-dnl RPMv3
-if test "x$enable_backend_rpm3" = "xyes"; then
+dnl RPM (dynamic)
+if test "x$enable_backend_rpm" = "xyes"; then
   save_CPPFLAGS="$CPPFLAGS"
   CPPFLAGS="$CPPFLAGS -I$RPM_PREFIX/include/rpm"
 
@@ -76,24 +77,25 @@ if test "x$enable_backend_rpm3" = "xyes"; then
   CPPFLAGS="$save_CPPFLAGS"
 fi
 
-dnl RPMv4
-if test "x$enable_backend_rpm4" = "xyes"; then
+dnl RPM (static)
+if test "x$enable_backend_rpm3_static" = "xyes"; then
   save_CPPFLAGS="$CPPFLAGS"
   CPPFLAGS="$CPPFLAGS -I$RPM_PREFIX/include/rpm"
 
-  AC_CHECK_HEADERS(rpm/rpmio.h,, AC_MSG_ERROR(couldn't find rpmio.h))
   AC_CHECK_HEADERS(rpm/rpmlib.h,, AC_MSG_ERROR(couldn't find rpmlib.h))
-  if grep -q ugid.h "$RPM_PREFIX/include/rpm/misc.h"; then
-    if test \! -r /usr/include/rpm/ugid.h ; then
-      AC_MSG_ERROR([broken rpm/misc.h, see README-ugid])
-    fi
-  fi
+
+dnl  if grep -q ugid.h "$RPM_PREFIX/include/rpm/misc.h"; then
+dnl    if test \! -r /usr/include/rpm/ugid.h ; then
+dnl      AC_MSG_ERROR([broken rpm/misc.h, see README-ugid])
+dnl    fi
+dnl  fi
 
   RPMLIB_CFLAGS="-I$RPM_PREFIX/include/rpm"
 
   AM_CONDITIONAL(ENABLE_RPM, true)
+  AM_CONDITIONAL(STATIC_RPM, true)
   AC_DEFINE(ENABLE_RPM)
-  AC_DEFINE(HAVE_RPM_4_0)
+  AC_DEFINE(STATIC_RPM)
 
   CPPFLAGS="$save_CPPFLAGS"
 fi
@@ -144,9 +146,9 @@ src/Makefile
 echo "
 Configuration:
 
-  Source code location:   ${srcdir}
-  Compiler:               ${CC}
-  Include RPM3 support:   ${enable_backend_rpm3}
-  Include RPM4 support:   ${enable_backend_rpm4}
-  Include DPKG support:   ${enable_backend_dpkg}
+  Source code location:         ${srcdir}
+  Compiler:                     ${CC}
+  Include DPKG support:         ${enable_backend_dpkg}
+  Include dynamic RPM support:  ${enable_backend_rpm}
+  Include static RPM3 support:  ${enable_backend_rpm3_static}
 "

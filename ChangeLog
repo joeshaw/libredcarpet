@@ -1,3 +1,10 @@
+2001-03-30  Ian Peters  <itp@ximian.com>
+
+	* acconfig.h: get rid of HAVE_RPM_4_0, add STATIC_RPM
+
+	* configure.in: don't need all the rpm crap anymore, handle the
+	dynamic and static rpm cases.
+
 2001-03-18  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* configure.in: put square brackets around the misc.h warning,

@@ -26,6 +26,7 @@
 #include <rpm/rpmlib.h>
 
 #include "rc-packman.h"
+#include "rc-rpmman-types.h"
 
 #define GTK_TYPE_RC_RPMMAN        (rc_rpmman_get_type ())
 #define RC_RPMMAN(obj)            (GTK_CHECK_CAST ((obj), \
@@ -47,6 +48,68 @@ struct _RCRpmman {
     rpmdb db;
 
     gchar *rpmroot;
+
+    guint major_version;
+    guint minor_version;
+    guint micro_version;
+
+    /*
+     * Common functions
+     */
+
+    FD_t (*fdOpen)(const char *, int, mode_t);
+    ssize_t (*fdRead)(void *, char *, size_t);
+    int (*fdClose)(void *);
+    int (*Ferror)(FD_t);
+
+    int (*headerGetEntry)(Header, int_32, int_32 *, void **, int_32 *);
+    void (*headerFree)(Header);
+
+    int (*rpmReadPackageHeader)(FD_t, Header *, int *, int *, int *);
+    int (*rpmtransAddPackage)(rpmTransactionSet, Header, FD_t, const void *,
+                              int, rpmRelocation *);
+    void (*rpmtransRemovePackage)(rpmTransactionSet, int);
+    rpmTransactionSet (*rpmtransCreateSet)(rpmdb, const char *);
+    void (*rpmtransFree)(rpmTransactionSet);
+    int (*rpmdepCheck)(rpmTransactionSet, struct rpmDependencyConflict **,
+                       int *);
+    void (*rpmdepFreeConflicts)(struct rpmDependencyConflict *, int);
+    int (*rpmdepOrder)(rpmTransactionSet);
+    int (*rpmRunTransactions)(rpmTransactionSet, rpmCallbackFunction,
+                              void *, rpmProblemSet, rpmProblemSet *,
+                              int, int);
+    void (*rpmProblemSetFree)(rpmProblemSet);
+    int (*readLead)(FD_t, struct rpmlead *);
+    int (*rpmReadSignature)(FD_t, Header *, short);
+    int (*rpmReadConfigFiles)(const char *, const char *);
+    int (*rpmdbOpen)(const char *, rpmdb *, int, int);
+    void (*rpmdbClose)(rpmdb);
+    const char * (*rpmProblemString)(rpmProblem);
+
+    /*
+     * RPMv4 only functions
+     */
+
+    rc_rpmdbMatchIterator (*rpmdbInitIterator)(rpmdb, int, const void *,
+                                               size_t);
+    int (*rpmdbGetIteratorCount)(rc_rpmdbMatchIterator);
+    void (*rpmdbFreeIterator)(rc_rpmdbMatchIterator);
+    Header (*rpmdbNextIterator)(rc_rpmdbMatchIterator);
+    unsigned int (*rpmdbGetIteratorOffset)(rc_rpmdbMatchIterator);
+
+    /*
+     * RPMv3 only functions
+     */
+
+    int (*rpmdbFirstRecNum)(rpmdb);
+    int (*rpmdbNextRecNum)(rpmdb, unsigned int);
+    int (*rpmdbFindByLabel)(rpmdb, const char *, rc_dbiIndexSet *);
+    int (*rpmdbFindPackage)(rpmdb, const char *, rc_dbiIndexSet *);
+    int (*rpmdbFindByFile)(rpmdb, const char *, rc_dbiIndexSet *);
+    Header (*rpmdbGetRecord)(rpmdb, unsigned int);
+    unsigned int (*dbiIndexSetCount)(rc_dbiIndexSet);
+    unsigned int (*dbiIndexRecordOffset)(rc_dbiIndexSet, int);
+    void (*dbiFreeIndexRecord)(rc_dbiIndexSet);
 };
 
 struct _RCRpmmanClass {

@@ -1,3 +1,16 @@
+2001-03-30  Ian Peters  <itp@ximian.com>
+
+	* Makefile.am: if we're building the static version, do the evil
+	hack, otherwise don't, just build the libredcarpet.a
+
+	* rc-rpmman-types.h: added.  evil file with types we need to
+	compile on either rpm3 or rpm4 base platforms.
+
+	* rc-rpmman.c, rc-rpmman.h: eww.  either dlopen the librpm.so file
+	and read symbols out of it, or use the statically linked versions.
+	wrap all rpm functions through function pointers in the rpmman
+	struct.
+
 2001-03-29  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c (deps_find_best_package_for_dep): Doh. Don't iterate
