@@ -1,3 +1,8 @@
+2005-01-03  Tambet Ingo  <tambet@ximian.com>
+
+	* libredcarpet-api.xml:
+	* generated/*.cs: Move arch from RC.Package to RC.PackageSpec.
+
 2004-12-16  Tambet Ingo  <tambet@ximian.com>
 
 	* RC.metadata: Hide Packman.QueryFile.

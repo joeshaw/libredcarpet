@@ -269,23 +269,6 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern int rc_package_get_arch(IntPtr raw);
-
-		[DllImport("libredcarpet")]
-		static extern void rc_package_set_arch(IntPtr raw, int value);
-
-		public RC.Arch Arch { 
-			get {
-				int raw_ret = rc_package_get_arch(Handle);
-				RC.Arch ret = (RC.Arch)raw_ret;
-				return ret;
-			}
-			set {
-				rc_package_set_arch(Handle, (int) value);
-			}
-		}
-
-		[DllImport("libredcarpet")]
 		static extern IntPtr rc_package_get_type();
 
 		public static GLib.GType GType { 

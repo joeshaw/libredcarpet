@@ -1670,7 +1670,6 @@
     <boxed name="Package" cname="RCPackage" opaque="1" parent="RCPackageSpec">
       <field cname="spec" type="RCPackageSpec" />
       <field cname="refs" type="gint" />
-      <field cname="arch" type="RCArch" />
       <field cname="section" type="RCPackageSection" />
       <field cname="file_size" type="guint32" />
       <field cname="installed_size" type="guint32" />
@@ -1707,9 +1706,6 @@
       </method>
       <method name="Copy" cname="rc_package_copy" hidden="1">
         <return-type type="RCPackage*" />
-      </method>
-      <method name="GetArch" cname="rc_package_get_arch">
-        <return-type type="RCArch" />
       </method>
       <method name="GetChannel" cname="rc_package_get_channel">
         <return-type type="RCChannel*" />
@@ -1822,12 +1818,6 @@
         <return-type type="const-gchar*" />
         <parameters>
           <parameter type="RCPackageSection" name="section" />
-        </parameters>
-      </method>
-      <method name="SetArch" cname="rc_package_set_arch">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="RCArch" name="value" />
         </parameters>
       </method>
       <method name="SetChannel" cname="rc_package_set_channel">
@@ -2161,6 +2151,7 @@
       <field cname="release" type="gchar*" />
       <field cname="has_epoch" type="gboolean" />
       <field cname="epoch" type="gint" />
+      <field cname="arch" type="RCArch" />
       <method name="CompareName" cname="rc_package_spec_compare_name" shared="true">
         <return-type type="gint" />
         <parameters>
@@ -2186,6 +2177,9 @@
       </method>
       <method name="FreeMembers" cname="rc_package_spec_free_members">
         <return-type type="void" />
+      </method>
+      <method name="GetArch" cname="rc_package_spec_get_arch">
+        <return-type type="RCArch" />
       </method>
       <method name="GetEpoch" cname="rc_package_spec_get_epoch">
         <return-type type="gint" />
@@ -2216,6 +2210,7 @@
           <parameter type="guint32" name="epoch" />
           <parameter type="const-gchar*" name="version" />
           <parameter type="const-gchar*" name="release" />
+          <parameter type="RCArch" name="arch" />
         </parameters>
       </method>
       <constructor cname="rc_package_spec_new" />
@@ -2224,6 +2219,12 @@
         <parameters>
           <parameter type="gconstpointer" name="a" />
           <parameter type="gconstpointer" name="b" />
+        </parameters>
+      </method>
+      <method name="SetArch" cname="rc_package_spec_set_arch">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCArch" name="value" />
         </parameters>
       </method>
       <method name="SetEpoch" cname="rc_package_spec_set_epoch">

@@ -66,6 +66,23 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
+		static extern int rc_package_spec_get_arch(IntPtr raw);
+
+		[DllImport("libredcarpet")]
+		static extern void rc_package_spec_set_arch(IntPtr raw, int value);
+
+		public RC.Arch Arch { 
+			get {
+				int raw_ret = rc_package_spec_get_arch(Handle);
+				RC.Arch ret = (RC.Arch)raw_ret;
+				return ret;
+			}
+			set {
+				rc_package_spec_set_arch(Handle, (int) value);
+			}
+		}
+
+		[DllImport("libredcarpet")]
 		static extern uint rc_package_spec_hash(IntPtr ptr);
 
 		public static uint Hash(IntPtr ptr) {
@@ -84,13 +101,6 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern void rc_package_spec_init(IntPtr raw, string name, bool has_epoch, uint epoch, string version, string release);
-
-		public void Init(string name, bool has_epoch, uint epoch, string version, string release) {
-			rc_package_spec_init(Handle, name, has_epoch, epoch, version, release);
-		}
-
-		[DllImport("libredcarpet")]
 		static extern IntPtr rc_package_spec_get_version(IntPtr raw);
 
 		[DllImport("libredcarpet")]
@@ -105,6 +115,20 @@ namespace RC {
 			set {
 				rc_package_spec_set_version(Handle, value);
 			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern void rc_package_spec_init(IntPtr raw, string name, bool has_epoch, uint epoch, string version, string release, int arch);
+
+		public void Init(string name, bool has_epoch, uint epoch, string version, string release, RC.Arch arch) {
+			rc_package_spec_init(Handle, name, has_epoch, epoch, version, release, (int) arch);
+		}
+
+		[DllImport("libredcarpet")]
+		static extern void rc_package_spec_free(IntPtr raw);
+
+		public void Free() {
+			rc_package_spec_free(Handle);
 		}
 
 		[DllImport("libredcarpet")]
@@ -129,13 +153,6 @@ namespace RC {
 
 		public void FreeMembers() {
 			rc_package_spec_free_members(Handle);
-		}
-
-		[DllImport("libredcarpet")]
-		static extern void rc_package_spec_free(IntPtr raw);
-
-		public void Free() {
-			rc_package_spec_free(Handle);
 		}
 
 		[DllImport("libredcarpet")]
