@@ -1,3 +1,8 @@
+2004-01-20  Joe Shaw  <joe@ximian.com>
+
+	* distributions.xml: Change the RHEL 3 strings to detect both
+	"Taroon" and "Taroon Update 1"
+
 2003-11-13  Joe Shaw  <joe@ximian.com>
 
 	* distributions.xml: We do a first-sufficient match, so we

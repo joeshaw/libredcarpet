@@ -228,7 +228,7 @@
 		<target>rhel-3as-i386</target>
 		<status>supported</status>
 		<detect>
-			<file source="/etc/redhat-release" substring="Red Hat Enterprise Linux AS release 3 (Taroon)"/>
+			<file source="/etc/redhat-release" substring="Red Hat Enterprise Linux AS release 3"/>
 		</detect>
 	</distro>
 	<distro>
@@ -239,7 +239,7 @@
 		<target>rhel-3es-i386</target>
 		<status>supported</status>
 		<detect>
-			<file source="/etc/redhat-release" substring="Red Hat Enterprise Linux ES release 3 (Taroon)"/>
+			<file source="/etc/redhat-release" substring="Red Hat Enterprise Linux ES release 3"/>
 		</detect>
 	</distro>
 	<distro>
@@ -250,7 +250,7 @@
    		<target>rhel-3ws-i386</target>
    		<status>supported</status>
    		<detect>
-			<file source="/etc/redhat-release" substring="Red Hat Enterprise Linux WS release 3 (Taroon)"/>
+			<file source="/etc/redhat-release" substring="Red Hat Enterprise Linux WS release 3"/>
 		</detect>
 	</distro>
 
