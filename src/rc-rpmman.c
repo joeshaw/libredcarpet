@@ -1354,6 +1354,27 @@ rc_rpmman_version_compare (RCPackman *packman,
     return (rc_packman_generic_version_compare (spec1, spec2, vercmp));
 }
 
+#ifdef HAVE_RPM_4_0
+
+static RCPackage *
+rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
+{
+    rpmdb db;
+    rpmdbMatchIterator mi = NULL;
+    Header hdr;
+
+    if (rpmdbOpen (RC_RPMMAN (packman)->rpmroot, &db, O_RDONLY, 0444)) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "unable to open rpm database");
+
+        return (NULL);
+    }
+
+    return (NULL);
+}
+
+#else /* !HAVE_RPM_4_0 */
+
 static RCPackage *
 rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
 {
@@ -1403,14 +1424,19 @@ rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
                            &package->section, &package->installed_size,
                            &package->summary, &package->description);
 
+    dbiFreeIndexRecord (matches);
+    rpmdbClose (db);
+
     return (package);
 
   ERROR:
     rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                          "find_file_failed");
+                          "find_file failed");
 
     return (NULL);
 }
+
+#endif
 
 static void
 rc_rpmman_destroy (GtkObject *obj)
