@@ -1,3 +1,8 @@
+2002-07-27  Ian Peters  <itp@ximian.com>
+
+	* rc-packman.c (rc_packman_real_check_database): g_assert the
+	right function, d'oh
+
 2002-07-26  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-world-dump.c (add_channel_packages_cb): Removed

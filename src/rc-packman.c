@@ -507,7 +507,7 @@ rc_packman_check_database (RCPackman *packman)
 
     klass = RC_PACKMAN_GET_CLASS (packman);
 
-    g_assert (klass->rc_packman_real_lock);
+    g_assert (klass->rc_packman_real_check_database);
 
     return (klass->rc_packman_real_check_database (packman));
 }
