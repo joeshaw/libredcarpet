@@ -1,3 +1,8 @@
+2004-04-08  James Willcox  <james@ximian.com>
+
+	* rc-arch.c:  flip the order of ix86 and i386 in the arch table.  This
+	was causing some lookup issues.
+
 2004-04-06  James Willcox  <james@ximian.com>
 
 	* rc-queue-item.c: (install_item_process), (require_process_cb),

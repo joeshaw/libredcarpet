@@ -40,8 +40,8 @@ typedef struct {
 static RCArchAndName arch_table[] = {
     { "noarch",  RC_ARCH_NOARCH },
     { "all",     RC_ARCH_NOARCH },
-    { "ix86",    RC_ARCH_I386 }, /* OpenPKG uses this */
     { "i386",    RC_ARCH_I386 },
+    { "ix86",    RC_ARCH_I386 }, /* OpenPKG uses this */
     { "i486",    RC_ARCH_I486 },
     { "i586",    RC_ARCH_I586 },
     { "i686",    RC_ARCH_I686 },
