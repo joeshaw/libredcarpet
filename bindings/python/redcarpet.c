@@ -43,6 +43,7 @@
 #include "resolver-context.h"
 #include "resolver-queue.h"
 #include "resolver.h"
+#include "package-file.h"
 
 static PyMethodDef redcarpet_methods[] = {
 
@@ -71,6 +72,7 @@ static RegistrationFn redcarpet_registration_fns[] = {
 	PyResolverContext_register,
 	PyResolverQueue_register,
 	PyResolver_register,
+	PyPackageFile_register,
 	NULL
 };
 

@@ -360,9 +360,29 @@ static PyGetSetDef PyPackage_getsets[] = {
 static int
 PyPackage_init (PyObject *self, PyObject *args, PyObject *kwds)
 {
+	char *xml = NULL;
+	static char *kwlist[] = {"xml", NULL};
 	PyPackage *py_package = (PyPackage *) self;
 
-	py_package->package = rc_package_new ();
+	if (! PyArg_ParseTupleAndKeywords (args, kwds, "|s", kwlist, &xml)) {
+		PyErr_SetString (PyExc_RuntimeError, "Can't parse arguments");
+		return -1;
+	}
+
+	if (!xml) {
+		py_package->package = rc_package_new ();
+	} else {
+		xmlNode *node;
+		xmlDoc *doc;
+
+		doc = rc_parse_xml_from_buffer (xml, strlen (xml));
+
+		node = xmlDocGetRootElement (doc);
+		
+		py_package->package = rc_xml_node_to_package (node, NULL);
+
+		xmlFreeDoc (doc);
+	}
 
 	if (py_package->package == NULL) {
 		PyErr_SetString (PyExc_RuntimeError, "Can't create Package");

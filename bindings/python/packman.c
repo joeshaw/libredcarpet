@@ -30,6 +30,7 @@
 #include "packman.h"
 #include "package-spec.h"
 #include "package.h"
+#include "package-file.h"
 #include "verification.h"
 #include "pyutil.h"
 
@@ -304,6 +305,26 @@ PyPackman_set_repackage_dir (PyObject *self, PyObject *args)
 	return Py_None;
 }
 
+static PyObject *
+PyPackman_file_list (PyObject *self, PyObject *args)
+{
+	PyObject *obj;
+	RCPackage *package;
+	GSList *list;
+	RCPackman *packman = PyPackman_get_packman (self);
+
+	if (! PyArg_ParseTuple (args, "O", &obj))
+		return NULL;
+
+	package = PyPackage_get_package (obj);
+	if (package == NULL)
+		return NULL;
+
+	list = rc_packman_file_list (packman, package);
+
+	return rc_package_file_slist_to_PyList (list);
+}
+
 static PyMethodDef PyPackman_methods[] = {
   { "transact",            PyPackman_transact,            METH_VARARGS },
   { "query_file",          PyPackman_query_file,          METH_VARARGS },
@@ -323,6 +344,7 @@ static PyMethodDef PyPackman_methods[] = {
   { "get_reason",          PyPackman_get_reason,          METH_NOARGS  },
   { "get_repackage_dir",   PyPackman_get_repackage_dir,   METH_NOARGS  },
   { "set_repackage_dir",   PyPackman_set_repackage_dir,   METH_VARARGS },
+  { "file_list",           PyPackman_file_list,           METH_VARARGS },
   { NULL, NULL }
 };
 

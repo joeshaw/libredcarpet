@@ -29,6 +29,7 @@
 
 #include <Python.h>
 #include <libredcarpet.h>
+#include <libxml/tree.h>
 
 void       PyPackage_register    (PyObject *dict);
 

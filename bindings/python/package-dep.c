@@ -49,8 +49,32 @@ PyPackageDep_get_relation (PyObject *self, PyObject *args)
 	return Py_BuildValue ("i", rc_package_dep_get_relation (dep));
 }
 
+static PyObject *
+PyPackageDep_to_xml (PyObject *self, PyObject *args)
+{
+	PyObject *ret;
+	RCPackageDep *dep = PyPackageDep_get_package_dep (self);
+	xmlNode *node;
+	xmlDoc *doc;
+	xmlBuffer *buf;
+	int len;
+
+	doc = xmlNewDoc(NULL);
+	node = rc_package_dep_to_xml_node (dep);
+	xmlDocSetRootElement (doc, node);
+	
+	buf = xmlBufferCreate ();
+	xmlNodeDump (buf, doc, node, 0, 1);
+
+	ret = PyString_FromString (buf->content);
+	xmlBufferFree (buf);
+	
+	return ret;
+}
+
 static PyMethodDef PyPackageDep_methods[] = {
 	{ "get_relation", PyPackageDep_get_relation, METH_NOARGS  },
+	{ "to_xml", PyPackageDep_to_xml, METH_NOARGS  },
 	{ NULL, NULL }
 };
 
