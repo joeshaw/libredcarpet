@@ -1082,8 +1082,7 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
     gint *relations;
     guint32 count;
     guint i;
-    RCPackageDepItem *dep;
-    RCPackageDep *depl = NULL;
+    RCPackageDep *dep;
 
     /* Shouldn't ever ask for dependencies unless you know what you really
        want (name, version, release) */
@@ -1156,12 +1155,10 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
 #endif
         } else {
             /* Add the dependency to the list of dependencies */
-            dep = rc_package_dep_item_new (names[i], epochs[i], versions[i],
-                                           releases[i], relation);
+            dep = rc_package_dep_new (names[i], epochs[i], versions[i],
+                                      releases[i], relation);
 
-            depl = g_slist_append (NULL, dep);
-
-            package->requires = g_slist_append (package->requires, depl);
+            package->requires = g_slist_append (package->requires, dep);
         }
 
         g_free (versions[i]);
@@ -1180,13 +1177,11 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
 
     /* Provide myself */
 
-    dep = rc_package_dep_item_new (package->spec.name, package->spec.epoch,
-                                   package->spec.version,
-                                   package->spec.release, RC_RELATION_EQUAL);
+    dep = rc_package_dep_new (package->spec.name, package->spec.epoch,
+                              package->spec.version,
+                              package->spec.release, RC_RELATION_EQUAL);
 
-    depl = g_slist_append (NULL, dep);
-
-    package->provides = g_slist_append (package->provides, depl);
+    package->provides = g_slist_append (package->provides, dep);
 
     {
         /* First stab at handling the pesky file dependencies */
@@ -1223,14 +1218,12 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
                                       NULL);
 
             if (in_set (tmp, file_dep_set)) {
-                dep = rc_package_dep_item_new (tmp, 0, NULL, NULL,
-                                               RC_RELATION_ANY);
+                dep = rc_package_dep_new (tmp, 0, NULL, NULL,
+                                          RC_RELATION_ANY);
 
                 g_free (tmp);
 
-                depl = g_slist_append (NULL, dep);
-
-                package->provides = g_slist_append (package->provides, depl);
+                package->provides = g_slist_append (package->provides, dep);
             }
         }
 
@@ -1244,12 +1237,10 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
 
         for (i = 0; i < count; i++) {
             if (in_set (names[i], file_dep_set)) {
-                dep = rc_package_dep_item_new (names[i], 0, NULL, NULL,
-                                               RC_RELATION_ANY);
+                dep = rc_package_dep_new (names[i], 0, NULL, NULL,
+                                          RC_RELATION_ANY);
 
-                depl = g_slist_append (NULL, dep);
-
-                package->provides = g_slist_append (package->provides, depl);
+                package->provides = g_slist_append (package->provides, dep);
             }
         }
 
@@ -1265,12 +1256,10 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
 
     for (i = 0; i < count; i++) {
         if (strcmp (names[i], package->spec.name) != 0) {
-            dep = rc_package_dep_item_new (names[i], 0, NULL, NULL,
+            dep = rc_package_dep_new (names[i], 0, NULL, NULL,
                                            RC_RELATION_ANY);
 
-            depl = g_slist_append (NULL, dep);
-
-            package->provides = g_slist_append (package->provides, depl);
+            package->provides = g_slist_append (package->provides, dep);
         }
     }
 
@@ -1311,12 +1300,10 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
             releases[i] = NULL;
         }
 
-        dep = rc_package_dep_item_new (names[i], epochs[i], versions[i],
+        dep = rc_package_dep_new (names[i], epochs[i], versions[i],
                                        releases[i], relation);
 
-        depl = g_slist_append (NULL, dep);
-
-        package->conflicts = g_slist_append (package->conflicts, depl);
+        package->conflicts = g_slist_append (package->conflicts, dep);
 
         g_free (versions[i]);
         g_free (releases[i]);

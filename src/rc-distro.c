@@ -131,6 +131,11 @@ RCDistroChunk distro_figurers[] = {
       func_string_in_file, "/etc/debian_version", "sid", NULL, 0},
     { "debian-woody-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/debian_version", "testing", NULL, 0},
+
+    { "solaris-8-sun4", RC_ARCH_SPARC,
+      func_sys, "uname -s", "SunOS", (gpointer) 0, CHECK_OP_AND,
+      func_sys, "uname -r", "5.8", (gpointer) 0 },
+
     { NULL }
 };
 
@@ -160,6 +165,8 @@ RCDistroType distro_types[] = {
     { "linuxppc-2000-ppc", NULL, "LinuxPPC", "2000", RC_PKG_RPM, RC_ARCH_PPC, "gdm-runlevel=5, non-gdm-runlevel=3" },
 
     { "yellowdog-12-ppc", NULL, "Yellow Dog Linux", "1.2", RC_PKG_RPM, RC_ARCH_PPC, "gdm-runlevel=5, non-gdm-runlevel=3" },
+
+    { "solaris-8-sun4", NULL, "Sun Solaris 8", "8", RC_PKG_RPM, RC_ARCH_SPARC, "" },
 
     { NULL }
 };
@@ -317,7 +324,7 @@ determine_arch ()
             ret = RC_ARCH_IA32;
         }
 
-        if (!strncmp (buf, "sun4u", 5) ||
+        if (!strncmp (buf, "sun4", 4) ||
             !strncmp (buf, "sparc", 5))
         {
             ret = RC_ARCH_SPARC;

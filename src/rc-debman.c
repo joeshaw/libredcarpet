@@ -46,11 +46,17 @@
 #include <signal.h>
 #include <errno.h>
 #include <ctype.h>
-#include <pty.h>
 #include <dirent.h>
 #include <limits.h>
+#ifndef fake_openpty
+#include <pty.h>
+#endif
 
 #include <gdk/gdkkeysyms.h>
+
+#ifdef fake_openpty
+#define openpty(a,b,c,d,e) /**/
+#endif
 
 static void rc_debman_class_init (RCDebmanClass *klass);
 static void rc_debman_init       (RCDebman *obj);
@@ -2299,10 +2305,9 @@ rc_debman_query_all_real (RCPackman *packman)
         if (package->installed) {
             package->provides =
                 g_slist_append (package->provides,
-                                rc_package_dep_new_with_item (
-                                    rc_package_dep_item_new_from_spec (
-                                        &package->spec,
-                                        RC_RELATION_EQUAL)));
+                                rc_package_dep_new_from_spec (
+                                    &package->spec,
+                                    RC_RELATION_EQUAL));
             g_hash_table_insert (debman->priv->package_hash,
                                  (gpointer) package->spec.name,
                                  (gpointer) package);
@@ -2395,7 +2400,6 @@ rc_debman_query_file (RCPackman *packman, const gchar *filename)
     RCLineBuf *line_buf;
     DebmanQueryInfo query_info;
     GMainLoop *loop;
-    RCPackageDepItem *dep_item;
     RCPackageDep *dep = NULL;
 
     RC_ENTRY;
@@ -2509,11 +2513,9 @@ rc_debman_query_file (RCPackman *packman, const gchar *filename)
 
     /* Make the package provide itself (that's what we like to do,
            anyway) */
-    dep_item = rc_package_dep_item_new_from_spec (
+    dep = rc_package_dep_new_from_spec (
         (RCPackageSpec *)query_info.package_buf,
         RC_RELATION_EQUAL);
-
-    dep = g_slist_append (dep, dep_item);
 
     query_info.package_buf->provides =
         g_slist_append (query_info.package_buf->provides, dep);
@@ -2848,7 +2850,8 @@ rc_debman_class_init (RCDebmanClass *klass)
 
     putenv ("DEBIAN_FRONTEND=noninteractive");
 
-    deps_conflicts_use_virtual_packages (FALSE);
+//    deps_conflicts_use_virtual_packages (FALSE);
+    g_warning ("vlad, fix deps_conflict_use_virtual_pakages");
 
     RC_EXIT;
 }

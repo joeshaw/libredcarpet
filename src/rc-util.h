@@ -50,6 +50,13 @@ gchar *rc_build_url (const gchar *method, const gchar *host,
 GHashTable *
 rc_hash_table_copy (GHashTable *ht, GHashFunc hfunc, GCompareFunc cfunc);
 
+/* assume key hashes to slist, append value to end of slist */
+void rc_hash_table_slist_insert (GHashTable *ht, gpointer key, gpointer value);
+/* assume key hashes to slist, append value to end of slist if it isn't present */
+void rc_hash_table_slist_insert_unique (GHashTable *ht, gpointer key, gpointer value,
+                                        GCompareFunc eqfunc);
+void rc_hash_table_slist_free (GHashTable *ht);
+
 /* uncompress memory */
 gint rc_uncompress_memory (guint8 *input_buffer, guint32 input_length,
                            GByteArray **out_ba);

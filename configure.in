@@ -73,11 +73,11 @@ AC_SUBST(RPMLIB_CFLAGS)
 dnl RPM (dynamic)
 if test "x$enable_backend_rpm" = "xyes"; then
   save_CPPFLAGS="$CPPFLAGS"
-  CPPFLAGS="$CPPFLAGS -I$RPM_PREFIX/include/rpm"
+  CPPFLAGS="$CPPFLAGS -I$RPM_PREFIX/include -I$RPM_PREFIX/include/rpm"
 
   AC_CHECK_HEADERS(rpm/rpmlib.h,, AC_MSG_ERROR(couldn't find rpmlib.h))
 
-  RPMLIB_CFLAGS="-I$RPM_PREFIX/include/rpm"
+  RPMLIB_CFLAGS="-I$RPM_PREFIX/include -I$RPM_PREFIX/include/rpm"
 
   AM_CONDITIONAL(ENABLE_RPM, true)
   AC_DEFINE(ENABLE_RPM)
@@ -117,7 +117,7 @@ dnl DPKG
 if test "x$enable_backend_dpkg" = "xyes"; then
   AC_ARG_ENABLE(fake-openpty,
     [  --enable-fake-openpty   pretend openpty exists],
-    [CFLAGS="$CFLAGS -D'openpty(x)=/**/'"; disable_openpty=yes])
+    [CFLAGS="$CFLAGS -Dfake_openpty"; disable_openpty=yes])
   if test "x$disable_openpty" != "xyes"; then
     AC_CHECK_LIB(util, openpty,,
       AC_MSG_ERROR(couldn't find openpty in libutil))

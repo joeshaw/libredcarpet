@@ -1,3 +1,47 @@
+2001-06-19  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* merge in from libredcarpet-or-dep-fixup branch
+	
+	* Makefile.am: dist rc-deps-private.h
+	
+2001-06-19  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-channel.c, rc-channel.h: Added dep_name_table along with dep_table
+	which is indexed by name not by spec.  Also changed both to have values
+	which are slists of packages, instead of just one package.  dep_table
+	might go away in the near future.
+
+	* rc-debman-general.c, rc-debman.c: Updated to handle or deps using
+	the rc_dep_or interface.
+
+	* rc-deps-private.h: added.
+
+	* rc-deps-util.c, rc-deps-util.h: renamed rc_deps_fix_system to
+	rc_dep_fix_system;  added rc_dep_or interface functions, and first
+	pass at debian package list munging to provide the right things.
+
+	* rc-deps.c: Updated to understand and use dep_name_table correctly.
+
+	* rc-package-dep.c, rc-package-dep.h: fixed xml parsing bits to create
+	ors
+
+	* rc-util.c, rc-util.h: added utility functions to manage hash tables
+	of slists.
+	
+	* rc-debug-misc.c: minor typo fixes
+
+2001-06-07  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-channel.c, rc-debman-general.c, rc-debug-misc.c,
+	rc-debug-misc.h, rc-debug-misc.c, rc-deps-util.c,
+	rc-deps.c, rc-deps.h, rc-distro.c, rc-package-dep.h,
+	rc-package-info.c, rc-rpmman.c: 
+
+	Changes to make a RCPackageDep into what used to be a
+	RCPackageDepItem.  RCPackageDep isn't a SList anymore; the debian
+	backend hasn't been fully fixed to understand this -- as it is now,
+	it will only use the first part of an or dep.  To be fixed later.
+
 2001-06-14  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c (rc_rpmman_transact):

@@ -26,6 +26,7 @@
 #include "rc-debman-general.h"
 #include "rc-debug.h"
 #include "rc-package.h"
+#include "rc-deps-util.h"
 
 /*
  * Takes a string of format [<epoch>:]<version>[-<release>], and returns those
@@ -118,7 +119,8 @@ rc_debman_fill_depends (gchar *input, RCPackageDepSList *list)
     for (i = 0; deps[i]; i++) {
         gchar **elems;
         guint j;
-        RCPackageDep *dep = NULL;
+        RCPackageDepSList *dep = NULL;
+        RCPackageDep *the_dep;
         gchar *curdep;
 
         curdep = g_strstrip (deps[i]);
@@ -127,7 +129,7 @@ rc_debman_fill_depends (gchar *input, RCPackageDepSList *list)
         /* For the most part, there's only one element per dep, except for the
            rare case of OR'd deps. */
         for (j = 0; elems[j]; j++) {
-            RCPackageDepItem *depi;
+            RCPackageDep *depi;
             gchar *curelem;
             gchar *s1, *s2;
 
@@ -175,8 +177,8 @@ rc_debman_fill_depends (gchar *input, RCPackageDepSList *list)
 
             if (!deprel) {
                 /* There's no version in this dependency, just a name. */
-                depi = rc_package_dep_item_new (depname, 0, NULL, NULL,
-                                                RC_RELATION_ANY);
+                depi = rc_package_dep_new (depname, 0, NULL, NULL,
+                                           RC_RELATION_ANY);
             } else {
                 /* We've got to parse the rest of this mess. */
                 guint relation = RC_RELATION_ANY;
@@ -209,8 +211,8 @@ rc_debman_fill_depends (gchar *input, RCPackageDepSList *list)
 
                 g_free (depvers);
 
-                depi = rc_package_dep_item_new (depname, epoch, version,
-                                                release, relation);
+                depi = rc_package_dep_new (depname, epoch, version,
+                                           release, relation);
                 g_free (version);
                 g_free (release);
             }
@@ -221,7 +223,14 @@ rc_debman_fill_depends (gchar *input, RCPackageDepSList *list)
 
         g_strfreev (elems);
 
-        list = g_slist_append (list, dep);
+        if (dep->next) {
+            RCDepOr *or = rc_dep_or_new (dep);
+            the_dep = rc_dep_or_new_provide (or);
+        } else {
+            the_dep = dep->data;
+            g_slist_free (dep);
+        }
+        list = g_slist_append (list, the_dep);
     }
 
     g_strfreev (deps);
@@ -236,105 +245,105 @@ rc_debman_section_to_package_section (const gchar *section)
 {
     switch (section[0]) {
     case 'a':
-        if (!g_strcasecmp (section, "admin")) {
+        if (!strcmp (section, "admin")) {
             return (RC_SECTION_SYSTEM);
         } else {
             return (RC_SECTION_MISC);
         }
     case 'b':
-        if (!g_strcasecmp (section, "base")) {
+        if (!strcmp (section, "base")) {
             return (RC_SECTION_SYSTEM);
         } else {
             return (RC_SECTION_MISC);
         }
     case 'c':
-        if (!g_strcasecmp (section, "comm")) {
+        if (!strcmp (section, "comm")) {
             return (RC_SECTION_INTERNET);
         } else {
             return (RC_SECTION_MISC);
         }
     case 'd':
-        if (!g_strcasecmp (section, "devel")) {
+        if (!strcmp (section, "devel")) {
             return (RC_SECTION_DEVEL);
-        } else if (!g_strcasecmp (section, "doc")) {
+        } else if (!strcmp (section, "doc")) {
             return (RC_SECTION_DOC);
         } else {
             return (RC_SECTION_MISC);
         }
     case 'e':
-        if (!g_strcasecmp (section, "editors")) {
+        if (!strcmp (section, "editors")) {
             return (RC_SECTION_UTIL);
         } else {
             return (RC_SECTION_MISC);
         }
     case 'g':
-        if (!g_strcasecmp (section, "games")) {
+        if (!strcmp (section, "games")) {
             return (RC_SECTION_GAME);
-        } else if (!g_strcasecmp (section, "graphics")) {
+        } else if (!strcmp (section, "graphics")) {
             return (RC_SECTION_IMAGING);
         } else {
             return (RC_SECTION_MISC);
         }
     case 'i':
-        if (!g_strcasecmp (section, "interpreters")) {
+        if (!strcmp (section, "interpreters")) {
             return (RC_SECTION_DEVELUTIL);
         } else {
             return (RC_SECTION_MISC);
         }
     case 'l':
-        if (!g_strcasecmp (section, "libs")) {
+        if (!strcmp (section, "libs")) {
             return (RC_SECTION_LIBRARY);
         } else {
             return (RC_SECTION_MISC);
         }
     case 'm':
-        if (!g_strcasecmp (section, "mail")) {
+        if (!strcmp (section, "mail")) {
             return (RC_SECTION_PIM);
         } else {
             return (RC_SECTION_MISC);
         }
     case 'n':
-        if (!g_strcasecmp (section, "net") ||
-            !g_strcasecmp (section, "news"))
+        if (!strcmp (section, "net") ||
+            !strcmp (section, "news"))
         {
             return (RC_SECTION_INTERNET);
         } else {
             return (RC_SECTION_MISC);
         }
     case 'o':
-        if (!g_strcasecmp (section, "oldlibs")) {
+        if (!strcmp (section, "oldlibs")) {
             return (RC_SECTION_LIBRARY);
         } else {
             return (RC_SECTION_MISC);
         }
     case 's':
-        if (!g_strcasecmp (section, "shells")) {
+        if (!strcmp (section, "shells")) {
             return (RC_SECTION_SYSTEM);
-        } else if (!g_strcasecmp (section, "sound")) {
+        } else if (!strcmp (section, "sound")) {
             return (RC_SECTION_MULTIMEDIA);
         } else {
             return (RC_SECTION_MISC);
         }
     case 't':
-        if (!g_strcasecmp (section, "text")) {
+        if (!strcmp (section, "text")) {
             return (RC_SECTION_UTIL);
         } else {
             return (RC_SECTION_MISC);
         }
     case 'u':
-        if (!g_strcasecmp (section, "utils")) {
+        if (!strcmp (section, "utils")) {
             return (RC_SECTION_UTIL);
         } else {
             return (RC_SECTION_MISC);
         }
     case 'w':
-        if (!g_strcasecmp (section, "web")) {
+        if (!strcmp (section, "web")) {
             return (RC_SECTION_INTERNET);
         } else {
             return (RC_SECTION_MISC);
         }
     case 'x':
-        if (!g_strcasecmp (section, "x11")) {
+        if (!strcmp (section, "x11")) {
             return (RC_SECTION_XAPP);
         } else {
             return (RC_SECTION_MISC);

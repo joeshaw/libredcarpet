@@ -53,6 +53,7 @@ libredcarpettmp_a_SOURCES =		\
 	rc-distro.h			\
         rc-deps.c                       \
         rc-deps.h                       \
+	rc-deps-private.h               \
 	rc-deps-util.c			\
 	rc-deps-util.h			\
         rc-distman.c                    \

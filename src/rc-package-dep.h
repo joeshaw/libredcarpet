@@ -63,9 +63,8 @@ enum _RCPackageRelation {
     RC_RELATION_WEAK_NONE          = RELATION_WEAK | RELATION_NONE,
 };
 
-typedef struct _RCPackageDepItem RCPackageDepItem;
+typedef struct _RCPackageDep RCPackageDep;
 
-typedef GSList RCPackageDep;
 typedef GSList RCPackageDepSList;
 
 /* These are included later, so as to avoid circular #include hell */
@@ -75,34 +74,29 @@ typedef GSList RCPackageDepSList;
 #include "rc-package-spec.h"
 
 /* THE SPEC MUST BE FIRST */
-struct _RCPackageDepItem {
+struct _RCPackageDep {
     RCPackageSpec spec;
     RCPackageRelation relation;
+    gboolean is_or;
 };
 
-typedef GSList RCPackageDepItemSList;
 
-RCPackageDepItem *rc_package_dep_item_new (gchar *name,
-                                           guint32 epoch,
-                                           gchar *version,
-                                           gchar *release,
-                                           RCPackageRelation relation);
 
-RCPackageDepItem *rc_package_dep_item_new_from_spec (
+RCPackageDep *rc_package_dep_new (gchar *name,
+                                  guint32 epoch,
+                                  gchar *version,
+                                  gchar *release,
+                                  RCPackageRelation relation);
+
+RCPackageDep *rc_package_dep_new_from_spec (
     RCPackageSpec *spec,
     RCPackageRelation relation);
 
-RCPackageDepItem *rc_package_dep_item_copy (RCPackageDepItem *rcpdi);
+RCPackageDep *rc_package_dep_copy (RCPackageDep *rcpdi);
 
-void rc_package_dep_item_free (RCPackageDepItem *rcpdi);
+void rc_package_dep_free (RCPackageDep *rcpdi);
 
-gboolean rc_package_dep_item_equal (RCPackageDepItem *a, RCPackageDepItem *b);
-
-RCPackageDep *rc_package_dep_new_with_item (RCPackageDepItem *rcpdi);
-
-RCPackageDep *rc_package_dep_copy (RCPackageDep *orig);
-
-void rc_package_dep_free (RCPackageDep *rcpd);
+gboolean rc_package_dep_equal (RCPackageDep *a, RCPackageDep *b);
 
 RCPackageDepSList *rc_package_dep_slist_copy (RCPackageDepSList *old);
 
@@ -111,33 +105,29 @@ void rc_package_dep_slist_free (RCPackageDepSList *rcpdsl);
 /* Dep verification */
 gboolean rc_package_dep_verify_relation (RCPackageDep *dep,
                                          RCPackageSpec *spec);
-gboolean rc_package_dep_verify_and_slist_relation (RCPackageDepSList *depl,
-                                                   RCPackageSpec *spec,
-                                                   RCPackageDep **fail_out);
-gboolean rc_package_dep_verify_and_relation (RCPackageDep *depl,
-                                             RCPackageSpec *spec,
-                                             RCPackageDep **fail_out,
-                                             gboolean is_virtual);
-gboolean rc_package_dep_item_verify_relation (RCPackageDepItem *dep, RCPackageSpec *spec);
+gboolean rc_package_dep_slist_verify_relation (RCPackageDepSList *depl,
+                                               RCPackageSpec *spec,
+                                               RCPackageDepSList **fail_out,
+                                               gboolean is_virtual);
 
-gint rc_package_dep_is_item_subset (RCPackageDep *a, RCPackageDepItem *b);
-gint rc_package_dep_item_is_subset (RCPackageDepItem *a, RCPackageDepItem *b);
+gint rc_package_dep_is_subset (RCPackageDep *a, RCPackageDep *b);
+gint rc_package_dep_slist_is_item_subset (RCPackageDepSList *a, RCPackageDep *b);
 
-
-RCPackageDepItem *rc_package_dep_item_invert (RCPackageDepItem *depi);
 RCPackageDep *rc_package_dep_invert (RCPackageDep *dep);
+RCPackageDepSList *rc_package_dep_slist_invert (RCPackageDepSList *depl);
 void rc_package_dep_weaken (RCPackageDep *dep);
+void rc_package_dep_slist_weaken (RCPackageDepSList *dep);
 gboolean rc_package_dep_is_fully_weak (RCPackageDep *dep);
 gboolean rc_package_dep_slist_is_fully_weak (RCPackageDepSList *deps);
 
-gboolean rc_package_dep_slist_has_item (RCPackageDepSList *deps, RCPackageDepItem *di);
 void rc_package_dep_system_is_rpmish (gboolean is_rpm);
-
 
 RCPackageRelation rc_string_to_package_relation (const gchar *relation);
 const gchar *rc_package_relation_to_string (RCPackageRelation relation,
                                             gint words);
+RCPackageDepSList *rc_package_dep_slist_remove_duplicates (RCPackageDepSList *deps);
 
+/* XML */
 RCPackageDep *rc_xml_node_to_package_dep (const xmlNode *);
 
 #endif /* _RC_PACKAGE_DEP_H */

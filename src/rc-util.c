@@ -207,6 +207,57 @@ rc_hash_table_copy (GHashTable *ht, GHashFunc hfunc, GCompareFunc cfunc)
     return nhash;
 }
 
+void
+rc_hash_table_slist_insert (GHashTable *ht, gpointer key, gpointer value)
+{
+    GSList *sl = NULL;
+    gboolean found = FALSE;
+
+    sl = g_hash_table_lookup (ht, key);
+    if (sl) found = TRUE;
+    sl = g_slist_append (sl, value);
+
+    if (!found) {
+        g_hash_table_insert (ht, key, sl);
+    }
+}
+
+void
+rc_hash_table_slist_insert_unique (GHashTable *ht, gpointer key, gpointer value,
+                                   GCompareFunc eqfunc)
+{
+    GSList *sl = NULL;
+    gboolean found = FALSE;
+
+    sl = g_hash_table_lookup (ht, key);
+    if (sl) {
+        if ((eqfunc && !g_slist_find_custom (sl, value, eqfunc)) ||
+            (!eqfunc && !g_slist_find (sl, value)))
+        {
+            sl = g_slist_append (sl, value);
+        }
+    } else {
+        sl = g_slist_append (sl, value);
+    }
+
+    if (!found) {
+        g_hash_table_insert (ht, key, sl);
+    }
+}
+
+/* Oh, how I wish I was using a real language and didn't have to do this tripe */
+static void
+hash_table_slist_free_helper (gpointer key, gpointer value, gpointer blah)
+{
+    g_slist_free ((GSList *) value);
+}
+
+void
+rc_hash_table_slist_free (GHashTable *ht)
+{
+    g_hash_table_foreach (ht, hash_table_slist_free_helper, NULL);
+}
+
 /*
  * Magic gunzipping goodness
  */

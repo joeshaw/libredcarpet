@@ -47,6 +47,7 @@ struct _RCSubchannel {
     RCPackageHashTableByString *packages;
 
     RCPackageHashTableBySpec *dep_table;
+    RCPackageHashTableByString *dep_name_table;
 };
 
 RCSubchannel *rc_subchannel_new (void);

@@ -65,8 +65,14 @@ rc_subchannel_free (RCSubchannel *subchannel)
 
     /* Everything in this table is a pointer into the elements of the
        packages hash table, so it'll get free'd in a few lines */
-    if (subchannel->dep_table)
+    if (subchannel->dep_table) {
+        rc_hash_table_slist_free (subchannel->dep_table);
         g_hash_table_destroy (subchannel->dep_table);
+    }
+    if (subchannel->dep_name_table) {
+        rc_hash_table_slist_free (subchannel->dep_name_table);
+        g_hash_table_destroy (subchannel->dep_name_table);
+    }
 
     g_hash_table_foreach_remove (subchannel->packages,
                                  (GHRFunc) remove_helper, NULL);
@@ -496,11 +502,13 @@ rc_xml_node_to_subchannel (xmlNode *node, const RCChannel *channel)
         xml_get_guint32_prop_default (node, "preference", 0);
 
     subchannel->packages = g_hash_table_new (g_str_hash, g_str_equal);
-    g_hash_table_freeze (subchannel->packages);
-
     subchannel->dep_table = g_hash_table_new (rc_package_spec_hash,
                                               rc_package_spec_equal);
+    subchannel->dep_name_table = g_hash_table_new (g_str_hash, g_str_equal);
+
+    g_hash_table_freeze (subchannel->packages);
     g_hash_table_freeze (subchannel->dep_table);
+    g_hash_table_freeze (subchannel->dep_name_table);
 
 #if LIBXML_VERSION < 20000
     iter = node->childs;
@@ -518,26 +526,23 @@ rc_xml_node_to_subchannel (xmlNode *node, const RCChannel *channel)
              prov_iter = prov_iter->next)
         {
             const RCPackageDep *dep = (RCPackageDep *)(prov_iter->data);
-            const RCPackageDep *dep_iter;
 
-            for (dep_iter = dep; dep_iter; dep_iter = dep_iter->next) {
-                const RCPackageDepItem *dep_item =
-                    (RCPackageDepItem *)(dep_iter->data);
-                g_hash_table_insert (subchannel->dep_table,
-                                     (gpointer)&dep_item->spec,
-                                     (gpointer)package);
-            }
+            rc_hash_table_slist_insert_unique (subchannel->dep_table,
+                                               &dep->spec, package, NULL);
+            rc_hash_table_slist_insert_unique (subchannel->dep_name_table,
+                                               dep->spec.name, package, NULL);
         }
             
         g_hash_table_insert (subchannel->packages,
-                             (gpointer)package->spec.name,
-                             (gpointer)package);
+                             (gpointer) package->spec.name,
+                             (gpointer) package);
 
         iter = iter->next;
     }
 
     g_hash_table_thaw (subchannel->packages);
     g_hash_table_thaw (subchannel->dep_table);
+    g_hash_table_thaw (subchannel->dep_name_table);
 
     return (subchannel);
 }

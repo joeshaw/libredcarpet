@@ -29,6 +29,7 @@
 #include "rc-packman.h"
 #include "xml-util.h"
 #include "rc-debug.h"
+#include "rc-deps-util.h"
 
 #include <gnome-xml/tree.h>
 
@@ -42,85 +43,54 @@ static gboolean rpmish = FALSE;
 
 extern RCPackman *das_global_packman;
 
-RCPackageDepItem *
-rc_package_dep_item_new (gchar *name,
-                         guint32 epoch,
-                         gchar *version,
-                         gchar *release,
-                         RCPackageRelation relation)
+RCPackageDep *
+rc_package_dep_new (gchar *name,
+                    guint32 epoch,
+                    gchar *version,
+                    gchar *release,
+                    RCPackageRelation relation)
 {
-    RCPackageDepItem *rcpdi = g_new0 (RCPackageDepItem, 1);
+    RCPackageDep *rcpd = g_new0 (RCPackageDep, 1);
 
-    rc_package_spec_init (RC_PACKAGE_SPEC (rcpdi), name, epoch, version,
+    rc_package_spec_init (RC_PACKAGE_SPEC (rcpd), name, epoch, version,
                           release);
 
-    rcpdi->relation = relation;
+    rcpd->relation = relation;
 
-    return (rcpdi);
-} /* rc_package_dep_item_new */
+    return (rcpd);
+} /* rc_package_dep_new */
 
-RCPackageDepItem *
-rc_package_dep_item_new_from_spec (RCPackageSpec *spec,
-                                   RCPackageRelation relation)
+RCPackageDep *
+rc_package_dep_new_from_spec (RCPackageSpec *spec,
+                              RCPackageRelation relation)
 {
-    RCPackageDepItem *rcpdi = rc_package_dep_item_new (spec->name, spec->epoch,
-                                                       spec->version,
-                                                       spec->release,
-                                                       relation);
+    RCPackageDep *rcpd = rc_package_dep_new (spec->name, spec->epoch,
+                                             spec->version,
+                                             spec->release,
+                                             relation);
 
-    return (rcpdi);
-} /* rc_package_dep_item_new_from_spec */
+    return (rcpd);
+} /* rc_package_dep_new_from_spec */
 
-RCPackageDepItem *
-rc_package_dep_item_copy (RCPackageDepItem *rcpdi)
+RCPackageDep *
+rc_package_dep_copy (RCPackageDep *rcpd)
 {
-    RCPackageDepItem *new = g_new0 (RCPackageDepItem, 1); /* That sucks */
+    RCPackageDep *new = g_new0 (RCPackageDep, 1); /* That sucks */
 
-    rc_package_spec_copy ((RCPackageSpec *) new, (RCPackageSpec *) rcpdi);
+    rc_package_spec_copy ((RCPackageSpec *) new, (RCPackageSpec *) rcpd);
 
-    new->relation = rcpdi->relation;
+    new->relation = rcpd->relation;
+    new->is_or = rcpd->is_or;
 
     return (new);
-}
-
-void
-rc_package_dep_item_free (RCPackageDepItem *rcpdi)
-{
-    rc_package_spec_free_members (RC_PACKAGE_SPEC (rcpdi));
-
-    g_free (rcpdi);
-} /* rc_package_dep_item_free */
-
-RCPackageDep *
-rc_package_dep_new_with_item (RCPackageDepItem *rcpdi)
-{
-    RCPackageDep *rcpd;
-    rcpd = g_slist_append (NULL, rcpdi);
-    return rcpd;
-} /* rc_package_dep_new_with_item */
-
-RCPackageDep *
-rc_package_dep_copy (RCPackageDep *old)
-{
-    RCPackageDep *iter;
-    RCPackageDep *dep = NULL;
-
-    for (iter = old; iter; iter = iter->next) {
-        RCPackageDepItem *di = (RCPackageDepItem *)(iter->data);
-        RCPackageDepItem *new = rc_package_dep_item_copy (di);
-
-        dep = g_slist_append (dep, new);
-    }
-
-    return (dep);
-}
+} /* rc_package_dep_copy */
 
 void
 rc_package_dep_free (RCPackageDep *rcpd)
 {
-    g_slist_foreach (rcpd, (GFunc) rc_package_dep_item_free, NULL);
+    rc_package_spec_free_members (RC_PACKAGE_SPEC (rcpd));
 
-    g_slist_free (rcpd);
+    g_free (rcpd);
 } /* rc_package_dep_free */
 
 RCPackageDepSList *
@@ -137,7 +107,7 @@ rc_package_dep_slist_copy (RCPackageDepSList *old)
     }
 
     return (new);
-}
+} /* rc_package_dep_slist_copy */
 
 void
 rc_package_dep_slist_free (RCPackageDepSList *rcpdsl)
@@ -147,41 +117,26 @@ rc_package_dep_slist_free (RCPackageDepSList *rcpdsl)
     g_slist_free (rcpdsl);
 } /* rc_package_dep_slist_free */
 
-/*
- * Helper function to verify  if the Dep or DepItem is fulfilled by the given spec
- */
 
 gboolean
-rc_package_dep_verify_relation (RCPackageDep *dep, RCPackageSpec *spec)
-{
-    /* Succeeds if any of the deps succeed */
-    while (dep) {
-        if (rc_package_dep_item_verify_relation ((RCPackageDepItem *) (dep->data), spec))
-            return TRUE;
-        dep = dep->next;
-    }
-
-    return FALSE;
-}
-
-gboolean
-rc_package_dep_verify_and_relation (RCPackageDep *depl,
-                                    RCPackageSpec *spec,
-                                    RCPackageDep **fail_out,
-                                    gboolean is_virtual)
+rc_package_dep_slist_verify_relation (RCPackageDepSList *depl,
+                                      RCPackageSpec *spec,
+                                      RCPackageDepSList **fail_out,
+                                      gboolean is_virtual)
 {
     gboolean ret = TRUE;
 
     while (depl) {
-        RCPackageDepItem *di = (RCPackageDepItem *) depl->data;
-        RCPackageRelation unweak_rel = di->relation & ~RC_RELATION_WEAK;
+        RCPackageDep *d = (RCPackageDep *) depl->data;
+        RCPackageRelation unweak_rel = d->relation & ~RC_RELATION_WEAK;
 
         /* HACK-2: debian can't have versioned deps fulfilled by virtual provides. */
         /* this should be some sort of if (debianish) { .. } */
         if (!rpmish) {
             if (is_virtual && (unweak_rel != RC_RELATION_ANY && unweak_rel != RC_RELATION_NONE)) {
-                if (!strcmp (di->spec.name, spec->name)) {
-                    if (fail_out) *fail_out = g_slist_append (*fail_out, di);
+                if (!strcmp (d->spec.name, spec->name)) {
+                    if (fail_out && !g_slist_find (*fail_out, d))
+                        *fail_out = g_slist_prepend (*fail_out, d);
                     ret = FALSE;
                 }
                 depl = depl->next;
@@ -189,8 +144,10 @@ rc_package_dep_verify_and_relation (RCPackageDep *depl,
             }
         }
 
-        if (!rc_package_dep_item_verify_relation (di, spec)) {
-            if (fail_out) *fail_out = g_slist_append (*fail_out, di);
+        if (!rc_package_dep_verify_relation (d, spec)) {
+            if (fail_out && !g_slist_find (*fail_out, d))
+                *fail_out = g_slist_prepend (*fail_out, d);
+
             ret = FALSE;
         }
         depl = depl->next;
@@ -199,30 +156,9 @@ rc_package_dep_verify_and_relation (RCPackageDep *depl,
     return ret;
 }
 
-
-/* Returns true if ALL and deps verify; if fail_out isn't NULL,
- * returns the first dep that failed in there.
- */
 gboolean
-rc_package_dep_verify_and_slist_relation (RCPackageDepSList *depl,
-                                          RCPackageSpec *spec,
-                                          RCPackageDep **fail_out)
-{
-    while (depl) {
-        RCPackageDep *dep = (RCPackageDep *) depl->data;
-        if (!rc_package_dep_verify_relation (dep, spec)) {
-            if (fail_out) *fail_out = dep;
-            return FALSE;
-        }
-        depl = depl->next;
-    }
-
-    return TRUE;
-}
-
-gboolean
-rc_package_dep_item_verify_relation (RCPackageDepItem *dep,
-                                     RCPackageSpec *spec)
+rc_package_dep_verify_relation (RCPackageDep *dep,
+                                RCPackageSpec *spec)
 {
     gboolean use_newspecspec = FALSE;
     RCPackageSpec newspecspec;
@@ -367,7 +303,7 @@ rc_string_to_package_relation (const gchar *relation)
 }
 
 gboolean
-rc_package_dep_item_equal (RCPackageDepItem *a, RCPackageDepItem *b)
+rc_package_dep_equal (RCPackageDep *a, RCPackageDep *b)
 {
     if (a->relation != b->relation)
         return FALSE;
@@ -419,13 +355,13 @@ rc_package_relation_to_string (RCPackageRelation relation, gint words)
  */
 
 gint
-rc_package_dep_is_item_subset (RCPackageDep *a, RCPackageDepItem *b)
+rc_package_dep_slist_is_item_subset (RCPackageDepSList *a, RCPackageDep *b)
 {
     while (a) {
-        RCPackageDepItem *ai = (RCPackageDepItem *) a->data;
+        RCPackageDep *ad = (RCPackageDep *) a->data;
         gint r;
 
-        r = rc_package_dep_item_is_subset (ai, b);
+        r = rc_package_dep_is_subset (ad, b);
         /* if b is more restrictive than ai, then b is more restrictive than b */
         if (r == 1) return 1;
         if (r == -1) return -1;
@@ -435,21 +371,24 @@ rc_package_dep_is_item_subset (RCPackageDep *a, RCPackageDepItem *b)
 }
         
 
-static gint rc_package_dep_item_is_subset_real (RCPackageDepItem *a, RCPackageDepItem *b);
+/* This wrapper is here so that we can print the return code, since it can come out
+ * many different places
+ */
+static gint rc_package_dep_is_subset_real (RCPackageDep *a, RCPackageDep *b);
 
-gint rc_package_dep_item_is_subset (RCPackageDepItem *a, RCPackageDepItem *b)
+gint rc_package_dep_is_subset (RCPackageDep *a, RCPackageDep *b)
 {
     gint ret;
-    ret = rc_package_dep_item_is_subset_real (a, b);
+    ret = rc_package_dep_is_subset_real (a, b);
 #if 0
-    rc_debug (RC_DEBUG_LEVEL_DEBUG, "IS_SUBSET: A: %s B: %s  --> %d\n", debug_rc_package_dep_item_str (a),
-             debug_rc_package_dep_item_str (b), ret);
+    rc_debug (RC_DEBUG_LEVEL_DEBUG, "IS_SUBSET: A: %s B: %s  --> %d\n", debug_rc_package_dep_str (a),
+             debug_rc_package_dep_str (b), ret);
 #endif
     return ret;
 }
 
 static gint
-rc_package_dep_item_is_subset_real (RCPackageDepItem *a, RCPackageDepItem *b)
+rc_package_dep_is_subset_real (RCPackageDep *a, RCPackageDep *b)
 {
     RCPackageRelation arel;
     RCPackageRelation brel;
@@ -629,31 +568,31 @@ rc_package_dep_item_is_subset_real (RCPackageDepItem *a, RCPackageDepItem *b)
 }
 
 
-RCPackageDepItem *
-rc_package_dep_item_invert (RCPackageDepItem *depi)
+RCPackageDep *
+rc_package_dep_invert (RCPackageDep *dep)
 {
-    RCPackageDepItem *out;
+    RCPackageDep *out;
     RCPackageRelation out_rel;
 
-    out = rc_package_dep_item_copy (depi);
-    if (depi->relation == RC_RELATION_ANY) {
+    out = rc_package_dep_copy (dep);
+    if (dep->relation == RC_RELATION_ANY) {
         out_rel = RC_RELATION_NONE;
-    } else if (depi->relation == RC_RELATION_NONE) {
+    } else if (dep->relation == RC_RELATION_NONE) {
         out_rel = RC_RELATION_ANY;
-    } else if (depi->relation == RC_RELATION_NOT_EQUAL) {
+    } else if (dep->relation == RC_RELATION_NOT_EQUAL) {
         out_rel = RC_RELATION_EQUAL;
-    } else if (depi->relation == RC_RELATION_EQUAL) {
+    } else if (dep->relation == RC_RELATION_EQUAL) {
         out_rel = RC_RELATION_NOT_EQUAL;
     } else {
-        if (depi->relation & RC_RELATION_EQUAL) {
+        if (dep->relation & RC_RELATION_EQUAL) {
             out_rel = 0;
         } else {
             out_rel = RC_RELATION_EQUAL;
         }
 
-        if (depi->relation & RC_RELATION_LESS) {
+        if (dep->relation & RC_RELATION_LESS) {
             out_rel |= RC_RELATION_GREATER;
-        } else if (depi->relation & RC_RELATION_GREATER) {
+        } else if (dep->relation & RC_RELATION_GREATER) {
             out_rel |= RC_RELATION_LESS;
         }
     }
@@ -663,40 +602,43 @@ rc_package_dep_item_invert (RCPackageDepItem *depi)
     return out;
 }
 
-RCPackageDep *
-rc_package_dep_invert (RCPackageDep *dep)
+RCPackageDepSList *
+rc_package_dep_slist_invert (RCPackageDepSList *depl)
 {
-    RCPackageDep *new_dep = NULL;
+    RCPackageDepSList *new_depl = NULL;
 
-    while (dep) {
-        RCPackageDepItem *depi = (RCPackageDepItem *) dep->data;
-        new_dep = g_slist_append (new_dep, rc_package_dep_item_invert (depi));
-        dep = dep->next;
+    while (depl) {
+        RCPackageDep *dep = (RCPackageDep *) depl->data;
+        new_depl = g_slist_append (new_depl, rc_package_dep_invert (dep));
+        depl = depl->next;
     }
 
-    return new_dep;
+    return new_depl;
 }
 
 void
 rc_package_dep_weaken (RCPackageDep *dep)
 {
-    while (dep) {
-        RCPackageDepItem *depi = (RCPackageDepItem *) dep->data;
-        depi->relation |= RC_RELATION_WEAK;
-        dep = dep->next;
+    dep->relation |= RC_RELATION_WEAK;
+}
+
+void
+rc_package_dep_slist_weaken (RCPackageDepSList *depl)
+{
+    while (depl) {
+        RCPackageDep *dep = (RCPackageDep *) depl->data;
+        dep->relation |= RC_RELATION_WEAK;
+        depl = depl->next;
     }
 }
 
 gboolean
 rc_package_dep_is_fully_weak (RCPackageDep *dep)
 {
-    while (dep) {
-        RCPackageDepItem *depi = (RCPackageDepItem *) dep->data;
-        if (!(depi->relation & RC_RELATION_WEAK))
-            return FALSE;
-        dep = dep->next;
-    }
-    return TRUE;
+    if (!(dep->relation & RC_RELATION_WEAK))
+        return FALSE;
+    else
+        return TRUE;
 }
 
 gboolean
@@ -712,21 +654,16 @@ rc_package_dep_slist_is_fully_weak (RCPackageDepSList *deps)
 }
 
 gboolean
-rc_package_dep_slist_has_item (RCPackageDepSList *deps, RCPackageDepItem *di)
+rc_package_dep_slist_has_dep (RCPackageDepSList *deps, RCPackageDep *pd)
 {
     while (deps) {
         RCPackageDep *dep = (RCPackageDep *) deps->data;
-        while (dep) {
-            RCPackageDepItem *depi = (RCPackageDepItem *) dep->data;
-
-            if (depi->relation == di->relation &&
-                rc_package_spec_equal (&depi->spec, &di->spec))
-            {
-                return TRUE;
-            }
-
-            dep = dep->next;
+        if (dep->relation == pd->relation &&
+            rc_package_spec_equal (&dep->spec, &pd->spec))
+        {
+            return TRUE;
         }
+
         deps = deps->next;
     }
 
@@ -739,10 +676,33 @@ rc_package_dep_system_is_rpmish (gboolean is_rpm)
     rpmish = is_rpm;
 }
 
-static RCPackageDepItem *
-rc_xml_node_to_package_dep_item (const xmlNode *node)
+RCPackageDepSList *
+rc_package_dep_slist_remove_duplicates (RCPackageDepSList *deps)
 {
-    RCPackageDepItem *dep_item;
+    RCPackageDepSList *out = NULL;
+    RCPackageDepSList *it;
+    gchar *last_name = NULL;
+
+    deps = g_slist_sort (deps, (GCompareFunc) rc_package_spec_compare_name);
+
+    it = deps;
+    while (it) {
+        RCPackageDep *dep = (RCPackageDep *) it->data;
+        if (!last_name || strcmp (last_name, dep->spec.name)) {
+            last_name = dep->spec.name;
+            out = g_slist_prepend (out, dep);
+        }
+        it = it->next;
+    }
+
+    g_slist_free (deps);
+    return out;
+}
+
+static RCPackageDep *
+rc_xml_node_to_package_dep_internal (const xmlNode *node)
+{
+    RCPackageDep *dep_item;
     gchar *tmp;
 
     if (g_strcasecmp (node->name, "dep")) {
@@ -750,7 +710,7 @@ rc_xml_node_to_package_dep_item (const xmlNode *node)
     }
 
     /* FIXME: this sucks */
-    dep_item = g_new0 (RCPackageDepItem, 1);
+    dep_item = g_new0 (RCPackageDep, 1);
 
     dep_item->spec.name = xml_get_prop (node, "name");
     tmp = xml_get_prop (node, "op");
@@ -776,9 +736,11 @@ rc_xml_node_to_package_dep (const xmlNode *node)
     RCPackageDep *dep = NULL;
 
     if (!g_strcasecmp (node->name, "dep")) {
-        dep = g_slist_append (dep, rc_xml_node_to_package_dep_item (node));
+        dep = rc_xml_node_to_package_dep_internal (node);
         return (dep);
     } else if (!g_strcasecmp (node->name, "or")) {
+        RCPackageDepSList *or_dep_slist = NULL;
+        RCDepOr *or;
 #if LIBXML_VERSION < 20000
         xmlNode *iter = node->childs;
 #else
@@ -786,9 +748,13 @@ rc_xml_node_to_package_dep (const xmlNode *node)
 #endif
 
         while (iter) {
-            dep = g_slist_append (dep, rc_xml_node_to_package_dep_item (iter));
+            or_dep_slist = g_slist_append (or_dep_slist,
+                                           rc_xml_node_to_package_dep_internal (iter));
             iter = iter->next;
         }
+
+        or = rc_dep_or_new (or_dep_slist);
+        dep = rc_dep_or_new_provide (or);
     }
 
     return (dep);
