@@ -1315,7 +1315,7 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
 
     depends_fill_helper (rpmman, header, RPMTAG_OBSOLETENAME,
                          RPMTAG_OBSOLETEVERSION, RPMTAG_OBSOLETEFLAGS,
-                         &package->conflicts);
+                         &package->obsoletes);
 
     /* RPM versions prior to 4.0 don't make each package provide
      * itself automatically, so we have to add the dependency

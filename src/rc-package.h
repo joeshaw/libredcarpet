@@ -62,6 +62,7 @@ struct _RCPackage {
     RCPackageDepSList *requires;
     RCPackageDepSList *provides;
     RCPackageDepSList *conflicts;
+    RCPackageDepSList *obsoletes;
 
     /* These are here to make the debian folks happy */
     RCPackageDepSList *suggests;

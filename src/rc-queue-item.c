@@ -383,6 +383,15 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
         
         *new_items = g_slist_prepend (*new_items, conflict_item);
     }
+
+    /* Construct conflict items for each of the package's obsoletes. */
+    for (iter = package->obsoletes; iter != NULL; iter = iter->next) {
+        RCPackageDep *dep = iter->data;
+        RCQueueItem *conflict_item = rc_queue_item_new_conflict (rc_queue_item_get_world (item),
+                                                                 dep, package);
+        
+        *new_items = g_slist_prepend (*new_items, conflict_item);
+    }
     
  finished:
     g_free (pkg_name);

@@ -1,3 +1,17 @@
+2002-03-27  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-package.h: Added a list of obsoletes to the RCPackage struct.
+
+	* rc-package.c (rc_package_copy): Copy the list of obsoletes.
+	(rc_package_free): Free the list of obsoletes.
+	(rc_xml_node_to_package): Read obsoletes in from XML.
+
+	* rc-rpmman.c (rc_rpmman_depends_fill): Store obsoletes in a
+	separate list, instead of just treating them as conflicts.
+
+	* rc-queue-item.c (install_item_process): Generate conflict items
+	from a package's obsoletes.
+
 2002-03-26  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-world.c (rc_world_add_packages_from_xml): Added.

@@ -58,6 +58,7 @@ rc_package_copy (RCPackage *old_package)
     package->requires = rc_package_dep_slist_copy (old_package->requires);
     package->provides = rc_package_dep_slist_copy (old_package->provides);
     package->conflicts = rc_package_dep_slist_copy (old_package->conflicts);
+    package->obsoletes = rc_package_dep_slist_copy (old_package->obsoletes);
 
     package->suggests = rc_package_dep_slist_copy (old_package->suggests);
     package->recommends = rc_package_dep_slist_copy (old_package->recommends);
@@ -85,6 +86,7 @@ rc_package_free (RCPackage *package)
     rc_package_dep_slist_free (package->requires);
     rc_package_dep_slist_free (package->provides);
     rc_package_dep_slist_free (package->conflicts);
+    rc_package_dep_slist_free (package->obsoletes);
 
     rc_package_dep_slist_free (package->suggests);
     rc_package_dep_slist_free (package->recommends);
@@ -266,10 +268,13 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
 
             while (iter2) {
                 package->requires =
-                    g_slist_append (package->requires,
-                                    rc_xml_node_to_package_dep (iter2));
+                    g_slist_prepend (package->requires,
+                                     rc_xml_node_to_package_dep (iter2));
                 iter2 = iter2->next;
             }
+
+            package->requires = g_slist_reverse (package->requires);
+
         } else if (!g_strcasecmp (iter->name, "recommends")) {
             const xmlNode *iter2;
 
@@ -277,10 +282,13 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
 
             while (iter2) {
                 package->recommends =
-                    g_slist_append (package->recommends,
-                                    rc_xml_node_to_package_dep (iter2));
+                    g_slist_prepend (package->recommends,
+                                     rc_xml_node_to_package_dep (iter2));
                 iter2 = iter2->next;
             }
+
+            package->recommends = g_slist_reverse (package->recommends);
+
         } else if (!g_strcasecmp (iter->name, "suggests")) {
             const xmlNode *iter2;
 
@@ -288,10 +296,13 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
 
             while (iter2) {
                 package->suggests =
-                    g_slist_append (package->suggests,
-                                    rc_xml_node_to_package_dep (iter2));
+                    g_slist_prepend (package->suggests,
+                                     rc_xml_node_to_package_dep (iter2));
                 iter2 = iter2->next;
             }
+
+            package->suggests = g_slist_reverse (package->suggests);
+
         } else if (!g_strcasecmp (iter->name, "conflicts")) {
             const xmlNode *iter2;
 
@@ -299,10 +310,27 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
 
             while (iter2) {
                 package->conflicts =
-                    g_slist_append (package->conflicts,
-                                    rc_xml_node_to_package_dep (iter2));
+                    g_slist_prepend (package->conflicts,
+                                     rc_xml_node_to_package_dep (iter2));
                 iter2 = iter2->next;
             }
+
+            package->conflicts = g_slist_reverse (package->conflicts);
+
+        } else if (!g_strcasecmp (iter->name, "obsoletes")) {
+            const xmlNode *iter2;
+
+            iter2 = iter->xmlChildrenNode;
+
+            while (iter2) {
+                package->obsoletes = 
+                    g_slist_prepend (package->obsoletes,
+                                     rc_xml_node_to_package_dep (iter2));
+                iter2 = iter2->next;
+            }
+
+            package->obsoletes = g_slist_reverse (package->obsoletes);
+
         } else if (!g_strcasecmp (iter->name, "provides")) {
             const xmlNode *iter2;
 
@@ -310,10 +338,13 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
 
             while (iter2) {
                 package->provides =
-                    g_slist_append (package->provides,
-                                    rc_xml_node_to_package_dep (iter2));
+                    g_slist_prepend (package->provides,
+                                     rc_xml_node_to_package_dep (iter2));
                 iter2 = iter2->next;
             }
+
+            package->provides = g_slist_reverse (package->provides);
+
         } else {
             /* FIXME: do we want to bitch to the user here? */
         }
