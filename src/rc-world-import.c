@@ -759,6 +759,24 @@ set_pkg_file_cb (RCPackage *pkg,
 }
 
 static void
+add_packages_from_hash_cb (gpointer key,
+                           gpointer val,
+                           gpointer user_data)
+{
+    RCPackage *pkg = val;
+    RCWorld *world = user_data;
+    RCPackageUpdate *update;
+
+    update = rc_package_update_new ();
+    rc_package_spec_copy (RC_PACKAGE_SPEC (update),
+                          RC_PACKAGE_SPEC (pkg));
+    pkg->history = g_slist_prepend (pkg->history, update);
+
+    rc_world_add_package (world, pkg);
+    rc_package_unref (pkg);
+}
+
+static void
 refresh_channel_from_dir (RCChannel *channel)
 {
     RCWorld *world = rc_get_world ();
@@ -813,10 +831,14 @@ refresh_channel_from_dir (RCChannel *channel)
            if it is a package. */
 
         GDir *dir;
+        GHashTable *hash;
+        RCPackman *packman = rc_world_get_packman (world);
 
         dir = g_dir_open (directory, 0, NULL);
         if (dir == NULL)
             goto cleanup;
+
+        hash = g_hash_table_new (NULL, NULL);
 
         rc_world_remove_packages (world, channel);
     
@@ -828,24 +850,34 @@ refresh_channel_from_dir (RCChannel *channel)
                                          full_path);
             
             if (pkg) {
-                RCPackageUpdate *update;
-                
-                pkg->channel = rc_channel_ref (channel);
-                pkg->package_filename = g_strdup (full_path);
-                pkg->local_package = FALSE;
-                
-                update = rc_package_update_new ();
-                rc_package_spec_copy (RC_PACKAGE_SPEC (update),
-                                      RC_PACKAGE_SPEC (pkg));
-                pkg->history = g_slist_prepend (pkg->history, update);
-                
-                rc_world_add_package (world, pkg);
-                rc_package_unref (pkg);
+                gpointer nameq = GINT_TO_POINTER (RC_PACKAGE_SPEC (pkg)->nameq);
+                RCPackage *curr_pkg;
+
+                curr_pkg = g_hash_table_lookup (hash, nameq);
+                if (curr_pkg == NULL
+                    || rc_packman_version_compare (packman,
+                                                   RC_PACKAGE_SPEC (pkg),
+                                                   RC_PACKAGE_SPEC (curr_pkg)) > 0) {
+
+                    pkg->channel = rc_channel_ref (channel);
+                    pkg->package_filename = g_strdup (full_path);
+                    pkg->local_package = FALSE;
+
+                    if (curr_pkg == NULL) {
+                        g_hash_table_insert (hash, nameq, pkg);
+                    } else {
+                        g_hash_table_replace (hash, nameq, pkg);
+                        rc_package_unref (curr_pkg);
+                    }
+                }
             }
             
             g_free (full_path);
         }
+
+        g_hash_table_foreach (hash, add_packages_from_hash_cb, world);
         
+        g_hash_table_destroy (hash);
         g_dir_close (dir);
     }
 

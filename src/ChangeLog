@@ -1,5 +1,10 @@
 2002-11-05  Jon Trowbridge  <trow@ximian.com>
 
+	* rc-world-import.c (refresh_channel_from_dir): If there are
+	multiple packages w/ the same name in the directory, filter out
+	all but the one with the highest version number.  This fixes
+	half of bug #33323.
+
 	* rc-queue-item.c (require_item_process): Set a meaningful branch
 	label.  This is helpful when debugging dependency problems.
 	(branch_item_destroy): Free the branch label.
