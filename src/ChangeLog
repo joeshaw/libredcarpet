@@ -1,5 +1,11 @@
 2001-01-16  Ian Peters  <itp@helixcode.com>
 
+	* rc-debman.c: Fix a couple cases where I forgot to update a
+	format string when I got rid of one of the inputs, this explains
+	the real garbage Joe was seeing
+
+2001-01-16  Ian Peters  <itp@helixcode.com>
+
 	* rc-debman.c (debman_poll_write_cb): only need to handle \t, not
 	\r here anymore
 

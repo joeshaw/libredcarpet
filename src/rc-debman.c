@@ -1147,7 +1147,7 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
                                   "couldn't reacquire lock file");
 
             rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
-                      "%s: lost database lock!\n");
+                      ": lost database lock!\n");
 
             g_slist_foreach (argvl, (GFunc) g_strfreev, NULL);
             g_slist_free (argvl);
@@ -1162,7 +1162,7 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
                                   "dpkg exited abnormally");
 
             rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
-                      "%s: dpkg exited abnormally\n");
+                      ": dpkg exited abnormally\n");
 
             g_slist_foreach (argvl, (GFunc) g_strfreev, NULL);
             g_slist_free (argvl);
@@ -2374,7 +2374,7 @@ rc_debman_find_file (RCPackman *packman, const gchar *filename)
 
     if (!g_path_is_absolute (filename)) {
         rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
-                  "%s: pathname is not absolute\n");
+                  ": pathname is not absolute\n");
 
         RC_EXIT;
 
