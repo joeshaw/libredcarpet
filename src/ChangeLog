@@ -1,3 +1,8 @@
+2001-03-19  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps-util.c: Oopsie!  Data allocated outside
+	of a loop should /not/ be freed inside the loop.
+
 2001-03-16  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c: moved back to the older deprecated but still
