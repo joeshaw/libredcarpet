@@ -1,5 +1,9 @@
 2002-08-08  Jon Trowbridge  <trow@ximian.com>
 
+	* rc-package-dep.h: By making the refs field in RCPackageDep a
+	20-bit int and shrinking relation to 8 bits, we can save 4 bytes
+	per object.  Not a huge savings, but it doesn't hurt.
+
 	* rc-xml.c (parser_package_start): Got rid of some unnecessary mem
 	allocs and string copies.
 	(parse_dep_attrs): Got rid of some unnecessary mem allocs and

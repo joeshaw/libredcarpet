@@ -89,10 +89,10 @@ typedef void (*RCPackageAndDepFn) (RCPackage *, RCPackageDep *, gpointer);
 /* THE SPEC MUST BE FIRST */
 struct _RCPackageDep {
     RCPackageSpec spec;
-    gint refs;
-    gint relation : 28;
-    guint is_or : 1;
-    guint pre   : 1;
+    gint refs     : 20;
+    gint relation : 8;
+    guint is_or   : 1;
+    guint pre     : 1;
 };
 
 RCPackageDep *rc_package_dep_ref (RCPackageDep *dep);
