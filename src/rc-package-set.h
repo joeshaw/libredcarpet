@@ -21,8 +21,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef _RC_PACKAGESET_H
-#define _RC_PACKAGESET_H
+#ifndef _RC_PACKAGE_SET_H
+#define _RC_PACKAGE_SET_H
 
 #include <glib.h>
 #include "rc-package.h"
@@ -37,6 +37,6 @@ struct _RCPackageSet {
 
 typedef GSList RCPackageSetSList;
 
-RCPackageSetSList *rc_packageset_parse (char *buf, int compressed_length);
+RCPackageSetSList *rc_package_set_parse (char *buf, int compressed_length);
 
-#endif _RC_PACKAGESET_H
+#endif _RC_PACKAGE_SET_H

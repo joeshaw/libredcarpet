@@ -30,8 +30,8 @@
 #include "xml-util.h"
 
 RCPackageSetSList *
-rc_packageset_parse (char *buf,
-                     int compressed_length)
+rc_package_set_parse (char *buf,
+                      int compressed_length)
 {
     xmlDoc *doc;
     xmlNode *root, *node;
@@ -80,8 +80,8 @@ rc_packageset_parse (char *buf,
         }
 
         rps = g_new0 (RCPackageSet, 1);
-        rps->name = xml_get_prop (node, "name");
-        rps->description = xml_get_prop (node, "description");
+        rps->name = xml_get_value (node, "name");
+        rps->description = xml_get_value (node, "description");
 
 #if LIBXML_VERSION < 20000
         xmn = node->childs;
@@ -113,7 +113,7 @@ rc_packageset_parse (char *buf,
                         others = others->next;
                     }
                     if (others == NULL) {
-                        g_warning ("packageset '%s' referenced non-existaent set '%s'",
+                        g_warning ("packageset '%s' referenced non-existant set '%s'",
                                    rps->name, temp);
                     }
                     g_free (temp);
