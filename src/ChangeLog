@@ -10,6 +10,12 @@
 	(rc_rpmman_transact): check the rpmRunTransactions return code and
 	do something intelligent with it
 
+2001-01-31  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c: Made redhat 6 and 7 work. Yay. Broke things
+	on debian. Boo.
+
+
 2001-01-31  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c (rc_rpmman_error_cb): Stupid rpmlib doesn't
