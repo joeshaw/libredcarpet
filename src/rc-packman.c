@@ -379,6 +379,13 @@ void
 rc_packman_configure_progress (RCPackman *p, gint amount, gint total)
 {
     g_return_if_fail (p);
+
+    gtk_signal_emit ((GtkObject *)p, signals[CONFIGURE_PROGRESS], amount,
+                     total);
+
+    while (gtk_events_pending ()) {
+        gtk_main_iteration ();
+    }
 }
 
 void
@@ -387,6 +394,10 @@ rc_packman_configure_step (RCPackman *p, gint seqno, gint total)
     g_return_if_fail (p);
 
     gtk_signal_emit ((GtkObject *)p, signals[CONFIGURE_STEP], seqno, total);
+
+    while (gtk_events_pending ()) {
+        gtk_main_iteration ();
+    }
 }
 
 void
@@ -395,6 +406,10 @@ rc_packman_configure_done (RCPackman *p)
     g_return_if_fail (p);
 
     gtk_signal_emit ((GtkObject *)p, signals[CONFIGURE_DONE]);
+
+    while (gtk_events_pending ()) {
+        gtk_main_iteration ();
+    }
 }
 
 void
@@ -404,6 +419,10 @@ rc_packman_transaction_progress (RCPackman *p, gint amount, gint total)
 
     gtk_signal_emit ((GtkObject *)p, signals[TRANSACTION_PROGRESS],
                      amount, total);
+
+    while (gtk_events_pending ()) {
+        gtk_main_iteration ();
+    }
 }
 
 void
@@ -412,6 +431,10 @@ rc_packman_transaction_step (RCPackman *p, gint seqno, gint total)
     g_return_if_fail (p);
 
     gtk_signal_emit ((GtkObject *)p, signals[TRANSACTION_STEP], seqno, total);
+
+    while (gtk_events_pending ()) {
+        gtk_main_iteration ();
+    }
 }
 
 void
@@ -420,6 +443,10 @@ rc_packman_transaction_done (RCPackman *p)
     g_return_if_fail (p);
 
     gtk_signal_emit ((GtkObject *)p, signals[TRANSACTION_DONE]);
+
+    while (gtk_events_pending ()) {
+        gtk_main_iteration ();
+    }
 }
 
 /* Methods to access the error stuff */
