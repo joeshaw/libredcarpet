@@ -657,8 +657,6 @@ packman_test_run (RCPackman *p, char *line)
 
     if (test && !strcmp (test, "test"))
         flags |= RC_TRANSACT_FLAG_NO_ACT;
-    else if (test && !strcmp (test, "repackage"))
-        flags |= RC_TRANSACT_FLAG_REPACKAGE;
 
     rc_packman_transact (p, transaction.install_pkgs, transaction.remove_pkgs,
                          flags);

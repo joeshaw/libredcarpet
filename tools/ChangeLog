@@ -1,3 +1,7 @@
+2003-08-28  Joe Shaw  <joe@ximian.com>
+
+	* packman_test.c (packman_test_run): No more repackaging.
+
 2003-08-20  Joe Shaw  <joe@ximian.com>
 
 	* cur_to_xml.c, dep_lint.c, pkg-vercmp.c, pkg_to_xml.c: None of
