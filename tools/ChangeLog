@@ -1,3 +1,10 @@
+2002-08-23  Joe Shaw  <joe@ximian.com>
+
+	* Makefile.am: Add (and install) pkg-vercmp.
+
+	* pkg-vercmp.c: Tool to take two EVRs and the packaging backend
+	type and returns "gt", "lt", or "eq".
+
 2002-08-20  Jon Trowbridge  <trow@ximian.com>
 
 	* cur_to_xml.c (main): Added a call to rc_distro_parse_xml, so

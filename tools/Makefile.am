@@ -4,7 +4,7 @@ INCLUDES = \
 	-DG_LOG_DOMAIN=\"librc-tools\"	\
 	-Wall
 
-bin_PROGRAMS = pkg_to_xml
+bin_PROGRAMS = pkg_to_xml pkg-vercmp
 
 noinst_PROGRAMS = cur_to_xml packman_test
 
@@ -23,3 +23,8 @@ packman_test_LDADD =	\
 	$(top_builddir)/src/libredcarpet.a	\
 	$(LIBREDCARPET_LIBS)	\
 	-lreadline -ltermcap
+
+pkg_vercmp_SOURCES = pkg-vercmp.c
+pkg_vercmp_LDADD =	\
+	$(top_builddir)/src/libredcarpet.a	\
+	$(LIBREDCARPET_LIBS)

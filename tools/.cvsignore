@@ -4,5 +4,6 @@ Makefile.in
 pkg_to_xml
 cur_to_xml
 packman_test
+pkg-vercmp
 .libs
 .deps
