@@ -1,5 +1,12 @@
 2002-08-01  Ian Peters  <itp@ximian.com>
 
+	* rc-rpmman.c (rc_rpmman_query_file): open the database read-only
+	before attempting to query the file.  This shouldn't be at all
+	necessary, but it fixes the rather bizarre hang some people were
+	getting, due to an unitialized variable in rpmlib.
+
+2002-08-01  Ian Peters  <itp@ximian.com>
+
 	* rc-world.h: rc_world_get_best_upgrade now takes a
 	subscribed_only flag to control what channels to look in
 

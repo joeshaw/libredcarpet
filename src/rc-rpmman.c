@@ -157,8 +157,10 @@ database_check_func (RCRpmman *rpmman)
 static void
 close_database (RCRpmman *rpmman)
 {
+#if 0
     if (getenv ("RC_RPM_NO_DB"))
         return;
+#endif
 
     rc_rpmman_is_database_changed (RC_PACKMAN (rpmman));
     rpmman->db_watcher_cb =
@@ -185,8 +187,10 @@ open_database (RCRpmman *rpmman, gboolean write)
     int db_fd = -1;
     gchar *db_filename = NULL;
 
+#if 0
     if (getenv ("RC_RPM_NO_DB"))
         return FALSE;
+#endif
 
     if (rpmman->db)
         close_database (rpmman);
@@ -1655,6 +1659,12 @@ rc_rpmman_query_file (RCPackman *packman, const gchar *filename)
         return NULL;
     }
 
+    /* This shouldn't be necessary, but it takes care of a valgrind
+     * error regarding unitialized values in Fdopen in rpm */
+    if (!open_database (rpmman, FALSE)) {
+        return NULL;
+    }
+
     fd = rc_rpm_open (rpmman, filename, "r.fdio", O_RDONLY, 0444);
 
     if (fd == NULL) {
@@ -1678,6 +1688,8 @@ rc_rpmman_query_file (RCPackman *packman, const gchar *filename)
 
     rpmman->headerFree (header);
     rc_rpm_close (rpmman, fd);
+
+    close_database (rpmman);
 
     return (package);
 
