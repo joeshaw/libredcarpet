@@ -35,6 +35,7 @@ typedef enum {
     RC_RESOLVER_INFO_TYPE_OBSOLETES,
     RC_RESOLVER_INFO_TYPE_DEPENDS_ON,
     RC_RESOLVER_INFO_TYPE_CHILD_OF,
+    RC_RESOLVER_INFO_TYPE_MISSING_REQ,
     RC_RESOLVER_INFO_TYPE_MISC
 } RCResolverInfoType;
 
@@ -49,10 +50,11 @@ struct _RCResolverInfo {
     RCPackage *package;
     int priority;
 
-    GSList *package_list;
-    char   *msg;
-    char   *action;
-    char   *trigger;
+    GSList       *package_list;
+    RCPackageDep *missing_req;
+    char         *msg;
+    char         *action;
+    char         *trigger;
 
     guint is_error     : 1;
     guint is_important : 1;
@@ -97,6 +99,8 @@ RCResolverInfo    *rc_resolver_info_obsoletes_new (RCPackage *package, RCPackage
 RCResolverInfo    *rc_resolver_info_depends_on_new (RCPackage *package, RCPackage *dependency);
 
 RCResolverInfo    *rc_resolver_info_child_of_new (RCPackage *package, RCPackage *dependency);
+
+RCResolverInfo    *rc_resolver_info_missing_req_new    (RCPackage *package, RCPackageDep *missing_req);
 
 #endif /* __RC_RESOLVER_INFO_H__ */
 

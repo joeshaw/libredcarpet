@@ -1,3 +1,12 @@
+2003-05-09  Jon Trowbridge  <trow@ximian.com>
+
+        * rc-resolver-info.c (rc_resolver_info_missing_req_new):
+        Constructor for a new type of info message, corresponding to a
+        report of a misisng requirement.
+        (rc_resolver_info_copy): Copy the missing req.
+        (rc_resolver_info_free): Free the missing req.
+        (rc_resolver_info_to_string): Stringify our missing req type.
+
 2003-05-08  Joe Shaw  <joe@ximian.com
 
 	Checkpoint the rollback code.

@@ -35,6 +35,7 @@ struct {
     { RC_RESOLVER_INFO_TYPE_OBSOLETES,      "obsoletes" },
     { RC_RESOLVER_INFO_TYPE_DEPENDS_ON,     "depended_on" },
     { RC_RESOLVER_INFO_TYPE_CHILD_OF,       "child_of" },
+    { RC_RESOLVER_INFO_TYPE_MISSING_REQ,    "missing_req" },
     { RC_RESOLVER_INFO_TYPE_MISC,           "misc" },
     { RC_RESOLVER_INFO_TYPE_INVALID,        "invalid" },
     { RC_RESOLVER_INFO_TYPE_INVALID,        NULL }
@@ -132,6 +133,7 @@ rc_resolver_info_copy (RCResolverInfo *info)
     cpy->package      = rc_package_ref (info->package);
     cpy->priority     = info->priority;
     cpy->package_list = NULL;
+    cpy->missing_req  = rc_package_dep_ref (info->missing_req);
     cpy->msg          = g_strdup (info->msg);
     cpy->is_error     = info->is_error;
     cpy->is_important = info->is_important;
@@ -153,6 +155,7 @@ rc_resolver_info_free (RCResolverInfo *info)
     if (info) {
         rc_package_slist_unref (info->package_list);
         g_slist_free (info->package_list);
+        rc_package_dep_unref (info->missing_req);
         rc_package_unref (info->package);
         g_free (info->msg);
         g_free (info);
@@ -199,8 +202,13 @@ rc_resolver_info_to_string (RCResolverInfo *info)
         pkgs = rc_resolver_info_packages_to_string (info, FALSE);
         msg = g_strdup_printf ("part of %s", pkgs);
         g_free (pkgs);
-        break;
+        break; 
 
+    case RC_RESOLVER_INFO_TYPE_MISSING_REQ:
+        msg = g_strdup_printf ("missing requirement %s",
+                               rc_package_dep_to_string_static (info->missing_req));
+        break;
+        
     case RC_RESOLVER_INFO_TYPE_MISC:
         msg = g_strconcat (info->action ? "Action: " : "",
                            info->action ? info->action : "",
@@ -518,3 +526,23 @@ rc_resolver_info_child_of_new (RCPackage *package,
 
     return info;
 }
+
+RCResolverInfo *
+rc_resolver_info_missing_req_new (RCPackage    *package,
+                                  RCPackageDep *missing_req)
+{
+    RCResolverInfo *info;
+ 
+    g_return_val_if_fail (package != NULL, NULL);
+    g_return_val_if_fail (missing_req != NULL, NULL);
+ 
+    info = g_new0 (RCResolverInfo, 1);
+ 
+    info->type        = RC_RESOLVER_INFO_TYPE_MISSING_REQ;
+    info->package     = rc_package_ref (package);
+    info->missing_req = rc_package_dep_ref (missing_req);
+    info->priority    = RC_RESOLVER_INFO_PRIORITY_USER;
+ 
+    return info;
+}
+

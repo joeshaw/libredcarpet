@@ -1903,14 +1903,11 @@ uninstall_item_process (RCQueueItem *item,
     RCWorld *world = rc_queue_item_get_world (item);
     
     RCPackageStatus status;
-    char *pkg_str, *dep_str = NULL;
+    char *pkg_str;
 
     int i;
     
     pkg_str = rc_package_spec_to_str (& uninstall->package->spec);
-
-    if (uninstall->dep_leading_to_uninstall)
-        dep_str = rc_package_dep_to_string (uninstall->dep_leading_to_uninstall);
     
     status = rc_resolver_context_get_status (context, uninstall->package);
 
@@ -1987,6 +1984,14 @@ uninstall_item_process (RCQueueItem *item,
 
         rc_queue_item_log_info (item, context);
 
+        if (uninstall->dep_leading_to_uninstall) {
+            RCResolverInfo *info;
+            
+            info = rc_resolver_info_missing_req_new (uninstall->package,
+                                                     uninstall->dep_leading_to_uninstall);
+            rc_resolver_context_add_info (context, info);
+        }
+
         if (uninstall->package->provides_a) {
             for (i = 0; i < uninstall->package->provides_a->len; i++) {
                 RCPackageDep *dep = uninstall->package->provides_a->data[i];
@@ -2050,7 +2055,6 @@ uninstall_item_process (RCQueueItem *item,
 
  finished:
     g_free (pkg_str);
-    g_free (dep_str);
     rc_queue_item_free (item);
 
     return TRUE;
