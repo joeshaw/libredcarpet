@@ -2000,8 +2000,8 @@ rc_rpmman_verify (RCPackman *packman, RCPackage *package, guint32 type)
 {
     RCVerificationSList *ret = NULL;
     RCVerification *verification = NULL;
-    gchar *signature_filename;
-    gchar *payload_filename;
+    gchar *signature_filename = NULL;
+    gchar *payload_filename = NULL;
     guint8 *md5sum = NULL;
     guint32 size;
 

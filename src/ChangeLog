@@ -1,3 +1,8 @@
+2002-07-30  Joe Shaw  <joe@ximian.com>
+
+	* rc-rpmman.c (rc_rpmman_verify): Initialize signature_filename
+	and payload_filename to NULL.
+
 2002-07-30  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c (close_database): s/close/rc_close
