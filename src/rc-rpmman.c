@@ -433,7 +433,7 @@ errxit:
 } /* rpmInstall */
 
 /* Gets a GSList of RCPackmanPackage, converts to a NULL terminated array of
-   filenames, and passes to rpmInstallHelix.  Emits the install_done signal at
+   filenames, and passes to rpmInstall.  Emits the install_done signal at
    the end. */
 
 static void
@@ -460,14 +460,28 @@ rc_rpmman_install (RCPackman *p, GSList *pkgs)
         iter = iter->next;
     }
 
+    /* Set the gross hack global pointer to the current object for callback
+       purposes */
+
     ghp = p;
+
+    /* Zero the package count */
 
     RC_RPMMAN (p)->package_count = 0;
 
     ret = rpmInstall (RPM_ROOTDIR, (const char **)pkgv, 0,
-                      INSTALL_NOORDER | INSTALL_UPGRADE, 0, NULL);
+                      INSTALL_NOORDER | INSTALL_UPGRADE | INSTALL_NODEPS, 0,
+                      NULL);
 
-    g_strfreev (pkgv);
+    /* Although in this case, it should be safe to argue that no elements of
+       pkgv are NULL (except for the terminating NULL), I'm trying to move away
+       from g_strfreev in general, so I'll do it by hand here */
+
+    for (i = 0; i < length; i++) {
+        g_free (pkgv[i]);
+    }
+
+    g_free (pkgv);
 
     /* I have no idea what return codes are possible, so I hope I'm
        interpreting how rpmlib works correctly.  Given my track record,
@@ -510,6 +524,7 @@ rc_rpmman_remove (RCPackman *p, RCPackageSList *pkgs)
         /* If you've got a release, you've gotta have a version */
         g_assert (!ptr->spec.release || ptr->spec.version);
 
+        /* <name>-<version>-<release>, or <name>-<version>, or <name> */
         if (ptr->spec.version && ptr->spec.release) {
             pkgv[i] = g_strconcat (ptr->spec.name, "-", ptr->spec.version, "-",
                                    ptr->spec.release, NULL);
@@ -525,7 +540,13 @@ rc_rpmman_remove (RCPackman *p, RCPackageSList *pkgs)
 
     ret = rpmErase (RPM_ROOTDIR, (const char **)pkgv, 0, 0);
 
-    g_strfreev (pkgv);
+    /* Once again, duck around the g_strfreev for anality */
+
+    for (i = 0; i < length; i++) {
+        g_free (pkgv[i]);
+    }
+
+    g_free (pkgv);
 
     /* I have no idea what error codes are possible... */
 
@@ -538,6 +559,81 @@ rc_rpmman_remove (RCPackman *p, RCPackageSList *pkgs)
     }
 } /* rc_rpmman_remove */
 
+/* Helper function to read values out of an rpm header safely.  If any of the
+   paramaters are NULL, they're ignored.  Remember, you don't need to free any
+   of the elements, since they are just pointers into the rpm header structure.
+   Just remember to free the header later! */
+
+static void
+rc_rpmman_read_header (Header hdr, gchar **name, guint32 *epoch,
+                       gchar **version, gchar **release, guint32 *size)
+{
+    int_32 type, count;
+
+    if (name) {
+        gchar *tmpname;
+
+        g_free (*name);
+        *name = NULL;
+
+        headerGetEntry (hdr, RPMTAG_NAME, &type, (void **)&tmpname, &count);
+
+        if (count && (type == RPM_STRING_TYPE) && tmpname && tmpname[0]) {
+            *name = tmpname;
+        }
+    }
+
+    if (epoch) {
+        guint32 *tmpepoch;
+
+        *epoch = 0;
+
+        headerGetEntry (hdr, RPMTAG_EPOCH, &type, (void **)&tmpepoch, &count);
+
+        if (count && (type == RPM_INT32_TYPE)) {
+            *epoch = *tmpepoch;
+        }
+    }
+
+    if (version) {
+        gchar *tmpver;
+
+        g_free (*version);
+        *version = NULL;
+
+        headerGetEntry (hdr, RPMTAG_VERSION, &type, (void **)&tmpver, &count);
+
+        if (count && (type == RPM_STRING_TYPE) && tmpver && tmpver[0]) {
+            *version = tmpver;
+        }
+    }
+
+    if (release) {
+        gchar *tmprel;
+
+        g_free (*release);
+        *release = NULL;
+
+        headerGetEntry (hdr, RPMTAG_RELEASE, &type, (void **)&tmprel, &count);
+
+        if (count && (type == RPM_STRING_TYPE) && tmprel && tmprel[0]) {
+            *release = tmprel;
+        }
+    }
+
+    if (size) {
+        guint32 *tmpsize;
+
+        *size = 0;
+
+        headerGetEntry (hdr, RPMTAG_SIZE, &type, (void **)&tmpsize, &count);
+
+        if (count && (type == RPM_INT32_TYPE)) {
+            *size = *tmpsize;
+        }
+    }
+}
+
 /* Query for information about a package (version, release, installed status,
    installed size...).  If you specify more than just a name, it tries to match
    those criteria. */
@@ -546,7 +642,6 @@ static RCPackage *
 rc_rpmman_query (RCPackman *p, RCPackage *pkg)
 {
     rpmdb db;
-    int_32 count;
     dbiIndexSet matches;
     guint i;
 
@@ -575,10 +670,7 @@ rc_rpmman_query (RCPackman *p, RCPackage *pkg)
             return (pkg);
         }
 
-        headerGetEntry (hdr, RPMTAG_EPOCH, NULL, (void **)&epoch, &count);
-        headerGetEntry (hdr, RPMTAG_VERSION, NULL, (void **)&version, &count);
-        headerGetEntry (hdr, RPMTAG_RELEASE, NULL, (void **)&release, &count);
-        headerGetEntry (hdr, RPMTAG_SIZE, NULL, (void **)&size, &count);
+        rc_rpmman_read_header (hdr, NULL, &epoch, &version, &release, &size);
 
         /* FIXME: this could potentially be a big problem if an rpm can have
            just an epoch (serial), and no version/release.  I'm choosing to
@@ -626,7 +718,6 @@ rc_rpmman_query_file (RCPackman *p, gchar *filename)
     Header hdr;
     gchar *name = NULL, *version = NULL, *release = NULL;
     guint32 size = 0, epoch = 0;
-    int count;
     RCPackage *pkg = rc_package_new ();
 
     fd = fdOpen (filename, O_RDONLY, 0444);
@@ -638,11 +729,7 @@ rc_rpmman_query_file (RCPackman *p, gchar *filename)
         return (NULL);
     }
 
-    headerGetEntry (hdr, RPMTAG_NAME, NULL, (void **)&name, &count);
-    headerGetEntry (hdr, RPMTAG_EPOCH, NULL, (void **)&epoch, &count);
-    headerGetEntry (hdr, RPMTAG_VERSION, NULL, (void **)&version, &count);
-    headerGetEntry (hdr, RPMTAG_RELEASE, NULL, (void **)&release, &count);
-    headerGetEntry (hdr, RPMTAG_SIZE, NULL, (void **)&size, &count);
+    rc_rpmman_read_header (hdr, &name, &epoch, &version, &release, &size);
 
     pkg->spec.name = g_strdup (name);
     pkg->spec.epoch = epoch;
@@ -680,7 +767,6 @@ rc_rpmman_query_all (RCPackman *p)
 
     for (; recno; recno = rpmdbNextRecNum (db, recno)) {
         Header hdr;
-        int_32 count;
         gchar *name = NULL, *version = NULL, *release = NULL;
         guint32 size = 0, epoch = 0;
         
@@ -691,15 +777,9 @@ rc_rpmman_query_all (RCPackman *p)
                                   "Unable to read RPM database entry");
             return (NULL);
         }
+
+        rc_rpmman_read_header (hdr, &name, &epoch, &version, &release, &size);
         
-        headerGetEntry (hdr, RPMTAG_NAME, NULL, (void **)&name, &count);
-        headerGetEntry (hdr, RPMTAG_EPOCH, NULL, (void **)&epoch, &count);
-        headerGetEntry (hdr, RPMTAG_VERSION, NULL, (void **)&version, &count);
-        headerGetEntry (hdr, RPMTAG_RELEASE, NULL, (void **)&release, &count);
-        headerGetEntry (hdr, RPMTAG_SIZE, NULL, (void **)&size, &count);
-
-        /* FIXME: the epoch I'm getting back from rpmlib is all fucked up */
-
         list = rc_package_slist_add_package (list, name, epoch, version,
                                              release, TRUE, size);
 
