@@ -36,8 +36,8 @@ typedef GSList RCChannelSList;
 
 #include <gnome-xml/tree.h>
 
-#include <libredcarpet/rc-package.h>
-#include <libredcarpet/rc-package-set.h>
+#include "rc-package.h"
+#include "rc-package-set.h"
 
 struct _RCSubchannel {
     gchar *name;
@@ -112,6 +112,8 @@ RCChannel *rc_channel_get_by_id(RCChannelSList *channels, int id);
 RCChannel *rc_channel_get_by_name(RCChannelSList *channels, char *name);
 
 gint rc_channel_compare_func (gconstpointer a, gconstpointer b);
+
+RCSubchannel *rc_channel_get_subchannel (RCChannel *channel, guint preference);
 
 RCPackage *rc_find_best_package (RCPackageDepItem *pdep, RCChannelSList *chs, gint user_pref);
 

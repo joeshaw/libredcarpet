@@ -383,6 +383,22 @@ rc_channel_compare_func (gconstpointer a, gconstpointer b)
     return (FALSE);
 }
 
+RCSubchannel *
+rc_channel_get_subchannel (RCChannel *channel, guint preference)
+{
+    RCSubchannelSList *iter;
+
+    for (iter = channel->subchannels; iter; iter = iter->next) {
+        RCSubchannel *subchannel = (RCSubchannel *)(iter->data);
+
+        if (subchannel->preference == preference) {
+            return (subchannel);
+        }
+    }
+
+    return (NULL);
+}
+
 RCPackage *
 rc_find_best_package (RCPackageDepItem *pdep, RCChannelSList *chs, gint user_pref)
 {
