@@ -42,7 +42,10 @@
 #if 0
 #define GTKFLUSH {while (gtk_events_pending ()) gtk_main_iteration ();}
 #endif
+#if 0
 #define GTKFLUSH {g_warning ("Ignored request for GTKFLUSH!");}
+#endif
+#define GTKFLUSH {while (g_main_pending ()) g_main_iteration (TRUE);}
 
 #undef rpmdbNextIterator
 

@@ -1,5 +1,10 @@
 2002-06-12  Joe Shaw  <joe@ximian.com>
 
+	* rc-xml.c (parser_update_end): Get the description tag.  Must
+	have missed it before.
+
+2002-06-12  Joe Shaw  <joe@ximian.com>
+
 	* rc-xml.c (parser_update_end): Assign the installed size to the
 	correct struct element.
 

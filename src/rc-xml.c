@@ -416,6 +416,10 @@ parser_update_end(RCPackageSAXContext *ctx, const xmlChar *name)
         ctx->current_update->importance =
             rc_string_to_package_importance(stripped);
     }
+    else if (!strcmp(name, "description")) {
+        char *stripped = g_strstrip (ctx->text_buffer);
+        ctx->current_update->description = g_strdup(stripped);
+    }
     else if (!strcmp(name, "hid")) {
         ctx->current_update->hid = 
             rc_string_to_guint32_with_default(ctx->text_buffer, 0);
