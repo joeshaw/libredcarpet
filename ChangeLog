@@ -1,3 +1,7 @@
+2001-02-14  Ian Peters  <itp@ximian.com>
+
+	* configure.in: some rpm detection loving
+
 2001-02-08  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* configure.in: for rpm4 misc.h check, make sure that

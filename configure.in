@@ -88,6 +88,7 @@ if test "x$enable_backend_rpm4" = "xyes"; then
 
   AM_CONDITIONAL(ENABLE_RPM, true)
   AC_DEFINE(ENABLE_RPM)
+  AC_DEFINE(HAVE_RPM_4_0)
 
   CPPFLAGS="$save_CPPFLAGS"
 fi
