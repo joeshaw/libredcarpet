@@ -1,3 +1,8 @@
+2003-08-22  Joe Shaw  <joe@ximian.com>
+
+	* rc-world.c (rc_world_guess_package_channel): Skip over system
+	and hidden channels, reimplement.
+
 2003-08-21  Joe Shaw  <joe@ximian.com>
 
 	* rc-extract-channels.c (rc_extract_channels_from_helix_buffer):
