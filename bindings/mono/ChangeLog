@@ -1,3 +1,8 @@
+2004-07-20  James Willcox  <james@ximian.com>
+
+	* AssemblyInfo.cs: don't sign the assembly.
+	Especially not with ecma.pub.
+
 2004-07-14  James Willcox  <james@ximian.com>
 
 	* Import into GNOME CVS.
