@@ -1,5 +1,7 @@
 2004-08-17  Tambet Ingo  <tambet@ximian.com>
 
+	* RC.metadata: Re-enable rc_maybe_merge_paths.
+
 	* .cvsignore: Add.
 
 	* RC.metadata: Hide PackageSpec.Equal|NotEqual.
