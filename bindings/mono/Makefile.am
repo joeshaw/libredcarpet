@@ -76,5 +76,8 @@ EXTRA_DIST =				\
 	WorldMulti.custom		\
 	ServiceMountException.cs
 
+dist-hook:
+	mkdir -p $(distdir)/en/RC
+	cp -r $(srcdir)/en/RC/*.xml $(distdir)/en/RC
 
 CLEANFILES = $(ASSEMBLY)

@@ -1,3 +1,7 @@
+2004-09-01  James Willcox  <james@ximian.com>
+
+	* Makefile.am: fix the dist
+
 2004-09-01  Tambet Ingo  <tambet@ximian.com>
 
 	* RC.metadata: Implicitly hide some API to make gapi-codegen
