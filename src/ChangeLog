@@ -1,3 +1,15 @@
+2001-09-20  Ian Peters  <itp@ximian.com>
+
+	* rc-rpm-helper-1.so, rc-rpm-helper-2.so, rc-rpm-helper-3.so:
+	rebuilt all of these using an amazingly simple and clever
+	technique I just now worked out.  We should be able to ship all of
+	our RC builds on i386 platforms using just --enable-backend-rpm,
+	which gives us near-maximal flexibility for dealing with the
+	various RPM versions.  I haven't bothered to fix the build process
+	to handle the other architectures, so we'll continue to ship those
+	static.  Joe, I apologize for making you have to redo the
+	installer stuff...
+
 2001-09-20  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c: Also, do a sanity check of the results to make
