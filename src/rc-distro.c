@@ -149,45 +149,34 @@ distro_check_file_eval (DistroCheck *check)
 
 /* Run a command, look for a string */
 
+void
+child_setup_func (gpointer user_data)
+{
+    /* We'll take output either on stdout or stderr */
+    dup2 (STDOUT_FILENO, STDERR_FILENO);
+}
+
 static gboolean
 distro_check_command_eval (DistroCheck *check)
 {
-    int fds[2];
-    pid_t pid;
     gboolean ret;
+    char *argv[] = { "/bin/sh", "-c", check->source, NULL };
+    gint stdout_fd;
+    GError *error;
 
-    if (pipe (fds))
-        return FALSE;
-
-    pid = fork ();
-
-    if (pid == -1) {
-        close (fds[0]);
-        close (fds[1]);
+    error = NULL;
+    if (!g_spawn_async_with_pipes (NULL, argv, NULL, 0, child_setup_func,
+                                   NULL, NULL, NULL, &stdout_fd, NULL, &error))
+    {
+        rc_debug (RC_DEBUG_LEVEL_ERROR,
+                  "g_spawn failed: %s", error->message);
+        g_error_free (error);
         return FALSE;
     }
 
-    if (pid == 0) {
-        close (fds[0]);
+    ret = distro_check_eval_fd (check, stdout_fd);
 
-        fflush (stdout);
-        dup2 (fds[1], STDOUT_FILENO);
-
-        fflush (stderr);
-        dup2 (fds[1], STDERR_FILENO);
-
-        execlp ("/bin/sh", "/bin/sh", "-c", check->source, NULL);
-
-        _exit (-1);
-    }
-
-    close (fds[1]);
-
-    waitpid (pid, NULL, 0);
-
-    ret = distro_check_eval_fd (check, fds[0]);
-
-    close (fds[0]);
+    close (stdout_fd);
 
     return ret;
 }
