@@ -1,3 +1,8 @@
+2002-06-12  Joe Shaw  <joe@ximian.com>
+
+	* rc-xml.c (parser_update_end): Assign the installed size to the
+	correct struct element.
+
 2002-06-11  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-package.c (rc_package_get_latest_update): Just return NULL if

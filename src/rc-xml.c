@@ -392,7 +392,7 @@ parser_update_end(RCPackageSAXContext *ctx, const xmlChar *name)
             rc_string_to_guint32_with_default(ctx->text_buffer, 0);
     }
     else if (!strcmp(name, "installedsize")) {
-        ctx->current_update->package_size =
+        ctx->current_update->installed_size =
             rc_string_to_guint32_with_default(ctx->text_buffer, 0);
     }
     else if (!strcmp(name, "signaturename")) {
