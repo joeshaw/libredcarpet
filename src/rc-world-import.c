@@ -334,7 +334,7 @@ rc_world_add_channel_from_buffer (RCWorld *world,
     return channel;
 }
 
-void
+gboolean
 rc_world_add_packages_from_buffer (RCWorld *world,
                                    RCChannel *channel,
                                    gchar *tbuf, 
@@ -342,15 +342,15 @@ rc_world_add_packages_from_buffer (RCWorld *world,
 {
     gchar *buf;
     GByteArray *byte_array = NULL;
-    guint count = 0;
+    guint count = -1;
 
-    g_return_if_fail (world != NULL);
-    g_return_if_fail (tbuf != NULL);
+    g_return_val_if_fail (world != NULL, FALSE);
+    g_return_val_if_fail (tbuf != NULL, FALSE);
 
     if (compressed_length) {
         if (rc_uncompress_memory (tbuf, compressed_length, &byte_array)) {
-            g_warning ("Uncompression failed");
-            return;
+            rc_debug (RC_DEBUG_LEVEL_WARNING, "Uncompression failed");
+            return FALSE;
         }
 
         buf = byte_array->data;
@@ -376,6 +376,8 @@ rc_world_add_packages_from_buffer (RCWorld *world,
     if (byte_array) {
         g_byte_array_free (byte_array, TRUE);
     }
+
+    return count >= 0;
 }
 
 static guint
@@ -391,7 +393,7 @@ rc_world_parse_helix (RCWorld *world, RCChannel *channel, gchar *buf)
         xml_doc = xmlParseMemory (buf, strlen (buf));
         
         if (!xml_doc) {
-            return 0;
+            return -1;
         }
         
         root = xmlDocGetRootElement (xml_doc);

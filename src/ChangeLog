@@ -2,9 +2,10 @@
 
 	* rc-world-import.c (rc_world_add_channels_from_xml): Look for a
 	channel alias in the XML and use it, if possible.
-	(rc_world_add_channel_from_buffer): Added a new argument to specify
-	the channel's alias.
-
+	(rc_world_add_channel_from_buffer): Added a new argument to
+	specify the channel's alias.  Also, now returns a boolean
+	indicating if adding the packages was successful or not.
+	
 	* rc-world.c (rc_world_add_channel): Added a new argument to
 	specify the channel's alias.
 	(rc_world_get_channel_by_alias): Added.

@@ -48,10 +48,10 @@ RCChannel *rc_world_add_channel_from_buffer (RCWorld *world,
                                              gchar *buf,
                                              gint compressed_length);
 
-void rc_world_add_packages_from_buffer (RCWorld *world,
-                                        RCChannel *channel,
-                                        gchar *buf,
-                                        gint compressed_length);
+gboolean rc_world_add_packages_from_buffer (RCWorld *world,
+                                            RCChannel *channel,
+                                            gchar *buf,
+                                            gint compressed_length);
 
 #endif /* __RC_WORLD_IMPORT_H__ */
 
