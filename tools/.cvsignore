@@ -2,3 +2,5 @@ Makefile
 Makefile.in
 *.o
 cur_to_xml
+.libs
+.deps

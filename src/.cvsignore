@@ -3,4 +3,7 @@ Makefile
 .deps
 *.flc
 *.so.0
+rc-marshal.c
+rc-marshal.h
+
 
