@@ -1,3 +1,9 @@
+2001-08-04  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c: create the system packages hash tables even if
+	we don't have system packages, to avoid null hash table
+	lookup warnings later on.
+
 2001-08-01  Ian Peters  <itp@ximian.com>
 
 	* rc-distro.c: undo, sigh
