@@ -85,11 +85,13 @@ PyPackman_query_file (PyObject *self, PyObject *args)
 	RCPackman *packman = PyPackman_get_packman (self);
 	RCPackage *package;
 	char *filename;
+	int filter_file_deps;
 
-	if (! PyArg_ParseTuple (args, "s", &filename))
+	if (! PyArg_ParseTuple (args, "si", &filename, &filter_file_deps))
 		return NULL;
 
-	package = rc_packman_query_file (packman, filename);
+	package = rc_packman_query_file (packman, filename,
+									 filter_file_deps == 0 ? FALSE : TRUE);
 	if (package == NULL) {
 		Py_INCREF (Py_None);
 		return Py_None;

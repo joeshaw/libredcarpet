@@ -1,3 +1,7 @@
+2004-11-30  Tambet Ingo  <tambet@ximian.com>
+
+	* packman.c (PyPackman_query_file): Update rc_packaman_query_file call.
+
 2004-11-16  James Willcox  <james@ximian.com>
 
 	* Makefile.am: link to libredcarpet properly, I hope
