@@ -458,6 +458,9 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
         ctx->current_package->installed_size = 
             rc_string_to_guint32_with_default(ctx->text_buffer, 0);
     }
+    else if (!strcmp(name, "install_only")) {
+        ctx->current_package->install_only = TRUE;
+    }
 } /* parser_package_end */
 
 static void
@@ -994,6 +997,8 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
             gchar *tmp = xml_get_content (iter);
             package->installed_size = tmp && *tmp ? atoi (tmp) : 0;
             g_free (tmp);
+        } else if (!g_strcasecmp (iter->name, "install_only")) {
+            package->install_only = TRUE;
         } else if (!g_strcasecmp (iter->name, "history")) {
             const xmlNode *iter2;
 
@@ -1367,6 +1372,10 @@ rc_package_to_xml_node (RCPackage *package)
 
     g_snprintf (buffer, 128, "%u", package->installed_size);
     xmlNewTextChild (package_node, NULL, "installedsize", buffer);
+
+    if (package->install_only) {
+        xmlNewTextChild (package_node, NULL, "install_only", "1");
+    }
 
     if (package->history) {
         tmp_node = xmlNewChild (package_node, NULL, "history", NULL);

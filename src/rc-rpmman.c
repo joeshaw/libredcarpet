@@ -810,7 +810,8 @@ transaction_add_install_packages (RCPackman *packman,
     int count = 0;
 
     for (iter = install_packages; iter; iter = iter->next) {
-        gchar *filename = ((RCPackage *)(iter->data))->package_filename;
+        RCPackage *package = iter->data;
+        char *filename = package->package_filename;
         HeaderInfo *hi;
         Header header;
         int rc;
@@ -827,13 +828,19 @@ transaction_add_install_packages (RCPackman *packman,
         header = hi->headers->data;
 
         if (rpmman->version >= 40100) {
-            rc = rpmman->rpmtsAddInstallElement (rpmman->rpmts, header,
-                                                 filename, 1, NULL);
+            rc = rpmman->rpmtsAddInstallElement (rpmman->rpmts,
+                                                 header,
+                                                 filename,
+                                                 !package->install_only,
+                                                 NULL);
         }
         else {
-            rc = rpmman->rpmtransAddPackage (transaction, header,
-                                             NULL, filename,
-                                             INSTALL_UPGRADE, NULL);
+            rc = rpmman->rpmtransAddPackage (transaction,
+                                             header,
+                                             NULL,
+                                             filename,
+                                             package->install_only ? 0 : INSTALL_UPGRADE,
+                                             NULL);
         }
 
         count++;

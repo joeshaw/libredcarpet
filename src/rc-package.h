@@ -89,6 +89,7 @@ struct _RCPackage {
     guint installed     : 1;
     guint local_package : 1;
     guint hold          : 1; /* Don't upgrade this package */
+    guint install_only  : 1; /* Only install, don't upgrade this package */
 };
 
 RCPackage *rc_package_new (void);

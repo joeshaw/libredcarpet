@@ -139,6 +139,7 @@ rc_package_copy (RCPackage *src)
     dest->installed     = src->installed;
     dest->local_package = src->local_package;
     dest->hold          = src->hold;
+    dest->install_only  = src->install_only;
 
     return dest;
 }

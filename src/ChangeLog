@@ -1,3 +1,16 @@
+2003-06-03  Joe Shaw  <joe@ximian.com>
+
+	* rc-package.h: Add an "install_only" flag for kernel packages
+	which we want to do an RPM install (not upgrade) on.
+
+	* rc-rpmman.c (transaction_add_install_packages): Check the
+	install_only bit and set the bit on the corresponding RPM call.
+
+	* rc-xml.c (parser_package_end, rc_xml_node_to_package)): Check
+	for the presence of the install_only tag.
+	(rc_package_to_xml_node): Write out the install_only tag if the
+	bit is set.
+
 2003-05-30  Joe Shaw  <joe@ximian.com>
 
 	* rc-rollback.c (add_tracked_package): Make sure we save the
