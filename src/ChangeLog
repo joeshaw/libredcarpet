@@ -1,3 +1,8 @@
+2001-10-30  Joe Shaw  <joe@ximian.com>
+
+	* rc-channel.c (rc_channel_parse_xml): Get the new channel tier,
+	if it's there.
+
 2001-10-25  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c: don't assume that only things which are an ANY

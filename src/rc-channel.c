@@ -311,10 +311,18 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
         tmp = xml_get_prop(node, "id");
         channel->id = atoi(tmp);
         g_free(tmp);
+
+        tmp = xml_get_prop(node, "tier");
+        if (tmp) {
+            channel->tier = atoi(tmp);
+            g_free(tmp);
+        }
+
         tmp = xml_get_prop(node, "last_update");
         if (tmp)
             channel->last_update = atol(tmp);
         g_free(tmp);
+
         tmp = xml_get_prop(node, "type");
         if (tmp) {
             if (g_strcasecmp (tmp, "helix") == 0)

@@ -68,6 +68,7 @@ struct _RCChannel {
     guint32 id;
     gchar *name;
     gchar *description;
+    guint32 tier;
 
     gboolean mirrored;
     gboolean available_select;
