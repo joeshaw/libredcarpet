@@ -23,6 +23,7 @@
 #include "rc-debman.h"
 
 #include <unistd.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -118,149 +119,107 @@ rc_debman_do_purge (GSList *pkgs)
     return (-1);
 }
 
-/* Install the packages listed in pkgs.  Because we don't have a convenient
-   library with callbacks to use here, we've got to fork dpkg, once per
-   package.  So, on the first pass through all of the packages, we unpack all
-   of the packages, and at the end we configure them.  The only tricky part is
-   keeping a list of all of the packages we've already unpacked, so that if we
-   have to abort at any point, we can purge the unpacked but unconfigured
-   packages. */
 static void
 rc_debman_install (RCPackman *p, GSList *pkgs)
 {
     GSList *iter;
-    GSList *installed_list = NULL;
-    GSList *remove_list = NULL;
     pid_t child;
-    gboolean remove = FALSE;
-    guint pkg_count = 0;
-    guint length;
-
-    /* If the list of packages is empty, let's spare ourselves the trouble of
-       doing anything */
-    if (!pkgs) {
-        rc_packman_install_done (p);
-    }
-
-    iter = pkgs;
+    int fds[2];
+    gchar **argv;
+    guint i;
+    gchar *buf = NULL, *tmp = NULL, single[2];
+    guint length, count = 0;
+    gint status;
 
     length = g_slist_length (pkgs);
 
-    while (iter && !remove) {
+    argv = g_new0 (gchar *, length + 3);
+    single[1] = '\0';
+
+    argv[0] = g_strdup ("/usr/bin/dpkg");
+    argv[1] = g_strdup ("--unpack");
+
+    i = 2;
+
+    for (iter = pkgs; iter; iter = iter->next) {
         gchar *filename = (gchar *)(iter->data);
 
-        /* Gotta give me a filename to install, otherwise purge the already
-           unpacked packages and bail */
-        if (!filename) {
-            remove = TRUE;
-            break;
-        }
+        argv[i++] = g_strdup (filename);
+    }
 
-        /* Fork off dpkg to unpack the package */
-        if (!(child = fork ())) {
-            fclose (stdout);
+    pipe (fds);
+    fcntl (fds[0], F_SETFL, O_NONBLOCK);
+    fcntl (fds[1], F_SETFL, O_NONBLOCK);
 
-            signal (SIGPIPE, SIG_DFL);
+    child = fork ();
 
-            execl ("/usr/bin/dpkg", "/usr/bin/dpkg", "--unpack", filename,
-                   NULL);
-        } else {
-            gint status;
+    switch (child) {
+    case -1:
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
+                              "Unable to fork second process");
+        g_strfreev (argv);
+        close (fds[0]);
+        close (fds[1]);
+        return;
+        break;
 
-            while (!waitpid (child, &status, WNOHANG)) {
-                while (gtk_events_pending ()) {
-                    gtk_main_iteration ();
+    case 0:
+        signal (SIGPIPE, SIG_DFL);
+
+        fflush (stdout);
+        close (fds[0]);
+        dup2 (fds[1], 1);
+
+        execv ("/usr/bin/dpkg", argv);
+        break;
+
+    default:
+        close (fds[1]);
+        while ((status = read (fds[0], single, 1))) {
+            if (status == 1) {
+                if (single[0] == '\n') {
+                    if (!strncmp (buf, "Unpacking", strlen ("Unpacking"))) {
+                        rc_packman_package_installed (p, "foo", ++count,
+                                                      length);
+                    }
+
+                    g_free (buf);
+                    buf = NULL;
+                } else {
+                    if (buf) {
+                        tmp = g_strconcat (buf, single, NULL);
+                        g_free (buf);
+                        buf = tmp;
+                    } else {
+                        buf = g_strdup (single);
+                    }
                 }
             }
 
-            /* Add the last package to the list of packages unpacked (even if
-               we're not completely sure it was unpacked, since purging it will
-               be harmless */
-            installed_list = g_slist_append (installed_list, filename);
-
-            rc_packman_package_installed (p, filename, ++pkg_count, length);
-
-            /* Check the exit status of dpkg, and abort this install if things
-               have started to go wrong */
-            if (!WIFEXITED (status) || WEXITSTATUS (status)) {
-                remove = TRUE;
-                break;
+            while (gtk_events_pending ()) {
+                gtk_main_iteration ();
             }
         }
 
-        iter = iter->next;
+        waitpid (child, &status, 0);
+        break;
     }
 
-    /* Check if we exited normally from the unpack loop.  If we did, configure
-       the unpacked packages */
-    if (!remove) {
-        /* Once again, fork dpkg to do the dirty work */
-        if (!(child = fork ())) {
-            fclose (stdout);
+    close (fds[0]);
+    g_free (buf);
+    g_strfreev (argv);
 
-            signal (SIGPIPE, SIG_DFL);
-            execl ("/usr/bin/dpkg", "/usr/bin/dpkg", "--configure",
-                   "--pending", NULL);
-        } else {
-            gint status;
+    if (!(WIFEXITED (status)) || WEXITSTATUS (status)) {
+        gchar *error, *tmp;
+        GSList *iter;
 
-            /* Keep the gtk mainloop in the picture */
-            while (!waitpid (child, &status, 0)) {
-                while (gtk_events_pending ()) {
-                    gtk_main_iteration ();
-                }
-            }
+        error = g_strdup ("dpkg failed to install the selected packages.  The "
+                          "following packages may have been left in an "
+                          "inconsistant state, and should be checked by "
+                          "hand:");
 
-            if (!WIFEXITED (status) || !WEXITSTATUS (status)) {
-                /* Looks like everything went ok, we're done */
-
-                /* Since I got confused by this, I may as well make it clear
-                   for anyone else dealing with this -- only free the list,
-                   not the elements, because the elements of the list are
-                   pointers to memory in the list of packages passed to us, and
-                   so we're not responsible for it. */
-                g_slist_free (installed_list);
-                rc_packman_install_done (p);
-                return;
-            }
-        }
-    }
-
-    /* Whoops.  Looks like we were either unable to unpack all of the packages,
-       or we were unable to complete the final configure.  Time to purge all of
-       the packages we unpacked */
-    for (iter = installed_list; iter; iter = iter->next) {
-        gchar *filename = g_strdup ((gchar *)(iter->data));
-        /* A debian file has filename <name>_<epoch>:<version>-<release>..., so
-           this should be a fairly safe way to get the actual package name.  Of
-           course, if we ever don't name our packages the canonical way we're
-           in trouble.  But then again, by the time we get here we're in
-           trouble anyway, so I don't want to rely on any more fork'd dpkg
-           methods */
-        gchar **parts = g_strsplit (filename, "_", 1);
-        gchar *pkg_name = g_strdup (strrchr (parts[0], '/') + 1);
-
-        remove_list = g_slist_append (remove_list, pkg_name);
-
-        g_free (filename);
-        g_strfreev (parts);
-    }
-
-    if (!rc_debman_do_purge (remove_list)) {
-        /* Looks like the purge went ok, so all we did was fail to install.
-           Let the people know the truth and bow out gracefully. */
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT, "Error installing "
-                              "packages.  All packages were purged.");
-        rc_packman_install_done (p);
-    } else {
-        /* Ok, if we got here, we're fucked.  Hard.  So grab the wife and kids
-           and get the hell out of Dodge. */
-        gchar *error = g_strdup ("Error installing packages.  The following "
-                                 "packages may have been left in an "
-                                 "inconsistant state:");
-
-        for (iter = remove_list; iter; iter = iter->next) {
-            gchar *tmp = g_strconcat (error, " ", (gchar *)(iter->data), NULL);
+        for (iter = pkgs; iter; iter = iter->next) {
+            tmp = g_strconcat (error, " ", (gchar *)(iter->data), NULL);
             g_free (error);
             error = tmp;
         }
@@ -269,13 +228,46 @@ rc_debman_install (RCPackman *p, GSList *pkgs)
 
         g_free (error);
 
-        rc_packman_install_done (p);
+        return;
     }
 
-    /* If you want to know why we don't free the elements of the list, read one
-       of the comments above */
-    g_slist_free (installed_list);
-} /* rc_debman_install */
+    child = fork ();
+
+    switch (child) {
+    case -1:
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+                              "Unable to fork process.  The packages have "
+                              "been installed, but not configured.  You will "
+                              "need to configure them by hand, by running the "
+                              "command `dpkg --configure --pending` as root");
+        return;
+        break;
+
+    case 0:
+        signal (SIGPIPE, SIG_DFL);
+        fclose (stdout);
+        
+        execl ("/usr/bin/dpkg", "/usr/bin/dpkg", "--configure", "--pending",
+               NULL);
+        break;
+
+    default:
+        while (waitpid (child, &status, WNOHANG)) {
+            while (gtk_events_pending ()) {
+                gtk_main_iteration ();
+            }
+        }
+        break;
+    }
+
+    if (!(WIFEXITED (status)) || WEXITSTATUS (status)) {
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+                              "Unable to run dpkg.  The packages have been "
+                              "installed, but not configured.  You will need "
+                              "to configure them by hand, by running the "
+                              "command `dpkg --configure --pending` as root.");
+    }
+}
 
 static void
 rc_debman_remove (RCPackman *p, RCPackageSList *pkgs)
@@ -465,7 +457,8 @@ rc_debman_query_helper (FILE *fp, RCPackage *pkg)
     RCPackageDep *dep = NULL;
 
     while ((buf = readline (fp)) && buf[0]) {
-        if (!strncmp (buf, "Status: install", strlen ("Status: install"))) {
+        if (!strncmp (buf, "Status: install ok installed",
+                      strlen ("Status: install ok installed"))) {
             pkg->spec.installed = TRUE;
         } else if (!strncmp (buf, "Installed-Size: ",
                              strlen ("Installed-Size: "))) {
