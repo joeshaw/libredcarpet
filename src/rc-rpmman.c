@@ -337,7 +337,8 @@ transaction_add_remove_packages (RCPackman *packman,
         gchar *package_name = rc_package_to_rpm_name (package);
         dbiIndexSet matches;
 
-        rc = rpmdbFindByLabel (db, package_name, &matches);
+        rc = rpmdbFindByLabel (RC_RPMMAN (packman)->db, package_name,
+                               &matches);
 
         switch (rc) {
         case 1:
@@ -416,7 +417,8 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     RCPackageSList *iter;
     struct rpmDependencyConflict *conflicts;
 
-    transaction = rpmtransCreateSet (db, RC_RPMMAN (packman)->rpmroot);
+    transaction = rpmtransCreateSet (RC_RPMMAN (packman)->db,
+                                     RC_RPMMAN (packman)->rpmroot);
 
     if (!(transaction_add_install_packages (packman, transaction,
                                             install_packages)))
@@ -429,7 +431,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         goto ERROR;
     }
 
-    if (!(transaction_add_remove_packages (packman, transaction, db,
+    if (!(transaction_add_remove_packages (packman, transaction,
                                            remove_packages)))
     {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
@@ -1031,7 +1033,8 @@ rc_rpmman_query (RCPackman *packman, RCPackage *package)
     dbiIndexSet matches;
     guint i;
 
-    switch (rpmdbFindPackage (db, package->spec.name, &matches)) {
+    switch (rpmdbFindPackage (RC_RPMMAN (packman)->db,
+                              package->spec.name, &matches)) {
     case -1:
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "unable to initialize database search");
@@ -1050,7 +1053,8 @@ rc_rpmman_query (RCPackman *packman, RCPackage *package)
     for (i = 0; i < matches.count; i++) {
         Header header;
 
-        if (!(header = rpmdbGetRecord (db, matches.recs[i].recOffset))) {
+        if (!(header = rpmdbGetRecord (RC_RPMMAN (packman)->db,
+                                       matches.recs[i].recOffset))) {
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "unable to fetch RPM header from database");
 
@@ -1176,19 +1180,20 @@ rc_rpmman_query_all (RCPackman *packman)
 {
     RCPackageSList *list = NULL;
     guint recno;
+    RCRpmman *rpmman = RC_RPMMAN (packman);
 
-    if (!(recno = rpmdbFirstRecNum (db))) {
+    if (!(recno = rpmdbFirstRecNum (rpmman->db))) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "unable to access RPM database");
 
         goto ERROR;
     }
 
-    for (; recno; recno = rpmdbNextRecNum (db, recno)) {
+    for (; recno; recno = rpmdbNextRecNum (rpmman->db, recno)) {
         RCPackage *package;
         Header header;
         
-        if (!(header = rpmdbGetRecord (db, recno))) {
+        if (!(header = rpmdbGetRecord (rpmman->db, recno))) {
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "Unable to read RPM database entry");
 
@@ -1199,10 +1204,11 @@ rc_rpmman_query_all (RCPackman *packman)
 
         package = rc_package_new ();
 
-        rc_rpmman_read_header (header, &package->spec.name, &package->spec.epoch,
-                               &package->spec.version, &package->spec.release,
-                               &package->section, &package->installed_size,
-                               &package->summary, &package->description);
+        rc_rpmman_read_header (header, &package->spec.name,
+                               &package->spec.epoch, &package->spec.version,
+                               &package->spec.release, &package->section,
+                               &package->installed_size, &package->summary,
+                               &package->description);
 
         package->installed = TRUE;
 
@@ -1601,7 +1607,7 @@ rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
     Header header;
     RCPackage *package;
 
-    if (rpmdbFindByFile (db, filename, &matches) == -1) {
+    if (rpmdbFindByFile (RC_RPMMAN (packman)->db, filename, &matches) == -1) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "RPM database search failed");
 
@@ -1615,7 +1621,8 @@ rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
         goto ERROR;
     }
 
-    if (!(header = rpmdbGetRecord (db, matches.recs[0].recOffset))) {
+    if (!(header = rpmdbGetRecord (RC_RPMMAN (packman)->db,
+                                   matches.recs[0].recOffset))) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "read of RPM header failed");
 

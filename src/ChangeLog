@@ -1,5 +1,7 @@
 2001-02-01  Ian Peters  <itp@ximian.com>
 
+	* rc-rpmman.c: bite me
+
 	* rc-rpmman.h: move the rpmdb into the RCRpmman struct
 
 	* rc-rpmman.c: remove all calls to rpmdbOpen, rpmdbClose, etc.
