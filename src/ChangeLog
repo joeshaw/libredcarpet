@@ -1,3 +1,7 @@
+2002-03-18  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c: minor build fixes for static linking, ie solaris
+
 2002-03-14  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.h: added rpmExpandNumeric

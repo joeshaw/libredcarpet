@@ -2352,6 +2352,7 @@ load_fake_syms (RCRpmman *rpmman)
 #if 0
     rpmman->rpmGetRpmlibProvides = &rpmGetRpmlibProvides;
 #endif
+    rpmman->rpmExpandNumeric = &rpmExpandNumeric;
 
 #ifdef RC_RPM4
 
