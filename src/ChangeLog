@@ -1,3 +1,16 @@
+2001-11-08  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c, rc-deps.h: rc_dep_resolution_new now takes a flage as
+	to whether you will be doing an INSTALL or a REMOVE mainly with
+	this resolution.  If Install, it will try to resolve all
+	dependencies and will do its best to never remove packages.  If
+	REMOVE, it will remove things more aggressively.
+
+	* rc-deps-util.c: Update call to rc_dep_resolution_new.
+
+	* rc-rpmman.c: Add patch to ignore rpm epochs as appropriate to
+	conform to RPM behaviour.
+	
 2001-11-08  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c: get rid of RPMPROB_FILTER_REPLACEPKG,
