@@ -39,9 +39,8 @@ libredcarpet_a_SOURCES =		\
 	rc-util.h			\
 	rc-distro.c			\
 	rc-distro.h			\
-        deps.c                          \
-        deps.h                          \
-        deps-private.h                  \
+        rc-deps.c                       \
+        rc-deps.h                       \
 	rc-common.h			\
         rc-distman.c                    \
         rc-distman.h                    \
@@ -53,6 +52,8 @@ libredcarpet_a_SOURCES =		\
         rc-md5.c                        \
         rc-md5.h                        \
         rc-md5-private.h                \
+	rc-debug-misc.c			\
+	rc-debug-misc.h			\
         xml-util.c                      \
         xml-util.h                      \
 	rc-line-buf.c			\

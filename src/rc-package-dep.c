@@ -2,6 +2,7 @@
 
 #include <libredcarpet/rc-package-dep.h>
 #include <libredcarpet/xml-util.h>
+#include <libredcarpet/rc-debug-misc.h>
 
 #include <gnome-xml/tree.h>
 
@@ -129,31 +130,53 @@ rc_package_dep_verify_relation (RCPackageDep *dep, RCPackageSpec *spec)
     return FALSE;
 }
 
+gboolean
+rc_package_dep_verify_and_relation (RCPackageDep *depl,
+                                    RCPackageSpec *spec,
+                                    RCPackageDepItem **fail_out)
+{
+    while (depl) {
+        RCPackageDepItem *di = (RCPackageDepItem *) depl->data;
+        if (!rc_package_dep_item_verify_relation (di, spec)) {
+            if (fail_out) *fail_out = di;
+            return FALSE;
+        }
+        depl = depl->next;
+    }
+
+    return TRUE;
+}
+
+
 /* Returns true if ALL and deps verify; if fail_out isn't NULL,
  * returns the first dep that failed in there.
  */
 gboolean
-rc_package_dep_verify_and_relation (RCPackageDep *dep, RCPackageSpec *spec,
-                                    RCPackageDepItem **fail_out)
+rc_package_dep_verify_and_slist_relation (RCPackageDepSList *depl,
+                                          RCPackageSpec *spec,
+                                          RCPackageDep **fail_out)
 {
-    while (dep) {
-        if (!rc_package_dep_item_verify_relation ((RCPackageDepItem *) (dep->data), spec)) {
-            if (fail_out) *fail_out = (RCPackageDepItem *) (dep->data);
+    while (depl) {
+        RCPackageDep *dep = (RCPackageDep *) depl->data;
+        if (!rc_package_dep_verify_relation (dep, spec)) {
+            if (fail_out) *fail_out = dep;
             return FALSE;
         }
-        dep = dep->next;
+        depl = depl->next;
     }
 
     return TRUE;
 }
 
 gboolean
-rc_package_dep_item_verify_relation (RCPackageDepItem *dep, RCPackageSpec *spec)
+rc_package_dep_item_verify_relation (RCPackageDepItem *dep,
+                                     RCPackageSpec *spec)
 {
     gboolean use_newspecspec = FALSE;
     RCPackageSpec newspecspec;
-
     gint compare_ret;
+
+    gint unweak_rel = dep->relation & ~RC_RELATION_WEAK;
 
     g_assert (dep);
     g_assert (spec);
@@ -177,6 +200,15 @@ rc_package_dep_item_verify_relation (RCPackageDepItem *dep, RCPackageSpec *spec)
  * operation.
  */
 
+    if (unweak_rel == RC_RELATION_NONE &&
+        strcmp (dep->spec.name, spec->name) == 0)
+    {
+#if DEBUG > 10
+        fprintf (stderr, "FAIL (pass) NONE relation\n");
+#endif
+        return FALSE;
+    }
+
     if (dep->spec.version == NULL && dep->spec.release == NULL) {
         if (strcmp (dep->spec.name, spec->name) == 0) {
 #if DEBUG > 10
@@ -189,7 +221,7 @@ rc_package_dep_item_verify_relation (RCPackageDepItem *dep, RCPackageSpec *spec)
     if (spec->version == NULL && spec->release == NULL)
     {
         /* If it's the same name and the relation isn't looking for a version less than blah */
-        if ((strcmp (dep->spec.name, spec->name) == 0) && !(dep->relation & RC_RELATION_LESS)) {
+        if ((strcmp (dep->spec.name, spec->name) == 0) && !(unweak_rel & RC_RELATION_LESS)) {
 #if DEBUG > 10
             fprintf (stderr, "PASS (nullrv)\n");
 #endif
@@ -210,7 +242,7 @@ rc_package_dep_item_verify_relation (RCPackageDepItem *dep, RCPackageSpec *spec)
  *
  */
     
-    if (dep->relation == RC_RELATION_EQUAL && dep->spec.release == NULL) {
+    if (unweak_rel == RC_RELATION_EQUAL && dep->spec.release == NULL) {
         /* it's not depending on any particular release */
         newspecspec.name = spec->name;
         newspecspec.epoch = spec->epoch;
@@ -227,14 +259,14 @@ rc_package_dep_item_verify_relation (RCPackageDepItem *dep, RCPackageSpec *spec)
      * we're checking a dep on the same package (so this function won't
      * check whether they're the same name for an ANY relation
      */
-    if (dep->relation == RC_RELATION_ANY) {
+    if (unweak_rel == RC_RELATION_ANY) {
 #if DEBUG > 10
             fprintf (stderr, "PASS\n");
 #endif
         return TRUE;
     }
 
-    if ((dep->relation & RC_RELATION_EQUAL) && (compare_ret == 0)) {
+    if ((unweak_rel & RC_RELATION_EQUAL) && (compare_ret == 0)) {
 #if DEBUG > 10
             fprintf (stderr, "PASS\n");
 #endif
@@ -243,13 +275,13 @@ rc_package_dep_item_verify_relation (RCPackageDepItem *dep, RCPackageSpec *spec)
     /* If the realtion is greater, then we want the compare to tell us that the
      * dep is LESS than the spec
      */
-    if ((dep->relation & RC_RELATION_GREATER) && (compare_ret < 0)) {
+    if ((unweak_rel & RC_RELATION_GREATER) && (compare_ret < 0)) {
 #if DEBUG > 10
             fprintf (stderr, "PASS\n");
 #endif
         return TRUE;
     }
-    if ((dep->relation & RC_RELATION_LESS) && (compare_ret > 0)) {
+    if ((unweak_rel & RC_RELATION_LESS) && (compare_ret > 0)) {
 #if DEBUG > 10
             fprintf (stderr, "PASS\n");
 #endif
@@ -282,9 +314,24 @@ rc_string_to_package_relation (const gchar *relation)
     }
 }
 
+gboolean
+rc_package_dep_item_equal (RCPackageDepItem *a, RCPackageDepItem *b)
+{
+    if (a->relation != b->relation)
+        return FALSE;
+    if (!rc_package_spec_equal (&a->spec, &b->spec))
+        return FALSE;
+
+    return TRUE;
+}
+
 const gchar *
 rc_package_relation_to_string (RCPackageRelation relation, gboolean words)
 {
+    if (relation & RC_RELATION_WEAK)
+        /* this should never get back to the user */
+        return rc_package_relation_to_string (relation & ~RC_RELATION_WEAK, words);
+
     switch (relation) {
     case RC_RELATION_ANY:
         return ("(any)");
@@ -318,11 +365,42 @@ rc_package_relation_to_string (RCPackageRelation relation, gboolean words)
  *  0 if b is not more restrictive than a [a is more restrictive]
  * -1 if b and a must both be considered together (cannot be merged)
  */
+
 gint
-rc_package_dep_item_is_subset (RCPackageDepItem *a, RCPackageDepItem *b)
+rc_package_dep_is_item_subset (RCPackageDep *a, RCPackageDepItem *b)
 {
-    gint arel;
-    gint brel;
+    while (a) {
+        RCPackageDepItem *ai = (RCPackageDepItem *) a->data;
+        gint r;
+
+        r = rc_package_dep_item_is_subset (ai, b);
+        /* if b is more restrictive than ai, then b is more restrictive than b */
+        if (r == 1) return 1;
+        if (r == -1) return -1;
+        a = a->next;
+    }
+    return 0;
+}
+        
+
+static gint rc_package_dep_item_is_subset_real (RCPackageDepItem *a, RCPackageDepItem *b);
+
+gint rc_package_dep_item_is_subset (RCPackageDepItem *a, RCPackageDepItem *b)
+{
+    gint ret;
+    ret = rc_package_dep_item_is_subset_real (a, b);
+#if 0
+    fprintf (stderr, "IS_SUBSET: A: %s B: %s  --> %d\n", debug_rc_package_dep_item_str (a),
+             debug_rc_package_dep_item_str (b), ret);
+#endif
+    return ret;
+}
+
+static gint
+rc_package_dep_item_is_subset_real (RCPackageDepItem *a, RCPackageDepItem *b)
+{
+    RCPackageRelation arel;
+    RCPackageRelation brel;
 
     gint compare;
 
@@ -332,8 +410,16 @@ rc_package_dep_item_is_subset (RCPackageDepItem *a, RCPackageDepItem *b)
     arel = a->relation;
     brel = b->relation;
 
-    compare = rc_package_spec_compare (&a->spec, &b->spec);
+    /* If you have a weak and a strong, they cannot be merged */
+    if ((arel ^ brel) & RC_RELATION_WEAK)
+        return -1;
 
+    if (brel == RC_RELATION_ANY && !(arel & RC_RELATION_NONE))
+        return 0;               /* merge ANY b with a */
+    if (arel == RC_RELATION_ANY && !(brel & RC_RELATION_ANY))
+        return 1;              /* don't merge ANY a with !ANY b */
+
+    compare = rc_package_spec_compare (&a->spec, &b->spec);
 
     if (arel == brel) {
         gint rel = arel;
@@ -484,6 +570,93 @@ rc_package_dep_item_is_subset (RCPackageDepItem *a, RCPackageDepItem *b)
     return -1;                  /* always safe -- means we won't guarantee anything about these 2 */
 }
 
+
+RCPackageDepItem *
+rc_package_dep_item_invert (RCPackageDepItem *depi)
+{
+    RCPackageDepItem *out;
+    RCPackageRelation out_rel;
+
+    out = rc_package_dep_item_copy (depi);
+    if (depi->relation == RC_RELATION_ANY) {
+        out_rel = RC_RELATION_NONE;
+    } else if (depi->relation == RC_RELATION_NONE) {
+        out_rel = RC_RELATION_ANY;
+    } else if (depi->relation == RC_RELATION_NOT_EQUAL) {
+        out_rel = RC_RELATION_EQUAL;
+    } else if (depi->relation == RC_RELATION_EQUAL) {
+        out_rel = RC_RELATION_NOT_EQUAL;
+    } else {
+        if (depi->relation & RC_RELATION_EQUAL) {
+            out_rel = 0;
+        } else {
+            out_rel = RC_RELATION_EQUAL;
+        }
+
+        if (depi->relation & RC_RELATION_LESS) {
+            out_rel |= RC_RELATION_GREATER;
+        } else if (depi->relation & RC_RELATION_GREATER) {
+            out_rel |= RC_RELATION_LESS;
+        }
+    }
+
+    out->relation = out_rel;
+
+    return out;
+}
+
+RCPackageDep *
+rc_package_dep_invert (RCPackageDep *dep)
+{
+    RCPackageDep *new_dep = NULL;
+
+    while (dep) {
+        RCPackageDepItem *depi = (RCPackageDepItem *) dep->data;
+        new_dep = g_slist_append (new_dep, rc_package_dep_item_invert (depi));
+        dep = dep->next;
+    }
+
+    return new_dep;
+}
+
+void
+rc_package_dep_weaken (RCPackageDep *dep)
+{
+    while (dep) {
+        RCPackageDepItem *depi = (RCPackageDepItem *) dep->data;
+        depi->relation |= RC_RELATION_WEAK;
+        dep = dep->next;
+    }
+}
+
+gboolean
+rc_package_dep_is_fully_weak (RCPackageDep *dep)
+{
+    while (dep) {
+        RCPackageDepItem *depi = (RCPackageDepItem *) dep->data;
+        if (!(depi->relation & RC_RELATION_WEAK))
+            return FALSE;
+        dep = dep->next;
+    }
+    return TRUE;
+}
+
+gboolean
+rc_package_dep_slist_is_fully_weak (RCPackageDepSList *deps)
+{
+    while (deps) {
+        RCPackageDep *dep = (RCPackageDep *) deps->data;
+        if (!rc_package_dep_is_fully_weak (dep))
+            return FALSE;
+        deps = deps->next;
+    }
+    return TRUE;
+}
+
+/**
+ ** XML conversion functions
+ **/
+
 static xmlNode *
 rc_package_dep_item_to_xml_node (const RCPackageDepItem *dep_item)
 {
@@ -594,3 +767,4 @@ rc_xml_node_to_package_dep (const xmlNode *node)
 
     return (dep);
 }
+

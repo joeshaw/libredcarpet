@@ -1,7 +1,7 @@
 #ifndef _LIBREDCARPET_H
 #define _LIBREDCARPET_H
 
-#include <libredcarpet/deps.h>
+#include <libredcarpet/rc-deps.h>
 #include <libredcarpet/rc-distro.h>
 #include <libredcarpet/rc-package-info.h>
 #include <libredcarpet/rc-channel.h>

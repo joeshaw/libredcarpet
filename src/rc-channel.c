@@ -387,13 +387,16 @@ RCPackage *
 rc_find_best_package (RCPackageDepItem *pdep, RCChannelSList *chs, gint user_pref)
 {
     RCPackage *ret = NULL;
+    RCPackageDep *dep = rc_package_dep_new_with_item (pdep);
 
     while (chs) {
         RCChannel *ch = (RCChannel *) chs->data;
         RCPackage *found;
         found = pkginfo_find_package_with_constraint (ch,
-                                                      pdep->spec.name, user_pref,
-                                                      pdep);
+                                                      pdep->spec.name,
+                                                      user_pref,
+                                                      dep,
+                                                      FALSE);
 #if 0
         if (!found) {
             found = g_hash_table_lookup (ch->dep_table,
@@ -412,6 +415,7 @@ rc_find_best_package (RCPackageDepItem *pdep, RCChannelSList *chs, gint user_pre
         chs = chs->next;
     }
 
+    g_slist_free (dep);
     return ret;
 }
 
