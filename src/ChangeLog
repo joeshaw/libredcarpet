@@ -1,3 +1,11 @@
+2003-04-28  Ian Peters  <itp@ximian.com>
+
+	* rc-world.c (struct _RCWorld): add a database_changed_id field to
+	keep the id of our handler
+	(rc_world_new): ref the RCPackman, and keep the handler id around
+	in database_changed_id
+	(rc_world_free): disconnect our handler, and unref our RCPackman
+
 2003-04-25  Joe Shaw  <joe@ximian.com>
 
 	* Makefile.am: Add rc-package-file.[ch].

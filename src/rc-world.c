@@ -50,6 +50,7 @@ struct _RCWorld {
     GSList *locks;
 
     RCPackman *packman;
+    int database_changed_id;
 
     gchar *synthetic_package_db;
 
@@ -453,11 +454,13 @@ rc_world_new (RCPackman *packman)
     world->conflicts_by_name = hashed_slist_new ();
 
     world->packman = packman;
+    g_object_ref (packman);
 
-    g_signal_connect (packman,
-                      "database_changed",
-                      G_CALLBACK (database_changed_cb),
-                      world);
+    world->database_changed_id =
+        g_signal_connect (packman,
+                          "database_changed",
+                          G_CALLBACK (database_changed_cb),
+                          world);
 	
 	return world;
 }
@@ -482,6 +485,10 @@ rc_world_free (RCWorld *world)
         hashed_slist_destroy (world->requires_by_name);
         hashed_slist_destroy (world->children_by_name);
         hashed_slist_destroy (world->conflicts_by_name);
+
+        g_signal_handler_disconnect (world->packman,
+                                     world->database_changed_id);
+        g_object_unref (world->packman);
 
         /* Free our channels */
         for (iter = world->channels; iter != NULL; iter = iter->next) {
