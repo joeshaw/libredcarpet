@@ -59,6 +59,7 @@ doc_DATA =				\
 	libredcarpet-sharp-docs.source
 
 EXTRA_DIST =				\
+	AssemblyInfo.cs			\
 	libredcarpet-sharp.snk		\
 	libredcarpet-sharp.pc.in	\
 	libredcarpet-sources.xml 	\
