@@ -1,3 +1,23 @@
+2003-03-20  Joe Shaw  <joe@ximian.com>
+
+	* rc-rpmman-types.h: Include the structure definitions for
+	rpmProblem in its three different versions, 3.0.x/4.0,
+	4.0.2-4.0.4, and 4.1/4.2.
+
+	* rc-rpmman.c (render_problems): Do all the type magic at runtime
+	based on the types we added in rc-rpmman-types.h.  Coerce the data
+	into the type we want and pass it off to the applicably typed
+	rpmProblemString function pointer.
+	(rc_rpmman_transact): Remove a chunk of code which basically
+	duplicated the render_problems() functionality poorly with a call
+	to the real thing.
+	(load_fake_syms, load_rpm_syms): Add an rpmProblemStringOlder()
+	method.
+
+	* rc-rpmman.h: Remove the conditional defines of
+	rpmProblemString() and rpmProblemStringOld() and add
+	rpmProblemStringOlder().
+
 2003-03-18  Joe Shaw  <joe@ximian.com>
 
 	* distributions.xml: Make the indenting of the new distros

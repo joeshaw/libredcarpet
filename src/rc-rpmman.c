@@ -834,23 +834,29 @@ render_problems (RCPackman *packman, gpointer prob_ptr)
 #else
     rpmProblemSet probs = prob_ptr;
 #endif
-#if RPM_VERSION >= 40002
-    rpmProblem problem = probs->probs;
-#else
-    rpmProblem *problem = probs->probs;
-#endif
     GString *report = g_string_new ("");
     RCRpmman *rpmman = RC_RPMMAN (packman);
 
     for (count = 0; count < probs->numProblems; count++) {
-        if (rpmman->version >= 40002) {
-            g_string_append_printf (report, "\n%s",
-                                    rpmman->rpmProblemString (problem));
-        } else {
-            g_string_append_printf (report, "\n%s",
-                                    rpmman->rpmProblemStringOld (*problem));
+        const char *str;
+
+        if (rpmman->version >= 40100) {
+            RCrpmProblem problem = ((RCrpmProblem) probs->probs) + count;
+
+            str = rpmman->rpmProblemString (problem);
         }
-        problem++;
+        else if (rpmman->version >= 40002) {
+            RCrpmProblemOld problem = ((RCrpmProblemOld) probs->probs) + count;
+
+            str = rpmman->rpmProblemStringOld (problem);
+        }
+        else {
+            RCrpmProblemOlder *problem = ((RCrpmProblemOlder *) probs->probs) + count;
+            
+            str = rpmman->rpmProblemStringOlder (*problem);
+        }
+
+        g_string_append_printf (report, "\n%s", str);
     }
 
     rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT, report->str);
@@ -1053,34 +1059,13 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
 
     if (rpmman->version >= 40100) {
         if (rpmman->rpmtsCheck (rpmman->rpmts)) {
-            GString *dep_info = g_string_new ("");
-            int i;
-
             ps = rpmman->rpmtsProblems (rpmman->rpmts);
-            for (i = 0; i < ps->numProblems; i++) {
-                rpmProblem p;
-                const char *msg;
-
-                p = ps->probs + i;
-
-                if (p->ignoreProblem) {
-                    /* Should we do something with the problem? */
-                    continue;
-                }
-
-                msg = rpmman->rpmProblemString (p);
-                g_string_append_printf (dep_info, "\n%s", msg);
-            }
-
-            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                                  dep_info->str);
-
-            g_string_free (dep_info, TRUE);
+            render_problems (packman, ps);
+            rpmman->rpmpsFree (ps);
 
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "transaction has unmet dependencies");
 
-            rpmman->rpmpsFree (ps);
 
             goto ERROR;
         }
@@ -3007,6 +2992,7 @@ load_fake_syms (RCRpmman *rpmman)
     rpmman->rpmdbClose = &rpmdbClose;
     rpmman->rpmProblemString = &rpmProblemString;
     rpmman->rpmProblemStringOld = &rpmProblemString;
+    rpmman->rpmProblemStringOlder = &rpmProblemString;
     rpmman->rpmExpandNumeric = &rpmExpandNumeric;
     rpmman->rpmDefineMacro = &rpmDefineMacro;
     rpmman->rpmGetPath = &rpmGetPath;
@@ -3166,6 +3152,10 @@ load_rpm_syms (RCRpmman *rpmman)
     }
     if (!g_module_symbol (rpmman->rpm_lib, "rpmProblemString",
                           ((gpointer)&rpmman->rpmProblemStringOld))) {
+        return (FALSE);
+    }
+    if (!g_module_symbol (rpmman->rpm_lib, "rpmProblemString",
+                          ((gpointer)&rpmman->rpmProblemStringOlder))) {
         return (FALSE);
     }
 #if 0

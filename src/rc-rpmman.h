@@ -103,13 +103,9 @@ struct _RCRpmman {
     int (*rpmReadConfigFiles)(const char *, const char *);
     int (*rpmdbOpen)(const char *, rpmdb *, int, int);
     void (*rpmdbClose)(rpmdb);
-#if RPM_VERSION >= 40002
-    const char * (*rpmProblemString)(rpmProblem);
-    const char * (*rpmProblemStringOld)(struct rpmProblem_s);
-#else
-    const char * (*rpmProblemString)(rpmProblem *);
-    const char * (*rpmProblemStringOld)(rpmProblem);
-#endif
+    const char * (*rpmProblemString)(RCrpmProblem);
+    const char * (*rpmProblemStringOld)(RCrpmProblemOld);
+    const char * (*rpmProblemStringOlder)(RCrpmProblemOlder);
     int (*rpmGetRpmlibProvides)(char ***, int **, char ***);
     int (*rpmExpandNumeric)(const char *);
     int (*rpmDefineMacro)(MacroContext *, const char *, int);

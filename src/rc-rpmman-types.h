@@ -28,6 +28,44 @@
 
 #include <rpmlib.h>
 
+/*
+ * rpmProblem is a real mess.  It's changed drastically between versions.
+ * Here is an attempt to support all three.
+ */
+
+/* This one is from RPM 4.1 to the present */
+typedef struct {
+    char *pkgNEVR;
+    char *altNEVR;
+    fnpyKey key;
+    rpmProblemType type;
+    int ignoreProblem;
+    char *str1;
+    unsigned long ulong1;
+} * RCrpmProblem;
+
+/* This one was from RPM 4.0.2 to 4.0.4 */
+typedef struct {
+    const char *pkgNEVR;
+    const char *altNEVR;
+    const void *key;
+    Header h;
+    rpmProblemType type;
+    int ignoreProblem;
+    const char *str1;
+    unsigned long ulong1;
+} * RCrpmProblemOld;
+
+/* This one was from RPM 3.0.x through RPM 4.0.1 */
+typedef struct {
+    Header h;
+    Header altH;
+    rpmProblemType type;
+    int ignoreProblem;
+    const char *str1;
+    unsigned long ulong1;
+} RCrpmProblemOlder;
+
 #if RPM_VERSION < 40100
 /* Definitions for RPM 4.1 and 4.2 */
 
