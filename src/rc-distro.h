@@ -21,9 +21,9 @@
 #ifndef RC_DISTRO_H_
 #define RC_DISTRO_H_
 
-#ifndef RC_DISTRO_NO_GLIB
 #include <glib.h>
-#endif
+
+#include "rc-arch.h"
 
 typedef enum {
     RC_PKG_RPM,
@@ -32,33 +32,15 @@ typedef enum {
     RC_PKG_UNKNOWN
 } RCPackageType;
 
-typedef enum {
-    RC_ARCH_UNKNOWN = 0,
-    RC_ARCH_ANY,
-    RC_ARCH_IA32,
-    RC_ARCH_IA64,
-    RC_ARCH_PPC,
-    RC_ARCH_ALPHA,
-    RC_ARCH_ARM,
-    RC_ARCH_SPARC,
-    RC_ARCH_SPARC64,
-    RC_ARCH_MIPS,
-    RC_ARCH_MIPS64,
-} RCDistroArch;
-
 typedef struct _RCDistroType {
     char *unique_name;
     char *pretend_name; /* i.e. connectiva-foo-i386 is the same as redhat-62-i386 */
     char *full_name;
     char *ver_string;
     RCPackageType pkgtype;
-    RCDistroArch arch;
+    RCArch arch;
     char *extra_stuff;          /* language? */
-#ifndef RC_DISTRO_NO_GLIB
     GHashTable *extra_hash;
-#else
-    void *extra_hash;
-#endif
 } RCDistroType;
 
 RCDistroType *rc_figure_distro (void);

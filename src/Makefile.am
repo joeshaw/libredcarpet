@@ -34,6 +34,7 @@ BUILT_SOURCES =				\
 
 libredcarpet_public_headers = 		\
 	rc-debug.h			\
+	rc-arch.h			\
 	rc-package-spec.h		\
 	libredcarpet.h			\
 	rc-package-dep.h		\
@@ -69,6 +70,7 @@ libredcarpet_public_headers = 		\
 
 libredcarpettmp_a_SOURCES =		\
 	rc-debug.c			\
+	rc-arch.c			\
 	rc-package-spec.c		\
 	rc-package-dep.c		\
 	rc-package-importance.c		\

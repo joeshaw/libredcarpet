@@ -263,6 +263,14 @@ rc_world_add_packages_from_slist (RCWorld *world,
     rc_world_thaw (world);
 }
 
+static void
+add_package_to_world (gchar *name, RCPackage *package,
+                      RCWorld *world)
+{
+    rc_world_add_package (world, package);
+    rc_package_unref (package);
+}
+
 guint
 rc_world_add_packages_from_xml (RCWorld *world,
                                 RCChannel *channel,
@@ -270,7 +278,9 @@ rc_world_add_packages_from_xml (RCWorld *world,
 {
     RCPackage *package;
     guint count = 0;
-    
+    GHashTable *packages;
+    GSList *compat_arch_list;
+
     g_return_val_if_fail (world != NULL, 0);
 
     rc_world_freeze (world);
@@ -284,21 +294,53 @@ rc_world_add_packages_from_xml (RCWorld *world,
         node = node->xmlChildrenNode;
     }
 
-    while (node) {
+    packages = g_hash_table_new (g_str_hash, g_str_equal);
 
+    compat_arch_list = rc_arch_get_compat_list (rc_arch_get_system_arch ());
+
+    while (node) {
         if (! g_strcasecmp (node->name, "package")) {
 
             package = rc_xml_node_to_package (node, channel);
-            if (package) {
-                rc_world_add_package (world, package);
-                rc_package_unref (package);
-                ++count;
+            if (package && (rc_arch_get_compat_score (compat_arch_list,
+                                                      package->arch) > -1))
+            {
+                RCPackage *old = NULL;
+                gboolean add = TRUE;
+
+                if ((old = g_hash_table_lookup (packages, package->spec.name)))
+                {
+                    gint old_score, new_score;
+
+                    old_score = rc_arch_get_compat_score (compat_arch_list,
+                                                          old->arch);
+                    new_score = rc_arch_get_compat_score (compat_arch_list,
+                                                          package->arch);
+
+                    if (new_score < old_score) {
+                        g_hash_table_remove (packages, old->spec.name);
+                        rc_package_unref (old);
+                    } else
+                        add = FALSE;
+                }
+
+                if (add)
+                    g_hash_table_insert (packages, package->spec.name,
+                                         package);
+                else
+                    rc_package_unref (package);
             }
-            
-        } 
+        }
 
         node = node->next;
     }
+
+    g_hash_table_foreach (packages, (GHFunc) add_package_to_world,
+                          (gpointer) world);
+
+    count = g_hash_table_size (packages);
+
+    g_hash_table_destroy (packages);
 
     rc_world_thaw (world);
 

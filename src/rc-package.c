@@ -27,6 +27,7 @@
 #include "rc-pretty-name.h"
 #include "rc-channel-private.h"
 #include "rc-world.h"
+#include "rc-arch.h"
 
 #ifdef RC_PACKAGE_FIND_LEAKS
 static GHashTable *leaked_packages = NULL;
@@ -36,6 +37,8 @@ RCPackage *
 rc_package_new (void)
 {
     RCPackage *package = g_new0 (RCPackage, 1);
+
+    package->arch = RC_ARCH_UNKNOWN;
 
     package->section = RC_SECTION_MISC;
     package->refs    = 1;
@@ -61,6 +64,8 @@ rc_package_copy (RCPackage *old_package)
 
     rc_package_spec_copy (RC_PACKAGE_SPEC (package),
                           RC_PACKAGE_SPEC (old_package));
+
+    package->arch = old_package->arch;
 
     package->section = old_package->section;
 

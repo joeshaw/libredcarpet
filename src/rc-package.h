@@ -43,6 +43,7 @@ typedef GHashTable RCPackageHashTableBySpec;
 #include "rc-package-dep.h"
 #include "rc-package-update.h"
 #include "rc-channel.h"
+#include "rc-arch.h"
 
 typedef void     (*RCPackagePairFn) (RCPackage *, RCPackage *, gpointer);
 typedef void     (*RCPackageAndSpecFn) (RCPackage *, RCPackageSpec *, gpointer);
@@ -50,6 +51,7 @@ typedef gboolean (*RCPackageAndSpecCheckFn) (RCPackage *, RCPackageSpec *, gpoin
 
 struct _RCPackage {
     RCPackageSpec spec;
+    RCArch arch;
 
     RCPackageSection section;
 

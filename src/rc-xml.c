@@ -43,7 +43,10 @@ struct _RCPackageSAXContext {
     xmlParserCtxt *xml_context;
     RCPackageSAXContextState state;
 
-    RCPackageSList *package_list;
+    /* Hash of RCPackage by package->spec.name */
+    GHashTable *packages;
+
+    GSList *compat_arch_list;
 
     /* Temporary state */
     RCPackage *current_package;
@@ -363,11 +366,44 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
             }
         }
 
-        ctx->package_list = g_slist_append(
-            ctx->package_list, ctx->current_package);
-
         ctx->current_package->obsoletes = g_slist_concat (
             ctx->current_package->obsoletes, ctx->obsoletes);
+
+        /* Hack for the old XML */
+        if (ctx->current_package->arch == RC_ARCH_UNKNOWN)
+            ctx->current_package->arch = rc_arch_get_system_arch ();
+
+        if (rc_arch_get_compat_score (ctx->compat_arch_list,
+                                      ctx->current_package->arch) > -1)
+        {
+            RCPackage *old_package = NULL;
+            gboolean add = TRUE;
+
+            if ((old_package =
+                 g_hash_table_lookup (ctx->packages,
+                                      ctx->current_package->spec.name)))
+            {
+                gint new_score, old_score;
+
+                new_score = rc_arch_get_compat_score (
+                    ctx->compat_arch_list, ctx->current_package->arch);
+                old_score = rc_arch_get_compat_score (
+                    ctx->compat_arch_list, old_package->arch);
+                if (new_score < old_score) {
+                    g_hash_table_remove (ctx->packages,
+                                         old_package->spec.name);
+                    rc_package_unref (old_package);
+                } else
+                    add = FALSE;
+            }
+
+            if (add)
+                g_hash_table_insert (ctx->packages,
+                                     ctx->current_package->spec.name,
+                                     ctx->current_package);
+            else
+                rc_package_unref (ctx->current_package);
+        }
         
         ctx->current_package = NULL;
         ctx->state = PARSER_TOPLEVEL;
@@ -383,6 +419,9 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
     } else if (!strcmp(name, "section")) {
         char *stripped = g_strstrip (ctx->text_buffer);
         ctx->current_package->section = rc_string_to_package_section (stripped);
+    } else if (!strcmp(name, "arch")) {
+        char *stripped = g_strstrip (ctx->text_buffer);
+        ctx->current_package->arch = rc_arch_from_string (stripped);
     }
     else if (!strcmp(name, "filesize")) {
         ctx->current_package->file_size = 
@@ -622,10 +661,17 @@ rc_package_sax_context_parse_chunk(RCPackageSAXContext *ctx,
     xmlParseChunk(ctx->xml_context, xmlbuf, size, 0);
 }
 
+static void
+package_slist_build (gchar *name, RCPackage *package,
+                     RCPackageSList **package_list)
+{
+    *package_list = g_slist_prepend (*package_list, package);
+}
+
 RCPackageSList *
 rc_package_sax_context_done(RCPackageSAXContext *ctx)
 {
-    RCPackageSList *packages;
+    RCPackageSList *packages = NULL;
 
     if (ctx->processing)
         xmlParseChunk(ctx->xml_context, "\0", 1, 1);
@@ -645,7 +691,11 @@ rc_package_sax_context_done(RCPackageSAXContext *ctx)
 
     g_free (ctx->text_buffer);
 
-    packages = ctx->package_list;
+    g_hash_table_foreach (ctx->packages, (GHFunc) package_slist_build,
+                          &packages);
+    g_hash_table_destroy (ctx->packages);
+
+    g_slist_free (ctx->compat_arch_list);
 
     g_free(ctx);
 
@@ -659,6 +709,11 @@ rc_package_sax_context_new(RCChannel *channel)
 
     ctx = g_new0(RCPackageSAXContext, 1);
     ctx->channel = channel;
+
+    ctx->packages = g_hash_table_new (g_str_hash, g_str_equal);
+
+    ctx->compat_arch_list =
+        rc_arch_get_compat_list (rc_arch_get_system_arch ());
 
     if (getenv ("RC_SPEW_XML"))
         rc_debug (RC_DEBUG_LEVEL_ALWAYS, "* Context created (%p)", ctx);
@@ -848,6 +903,10 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
             gchar *tmp = xml_get_content (iter);
             package->section = rc_string_to_package_section (tmp);
             g_free (tmp);
+        } else if (!g_strcasecmp (iter->name, "arch")) {
+            gchar *tmp = xml_get_content (iter);
+            package->arch = rc_arch_from_string (tmp);
+            g_free (tmp);
         } else if (!g_strcasecmp (iter->name, "filesize")) {
             gchar *tmp = xml_get_content (iter);
             package->file_size = tmp && *tmp ? atoi (tmp) : 0;
@@ -946,6 +1005,10 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
     g_free (epoch);
     g_free (version);
     g_free (release);
+
+    /* Hack for no archs in the XML yet */
+    if (package->arch == RC_ARCH_UNKNOWN)
+        package->arch = rc_arch_get_system_arch ();
 
     return (package);
 } /* rc_xml_node_to_package */
@@ -1181,6 +1244,9 @@ rc_package_to_xml_node (RCPackage *package)
     tmp_str = sanitize_string (package->summary);
     xmlNewTextChild (package_node, NULL, "description", tmp_str);
     g_free (tmp_str);
+
+    xmlNewTextChild (package_node, NULL, "arch",
+                     rc_arch_to_string (package->arch));
 
     xmlNewTextChild (package_node, NULL, "section",
                      rc_package_section_to_string (package->section));

@@ -1,3 +1,42 @@
+2002-07-31  Ian Peters  <itp@ximian.com>
+
+	* rc-arch.c, rc-arch.h: added
+
+	* Makefile.am: rc-arch.[ch] added as part of the build
+
+	* rc-distro.h, rc-distro.c: remove the old arch stuff, use the new
+	arch stuff, remove the NO_GLIB stuff
+
+	* rc-package.h, rc-package.c: RCPackage now has an arch field that
+	must be initialized and copied appropriately
+
+	* rc-rpmman.c (rc_rpmman_read_header): check RPMTAG_ARCH and set
+	it in the package
+
+	* rc-xml.c (RCPackageSAXContext): keep the packages in a hash
+	instead of a list, and keep the arch compat list here
+	(parser_package_end): make sure the parsed package has an arch --
+	if one was missing in the xml, set it (as a hack) to the system
+	arch.  make sure the package is compatible with the system before
+	adding it to the hash.  if that package is already present in the
+	hash, make sure ours is a better arch before adding it to the
+	hash, and removing the other.  parse an arch field out of the
+	package, if present.
+	(package_slist_build): added.  builds an slist as a hash cb func.
+	(rc_package_sax_context_done): convert the ctx hash into a list,
+	destroy the hash, return the list.  also free the arch compat list
+	here.
+	(rc_package_sax_context_new): create the package hash and the arch
+	compat list here
+	(rc_xml_node_to_package): parse an arch field, if present.  fake
+	one if necessary, as above
+	(rc_package_to_xml_node): add the arch field to the xmlNode
+
+	* rc-world-import.c (add_package_to_world): added.  hash cb func.
+	(rc_world_add_packages_to_xml): rather than just adding packages
+	one by one to the world, create a hash, just like in the SAX
+	parser, with the same logic to pick the best package/arch pair.
+
 2002-07-31  Joe Shaw  <joe@ximian.com>
 
 	* rc-xml.c: Don't output the SAX parser spew normally.  Only do it

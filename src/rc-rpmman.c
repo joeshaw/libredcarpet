@@ -35,6 +35,7 @@
 #include "rc-rpmman-types.h"
 #include "rc-util.h"
 #include "rc-verification-private.h"
+#include "rc-arch.h"
 
 #include "rpm-rpmlead.h"
 #include "rpm-signature.h"
@@ -1231,6 +1232,13 @@ rc_rpmman_read_header (RCRpmman *rpmman, Header header, RCPackage *package)
         package->spec.release = g_strdup (tmpc);
     else
         package->spec.release = NULL;
+
+    rpmman->headerGetEntry (header, RPMTAG_ARCH, &type, (void **)&tmpc,
+                            &count);
+    if (count && (type == RPM_STRING_TYPE) && tmpc && tmpc[0])
+        package->arch = rc_arch_from_string (tmpc);
+    else
+        package->arch = RC_ARCH_UNKNOWN;
 
     rpmman->headerGetEntry (header, RPMTAG_GROUP, &type, (void **)&tmpc,
                             &count);

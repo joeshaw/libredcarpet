@@ -28,24 +28,6 @@
 
 #include "rc-distro.h"
 
-#ifdef RC_DISTRO_NO_GLIB
-typedef int gboolean;
-typedef int gint;
-typedef void * gpointer;
-typedef char gchar;
-
-#define g_malloc malloc
-#define g_free free
-#define g_realloc realloc
-#define g_warning(x...) fprintf(stderr, x)
-#define g_error(x...) do { fprintf(stderr, x); exit(-1); } while (0)
-#ifndef FALSE
-#define FALSE 0
-#define TRUE 1
-#endif
-
-#endif
-
 typedef gboolean (*distro_check_function) (gpointer param1, gpointer param2, gpointer param3);
 
 #define CHECK_OP_NONE	0
@@ -55,7 +37,7 @@ typedef gboolean (*distro_check_function) (gpointer param1, gpointer param2, gpo
 
 typedef struct _RCDistroChunk {
     char *unique_name;
-    RCDistroArch arch;
+    RCArch arch;
     distro_check_function func1;
     gpointer param11;
     gpointer param12;
@@ -98,77 +80,77 @@ RCDistroChunk distro_figurers[] = {
     { "yellowdog-22-ppc", RC_ARCH_PPC,
       func_string_in_file, "/etc/yellowdog-release", "2.2", NULL, 0 },
 
-    { "mandrake-70-i586", RC_ARCH_IA32,
+    { "mandrake-70-i586", RC_ARCH_I586,
       func_string_in_file, "/etc/mandrake-release", "7.0", NULL, 0 },
-    { "mandrake-71-i586", RC_ARCH_IA32,
+    { "mandrake-71-i586", RC_ARCH_I586,
       func_string_in_file, "/etc/mandrake-release", "7.1", NULL, 0 },
-    { "mandrake-72-i586", RC_ARCH_IA32,
+    { "mandrake-72-i586", RC_ARCH_I586,
       func_string_in_file, "/etc/mandrake-release", "7.2", NULL, 0 },
-    { "mandrake-80-i586", RC_ARCH_IA32,
+    { "mandrake-80-i586", RC_ARCH_I586,
       func_string_in_file, "/etc/mandrake-release", "8.0", NULL, 0 },
-    { "mandrake-81-i586", RC_ARCH_IA32,
+    { "mandrake-81-i586", RC_ARCH_I586,
       func_string_in_file, "/etc/mandrake-release", "8.1", NULL, 0 },
-    { "mandrake-82-i586", RC_ARCH_IA32,
+    { "mandrake-82-i586", RC_ARCH_I586,
       func_string_in_file, "/etc/mandrake-release", "8.2", NULL, 0 },
 
-    { "redhat-60-i386", RC_ARCH_IA32,
+    { "redhat-60-i386", RC_ARCH_I386,
       func_string_in_file, "/etc/redhat-release", "6.0", NULL, 0 },
-    { "redhat-61-i386", RC_ARCH_IA32,
+    { "redhat-61-i386", RC_ARCH_I386,
       func_string_in_file, "/etc/redhat-release", "6.1", NULL, 0 },
-    { "redhat-62-i386", RC_ARCH_IA32,
+    { "redhat-62-i386", RC_ARCH_I386,
       func_string_in_file, "/etc/redhat-release", "6.2", NULL, 0 },
-    { "redhat-70-i386", RC_ARCH_IA32,
+    { "redhat-70-i386", RC_ARCH_I386,
       func_string_in_file, "/etc/redhat-release", "7.0", NULL, 0 },
-    { "redhat-71-i386", RC_ARCH_IA32,
+    { "redhat-71-i386", RC_ARCH_I386,
       func_string_in_file, "/etc/redhat-release", "7.1", NULL, 0 },
-    { "redhat-72-i386", RC_ARCH_IA32,
+    { "redhat-72-i386", RC_ARCH_I386,
       func_string_in_file, "/etc/redhat-release", "7.2", NULL, 0 },
-    { "redhat-73-i386", RC_ARCH_IA32,
+    { "redhat-73-i386", RC_ARCH_I386,
       func_string_in_file, "/etc/redhat-release", "7.3", NULL, 0 },
 
-    { "turbolinux-60-i386", RC_ARCH_IA32,
+    { "turbolinux-60-i386", RC_ARCH_I386,
       func_string_in_file, "/etc/turbolinux-release", "6.0", NULL, 0 },
-    { "turbolinux-70-i386", RC_ARCH_IA32,
+    { "turbolinux-70-i386", RC_ARCH_I386,
       func_string_in_file, "/etc/turbolinux-release", "7.0", NULL, 0 },
 
-    { "suse-63-i386", RC_ARCH_IA32,
+    { "suse-63-i386", RC_ARCH_I386,
       func_string_in_file, "/etc/SuSE-release", "6.3", NULL, 0 },
-    { "suse-64-i386", RC_ARCH_IA32,
+    { "suse-64-i386", RC_ARCH_I386,
       func_string_in_file, "/etc/SuSE-release", "6.4", NULL, 0 },
-    { "suse-70-i386", RC_ARCH_IA32,
+    { "suse-70-i386", RC_ARCH_I386,
       func_string_in_file, "/etc/SuSE-release", "7.0", NULL, 0 },
-    { "suse-71-i386", RC_ARCH_IA32,
+    { "suse-71-i386", RC_ARCH_I386,
       func_string_in_file, "/etc/SuSE-release", "7.1", NULL, 0 },
-    { "suse-72-i386", RC_ARCH_IA32,
+    { "suse-72-i386", RC_ARCH_I386,
       func_string_in_file, "/etc/SuSE-release", "7.2", NULL, 0 },
-    { "suse-73-i386", RC_ARCH_IA32,
+    { "suse-73-i386", RC_ARCH_I386,
       func_string_in_file, "/etc/SuSE-release", "7.3", NULL, 0 },
-    { "suse-80-i386", RC_ARCH_IA32,
+    { "suse-80-i386", RC_ARCH_I386,
       func_string_in_file, "/etc/SuSE-release", "8.0", NULL, 0 },
 
-    { "debian-potato-i386", RC_ARCH_IA32,
+    { "debian-potato-i386", RC_ARCH_I386,
       func_string_in_file, "/etc/debian_version", "2.2", NULL, 0},
-    { "debian-potato-i386", RC_ARCH_IA32,
+    { "debian-potato-i386", RC_ARCH_I386,
       func_string_in_file, "/etc/debian_version", "potato", NULL, 0},
-    { "debian-woody-i386", RC_ARCH_IA32,
+    { "debian-woody-i386", RC_ARCH_I386,
       func_string_in_file, "/etc/debian_version", "3.0", NULL, 0},
-    { "debian-woody-i386", RC_ARCH_IA32,
+    { "debian-woody-i386", RC_ARCH_I386,
       func_string_in_file, "/etc/debian_version", "woody", NULL, 0},
-    { "debian-testing-i386", RC_ARCH_IA32,
+    { "debian-testing-i386", RC_ARCH_I386,
       func_string_in_file, "/etc/debian_version", "testing", NULL, 0},
 /* When debian comes up with the next name, put it here and uncomment */
-/*    { "debian-testing-i386", RC_ARCH_IA32,
+/*    { "debian-testing-i386", RC_ARCH_I386,
       func_string_in_file, "/etc/debain_version", "TOYSTORY", NULL, 0}, */
-    { "debian-sid-i386", RC_ARCH_IA32,
+    { "debian-sid-i386", RC_ARCH_I386,
       func_string_in_file, "/etc/debian_version", "sid", NULL, 0},
-    { "debian-sid-i386", RC_ARCH_IA32,
+    { "debian-sid-i386", RC_ARCH_I386,
       func_string_in_file, "/etc/debian_version", "unstable", NULL, 0},
 
-    { "solaris-7-sun4", RC_ARCH_SPARC,
+    { "solaris-7-sun4", RC_ARCH_SPARC64,
       func_sys, "uname -s", "SunOS", (gpointer) 0, CHECK_OP_AND,
       func_sys, "uname -r", "5.7", (gpointer) 0 },
 
-    { "solaris-8-sun4", RC_ARCH_SPARC,
+    { "solaris-8-sun4", RC_ARCH_SPARC64,
       func_sys, "uname -s", "SunOS", (gpointer) 0, CHECK_OP_AND,
       func_sys, "uname -r", "5.8", (gpointer) 0 },
 
@@ -176,36 +158,36 @@ RCDistroChunk distro_figurers[] = {
 };
 
 RCDistroType distro_types[] = {
-    { "redhat-60-i386", NULL, "Red Hat Linux", "6.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "redhat-61-i386", NULL, "Red Hat Linux", "6.1", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "redhat-62-i386", NULL, "Red Hat Linux", "6.2", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "redhat-70-i386", NULL, "Red Hat Linux", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "redhat-71-i386", NULL, "Red Hat Linux", "7.1", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "redhat-72-i386", NULL, "Red Hat Linux", "7.2", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "redhat-73-i386", NULL, "Red Hat Linux", "7.3", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "redhat-60-i386", NULL, "Red Hat Linux", "6.0", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "redhat-61-i386", NULL, "Red Hat Linux", "6.1", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "redhat-62-i386", NULL, "Red Hat Linux", "6.2", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "redhat-70-i386", NULL, "Red Hat Linux", "7.0", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "redhat-71-i386", NULL, "Red Hat Linux", "7.1", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "redhat-72-i386", NULL, "Red Hat Linux", "7.2", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "redhat-73-i386", NULL, "Red Hat Linux", "7.3", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=5, non-gdm-runlevel=3" },
 
-    { "turbolinux-60-i386", NULL, "TurboLinux", "6.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "turbolinux-70-i386", NULL, "TurboLinux", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "turbolinux-60-i386", NULL, "TurboLinux", "6.0", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "turbolinux-70-i386", NULL, "TurboLinux", "7.0", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=5, non-gdm-runlevel=3" },
 
-    { "suse-63-i386", NULL, "SuSE", "6.3", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=3, non-gdm-runlevel=2" },
-    { "suse-64-i386", NULL, "SuSE", "6.4", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=3, non-gdm-runlevel=2" },
-    { "suse-70-i386", NULL, "SuSE", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=3, non-gdm-runlevel=2" },
-    { "suse-71-i386", NULL, "SuSE", "7.1", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "suse-72-i386", NULL, "SuSE", "7.2", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "suse-73-i386", NULL, "SuSE", "7.3", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "suse-80-i386", NULL, "SuSE", "8.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "suse-63-i386", NULL, "SuSE", "6.3", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=3, non-gdm-runlevel=2" },
+    { "suse-64-i386", NULL, "SuSE", "6.4", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=3, non-gdm-runlevel=2" },
+    { "suse-70-i386", NULL, "SuSE", "7.0", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=3, non-gdm-runlevel=2" },
+    { "suse-71-i386", NULL, "SuSE", "7.1", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "suse-72-i386", NULL, "SuSE", "7.2", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "suse-73-i386", NULL, "SuSE", "7.3", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "suse-80-i386", NULL, "SuSE", "8.0", RC_PKG_RPM, RC_ARCH_I386, "gdm-runlevel=5, non-gdm-runlevel=3" },
 
-    { "mandrake-70-i586", NULL, "Linux Mandrake", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "mandrake-71-i586", NULL, "Linux Mandrake", "7.1", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "mandrake-72-i586", NULL, "Linux Mandrake", "7.2", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "mandrake-80-i586", NULL, "Linux Mandrake", "8.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "mandrake-81-i586", NULL, "Linux Mandrake", "8.1", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "mandrake-82-i586", NULL, "Linux Mandrake", "8.2", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "mandrake-70-i586", NULL, "Linux Mandrake", "7.0", RC_PKG_RPM, RC_ARCH_I586, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "mandrake-71-i586", NULL, "Linux Mandrake", "7.1", RC_PKG_RPM, RC_ARCH_I586, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "mandrake-72-i586", NULL, "Linux Mandrake", "7.2", RC_PKG_RPM, RC_ARCH_I586, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "mandrake-80-i586", NULL, "Linux Mandrake", "8.0", RC_PKG_RPM, RC_ARCH_I586, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "mandrake-81-i586", NULL, "Linux Mandrake", "8.1", RC_PKG_RPM, RC_ARCH_I586, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "mandrake-82-i586", NULL, "Linux Mandrake", "8.2", RC_PKG_RPM, RC_ARCH_I586, "gdm-runlevel=5, non-gdm-runlevel=3" },
 
-    { "debian-sid-i386", NULL, "Debian GNU/Linux", "sid", RC_PKG_DPKG, RC_ARCH_IA32, NULL },
-    { "debian-testing-i386", NULL, "Debian GNU/Linux", "testing", RC_PKG_DPKG, RC_ARCH_IA32, NULL },
-    { "debian-woody-i386", NULL, "Debian GNU/Linux", "woody", RC_PKG_DPKG, RC_ARCH_IA32, NULL },
-    { "debian-potato-i386", NULL, "Debian GNU/Linux", "potato", RC_PKG_DPKG, RC_ARCH_IA32, NULL },
+    { "debian-sid-i386", NULL, "Debian GNU/Linux", "sid", RC_PKG_DPKG, RC_ARCH_I386, NULL },
+    { "debian-testing-i386", NULL, "Debian GNU/Linux", "testing", RC_PKG_DPKG, RC_ARCH_I386, NULL },
+    { "debian-woody-i386", NULL, "Debian GNU/Linux", "woody", RC_PKG_DPKG, RC_ARCH_I386, NULL },
+    { "debian-potato-i386", NULL, "Debian GNU/Linux", "potato", RC_PKG_DPKG, RC_ARCH_I386, NULL },
 
     { "linuxppc-2000-ppc", NULL, "LinuxPPC", "2000", RC_PKG_RPM, RC_ARCH_PPC, "gdm-runlevel=5, non-gdm-runlevel=3" },
     { "linuxppc-2000q4-ppc", NULL, "Linux/PPC", "2000 Q4", RC_PKG_RPM, RC_ARCH_PPC, "gdm-runlevel=5, non-gdm-runlevel=3" },
@@ -215,8 +197,8 @@ RCDistroType distro_types[] = {
     { "yellowdog-21-ppc", NULL, "Yellow Dog Linux", "2.1", RC_PKG_RPM, RC_ARCH_PPC, "gdm-runlevel=5, non-gdm-runlevel=3" },
     { "yellowdog-22-ppc", NULL, "Yellow Dog Linux", "2.2", RC_PKG_RPM, RC_ARCH_PPC, "gdm-runlevel=5, non-gdm-runlevel=3" },
 
-    { "solaris-7-sun4", NULL, "Sun Solaris 7", "7", RC_PKG_RPM, RC_ARCH_SPARC, "" },
-    { "solaris-8-sun4", NULL, "Sun Solaris 8", "8", RC_PKG_RPM, RC_ARCH_SPARC, "" },
+    { "solaris-7-sun4", NULL, "Sun Solaris 7", "7", RC_PKG_RPM, RC_ARCH_SPARC64, "" },
+    { "solaris-8-sun4", NULL, "Sun Solaris 8", "8", RC_PKG_RPM, RC_ARCH_SPARC64, "" },
 
     { NULL }
 };
@@ -351,75 +333,18 @@ func_sys (gpointer arg1, gpointer arg2, gpointer arg3)
 void *foo_unused__func_nth_string_in_file = func_nth_string_in_file;
 void *foo_unused__func_sys = func_sys;
 
-/* We try to determine the architecture in many sneaky ways here */
-static RCDistroArch
-determine_arch ()
-{
-    gint bufsz;
-    gchar *buf;
-    RCDistroArch ret = 0;
-
-    /* First try arch */
-    bufsz = call_system ("arch", &buf);
-    /* Try uname -m if this fails */
-    if (bufsz < 0)
-        bufsz = call_system ("uname -m", &buf);
-
-    if (bufsz > 0) {
-        if (!strncmp (buf, "i386", 4) ||
-            !strncmp (buf, "i486", 4) ||
-            !strncmp (buf, "i586", 4) ||
-            !strncmp (buf, "i686", 4))
-        {
-            ret = RC_ARCH_IA32;
-        }
-
-        if (!strncmp (buf, "sun4", 4) ||
-            !strncmp (buf, "sparc", 5))
-        {
-            ret = RC_ARCH_SPARC;
-        }
-
-        if (!strncmp (buf, "alpha", 5))
-        {
-            ret = RC_ARCH_ALPHA;
-        }
-
-        if (!strncmp (buf, "ppc", 3))
-        {
-            ret = RC_ARCH_PPC;
-        }
-
-        if (!strncmp (buf, "armv4l", 6) ||
-            !strncmp (buf, "arm", 3))
-        {
-            ret = RC_ARCH_ARM;
-        }
-
-        /* Add more! */
-
-        g_free (buf);
-        if (ret) return ret;
-    }
-
-    return RC_ARCH_UNKNOWN;
-}
-
 const char *
 rc_distro_option_lookup(RCDistroType *distro, const char *key)
 {
-#ifndef RC_DISTRO_NO_GLIB
     return g_hash_table_lookup(distro->extra_hash, key);
-#else
-    return NULL;
-#endif
 } /* rc_distro_option_lookup */
 
 RCDistroType *
 rc_figure_distro (void)
 {
     int i = 0;
-    RCDistroArch arch;
+    RCArch arch;
+    GSList *compat_arch_list;
     gchar *distro_name = NULL;
     char **options;
 
@@ -428,11 +353,12 @@ rc_figure_distro (void)
     if (!dtype) {
         if (!getenv ("RC_DISTRO_NAME")) {
             /* Go through each chunk and figure out if it matches */
-            arch = determine_arch ();
+            arch = rc_arch_get_system_arch ();
             if (arch == RC_ARCH_UNKNOWN) {
                 g_warning("Unable to figure out what architecture you're on");
                 return NULL;
             }
+            compat_arch_list = rc_arch_get_compat_list (arch);
             
             while (distro_figurers[i].unique_name) {
                 gboolean result;
@@ -441,7 +367,8 @@ rc_figure_distro (void)
                 }
 
                 /* Check if this is the right architecture */
-                if (distro_figurers[i].arch != arch) {
+                if (rc_arch_get_compat_score (
+                        compat_arch_list, distro_figurers[i].arch) < 0) {
                     i++;
                     continue;
                 }
@@ -496,7 +423,6 @@ rc_figure_distro (void)
     }
 
     if (dtype) {
-#ifndef RC_DISTRO_NO_GLIB
         dtype->extra_hash = g_hash_table_new(g_str_hash, g_str_equal);
         if (dtype->extra_stuff) {
             options = g_strsplit(dtype->extra_stuff, ",", 0);
@@ -515,9 +441,6 @@ rc_figure_distro (void)
             }
             g_strfreev(options);
         }
-#else
-        dtype->extra_hash = NULL;
-#endif
     }
 
     return dtype;
