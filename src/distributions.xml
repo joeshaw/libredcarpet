@@ -431,9 +431,9 @@
         <distro>
                 <name>SuSE Linux Enterprise Server</name>
                 <version>8</version>
-                <arch>s390</arch>
+                <arch>s390x</arch>
                 <type>rpm</type>
-                <target>sles-8-s390</target>
+                <target>sles-8-s390x</target>
                 <status>supported</status>
                 <detect>
                         <file source="/etc/SuSE-release" substring="SLES-8"/>
@@ -442,9 +442,9 @@
         <distro>
                 <name>SuSE Linux Enterprise Server</name>
                 <version>8</version>
-                <arch>s390x</arch>
+                <arch>s390</arch>
                 <type>rpm</type>
-                <target>sles-8-s390x</target>
+                <target>sles-8-s390</target>
                 <status>supported</status>
                 <detect>
                         <file source="/etc/SuSE-release" substring="SLES-8"/>
