@@ -57,4 +57,6 @@ void rc_verification_slist_free (RCVerificationSList *verification_list);
 
 void rc_verification_set_keyring (const gchar *keyring);
 
+const char *rc_verification_type_to_string (RCVerificationType type);
+
 #endif

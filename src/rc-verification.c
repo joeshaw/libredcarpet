@@ -68,6 +68,32 @@ rc_verification_slist_free (RCVerificationSList *verification_list)
     g_slist_free (verification_list);
 }
 
+const char *
+rc_verification_type_to_string (RCVerificationType type)
+{
+    char *type_str;
+
+    switch (type) {
+    case RC_VERIFICATION_TYPE_SANITY:
+        type_str = "sanity";
+        break;
+    case RC_VERIFICATION_TYPE_SIZE:
+        type_str = "size";
+        break;
+    case RC_VERIFICATION_TYPE_MD5:
+        type_str = "MD5";
+        break;
+    case RC_VERIFICATION_TYPE_GPG:
+        type_str = "GPG";
+        break;
+    default:
+        type_str = "(invalid)";
+        break;
+    }
+
+    return type_str;
+}
+
 static void
 gpg_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
 {
