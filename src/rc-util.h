@@ -57,6 +57,8 @@ void rc_hash_table_slist_insert_unique (GHashTable *ht, gpointer key, gpointer v
                                         GCompareFunc eqfunc);
 void rc_hash_table_slist_free (GHashTable *ht);
 
+GSList *rc_slist_unique (const GSList *sorted_list);
+
 /* uncompress memory */
 gint rc_uncompress_memory (guint8 *input_buffer, guint32 input_length,
                            GByteArray **out_ba);

@@ -245,6 +245,21 @@ rc_hash_table_slist_insert_unique (GHashTable *ht, gpointer key, gpointer value,
     }
 }
 
+GSList *
+rc_slist_unique (const GSList *sorted_list)
+{
+    GSList *out = NULL;
+    GSList *iter = sorted_list;
+    gpointer last_thing = NULL;
+    while (iter) {
+        if (last_thing != iter->data) {
+            out = g_slist_prepend (out, iter->data);
+            last_thing = iter->data;
+        }
+        iter = iter->next;
+    }
+}
+
 /* Oh, how I wish I was using a real language and didn't have to do this tripe */
 static void
 hash_table_slist_free_helper (gpointer key, gpointer value, gpointer blah)

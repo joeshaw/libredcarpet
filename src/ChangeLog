@@ -1,3 +1,12 @@
+2001-07-11  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c, rc-deps.h: Add some helper functions to give better
+	info about what packages depend on others to the GUI (include
+	packages that are pulled in because of things like library provides
+	instead of just the package name itself)
+
+	* rc-util.c, rc-util.h: rc_slist_unique()
+
 2001-07-11  Ian Peters  <itp@ximian.com>
 
 	* rc-debman.c: added the fake version hack to the mark purge step,
