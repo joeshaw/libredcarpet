@@ -188,6 +188,28 @@
                         <file source="/etc/redhat-release" substring="2.1AS"/>
                 </detect>
         </distro>
+        <distro>
+                <name>Red Hat Enterprise Linux ES</name>
+                <version>2.1</version>
+                <arch>i386</arch>
+                <type>rpm</type>
+                <target>rhel-21es-i386</target>
+                <status>supported</status>
+                <detect>
+                        <file source="/etc/redhat-release" substring="Red Hat Enterprise Linux ES release 2.1 (Panama)"/>
+                </detect>
+        </distro>
+        <distro>
+                <name>Red Hat Enterprise Linux WS</name>
+                <version>2.1</version>
+                <arch>i386</arch>
+                <type>rpm</type>
+                <target>rhel-21ws-i386</target>
+                <status>supported</status>
+                <detect>
+                        <file source="/etc/redhat-release" substring="Red Hat Enterprise Linux WS release 2.1 (Tampa)"/>
+                </detect>
+        </distro>
 	<distro>
 		<name>Red Hat Linux</name>
 		<version>6.0</version>

@@ -1,3 +1,7 @@
+2003-05-15    <jose@ximian.com>
+
+	* distributions.xml: Added rhel-21es-i386 and rhel-21ws-i386.
+
 2003-05-12  Joe Shaw  <joe@ximian.com>
 
 	* libredcarpet.h: Add rc-rollback.h.
