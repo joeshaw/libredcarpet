@@ -2520,6 +2520,10 @@ load_rpm_syms (RCRpmman *rpmman)
         return (FALSE);
     }
 #endif
+    if (!g_module_symbol (rpmman->rpm_lib, "rpmExpandNumeric",
+                          ((gpointer)&rpmman->rpmExpandNumeric))) {
+        return (FALSE);
+    }
 
     if (rpmman->major_version == 4) {
         if (!g_module_symbol (rpmman->rpm_lib, "rpmdbInitIterator",
@@ -2714,6 +2718,19 @@ rc_rpmman_init (RCRpmman *obj)
         if (obj->rpmdbOpen (obj->rpmroot, &obj->db, flags, 0644)) {
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
                                   "unable to open RPM database");
+        }
+    }
+
+    if (obj->version >= 40003) {
+        if (!(obj->rpmExpandNumeric ("%{?__dbi_cdb:1}"))) {
+            int i;
+
+            for (i = 0; i < 16; i++) {
+                gchar *filename = g_strdup_printf
+                    ("%s/var/lib/rpm/__db.0%02d", obj->rpmroot, i);
+                unlink (filename);
+                g_free (filename);
+            }
         }
     }
 

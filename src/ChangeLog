@@ -1,5 +1,14 @@
 2002-03-14  Ian Peters  <itp@ximian.com>
 
+	* rc-rpmman.h: added rpmExpandNumeric
+
+	* rc-rpmman.c: if we're using a new enough version of RPM, and
+	there are stale concurrent db files in /var/lib/rpm, and we're not
+	supposed to be using concurrent access shit, clean up after the
+	library.
+
+2002-03-14  Ian Peters  <itp@ximian.com>
+
 	* rc-rpmman.c (rc_rpmman_transact): reverse the order we run
 	removes and installs in, to work around some previously unknown
 	behaviour with rpm obsoletes.  Also, make one error fatal instead

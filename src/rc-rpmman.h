@@ -113,6 +113,7 @@ struct _RCRpmman {
     const char * (*rpmProblemStringOld)(rpmProblem);
 #endif
     int (*rpmGetRpmlibProvides)(char ***, int **, char ***);
+    int (*rpmExpandNumeric)(const char *);
 
     /*
      * RPMv3 only functions
