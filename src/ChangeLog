@@ -1,3 +1,8 @@
+2001-07-23  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c: erm, don't return the same system package
+	multiple times, causing a nasty loop
+
 2001-07-20  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-distro.c: added suse 7.2 string
