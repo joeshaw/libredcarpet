@@ -135,7 +135,7 @@ rc_package_spec_version_to_str (RCPackageSpec *spec)
     if (spec->has_epoch) {
         g_snprintf (epoch_buf, 11, "%d:", spec->epoch);
     } else {
-        g_snprintf (epoch_buf, 11, "%s", "");
+        epoch_buf[0] = 0;
     }
 
     return (g_strdup_printf (

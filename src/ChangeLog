@@ -1,3 +1,8 @@
+2002-06-05  Ian Peters  <itp@ximian.com>
+
+	* rc-package-spec.c (rc_package_spec_version_to_str): fix a stupid
+	solaris crash, because solaris sucks
+
 2002-06-04  Ian Peters  <itp@ximian.com>
 
 	* rc-world-import.c (debian_packages_helper): this package update,
