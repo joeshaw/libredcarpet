@@ -338,3 +338,31 @@ rc_package_slist_find_duplicates (RCPackageSList *pkgs)
 
     return out_list;
 }
+
+RCPackageSList *
+rc_package_slist_remove_older_duplicates (RCPackageSList *packages, RCPackageSList **removed_packages)
+{
+    GSList *dupes;
+
+    packages = rc_package_slist_sort_by_spec (packages);
+    dupes = rc_package_slist_find_duplicates (packages);
+
+    while (dupes) {
+        RCPackageSList *cur_dupe = (RCPackageSList *) dupes->data;
+
+        cur_dupe = g_slist_reverse (cur_dupe);
+
+        while (cur_dupe) {
+            RCPackage *dup_pkg = (RCPackage *) cur_dupe->data;
+            if (cur_dupe->next) {
+                packages = g_slist_remove (packages, dup_pkg);
+                if (removed_packages) {
+                    *removed_packages = g_slist_prepend (*removed_packages, dup_pkg);
+                }
+            }
+            cur_dupe = cur_dupe->next;
+        }
+
+        dupes = dupes->next;
+    }
+}
