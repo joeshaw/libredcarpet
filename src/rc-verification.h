@@ -51,6 +51,8 @@ typedef GSList RCVerificationSList;
 
 RCVerification *rc_verification_new (void);
 
+void rc_verification_cleanup ();
+
 void rc_verification_free (RCVerification *verification);
 
 void rc_verification_slist_free (RCVerificationSList *verification_list);
