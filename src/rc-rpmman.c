@@ -1178,6 +1178,45 @@ rc_rpmman_read_header (RCRpmman *rpmman, Header header, gchar **name,
    and does the right thing, breaking them into the right parts and returning
    the parts in the arrays epochs, versions, and releases. */
 
+static gboolean
+parse_version (const char *input, gboolean *has_epoch, guint32 *epoch,
+               char **version, char **release)
+{
+    const char *vptr = NULL, *rptr = NULL;
+
+    g_return_val_if_fail (input, FALSE);
+    g_return_val_if_fail (input[0], FALSE);
+
+    *has_epoch = 0;
+
+    if ((vptr = strchr (input, ':'))) {
+        /* We -might- have an epoch here */
+        char *endptr;
+
+        *epoch = strtoul (input, &endptr, 10);
+
+        if (endptr != vptr) {
+            /* No epoch here, just a : in the version string */
+            *epoch = 0;
+            vptr = input;
+        } else {
+            vptr++;
+            *has_epoch = 1;
+        }
+    } else {
+        vptr = input;
+    }
+
+    if ((rptr = strchr (vptr, '-'))) {
+        *version = g_strndup (vptr, rptr - vptr);
+        *release = g_strdup (rptr + 1);
+    } else {
+        *version = g_strdup (vptr);
+    }
+
+    return (TRUE);
+}
+
 static void
 parse_versions (char **inputs, gboolean **has_epochs, guint32 **epochs,
                 char ***versions, char ***releases, guint count)
@@ -1190,34 +1229,9 @@ parse_versions (char **inputs, gboolean **has_epochs, guint32 **epochs,
     *has_epochs = g_new0 (gboolean, count);
 
     for (i = 0; i < count; i++) {
-        char *vptr = NULL, *rptr = NULL;
-
-        if (!inputs[i] || !inputs[i][0]) {
-            continue;
-        }
-
-        if ((vptr = strchr (inputs[i], ':'))) {
-            /* We might have an epoch here, depending */
-            char *endptr;
-            (*epochs)[i] = strtoul (inputs[i], &endptr, 10);
-
-            if (endptr != vptr) {
-                /* No epoch here, just a : in the version string */
-                (*epochs)[i] = 0;
-                vptr = inputs[i];
-            } else {
-                vptr++;
-                (*has_epochs)[i] = 1;
-            }
-        } else {
-            vptr = inputs[i];
-        }
-
-        if ((rptr = strchr (vptr, '-'))) {
-            (*versions)[i] = g_strndup (vptr, rptr - vptr);
-            (*releases)[i] = g_strdup (rptr + 1);
-        } else {
-            (*versions)[i] = g_strdup (vptr);
+        if (inputs[i] && inputs[i][0]) {
+            parse_version (inputs[i], &((*has_epochs)[i]), &((*epochs)[i]),
+                           &((*versions)[i]), &((*releases)[i]));
         }
     }
 }

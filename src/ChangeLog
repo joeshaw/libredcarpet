@@ -1,5 +1,10 @@
 2002-06-05  Ian Peters  <itp@ximian.com>
 
+	* rc-rpmman.c (parse_version): added, guts of parse_versions
+	(parse_versions): just calls parse_version now
+
+2002-06-05  Ian Peters  <itp@ximian.com>
+
 	* rc-verification.h: add RC_VERIFICATION_TYPE_ALL, add bit values
 	to RC_VERIFICATION_TYPE_*
 
