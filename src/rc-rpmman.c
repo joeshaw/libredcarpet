@@ -1203,11 +1203,15 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
                          RPMTAG_OBSOLETEVERSION, RPMTAG_OBSOLETEFLAGS,
                          &package->conflicts);
 
-    /* Provide myself for the benefit of the dependency code */
-    dep = rc_package_dep_new (package->spec.name, package->spec.epoch,
-                              package->spec.version,
-                              package->spec.release, RC_RELATION_EQUAL);
-    package->provides = g_slist_prepend (package->provides, dep);
+    /* RPM versions prior to 4.0 don't make each package provide
+     * itself automatically, so we have to add the dependency
+     * ourselves */
+    if (rpmman->version < 40000) {
+        dep = rc_package_dep_new (package->spec.name, package->spec.epoch,
+                                  package->spec.version,
+                                  package->spec.release, RC_RELATION_EQUAL);
+        package->provides = g_slist_prepend (package->provides, dep);
+    }
 
     /* First stab at handling the pesky file dependencies */
     {

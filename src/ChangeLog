@@ -1,5 +1,10 @@
 2001-09-21  Ian Peters  <itp@ximian.com>
 
+	* rc-rpmman.c: check what version of RPM we're using before we add
+	a self-dependency -- RPM 4.0 and beyond don't need this
+
+2001-09-21  Ian Peters  <itp@ximian.com>
+
 	* rc-rpm-helper-1.so, rc-rpm-helper-2.so, rc-rpm-helper-3.so:
 	removed.
 
