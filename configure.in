@@ -157,4 +157,5 @@ Configuration:
   Include DPKG support:         ${enable_backend_dpkg}
   Include dynamic RPM support:  ${enable_backend_rpm}
   Include static RPM3 support:  ${enable_backend_rpm3_static}
+  Include static RPM4 support:  ${enable_backend_rpm4_static}
 "
