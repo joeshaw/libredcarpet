@@ -1,3 +1,15 @@
+2004-09-01  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-package.c (rc_package_get_file_size): Implement.
+	(rc_package_get_requires): Implement.
+	(rc_package_get_provides): Implement.
+	(rc_package_get_conflicts): Implement.
+	(rc_package_get_obsoletes): Implement.
+	(rc_package_get_children): Implement.
+
+	* rc-package-dep.c (rc_package_dep_get_spec): Implement.
+	(rc_package_dep_array_nth): Implement.
+
 2004-08-30  James Willcox  <james@ximian.com>
 
 	* distributions.xml: Add rhel-3es-x86_64

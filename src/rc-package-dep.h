@@ -97,6 +97,9 @@ rc_package_dep_new_from_spec (RCPackageSpec     *spec,
                               gboolean           pre,
                               gboolean           is_or);
 
+RCPackageSpec *
+rc_package_dep_get_spec (RCPackageDep *dep);
+
 RCPackageRelation
 rc_package_dep_get_relation (RCPackageDep *dep);
 
@@ -130,6 +133,9 @@ rc_package_dep_array_copy (RCPackageDepArray *array);
 
 void
 rc_package_dep_array_free (RCPackageDepArray *array);
+
+RCPackageDep *
+rc_package_dep_array_nth (RCPackageDepArray *array, guint n);
 
 gboolean
 rc_package_dep_verify_relation (RCPackman    *packman,

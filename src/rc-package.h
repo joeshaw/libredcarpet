@@ -137,6 +137,7 @@ void             rc_package_set_filename      (RCPackage  *package,
 RCPackageSpec   *rc_package_get_spec          (RCPackage  *package);
 RCArch           rc_package_get_arch          (RCPackage  *package);
 RCPackageSection rc_package_get_section       (RCPackage  *package);
+guint32          rc_package_get_file_size     (RCPackage  *package);
 guint32          rc_package_get_installed_size (RCPackage *package);
 gchar           *rc_package_get_summary       (RCPackage  *package);
 gchar           *rc_package_get_description   (RCPackage  *package);
@@ -144,5 +145,11 @@ gchar           *rc_package_get_signature_filename (RCPackage *package);
 void             rc_package_set_signature_filename (RCPackage  *package,
                                                     const char *filename);
 
+
+RCPackageDepArray *rc_package_get_requires     (RCPackage *package);
+RCPackageDepArray *rc_package_get_provides     (RCPackage *package);
+RCPackageDepArray *rc_package_get_conflicts    (RCPackage *package);
+RCPackageDepArray *rc_package_get_obsoletes    (RCPackage *package);
+RCPackageDepArray *rc_pakcage_get_children     (RCPackage *package);
 
 #endif /* _RC_PACKAGE_H */

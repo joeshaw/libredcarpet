@@ -412,6 +412,12 @@ rc_package_get_section (RCPackage *package)
 }
 
 guint32
+rc_package_get_file_size (RCPackage  *package)
+{
+    return package->file_size;
+}
+
+guint32
 rc_package_get_installed_size (RCPackage *package)
 {
     return package->installed_size;
@@ -440,4 +446,44 @@ rc_package_set_signature_filename (RCPackage *package,
                                    const char *filename)
 {
     package->signature_filename = g_strdup (filename);
+}
+
+RCPackageDepArray *
+rc_package_get_requires (RCPackage *package)
+{
+    g_return_val_if_fail (package != NULL, NULL);
+
+    return package->requires_a;
+}
+
+RCPackageDepArray *
+rc_package_get_provides (RCPackage *package)
+{
+    g_return_val_if_fail (package != NULL, NULL);
+
+    return package->provides_a;
+}
+
+RCPackageDepArray *
+rc_package_get_conflicts (RCPackage *package)
+{
+    g_return_val_if_fail (package != NULL, NULL);
+
+    return package->conflicts_a;
+}
+
+RCPackageDepArray *
+rc_package_get_obsoletes (RCPackage *package)
+{
+    g_return_val_if_fail (package != NULL, NULL);
+
+    return package->obsoletes_a;
+}
+
+RCPackageDepArray *
+rc_package_get_children (RCPackage *package)
+{
+    g_return_val_if_fail (package != NULL, NULL);
+
+    return package->children_a;
 }

@@ -289,6 +289,12 @@ rc_package_dep_new_from_spec (RCPackageSpec     *spec,
         spec->version, spec->release, relation, channel, is_pre, is_or);
 }
 
+RCPackageSpec *
+rc_package_dep_get_spec (RCPackageDep *dep)
+{
+    return &dep->spec;
+}
+
 RCPackageRelation
 rc_package_dep_get_relation (RCPackageDep *dep)
 {
@@ -442,6 +448,15 @@ rc_package_dep_array_free (RCPackageDepArray *array)
     g_free (array->data);
 
     g_free (array);
+}
+
+RCPackageDep *
+rc_package_dep_array_nth (RCPackageDepArray *array, guint n)
+{
+    g_return_val_if_fail (array != NULL, NULL);
+    g_return_val_if_fail (n < array->len, NULL);
+
+    return array->data[n];
 }
 
 gboolean
