@@ -5,6 +5,14 @@
     public static Channel ANY = new Channel (new IntPtr (2));
     public static Channel NON_SYSTEM = new Channel (new IntPtr (3));
 
+    private bool pkginfoFileCompressed = false;
+
+    public bool PkginfoFileCompressed
+    {
+        get { return this.pkginfoFileCompressed; }
+        set { this.pkginfoFileCompressed = value; }
+    }
+
     [DllImport("libredcarpet")]
     static extern IntPtr rc_channel_get_world(IntPtr raw);
                                                                                 
@@ -56,4 +64,111 @@
         System.IO.Stream s = System.IO.File.Open (filename, System.IO.FileMode.OpenOrCreate);
         Channel.ToXml (channels, s);
         s.Close ();
+    }
+
+    private static void FromXml (System.Xml.XmlTextReader reader, ChannelDelegate callback)
+    {
+        reader.MoveToContent ();
+        reader.ReadStartElement ("channellist");
+
+        while (reader.Read ()) {
+            if (reader.LocalName != "channel")
+                continue;
+
+            if (!reader.HasAttributes) {
+                Console.WriteLine ("channel doesn't have attributes, skipping");
+                continue;
+            }
+
+            Channel c = new Channel (reader["bid"],
+                                     reader["name"],
+                                     reader["alias"],
+                                     reader["description"]);
+            c.LegacyId = reader["id"];
+
+            string distros = reader["distro_target"];
+            if (distros != null) {
+                foreach (string d in distros.Split (new Char[] {':'}))
+                    c.AddDistroTarget (d);
+            }
+
+            ChannelType type = ChannelType.Unknown;
+            string type_str = reader["type"];
+            if (type_str != null) {
+                switch (type_str) {
+                case "helix":
+                    type = ChannelType.Helix;
+                    break;
+                case "debian":
+                    type = ChannelType.Debian;
+                    break;
+                case "aptrpm":
+                    type = ChannelType.Aptrpm;
+                    break;
+                case "yum":
+                    type = ChannelType.Yum;
+                    break;
+                default:
+                    break;
+                }
+            }
+
+            c.SetType (type);
+
+            int subd_priority = 0;
+            int unsubd_priority = 0;
+            string priority = reader["priority"];
+            if (priority != null)
+                subd_priority = Channel.PriorityParse (priority);
+
+            priority = reader["priority_when_unsubscribed"];
+            if (priority != null)
+                unsubd_priority = Channel.PriorityParse (priority);
+
+            c.SetPriorities (subd_priority, unsubd_priority);
+
+            c.Path = reader["path"];
+            c.FilePath = reader["file_path"];
+            c.IconFile = reader["icon"];
+            c.PkginfoFile = reader["pkginfo_file"];
+
+            string compressed = reader["pkginfo_compressed"];
+            if (compressed != null && compressed == "1")
+                c.PkginfoFileCompressed = true;
+
+            if (!callback (c))
+                break;
+        }
+    }
+
+    public static void FromXml (System.IO.Stream stream, ChannelDelegate callback)
+    {
+        System.Xml.XmlTextReader reader = new System.Xml.XmlTextReader (stream);
+        FromXml (reader, callback);
+        reader.Close ();
+        stream.Close ();
+    }
+
+    private class FromXmlHelper {
+        private System.Collections.ArrayList list;
+
+        public FromXmlHelper () {
+            this.list = new System.Collections.ArrayList ();
+        }
+
+        public bool ForeachChannelCb (Channel channel) {
+            this.list.Add (channel);
+            return true;
+        }
+
+        public Channel[] Channels {
+            get { return (Channel[]) this.list.ToArray (typeof (Channel)); }
+        }
+    }
+
+    public static Channel[] FromXml (System.IO.Stream stream)
+    {
+        FromXmlHelper helper = new FromXmlHelper ();
+        FromXml (stream, new ChannelDelegate (helper.ForeachChannelCb));
+        return helper.Channels;
     }

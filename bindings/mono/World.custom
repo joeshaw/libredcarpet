@@ -76,10 +76,3 @@
         writer.WriteEndDocument ();
         writer.Close ();
     }
-
-    public void ToXml (string filename)
-    {
-        System.IO.Stream s = System.IO.File.Open (filename, System.IO.FileMode.OpenOrCreate);
-        this.ToXml (s);
-        s.Close ();
-    }

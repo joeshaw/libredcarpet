@@ -1,39 +1,6 @@
 /* -*- Mode: csharp; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 
 //namespace {
-    private void ParseXmlNode (System.Xml.XmlNode node) {
-        string name = node.Attributes["name"].Value;
-        string version = null;
-        string release = null;
-        bool has_epoch = false;
-        uint epoch = 0;
-        RC.PackageRelation relation = PackageRelation.Any;
-        RC.Channel channel = Channel.ANY;
-
-        if (node.Attributes["op"] != null) {
-            relation = Package.RelationFromString (node.Attributes["op"].Value);
-            version = node.Attributes["version"].Value;
-            release = node.Attributes["release"].Value;
-
-            if (node.Attributes["epoch"] != null) {
-                has_epoch = true;
-                epoch = Convert.ToUInt32 (node.Attributes["epoch"].Value);
-            }
-        }
-
-        Raw = rc_package_dep_new (name, has_epoch, epoch, version, release,
-                                  (int) relation, channel.Handle, false, false);
-    }
-
-    public PackageDep (System.Xml.XmlNode node) {
-        if (node.Name == "dep") {
-            ParseXmlNode (node);
-            // FIXME
-            // } else if (node.Name == "or") {
-        } else
-            throw new ArgumentException ("Invalid XML node");
-    }
-
     public void ToXml (System.Xml.XmlTextWriter writer)
     {
         // FIXME: if (this.IsOr) rc_package_dep_or_slist_to_xml_node ()
@@ -57,4 +24,42 @@
 
         writer.WriteEndElement ();
     }
-    
+
+    private void ParseXmlNode (System.Xml.XmlTextReader reader)
+    {
+        string name = null;
+        string version = null;
+        string release = null;
+        bool has_epoch = false;
+        uint epoch = 0;
+        RC.PackageRelation relation = PackageRelation.Any;
+        RC.Channel channel = Channel.ANY;
+
+        name = reader["name"];
+
+        string tmp = reader["op"];
+        if (tmp != null) {
+            relation = Package.RelationFromString (tmp);
+            version = reader["version"];
+            release = reader["release"];
+
+            tmp = reader["epoch"];
+            if (tmp != null) {
+                has_epoch = true;
+                epoch = System.Xml.XmlConvert.ToUInt32 (tmp);
+            }
+        }
+
+        Raw = rc_package_dep_new (name, has_epoch, epoch, version, release,
+                                  (int) relation, channel.Handle, false, false);
+    }
+
+    public PackageDep (System.Xml.XmlTextReader reader) {
+        if (reader.LocalName == "dep") {
+            ParseXmlNode (reader);
+            // FIXME
+            // } else if (node.Name == "or") {
+        } else
+            throw new ArgumentException ("Invalid XML node");
+    }
+

@@ -1,32 +1,6 @@
 /* -*- Mode: csharp; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 
 //namespace {
-    public PackageMatch (System.Xml.XmlNode node) : this () {
-        if (node.Name != "match")
-            throw new ArgumentException ("Invalid XML node");
-
-        System.Xml.XmlNode iter = node.FirstChild;
-        while (iter != null) {
-            if (iter.Name == "channel")
-                this.ChannelId = iter.FirstChild.Value;
-            else if (iter.Name == "dep") {
-                PackageDep dep = new PackageDep (iter);
-                this.Dep = dep;
-                dep.Unref ();
-            } else if (iter.Name == "glob")
-                this.Glob = iter.FirstChild.Value;
-            else if (iter.Name == "importance") {
-                int gteq = 0;
-                if (iter.Attributes["gteq"] != null)
-                    gteq = Convert.ToInt32 (iter.Attributes["gteq"].Value);
-                PackageImportance imp = RC.Global.PackageImportanceFromString (iter.FirstChild.Value);
-                this.SetImportance (imp, Convert.ToBoolean (gteq));
-            }
-
-            iter = iter.NextSibling;
-        }
-    }
-
     public void ToXml (System.Xml.XmlTextWriter writer)
     {
         writer.WriteStartElement ("match");
@@ -48,4 +22,89 @@
         }
 
         writer.WriteEndElement ();
+    }
+
+    private static PackageMatch ParseMatch (System.Xml.XmlTextReader reader)
+    {
+        // Make sure we're in right position
+        reader.ReadStartElement ("match");
+
+        PackageMatch match = new PackageMatch ();
+
+        if (reader.LocalName == "channel")
+            match.ChannelId = reader.ReadElementString ();
+
+        if (reader.LocalName == "dep") {
+            PackageDep dep = new PackageDep (reader);
+            match.Dep = dep;
+            dep.Unref ();
+
+            // Move reader to start of next element
+            while (reader.Read ())
+                if (reader.NodeType == System.Xml.XmlNodeType.Element)
+                    break;
+        }
+
+        if (reader.LocalName == "glob")
+            match.Glob = reader.ReadElementString ();
+
+        if (reader.LocalName == "importance") {
+            int gteq = 0;
+            string gteq_str = reader["gteq"];
+            if (gteq_str != null)
+                gteq = System.Xml.XmlConvert.ToInt32 (gteq_str);
+
+            PackageImportance imp = RC.Global.PackageImportanceFromString (reader.ReadElementString ());
+            match.SetImportance (imp, Convert.ToBoolean (gteq));
+        }
+
+        return match;
+    }
+
+    private static void FromXml (System.Xml.XmlTextReader reader, PackageMatchDelegate callback)
+    {
+        reader.MoveToContent ();
+
+        while (reader.Read ()) {
+            if (reader.NodeType == System.Xml.XmlNodeType.Element && reader.LocalName == "match") {
+                PackageMatch match = ParseMatch (reader);
+
+                if (!callback (match))
+                    break;
+            }
+        }
+
+        reader.Close ();
+    }
+
+    public static void FromXml (System.IO.Stream stream, PackageMatchDelegate callback)
+    {
+        System.Xml.XmlTextReader reader = new System.Xml.XmlTextReader (stream);
+        FromXml (reader, callback);
+        reader.Close ();
+        stream.Close ();
+    }
+
+    private class FromXmlHelper {
+        private System.Collections.ArrayList list;
+
+        public FromXmlHelper () {
+            this.list = new System.Collections.ArrayList ();
+        }
+
+        public bool ForeachMatchCb (PackageMatch match) {
+            this.list.Add (match);
+            return true;
+        }
+
+        public PackageMatch[] Matches {
+            get { return (PackageMatch[]) this.list.ToArray (typeof (PackageMatch)); }
+        }
+    }
+
+    public static PackageMatch[] FromXml (System.IO.Stream stream)
+    {
+        FromXmlHelper helper = new FromXmlHelper ();
+        FromXml (stream, new PackageMatchDelegate (helper.ForeachMatchCb));
+        return helper.Matches;
     }
