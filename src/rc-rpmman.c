@@ -127,6 +127,7 @@ struct _InstallState {
     guint install_total;
     guint install_extra;
     guint remove_total;
+    guint true_total;
     gboolean configuring;
 };
 
@@ -162,29 +163,33 @@ transact_cb (const Header h, const rpmCallbackType what,
         break;
 
     case RPMCALLBACK_TRANS_PROGRESS:
-        if (state->configuring) {
-            gtk_signal_emit_by_name (GTK_OBJECT (state->packman),
-                                     "transact_step", ++state->seqno,
-                                     RC_PACKMAN_STEP_CONFIGURE, NULL);
-            GTKFLUSH;
-            if (state->seqno == state->install_total) {
-                state->configuring = FALSE;
+        if (state->seqno < state->true_total) {
+            if (state->configuring) {
+                gtk_signal_emit_by_name (GTK_OBJECT (state->packman),
+                                         "transact_step", ++state->seqno,
+                                         RC_PACKMAN_STEP_CONFIGURE, NULL);
+                GTKFLUSH;
+                if (state->seqno == state->install_total) {
+                    state->configuring = FALSE;
+                }
+            } else {
+                gtk_signal_emit_by_name (GTK_OBJECT (state->packman),
+                                         "transact_step", ++state->seqno,
+                                         RC_PACKMAN_STEP_REMOVE, NULL);
+                GTKFLUSH;
             }
-        } else {
-            gtk_signal_emit_by_name (GTK_OBJECT (state->packman),
-                                     "transact_step", ++state->seqno,
-                                     RC_PACKMAN_STEP_REMOVE, NULL);
-            GTKFLUSH;
         }
         break;
 
     case RPMCALLBACK_INST_START:
-        filename_copy = g_strdup (pkgKey);
-        base = basename (filename_copy);
-        gtk_signal_emit_by_name (GTK_OBJECT (state->packman),
-                                 "transact_step", ++state->seqno,
-                                 RC_PACKMAN_STEP_INSTALL, base);
-        g_free (filename_copy);
+        if (state->seqno < state->true_total) {
+            filename_copy = g_strdup (pkgKey);
+            base = basename (filename_copy);
+            gtk_signal_emit_by_name (GTK_OBJECT (state->packman),
+                                     "transact_step", ++state->seqno,
+                                     RC_PACKMAN_STEP_INSTALL, base);
+            g_free (filename_copy);
+        }
         break;
 
     case RPMCALLBACK_TRANS_START:
@@ -607,9 +612,11 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         rc_package_free (package);
     }
 
+    state.true_total = state.install_total * 2 + state.install_extra +
+        state.remove_total;
+
     gtk_signal_emit_by_name (GTK_OBJECT (packman), "transact_start",
-                             state.install_total * 2 + state.install_extra +
-                             state.remove_total);
+                             state.true_total);
     GTKFLUSH;
 
     rc = rpmman->rpmRunTransactions (transaction,
@@ -658,6 +665,13 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     }
 
     rpmman->rpmProblemSetFree (probs);
+
+    while (state.seqno < state.true_total) {
+        gtk_signal_emit_by_name (GTK_OBJECT (packman), "transact_step",
+                                 ++state.seqno, RC_PACKMAN_STEP_UNKNOWN,
+                                 NULL);
+        GTKFLUSH;
+    }
 
     gtk_signal_emit_by_name (GTK_OBJECT (packman), "transact_done");
     GTKFLUSH;

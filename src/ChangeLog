@@ -1,3 +1,8 @@
+2001-09-19  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c: lame hacks to avoid over/under counts during
+	transactions
+
 2001-09-19  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c: Call deps_find_provide after adding a non-older package
