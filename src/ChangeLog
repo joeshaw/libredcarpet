@@ -1,3 +1,7 @@
+2001-02-05  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c: finish moving the db into the RCRpmman struct
+
 2001-02-02  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c: Yay for typos. Made debian conflicts (mostly) work

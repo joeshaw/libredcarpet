@@ -281,7 +281,8 @@ transaction_add_remove_packages (RCPackman *packman,
         unsigned int offset;
         int count;
 
-        mi = rpmdbInitIterator (db, RPMDBI_LABEL, package_name, 0);
+        mi = rpmdbInitIterator (RC_RPMMAN (packman)->db, RPMDBI_LABEL,
+                                package_name, 0);
         count = rpmdbGetIteratorCount (mi);
 
         if (count <= 0) {
@@ -982,7 +983,8 @@ rc_rpmman_query (RCPackman *packman, RCPackage *package)
     rpmdbMatchIterator mi = NULL;
     Header header;
 
-    mi = rpmdbInitIterator (db, RPMDBI_LABEL, package->spec.name, 0);
+    mi = rpmdbInitIterator (RC_RPMMAN (packman)->db, RPMDBI_LABEL,
+                            package->spec.name, 0);
 
     /* I think this is an error? */
     /* I guess not */
@@ -1137,7 +1139,8 @@ rc_rpmman_query_all (RCPackman *packman)
     rpmdbMatchIterator mi = NULL;
     Header header;
 
-    mi = rpmdbInitIterator (db, RPMDBI_PACKAGES, NULL, 0);
+    mi = rpmdbInitIterator (RC_RPMMAN (packman)->db, RPMDBI_PACKAGES,
+                            NULL, 0);
 
     if (!mi) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
@@ -1560,7 +1563,8 @@ rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
     Header header;
     RCPackage *package;
 
-    mi = rpmdbInitIterator (db, RPMTAG_BASENAMES, filename, 0);
+    mi = rpmdbInitIterator (RC_RPMMAN (packman)->db, RPMTAG_BASENAMES,
+                            filename, 0);
 
     if (!mi) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
