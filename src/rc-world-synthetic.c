@@ -169,7 +169,13 @@ rc_world_synthetic_transact (RCWorld *world,
 
     for (iter = install_packages; iter != NULL; iter = iter->next) {
         RCPackage *pkg = iter->data;
-        rc_world_store_add_package (RC_WORLD_STORE (world), pkg);
+        RCPackage *synth_pkg = rc_package_copy (pkg);
+
+        synth_pkg->channel =
+            rc_channel_ref (RC_WORLD_SYNTHETIC (world)->synthetic_channel);
+
+        rc_world_store_add_package (RC_WORLD_STORE (world), synth_pkg);
+        rc_package_unref (synth_pkg);
     }
 
     for (iter = remove_packages; iter != NULL; iter = iter->next) {

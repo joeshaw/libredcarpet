@@ -1,5 +1,11 @@
 2003-08-27  Joe Shaw  <joe@ximian.com>
 
+	* rc-world-synthetic.c (rc_world_synthetic_transact): Make a copy
+	of the package coming in and assign its channel to the synthetic
+	channel.  Unref it after we've added it to the world.
+
+2003-08-27  Joe Shaw  <joe@ximian.com>
+
 	* rc-pending.c (rc_pending_class_init): Fix a cut-and-paste error
 	that was pointing the message signal at the complete signal's
 	class structure offset.
