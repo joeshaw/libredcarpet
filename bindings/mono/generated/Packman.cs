@@ -733,7 +733,9 @@ namespace RC {
             return ret;
         }
 
-        set { rc_packman_set_global(value.Handle); }
+        set {
+            rc_packman_set_global ((value == null) ? IntPtr.Zero : value.Handle);
+        }
     }
 
 #endregion

@@ -1052,15 +1052,6 @@
           <parameter type="int" name="flags" />
         </parameters>
       </method>
-      <method cname="rc_get_world" shared="true" name="GetGlobal">
-        <return-type type="RCWorld*" />
-      </method>
-      <method cname="rc_set_world" shared="true" name="SetGlobal">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="RCWorld*" name="world" />
-        </parameters>
-      </method>
     </object>
     <object name="WorldLocalDir" cname="RCWorldLocalDir" parent="RCWorldService">
       <field cname="path" type="char*" />
@@ -1710,7 +1701,7 @@
           <parameter type="RCPackageUpdate*" name="update" />
         </parameters>
       </method>
-      <method name="Copy" cname="rc_package_copy">
+      <method name="Copy" cname="rc_package_copy" hidden="1">
         <return-type type="RCPackage*" />
       </method>
       <method name="GetArch" cname="rc_package_get_arch">
@@ -1801,7 +1792,7 @@
         <return-type type="gboolean" />
       </method>
       <constructor cname="rc_package_new" />
-      <method name="Ref" cname="rc_package_ref">
+      <method name="Ref" cname="rc_package_ref" hidden="1">
         <return-type type="RCPackage*" />
       </method>
       <method name="RelationFromString" cname="rc_package_relation_from_string" shared="true">
@@ -1964,7 +1955,7 @@
       <method name="ToStrStatic" cname="rc_package_to_str_static" hidden="1">
         <return-type type="const-char*" />
       </method>
-      <method name="Unref" cname="rc_package_unref">
+      <method name="Unref" cname="rc_package_unref" hidden="1">
         <return-type type="void" />
       </method>
     </boxed>
@@ -3356,6 +3347,9 @@
           <parameter type="const-char*" name="filename" />
         </parameters>
       </method>
+      <method name="GetWorld" cname="rc_get_world" shared="true" hidden="1">
+        <return-type type="RCWorld*" />
+      </method>
       <method name="GunzipMemory" cname="rc_gunzip_memory" shared="true" hidden="1">
         <return-type type="gint" />
         <parameters>
@@ -3390,6 +3384,12 @@
         <return-type type="xmlDoc*" />
         <parameters>
           <parameter type="const-char*" name="filename" />
+        </parameters>
+      </method>
+      <method name="SetWorld" cname="rc_set_world" shared="true" hidden="1">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCWorld*" name="world" />
         </parameters>
       </method>
       <method name="StringToGuint32WithDefault" cname="rc_string_to_guint32_with_default" shared="true" hidden="1">

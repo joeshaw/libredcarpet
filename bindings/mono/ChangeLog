@@ -1,3 +1,31 @@
+2004-11-08  Tambet Ingo  <tambet@ximian.com>
+
+	* generated/Package.cs: Comment out constructor Package(IntPtr raw).
+	It's implemented in .custom file with modifications.
+
+	* generated/*.cs: Regenerated.
+
+	* libredcarpet-api.xml: Regenerated.
+
+	* WorldService.custom (MountUnmanaged): Use
+	GLib.Object.GetObject (raw, true) so it doesn't increment the reference
+	count. We already have the reference.
+	Re-indentify.
+
+	* WorldMulti.custom: Dispose child world after it's added to WorlMulti.
+
+	* World.custom: Re-indentify. Implement Get/Set Global which handles
+	null values.
+
+	* RC.metadata: Hide rc_package_[ref|unref].
+	Hide rc_[s|g]et_world, it's implemented manually with some changes.
+
+	* Packman.custom (SetGlobal): Allow value to be null.
+
+	* Package.custom: Implment IDisposable and destructor.
+	Increment reference count in constructor.
+	Implement ICloneable.
+
 2004-10-29  James Willcox  <james@ximian.com>
 
 	* AssemblyInfo.cs:

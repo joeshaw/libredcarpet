@@ -35,17 +35,6 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_package_get_type();
-
-		public static GLib.GType GType { 
-			get {
-				IntPtr raw_ret = rc_package_get_type();
-				GLib.GType ret = new GLib.GType(raw_ret);
-				return ret;
-			}
-		}
-
-		[DllImport("libredcarpet")]
 		static extern IntPtr rc_package_get_description(IntPtr raw);
 
 		[DllImport("libredcarpet")]
@@ -132,19 +121,6 @@ namespace RC {
 		public static GLib.SList SlistRef(GLib.SList packages) {
 			IntPtr raw_ret = rc_package_slist_ref(packages.Handle);
 			GLib.SList ret = new GLib.SList(raw_ret);
-			return ret;
-		}
-
-		[DllImport("libredcarpet")]
-		static extern IntPtr rc_package_ref(IntPtr raw);
-
-		public RC.Package Ref() {
-			IntPtr raw_ret = rc_package_ref(Handle);
-			RC.Package ret;
-			if (raw_ret == IntPtr.Zero)
-				ret = null;
-			else
-				ret = new RC.Package(raw_ret);
 			return ret;
 		}
 
@@ -321,6 +297,17 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
+		static extern IntPtr rc_package_get_type();
+
+		public static GLib.GType GType { 
+			get {
+				IntPtr raw_ret = rc_package_get_type();
+				GLib.GType ret = new GLib.GType(raw_ret);
+				return ret;
+			}
+		}
+
+		[DllImport("libredcarpet")]
 		static extern bool rc_package_is_synthetic(IntPtr raw);
 
 		public bool IsSynthetic { 
@@ -388,27 +375,7 @@ namespace RC {
 			rc_package_add_dummy_update(Handle, package_filename, package_size);
 		}
 
-		[DllImport("libredcarpet")]
-		static extern IntPtr rc_package_copy(IntPtr raw);
-
-		public RC.Package Copy() {
-			IntPtr raw_ret = rc_package_copy(Handle);
-			RC.Package ret;
-			if (raw_ret == IntPtr.Zero)
-				ret = null;
-			else
-				ret = new RC.Package(raw_ret);
-			return ret;
-		}
-
-		[DllImport("libredcarpet")]
-		static extern void rc_package_unref(IntPtr raw);
-
-		public void Unref() {
-			rc_package_unref(Handle);
-		}
-
-		public Package(IntPtr raw) : base(raw) {}
+		// public Package(IntPtr raw) : base(raw) {}
 
 		[DllImport("libredcarpet")]
 		static extern IntPtr rc_package_new();
@@ -421,7 +388,50 @@ namespace RC {
 #endregion
 #region Customized extensions
 #line 1 "Package.custom"
-//namespace {
+    [DllImport("libredcarpet")]
+    static extern IntPtr rc_package_ref(IntPtr raw);
+
+    protected Package (IntPtr raw, bool owned_ref) : base (raw) {
+        if (!owned_ref)
+            rc_package_ref (Handle);
+    }
+
+    public Package(IntPtr raw) : this(raw, false) {}
+
+    private bool disposed = false;
+
+    public void Dispose () {
+        Dispose (true);
+        GC.SuppressFinalize (this);
+    }
+
+    [DllImport("libredcarpet")]
+    static extern void rc_package_unref(IntPtr raw);
+
+    private void Dispose (bool disposing) {
+        if (!disposed) {
+            rc_package_unref (Handle);
+            disposed = true;
+        }
+    }
+
+    ~Package () {
+        Dispose (false);
+    }
+
+    [DllImport("libredcarpet")]
+    static extern IntPtr rc_package_copy(IntPtr raw);
+
+    // ICloneable
+    public Object Clone () {
+        IntPtr raw_ret = rc_package_copy(Handle);
+        RC.Package ret;
+        if (raw_ret == IntPtr.Zero)
+            ret = null;
+        else
+            ret = new RC.Package(raw_ret, true);
+        return ret;
+    }
 
     [DllImport("libredcarpet")]
     static extern IntPtr rc_package_get_children(IntPtr raw);

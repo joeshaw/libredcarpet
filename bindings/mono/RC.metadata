@@ -49,6 +49,9 @@
 
   <attr path="/api/namespace/boxed[@cname='RCPackage']" name="opaque">1</attr>
   <attr path="/api/namespace/boxed[@cname='RCPackage']" name="parent">RCPackageSpec</attr>
+  <attr path="/api/namespace/boxed[@cname='RCPackage']/method[@cname='rc_package_ref']" name="hidden">1</attr>
+  <attr path="/api/namespace/boxed[@cname='RCPackage']/method[@cname='rc_package_unref']" name="hidden">1</attr>
+  <attr path="/api/namespace/boxed[@cname='RCPackage']/method[@cname='rc_package_copy']" name="hidden">1</attr>
   <attr path="/api/namespace/boxed[@cname='RCPackage']/method[@cname='rc_package_get_name']" name="hidden">1</attr>
   <attr path="/api/namespace/boxed[@cname='RCPackage']/method[@cname='rc_package_get_spec']" name="hidden">1</attr>
   <attr path="/api/namespace/boxed[@cname='RCPackage']/method[@cname='rc_package_get_children']" name="hidden">1</attr>
@@ -129,14 +132,12 @@
    <attr path="/api/namespace/callback[@cname='RCWorldTransactFn']" name="name">WorldTransactDelegate</attr>
    
    <attr path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_string_to_package_importance']" name="name">PackageImportanceFromString</attr>
-   <attr path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_get_world']" name="name">GetGlobal</attr>
-   <attr path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_set_world']" name="name">SetGlobal</attr>
+   <attr path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_get_world']" name="hidden">1</attr>
+   <attr path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_set_world']" name="hidden">1</attr>
    <attr path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_distman_new']" name="name">Distman</attr>
 
    
    <move-node path="/api/namespace/boxed[@cname='RCPackage']/method[@cname='rc_package_importance_to_string']">/api/namespace/class[@cname='RCGlobal']</move-node>
-   <move-node path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_get_world']">/api/namespace/object[@cname='RCWorld']</move-node>
-   <move-node path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_set_world']">/api/namespace/object[@cname='RCWorld']</move-node>
    <move-node path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_distman_new']">/api/namespace/object[@cname='RCPackman']</move-node>
 
    

@@ -648,27 +648,6 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_get_world();
-
-		[DllImport("libredcarpet")]
-		static extern void rc_set_world(IntPtr world);
-
-		public static RC.World Global { 
-			get {
-				IntPtr raw_ret = rc_get_world();
-				RC.World ret;
-				if (raw_ret == IntPtr.Zero)
-					ret = null;
-				else
-					ret = (RC.World) GLib.Object.GetObject(raw_ret);
-				return ret;
-			}
-			set {
-				rc_set_world(value.Handle);
-			}
-		}
-
-		[DllImport("libredcarpet")]
 		static extern IntPtr rc_world_get_channels(IntPtr raw);
 
 		public GLib.SList Channels { 
@@ -875,7 +854,29 @@ namespace RC {
 #line 1 "World.custom"
 /* -*- Mode: csharp; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 
-//namespace {
+// namespace {
+
+    [DllImport("libredcarpet")]
+    static extern IntPtr rc_get_world();
+
+    [DllImport("libredcarpet")]
+    static extern void rc_set_world(IntPtr world);
+
+    public static RC.World Global { 
+        get {
+            IntPtr raw_ret = rc_get_world();
+            RC.World ret;
+            if (raw_ret == IntPtr.Zero)
+                ret = null;
+            else
+                ret = (RC.World) GLib.Object.GetObject(raw_ret);
+            return ret;
+        }
+        set {
+            rc_set_world((value == null) ? IntPtr.Zero : value.Handle);
+        }
+    }
+
     [DllImport("libredcarpet")]
     static extern void rc_world_set_refresh_function(IntPtr raw, RCSharp.WorldRefreshDelegateNative refresh_fn);
 

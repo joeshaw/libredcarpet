@@ -254,24 +254,23 @@ namespace RC {
 #endregion
 #region Customized extensions
 #line 1 "WorldMulti.custom"
-
-// This method is needed to support managed WorldService implementations
-public void MountService (string url)
-{
+    // This method is needed to support managed WorldService implementations
+    public void MountService (string url) {
         WorldService existing = this.LookupService (url);
 
         if (existing != null) {
-                throw new ServiceMountException ("A service with id " + existing.Id + " is already mounted");
+            throw new ServiceMountException ("A service with id " + existing.Id + " is already mounted");
         }
 
         WorldService world = (WorldService)WorldService.Mount (url);
 
         if (this.LookupServiceById (world.Id) != null) {
-                throw new ServiceMountException ("A service with id " + world.Id + " is already mounted");
+            throw new ServiceMountException ("A service with id " + world.Id + " is already mounted");
         }
 
         this.AddSubworld (world);
-}
+        world.Dispose ();
+    }
 
 #endregion
 	}
