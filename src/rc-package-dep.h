@@ -69,7 +69,8 @@ typedef GSList RCPackageDepSList;
 /* These are included later, so as to avoid circular #include hell */
 
 #include <gnome-xml/tree.h>
-#include <libredcarpet/rc-package-spec.h>
+
+#include "rc-package-spec.h"
 
 /* THE SPEC MUST BE FIRST */
 struct _RCPackageDepItem {

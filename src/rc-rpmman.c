@@ -31,7 +31,7 @@
 #include "rc-util.h"
 #include "rc-verification-private.h"
 
-#ifdef HAVE_RPM_4_0
+#ifdef ENABLE_RPM4
 #include "rpmlead-4-0-x.h"
 #include "signature-4-0-x.h"
 #else
@@ -255,7 +255,7 @@ rc_package_to_rpm_name (RCPackage *package)
     return (ret);
 } /* rc_package_to_rpm_name */
 
-#ifdef HAVE_RPM_4_0
+#ifdef ENABLE_RPM4
 
 static gboolean
 transaction_add_remove_packages (RCPackman *packman,
@@ -311,7 +311,7 @@ transaction_add_remove_packages (RCPackman *packman,
     return (TRUE);
 }
 
-#else /* !HAVE_RPM_4_0 */
+#else /* !ENABLE_RPM4 */
 
 static gboolean
 transaction_add_remove_packages (RCPackman *packman,
@@ -393,7 +393,7 @@ transaction_add_remove_packages (RCPackman *packman,
     return (TRUE);
 } /* transaction_add_remove_pkgs */
 
-#endif /* !HAVE_RPM_4_0 */
+#endif /* !ENABLE_RPM4 */
 
 static void
 rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
@@ -963,7 +963,7 @@ rc_rpmman_check_match (Header header, RCPackage *package)
     return (FALSE);
 }
 
-#ifdef HAVE_RPM_4_0
+#ifdef ENABLE_RPM4
 
 static RCPackage *
 rc_rpmman_query (RCPackman *packman, RCPackage *package)
@@ -1026,7 +1026,7 @@ rc_rpmman_query (RCPackman *packman, RCPackage *package)
     return (package);
 } /* rc_packman_query */
 
-#else /* !HAVE_RPM_4_0 */
+#else /* !ENABLE_RPM4 */
 
 static RCPackage *
 rc_rpmman_query (RCPackman *packman, RCPackage *package)
@@ -1100,7 +1100,7 @@ rc_rpmman_query (RCPackman *packman, RCPackage *package)
     return (package);
 } /* rc_packman_query */
 
-#endif /* !HAVE_RPM_4_0 */
+#endif /* !ENABLE_RPM4 */
 
 /* Query a file for rpm header information */
 
@@ -1143,7 +1143,7 @@ rc_rpmman_query_file (RCPackman *packman, const gchar *filename)
 
 /* Query all of the packages on the system */
 
-#ifdef HAVE_RPM_4_0
+#ifdef ENABLE_RPM4
 
 static RCPackageSList *
 rc_rpmman_query_all (RCPackman *packman)
@@ -1200,7 +1200,7 @@ rc_rpmman_query_all (RCPackman *packman)
     return (NULL);
 } /* rc_rpmman_query_all */
 
-#else /* !HAVE_RPM_4_0 */
+#else /* !ENABLE_RPM4 */
 
 static RCPackageSList *
 rc_rpmman_query_all (RCPackman *packman)
@@ -1267,7 +1267,7 @@ rc_rpmman_query_all (RCPackman *packman)
     return (NULL);
 } /* rc_rpmman_query_all */
 
-#endif /* !HAVE_RPM_4_0 */
+#endif /* !ENABLE_RPM4 */
 
 static gboolean
 split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
@@ -1626,7 +1626,7 @@ rc_rpmman_version_compare (RCPackman *packman,
     return (rc_packman_generic_version_compare (spec1, spec2, vercmp));
 }
 
-#ifdef HAVE_RPM_4_0
+#ifdef ENABLE_RPM4
 
 static RCPackage *
 rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
@@ -1685,7 +1685,7 @@ rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
     return (NULL);
 }
 
-#else /* !HAVE_RPM_4_0 */
+#else /* !ENABLE_RPM4 */
 
 static RCPackage *
 rc_rpmman_find_file (RCPackman *packman, const gchar *filename)

@@ -34,7 +34,7 @@
 
 #define DEBUG 50 
 
-#if defined(WITH_RPM3) || defined(WITH_RPM4)
+#if defined(ENABLE_RPM3) || defined(ENABLE_RPM4)
 static gboolean rpmish = TRUE;
 #else
 static gboolean rpmish = FALSE;

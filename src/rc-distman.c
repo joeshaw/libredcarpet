@@ -25,11 +25,11 @@
 #include "rc-distro.h"
 #include "rc-distman.h"
 
-#ifdef WITH_DPKG
+#ifdef ENABLE_DPKG
 #include "rc-debman.h"
 #endif
 
-#if (defined(WITH_RPM3) || defined(WITH_RPM4)) && defined(HAVE_LIBRPM)
+#if (defined(ENABLE_RPM3) || defined(ENABLE_RPM4))
 #include "rc-rpmman.h"
 #endif
 
@@ -48,13 +48,13 @@ rc_distman_new (void)
 
     env = getenv("RC_PACKMAN_TYPE");
     if (env && g_strcasecmp(env, "dpkg") == 0) {
-#ifdef WITH_DPKG
+#ifdef ENABLE_DPKG
         packman = RC_PACKMAN(rc_debman_new());
 #else
         g_warning ("DPKG support not enabled.");
 #endif
     } else if (env && g_strcasecmp(env, "rpm") == 0) {
-#if (defined(WITH_RPM3) || defined(WITH_RPM4)) && defined(HAVE_LIBRPM)
+#if (defined(ENABLE_RPM3) || defined(ENABLE_RPM4))
         packman = RC_PACKMAN(rc_rpmman_new());
 #else
         g_warning ("RPM support not enabled.");
@@ -65,14 +65,14 @@ rc_distman_new (void)
             case RC_PKG_UNKNOWN:
                 break;
             case RC_PKG_DPKG:
-#ifdef WITH_DPKG
+#ifdef ENABLE_DPKG
                 packman = RC_PACKMAN (rc_debman_new ());
 #else
                 g_warning ("DPKG support not enabled.");
 #endif
                 break;
             case RC_PKG_RPM:
-#if (defined(WITH_RPM3) || defined(WITH_RPM4)) && defined(HAVE_LIBRPM)
+#if (defined(ENABLE_RPM3) || defined(ENABLE_RPM4))
                 packman = RC_PACKMAN (rc_rpmman_new ());
 #else
                 g_warning ("RPM support not enabled.");

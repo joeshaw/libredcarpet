@@ -1,33 +1,29 @@
-INCLUDES =				\
-	-I$(top_srcdir)			\
-	-I$(includedir)			\
-	$(RPMLIB_CFLAGS)		\
-	$(GTK_CFLAGS)			\
-	$(XML_CFLAGS)			\
-	$(BUILD_CFLAGS)			\
-	-DG_LOG_DOMAIN=\"libredcarpet\" \
-	-DSHAREDIR=\""$(datadir)/redcarpet"\"
+INCLUDES =-I$(top_srcdir) -I$(includedir) $(RPMLIB_CFLAGS) $(GTK_CFLAGS) $(XML_CFLAGS)	-DG_LOG_DOMAIN=\"libredcarpet\" -DSHAREDIR=\""$(datadir)/redcarpet"\"
 
 noinst_LIBRARIES = libredcarpet.a
 
-rpm_sources = 			\
+rpm_sources =			\
 	rc-rpmman.c		\
 	rc-rpmman.h		\
-	rpmlead-4-0-x.h		\
 	rpmlead-3-0-x.h		\
-	signature-4-0-x.h	\
-	signature-3-0-x.h
+	signature-3-0-x.h	\
+	rpmlead-4-0-x.h		\
+	signature-4-0-x.h
 
 dpkg_sources =			\
 	rc-debman.c		\
 	rc-debman.h		\
 	rc-debman-private.h
 
-if HAVE_LIBRPM
-rpm_sources2 = $(rpm_sources)
+if ENABLE_RPM3
+rpm3_sources2 = $(rpm_sources)
 endif
 
-if HAVE_DPKG
+if ENABLE_RPM4
+rpm4_sources2 = $(rpm_sources)
+endif
+
+if ENABLE_DPKG
 dpkg_sources2 = $(dpkg_sources)
 endif
 
@@ -80,15 +76,10 @@ libredcarpet_a_SOURCES =		\
 	rc-debman-general.c		\
 	rc-debman-general.h		\
 	$(dpkg_sources2)		\
-        $(rpm_sources2)
+	$(rpm3_sources2)		\
+	$(rpm4_sources2)
 
-#	rc-crypto.c			\
-#	rc-crypto.h			\
-
-gpgdir = $(datadir)/redcarpet
-gpg_DATA = red-carpet.gpg
-
-EXTRA_DIST = $(rpm_sources) $(dpkg_sources) rc-dpkg-helper.c $(gpg_DATA)
+EXTRA_DIST = $(rpm_sources) $(dpkg_sources) rc-dpkg-helper.c
 
 helperdir = $(datadir)/redcarpet
 helper_DATA = \

@@ -1,0 +1,3 @@
+       boc| msw_home: where do i get ugid.h? :)
+  msw_home| boc: just take it out of misc.h
+  msw_home| boc: I guess that would be a "bug"
