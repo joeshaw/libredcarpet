@@ -1,3 +1,10 @@
+2002-08-26  Joe Shaw  <joe@ximian.com>
+
+	* rc-world-subscriptions.c
+	(rc_world_import_subscriptions_from_xml): Make the
+	can't-subscribe-to-channel-because-it-wasn't-in-the-XML error a
+	little more clear.
+
 2002-08-23  Joe Shaw  <joe@ximian.com>
 
 	* rc-debman-general.c (rc_debman_parse_version): Make input a

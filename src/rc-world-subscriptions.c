@@ -68,7 +68,7 @@ rc_world_import_subscriptions_from_xml (RCWorld *world,
                 
                 if (channel == NULL) {
                     rc_debug (RC_DEBUG_LEVEL_WARNING,
-                              "Unknown channel id '%s'",
+                              "Can't subscribe to non-existent channel '%s'",
                               id_str);
 
                     if (!g_slist_find (old_subs, GINT_TO_POINTER (id))) {
