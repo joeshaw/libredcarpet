@@ -1,3 +1,10 @@
+2002-12-06  Joe Shaw  <joe@ximian.com>
+
+	* rc-rpmman.c: Pass in the address to a gboolean as the third
+	parameter to rpmReadPackageHeader() which tells us if we're
+	dealing with a source package.  If we are, abort out since we
+	don't handle source packages right now.
+
 2002-12-05  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-world-subscriptions.c (clear_sub_cb): When resetting our

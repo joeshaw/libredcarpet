@@ -431,6 +431,7 @@ transaction_add_install_packages (RCPackman *packman,
     FD_t fd;
     Header header;
     int rc;
+    gboolean is_source;
     guint count = 0;
     RCRpmman *rpmman = RC_RPMMAN (packman);
 
@@ -447,7 +448,8 @@ transaction_add_install_packages (RCPackman *packman,
             return (0);
         }
 
-        rc = rpmman->rpmReadPackageHeader (fd, &header, NULL, NULL, NULL);
+        rc = rpmman->rpmReadPackageHeader (fd, &header, &is_source,
+                                           NULL, NULL);
 
         switch (rc) {
         case 1:
@@ -467,6 +469,17 @@ transaction_add_install_packages (RCPackman *packman,
             return (0);
 
         case 0:
+            if (is_source) {
+                rc_rpm_close (rpmman, fd);
+
+                rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                      "%s is a source package; installing "
+                                      "source packages is not supported",
+                                      filename);
+
+                return 0;
+            }
+
             rc = rpmman->rpmtransAddPackage (
                 transaction, header, NULL, filename, INSTALL_UPGRADE, NULL);
             count++;
@@ -1742,6 +1755,7 @@ rc_rpmman_query_file (RCPackman *packman, const gchar *filename)
 {
     FD_t fd;
     Header header;
+    gboolean is_source;
     RCPackage *package;
     RCRpmman *rpmman = RC_RPMMAN (packman);
 
@@ -1759,9 +1773,18 @@ rc_rpmman_query_file (RCPackman *packman, const gchar *filename)
         return NULL;
     }
 
-    if (rpmman->rpmReadPackageHeader (fd, &header, NULL, NULL, NULL)) {
+    if (rpmman->rpmReadPackageHeader (fd, &header, &is_source, NULL, NULL)) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "unable to read package header");
+
+        rc_rpm_close (rpmman, fd);
+
+        return NULL;
+    }
+
+    if (is_source) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "source packages are not supported");
 
         rc_rpm_close (rpmman, fd);
 
@@ -1964,6 +1987,7 @@ rc_rpmman_package_is_repackaged (RCPackman *packman, RCPackage *package)
     FD_t rpm_fd = NULL;
     int rc;
     Header header = NULL;
+    gboolean is_source;
     char *buf = NULL;
     guint32 count = 0;
 
@@ -1982,11 +2006,19 @@ rc_rpmman_package_is_repackaged (RCPackman *packman, RCPackage *package)
         goto cleanup;
     }
 
-    rc = rpmman->rpmReadPackageHeader (rpm_fd, &header, NULL, NULL, NULL);
+    rc = rpmman->rpmReadPackageHeader (rpm_fd, &header, &is_source,
+                                       NULL, NULL);
 
     if (rc) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "unable to read package header");
+        goto cleanup;
+    }
+
+    if (is_source) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "source packages are not supported");
+
         goto cleanup;
     }
 
