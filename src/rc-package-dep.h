@@ -52,6 +52,6 @@ gboolean rc_package_dep_verify_relation (RCPackageDep *dep, RCPackageSpec *spec)
 gboolean rc_package_dep_item_verify_relation (RCPackageDepItem *dep, RCPackageSpec *spec);
 
 /* Misc */
-const gchar *rc_relation_string (gint rel);
+const gchar *rc_relation_string (gint rel, gboolean words);
 
 #endif /* _RC_PACKAGE_DEP_H */
