@@ -245,6 +245,27 @@ parse_xml_setup (xmlNode *node)
 
 
             g_free (package_name);
+        } else if (! g_strcasecmp (node->name, "lock")) {
+            gchar *channel_name = xml_get_prop (node, "channel");
+            gchar *package_name = xml_get_prop (node, "package");
+            RCPackage *package;
+
+            g_assert (channel_name);
+            g_assert (package_name);
+
+            package = get_package (channel_name, package_name);
+            if (package) {
+                g_print (">!> Locking %s from channel %s\n",
+                         package_name, channel_name);
+                package->hold = TRUE;
+            } else {
+                g_warning ("Unknown package %s::%s",
+                           channel_name, package_name);
+            }
+
+            g_free (channel_name);
+            g_free (package_name);
+
         } else {
             g_warning ("Unrecognized tag '%s' in setup", node->name);
         }

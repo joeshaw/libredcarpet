@@ -1,3 +1,8 @@
+2003-04-23  Jon Trowbridge  <trow@ximian.com>
+
+	* deptestomatic.c (parse_xml_setup): Added the ability to lock
+	specific packages in the test's 'setup' block.
+
 2003-04-17  Jon Trowbridge  <trow@ximian.com>
 
 	* deptestomatic.c (load_channel): Set channel IDs as strings.
