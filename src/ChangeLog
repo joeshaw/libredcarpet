@@ -1,3 +1,11 @@
+2005-01-26  James Willcox  <james@ximian.com>
+
+	* rc-package.c: (rc_package_copy), (rc_package_get_id),
+	(rc_package_set_id):
+	* rc-package.h:
+
+	Add an 'id' to packages.
+
 2005-01-26  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-package-spec.c (rc_package_spec_copy): Fix a typo.

@@ -150,6 +150,7 @@ rc_package_copy (RCPackage *src)
     dest->local_package = src->local_package;
     dest->install_only  = src->install_only;
     dest->package_set   = src->package_set;
+    dest->id            = g_strdup (src->id);
 
     return dest;
 }
@@ -696,3 +697,16 @@ rc_package_set_recommends (RCPackage *package, RCPackageDepSList *value)
     RCPackageDepSList *copy = rc_package_dep_slist_copy (value);
     package->recommends_a = rc_package_dep_array_from_slist (&copy);
 }
+
+char *
+rc_package_get_id (RCPackage *package)
+{
+    return g_strdup (package->id);
+}
+
+void
+rc_package_set_id (RCPackage *package, const char *id)
+{
+    package->id = g_strdup (id);
+}
+
