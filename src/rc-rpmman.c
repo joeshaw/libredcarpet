@@ -641,7 +641,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
             g_string_sprintfa (report, "\n%s",
                                rpmman->rpmProblemString (problem));
 #else
-            g_string_sprintfa (reprt, "\n%s",
+            g_string_sprintfa (report, "\n%s",
                                rpmman->rpmProblemString (*problem));
 #endif
             problem++;
