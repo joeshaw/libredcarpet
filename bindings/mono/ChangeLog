@@ -1,3 +1,15 @@
+2005-01-31  Tambet Ingo  <tambet@ximian.com>
+
+	* libredcarpet-api.xml: Regenerate.
+
+	* generated/*.cs: Regenerate.
+
+	* RC.metadata: Make channel subscription API nicer.
+
+	* PackageSpec.custom (GetHashCode): Add.
+
+	* Channel.custom: Update subscription API.
+
 2005-01-27  Tambet Ingo  <tambet@ximian.com>
 
 	* Rollback.custom: Really add it.

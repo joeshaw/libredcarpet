@@ -38,6 +38,8 @@
   <attr path="/api/namespace/object[@cname='RCWorld']/method[@name='GetLocks']/return-type" name="element_type">RC.PackageMatch</attr>
   <attr path="/api/namespace/object[@cname='RCWorld']/method[@name='GetUpgrades']/return-type" name="element_type">RC.Package</attr>
   <attr path="/api/namespace/boxed[@cname='RCChannel']/method[@name='GetPackages']/return-type" name="element_type">RC.Package</attr>
+  <attr path="/api/namespace/boxed[@cname='RCChannel']/method[@cname='rc_channel_set_subscription']" name="name">SetSubscribed</attr>
+  <attr path="/api/namespace/boxed[@cname='RCChannel']/method[@cname='rc_channel_is_subscribed']" name="name">GetSubscribed</attr>
   <attr path="/api/namespace/boxed[@cname='RCResolverContext']/method[@name='GetInstalls']/return-type" name="element_type">RC.Package</attr>
   <attr path="/api/namespace/boxed[@cname='RCResolverContext']/method[@name='GetUninstalls']/return-type" name="element_type">RC.Package</attr>
   <attr path="/api/namespace/boxed[@cname='RCResolverContext']/method[@name='GetMarkedPackages']/return-type" name="element_type">RC.Package</attr>

@@ -38,7 +38,7 @@
         if (this.Alias != null)
             writer.WriteAttributeString ("alias", this.Alias);
 
-        writer.WriteAttributeString ("subscribed", this.IsSubscribed ? "1" : "0");
+        writer.WriteAttributeString ("subscribed", this.Subscribed ? "1" : "0");
         writer.WriteAttributeString ("priority_base", System.Xml.XmlConvert.ToString (this.GetPriority (true)));
         writer.WriteAttributeString ("priority_unsubd", System.Xml.XmlConvert.ToString (this.GetPriority (false)));
 

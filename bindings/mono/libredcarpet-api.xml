@@ -1492,7 +1492,7 @@
       <method name="IsImmutable" cname="rc_channel_is_immutable">
         <return-type type="gboolean" />
       </method>
-      <method name="IsSubscribed" cname="rc_channel_is_subscribed">
+      <method cname="rc_channel_is_subscribed" name="GetSubscribed">
         <return-type type="gboolean" />
       </method>
       <method name="IsSystem" cname="rc_channel_is_system">
@@ -1579,7 +1579,7 @@
           <parameter type="gint" name="unsubd_priority" />
         </parameters>
       </method>
-      <method name="SetSubscription" cname="rc_channel_set_subscription">
+      <method cname="rc_channel_set_subscription" name="SetSubscribed">
         <return-type type="void" />
         <parameters>
           <parameter type="gboolean" name="subscribed" />

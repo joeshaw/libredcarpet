@@ -193,16 +193,20 @@ namespace RC {
 #region Customized extensions
 #line 1 "PackageSpec.custom"
       [DllImport("libredcarpet")]
-	  static extern int rc_package_spec_equal(IntPtr a, IntPtr b);
+      static extern int rc_package_spec_equal(IntPtr a, IntPtr b);
 
-	  public override bool Equals (object other) {
-	      int ret = rc_package_spec_equal (this.Handle,
-                                               ((PackageSpec) other).Handle);
-	      if (ret == 0)
+      public override bool Equals (object other) {
+          int ret = rc_package_spec_equal (this.Handle,
+                                           ((PackageSpec) other).Handle);
+          if (ret == 0)
                   return false;
 
-	      return true;
-	  }
+          return true;
+      }
+
+      public override int GetHashCode () {
+          return ToString ().GetHashCode ();
+      }
 
 #endregion
 	}

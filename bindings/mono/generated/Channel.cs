@@ -283,17 +283,6 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern bool rc_channel_is_subscribed(IntPtr raw);
-
-		public bool IsSubscribed { 
-			get {
-				bool raw_ret = rc_channel_is_subscribed(Handle);
-				bool ret = raw_ret;
-				return ret;
-			}
-		}
-
-		[DllImport("libredcarpet")]
 		static extern void rc_channel_set_priorities(IntPtr raw, int subd_priority, int unsubd_priority);
 
 		public void SetPriorities(int subd_priority, int unsubd_priority) {
@@ -307,15 +296,6 @@ namespace RC {
 			bool raw_ret = rc_channel_has_distro_target(Handle, target);
 			bool ret = raw_ret;
 			return ret;
-		}
-
-		[DllImport("libredcarpet")]
-		static extern void rc_channel_set_subscription(IntPtr raw, bool subscribed);
-
-		public bool Subscription { 
-			set {
-				rc_channel_set_subscription(Handle, value);
-			}
 		}
 
 		[DllImport("libredcarpet")]
@@ -335,6 +315,23 @@ namespace RC {
 				bool raw_ret = rc_channel_is_hidden(Handle);
 				bool ret = raw_ret;
 				return ret;
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern bool rc_channel_is_subscribed(IntPtr raw);
+
+		[DllImport("libredcarpet")]
+		static extern void rc_channel_set_subscription(IntPtr raw, bool subscribed);
+
+		public bool Subscribed { 
+			get {
+				bool raw_ret = rc_channel_is_subscribed(Handle);
+				bool ret = raw_ret;
+				return ret;
+			}
+			set {
+				rc_channel_set_subscription(Handle, value);
 			}
 		}
 
@@ -417,7 +414,7 @@ namespace RC {
         if (this.Alias != null)
             writer.WriteAttributeString ("alias", this.Alias);
 
-        writer.WriteAttributeString ("subscribed", this.IsSubscribed ? "1" : "0");
+        writer.WriteAttributeString ("subscribed", this.Subscribed ? "1" : "0");
         writer.WriteAttributeString ("priority_base", System.Xml.XmlConvert.ToString (this.GetPriority (true)));
         writer.WriteAttributeString ("priority_unsubd", System.Xml.XmlConvert.ToString (this.GetPriority (false)));
 
