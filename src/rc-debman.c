@@ -58,6 +58,60 @@ rc_debman_get_type (void)
     return type;
 } /* rc_debman_get_type */
 
+/* Helper function used by rc_debman_install during its "Oh fuck" disaster
+   recovery phase, and also by rc_debman_remove.  Given a GSList * of package
+   names, remove them from the system. */
+static gint
+rc_debman_do_purge (GSList *pkgs)
+{
+    gchar **filev = g_new0 (gchar *, g_slist_length (pkgs) + 3);
+    guint i = 0;
+    pid_t child;
+    GSList *iter;
+
+    filev[0] = g_strdup ("/usr/bin/dpkg");
+    filev[1] = g_strdup ("--purge");
+
+    /* Assemble an array of strings of the package names */
+    for (iter = pkgs; iter; iter = iter->next) {
+        gchar *pkg = (gchar *)(iter->data);
+
+        /* This would definitely be an issue */
+        g_assert (pkg);
+
+        filev[2 + i++] = g_strdup (pkg);
+    }
+
+    if (!(child = fork ())) {
+        fclose (stdout);
+        execv ("/usr/bin/dpkg", filev);
+    } else {
+        gint status;
+
+        waitpid (child, &status, 0);
+
+        g_strfreev (filev);
+
+        if (WIFEXITED (status)) {
+            return (WEXITSTATUS (status));
+        } else {
+            return (-1);
+        }
+    }
+
+    g_assert_not_reached ();
+
+    return (-1);
+}
+
+/* Install the packages listed in pkgs.  Because we don't have a convenient
+   library with callbacks to use here, we've got to fork dpkg, once per
+   package.  So, on the first pass through all of the packages, we unpack all
+   of the packages, and at the end we configure them.  The only tricky part is
+   keeping a list of all of the packages we've already unpacked, so that if we
+   have to abort at any point, we can purge the unpacked but unconfigured
+   packages. */
+
 static void
 rc_debman_install (RCPackman *p, GSList *pkgs)
 {
@@ -67,12 +121,25 @@ rc_debman_install (RCPackman *p, GSList *pkgs)
     gboolean remove = FALSE;
     guint i = 0;
 
-    for (iter = pkgs; iter; iter = iter->next) {
+    /* If the list of packages is empty, let's spare ourselves the trouble of
+       doing anything */
+    if (!pkgs) {
+        rc_packman_install_done (p, RC_PACKMAN_COMPLETE);
+    }
+
+    iter = pkgs;
+
+    while (iter && !remove) {
         gchar *filename = (gchar *)(iter->data);
 
-        /* Gotta give me a filename to install */
-        g_assert (filename);
+        /* Gotta give me a filename to install, otherwise purge the already
+           unpacked packages and bail */
+        if (!filename) {
+            remove = TRUE;
+            break;
+        }
 
+        /* Fork off dpkg to unpack the package */
         if (!(child = fork ())) {
             fclose (stdout);
             execl ("/usr/bin/dpkg", "/usr/bin/dpkg", "--unpack", filename,
@@ -82,87 +149,110 @@ rc_debman_install (RCPackman *p, GSList *pkgs)
 
             waitpid (child, &status, 0);
 
+            /* Add the last package to the list of packages unpacked (even if
+               we're not completely sure it was unpacked, since purging it will
+               be harmless */
             installed_list = g_slist_append (installed_list, filename);
 
             rc_packman_package_installed (p, filename, ++i);
 
+            /* Check the exit status of dpkg, and abort this install if things
+               have started to go wrong */
             if (WIFEXITED (status) && WEXITSTATUS (status)) {
                 remove = TRUE;
                 break;
             }
         }
+
+        iter = iter->next;
     }
 
+    /* Check if we exited normally from the unpack loop.  If we did, configure
+       the unpacked packages */
     if (!remove) {
+        /* Once again, fork dpkg to do the dirty work */
         if (!(child = fork ())) {
             fclose (stdout);
 
             execl ("/usr/bin/dpkg", "/usr/bin/dpkg", "--configure",
                    "--pending", NULL);
         } else {
-            /* FIXME: check the return code of this, too, maybe? */
+            gint status;
 
-            waitpid (child, NULL, 0);
+            waitpid (child, &status, 0);
 
-            rc_packman_install_done (p, RC_PACKMAN_COMPLETE);
-        }
-    } else {
-        for (iter = installed_list; iter; iter = iter->next) {
-            gchar *filename = (gchar *)(iter->data);
-            gchar **parts = g_strsplit (filename, "_", 1);
-            gchar *pkg = g_strdup (strrchr (parts[0], '/') + 1);
-
-            if (!(child = fork ())) {
-                fclose (stdout);
-
-                execl ("/usr/bin/dpkg", "/usr/bin/dpkg", "--purge", pkg,
-                       NULL);
-            } else {
-                /* FIXME: check this return code too asshole */
-
-                waitpid (child, NULL, 0);
+            if (WIFEXITED (status) && !WEXITSTATUS (status)) {
+                /* Looks like everything went ok, we're done */
+                g_slist_foreach (installed_list, (GFunc) g_free, NULL);
+                rc_packman_install_done (p, RC_PACKMAN_COMPLETE);
+                return;
             }
-
-            rc_packman_install_done (p, RC_PACKMAN_FAIL);
-
-            g_strfreev (parts);
-            g_free (pkg);
         }
     }
+
+    /* Whoops.  Looks like we were either unable to unpack all of the packages,
+       or we were unable to complete the final configure.  Time to purge all of
+       the packages we unpacked */
+    for (iter = installed_list; iter; iter = iter->next) {
+        gchar *filename = (gchar *)(iter->data);
+        /* A debian file has filename <name>_<epoch>:<version>-<release>..., so
+           this should be a fairly safe way to get the actual package name.  Of
+           course, if we ever don't name our packages the canonical way we're
+           in trouble.  But then again, by the time we get here we're in
+           trouble anyway, so I don't want to rely on any more fork'd dpkg
+           methods */
+        gchar **parts = g_strsplit (filename, "_", 1);
+        gchar *pkg = g_strdup (strrchr (parts[0], '/') + 1);
+
+        g_free (filename);
+        filename = pkg;
+
+        g_strfreev (parts);
+    }
+
+    if (!rc_debman_do_purge (installed_list)) {
+        /* Looks like the purge went ok, so all we did was fail to install.
+           Let the people know the truth and bow out gracefully. */
+        rc_packman_install_done (p, RC_PACKMAN_FAIL);
+    } else {
+        /* Ok, if we got here, we're fucked.  Hard.  So grab the wife and kids
+           and get the hell out of Dodge. */
+        gchar *error = g_strdup ("The following packages were left in an inconsistant state:");
+
+        for (iter = installed_list; iter; iter = iter->next) {
+            gchar *tmp = g_strconcat (error, " ", (gchar *)(iter->data), NULL);
+            g_free (error);
+            error = tmp;
+        }
+
+        rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED, error);
+
+        rc_packman_install_done (p, RC_PACKMAN_FAIL);
+    }
+
+    g_slist_foreach (installed_list, (GFunc) g_free, NULL);
 } /* rc_debman_install */
 
 static void
 rc_debman_remove (RCPackman *p, RCPackageSList *pkgs)
 {
     RCPackageSList *iter;
-    gchar **filev = g_new0 (gchar *, g_slist_length (pkgs) + 3);
-    guint i = 0;
-    pid_t child;
-
-    filev[0] = g_strdup ("/usr/bin/dpkg");
-    filev[1] = g_strdup ("--purge");
+    GSList *names = NULL;
+    gint ret;
 
     for (iter = pkgs; iter; iter = iter->next) {
-        RCPackage *pkg = (RCPackage *)(iter->data);
-
-        g_assert (pkg);
-        g_assert (pkg->spec.name);
-
-        filev[2 + i++] = g_strdup (pkg->spec.name);
+        names = g_slist_append (names, ((RCPackage *)(iter->data))->spec.name);
     }
 
-    if (!(child = fork())) {
-        fclose (stdout);
-        execv ("/usr/bin/dpkg", filev);
+    ret = rc_debman_do_purge (names);
+
+    g_slist_free (names);
+
+    if (!ret) {
+        rc_packman_remove_done (p, RC_PACKMAN_COMPLETE);
     } else {
-        /* FIXME: do some smart error handling here */
-
-        waitpid (child, NULL, 0);
+        rc_packman_remove_done (p, RC_PACKMAN_FAIL);
     }
-
-    g_strfreev (filev);
-
-    rc_packman_remove_done (p, RC_PACKMAN_COMPLETE);
 } /* rc_debman_remove */
 
 static void
