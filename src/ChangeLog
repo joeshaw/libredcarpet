@@ -1,3 +1,8 @@
+2001-08-17  Joe Shaw  <joe@ximian.com>
+
+	* rc-channel.c (rc_xml_node_to_subchannel): Don't puke on empty
+	subchannels.
+
 2001-08-16  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-package-dep.c: Add print statements for RELATION_NOT_EQUAL
