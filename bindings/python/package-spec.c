@@ -30,6 +30,7 @@
 typedef struct {
 	PyObject_HEAD;
 	RCPackageSpec *spec;
+	gboolean borrowed;
 } PyPackageSpec;
 
 static PyTypeObject PyPackageSpec_type_info = {
@@ -57,7 +58,7 @@ PyPackageSpec_init (PyObject *self, PyObject *args, PyObject *kwds)
 	int epoch;
 
 	if (! PyArg_ParseTuple (args, "siiss", &name, &has_epoch, &epoch,
-					    &version, &release))
+				&version, &release))
 		return -1;
 
 	py_spec->spec = g_new0 (RCPackageSpec, 1);
@@ -73,6 +74,7 @@ PyPackageSpec_tp_new (PyTypeObject *type, PyObject *args, PyObject *kwds)
 
 	py_spec = (PyPackageSpec *) type->tp_alloc (type, 0);
 	py_spec->spec = NULL;
+	py_spec->borrowed = FALSE;
 
 	return (PyObject *) py_spec;
 }
@@ -82,8 +84,10 @@ PyPackageSpec_tp_dealloc (PyObject *self)
 {
 	PyPackageSpec *py_spec = (PyPackageSpec *) self;
 
-	if (py_spec->spec)
+	if (py_spec->spec && py_spec->borrowed == FALSE) {
 		rc_package_spec_free_members (py_spec->spec);
+		g_free (py_spec->spec);
+	}
 
 	if (self->ob_type->tp_free)
 		self->ob_type->tp_free (self);
@@ -146,8 +150,9 @@ PyObject *
 PyPackageSpec_new (RCPackageSpec *spec)
 {
 	PyObject *py_spec = PyPackageSpec_tp_new (&PyPackageSpec_type_info,
-									  NULL, NULL);
+						  NULL, NULL);
 	((PyPackageSpec *) py_spec)->spec = spec;
+	((PyPackageSpec *) py_spec)->borrowed = TRUE;
 
 	return py_spec;
 }

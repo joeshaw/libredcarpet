@@ -36,6 +36,7 @@
 typedef struct {
 	PyObject_HEAD;
 	RCWorld *world;
+	gboolean borrowed;
 } PyWorld;
 
 static PyTypeObject PyWorld_type_info = {
@@ -471,10 +472,8 @@ PyWorld_remove_packages (PyObject *self, PyObject *args)
 	if (! PyArg_ParseTuple (args, "O", &obj))
 		return NULL;
 
+	/* Channel or channel wildcard */
 	channel = PyChannel_get_channel (obj);
-	if (channel == NULL)
-		return NULL;
-
 	rc_world_remove_packages (world, channel);
 	Py_INCREF (Py_None);
 	return Py_None;
@@ -596,9 +595,8 @@ PyWorld_get_all_pkgs (PyObject *self, PyObject *args)
 	if (! PyArg_ParseTuple (args, "O", &obj))
 		return NULL;
 
+	/* Channel or channel wildcard */
 	channel = PyChannel_get_channel (obj);
-	if (channel == NULL)
-		return NULL;
 
 	py_list = PyList_New (0);
 	rc_world_foreach_package (world, channel,
@@ -618,9 +616,8 @@ PyWorld_get_all_pkgs_by_name (PyObject *self, PyObject *args)
 	if (! PyArg_ParseTuple (args, "sO", &name, &obj))
 		return NULL;
 
+	/* Channel or channel wildcard */
 	channel = PyChannel_get_channel (obj);
-	if (channel == NULL)
-		return NULL;
 
 	py_list = PyList_New (0);
 	rc_world_foreach_package_by_name (world,
@@ -668,9 +665,8 @@ PyWorld_get_all_upgrades (PyObject *self, PyObject *args)
 	if (pkg == NULL)
 		return NULL;
 
+	/* Channel or channel wildcard */
 	channel = PyChannel_get_channel (py_channel);
-	if (channel == NULL)
-		return NULL;
 
 	py_list = PyList_New (0);
 	rc_world_foreach_upgrade (world, pkg, channel,
@@ -943,6 +939,7 @@ PyWorld_init (PyObject *self, PyObject *args, PyObject *kwds)
 
 	if (! PyArg_ParseTuple (args, "O", &obj)) {
 		py_world->world = rc_get_world();
+		py_world->borrowed = TRUE;
 	} else {
 		RCPackman *packman;
 
@@ -964,6 +961,7 @@ PyWorld_tp_new (PyTypeObject *type, PyObject *args, PyObject *kwds)
 
 	py_world = (PyWorld *) type->tp_alloc (type, 0);
 	py_world->world = NULL;
+	py_world->borrowed = FALSE;
 
 	return (PyObject *) py_world;
 }
@@ -973,7 +971,7 @@ PyWorld_tp_dealloc (PyObject *self)
 {
 	PyWorld *py_world = (PyWorld *) self;
 
-	if (py_world->world)
+	if (py_world->world && py_world->borrowed == FALSE)
 		rc_world_free (py_world->world);
 
 	if (self->ob_type->tp_free)
@@ -1006,6 +1004,7 @@ PyWorld_new (RCWorld *world)
 	PyObject *py_world = PyWorld_tp_new (&PyWorld_type_info,
 					     NULL, NULL);
 	((PyWorld *) py_world)->world = world;
+	((PyWorld *) py_world)->borrowed = TRUE;
 
 	return py_world;
 }

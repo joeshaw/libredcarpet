@@ -26,6 +26,7 @@
 
 #include "resolver.h"
 #include "resolver-context.h"
+#include "resolver-queue.h"
 #include "package.h"
 #include "channel.h"
 #include "world.h"
@@ -34,6 +35,7 @@
 typedef struct {
 	PyObject_HEAD;
 	RCResolver *resolver;
+	gboolean borrowed;
 } PyResolver;
 
 static PyTypeObject PyResolver_type_info = {
@@ -57,6 +59,23 @@ PyResolver_get_best_context (PyObject *self, PyObject *args)
 	}
 
 	return PyResolverContext_new (resolver->best_context);
+}
+
+static PyObject *
+PyResolver_get_invalid_queues (PyObject *self, PyObject *args)
+{
+	RCResolver *resolver = PyResolver_get_resolver (self);
+	PyObject *py_list;
+	GSList *iter;
+
+	py_list = PyList_New (0);
+
+	for (iter = resolver->invalid_queues; iter != NULL; iter = iter->next) {
+		RCResolverQueue *q = iter->data;
+		PyList_Append (py_list, PyResolverQueue_new (q));
+	}
+
+	return py_list;
 }
 
 static PyObject *
@@ -212,6 +231,8 @@ PyResolver_resolve_dependencies (PyObject *self, PyObject *args)
 
 static PyMethodDef PyResolver_methods[] = {
 	{ "get_best_context",        PyResolver_get_best_context,        METH_NOARGS  },
+	{ "get_invalid_queues",      PyResolver_get_invalid_queues,      METH_NOARGS  },
+
 	{ "set_timeout",             PyResolver_set_timeout,             METH_VARARGS },
 	{ "set_world",               PyResolver_set_world,               METH_VARARGS },
 	{ "get_world",               PyResolver_get_world,               METH_NOARGS  },
@@ -249,6 +270,7 @@ PyResolver_tp_new (PyTypeObject *type, PyObject *args, PyObject *kwds)
 
 	py_resolver = (PyResolver *) type->tp_alloc (type, 0);
 	py_resolver->resolver = NULL;
+	py_resolver->borrowed = FALSE;
 
 	return (PyObject *) py_resolver;
 }
@@ -258,7 +280,7 @@ PyResolver_tp_dealloc (PyObject *self)
 {
 	PyResolver *py_resolver = (PyResolver *) self;
 
-	if (py_resolver->resolver)
+	if (py_resolver->resolver && py_resolver->borrowed == FALSE)
 		rc_resolver_free (py_resolver->resolver);
 
 	if (self->ob_type->tp_free)
@@ -289,8 +311,9 @@ PyObject *
 PyResolver_new (RCResolver *resolver)
 {
 	PyObject *py_resolver = PyResolver_tp_new (&PyResolver_type_info,
-									   NULL, NULL);
+						   NULL, NULL);
 	((PyResolver *) py_resolver)->resolver = resolver;
+	((PyResolver *) py_resolver)->borrowed = TRUE;
 
 	return py_resolver;
 }

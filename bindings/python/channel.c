@@ -285,12 +285,16 @@ void PyChannel_register (PyObject *dict)
 	pyutil_register_int_constant (dict, "CHANNEL_TYPE_UNKNOWN",
 				      RC_CHANNEL_TYPE_UNKNOWN);
 
-	pyutil_register_int_constant (dict, "CHANNEL_SYSTEM",
-				      RC_CHANNEL_SYSTEM);
-	pyutil_register_int_constant (dict, "CHANNEL_ANY",
-				      RC_CHANNEL_ANY);
-	pyutil_register_int_constant (dict, "CHANNEL_NON_SYSTEM",
-				      RC_CHANNEL_NON_SYSTEM);
+	/* Build these static special channels */
+
+	PyDict_SetItemString (dict, "CHANNEL_SYSTEM",
+			      PyChannel_new (RC_CHANNEL_SYSTEM));
+
+	PyDict_SetItemString (dict, "CHANNEL_ANY",
+			      PyChannel_new (RC_CHANNEL_ANY));
+
+	PyDict_SetItemString (dict, "CHANNEL_NON_SYSTEM",
+			      PyChannel_new (RC_CHANNEL_NON_SYSTEM));
 }
 
 int

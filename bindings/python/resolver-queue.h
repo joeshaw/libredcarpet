@@ -1,12 +1,10 @@
-/* This is -*- C -*- */
-/* vim: set sw=2: */
-/* $Id$ */
-
+/* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
- * pyutil.h
+ * resolver-queue.c
  *
- * Copyright (C) 2002 Ximian, Inc.
+ * Copyright (C) 2003 The Free Software Foundation, Inc.
  *
+ * Developed by Tambet Ingo <tambet@ximian.com>
  */
 
 /*
@@ -26,18 +24,16 @@
  * USA.
  */
 
-#ifndef __PYUTIL_H__
-#define __PYUTIL_H__
+#ifndef __RESOLVER_QUEUE_H__
+#define __RESOLVER_QUEUE_H__
 
 #include <Python.h>
+#include <libredcarpet.h>
 
-void pyutil_register_type (PyObject *dict,
-			   PyTypeObject *type);
+void       PyResolverQueue_register (PyObject *dict);
+int        PyResolverQueue_check    (PyObject *obj);
+PyObject  *PyResolverQueue_new      (RCResolverQueue *queue);
 
-void pyutil_register_function     (PyObject *dict, const char *name);
-void pyutil_register_int_constant (PyObject *dict,
-							const char *name,
-							int value);
+RCResolverQueue *PyResolverQueue_get_resolver_queue (PyObject *obj);
 
-#endif /* __PYUTIL_H__ */
-
+#endif /* __RESOLVER_QUEUE_H__ */

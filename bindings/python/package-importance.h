@@ -1,12 +1,10 @@
-/* This is -*- C -*- */
-/* vim: set sw=2: */
-/* $Id$ */
-
+/* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
- * pyutil.h
+ * package-importance.h
  *
- * Copyright (C) 2002 Ximian, Inc.
+ * Copyright (C) 2003 The Free Software Foundation, Inc.
  *
+ * Developed by Tambet Ingo <tambet@ximian.com>
  */
 
 /*
@@ -26,18 +24,17 @@
  * USA.
  */
 
-#ifndef __PYUTIL_H__
-#define __PYUTIL_H__
+#ifndef __PACKAGE_IMPORTANCE_H__
+#define __PACKAGE_IMPORTANCE_H__
 
 #include <Python.h>
+#include <libredcarpet.h>
 
-void pyutil_register_type (PyObject *dict,
-			   PyTypeObject *type);
+void      PyPackageImportance_register (PyObject *dict);
+int       PyPackageImportance_check    (PyObject *obj);
+PyObject *PyPackageImportance_new      (RCPackageImportance importance);
 
-void pyutil_register_function     (PyObject *dict, const char *name);
-void pyutil_register_int_constant (PyObject *dict,
-							const char *name,
-							int value);
+RCPackageImportance PyPackageImportance_get_package_importance (PyObject *obj);
 
-#endif /* __PYUTIL_H__ */
 
+#endif /* __PACKAGE_IMPORTANCE_H__ */

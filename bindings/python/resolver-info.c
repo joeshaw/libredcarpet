@@ -116,7 +116,8 @@ PyResolverInfo_tp_dealloc (PyObject *self)
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
-void PyResolverInfo_register (PyObject *dict)
+void
+PyResolverInfo_register (PyObject *dict)
 {
 	PyResolverInfo_type_info.tp_new     = PyResolverInfo_tp_new;
 	PyResolverInfo_type_info.tp_dealloc = PyResolverInfo_tp_dealloc;
@@ -136,7 +137,7 @@ PyObject *
 PyResolverInfo_new (RCResolverInfo *info)
 {
 	PyObject *py_info = PyResolverInfo_tp_new (&PyResolverInfo_type_info,
-									   NULL, NULL);
+						   NULL, NULL);
 	((PyResolverInfo *) py_info)->info = rc_resolver_info_copy (info);
 
 	return py_info;

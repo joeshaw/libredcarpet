@@ -25,6 +25,7 @@
  */
 
 #include "package-match.h"
+#include "package-importance.h"
 #include "package-dep.h"
 #include "package.h"
 #include "channel.h"
@@ -33,6 +34,7 @@
 typedef struct {
 	PyObject_HEAD;
 	RCPackageMatch *match;
+	gboolean borrowed;
 } PyPackageMatch;
 
 static PyTypeObject PyPackageMatch_type_info = {
@@ -55,10 +57,8 @@ PyPackageMatch_set_channel (PyObject *self, PyObject *args)
 	if (! PyArg_ParseTuple (args, "O", &obj))
 		return NULL;
 
+	/* Channel or channel wildcard */
 	channel = PyChannel_get_channel (obj);
-	if (channel == NULL)
-		return NULL;
-
 	rc_package_match_set_channel (match, channel);
 
 	Py_INCREF (Py_None);
@@ -150,8 +150,17 @@ PyPackageMatch_get_glob (PyObject *self, PyObject *args)
 static PyObject *
 PyPackageMatch_set_importance (PyObject *self, PyObject *args)
 {
-	/* FIXME */
 	RCPackageMatch *match = PyPackageMatch_get_package_match (self);
+	PyObject *obj;
+	RCPackageImportance imp;
+	gboolean imp_gteq;
+
+	if (! PyArg_ParseTuple (args, "Oi", &obj, &imp_gteq))
+		return NULL;
+
+	imp = PyPackageImportance_get_package_importance (obj);
+	rc_package_match_set_importance (match, imp, imp_gteq);
+
 	Py_INCREF (Py_None);
 	return Py_None;
 }
@@ -159,10 +168,18 @@ PyPackageMatch_set_importance (PyObject *self, PyObject *args)
 static PyObject *
 PyPackageMatch_get_importance (PyObject *self, PyObject *args)
 {
-	/* FIXME */
 	RCPackageMatch *match = PyPackageMatch_get_package_match (self);
-	Py_INCREF (Py_None);
-	return Py_None;
+	PyObject *tuple;
+	RCPackageImportance imp;
+        gboolean imp_gteq;
+
+        imp = rc_package_match_get_importance (match, &imp_gteq);
+
+	tuple = PyTuple_New (2);
+	PyTuple_SetItem (tuple, 0, PyPackageImportance_new (imp));
+	PyTuple_SetItem (tuple, 1, Py_BuildValue ("i", imp_gteq));
+
+	return tuple;
 }
 
 static PyMethodDef PyPackageMatch_methods[] = {
@@ -201,6 +218,7 @@ PyPackageMatch_tp_new (PyTypeObject *type, PyObject *args, PyObject *kwds)
 
 	py_match = (PyPackageMatch *) type->tp_alloc (type, 0);
 	py_match->match = NULL;
+	py_match->borrowed = FALSE;
 
 	return (PyObject *) py_match;
 }
@@ -210,7 +228,7 @@ PyPackageMatch_tp_dealloc (PyObject *self)
 {
 	PyPackageMatch *py_match = (PyPackageMatch *) self;
 
-	if (py_match->match)
+	if (py_match->match && py_match->borrowed == FALSE)
 		rc_package_match_free (py_match->match);
 
 	if (self->ob_type->tp_free)
@@ -241,8 +259,9 @@ PyObject *
 PyPackageMatch_new (RCPackageMatch *match)
 {
 	PyObject *py_match = PyPackageMatch_tp_new (&PyPackageMatch_type_info,
-										NULL, NULL);
+						    NULL, NULL);
 	((PyPackageMatch *) match)->match = match;
+	((PyPackageMatch *) match)->borrowed = TRUE;
 
 	return py_match;
 }

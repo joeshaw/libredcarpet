@@ -28,6 +28,7 @@
 
 #include <Python.h>
 
+#include "package-importance.h"
 #include "package-spec.h"
 #include "package-dep.h"
 #include "package-match.h"
@@ -37,6 +38,7 @@
 #include "world.h"
 #include "resolver-info.h"
 #include "resolver-context.h"
+#include "resolver-queue.h"
 #include "resolver.h"
 
 static PyMethodDef redcarpet_methods[] = {
@@ -51,6 +53,7 @@ static InitFns redcarpet_init_fns[] = {
 
 typedef void (*RegistrationFn) (PyObject *dict);
 static RegistrationFn redcarpet_registration_fns[] = {
+	PyPackageImportance_register,
 	PyPackageSpec_register,
 	PyPackageDep_register,
 	PyPackageMatch_register,
@@ -60,6 +63,7 @@ static RegistrationFn redcarpet_registration_fns[] = {
 	PyWorld_register,
 	PyResolverInfo_register,
 	PyResolverContext_register,
+	PyResolverQueue_register,
 	PyResolver_register,
 	NULL
 };

@@ -22,6 +22,7 @@ other_libdirs  = ["../../src"]
  
 
 py_tsar_sources = [ "pyutil.c",
+                    "package-importance.c",
                     "package-spec.c",
                     "package-dep.c",
                     "package-match.c",
@@ -31,6 +32,7 @@ py_tsar_sources = [ "pyutil.c",
                     "world.c",
                     "resolver-info.c",
                     "resolver-context.c",
+                    "resolver-queue.c",
                     "resolver.c",
                     "redcarpet.c",
                     ]

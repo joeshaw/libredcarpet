@@ -142,13 +142,17 @@ PyResolverContext_get_all_info (PyObject *self, PyObject *args)
 	if (! PyArg_ParseTuple (args, "Oi", &obj, &priority))
 		return NULL;
 
-	pkg = PyPackage_get_package (obj);
-	if (pkg == NULL)
-		return NULL;
+	if (obj == Py_None)
+		pkg = NULL;
+	else {
+		pkg = PyPackage_get_package (obj);
+		if (pkg == NULL)
+			return NULL;
+	}
 
 	py_list = PyList_New (0);
 	rc_resolver_context_foreach_info (ctx, pkg, priority,
-							    get_all_info_cb, py_list);
+					  get_all_info_cb, py_list);
 
 	return py_list;
 }
@@ -225,7 +229,7 @@ PyObject *
 PyResolverContext_new (RCResolverContext *context)
 {
 	PyObject *py_context = PyResolverContext_tp_new (&PyResolverContext_type_info,
-										    NULL, NULL);
+							 NULL, NULL);
 	((PyResolverContext *) py_context)->context = rc_resolver_context_ref (context);
 
 	return py_context;

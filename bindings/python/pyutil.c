@@ -79,6 +79,23 @@ pyutil_register_type (PyObject *dict,
 }
 
 void
+pyutil_register_function (PyObject *dict, const char *name)
+{
+	PyObject *v;
+
+	v = PyCFunction_New ((char *) name, NULL);
+	if (v == NULL)
+		return;
+
+	if (PyDict_SetItemString (dict, (char *) name, v) != 0) {
+		Py_DECREF (v);
+		return;
+	}
+
+	Py_DECREF (v);
+}
+
+void
 pyutil_register_int_constant (PyObject *dict, const char *name, int value)
 {
 	PyDict_SetItemString (dict, (char *) name, PyInt_FromLong(value));
