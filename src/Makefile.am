@@ -15,12 +15,8 @@ dpkg_sources =			\
 	rc-debman.h		\
 	rc-debman-private.h
 
-if ENABLE_RPM3
-rpm3_sources2 = $(rpm_sources)
-endif
-
-if ENABLE_RPM4
-rpm4_sources2 = $(rpm_sources)
+if ENABLE_RPM
+rpm_sources2 = $(rpm_sources)
 endif
 
 if ENABLE_DPKG
@@ -76,8 +72,7 @@ libredcarpet_a_SOURCES =		\
 	rc-debman-general.c		\
 	rc-debman-general.h		\
 	$(dpkg_sources2)		\
-	$(rpm3_sources2)		\
-	$(rpm4_sources2)
+	$(rpm_sources2)
 
 EXTRA_DIST = $(rpm_sources) $(dpkg_sources) rc-dpkg-helper.c
 

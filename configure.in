@@ -56,6 +56,10 @@ dnl RPM (any version)
 RPM_PREFIX="$with_rpm_prefix"
 AC_SUBST(RPM_PREFIX)
 
+AM_CONDITIONAL(ENABLE_RPM, false)
+ENABLE_RPM=no
+AC_SUBST(ENABLE_RPM)
+
 dnl RPMv3
 if test "x$enable_backend_rpm3" = "xyes"; then
   save_CPPFLAGS="$CPPFLAGS"
@@ -78,15 +82,13 @@ if test "x$enable_backend_rpm3" = "xyes"; then
   RPMLIB_LIBS="-L$RPM_PREFIX/lib -Wl,-Bstatic -lrpm -lbz2 -lz -Wl,-Bdynamic -lpopt"
   RPMLIB_CFLAGS="-I$RPM_PREFIX/include/rpm"
 
-  AM_CONDITIONAL(ENABLE_RPM3, true)
-  ENABLE_RPM3=yes
-  AC_SUBST(ENABLE_RPM3)
+  AM_CONDITIONAL(ENABLE_RPM, true)
+  ENABLE_RPM=yes
+
   AC_SUBST(RPMLIB_LIBS)
   AC_SUBST(RPMLIB_CFLAGS)
 
   CPPFLAGS="$save_CPPFLAGS"
-else
-  AM_CONDITIONAL(ENABLE_RPM3, false)
 fi
 
 dnl RPMv4
@@ -116,18 +118,20 @@ if test "x$enable_backend_rpm4" = "xyes"; then
   RPMLIB_LIBS="-L$RPM_PREFIX/lib -Wl,-Bstatic -lrpm -lrpmio -lbz2 -Wl,-Bdynamic -lpopt"
   RPMLIB_CFLAGS="-I$RPM_PREFIX/include/rpm"
 
-  AM_CONDITIONAL(ENABLE_RPM4, true)
-  ENABLE_RPM4=yes
-  AC_SUBST(ENABLE_RPM4)
+  AM_CONDITIONAL(ENABLE_RPM, true)
+  ENABLE_RPM=yes
+
   AC_SUBST(RPMLIB_LIBS)
   AC_SUBST(RPMLIB_CFLAGS)
 
+  AC_DEFINE(HAVE_RPM_4_0)
+
   CPPFLAGS="$save_CPPFLAGS"
-else
-  AM_CONDITIONAL(ENABLE_RPM3, false)
 fi
 
-dnl If we ever need to purify the dpkg backend, for example
+AM_CONDITIONAL(ENABLE_DPKG, false)
+ENABLE_DPKG=no
+AC_SUBST(ENABLE_DPKG)
 
 dnl DPKG
 if test "x$enable_backend_dpkg" = "xyes"; then
@@ -141,9 +145,6 @@ if test "x$enable_backend_dpkg" = "xyes"; then
 
   AM_CONDITIONAL(ENABLE_DPKG, true)
   ENABLE_DPKG=yes
-  AC_SUBST(ENABLE_DPKG)
-else
-  AM_CONDITIONAL(ENABLE_DPKG, false)
 fi
 
 dnl libxml

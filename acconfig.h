@@ -4,6 +4,4 @@
 #undef HAVE_LC_MESSAGES
 #undef HAVE_STPCPY
 
-#undef ENABLE_RPM3
-#undef ENABLE_RPM4
-#undef ENABLE_DPKG
+#undef HAVE_RPM_4_0
