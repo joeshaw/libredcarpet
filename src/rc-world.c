@@ -382,6 +382,7 @@ rc_world_get_system_packages (RCWorld *world)
 RCChannel *
 rc_world_add_channel (RCWorld *world,
                       const char *channel_name,
+                      const char *alias,
                       guint32 channel_id,
                       RCChannelType type)
 {
@@ -389,12 +390,14 @@ rc_world_add_channel (RCWorld *world,
 
     g_return_val_if_fail (world != NULL, NULL);
     g_return_val_if_fail (channel_name && *channel_name, NULL);
+    g_return_val_if_fail (alias, NULL);
 
     channel = rc_channel_new ();
 
     channel->world = world;
     channel->id    = channel_id;
     channel->name  = g_strdup (channel_name);
+    channel->alias = g_strdup (alias);
     channel->type  = type;
     
     world->channels = g_slist_prepend (world->channels,
@@ -474,6 +477,25 @@ rc_world_get_channel_by_name (RCWorld *world,
             return channel;
     }
 
+    return NULL;
+}
+
+RCChannel *
+rc_world_get_channel_by_alias (RCWorld *world,
+                               const char *alias)
+{
+    GSList *iter;
+
+    g_return_val_if_fail (world != NULL, NULL);
+    g_return_val_if_fail (alias && *alias, NULL);
+
+    for (iter = world->channels; iter != NULL; iter = iter->next) {
+        RCChannel *channel = iter->data;
+        if (channel->alias
+            && !g_strcasecmp (channel->alias, alias))
+            return channel;
+    }
+    
     return NULL;
 }
 

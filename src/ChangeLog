@@ -1,5 +1,20 @@
 2002-07-23  Jon Trowbridge  <trow@ximian.com>
 
+	* rc-world-import.c (rc_world_add_channels_from_xml): Look for a
+	channel alias in the XML and use it, if possible.
+	(rc_world_add_channel_from_buffer): Added a new argument to specify
+	the channel's alias.
+
+	* rc-world.c (rc_world_add_channel): Added a new argument to
+	specify the channel's alias.
+	(rc_world_get_channel_by_alias): Added.
+
+	* rc-channel.c (rc_channel_get_alias): Added.  An accessor for the
+	alias field.
+
+	* rc-channel-private.h: Added "alias" field to the RCChannel
+	struct.
+
 	* rc-queue-item.c (install_item_process): Generate a "needed by"
 	info item whenever we can.  For some weird reason we were
 	explicitly not creating the proper info items in the case of

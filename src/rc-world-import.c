@@ -77,7 +77,7 @@ rc_world_add_channels_from_xml (RCWorld *world,
     while (node) {
         char *tmp;
         GSList *distro_target;
-        gchar *name;
+        gchar *name, *alias;
         guint32 id;
         RCChannelType type = RC_CHANNEL_TYPE_HELIX;
         gchar **targets;
@@ -120,6 +120,10 @@ rc_world_add_channels_from_xml (RCWorld *world,
         } else {
             
             name = xml_get_prop(node, "name");
+            
+            alias = xml_get_prop(node, "alias");
+            if (alias == NULL)
+                alias = g_strdup ("");
 
             tmp = xml_get_prop(node, "id");
             id = atoi(tmp);
@@ -138,8 +142,9 @@ rc_world_add_channels_from_xml (RCWorld *world,
                 g_free (tmp);
             }
 
-            channel = rc_world_add_channel (world, name, id, type);
+            channel = rc_world_add_channel (world, name, alias, id, type);
             g_free (name);
+            g_free (alias);
 
             channel->path = xml_get_prop(node, "path");
 
@@ -303,6 +308,7 @@ rc_world_add_packages_from_xml (RCWorld *world,
 RCChannel *
 rc_world_add_channel_from_buffer (RCWorld *world,
                                   const char *channel_name,
+                                  const char *alias,
                                   guint32 channel_id,
                                   RCChannelType type,
                                   gchar *tbuf,
@@ -312,10 +318,12 @@ rc_world_add_channel_from_buffer (RCWorld *world,
 
     g_return_val_if_fail (world != NULL, NULL);
     g_return_val_if_fail (channel_name && *channel_name, NULL);
+    g_return_val_if_fail (alias != NULL, NULL);
     g_return_val_if_fail (tbuf != NULL, NULL);
 
     channel = rc_world_add_channel (world,
                                     channel_name,
+                                    alias,
                                     channel_id,
                                     type);
 

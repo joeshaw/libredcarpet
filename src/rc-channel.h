@@ -58,6 +58,8 @@ guint32       rc_channel_get_id          (const RCChannel *channel);
 
 const char   *rc_channel_get_name        (const RCChannel *channel);
 
+const char   *rc_channel_get_alias       (const RCChannel *channel);
+
 const char   *rc_channel_get_description (const RCChannel *channel);
 
 int           rc_channel_get_priority    (const RCChannel *channel,

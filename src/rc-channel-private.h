@@ -37,6 +37,7 @@ struct _RCChannel {
 
     guint32 id;
     gchar *name;
+    gchar *alias;
     gchar *description;
     guint32 tier;
                            /* priority if channel is... */

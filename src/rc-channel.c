@@ -101,6 +101,7 @@ rc_channel_unref (RCChannel *channel)
 
         if (channel->refs == 0) {
             g_free (channel->name);
+            g_free (channel->alias);
             g_free (channel->description);
 
             g_slist_foreach (channel->distro_target, (GFunc)g_free, NULL);
@@ -140,6 +141,14 @@ rc_channel_get_name (const RCChannel *channel)
     g_return_val_if_fail (channel != NULL, NULL);
 
     return channel->name ? channel->name : "Unnamed Channel";
+}
+
+const char *
+rc_channel_get_alias (const RCChannel *channel)
+{
+    g_return_val_if_fail (channel != NULL, NULL);
+
+    return channel->alias;
 }
 
 const char *
