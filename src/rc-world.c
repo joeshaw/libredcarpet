@@ -57,20 +57,6 @@ struct _RCPackageAndDep {
 };
 
 static RCPackageAndDep *
-rc_package_and_dep_new_package (RCPackage *package)
-{
-    RCPackageAndDep *pad;
-
-    pad = g_new0 (RCPackageAndDep, 1);
-    pad->package = rc_package_ref (package);
-    pad->dep = rc_package_dep_new_from_spec (&package->spec,
-                                             RC_RELATION_EQUAL,
-                                             FALSE, FALSE);
-
-    return pad;
-}
-
-static RCPackageAndDep *
 rc_package_and_dep_new_pair (RCPackage *package, RCPackageDep *dep)
 {
     RCPackageAndDep *pad;
@@ -704,13 +690,7 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
                       package->spec.nameq,
                       package);
 
-    /* Store all of the package's provides in a hash by name.
-       Packages implicitly provide themselves. */
-
-    pad = rc_package_and_dep_new_package (package);
-    hashed_slist_add (world->provides_by_name,
-                      RC_PACKAGE_SPEC (pad->dep)->nameq,
-                      pad);
+    /* Store all of the package's provides in a hash by name. */
 
     if (package->provides_a)
         for (i = 0; i < package->provides_a->len; i++) {
