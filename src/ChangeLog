@@ -1,3 +1,10 @@
+2002-10-23  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-world-import.c (rc_world_add_packages_from_xml): When pulling
+	in packages, don't do any filtering by architecture on system
+	packages.  This lets us reproduce broken systems with multiple
+	installs when undumping.
+
 2002-10-18  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c: only include rpm-stubs.h in the non-static case
