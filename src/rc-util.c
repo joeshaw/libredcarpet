@@ -28,6 +28,8 @@
 
 #include <zlib.h>
 #ifdef HAVE_BZ2
+/* Older bzlib didn't icnlude stdio.h */
+#  include <stdio.h>
 #  include <bzlib.h>
 #endif
 

@@ -1,3 +1,7 @@
+2003-09-09  Frank Belew <frb@ximian.com>
+
+	* rc-util.c: include stdio.h for older bz2 headers
+
 2003-09-05  Joe Shaw  <joe@ximian.com>
 
 	* rc-world-system.c (rc_world_system_init): Connect to the
