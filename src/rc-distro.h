@@ -21,6 +21,8 @@
 #ifndef RC_DISTRO_H_
 #define RC_DISTRO_H_
 
+#include <glib.h>
+
 typedef enum _RCPackageType {
     RC_PKG_RPM,
     RC_PKG_DPKG,
@@ -50,8 +52,10 @@ typedef struct _RCDistroType {
     RCPackageType pkgtype;
     RCDistroArch arch;
     char *extra_stuff;          /* language? */
+    GHashTable *extra_hash;
 } RCDistroType;
 
 RCDistroType *rc_figure_distro (void);
+const char *rc_distro_option_lookup(RCDistroType *distro, const char *key);
 
 #endif /* RC_DISTRO_H_ */

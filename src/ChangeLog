@@ -1,3 +1,12 @@
+2001-03-21  Joe Shaw  <joe@ximain.com>
+
+	* rc-distro.c (distro_types[]): Change the "extra_stuff" parameters of
+	the distros.
+	(rc_figure_distro): Added a hash table to the RCDistroType struct
+	called extra_hash and parse the extra_stuff string here.
+	(rc_distro_option_lookup): Added. Looks up an option in the extra_hash
+	hash table.
+
 2001-03-20  Joe Shaw  <joe@ximian.com>
 
 	* rc-debman.c (rc_debman_verify): Do not crash if package->history

@@ -119,31 +119,31 @@ RCDistroChunk distro_figurers[] = {
 };
 
 RCDistroType distro_types[] = {
-    { "redhat-60-i386", NULL, "Red Hat Linux", "6.0", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
-    { "redhat-61-i386", NULL, "Red Hat Linux", "6.1", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
-    { "redhat-62-i386", NULL, "Red Hat Linux", "6.2", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
-    { "redhat-70-i386", NULL, "Red Hat Linux", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
-    { "redhat-71-i386", NULL, "Red Hat Linux", "7.1", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
+    { "redhat-60-i386", NULL, "Red Hat Linux", "6.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "redhat-61-i386", NULL, "Red Hat Linux", "6.1", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "redhat-62-i386", NULL, "Red Hat Linux", "6.2", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "redhat-70-i386", NULL, "Red Hat Linux", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "redhat-71-i386", NULL, "Red Hat Linux", "7.1", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
 
-    { "scyld-20-i386", NULL, "Scyld Beowulf", "2.0", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
+    { "scyld-20-i386", NULL, "Scyld Beowulf", "2.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
 
-    { "turbolinux-60-i386", NULL, "TurboLinux", "6.0", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
+    { "turbolinux-60-i386", NULL, "TurboLinux", "6.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
 
-    { "caldera-24-i386", NULL, "Caldera OpenLinux eDesktop", "2.4", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
+    { "caldera-24-i386", NULL, "Caldera OpenLinux eDesktop", "2.4", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
 
-    { "suse-63-i386", NULL, "SuSE", "6.3", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
-    { "suse-64-i386", NULL, "SuSE", "6.4", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
-    { "suse-70-i386", NULL, "SuSE", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
+    { "suse-63-i386", NULL, "SuSE", "6.3", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=3, non-gdm-runlevel=2" },
+    { "suse-64-i386", NULL, "SuSE", "6.4", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=3, non-gdm-runlevel=2" },
+    { "suse-70-i386", NULL, "SuSE", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=3, non-gdm-runlevel=2" },
 
-    { "mandrake-70-i386", NULL, "Linux Mandrake", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
-    { "mandrake-71-i386", NULL, "Linux Mandrake", "7.1", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
-    { "mandrake-72-i386", NULL, "Linux Mandrake", "7.2", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
+    { "mandrake-70-i386", NULL, "Linux Mandrake", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "mandrake-71-i386", NULL, "Linux Mandrake", "7.1", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "mandrake-72-i386", NULL, "Linux Mandrake", "7.2", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
 
-    { "debian-sid-i386", NULL, "Debian GNU/Linux", "sid", RC_PKG_DPKG, RC_ARCH_IA32, "gdmrunlevel=2,3,4,5 restartgdm" },
-    { "debian-woody-i386", NULL, "Debian GNU/Linux", "woody", RC_PKG_DPKG, RC_ARCH_IA32, "gdmrunlevel=2,3,4,5 restartgdm" },
-    { "debian-22-i386", NULL, "Debian GNU/Linux", "2.2", RC_PKG_DPKG, RC_ARCH_IA32, "gdmrunlevel=2,3,4,5 restartgdm" },
+    { "debian-sid-i386", NULL, "Debian GNU/Linux", "sid", RC_PKG_DPKG, RC_ARCH_IA32, NULL },
+    { "debian-woody-i386", NULL, "Debian GNU/Linux", "woody", RC_PKG_DPKG, RC_ARCH_IA32, NULL },
+    { "debian-22-i386", NULL, "Debian GNU/Linux", "2.2", RC_PKG_DPKG, RC_ARCH_IA32, NULL },
 
-    { "linuxppc-2000-ppc", NULL, "LinuxPPC 2000", "2000", RC_PKG_RPM, RC_ARCH_PPC, "" },
+    { "linuxppc-2000-ppc", NULL, "LinuxPPC 2000", "2000", RC_PKG_RPM, RC_ARCH_PPC, "gdm-runlevel=5, non-gdm-runlevel=3" },
 
     { NULL }
 };
@@ -332,7 +332,11 @@ determine_arch ()
     return RC_ARCH_UNKNOWN;
 }
 
-
+const char *
+rc_distro_option_lookup(RCDistroType *distro, const char *key)
+{
+    return g_hash_table_lookup(distro->extra_hash, key);
+} /* rc_distro_option_lookup */
 
 RCDistroType *
 rc_figure_distro (void)
@@ -340,6 +344,7 @@ rc_figure_distro (void)
     int i = 0;
     RCDistroArch arch;
     gchar *distro_name = NULL;
+    char **options;
 
     static RCDistroType *dtype = NULL;
 
@@ -411,6 +416,24 @@ rc_figure_distro (void)
                 dtype = &distro_types[j];
             }
         }
+    }
+
+    dtype->extra_hash = g_hash_table_new(g_str_hash, g_str_equal);
+    if (dtype->extra_stuff) {
+        options = g_strsplit(dtype->extra_stuff, ",", 0);
+        for (i = 0; options[i]; i++) {
+            char **parseit;
+            
+            parseit = g_strsplit(options[i], "=", 1);
+            if (!parseit[0] || !parseit[1]) {
+                g_warning("Invalid distribution option: %s", options[i]);
+                continue;
+            }
+            g_hash_table_insert(
+                dtype->extra_hash, g_strstrip(parseit[0]), 
+                g_strstrip(parseit[1]));
+        }
+        g_strfreev(options);
     }
 
     return dtype;
