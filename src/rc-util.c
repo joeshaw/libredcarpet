@@ -168,6 +168,29 @@ rc_build_url (const gchar *method, const gchar *host, const gchar *path, const g
     return NULL;
 }
 
+static void
+hash_copy_helper (gpointer a, gpointer b, gpointer data)
+{
+    GHashTable *ht = (GHashTable *) data;
+
+    g_hash_table_insert (ht, a, b);
+}
+
+GHashTable *
+rc_hash_table_copy (GHashTable *ht, GHashFunc hfunc, GCompareFunc cfunc)
+{
+    GHashTable *nhash;
+
+    nhash = g_hash_table_new (hfunc, cfunc);
+    g_hash_table_foreach (ht, hash_copy_helper, nhash);
+
+    return nhash;
+}
+
+/*
+ * Magic gunzipping goodness
+ */
+
 /*
  * Count number of bytes to skip at start of buf
  */

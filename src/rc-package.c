@@ -175,3 +175,31 @@ rc_package_compare_func (gconstpointer a, gconstpointer b)
 
     return rc_package_spec_compare (&one->spec, &two->spec);
 }
+
+static void
+util_hash_to_list (gpointer a, gpointer b, gpointer c)
+{
+    GSList **l = (GSList **) c;
+    *l = g_slist_append (*l, b);
+}
+
+RCPackageSList *
+rc_package_hash_table_by_spec_to_list (RCPackageHashTableBySpec *ht)
+{
+    RCPackageSList *l = NULL;
+
+    g_hash_table_foreach (ht, util_hash_to_list, &l);
+
+    return l;
+}
+
+RCPackageSList *
+rc_package_hash_table_by_string_to_list (RCPackageHashTableByString *ht)
+{
+    RCPackageSList *l = NULL;
+
+    g_hash_table_foreach (ht, util_hash_to_list, &l);
+
+    return l;
+}
+

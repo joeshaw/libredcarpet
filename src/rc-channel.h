@@ -103,4 +103,6 @@ RCChannel *rc_channel_get_by_name(RCChannelSList *channels, char *name);
 
 gint rc_channel_compare_func (gconstpointer a, gconstpointer b);
 
+RCPackage *rc_find_best_package (RCPackageDepItem *pdep, RCChannelSList *chs, gint user_pref);
+
 #endif /* _RC_CHANNEL_H */

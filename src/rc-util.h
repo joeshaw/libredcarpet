@@ -47,7 +47,9 @@ gboolean rc_url_is_absolute (const char *url);
 gchar *rc_build_url (const gchar *method, const gchar *host,
                      const gchar *path, const gchar *rest_url);
 
-
+/* ... */
+GHashTable *
+rc_hash_table_copy (GHashTable *ht, GHashFunc hfunc, GCompareFunc cfunc);
 
 /* uncompress memory */
 gint rc_uncompress_memory (guint8 *input_buffer, guint32 input_length,

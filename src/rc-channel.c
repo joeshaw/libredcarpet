@@ -28,6 +28,7 @@
 #include "rc-channel.h"
 #include "rc-common.h"
 #include "rc-util.h"
+#include "pkginfo.h"
 
 RCSubchannel *
 rc_subchannel_new (void)
@@ -356,4 +357,36 @@ rc_channel_compare_func (gconstpointer a, gconstpointer b)
     }
 
     return (FALSE);
+}
+
+RCPackage *
+rc_find_best_package (RCPackageDepItem *pdep, RCChannelSList *chs, gint user_pref)
+{
+    RCPackage *ret = NULL;
+
+    while (chs) {
+        RCChannel *ch = (RCChannel *) chs->data;
+        RCPackage *found;
+        found = pkginfo_find_package_with_constraint (ch,
+                                                      pdep->spec.name, user_pref,
+                                                      pdep);
+#if 0
+        if (!found) {
+            found = g_hash_table_lookup (ch->dep_table,
+                                         &pdep->spec);
+        }
+#endif
+        if (found) {
+            if (ret) {
+                if (rc_package_spec_compare (&found->spec, &ret->spec) > 0) {
+                    ret = found;
+                }
+            } else {
+                ret = found;
+            }
+        }
+        chs = chs->next;
+    }
+
+    return ret;
 }

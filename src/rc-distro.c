@@ -24,6 +24,7 @@
 
 #include <glib.h>
 #include <string.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/fcntl.h>
@@ -225,16 +226,17 @@ func_string_in_file (gpointer arg1, gpointer arg2, gpointer arg3)
     gchar *str = (gchar *) arg2;
     gboolean exact = (arg3 != NULL);
 
-    return check_string_in_data (suck_file, fn, str, (gpointer) exact);
+    return check_string_in_data (suck_file, fn, str, exact);
 }
 
 static gboolean
 func_nth_string_in_file (gpointer arg1, gpointer arg2, gpointer arg3)
 {
+/*
     gchar *fn = (gchar *) arg1;
     gchar *str = (gchar *) arg2;
     gint n = (gint) arg3;
-
+*/
     g_error ("Implement nth_string_in_file in rc-distro.c!");
     return FALSE;
 }
