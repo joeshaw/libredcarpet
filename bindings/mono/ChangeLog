@@ -1,3 +1,7 @@
+2004-08-16  James Willcox  <james@ximian.com>
+
+	* Makefile.am: get rid of the icky install rule
+
 2004-08-16  Tambet Ingo  <tambet@ximian.com>
 
 	* WorldService.custom: Don't print out the exception.

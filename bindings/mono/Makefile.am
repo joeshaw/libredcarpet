@@ -8,6 +8,9 @@ ASSEMBLY=libredcarpet-sharp.dll
 DOC_UPDATER=@MONODOC@ --update
 DOC_ASSEMBLER=@MONODOC@ --assemble
 
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = libredcarpet-sharp.pc
+
 all: $(ASSEMBLY) docs-stamp
 
 $(API):
@@ -34,9 +37,6 @@ clean-docs:
 	rm -f libredcarpet-sharp-docs.tree
 	rm -rf en
 
-clean:
-	rm -f $(ASSEMBLY)
-
 clean-all: clean clean-docs
 	rm -f generated-stamp
 	rm -rf generated
@@ -45,20 +45,21 @@ prefix=@prefix@
 apidir=$(prefix)/share/gapi
 libdir=$(prefix)/lib
 
-EXTRA_DIST = libredcarpet-sharp.pc.in
-
-pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = libredcarpet-sharp.pc
-
 SHELL = @SHELL@
 top_srcdir = @top_srcdir@
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 
-install: all
-	$(mkinstalldirs) $(libdir) &&		\
-	$(mkinstalldirs) $(apidir) &&		\
-	$(mkinstalldirs) $(pkgconfigdir) &&\
-	cp $(API) $(apidir) &&			\
-	cp $(ASSEMBLY) $(libdir) &&		\
-	cp $(pkgconfig_DATA) $(pkgconfigdir) &&	\
-	install -m 644 libredcarpet-sharp-docs.zip libredcarpet-sharp-docs.source libredcarpet-sharp-docs.tree `monodoc --get-sourcesdir`
+assemblydir = $(libdir)
+assembly_DATA = $(ASSEMBLY)
+
+apidatadir = $(apidir)
+apidata_DATA = $(API)
+
+docdir = `monodoc --get-sourcesdir`
+doc_DATA =				\
+	libredcarpet-sharp-docs.zip	\
+	libredcarpet-sharp-docs.tree	\
+	libredcarpet-sharp-docs.source
+
+EXTRA_DIST = libredcarpet-sharp.pc.in
+CLEANFILES = $(ASSEMBLY) docs-stamp
