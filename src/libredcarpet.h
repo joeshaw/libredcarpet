@@ -2,7 +2,7 @@
 #define _LIBREDCARPET_H
 
 #include "deps.h"
-#include "distro.h"
+#include "rc-distro.h"
 #include "pkginfo.h"
 #include "rc-channel.h"
 #include "rc-common.h"

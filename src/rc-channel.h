@@ -23,7 +23,7 @@ void rc_subchannel_slist_free(RCSubchannelSList *rcsl);
 typedef enum _RCChannelType {
     RC_CHANNEL_TYPE_HELIX,      /* packageinfo.xml */
     RC_CHANNEL_TYPE_DEBIAN,     /* debian Packages.gz */
-    RC_CHANNEL_TYPE_REDHAT,     /* redhat up2date RDF */
+    RC_CHANNEL_TYPE_REDHAT,     /* redhat up2date RDF [?] */
     RC_CHANNEL_TYPE_UNKNOWN,
     RC_CHANNEL_TYPE_LAST
 } RCChannelType;
@@ -39,8 +39,7 @@ struct _RCChannel {
 
     RCChannelType type;
 
-    gchar *distribution;
-    guint major, minor;
+    gchar *distro_target;
 
     gchar *path;
     gchar *file_path;

@@ -24,6 +24,8 @@
 #include "config.h"
 #include <stdlib.h>
 
+#include "rc-distro.h"
+
 #include "rc-distman.h"
 
 #include "rc-debman.h"
@@ -35,11 +37,11 @@
 RCPackman *
 rc_distman_new (void)
 {
-    DistributionInfo distro;
+    RCDistroType *dtype;
 	RCPackman *packman = NULL;
     char *env;
 
-    rc_determine_distro (&distro);
+    dtype = rc_figure_distro ();
 
     env = getenv("RC_PACKMAN_TYPE");
     if (env && g_strcasecmp(env, "dpkg") == 0)
@@ -51,21 +53,23 @@ rc_distman_new (void)
         g_warning ("RPM support not enabled.");
 #endif
     } else {
-        switch (distro.type) {
-        case DISTRO_UNSUPPORTED:
-        case DISTRO_UNKNOWN:
-            break;
-        case DISTRO_DEBIAN:
-        case DISTRO_COREL:
-            packman = RC_PACKMAN (rc_debman_new ());
-        break;
-        default:
+        switch (dtype->pkgtype) {
+            case RC_PKG_UNSUPPORTED:
+            case RC_PKG_UNKNOWN:
+                break;
+            case RC_PKG_DPKG:
+                packman = RC_PACKMAN (rc_debman_new ());
+                break;
+            case RC_PKG_RPM:
 #ifdef HAVE_LIBRPM
-            packman = RC_PACKMAN (rc_rpmman_new ());
+                packman = RC_PACKMAN (rc_rpmman_new ());
 #else
-            g_warning ("RPM support not enabled.");
+                g_warning ("RPM support not enabled.");
 #endif
-            break;
+                break;
+            default:
+                g_error ("Cannot determine correct distman for your distro (%s)", dtype->unique_name);
+                break;
         }
     }
 

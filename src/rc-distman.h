@@ -25,7 +25,6 @@
 #define __RC_DISTMAN_H
 
 #include "rc-packman.h"
-#include "distro.h"
 
 RCPackman *rc_distman_new (void);
 

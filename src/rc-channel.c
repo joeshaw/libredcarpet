@@ -45,7 +45,7 @@ rc_channel_free (RCChannel *rcc)
 {
     g_free (rcc->name);
     g_free (rcc->description);
-    g_free (rcc->distribution);
+    g_free (rcc->distro_target);
     g_free (rcc->path);
     g_free (rcc->subs_url);
     g_free (rcc->unsubs_url);
@@ -122,8 +122,8 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
         channel->file_path = xml_get_prop(node, "file_path");
 	channel->icon_file = xml_get_prop(node, "icon");
 	channel->title_file = xml_get_prop(node, "title");
-	channel->description = xml_get_prop(node, "description");
-        channel->distribution = xml_get_prop(node, "distribution");
+        channel->description = xml_get_prop(node, "description");
+	channel->distro_target = xml_get_prop(node, "distro_target");
         channel->pkginfo_file = xml_get_prop(node, "pkginfo_file");
 	tmp = xml_get_prop(node, "mirrored");
 	if (tmp) {
@@ -140,12 +140,6 @@ rc_channel_parse_xml(char *xmlbuf, int compressed_length)
         } else {
             channel->pkginfo_compressed = FALSE;
         }
-        tmp = xml_get_prop (node, "major");
-        channel->major = atoi (tmp);
-        g_free (tmp);
-        tmp = xml_get_prop (node, "minor");
-        channel->minor = atoi (tmp);
-        g_free (tmp);
 	channel->subs_url = xml_get_prop(node, "subs_url");
         channel->unsubs_url = xml_get_prop(node, "unsubs_url");
         tmp = xml_get_prop(node, "id");

@@ -30,11 +30,11 @@ libredcarpet_a_SOURCES =		\
 	rc-channel.c			\
 	rc-util.c			\
 	rc-util.h			\
+	rc-distro.c			\
+	rc-distro.h			\
         deps.c                          \
         deps.h                          \
         deps-private.h                  \
-        distro.c                        \
-        distro.h                        \
         pkginfo.c                       \
         pkginfo.h                       \
 	rc-common.h			\
