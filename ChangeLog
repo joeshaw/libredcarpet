@@ -1,3 +1,7 @@
+2004-08-13  Tambet Ingo  <tambet@ximian.com>
+
+	* configure.in: Add libredcarpet-sharp.pc.
+
 2004-07-14  James Willcox  <james@ximian.com>
 
 	* configure.in: Add mono bindings

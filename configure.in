@@ -288,6 +288,7 @@ dependency-tests/Makefile
 tools/Makefile
 bindings/Makefile
 bindings/mono/Makefile
+bindings/mono/libredcarpet-sharp.pc
 bindings/python/Makefile
 libredcarpet.pc
 ])
