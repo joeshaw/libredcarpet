@@ -23,7 +23,6 @@
 #include <stdlib.h>
 #include <gnome-xml/xmlmemory.h>
 
-#include "softmgr.h"
 #include "xml-util.h"
 
 gchar *
