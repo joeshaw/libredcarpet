@@ -153,9 +153,8 @@ EXTRA_DIST =				\
 	rc-marshal.list
 
 dpkg-helper.h: rc-dpkg-helper.so
-	cd $(srcdir) && \
 	gzip -9 -c rc-dpkg-helper.so > rc-dpkg-helper.so.gz && \
-	./packer.pl rc-dpkg-helper.so.gz rc-dpkg-helper.so > dpkg-helper.h && \
+	$(srcdir)/packer.pl rc-dpkg-helper.so.gz rc-dpkg-helper.so > dpkg-helper.h && \
 	rm rc-dpkg-helper.so.gz
 
 rc-dpkg-helper.so: $(srcdir)/rc-dpkg-helper.c
@@ -167,33 +166,32 @@ CLEANFILES = dpkg-helper.h rc-dpkg-helper.so
 RPM_STUBS = rc-{rpm}.so.0 rc-{rpm_rpmio}.so.0 rc-{rpm_rpmio_rpmdb}-4.0.3.so rc-{rpm_rpmio_rpmdb}-4.0.4.so rc-{rpm_rpmio_rpmdb}-4.1.so rc-{rpm_rpmio_rpmdb}-4.2.so
 
 rpm-stubs.h: $(RPM_STUBS) packer.pl 
-	cd $(srcdir) && \
 	rm -f rpm-stubs.h && \
 	for stub in $(RPM_STUBS) ; do \
 		gzip -c -9 $$stub > $$stub.gz && \
-		./packer.pl $$stub.gz $$stub >> rpm-stubs.h && \
+		$(srcdir)/packer.pl $$stub.gz $$stub >> rpm-stubs.h && \
 		rm $$stub.gz; \
 	done;
 
 CLEANFILES += rpm-stubs.h $(RPM_STUBS)
 
 rc-{rpm}.so.0:
-	./make_stub.sh rc-{rpm}.so.0 librpm.so.0 libpopt.so.0
+	$(srcdir)/make_stub.sh rc-{rpm}.so.0 librpm.so.0 libpopt.so.0
 
 rc-{rpm_rpmio}.so.0:
-	./make_stub.sh rc-{rpm_rpmio}.so.0 librpm.so.0 librpmio.so.0 libpopt.so.0
+	$(srcdir)/make_stub.sh rc-{rpm_rpmio}.so.0 librpm.so.0 librpmio.so.0 libpopt.so.0
 
 rc-{rpm_rpmio_rpmdb}-4.0.3.so:
-	./make_stub.sh rc-{rpm_rpmio_rpmdb}-4.0.3.so librpm-4.0.3.so librpmio-4.0.3.so librpmdb-4.0.3.so libpopt.so.0
+	$(srcdir)/make_stub.sh rc-{rpm_rpmio_rpmdb}-4.0.3.so librpm-4.0.3.so librpmio-4.0.3.so librpmdb-4.0.3.so libpopt.so.0
 
 rc-{rpm_rpmio_rpmdb}-4.0.4.so:
-	./make_stub.sh rc-{rpm_rpmio_rpmdb}-4.0.4.so librpm-4.0.4.so librpmio-4.0.4.so librpmdb-4.0.4.so libpopt.so.0
+	$(srcdir)/make_stub.sh rc-{rpm_rpmio_rpmdb}-4.0.4.so librpm-4.0.4.so librpmio-4.0.4.so librpmdb-4.0.4.so libpopt.so.0
 
 rc-{rpm_rpmio_rpmdb}-4.1.so:
-	./make_stub.sh rc-{rpm_rpmio_rpmdb}-4.1.so librpm-4.1.so librpmio-4.1.so librpmdb-4.1.so libpopt.so.0
+	$(srcdir)/make_stub.sh rc-{rpm_rpmio_rpmdb}-4.1.so librpm-4.1.so librpmio-4.1.so librpmdb-4.1.so libpopt.so.0
 
 rc-{rpm_rpmio_rpmdb}-4.2.so:
-	./make_stub.sh rc-{rpm_rpmio_rpmdb}-4.2.so librpm-4.2.so librpmio-4.2.so librpmdb-4.2.so libpopt.so.0
+	$(srcdir)/make_stub.sh rc-{rpm_rpmio_rpmdb}-4.2.so librpm-4.2.so librpmio-4.2.so librpmdb-4.2.so libpopt.so.0
 
 all-local: libredcarpet.a
 

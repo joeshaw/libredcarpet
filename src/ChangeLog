@@ -1,5 +1,7 @@
 2003-08-20  Joe Shaw  <joe@ximian.com>
 
+	* Makefile.am: Fix a lot of srcdir/builddir issues.
+
 	* rc-rpmman.c: Add support for RPM 4.2.1
 
 2003-08-19  Joe Shaw  <joe@ximian.com>
