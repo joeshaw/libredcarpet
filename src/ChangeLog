@@ -1,5 +1,13 @@
 2001-01-23  Ian Peters  <itp@ximian.com>
 
+	* rc-rpmman.c: add install_extra to InstallState
+	(transact_cb): add the install_extra to the transaction total.
+	Only switch to the configuring state if we're installing things.
+	(rc_rpmman_transact): calculate the install_extra by querying if
+	packages to be installed have older already installed versions
+
+2001-01-23  Ian Peters  <itp@ximian.com>
+
 	* rc-packman.c (rc_packman_query): comment out busy check
 	(rc_packman_query_file): comment out busy check
 	(rc_packman_query_all): comment out busy check

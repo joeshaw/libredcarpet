@@ -70,9 +70,10 @@ typedef struct _InstallState InstallState;
 
 struct _InstallState {
     RCPackman *p;
-    gint seqno;
-    gint install_total;
-    gint remove_total;
+    guint seqno;
+    guint install_total;
+    guint install_extra;
+    guint remove_total;
     gboolean configuring;
 };
 
@@ -101,7 +102,8 @@ transact_cb (const Header h, const rpmCallbackType what,
         if (amount == total) {
             gtk_signal_emit_by_name (GTK_OBJECT (state->p), "transaction_step",
                                      ++state->seqno, state->install_total +
-                                     state->remove_total);
+                                     state->remove_total +
+                                     state->install_extra);
         }
         break;
 
@@ -117,12 +119,14 @@ transact_cb (const Header h, const rpmCallbackType what,
                 gtk_signal_emit_by_name (GTK_OBJECT (state->p),
                                          "transaction_step", 0,
                                          state->install_total +
+                                         state->install_extra +
                                          state->remove_total);
             }
         } else {
             gtk_signal_emit_by_name (GTK_OBJECT (state->p), "transaction_step",
                                      ++state->seqno, state->install_total +
-                                     state->remove_total);
+                                     state->remove_total +
+                                     state->install_extra);
         }
         break;
 
@@ -130,7 +134,9 @@ transact_cb (const Header h, const rpmCallbackType what,
         break;
 
     case RPMCALLBACK_TRANS_START:
-        state->configuring = TRUE;
+        if (state->install_total) {
+            state->configuring = TRUE;
+        }
         break;
 
     case RPMCALLBACK_UNINST_START:
@@ -369,18 +375,31 @@ rc_rpmman_transact (RCPackman *p, RCPackageSList *install_packages,
     for (iter = install_packages; iter; iter = iter->next) {
         RCPackage *package = (RCPackage *)(iter->data);
 
-        if (!(rc_packman_query (p, package))->installed) {
+        package = rc_packman_query_file (p, package->package_filename);
+
+        package->spec.epoch = 0;
+        g_free (package->spec.version);
+        package->spec.version = NULL;
+        g_free (package->spec.release);
+        package->spec.release = NULL;
+
+        if ((rc_packman_query (p, package))->installed) {
             extras++;
         }
+
+        rc_package_free (package);
     }
 
     state = g_new0 (InstallState, 1);
     state->p = p;
     state->seqno = 0;
-    state->install_total = g_slist_length (install_packages) + extras;
+    state->install_total = g_slist_length (install_packages);
+    state->install_extra = extras;
     state->remove_total = g_slist_length (remove_packages);
 
-    gtk_signal_emit_by_name (GTK_OBJECT (p), 0, state->install_total);
+    gtk_signal_emit_by_name (GTK_OBJECT (p), "transaction_step", 0,
+                             state->install_total + state->remove_total +
+                             state->install_extra);
 
     rc = rpmRunTransactions (transaction, transact_cb, (void *) state,
                              NULL, &probs, 0, 0);
@@ -912,8 +931,9 @@ rc_rpmman_query (RCPackman *p, RCPackage *pkg)
 
     if (rpmdbFindPackage (db, pkg->spec.name, &matches)) {
         rpmdbClose (db);
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
-                              "Unable to perform RPM database search");
+
+        pkg->installed = FALSE;
+
         return (pkg);
     }
 
