@@ -33,6 +33,7 @@ libredcarpet_a_SOURCES =		\
 	rc-package.h			\
 	rc-verification.c		\
 	rc-verification.h		\
+	rc-verification-private.h	\
 	rc-channel.h			\
 	rc-channel.c			\
 	rc-util.c			\
@@ -49,6 +50,7 @@ libredcarpet_a_SOURCES =		\
         rc-packman-private.h            \
         rc-debman.c                     \
         rc-debman.h                     \
+	rc-debman-private.h		\
         rc-md5.c                        \
         rc-md5.h                        \
         rc-md5-private.h                \
@@ -58,6 +60,7 @@ libredcarpet_a_SOURCES =		\
         xml-util.h                      \
 	rc-line-buf.c			\
 	rc-line-buf.h			\
+	rc-line-buf-private.h		\
 	rpmlead-4-0-x.h			\
 	rpmlead-3-0-x.h			\
 	signature-4-0-x.h		\
