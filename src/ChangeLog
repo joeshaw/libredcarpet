@@ -1,5 +1,10 @@
 2002-11-14  Joe Shaw  <joe@ximian.com>
 
+	* rc-dep-or.c (rc_dep_string_to_or_dep_slist): Return NULL if
+	there isn't a trailing parenthesis.
+
+2002-11-14  Joe Shaw  <joe@ximian.com>
+
 	* rc-debman.c (rc_debman_is_database_changed): Destroy our cache
 	of packages when the db changes out from underneath us.
 	(unlock_database, rc_debman_init): Make the timeouts 5 seconds,

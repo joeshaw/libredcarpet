@@ -195,6 +195,9 @@ rc_dep_string_to_or_dep_slist (const gchar *munged)
 
     zz = strchr (s, ')');
 
+    if (!zz)
+        return NULL;
+
     /* s now points to the start of the first thing */
     do {
         RCPackageDep *cur_item;
