@@ -28,6 +28,7 @@
 #include <libgen.h>
 
 #include <rpm/rpmlib.h>
+#include <rpm/rpmmacro.h>
 
 #include "rc-packman-private.h"
 #include "rc-rpmman.h"
@@ -2621,7 +2622,7 @@ rc_rpmman_init (RCRpmman *obj)
 
     /* Used to use RPMVERSION rathre than rpmEVR, until that broke in
      * RPM 4.0.4.  rpmEVR seems to contain the same thing? */
-    extern char *rpmEVR;
+    extern const char *rpmEVR;
 
     parse_rpm_version (obj, rpmEVR);
 
