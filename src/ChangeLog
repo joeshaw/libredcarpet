@@ -1,3 +1,47 @@
+2002-05-02  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-xml.c (parser_package_end): strdup the version and release
+	when copying the update spec info to the package spec, thus
+	avoiding a segfault when the package is unrefed.
+	(parser_update_end): Use the rc_package_add_update instead of
+	directly accessing the package's ->history.
+	(rc_package_sax_context_done): s/rc_package_free/rc_package_unref/
+	(rc_xml_node_to_package): Use rc_package_add_update.
+	(rc_xml_node_to_package): strdup the version and release when
+	copying the update spec info to the package spec.
+
+	* rc-world.c (rc_package_and_dep_new_package): Added as a
+	convenience function.
+	(rc_package_and_dep_new_pair): Added as a convenience function.
+	(rc_package_and_dep_free): Added as a convenience function.
+	(rc_world_free): Actually try to free all of our resources when we
+	free the world.  Previously we've just leaked with gusto.
+	(rc_world_add_package): Use our rc_package_and_dep_* convenience
+	functions.
+	(remove_package_structs_generic): Use our rc_package_and_dep_*
+	convenience functions.  Since we no longer have RCPackageAndSpec
+	structs, this code now is slightly less generic, and thus easier
+	to understand.
+
+	* rc-world-import.c (rc_world_add_packages_from_xml): Unref
+	package after adding it to the world.
+	(rc_world_parse_helix): Unref package after adding it to the
+	world.
+	(rc_world_parse_debian): Unref package after adding it to the
+	world.
+	(debian_packages_helper): Call rc_package_add_update instead
+	of directly manipulating the package's ->history.
+
+	* rc-package.c (rc_package_new): Add leak-checking code.
+	(rc_package_unref): Add leak-checking code.
+	(rc_package_spew_leaks): Added.  If leak-checking is enabled,
+	dump a list of all leaked packages.
+	(rc_package_add_update): Added.
+
+	* rc-package-update.c (rc_package_update_free): Don't cast the
+	update to a spec, just pass a pointer to that element of the
+	structure.
+
 2002-05-01  Joe Shaw  <joe@ximian.com>
 
 	* Makefile.am: Add rc-xml.[ch].

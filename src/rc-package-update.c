@@ -68,7 +68,7 @@ rc_package_update_free (RCPackageUpdate *update)
 {
     g_return_if_fail (update);
 
-    rc_package_spec_free_members(RC_PACKAGE_SPEC (update));
+    rc_package_spec_free_members(&update->spec);
 
     g_free (update->package_url);
 

@@ -276,8 +276,8 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
         update = rc_package_get_latest_update(ctx->current_package);
         if (update) {
             ctx->current_package->spec.epoch   = update->spec.epoch;
-            ctx->current_package->spec.version = update->spec.version;
-            ctx->current_package->spec.release = update->spec.release;
+            ctx->current_package->spec.version = g_strdup (update->spec.version);
+            ctx->current_package->spec.release = g_strdup (update->spec.release);
         }
         else {
             RCPackageDepSList *iter;
@@ -289,8 +289,8 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
                 if (dep->relation == RC_RELATION_EQUAL &&
                     !strcmp(dep->spec.name, ctx->current_package->spec.name)) {
                     ctx->current_package->spec.epoch   = dep->spec.epoch;
-                    ctx->current_package->spec.version = dep->spec.version;
-                    ctx->current_package->spec.release = dep->spec.release;
+                    ctx->current_package->spec.version = g_strdup (dep->spec.version);
+                    ctx->current_package->spec.release = g_strdup (dep->spec.release);
                     break;
                 }
             }
@@ -347,8 +347,8 @@ parser_update_end(RCPackageSAXContext *ctx, const xmlChar *name)
         url_prefix = ctx->current_package->channel->file_path;
 
     if (!strcmp(name, "update")) {
-        ctx->current_package->history = g_slist_append(
-            ctx->current_package->history, ctx->current_update);
+        rc_package_add_update (ctx->current_package,
+                               ctx->current_update);
 
         ctx->current_update = NULL;
         ctx->state = PARSER_HISTORY;
@@ -536,15 +536,15 @@ rc_package_sax_context_done(RCPackageSAXContext *ctx)
 
     if (ctx->xml_context)
         xmlFreeParserCtxt(ctx->xml_context);
-
+    
     if (ctx->current_package) {
         g_warning("Incomplete package lost");
-        rc_package_free(ctx->current_package);
+        rc_package_unref (ctx->current_package);
     }
 
     if (ctx->current_update) {
         g_warning("Incomplete update lost");
-        rc_package_update_free(ctx->current_update);
+        rc_package_update_free (ctx->current_update);
     }
 
     g_free(ctx->text_buffer);
@@ -621,8 +621,7 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
 
                 update = rc_xml_node_to_package_update (iter2, package);
 
-                package->history =
-                    g_slist_append (package->history, update);
+                rc_package_add_update (package, update);
 
                 iter2 = iter2->next;
             }
@@ -779,8 +778,8 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
         RCPackageUpdate *update = package->history->data;
 
         package->spec.epoch   = update->spec.epoch;
-        package->spec.version = update->spec.version;
-        package->spec.release = update->spec.release;
+        package->spec.version = g_strdup (update->spec.version);
+        package->spec.release = g_strdup (update->spec.release);
 
     } else {
 
@@ -795,8 +794,8 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
             if (dep->relation == RC_RELATION_EQUAL
                 && ! strcmp (dep->spec.name, package->spec.name)) {
                 package->spec.epoch   = dep->spec.epoch;
-                package->spec.version = dep->spec.version;
-                package->spec.release = dep->spec.release;
+                package->spec.version = g_strdup (dep->spec.version);
+                package->spec.release = g_strdup (dep->spec.release);
                 break;
             }
         }

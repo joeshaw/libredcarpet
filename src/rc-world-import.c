@@ -97,6 +97,7 @@ rc_world_add_packages_from_xml (RCWorld *world, RCChannel *channel, xmlNode *nod
             package = rc_xml_node_to_package (node, channel);
             if (package) {
                 rc_world_add_package (world, package);
+                rc_package_unref (package);
                 ++count;
             }
             
@@ -189,6 +190,8 @@ rc_world_parse_helix (RCWorld *world, RCChannel *channel, gchar *buf)
         rc_world_freeze(world);
         rc_world_add_packages_from_slist(world, packages);
         rc_world_thaw(world);
+
+        rc_package_slist_unref (packages);
     }
 
     return count;
@@ -223,6 +226,7 @@ rc_world_parse_debian (RCWorld *world, RCChannel *rcc, char *buf)
         p->channel = rcc;
 
         rc_world_add_package (world, p);
+        rc_package_unref (p);
         ++count;
     }
 
@@ -433,7 +437,7 @@ debian_packages_helper (gchar *mbuf, RCPackage *pkg, gchar *url_prefix)
     up->importance = RC_IMPORTANCE_SUGGESTED;
     up->description = g_strdup ("Upstream Debian release");
     rc_package_spec_copy (&up->spec, &pkg->spec);
-    pkg->history = g_slist_append (pkg->history, up);
+    rc_package_add_update (pkg, up);
 
     /* Make sure to provide myself, for the dep code! */
     pkg->provides =

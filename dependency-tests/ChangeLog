@@ -1,3 +1,8 @@
+2002-05-02  Jon Trowbridge  <trow@ximian.com>
+
+	* deptestomatic.c (main): Call rc_package_spew_leaks after
+	freeing the RCWorld.
+
 2002-05-01  Jon Trowbridge  <trow@ximian.com>
 
 	* deptestomatic.c (main): Call rc_world_free when we are finished,

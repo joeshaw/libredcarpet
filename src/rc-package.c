@@ -24,6 +24,10 @@
 #include "rc-package.h"
 #include "rc-pretty-name.h"
 
+#ifdef RC_PACKAGE_FIND_LEAKS
+static GHashTable *leaked_packages = NULL;
+#endif
+
 RCPackage *
 rc_package_new (void)
 {
@@ -31,6 +35,13 @@ rc_package_new (void)
 
     package->section = RC_SECTION_MISC;
     package->refs    = 1;
+
+#ifdef RC_PACKAGE_FIND_LEAKS
+    if (leaked_packages == NULL)
+        leaked_packages = g_hash_table_new (NULL, NULL);
+
+    g_hash_table_insert (leaked_packages, package, package);
+#endif
 
     return (package);
 } /* rc_package_new */
@@ -97,6 +108,8 @@ rc_package_unref (RCPackage *package)
 
         if (package->refs == 0) {
 
+            rc_package_update_slist_free (package->history);
+
             rc_package_spec_free_members (RC_PACKAGE_SPEC (package));
 
             rc_package_dep_slist_free (package->requires);
@@ -110,26 +123,62 @@ rc_package_unref (RCPackage *package)
             g_free (package->summary);
             g_free (package->description);
 
-            rc_package_update_slist_free (package->history);
+
             
             g_free (package->package_filename);
             g_free (package->signature_filename);
+
+#ifdef RC_PACKAGE_FIND_LEAKS
+            g_assert (leaked_packages);
+            g_hash_table_remove (leaked_packages, package);
+#endif
 
             g_free (package);
         }
     }
 } /* rc_package_unref */
 
+#ifdef RC_PACKAGE_FIND_LEAKS
+static void
+leaked_pkg_cb (gpointer key, gpointer val, gpointer user_data)
+{
+    RCPackage *pkg = key;
+
+    g_print (">!> Leaked %s (refs=%d)\n",
+             rc_package_to_str_static (pkg),
+             pkg->refs);
+}
+#endif
+
+void
+rc_package_spew_leaks (void)
+{
+#ifdef RC_PACKAGE_FIND_LEAKS
+    if (leaked_packages) 
+        g_hash_table_foreach (leaked_packages,
+                              leaked_pkg_cb,
+                              NULL);
+#endif
+}
+
 char *
 rc_package_to_str (RCPackage *package)
 {
+    char *str, *specstr;
+
     g_return_val_if_fail (package != NULL, NULL);
 
-    return g_strconcat (rc_package_spec_to_str_static (&package->spec),
-                        package->channel ? "[" : NULL,
-                        package->channel ? package->channel->name : "",
-                        "]",
-                        NULL);
+    specstr = rc_package_spec_to_str (&package->spec);
+
+    str = g_strconcat (specstr,
+                       package->channel ? "[" : NULL,
+                       package->channel ? package->channel->name : "",
+                       "]",
+                       NULL);
+
+    g_free (specstr);
+
+    return str;
 }
 
 const char *
@@ -218,6 +267,19 @@ rc_package_hash_table_by_string_to_list (RCPackageHashTableByString *ht)
     g_hash_table_foreach (ht, util_hash_to_list, &l);
 
     return l;
+}
+
+void
+rc_package_add_update (RCPackage *package,
+                       RCPackageUpdate *update)
+{
+    g_return_if_fail (package != NULL);
+    g_return_if_fail (update != NULL);
+
+    g_assert (update->package == NULL || update->package == package);
+    update->package = package;
+
+    package->history = g_slist_append (package->history, update);
 }
 
 RCPackageUpdate *

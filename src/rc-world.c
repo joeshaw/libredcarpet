@@ -37,6 +37,44 @@ struct _RCPackageAndDep {
     RCPackageDep *dep;
 };
 
+static RCPackageAndDep *
+rc_package_and_dep_new_package (RCPackage *package)
+{
+    RCPackageAndDep *pad;
+
+    pad = g_new0 (RCPackageAndDep, 1);
+    pad->package = rc_package_ref (package);
+    pad->dep = rc_package_dep_new_from_spec (&package->spec,
+                                             RC_RELATION_EQUAL);
+    pad->dep->spec.type = RC_PACKAGE_SPEC_TYPE_PACKAGE;
+
+    return pad;
+}
+
+static RCPackageAndDep *
+rc_package_and_dep_new_pair (RCPackage *package, RCPackageDep *dep)
+{
+    RCPackageAndDep *pad;
+
+    pad = g_new0 (RCPackageAndDep, 1);
+    pad->package = rc_package_ref (package);
+    pad->dep = rc_package_dep_copy (dep);
+
+    return pad;
+}
+
+void
+rc_package_and_dep_free (RCPackageAndDep *pad)
+{
+    if (pad) {
+        rc_package_dep_free (pad->dep);
+        rc_package_unref (pad->package);
+        g_free (pad);
+    }
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
 static gboolean
 channel_match (const RCChannel *a, const RCChannel *b)
 {
@@ -110,7 +148,7 @@ rc_world_free (RCWorld *world)
 {
 	if (world) {
 
-        /* FIXME: Leaks almost everything */
+        rc_world_remove_packages (world, RC_WORLD_ANY_CHANNEL);
 
         g_hash_table_destroy (world->packages_by_name);
         g_hash_table_destroy (world->provides_by_name);
@@ -206,12 +244,7 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
     /* Store all of the package's provides in a hash by name.
        Packages implicitly provide themselves. */
 
-    pad = g_new0 (RCPackageAndDep, 1);
-    pad->package = package;
-    pad->dep = rc_package_dep_new_from_spec (&package->spec,
-                                             RC_RELATION_EQUAL);
-    pad->dep->spec.type = RC_PACKAGE_SPEC_TYPE_PACKAGE;
-
+    pad = rc_package_and_dep_new_package (package);
     rc_hash_table_slist_insert (world->provides_by_name,
                                 pad->dep->spec.name,
                                 pad);
@@ -220,9 +253,7 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
 
         RCPackageDep *dep = (RCPackageDep *) iter->data;
 
-        pad = g_new0 (RCPackageAndDep, 1);
-        pad->package = package;
-        pad->dep = dep;
+        pad = rc_package_and_dep_new_pair (package, dep);
 
         rc_hash_table_slist_insert (world->provides_by_name,
                                     dep->spec.name,
@@ -234,9 +265,7 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
     for (iter = package->requires; iter != NULL; iter = iter->next) {
         RCPackageDep *dep = (RCPackageDep *) iter->data;
 
-        pad = g_new0 (RCPackageAndDep, 1);
-        pad->package = package;
-        pad->dep = dep;
+        pad = rc_package_and_dep_new_pair (package, dep);
 
         rc_hash_table_slist_insert (world->requires_by_name,
                                     dep->spec.name,
@@ -313,8 +342,8 @@ remove_package_structs_generic (GSList *slist, RCPackage *package_to_remove, RCC
     if (package_to_remove == NULL
         && channel == RC_WORLD_ANY_CHANNEL) {
         for (iter = slist; iter != NULL; iter = iter->next) {
-            if (iter->data)
-                g_free (iter->data);
+            RCPackageAndDep *pad = iter->data;
+            rc_package_and_dep_free (pad);
         }
         
         g_slist_free (slist);
@@ -329,15 +358,16 @@ remove_package_structs_generic (GSList *slist, RCPackage *package_to_remove, RCC
     */
     orig = iter = slist;
     while (iter != NULL) {
-        RCPackage **our_struct = iter->data;
+        RCPackageAndDep *pad = iter->data;
         GSList *next = iter->next;
-        if (our_struct) {
-            RCPackage *package = *our_struct;
+        
+        if (pad) {
+            RCPackage *package = pad->package;
             
             if (package && 
                 ((package_to_remove && package == package_to_remove)
                  || channel_match (package->channel, channel))) {
-                g_free (our_struct);
+                rc_package_and_dep_free (pad);
                 if (iter == slist) {
                     iter->data = NULL;
                 } else {

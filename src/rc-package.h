@@ -25,6 +25,8 @@
 
 #include <libxml/tree.h>
 
+#define RC_PACKAGE_FIND_LEAKS
+
 typedef struct _RCPackage RCPackage;
 
 typedef GSList RCPackageSList;
@@ -84,11 +86,11 @@ struct _RCPackage {
 };
 
 RCPackage *rc_package_new (void);
-
 RCPackage *rc_package_copy (RCPackage *package);
-
 RCPackage *rc_package_ref   (RCPackage *package);
 void       rc_package_unref (RCPackage *package);
+
+void       rc_package_spew_leaks (void);
 
 char       *rc_package_to_str        (RCPackage *package);
 const char *rc_package_to_str_static (RCPackage *package);
@@ -105,7 +107,9 @@ RCPackageSList *rc_package_slist_sort_by_pretty_name (RCPackageSList *packages);
 RCPackageSList *rc_package_hash_table_by_spec_to_list (RCPackageHashTableBySpec *ht);
 RCPackageSList *rc_package_hash_table_by_string_to_list (RCPackageHashTableBySpec *ht);
 
-RCPackageUpdate *rc_package_get_latest_update(RCPackage *package);
+void             rc_package_add_update        (RCPackage *package,
+                                               RCPackageUpdate *update);
+RCPackageUpdate *rc_package_get_latest_update (RCPackage *package);
 
 GSList *rc_package_slist_find_duplicates (RCPackageSList *pkgs);
 RCPackageSList *rc_package_slist_remove_older_duplicates (RCPackageSList *packages,

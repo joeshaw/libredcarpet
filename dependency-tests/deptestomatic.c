@@ -582,6 +582,7 @@ main (int argc, char *argv[])
     process_xml_test_file (argv[1]);
 
     rc_world_free (world);
+    rc_package_spew_leaks ();
 
     return 0;
 }
