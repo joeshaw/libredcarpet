@@ -1,0 +1,15 @@
+<gapi-parser-input>
+  <api filename="libredcarpet-api.xml">
+    <library name="libredcarpet">
+      <namespace name="RC">
+        <dir>../../src</dir>
+        <exclude>../../src/distributions-xml.h</exclude>
+        <exclude>../../src/dpkg-helper.h</exclude>
+        <exclude>../../src/rpm-rpmlead.h</exclude>
+        <exclude>../../src/rpm-signature.h</exclude>
+        <exclude>../../src/rpm-stubs.h</exclude>
+        <exclude>../../src/rpm-ugid.h</exclude>
+      </namespace>
+    </library>
+  </api>
+</gapi-parser-input> 

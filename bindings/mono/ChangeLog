@@ -1,0 +1,39 @@
+2004-07-14  James Willcox  <james@ximian.com>
+
+	* Import into GNOME CVS.
+
+2004-05-20  James Willcox  <james@ximian.com>
+
+	* libredcarpet-api.xml: regenned
+
+2004-04-26  James Willcox  <james@ximian.com>
+
+	* Makefile.am: fix a couple bugs in rules
+	* RC.metadata: regenned
+	* libredcarpet-api.xml: hide some stuff
+	* libredcarpet-sharp-docs.source: Readded
+
+2004-04-24  James Willcox  <james@ximian.com>
+
+	* Channel.custom:  Added
+	* Makefile.am:  Added
+	* Makefile.in:  Removed
+	* RC.metadata:  Fixed some stuff, make some classes opaque and/or boxed
+	* ServiceMountException.cs:  Added
+	* libredcarpet-api.xml:  Regenned
+	* libredcarpet-sharp-docs.source:  Removed
+
+2004-02-25  James Willcox  <james@ximian.com>
+
+	* RC.metadata:  Hide WorldMulti.MountService
+	* WorldMulti.custom:  Provide a custom MountService method
+	* libredcarpet-api.xml:  regenned
+
+2004-02-23  James Willcox  <jwillcox@gnome.org>
+
+	* Makefile.in:  added doc stuff
+	* RC.metadata:  massaged some stuff
+	* libredcarpet-api.xml:  regenerated
+
+	Start a ChangeLog
+

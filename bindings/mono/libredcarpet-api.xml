@@ -1,0 +1,4039 @@
+<?xml version="1.0"?>
+<api
+><!--
+
+        This file was automatically generated.
+        Please DO NOT MODIFY THIS FILE, modify .metadata files instead.
+
+-->
+  <namespace name="RC" library="libredcarpet">
+    <enum name="Arch" cname="RCArch" type="enum">
+      <member cname="RC_ARCH_UNKNOWN" name="Unknown" value="-1" />
+      <member cname="RC_ARCH_NOARCH" name="Noarch" />
+      <member cname="RC_ARCH_I386" name="I386" />
+      <member cname="RC_ARCH_I486" name="I486" />
+      <member cname="RC_ARCH_I586" name="I586" />
+      <member cname="RC_ARCH_I686" name="I686" />
+      <member cname="RC_ARCH_ATHLON" name="Athlon" />
+      <member cname="RC_ARCH_PPC" name="Ppc" />
+      <member cname="RC_ARCH_PPC64" name="Ppc64" />
+      <member cname="RC_ARCH_S390" name="S390" />
+      <member cname="RC_ARCH_S390X" name="S390x" />
+      <member cname="RC_ARCH_SPARC" name="Sparc" />
+      <member cname="RC_ARCH_SPARC64" name="Sparc64" />
+    </enum>
+    <enum name="DebugLevel" cname="RCDebugLevel" type="enum">
+      <member cname="RC_DEBUG_LEVEL_ALWAYS" name="Always" value="-1" />
+      <member cname="RC_DEBUG_LEVEL_NONE" name="None" />
+      <member cname="RC_DEBUG_LEVEL_ERROR" name="Error" value="1" />
+      <member cname="RC_DEBUG_LEVEL_CRITICAL" name="Critical" value="2" />
+      <member cname="RC_DEBUG_LEVEL_WARNING" name="Warning" value="3" />
+      <member cname="RC_DEBUG_LEVEL_MESSAGE" name="Message" value="4" />
+      <member cname="RC_DEBUG_LEVEL_INFO" name="Info" value="5" />
+      <member cname="RC_DEBUG_LEVEL_DEBUG" name="Debug" value="6" />
+    </enum>
+    <enum name="DistroPackageType" cname="RCDistroPackageType" type="enum">
+      <member cname="RC_DISTRO_PACKAGE_TYPE_UNKNOWN" name="Unknown" />
+      <member cname="RC_DISTRO_PACKAGE_TYPE_RPM" name="Rpm" />
+      <member cname="RC_DISTRO_PACKAGE_TYPE_DPKG" name="Dpkg" />
+    </enum>
+    <enum name="DistroStatus" cname="RCDistroStatus" type="enum">
+      <member cname="RC_DISTRO_STATUS_UNSUPPORTED" name="Unsupported" />
+      <member cname="RC_DISTRO_STATUS_PRESUPPORTED" name="Presupported" />
+      <member cname="RC_DISTRO_STATUS_SUPPORTED" name="Supported" />
+      <member cname="RC_DISTRO_STATUS_DEPRECATED" name="Deprecated" />
+      <member cname="RC_DISTRO_STATUS_RETIRED" name="Retired" />
+    </enum>
+    <enum name="LineBufStatus" cname="RCLineBufStatus" type="enum">
+      <member cname="RC_LINE_BUF_OK" name="Ok" />
+      <member cname="RC_LINE_BUF_ERROR" name="Error" />
+    </enum>
+    <enum name="PackageImportance" cname="RCPackageImportance" type="enum">
+      <member cname="RC_IMPORTANCE_INVALID" name="Invalid" value="-1" />
+      <member cname="RC_IMPORTANCE_NECESSARY" name="Necessary" />
+      <member cname="RC_IMPORTANCE_URGENT" name="Urgent" />
+      <member cname="RC_IMPORTANCE_SUGGESTED" name="Suggested" />
+      <member cname="RC_IMPORTANCE_FEATURE" name="Feature" />
+      <member cname="RC_IMPORTANCE_MINOR" name="Minor" />
+      <member cname="RC_IMPORTANCE_LAST" name="Last" />
+    </enum>
+    <enum name="PackageRelation" cname="RCPackageRelation" type="enum">
+      <member cname="RC_RELATION_INVALID" name="Invalid" value="-1" />
+      <member cname="RC_RELATION_ANY" name="Any" />
+      <member cname="RC_RELATION_EQUAL" name="Equal" />
+      <member cname="RC_RELATION_LESS" name="Less" />
+      <member cname="RC_RELATION_LESS_EQUAL" name="LessEqual" />
+      <member cname="RC_RELATION_GREATER" name="Greater" />
+      <member cname="RC_RELATION_GREATER_EQUAL" name="GreaterEqual" />
+      <member cname="RC_RELATION_NOT_EQUAL" name="NotEqual" />
+      <member cname="RC_RELATION_NONE" name="None" />
+    </enum>
+    <enum name="PackageSection" cname="RCPackageSection" type="enum">
+      <member cname="RC_SECTION_OFFICE" name="Office" />
+      <member cname="RC_SECTION_IMAGING" name="Imaging" />
+      <member cname="RC_SECTION_PIM" name="Pim" />
+      <member cname="RC_SECTION_XAPP" name="Xapp" />
+      <member cname="RC_SECTION_GAME" name="Game" />
+      <member cname="RC_SECTION_MULTIMEDIA" name="Multimedia" />
+      <member cname="RC_SECTION_INTERNET" name="Internet" />
+      <member cname="RC_SECTION_UTIL" name="Util" />
+      <member cname="RC_SECTION_SYSTEM" name="System" />
+      <member cname="RC_SECTION_DOC" name="Doc" />
+      <member cname="RC_SECTION_LIBRARY" name="Library" />
+      <member cname="RC_SECTION_DEVEL" name="Devel" />
+      <member cname="RC_SECTION_DEVELUTIL" name="Develutil" />
+      <member cname="RC_SECTION_MISC" name="Misc" />
+      <member cname="RC_SECTION_LAST" name="Last" />
+    </enum>
+    <enum name="PackageStatus" cname="RCPackageStatus" type="enum">
+      <member cname="RC_PACKAGE_STATUS_UNKNOWN" name="Unknown" />
+      <member cname="RC_PACKAGE_STATUS_INSTALLED" name="Installed" />
+      <member cname="RC_PACKAGE_STATUS_UNINSTALLED" name="Uninstalled" />
+      <member cname="RC_PACKAGE_STATUS_TO_BE_INSTALLED" name="ToBeInstalled" />
+      <member cname="RC_PACKAGE_STATUS_TO_BE_INSTALLED_SOFT" name="ToBeInstalledSoft" />
+      <member cname="RC_PACKAGE_STATUS_TO_BE_UNINSTALLED" name="ToBeUninstalled" />
+      <member cname="RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_OBSOLETE" name="ToBeUninstalledDueToObsolete" />
+      <member cname="RC_PACKAGE_STATUS_TO_BE_UNINSTALLED_DUE_TO_UNLINK" name="ToBeUninstalledDueToUnlink" />
+    </enum>
+    <enum name="PackmanError" cname="RCPackmanError" type="enum">
+      <member cname="RC_PACKMAN_ERROR_NONE" name="None" />
+      <member cname="RC_PACKMAN_ERROR_ABORT" name="Abort" />
+      <member cname="RC_PACKMAN_ERROR_FATAL" name="Fatal" />
+    </enum>
+    <enum name="PackmanStep" cname="RCPackmanStep" type="enum">
+      <member cname="RC_PACKMAN_STEP_UNKNOWN" name="Unknown" />
+      <member cname="RC_PACKMAN_STEP_PREPARE" name="Prepare" />
+      <member cname="RC_PACKMAN_STEP_INSTALL" name="Install" />
+      <member cname="RC_PACKMAN_STEP_REMOVE" name="Remove" />
+      <member cname="RC_PACKMAN_STEP_CONFIGURE" name="Configure" />
+    </enum>
+    <enum name="QueueItemType" cname="RCQueueItemType" type="enum">
+      <member cname="RC_QUEUE_ITEM_TYPE_UNKNOWN" name="Unknown" />
+      <member cname="RC_QUEUE_ITEM_TYPE_INSTALL" name="Install" />
+      <member cname="RC_QUEUE_ITEM_TYPE_REQUIRE" name="Require" />
+      <member cname="RC_QUEUE_ITEM_TYPE_BRANCH" name="Branch" />
+      <member cname="RC_QUEUE_ITEM_TYPE_GROUP" name="Group" />
+      <member cname="RC_QUEUE_ITEM_TYPE_CONFLICT" name="Conflict" />
+      <member cname="RC_QUEUE_ITEM_TYPE_UNINSTALL" name="Uninstall" />
+      <member cname="RC_QUEUE_ITEM_TYPE_LAST" name="Last" />
+    </enum>
+    <enum name="ResolverInfoType" cname="RCResolverInfoType" type="enum">
+      <member cname="RC_RESOLVER_INFO_TYPE_INVALID" name="Invalid" />
+      <member cname="RC_RESOLVER_INFO_TYPE_NEEDED_BY" name="NeededBy" />
+      <member cname="RC_RESOLVER_INFO_TYPE_CONFLICTS_WITH" name="ConflictsWith" />
+      <member cname="RC_RESOLVER_INFO_TYPE_OBSOLETES" name="Obsoletes" />
+      <member cname="RC_RESOLVER_INFO_TYPE_DEPENDS_ON" name="DependsOn" />
+      <member cname="RC_RESOLVER_INFO_TYPE_CHILD_OF" name="ChildOf" />
+      <member cname="RC_RESOLVER_INFO_TYPE_MISSING_REQ" name="MissingReq" />
+      <member cname="RC_RESOLVER_INFO_TYPE_MISC" name="Misc" />
+    </enum>
+    <enum name="RpmmanDBStatus" cname="RCRpmmanDBStatus" type="enum">
+      <member cname="RC_RPMMAN_DB_NONE" name="None" />
+      <member cname="RC_RPMMAN_DB_RDONLY" name="Rdonly" />
+      <member cname="RC_RPMMAN_DB_RDWR" name="Rdwr" />
+    </enum>
+    <enum name="VerificationStatus" cname="RCVerificationStatus" type="enum">
+      <member cname="RC_VERIFICATION_STATUS_FAIL" name="Fail" />
+      <member cname="RC_VERIFICATION_STATUS_UNDEF" name="Undef" />
+      <member cname="RC_VERIFICATION_STATUS_PASS" name="Pass" />
+    </enum>
+    <enum name="VerificationType" cname="RCVerificationType" type="flags">
+      <member cname="RC_VERIFICATION_TYPE_ALL" name="All" />
+      <member cname="RC_VERIFICATION_TYPE_SANITY" name="Sanity" value="1" />
+      <member cname="RC_VERIFICATION_TYPE_SIZE" name="Size" value="1 &lt;&lt; 1" />
+      <member cname="RC_VERIFICATION_TYPE_MD5" name="Md5" value="1 &lt;&lt; 2" />
+      <member cname="RC_VERIFICATION_TYPE_GPG" name="Gpg" value="1 &lt;&lt; 3" />
+    </enum>
+    <enum name="ChannelType" cname="RCChannelType" type="enum">
+      <member cname="RC_CHANNEL_TYPE_UNKNOWN" name="Unknown" value="-1" />
+      <member cname="RC_CHANNEL_TYPE_HELIX" name="Helix" />
+      <member cname="RC_CHANNEL_TYPE_DEBIAN" name="Debian" />
+      <member cname="RC_CHANNEL_TYPE_APTRPM" name="Aptrpm" />
+    </enum>
+    <enum name="PendingStatus" cname="RCPendingStatus" type="enum">
+      <member cname="RC_PENDING_STATUS_INVALID" name="Invalid" />
+      <member cname="RC_PENDING_STATUS_PRE_BEGIN" name="PreBegin" />
+      <member cname="RC_PENDING_STATUS_RUNNING" name="Running" />
+      <member cname="RC_PENDING_STATUS_BLOCKING" name="Blocking" />
+      <member cname="RC_PENDING_STATUS_ABORTED" name="Aborted" />
+      <member cname="RC_PENDING_STATUS_FAILED" name="Failed" />
+      <member cname="RC_PENDING_STATUS_FINISHED" name="Finished" />
+    </enum>
+    <enum name="RpmVSFlags" cname="rpmVSFlags" type="enum">
+      <member cname="RPMVSF_DEFAULT" name="Default" />
+      <member cname="RPMVSF_NOHDRCHK" name="Nohdrchk" />
+      <member cname="RPMVSF_NEEDPAYLOAD" name="Needpayload" />
+      <member cname="RPMVSF_NOSHA1HEADER" name="Nosha1header" />
+      <member cname="RPMVSF_NOMD5HEADER" name="Nomd5header" />
+      <member cname="RPMVSF_NODSAHEADER" name="Nodsaheader" />
+      <member cname="RPMVSF_NORSAHEADER" name="Norsaheader" />
+      <member cname="RPMVSF_NOSHA1" name="Nosha1" />
+      <member cname="RPMVSF_NOMD5" name="Nomd5" />
+      <member cname="RPMVSF_NODSA" name="Nodsa" />
+      <member cname="RPMVSF_NORSA" name="Norsa" />
+    </enum>
+    <callback name="ChannelAndSubdFn" cname="RCChannelAndSubdFn">
+      <return-type type="gboolean" />
+      <parameters>
+        <parameter type="RCChannel*" name="arg1" />
+        <parameter type="gboolean" name="arg2" />
+        <parameter type="gpointer" name="arg3" />
+      </parameters>
+    </callback>
+    <callback name="ChannelFn" cname="RCChannelFn">
+      <return-type type="gboolean" />
+      <parameters>
+        <parameter type="RCChannel*" name="arg1" />
+        <parameter type="gpointer" name="arg2" />
+      </parameters>
+    </callback>
+    <callback name="DebugFn" cname="RCDebugFn">
+      <return-type type="void" />
+      <parameters>
+        <parameter type="const-char*" name="message" />
+        <parameter type="RCDebugLevel" name="level" />
+        <parameter type="gpointer" name="user_data" />
+      </parameters>
+    </callback>
+    <callback name="MarkedPackageFn" cname="RCMarkedPackageFn">
+      <return-type type="void" />
+      <parameters>
+        <parameter type="RCPackage*" name="arg1" />
+        <parameter type="RCPackageStatus" name="arg2" />
+        <parameter type="gpointer" name="arg3" />
+      </parameters>
+    </callback>
+    <callback name="MarkedPackagePairFn" cname="RCMarkedPackagePairFn">
+      <return-type type="void" />
+      <parameters>
+        <parameter type="RCPackage*" name="arg1" />
+        <parameter type="RCPackageStatus" name="arg2" />
+        <parameter type="RCPackage*" name="arg3" />
+        <parameter type="RCPackageStatus" name="arg4" />
+        <parameter type="gpointer" name="arg5" />
+      </parameters>
+    </callback>
+    <callback name="PackageAndDepFn" cname="RCPackageAndDepFn">
+      <return-type type="gboolean" />
+      <parameters>
+        <parameter type="RCPackage*" name="arg1" />
+        <parameter type="RCPackageDep*" name="arg2" />
+        <parameter type="gpointer" name="arg3" />
+      </parameters>
+    </callback>
+    <callback name="PackageAndSpecFn" cname="RCPackageAndSpecFn">
+      <return-type type="gboolean" />
+      <parameters>
+        <parameter type="RCPackage*" name="arg1" />
+        <parameter type="RCPackageSpec*" name="arg2" />
+        <parameter type="gpointer" name="arg3" />
+      </parameters>
+    </callback>
+    <callback name="PackageFn" cname="RCPackageFn">
+      <return-type type="gboolean" />
+      <parameters>
+        <parameter type="RCPackage*" name="arg1" />
+        <parameter type="gpointer" name="arg2" />
+      </parameters>
+    </callback>
+    <callback name="PackageMatchFn" cname="RCPackageMatchFn">
+      <return-type type="gboolean" />
+      <parameters>
+        <parameter type="struct" name="_RCPackageMatch*" />
+        <parameter type="gpointer" name="arg2" />
+      </parameters>
+    </callback>
+    <callback name="PackagePairFn" cname="RCPackagePairFn">
+      <return-type type="void" />
+      <parameters>
+        <parameter type="RCPackage*" name="arg1" />
+        <parameter type="RCPackage*" name="arg2" />
+        <parameter type="gpointer" name="arg3" />
+      </parameters>
+    </callback>
+    <callback name="ResolverContextFn" cname="RCResolverContextFn">
+      <return-type type="void" />
+      <parameters>
+        <parameter type="RCResolverContext*" name="arg1" />
+        <parameter type="gpointer" name="arg2" />
+      </parameters>
+    </callback>
+    <callback name="ResolverInfoFn" cname="RCResolverInfoFn">
+      <return-type type="void" />
+      <parameters>
+        <parameter type="RCResolverInfo*" name="arg1" />
+        <parameter type="gpointer" name="arg2" />
+      </parameters>
+    </callback>
+    <callback name="WorldAddLockFn" cname="RCWorldAddLockFn">
+      <return-type type="void" />
+      <parameters>
+        <parameter type="RCWorld*" name="world" />
+        <parameter type="RCPackageMatch*" name="lock" />
+      </parameters>
+    </callback>
+    <callback name="WorldCanTransactPackageFn" cname="RCWorldCanTransactPackageFn">
+      <return-type type="gboolean" />
+      <parameters>
+        <parameter type="RCWorld*" name="world" />
+        <parameter type="RCPackage*" name="package" />
+      </parameters>
+    </callback>
+    <callback name="WorldClearLockFn" cname="RCWorldClearLockFn">
+      <return-type type="void" />
+      <parameters>
+        <parameter type="RCWorld*" name="world" />
+      </parameters>
+    </callback>
+    <callback name="WorldDupFn" cname="RCWorldDupFn">
+      <return-type type="RCWorld*" />
+      <parameters>
+        <parameter type="RCWorld*" name="world" />
+      </parameters>
+    </callback>
+    <callback name="WorldFn" cname="RCWorldFn">
+      <return-type type="gboolean" />
+      <parameters>
+        <parameter type="RCWorld*" name="world" />
+        <parameter type="gpointer" name="user_data" />
+      </parameters>
+    </callback>
+    <callback name="WorldForeachChannelFn" cname="RCWorldForeachChannelFn" hidden="1">
+      <return-type type="int" />
+      <parameters>
+        <parameter type="RCWorld*" name="world" />
+        <parameter type="RCChannelFn" name="callback" />
+        <parameter type="gpointer" name="user_data" />
+      </parameters>
+    </callback>
+    <callback name="WorldForeachLockFn" cname="RCWorldForeachLockFn" hidden="1">
+      <return-type type="int" />
+      <parameters>
+        <parameter type="RCWorld*" name="world" />
+        <parameter type="RCPackageMatchFn" name="callback" />
+        <parameter type="gpointer" name="user_data" />
+      </parameters>
+    </callback>
+    <callback name="WorldForeachPackageDepFn" cname="RCWorldForeachPackageDepFn" hidden="1">
+      <return-type type="int" />
+      <parameters>
+        <parameter type="RCWorld*" name="world" />
+        <parameter type="RCPackageDep*" name="dep" />
+        <parameter type="RCPackageAndDepFn" name="callback" />
+        <parameter type="gpointer" name="user_data" />
+      </parameters>
+    </callback>
+    <callback name="WorldForeachPackageFn" cname="RCWorldForeachPackageFn" hidden="1">
+      <return-type type="int" />
+      <parameters>
+        <parameter type="RCWorld*" name="world" />
+        <parameter type="const-char*" name="name" />
+        <parameter type="RCChannel*" name="channel" />
+        <parameter type="RCPackageFn" name="callback" />
+        <parameter type="gpointer" name="user_data" />
+      </parameters>
+    </callback>
+    <callback name="WorldForeachPackageSpecFn" cname="RCWorldForeachPackageSpecFn" hidden="1">
+      <return-type type="int" />
+      <parameters>
+        <parameter type="RCWorld*" name="world" />
+        <parameter type="RCPackageDep*" name="dep" />
+        <parameter type="RCPackageAndSpecFn" name="callback" />
+        <parameter type="gpointer" name="user_data" />
+      </parameters>
+    </callback>
+    <callback name="WorldGetSubscribedFn" cname="RCWorldGetSubscribedFn">
+      <return-type type="gboolean" />
+      <parameters>
+        <parameter type="RCWorld*" name="world" />
+        <parameter type="RCChannel*" name="channel" />
+      </parameters>
+    </callback>
+    <callback name="WorldMembershipToXmlFn" cname="RCWorldMembershipToXmlFn">
+      <return-type type="void" />
+      <parameters>
+        <parameter type="RCWorld*" name="world" />
+        <parameter type="xmlNode*" name="root" />
+      </parameters>
+    </callback>
+    <callback name="WorldRefreshFn" cname="RCWorldRefreshFn">
+      <return-type type="RCPending*" />
+      <parameters>
+        <parameter type="RCWorld*" name="world" />
+      </parameters>
+    </callback>
+    <callback name="WorldRemoveLockFn" cname="RCWorldRemoveLockFn">
+      <return-type type="void" />
+      <parameters>
+        <parameter type="RCWorld*" name="world" />
+        <parameter type="RCPackageMatch*" name="lock" />
+      </parameters>
+    </callback>
+    <callback name="WorldServiceAssembleFn" cname="RCWorldServiceAssembleFn" hidden="1">
+      <return-type type="gboolean" />
+      <parameters>
+        <parameter type="RCWorldService*" name="worldserv" />
+        <parameter type="GError**" name="error" />
+      </parameters>
+    </callback>
+    <callback name="WorldSetSubscribedFn" cname="RCWorldSetSubscribedFn">
+      <return-type type="void" />
+      <parameters>
+        <parameter type="RCWorld*" name="world" />
+        <parameter type="RCChannel*" name="channel" />
+        <parameter type="gboolean" name="subs_status" />
+      </parameters>
+    </callback>
+    <callback name="WorldSpewFn" cname="RCWorldSpewFn">
+      <return-type type="void" />
+      <parameters>
+        <parameter type="RCWorld*" name="world" />
+        <parameter type="FILE*" name="out" />
+      </parameters>
+    </callback>
+    <callback name="WorldSyncFn" cname="RCWorldSyncFn">
+      <return-type type="gboolean" />
+      <parameters>
+        <parameter type="RCWorld*" name="world" />
+        <parameter type="RCChannel*" name="channel" />
+      </parameters>
+    </callback>
+    <callback name="WorldTransactFn" cname="RCWorldTransactFn">
+      <return-type type="gboolean" />
+      <parameters>
+        <parameter type="RCWorld*" name="world" />
+        <parameter type="RCPackageSList*" name="install_packages" />
+        <parameter type="RCPackageSList*" name="remove_packages" />
+        <parameter type="int" name="flags" />
+      </parameters>
+    </callback>
+    <object name="Debman" cname="RCDebman" parent="RCPackman">
+      <field cname="priv" type="RCDebmanPrivate*" />
+      <method name="FillDepends" cname="rc_debman_fill_depends" shared="true">
+        <return-type type="RCPackageDepSList*" />
+        <parameters>
+          <parameter type="gchar*" name="input" />
+          <parameter type="gboolean" name="pre" />
+        </parameters>
+      </method>
+      <method name="GetType" cname="rc_debman_get_type" shared="true">
+        <return-type type="GType" />
+      </method>
+      <constructor cname="rc_debman_new" />
+      <method name="ParseVersion" cname="rc_debman_parse_version" shared="true">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-gchar*" name="input" />
+          <parameter type="guint32*" name="epoch" />
+          <parameter type="gchar**" name="version" />
+          <parameter type="gchar**" name="release" />
+        </parameters>
+      </method>
+      <method name="SectionToPackageSection" cname="rc_debman_section_to_package_section" shared="true">
+        <return-type type="RCPackageSection" />
+        <parameters>
+          <parameter type="const-gchar*" name="section" />
+        </parameters>
+      </method>
+    </object>
+    <object name="LineBuf" cname="RCLineBuf" parent="GObject">
+      <field cname="priv" type="RCLineBufPrivate*" />
+      <signal name="ReadLine" cname="read_line" when="FIRST">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCLineBuf*" name="line_buf" />
+          <parameter type="gchar*" name="line" />
+        </parameters>
+      </signal>
+      <signal name="ReadDone" cname="read_done" when="LAST">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCLineBuf*" name="line_buf" />
+          <parameter type="RCLineBufStatus" name="status" />
+        </parameters>
+      </signal>
+      <method name="GetBuf" cname="rc_line_buf_get_buf">
+        <return-type type="gchar*" />
+      </method>
+      <method name="GetType" cname="rc_line_buf_get_type" shared="true">
+        <return-type type="GType" />
+      </method>
+      <constructor cname="rc_line_buf_new" />
+      <method name="SetFd" cname="rc_line_buf_set_fd">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="int" name="fd" />
+        </parameters>
+      </method>
+    </object>
+    <object name="Packman" cname="RCPackman" parent="GObject">
+      <field cname="priv" type="RCPackmanPrivate*" />
+      <signal name="TransactStart" cname="transact_start" when="LAST">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackman*" name="packman" />
+          <parameter type="gint" name="total_steps" />
+        </parameters>
+      </signal>
+      <signal name="TransactStep" cname="transact_step" when="LAST">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackman*" name="packman" />
+          <parameter type="gint" name="seqno" />
+          <parameter type="RCPackmanStep" name="step" />
+          <parameter type="gchar*" name="name" />
+        </parameters>
+      </signal>
+      <signal name="TransactProgress" cname="transact_progress" when="LAST">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackman*" name="packman" />
+          <parameter type="gulong" name="amount" />
+          <parameter type="gulong" name="total" />
+        </parameters>
+      </signal>
+      <signal name="TransactDone" cname="transact_done" when="LAST">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackman*" name="packman" />
+        </parameters>
+      </signal>
+      <signal name="DatabaseChanged" cname="database_changed" when="LAST">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackman*" name="packman" />
+        </parameters>
+      </signal>
+      <signal name="DatabaseLocked" cname="database_locked" when="LAST">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackman*" name="packman" />
+        </parameters>
+      </signal>
+      <signal name="DatabaseUnlocked" cname="database_unlocked" when="LAST">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackman*" name="packman" />
+        </parameters>
+      </signal>
+      <virtual_method name="RcPackmanRealTransact" cname="rc_packman_real_transact">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackman*" name="packman" />
+          <parameter type="RCPackageSList*" name="install_packages" />
+          <parameter type="RCPackageSList*" name="remove_packages" />
+          <parameter type="int" name="flags" />
+        </parameters>
+      </virtual_method>
+      <virtual_method name="RcPackmanRealQueryFile" cname="rc_packman_real_query_file">
+        <return-type type="RCPackage*" />
+        <parameters>
+          <parameter type="RCPackman*" name="packman" />
+          <parameter type="const-gchar*" name="filename" />
+        </parameters>
+      </virtual_method>
+      <virtual_method name="RcPackmanRealVersionCompare" cname="rc_packman_real_version_compare">
+        <return-type type="gint" />
+        <parameters>
+          <parameter type="RCPackman*" name="packman" />
+          <parameter type="RCPackageSpec*" name="spec1" />
+          <parameter type="RCPackageSpec*" name="spec2" />
+        </parameters>
+      </virtual_method>
+      <virtual_method name="RcPackmanRealVerify" cname="rc_packman_real_verify">
+        <return-type type="RCVerificationSList*" />
+        <parameters>
+          <parameter type="RCPackman*" name="packman" />
+          <parameter type="RCPackage*" name="package" />
+          <parameter type="guint32" name="type" />
+        </parameters>
+      </virtual_method>
+      <virtual_method name="RcPackmanRealLock" cname="rc_packman_real_lock">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCPackman*" name="packman" />
+        </parameters>
+      </virtual_method>
+      <virtual_method name="RcPackmanRealIsDatabaseChanged" cname="rc_packman_real_is_database_changed">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCPackman*" name="packman" />
+        </parameters>
+      </virtual_method>
+      <method name="FileList" cname="rc_packman_file_list">
+        <return-type type="RCPackageFileSList*" />
+        <parameters>
+          <parameter type="RCPackage*" name="package" />
+        </parameters>
+      </method>
+      <method name="FindFile" cname="rc_packman_find_file">
+        <return-type type="RCPackageSList*" />
+        <parameters>
+          <parameter type="const-gchar*" name="filename" />
+        </parameters>
+      </method>
+      <method name="GetCapabilities" cname="rc_packman_get_capabilities">
+        <return-type type="guint32" />
+      </method>
+      <method name="GetError" cname="rc_packman_get_error">
+        <return-type type="guint" />
+      </method>
+      <method name="GetFileExtension" cname="rc_packman_get_file_extension">
+        <return-type type="const-gchar*" />
+      </method>
+      <method name="GetGlobal" cname="rc_packman_get_global" shared="true">
+        <return-type type="RCPackman*" />
+      </method>
+      <method name="GetReason" cname="rc_packman_get_reason">
+        <return-type type="const-gchar*" />
+      </method>
+      <method name="GetRollbackEnabled" cname="rc_packman_get_rollback_enabled">
+        <return-type type="gboolean" />
+      </method>
+      <method name="GetType" cname="rc_packman_get_type" shared="true">
+        <return-type type="GType" />
+      </method>
+      <method name="IsDatabaseChanged" cname="rc_packman_is_database_changed">
+        <return-type type="gboolean" />
+      </method>
+      <method name="IsLocked" cname="rc_packman_is_locked">
+        <return-type type="gboolean" />
+      </method>
+      <method name="Lock" cname="rc_packman_lock">
+        <return-type type="gboolean" />
+      </method>
+      <constructor cname="rc_packman_new" />
+      <method name="ParseVersion" cname="rc_packman_parse_version">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="const-gchar*" name="input" />
+          <parameter type="gboolean*" name="has_epoch" />
+          <parameter type="guint32*" name="epoch" />
+          <parameter type="gchar**" name="version" />
+          <parameter type="gchar**" name="release" />
+        </parameters>
+      </method>
+      <method name="Query" cname="rc_packman_query">
+        <return-type type="RCPackageSList*" />
+        <parameters>
+          <parameter type="const-char*" name="name" />
+        </parameters>
+      </method>
+      <method name="QueryAll" cname="rc_packman_query_all">
+        <return-type type="RCPackageSList*" />
+      </method>
+      <method name="QueryFile" cname="rc_packman_query_file">
+        <return-type type="RCPackage*" />
+        <parameters>
+          <parameter type="const-gchar*" name="filename" />
+        </parameters>
+      </method>
+      <method name="QueryFileList" cname="rc_packman_query_file_list">
+        <return-type type="RCPackageSList*" />
+        <parameters>
+          <parameter type="GSList*" name="filenames" />
+        </parameters>
+      </method>
+      <method name="SetGlobal" cname="rc_packman_set_global">
+        <return-type type="void" />
+      </method>
+      <method name="SetRollbackEnabled" cname="rc_packman_set_rollback_enabled">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="gboolean" name="enabled" />
+        </parameters>
+      </method>
+      <method name="Transact" cname="rc_packman_transact">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageSList*" name="install_packages" />
+          <parameter type="RCPackageSList*" name="remove_packages" />
+          <parameter type="int" name="flags" />
+        </parameters>
+      </method>
+      <method name="Unlock" cname="rc_packman_unlock">
+        <return-type type="void" />
+      </method>
+      <method name="Verify" cname="rc_packman_verify">
+        <return-type type="RCVerificationSList*" />
+        <parameters>
+          <parameter type="RCPackage*" name="package" />
+          <parameter type="guint32" name="type" />
+        </parameters>
+      </method>
+      <method name="VersionCompare" cname="rc_packman_version_compare">
+        <return-type type="gint" />
+        <parameters>
+          <parameter type="RCPackageSpec*" name="spec1" />
+          <parameter type="RCPackageSpec*" name="spec2" />
+        </parameters>
+      </method>
+    </object>
+    <object name="Pending" cname="RCPending" parent="GObject">
+      <field cname="description" type="char*" />
+      <field cname="id" type="gint" />
+      <field cname="status" type="RCPendingStatus" />
+      <field cname="percent_complete" type="double" />
+      <field cname="completed_size" type="int" />
+      <field cname="total_size" type="int" />
+      <field cname="start_time" type="time_t" />
+      <field cname="last_time" type="time_t" />
+      <field cname="poll_time" type="time_t" />
+      <field cname="retval" type="gint" />
+      <field cname="error_msg" type="char*" />
+      <field cname="messages" type="GSList*" />
+      <signal cname="update" when="FIRST" name="Updated">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPending*" name="arg1" />
+        </parameters>
+      </signal>
+      <signal name="Complete" cname="complete" when="FIRST">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPending*" name="arg1" />
+        </parameters>
+      </signal>
+      <signal name="Message" cname="message" when="FIRST">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPending*" name="arg1" />
+        </parameters>
+      </signal>
+      <method name="Abort" cname="rc_pending_abort">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="gint" name="retval" />
+        </parameters>
+      </method>
+      <method name="AddMessage" cname="rc_pending_add_message">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="message" />
+        </parameters>
+      </method>
+      <method name="Begin" cname="rc_pending_begin">
+        <return-type type="void" />
+      </method>
+      <method name="Fail" cname="rc_pending_fail">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="gint" name="retval" />
+          <parameter type="const-char*" name="error_msg" />
+        </parameters>
+      </method>
+      <method name="Finished" cname="rc_pending_finished">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="gint" name="retval" />
+        </parameters>
+      </method>
+      <method name="GetAllActiveIds" cname="rc_pending_get_all_active_ids" shared="true">
+        <return-type type="GSList*" />
+      </method>
+      <method name="GetCompletedSize" cname="rc_pending_get_completed_size">
+        <return-type type="int" />
+      </method>
+      <method name="GetDescription" cname="rc_pending_get_description">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetElapsedSecs" cname="rc_pending_get_elapsed_secs">
+        <return-type type="gint" />
+      </method>
+      <method name="GetErrorMsg" cname="rc_pending_get_error_msg">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetExpectedSecs" cname="rc_pending_get_expected_secs">
+        <return-type type="gint" />
+      </method>
+      <method name="GetId" cname="rc_pending_get_id">
+        <return-type type="gint" />
+      </method>
+      <method name="GetLastTime" cname="rc_pending_get_last_time">
+        <return-type type="time_t" />
+      </method>
+      <method name="GetLatestMessage" cname="rc_pending_get_latest_message">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetMessages" cname="rc_pending_get_messages">
+        <return-type type="GSList*" />
+      </method>
+      <method name="GetPercentComplete" cname="rc_pending_get_percent_complete">
+        <return-type type="double" />
+      </method>
+      <method name="GetRemainingSecs" cname="rc_pending_get_remaining_secs">
+        <return-type type="gint" />
+      </method>
+      <method name="GetStartTime" cname="rc_pending_get_start_time">
+        <return-type type="time_t" />
+      </method>
+      <method name="GetStatus" cname="rc_pending_get_status">
+        <return-type type="RCPendingStatus" />
+      </method>
+      <method name="GetTotalSize" cname="rc_pending_get_total_size">
+        <return-type type="int" />
+      </method>
+      <method name="GetType" cname="rc_pending_get_type" shared="true">
+        <return-type type="GType" />
+      </method>
+      <method name="IsActive" cname="rc_pending_is_active">
+        <return-type type="gboolean" />
+      </method>
+      <method name="LookupById" cname="rc_pending_lookup_by_id" shared="true">
+        <return-type type="RCPending*" />
+        <parameters>
+          <parameter type="gint" name="id" />
+        </parameters>
+      </method>
+      <constructor cname="rc_pending_new">
+        <parameters>
+          <parameter type="const-char*" name="description" />
+        </parameters>
+      </constructor>
+      <method name="SetDescription" cname="rc_pending_set_description">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="desc" />
+        </parameters>
+      </method>
+      <method name="StatusToString" cname="rc_pending_status_to_string" shared="true">
+        <return-type type="const-char*" />
+        <parameters>
+          <parameter type="RCPendingStatus" name="status" />
+        </parameters>
+      </method>
+      <method name="Update" cname="rc_pending_update">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="double" name="percent_complete" />
+        </parameters>
+      </method>
+      <method name="UpdateBySize" cname="rc_pending_update_by_size">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="int" name="size" />
+          <parameter type="int" name="total_size" />
+        </parameters>
+      </method>
+    </object>
+    <object name="Rpmman" cname="RCRpmman" parent="RCPackman">
+      <field cname="rpmts" type="rpmts" />
+      <field cname="db" type="rpmdb" />
+      <field cname="db_status" type="int" />
+      <field cname="lock_fd" type="int" />
+      <field cname="db_clean" type="gboolean" />
+      <field cname="rpmroot" type="gchar*" />
+      <field cname="major_version" type="guint" />
+      <field cname="minor_version" type="guint" />
+      <field cname="micro_version" type="guint" />
+      <field cname="version" type="guint" />
+      <field cname="db_watcher_cb" type="guint" />
+      <field cname="db_mtime" type="time_t" />
+      <field cname="rpm_lib" type="GModule*" />
+      <callback cname="rc_fdOpen">
+        <return-type type="FD_t" />
+        <parameters>
+          <parameter type="const-char*" name="," />
+        </parameters>
+      </callback>
+      <callback cname="rc_fdRead">
+        <return-type type="ssize_t" />
+        <parameters>
+          <parameter type="void*" name="," />
+        </parameters>
+      </callback>
+      <callback cname="rc_fdClose">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="void*" name="arg1" />
+        </parameters>
+      </callback>
+      <callback cname="Fopen">
+        <return-type type="FD_t" />
+        <parameters>
+          <parameter type="const-char*" name="," />
+        </parameters>
+      </callback>
+      <callback cname="Fclose">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="FD_t" name="arg1" />
+        </parameters>
+      </callback>
+      <callback cname="Fread">
+        <return-type type="size_t" />
+        <parameters>
+          <parameter type="void*" name="," />
+        </parameters>
+      </callback>
+      <callback cname="headerGetEntry">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="Header," name="int_32," />
+        </parameters>
+      </callback>
+      <callback cname="headerFree">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="Header" name="arg1" />
+        </parameters>
+      </callback>
+      <callback cname="headerSizeof">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="Header," name="int" />
+        </parameters>
+      </callback>
+      <callback cname="headerLoad">
+        <return-type type="Header" />
+        <parameters>
+          <parameter type="const-void*" name="arg1" />
+        </parameters>
+      </callback>
+      <callback cname="readLead">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="FD_t," name="struct-rpmlead*" />
+        </parameters>
+      </callback>
+      <callback cname="rpmReadConfigFiles">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="const-char*" name="," />
+        </parameters>
+      </callback>
+      <callback cname="rpmdbOpen">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="const-char*" name="," />
+        </parameters>
+      </callback>
+      <callback cname="rpmdbClose">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="rpmdb" name="arg1" />
+        </parameters>
+      </callback>
+      <callback cname="rpmProblemString">
+        <return-type type="const--char*" />
+        <parameters>
+          <parameter type="RCrpmProblem" name="arg1" />
+        </parameters>
+      </callback>
+      <callback cname="rpmProblemStringOld">
+        <return-type type="const--char*" />
+        <parameters>
+          <parameter type="RCrpmProblemOld" name="arg1" />
+        </parameters>
+      </callback>
+      <callback cname="rpmProblemStringOlder">
+        <return-type type="const--char*" />
+        <parameters>
+          <parameter type="RCrpmProblemOlder" name="arg1" />
+        </parameters>
+      </callback>
+      <callback cname="rpmGetRpmlibProvides">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="char***" name="," />
+        </parameters>
+      </callback>
+      <callback cname="rpmExpandNumeric">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="const-char*" name="arg1" />
+        </parameters>
+      </callback>
+      <callback cname="rpmDefineMacro">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="MacroContext*" name="," />
+        </parameters>
+      </callback>
+      <callback cname="rpmGetPath">
+        <return-type type="const--char*" />
+        <parameters>
+          <parameter ellipsis="true" />
+        </parameters>
+      </callback>
+      <callback cname="unameToUid">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="const-char*" name="," />
+        </parameters>
+      </callback>
+      <callback cname="gnameToGid">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="const-char*" name="," />
+        </parameters>
+      </callback>
+      <callback cname="rpmdbFirstRecNum">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="rpmdb" name="arg1" />
+        </parameters>
+      </callback>
+      <callback cname="rpmdbNextRecNum">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="rpmdb," name="unsigned" />
+        </parameters>
+      </callback>
+      <callback cname="rpmdbFindByLabel">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="rpmdb," name="const-char*" />
+        </parameters>
+      </callback>
+      <callback cname="rpmdbFindPackage">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="rpmdb," name="const-char*" />
+        </parameters>
+      </callback>
+      <callback cname="rpmdbFindByFile">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="rpmdb," name="const-char*" />
+        </parameters>
+      </callback>
+      <callback cname="rpmdbGetRecord">
+        <return-type type="Header" />
+        <parameters>
+          <parameter type="rpmdb," name="unsigned" />
+        </parameters>
+      </callback>
+      <callback cname="dbiIndexSetCount">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="rc_dbiIndexSet" name="arg1" />
+        </parameters>
+      </callback>
+      <callback cname="dbiIndexRecordOffset">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="rc_dbiIndexSet," name="int" />
+        </parameters>
+      </callback>
+      <callback cname="dbiFreeIndexRecord">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="rc_dbiIndexSet" name="arg1" />
+        </parameters>
+      </callback>
+      <callback cname="rpmdbGetIteratorCount">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="rc_rpmdbMatchIterator" name="arg1" />
+        </parameters>
+      </callback>
+      <callback cname="rpmdbFreeIterator">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="rc_rpmdbMatchIterator" name="arg1" />
+        </parameters>
+      </callback>
+      <callback cname="rpmdbNextIterator">
+        <return-type type="Header" />
+        <parameters>
+          <parameter type="rc_rpmdbMatchIterator" name="arg1" />
+        </parameters>
+      </callback>
+      <callback cname="rpmdbGetIteratorOffset">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="rc_rpmdbMatchIterator" name="arg1" />
+        </parameters>
+      </callback>
+      <callback cname="rpmdbInitIterator">
+        <return-type type="rc_rpmdbMatchIterator" />
+        <parameters>
+          <parameter type="rpmdb," name="int," />
+        </parameters>
+      </callback>
+      <callback cname="rpmReadPackageHeader">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="FD_t," name="Header*" />
+        </parameters>
+      </callback>
+      <callback cname="rpmtransAddPackage">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="rpmTransactionSet," name="Header," />
+        </parameters>
+      </callback>
+      <callback cname="rpmtransRemovePackage">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="rpmTransactionSet," name="int" />
+        </parameters>
+      </callback>
+      <callback cname="rpmtransCreateSet">
+        <return-type type="rpmTransactionSet" />
+        <parameters>
+          <parameter type="rpmdb," name="const-char*" />
+        </parameters>
+      </callback>
+      <callback cname="rpmtransFree">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="rpmTransactionSet" name="arg1" />
+        </parameters>
+      </callback>
+      <callback cname="rpmdepCheck">
+        <return-type type="40003int" />
+        <parameters>
+          <parameter type="rpmTransactionSet," name="rpmDependencyConflict*" />
+        </parameters>
+      </callback>
+      <callback cname="rpmdepFreeConflicts">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="rpmDependencyConflict," name="int" />
+        </parameters>
+      </callback>
+      <callback cname="rpmdepCheck">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="rpmTransactionSet," name="struct-rpmDependencyConflict**" />
+        </parameters>
+      </callback>
+      <callback cname="rpmdepFreeConflicts">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="struct-rpmDependencyConflict*" name="," />
+        </parameters>
+      </callback>
+      <callback cname="rpmdepOrder">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="rpmTransactionSet" name="arg1" />
+        </parameters>
+      </callback>
+      <callback cname="rpmRunTransactions">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="rpmTransactionSet," name="rpmCallbackFunction,void*" />
+        </parameters>
+      </callback>
+      <callback cname="rpmProblemSetFree">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="rpmProblemSet" name="arg1" />
+        </parameters>
+      </callback>
+      <callback cname="rpmReadSignatureOld">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="FD_t," name="Header*" />
+        </parameters>
+      </callback>
+      <callback cname="rpmReadPackageFile">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="rpmts," name="FD_t," />
+        </parameters>
+      </callback>
+      <callback cname="rpmReadSignature">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="FD_t," name="Header*" />
+        </parameters>
+      </callback>
+      <callback cname="rpmtsInitIterator">
+        <return-type type="rc_rpmdbMatchIterator" />
+        <parameters>
+          <parameter type="const-rpmts," name="int," />
+        </parameters>
+      </callback>
+      <callback cname="rpmtsCreate">
+        <return-type type="rpmts" />
+        <parameters>
+          <parameter type="void" name="arg1" />
+        </parameters>
+      </callback>
+      <callback cname="rpmtsSetRootDir">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="rpmts," name="const-char*" />
+        </parameters>
+      </callback>
+      <callback cname="rpmtsAddInstallElement">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="rpmts," name="Header," />
+        </parameters>
+      </callback>
+      <callback cname="rpmtsAddEraseElement">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="rpmts," name="Header," />
+        </parameters>
+      </callback>
+      <callback cname="rpmtsCheck">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="rpmts" name="arg1" />
+        </parameters>
+      </callback>
+      <callback cname="rpmtsOrder">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="rpmts" name="arg1" />
+        </parameters>
+      </callback>
+      <callback cname="rpmtsClean">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="rpmts" name="arg1" />
+        </parameters>
+      </callback>
+      <callback cname="rpmtsRun">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="rpmts," name="rpmps," />
+        </parameters>
+      </callback>
+      <callback cname="rpmtsSetNotifyCallback">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="rpmts," name="rpmCallbackFunction," />
+        </parameters>
+      </callback>
+      <callback cname="rpmtsSetFlags">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="rpmts," name="int" />
+        </parameters>
+      </callback>
+      <callback cname="rpmtsFree">
+        <return-type type="rpmts" />
+        <parameters>
+          <parameter type="rpmts" name="arg1" />
+        </parameters>
+      </callback>
+      <callback cname="rpmtsProblems">
+        <return-type type="rpmps" />
+        <parameters>
+          <parameter type="rpmts" name="arg1" />
+        </parameters>
+      </callback>
+      <callback cname="rpmpsFree">
+        <return-type type="rpmps" />
+        <parameters>
+          <parameter type="rpmps" name="arg1" />
+        </parameters>
+      </callback>
+      <callback cname="rpmtsVSFlags">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="rpmts" name="arg1" />
+        </parameters>
+      </callback>
+      <callback cname="rpmtsSetVSFlags">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="rpmts," name="int" />
+        </parameters>
+      </callback>
+      <method name="DependsFill" cname="rc_rpmman_depends_fill">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="Header" name="header" />
+          <parameter type="RCPackage*" name="package" />
+        </parameters>
+      </method>
+      <method name="GetType" cname="rc_rpmman_get_type" shared="true">
+        <return-type type="GType" />
+      </method>
+      <constructor cname="rc_rpmman_new" />
+      <method name="ReadHeader" cname="rc_rpmman_read_header">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="Header" name="header" />
+          <parameter type="RCPackage*" name="package" />
+        </parameters>
+      </method>
+    </object>
+    <object name="World" cname="RCWorld" parent="GObject">
+      <signal name="ChangedPackages" cname="changed_packages" when="LAST">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCWorld*" name="arg1" />
+        </parameters>
+      </signal>
+      <signal name="ChangedChannels" cname="changed_channels" when="LAST">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCWorld*" name="arg1" />
+        </parameters>
+      </signal>
+      <signal name="ChangedSubscriptions" cname="changed_subscriptions" when="LAST">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCWorld*" name="arg1" />
+        </parameters>
+      </signal>
+      <signal name="ChangedLocks" cname="changed_locks" when="LAST">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCWorld*" name="arg1" />
+        </parameters>
+      </signal>
+      <signal name="Refreshed" cname="refreshed" when="LAST">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCWorld*" name="arg1" />
+        </parameters>
+      </signal>
+      <method name="AddLock" cname="rc_world_add_lock">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageMatch*" name="lock" />
+        </parameters>
+      </method>
+      <method name="CanTransactPackage" cname="rc_world_can_transact_package">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCPackage*" name="package" />
+        </parameters>
+      </method>
+      <method name="ClearLocks" cname="rc_world_clear_locks">
+        <return-type type="void" />
+      </method>
+      <method name="ContainsChannel" cname="rc_world_contains_channel">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCChannel*" name="channel" />
+        </parameters>
+      </method>
+      <method name="Dump" cname="rc_world_dump">
+        <return-type type="char*" />
+        <parameters>
+          <parameter type="xmlNode*" name="extra_xml" />
+        </parameters>
+      </method>
+      <method name="DumpToXml" cname="rc_world_dump_to_xml">
+        <return-type type="xmlNode*" />
+        <parameters>
+          <parameter type="xmlNode*" name="extra_xml" />
+        </parameters>
+      </method>
+      <method name="Dup" cname="rc_world_dup">
+        <return-type type="RCWorld*" />
+      </method>
+      <method name="FindInstalledVersion" cname="rc_world_find_installed_version">
+        <return-type type="RCPackage*" />
+        <parameters>
+          <parameter type="RCPackage*" name="package" />
+        </parameters>
+      </method>
+      <method name="ForeachChannel" cname="rc_world_foreach_channel">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="RCChannelFn" name="fn" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="ForeachConflictingPackage" cname="rc_world_foreach_conflicting_package">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="RCPackageDep*" name="dep" />
+          <parameter type="RCPackageAndDepFn" name="fn" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="ForeachLock" cname="rc_world_foreach_lock">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="RCPackageMatchFn" name="fn" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="ForeachPackage" cname="rc_world_foreach_package">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="RCChannel*" name="channel" />
+          <parameter type="RCPackageFn" name="fn" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="ForeachPackageByMatch" cname="rc_world_foreach_package_by_match">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="RCPackageMatch*" name="match" />
+          <parameter type="RCPackageFn" name="fn" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="ForeachPackageByName" cname="rc_world_foreach_package_by_name">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="const-char*" name="name" />
+          <parameter type="RCChannel*" name="channel" />
+          <parameter type="RCPackageFn" name="fn" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="ForeachParentPackage" cname="rc_world_foreach_parent_package">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="RCPackageDep*" name="dep" />
+          <parameter type="RCPackageAndDepFn" name="fn" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="ForeachProvidingPackage" cname="rc_world_foreach_providing_package">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="RCPackageDep*" name="dep" />
+          <parameter type="RCPackageAndSpecFn" name="fn" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="ForeachRequiringPackage" cname="rc_world_foreach_requiring_package">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="RCPackageDep*" name="dep" />
+          <parameter type="RCPackageAndDepFn" name="fn" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="ForeachSystemUpgrade" cname="rc_world_foreach_system_upgrade">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="gboolean" name="subscribed_only" />
+          <parameter type="RCPackagePairFn" name="fn" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="ForeachUpgrade" cname="rc_world_foreach_upgrade">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="RCPackage*" name="package" />
+          <parameter type="RCChannel*" name="channel" />
+          <parameter type="RCPackageFn" name="fn" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="GetBestUpgrade" cname="rc_world_get_best_upgrade">
+        <return-type type="RCPackage*" />
+        <parameters>
+          <parameter type="RCPackage*" name="package" />
+          <parameter type="gboolean" name="subscribed_only" />
+        </parameters>
+      </method>
+      <method name="GetChannelByAlias" cname="rc_world_get_channel_by_alias">
+        <return-type type="RCChannel*" />
+        <parameters>
+          <parameter type="const-char*" name="alias" />
+        </parameters>
+      </method>
+      <method name="GetChannelById" cname="rc_world_get_channel_by_id">
+        <return-type type="RCChannel*" />
+        <parameters>
+          <parameter type="const-char*" name="channel_id" />
+        </parameters>
+      </method>
+      <method name="GetChannelByName" cname="rc_world_get_channel_by_name">
+        <return-type type="RCChannel*" />
+        <parameters>
+          <parameter type="const-char*" name="channel_name" />
+        </parameters>
+      </method>
+      <method name="GetChannelSequenceNumber" cname="rc_world_get_channel_sequence_number">
+        <return-type type="guint" />
+      </method>
+      <method name="GetChannels" cname="rc_world_get_channels">
+        <return-type type="GSList*" element_type="RC.Channel" />
+      </method>
+      <method name="GetLockSequenceNumber" cname="rc_world_get_lock_sequence_number">
+        <return-type type="guint" />
+      </method>
+      <method name="GetLocks" cname="rc_world_get_locks">
+        <return-type type="GSList*" element_type="RC.PackageMatch" />
+      </method>
+      <method name="GetPackage" cname="rc_world_get_package">
+        <return-type type="RCPackage*" />
+        <parameters>
+          <parameter type="RCChannel*" name="channel" />
+          <parameter type="const-char*" name="name" />
+        </parameters>
+      </method>
+      <method name="GetPackageSequenceNumber" cname="rc_world_get_package_sequence_number">
+        <return-type type="guint" />
+      </method>
+      <method name="GetPackageWithConstraint" cname="rc_world_get_package_with_constraint">
+        <return-type type="RCPackage*" />
+        <parameters>
+          <parameter type="RCChannel*" name="channel" />
+          <parameter type="const-char*" name="name" />
+          <parameter type="RCPackageDep*" name="constraint" />
+          <parameter type="gboolean" name="is_and" />
+        </parameters>
+      </method>
+      <method name="GetSingleProvider" cname="rc_world_get_single_provider">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCPackageDep*" name="dep" />
+          <parameter type="RCChannel*" name="channel" />
+          <parameter type="RCPackage**" name="package" />
+        </parameters>
+      </method>
+      <method name="GetSubscriptionSequenceNumber" cname="rc_world_get_subscription_sequence_number">
+        <return-type type="guint" />
+      </method>
+      <method name="GetType" cname="rc_world_get_type" shared="true">
+        <return-type type="GType" />
+      </method>
+      <method name="GetUpgrades" cname="rc_world_get_upgrades">
+        <return-type type="GSList*" element_type="RC.Package" />
+        <parameters>
+          <parameter type="RCPackage*" name="package" />
+          <parameter type="RCChannel*" name="channel" />
+        </parameters>
+      </method>
+      <method name="GuessPackageChannel" cname="rc_world_guess_package_channel">
+        <return-type type="RCChannel*" />
+        <parameters>
+          <parameter type="RCPackage*" name="package" />
+        </parameters>
+      </method>
+      <method name="HasRefresh" cname="rc_world_has_refresh">
+        <return-type type="gboolean" />
+      </method>
+      <method name="IsRefreshing" cname="rc_world_is_refreshing">
+        <return-type type="gboolean" />
+      </method>
+      <method name="IsSubscribed" cname="rc_world_is_subscribed">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCChannel*" name="channel" />
+        </parameters>
+      </method>
+      <method name="MembershipToXml" cname="rc_world_membership_to_xml">
+        <return-type type="xmlNode*" />
+      </method>
+      <method name="PackageIsLocked" cname="rc_world_package_is_locked">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCPackage*" name="package" />
+        </parameters>
+      </method>
+      <method name="Refresh" cname="rc_world_refresh">
+        <return-type type="RCPending*" />
+      </method>
+      <method name="RefreshBegin" cname="rc_world_refresh_begin">
+        <return-type type="void" />
+      </method>
+      <method name="RefreshComplete" cname="rc_world_refresh_complete">
+        <return-type type="void" />
+      </method>
+      <method name="RemoveLock" cname="rc_world_remove_lock">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageMatch*" name="lock" />
+        </parameters>
+      </method>
+      <method name="SetSubscription" cname="rc_world_set_subscription">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCChannel*" name="channel" />
+          <parameter type="gboolean" name="is_subscribed" />
+        </parameters>
+      </method>
+      <method name="Spew" cname="rc_world_spew">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="FILE*" name="out" />
+        </parameters>
+      </method>
+      <method name="Sync" cname="rc_world_sync">
+        <return-type type="gboolean" />
+      </method>
+      <method name="SyncConditional" cname="rc_world_sync_conditional">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCChannel*" name="arg1" />
+        </parameters>
+      </method>
+      <method name="TouchChannelSequenceNumber" cname="rc_world_touch_channel_sequence_number">
+        <return-type type="void" />
+      </method>
+      <method name="TouchLockSequenceNumber" cname="rc_world_touch_lock_sequence_number">
+        <return-type type="void" />
+      </method>
+      <method name="TouchPackageSequenceNumber" cname="rc_world_touch_package_sequence_number">
+        <return-type type="void" />
+      </method>
+      <method name="TouchSubscriptionSequenceNumber" cname="rc_world_touch_subscription_sequence_number">
+        <return-type type="void" />
+      </method>
+      <method name="Transact" cname="rc_world_transact">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCPackageSList*" name="install_packages" />
+          <parameter type="RCPackageSList*" name="remove_packages" />
+          <parameter type="int" name="flags" />
+        </parameters>
+      </method>
+    </object>
+    <object name="WorldLocalDir" cname="RCWorldLocalDir" parent="RCWorldService">
+      <field cname="path" type="char*" />
+      <field cname="alias" type="char*" />
+      <field cname="description" type="char*" />
+      <field cname="mtime" type="time_t" />
+      <field cname="recursive" type="gboolean" />
+      <field cname="channel" type="RCChannel*" />
+      <field cname="frozen" type="gboolean" />
+      <method name="GetType" cname="rc_world_local_dir_get_type" shared="true">
+        <return-type type="GType" />
+      </method>
+      <constructor cname="rc_world_local_dir_new">
+        <parameters>
+          <parameter type="const-char*" name="path" />
+        </parameters>
+      </constructor>
+      <method name="RegisterService" cname="rc_world_local_dir_register_service" shared="true">
+        <return-type type="void" />
+      </method>
+      <method name="SetAlias" cname="rc_world_local_dir_set_alias">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="alias" />
+        </parameters>
+      </method>
+      <method name="SetName" cname="rc_world_local_dir_set_name" hidden="1">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="name" />
+        </parameters>
+      </method>
+    </object>
+    <object name="WorldMulti" cname="RCWorldMulti" parent="RCWorld">
+      <field cname="mounts" type="GHashTable*" />
+      <field cname="subworlds" type="GSList*" />
+      <field cname="multi_pending" type="RCPending*" />
+      <field cname="subworld_pendings" type="GSList*" />
+      <signal name="SubworldAdded" cname="subworld_added" when="LAST">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCWorldMulti*" name="multi" />
+          <parameter type="RCWorld*" name="subworld" />
+        </parameters>
+      </signal>
+      <signal name="SubworldRemoved" cname="subworld_removed" when="LAST">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCWorldMulti*" name="multi" />
+          <parameter type="RCWorld*" name="subworld" />
+        </parameters>
+      </signal>
+      <method name="AddSubworld" cname="rc_world_multi_add_subworld">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCWorld*" name="arg1" />
+        </parameters>
+      </method>
+      <method name="ForeachSubworld" cname="rc_world_multi_foreach_subworld">
+        <return-type type="gint" />
+        <parameters>
+          <parameter type="RCWorldFn" name="callback" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="ForeachSubworldByType" cname="rc_world_multi_foreach_subworld_by_type">
+        <return-type type="gint" />
+        <parameters>
+          <parameter type="GType" name="type" />
+          <parameter type="RCWorldFn" name="callback" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="GetSubworlds" cname="rc_world_multi_get_subworlds">
+        <return-type type="GSList*" />
+      </method>
+      <method name="GetType" cname="rc_world_multi_get_type" shared="true">
+        <return-type type="GType" />
+      </method>
+      <method name="LookupService" cname="rc_world_multi_lookup_service">
+        <return-type type="RCWorldService*" />
+        <parameters>
+          <parameter type="const-char*" name="url" />
+        </parameters>
+      </method>
+      <method name="LookupServiceById" cname="rc_world_multi_lookup_service_by_id">
+        <return-type type="RCWorldService*" />
+        <parameters>
+          <parameter type="const-char*" name="id" />
+        </parameters>
+      </method>
+      <method name="MountService" cname="rc_world_multi_mount_service" hidden="1">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="const-char*" name="url" />
+          <parameter type="GError**" name="error" />
+        </parameters>
+      </method>
+      <constructor cname="rc_world_multi_new" />
+      <method name="RemoveSubworld" cname="rc_world_multi_remove_subworld">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCWorld*" name="arg1" />
+        </parameters>
+      </method>
+    </object>
+    <object name="WorldService" cname="RCWorldService" parent="RCWorldStore">
+      <field cname="url" type="char*" />
+      <field cname="name" type="char*" />
+      <field cname="unique_id" type="char*" />
+      <field cname="is_sticky" type="gboolean" />
+      <field cname="is_invisible" type="gboolean" />
+      <field cname="is_unsaved" type="gboolean" />
+      <field cname="is_singleton" type="gboolean" />
+      <method name="GetId" cname="rc_world_service_get_id">
+        <return-type type="char*" />
+      </method>
+      <method name="GetIsInvisible" cname="rc_world_service_get_is_invisible">
+        <return-type type="gboolean" />
+      </method>
+      <method name="GetIsSingleton" cname="rc_world_service_get_is_singleton">
+        <return-type type="gboolean" />
+      </method>
+      <method name="GetIsSticky" cname="rc_world_service_get_is_sticky">
+        <return-type type="gboolean" />
+      </method>
+      <method name="GetName" cname="rc_world_service_get_name">
+        <return-type type="char*" />
+      </method>
+      <method name="GetType" cname="rc_world_service_get_type" shared="true">
+        <return-type type="GType" />
+      </method>
+      <method name="GetUrl" cname="rc_world_service_get_url">
+        <return-type type="char*" />
+      </method>
+      <method name="Lookup" cname="rc_world_service_lookup" shared="true">
+        <return-type type="GType" />
+        <parameters>
+          <parameter type="const-char*" name="scheme" />
+        </parameters>
+      </method>
+      <method name="Mount" cname="rc_world_service_mount" shared="true" hidden="1">
+        <return-type type="RCWorld*" />
+        <parameters>
+          <parameter type="const-char*" name="url" />
+          <parameter type="GError**" name="error" />
+        </parameters>
+      </method>
+      <method name="Register" cname="rc_world_service_register" shared="true" hidden="1">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="scheme" />
+          <parameter type="GType" name="world_type" />
+        </parameters>
+      </method>
+      <method name="SetId" cname="rc_world_service_set_id">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="id" />
+        </parameters>
+      </method>
+      <method name="SetIsInvisible" cname="rc_world_service_set_is_invisible">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="gboolean" name="invisible" />
+        </parameters>
+      </method>
+      <method name="SetIsSingleton" cname="rc_world_service_set_is_singleton">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="gboolean" name="singleton" />
+        </parameters>
+      </method>
+      <method name="SetIsSticky" cname="rc_world_service_set_is_sticky">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="gboolean" name="sticky" />
+        </parameters>
+      </method>
+      <method name="SetName" cname="rc_world_service_set_name">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="name" />
+        </parameters>
+      </method>
+      <method name="SetUrl" cname="rc_world_service_set_url">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="url" />
+        </parameters>
+      </method>
+      <method name="Unregister" cname="rc_world_service_unregister" shared="true">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="scheme" />
+        </parameters>
+      </method>
+    </object>
+    <object name="WorldStore" cname="RCWorldStore" parent="RCWorld">
+      <field cname="freeze_count" type="int" />
+      <field cname="packages_by_name" type="GHashTable*" />
+      <field cname="provides_by_name" type="GHashTable*" />
+      <field cname="requires_by_name" type="GHashTable*" />
+      <field cname="children_by_name" type="GHashTable*" />
+      <field cname="conflicts_by_name" type="GHashTable*" />
+      <field cname="channels" type="GSList*" />
+      <field cname="locks" type="GSList*" />
+      <method name="AddChannel" cname="rc_world_store_add_channel">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCChannel*" name="channel" />
+        </parameters>
+      </method>
+      <method name="AddLock" cname="rc_world_store_add_lock">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageMatch*" name="lock" />
+        </parameters>
+      </method>
+      <method name="AddPackage" cname="rc_world_store_add_package">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCPackage*" name="package" />
+        </parameters>
+      </method>
+      <method name="AddPackagesFromSlist" cname="rc_world_store_add_packages_from_slist">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageSList*" name="slist" />
+        </parameters>
+      </method>
+      <method name="Clear" cname="rc_world_store_clear">
+        <return-type type="void" />
+      </method>
+      <method name="ClearLocks" cname="rc_world_store_clear_locks">
+        <return-type type="void" />
+      </method>
+      <method name="GetType" cname="rc_world_store_get_type" shared="true">
+        <return-type type="GType" />
+      </method>
+      <constructor cname="rc_world_store_new" />
+      <method name="RemoveChannel" cname="rc_world_store_remove_channel">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCChannel*" name="channel" />
+        </parameters>
+      </method>
+      <method name="RemoveLock" cname="rc_world_store_remove_lock">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageMatch*" name="lock" />
+        </parameters>
+      </method>
+      <method name="RemovePackage" cname="rc_world_store_remove_package">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackage*" name="package" />
+        </parameters>
+      </method>
+      <method name="RemovePackages" cname="rc_world_store_remove_packages">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCChannel*" name="channel" />
+        </parameters>
+      </method>
+    </object>
+    <object name="WorldSynthetic" cname="RCWorldSynthetic" parent="RCWorldService">
+      <field cname="database_fn" type="char*" />
+      <field cname="synthetic_channel" type="RCChannel*" />
+      <field cname="error_flag" type="gboolean" />
+      <method name="GetType" cname="rc_world_synthetic_get_type" shared="true">
+        <return-type type="GType" />
+      </method>
+      <constructor cname="rc_world_synthetic_new" />
+      <method name="RegisterService" cname="rc_world_synthetic_register_service" shared="true">
+        <return-type type="void" />
+      </method>
+    </object>
+    <object name="WorldSystem" cname="RCWorldSystem" parent="RCWorldService">
+      <field cname="packman" type="RCPackman*" />
+      <field cname="system_channel" type="RCChannel*" />
+      <field cname="error_flag" type="gboolean" />
+      <field cname="database_changed_id" type="guint" />
+      <method name="GetType" cname="rc_world_system_get_type" shared="true">
+        <return-type type="GType" />
+      </method>
+      <constructor cname="rc_world_system_new" />
+      <method name="RegisterService" cname="rc_world_system_register_service" shared="true">
+        <return-type type="void" />
+      </method>
+    </object>
+    <object name="WorldUndump" cname="RCWorldUndump" parent="RCWorldStore">
+      <field cname="subscriptions" type="GSList*" />
+      <method name="GetType" cname="rc_world_undump_get_type" shared="true">
+        <return-type type="GType" />
+      </method>
+      <method name="Load" cname="rc_world_undump_load">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="filename" />
+        </parameters>
+      </method>
+      <constructor cname="rc_world_undump_new">
+        <parameters>
+          <parameter type="const-char*" name="filename" />
+        </parameters>
+      </constructor>
+    </object>
+    <struct name="Buffer" cname="RCBuffer">
+      <field cname="data" type="gpointer" />
+      <field cname="size" type="gsize" />
+      <field cname="is_mmapped" type="gboolean" />
+      <method name="MapFile" cname="rc_buffer_map_file" shared="true">
+        <return-type type="RCBuffer*" />
+        <parameters>
+          <parameter type="const-char*" name="filename" />
+        </parameters>
+      </method>
+      <method name="UnmapFile" cname="rc_buffer_unmap_file">
+        <return-type type="void" />
+      </method>
+    </struct>
+    <struct name="Channel" cname="RCChannel" opaque="true">
+      <method name="AddDistroTarget" cname="rc_channel_add_distro_target">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="target" />
+        </parameters>
+      </method>
+      <method name="Equal" cname="rc_channel_equal">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCChannel*" name="b" />
+        </parameters>
+      </method>
+      <method name="EqualId" cname="rc_channel_equal_id">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="const-char*" name="id" />
+        </parameters>
+      </method>
+      <method name="GetAlias" cname="rc_channel_get_alias">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetDescription" cname="rc_channel_get_description">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetFilePath" cname="rc_channel_get_file_path">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetIconFile" cname="rc_channel_get_icon_file">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetId" cname="rc_channel_get_id">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetLegacyId" cname="rc_channel_get_legacy_id">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetName" cname="rc_channel_get_name">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetPackages" cname="rc_channel_get_packages">
+        <return-type type="GSList*" element_type="RC.Package" />
+      </method>
+      <method name="GetPath" cname="rc_channel_get_path">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetPkginfoFile" cname="rc_channel_get_pkginfo_file">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetPriority" cname="rc_channel_get_priority">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="gboolean" name="is_subscribed" />
+        </parameters>
+      </method>
+      <method name="GetType" cname="rc_channel_get_type">
+        <return-type type="RCChannelType" />
+      </method>
+      <method name="HasDistroTarget" cname="rc_channel_has_distro_target">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="const-char*" name="target" />
+        </parameters>
+      </method>
+      <method name="IsHidden" cname="rc_channel_is_hidden">
+        <return-type type="gboolean" />
+      </method>
+      <method name="IsImmutable" cname="rc_channel_is_immutable">
+        <return-type type="gboolean" />
+      </method>
+      <method name="IsSubscribed" cname="rc_channel_is_subscribed">
+        <return-type type="gboolean" />
+      </method>
+      <method name="IsSystem" cname="rc_channel_is_system">
+        <return-type type="gboolean" />
+      </method>
+      <method name="IsWildcard" cname="rc_channel_is_wildcard">
+        <return-type type="gboolean" />
+      </method>
+      <method name="MakeImmutable" cname="rc_channel_make_immutable">
+        <return-type type="void" />
+      </method>
+      <constructor cname="rc_channel_new">
+        <parameters>
+          <parameter type="const-char*" name="id" />
+          <parameter type="const-char*" name="name" />
+          <parameter type="const-char*" name="alias" />
+          <parameter type="const-char*" name="description" />
+        </parameters>
+      </constructor>
+      <method name="PriorityParse" cname="rc_channel_priority_parse" shared="true">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="const-char*" name="arg1" />
+        </parameters>
+      </method>
+      <method name="Ref" cname="rc_channel_ref">
+        <return-type type="RCChannel*" />
+      </method>
+      <method name="SetAlias" cname="rc_channel_set_alias">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="path" />
+        </parameters>
+      </method>
+      <method name="SetFilePath" cname="rc_channel_set_file_path">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="file_path" />
+        </parameters>
+      </method>
+      <method name="SetHidden" cname="rc_channel_set_hidden">
+        <return-type type="void" />
+      </method>
+      <method name="SetIconFile" cname="rc_channel_set_icon_file">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="icon_file" />
+        </parameters>
+      </method>
+      <method name="SetIdPrefix" cname="rc_channel_set_id_prefix">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="prefix" />
+        </parameters>
+      </method>
+      <method name="SetLegacyId" cname="rc_channel_set_legacy_id">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="legacy_id" />
+        </parameters>
+      </method>
+      <method name="SetName" cname="rc_channel_set_name">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="path" />
+        </parameters>
+      </method>
+      <method name="SetPath" cname="rc_channel_set_path">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="path" />
+        </parameters>
+      </method>
+      <method name="SetPkginfoFile" cname="rc_channel_set_pkginfo_file">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="pkginfo_file" />
+        </parameters>
+      </method>
+      <method name="SetPriorities" cname="rc_channel_set_priorities">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="gint" name="subd_priority" />
+          <parameter type="gint" name="unsubd_priority" />
+        </parameters>
+      </method>
+      <method name="SetSubscription" cname="rc_channel_set_subscription">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="gboolean" name="subscribed" />
+        </parameters>
+      </method>
+      <method name="SetSystem" cname="rc_channel_set_system">
+        <return-type type="void" />
+      </method>
+      <method name="SetType" cname="rc_channel_set_type">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCChannelType" name="type" />
+        </parameters>
+      </method>
+      <method name="SetWorld" cname="rc_channel_set_world">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="_RCWorld*" name="world" />
+        </parameters>
+      </method>
+      <method name="ToXmlNode" cname="rc_channel_to_xml_node">
+        <return-type type="xmlNode*" />
+      </method>
+      <method name="Unref" cname="rc_channel_unref">
+        <return-type type="void" />
+      </method>
+    </struct>
+    <alias name="ChannelSList" cname="RCChannelSList" type="GSList" />
+    <struct name="DepOr" cname="RCDepOr">
+      <field cname="or_dep" type="gchar*" />
+      <field cname="split_ors" type="RCPackageDepSList*" />
+      <field cname="created_provides" type="RCPackageDepSList*" />
+      <field cname="ref" type="gint" />
+      <method name="DepSlistToString" cname="rc_dep_or_dep_slist_to_string" shared="true">
+        <return-type type="gchar*" />
+        <parameters>
+          <parameter type="RCPackageDepSList*" name="dep" />
+        </parameters>
+      </method>
+      <method name="Free" cname="rc_dep_or_free">
+        <return-type type="void" />
+      </method>
+      <constructor cname="rc_dep_or_new">
+        <parameters>
+          <parameter type="RCPackageDepSList*" name="deps" />
+        </parameters>
+      </constructor>
+      <constructor cname="rc_dep_or_new_by_string">
+        <parameters>
+          <parameter type="gchar*" name="depstr" />
+        </parameters>
+      </constructor>
+      <constructor cname="rc_dep_or_new_provide">
+        <parameters>
+          <parameter type="RCDepOr*" name="dor" />
+        </parameters>
+      </constructor>
+      <constructor cname="rc_dep_or_new_provide_by_string">
+        <parameters>
+          <parameter type="gchar*" name="dor_name" />
+        </parameters>
+      </constructor>
+    </struct>
+    <struct name="Distro" cname="RCDistro" opaque="true">
+      <method name="Free" cname="rc_distro_free">
+        <return-type type="void" />
+      </method>
+      <method name="GetArch" cname="rc_distro_get_arch">
+        <return-type type="RCArch" />
+      </method>
+      <method name="GetDeathDate" cname="rc_distro_get_death_date">
+        <return-type type="time_t" />
+      </method>
+      <method name="GetName" cname="rc_distro_get_name">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetPackageType" cname="rc_distro_get_package_type">
+        <return-type type="RCDistroPackageType" />
+      </method>
+      <method name="GetStatus" cname="rc_distro_get_status">
+        <return-type type="RCDistroStatus" />
+      </method>
+      <method name="GetTarget" cname="rc_distro_get_target">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetVersion" cname="rc_distro_get_version">
+        <return-type type="const-char*" />
+      </method>
+      <method name="ParseXml" cname="rc_distro_parse_xml" shared="true">
+        <return-type type="RCDistro*" />
+        <parameters>
+          <parameter type="const-char*" name="xml_buf" />
+          <parameter type="guint" name="compressed_length" />
+        </parameters>
+      </method>
+    </struct>
+    <struct name="GPGKey" cname="RCGPGKey">
+      <field cname="key_id" type="gchar*" />
+      <field cname="user_id" type="gchar*" />
+      <field cname="date" type="gchar*" />
+      <method name="Free" cname="rc_gpg_key_free">
+        <return-type type="void" />
+      </method>
+    </struct>
+    <alias name="GPGSList" cname="RCGPGSList" type="GSList" />
+    <boxed name="Package" cname="RCPackage" opaque="1">
+      <field cname="spec" type="RCPackageSpec" />
+      <field cname="refs" type="gint" />
+      <field cname="arch" type="RCArch" />
+      <field cname="section" type="RCPackageSection" />
+      <field cname="file_size" type="guint32" />
+      <field cname="installed_size" type="guint32" />
+      <field cname="channel" type="RCChannel*" />
+      <field cname="requires_a" type="RCPackageDepArray*" />
+      <field cname="provides_a" type="RCPackageDepArray*" />
+      <field cname="conflicts_a" type="RCPackageDepArray*" />
+      <field cname="obsoletes_a" type="RCPackageDepArray*" />
+      <field cname="children_a" type="RCPackageDepArray*" />
+      <field cname="suggests_a" type="RCPackageDepArray*" />
+      <field cname="recommends_a" type="RCPackageDepArray*" />
+      <field cname="pretty_name" type="gchar*" />
+      <field cname="summary" type="gchar*" />
+      <field cname="description" type="gchar*" />
+      <field cname="history" type="RCPackageUpdateSList*" />
+      <field cname="package_filename" type="gchar*" />
+      <field cname="signature_filename" type="gchar*" />
+      <field cname="installed" type="gboolean" />
+      <field cname="local_package" type="gboolean" />
+      <field cname="install_only" type="gboolean" />
+      <field cname="package_set" type="gboolean" />
+      <method name="AddDummyUpdate" cname="rc_package_add_dummy_update">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="package_filename" />
+          <parameter type="guint32" name="package_size" />
+        </parameters>
+      </method>
+      <method name="AddUpdate" cname="rc_package_add_update">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageUpdate*" name="update" />
+        </parameters>
+      </method>
+      <method name="Copy" cname="rc_package_copy">
+        <return-type type="RCPackage*" />
+      </method>
+      <method name="GetArch" cname="rc_package_get_arch">
+        <return-type type="RCArch" />
+      </method>
+      <method name="GetChannel" cname="rc_package_get_channel">
+        <return-type type="RCChannel*" />
+      </method>
+      <method name="GetDescription" cname="rc_package_get_description">
+        <return-type type="gchar*" />
+      </method>
+      <method name="GetFilename" cname="rc_package_get_filename">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetInstalledSize" cname="rc_package_get_installed_size">
+        <return-type type="guint32" />
+      </method>
+      <method name="GetLatestUpdate" cname="rc_package_get_latest_update">
+        <return-type type="RCPackageUpdate*" />
+      </method>
+      <method name="GetName" cname="rc_package_get_name">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetSection" cname="rc_package_get_section">
+        <return-type type="RCPackageSection" />
+      </method>
+      <method name="GetSignatureFilename" cname="rc_package_get_signature_filename">
+        <return-type type="gchar*" />
+      </method>
+      <method name="GetSpec" cname="rc_package_get_spec">
+        <return-type type="RCPackageSpec*" />
+      </method>
+      <method name="GetSummary" cname="rc_package_get_summary">
+        <return-type type="gchar*" />
+      </method>
+      <method name="GetType" cname="rc_package_get_type" shared="true">
+        <return-type type="GType" />
+      </method>
+      <method name="HashTableBySpecToList" cname="rc_package_hash_table_by_spec_to_list" shared="true">
+        <return-type type="RCPackageSList*" />
+        <parameters>
+          <parameter type="RCPackageHashTableBySpec*" name="ht" />
+        </parameters>
+      </method>
+      <method name="HashTableByStringToList" cname="rc_package_hash_table_by_string_to_list" shared="true">
+        <return-type type="RCPackageSList*" />
+        <parameters>
+          <parameter type="RCPackageHashTableBySpec*" name="ht" />
+        </parameters>
+      </method>
+      <method name="ImportanceToString" cname="rc_package_importance_to_string" shared="true">
+        <return-type type="const-gchar*" />
+        <parameters>
+          <parameter type="RCPackageImportance" name="importance" />
+        </parameters>
+      </method>
+      <method name="IsInstalled" cname="rc_package_is_installed">
+        <return-type type="gboolean" />
+      </method>
+      <method name="IsPackageSet" cname="rc_package_is_package_set">
+        <return-type type="gboolean" />
+      </method>
+      <method name="IsSynthetic" cname="rc_package_is_synthetic">
+        <return-type type="gboolean" />
+      </method>
+      <constructor cname="rc_package_new" />
+      <method name="Ref" cname="rc_package_ref">
+        <return-type type="RCPackage*" />
+      </method>
+      <method name="RelationFromString" cname="rc_package_relation_from_string" shared="true">
+        <return-type type="RCPackageRelation" />
+        <parameters>
+          <parameter type="const-gchar*" name="relation" />
+        </parameters>
+      </method>
+      <method name="RelationToString" cname="rc_package_relation_to_string" shared="true">
+        <return-type type="const-gchar*" />
+        <parameters>
+          <parameter type="RCPackageRelation" name="relation" />
+          <parameter type="gint" name="words" />
+        </parameters>
+      </method>
+      <method name="SectionToString" cname="rc_package_section_to_string" shared="true">
+        <return-type type="const-gchar*" />
+        <parameters>
+          <parameter type="RCPackageSection" name="section" />
+        </parameters>
+      </method>
+      <method name="SectionToUserString" cname="rc_package_section_to_user_string" shared="true">
+        <return-type type="const-gchar*" />
+        <parameters>
+          <parameter type="RCPackageSection" name="section" />
+        </parameters>
+      </method>
+      <method name="SetChannel" cname="rc_package_set_channel">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCChannel*" name="channel" />
+        </parameters>
+      </method>
+      <method name="SetFilename" cname="rc_package_set_filename">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="filename" />
+        </parameters>
+      </method>
+      <method name="SetSignatureFilename" cname="rc_package_set_signature_filename">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="filename" />
+        </parameters>
+      </method>
+      <method name="SlistRef" cname="rc_package_slist_ref" shared="true">
+        <return-type type="RCPackageSList*" />
+        <parameters>
+          <parameter type="RCPackageSList*" name="packages" />
+        </parameters>
+      </method>
+      <method name="SlistSortByName" cname="rc_package_slist_sort_by_name" shared="true">
+        <return-type type="RCPackageSList*" />
+        <parameters>
+          <parameter type="RCPackageSList*" name="packages" />
+        </parameters>
+      </method>
+      <method name="SlistSortByPrettyName" cname="rc_package_slist_sort_by_pretty_name" shared="true">
+        <return-type type="RCPackageSList*" />
+        <parameters>
+          <parameter type="RCPackageSList*" name="packages" />
+        </parameters>
+      </method>
+      <method name="SlistUnref" cname="rc_package_slist_unref" shared="true">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageSList*" name="packages" />
+        </parameters>
+      </method>
+      <method name="SpewLeaks" cname="rc_package_spew_leaks" shared="true">
+        <return-type type="void" />
+      </method>
+      <method name="StatusToString" cname="rc_package_status_to_string" shared="true">
+        <return-type type="const-char*" />
+        <parameters>
+          <parameter type="RCPackageStatus" name="status" />
+        </parameters>
+      </method>
+      <method cname="rc_package_to_str" name="ToString">
+        <return-type type="char*" />
+      </method>
+      <method name="ToStrStatic" cname="rc_package_to_str_static" hidden="1">
+        <return-type type="const-char*" />
+      </method>
+      <method name="ToXmlNode" cname="rc_package_to_xml_node">
+        <return-type type="xmlNode*" />
+      </method>
+      <method name="Unref" cname="rc_package_unref">
+        <return-type type="void" />
+      </method>
+    </boxed>
+    <struct name="PackageDep" cname="RCPackageDep" opaque="true">
+      <method name="GetChannel" cname="rc_package_dep_get_channel">
+        <return-type type="RCChannel*" />
+      </method>
+      <method name="GetRelation" cname="rc_package_dep_get_relation">
+        <return-type type="RCPackageRelation" />
+      </method>
+      <method name="IsOr" cname="rc_package_dep_is_or">
+        <return-type type="gboolean" />
+      </method>
+      <method name="IsPre" cname="rc_package_dep_is_pre">
+        <return-type type="gboolean" />
+      </method>
+      <constructor cname="rc_package_dep_new">
+        <parameters>
+          <parameter type="const-char*" name="name" />
+          <parameter type="gboolean" name="has_epoch" />
+          <parameter type="guint32" name="epoch" />
+          <parameter type="const-char*" name="version" />
+          <parameter type="const-char*" name="release" />
+          <parameter type="RCPackageRelation" name="relation" />
+          <parameter type="RCChannel*" name="channel" />
+          <parameter type="gboolean" name="pre" />
+          <parameter type="gboolean" name="is_or" />
+        </parameters>
+      </constructor>
+      <constructor cname="rc_package_dep_new_from_spec">
+        <parameters>
+          <parameter type="RCPackageSpec*" name="spec" />
+          <parameter type="RCPackageRelation" name="relation" />
+          <parameter type="RCChannel*" name="channel" />
+          <parameter type="gboolean" name="pre" />
+          <parameter type="gboolean" name="is_or" />
+        </parameters>
+      </constructor>
+      <method name="OrSlistToXmlNode" cname="rc_package_dep_or_slist_to_xml_node" shared="true">
+        <return-type type="xmlNode*" />
+        <parameters>
+          <parameter type="RCPackageDepSList*" name="dep" />
+        </parameters>
+      </method>
+      <method name="Ref" cname="rc_package_dep_ref">
+        <return-type type="RCPackageDep*" />
+      </method>
+      <method name="SlistCopy" cname="rc_package_dep_slist_copy" shared="true">
+        <return-type type="RCPackageSList*" />
+        <parameters>
+          <parameter type="RCPackageSList*" name="list" />
+        </parameters>
+      </method>
+      <method name="SlistFree" cname="rc_package_dep_slist_free" shared="true">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageDepSList*" name="list" />
+        </parameters>
+      </method>
+      <method name="SpewCache" cname="rc_package_dep_spew_cache" shared="true">
+        <return-type type="void" />
+      </method>
+      <method name="ToString" cname="rc_package_dep_to_string">
+        <return-type type="char*" />
+      </method>
+      <method name="ToStringStatic" cname="rc_package_dep_to_string_static" hidden="1">
+        <return-type type="const-char*" />
+      </method>
+      <method name="ToXmlNode" cname="rc_package_dep_to_xml_node">
+        <return-type type="xmlNode*" />
+      </method>
+      <method name="Unref" cname="rc_package_dep_unref">
+        <return-type type="void" />
+      </method>
+      <method name="VerifyRelation" cname="rc_package_dep_verify_relation" shared="true">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCPackman*" name="packman" />
+          <parameter type="RCPackageDep*" name="dep" />
+          <parameter type="RCPackageDep*" name="prov" />
+        </parameters>
+      </method>
+    </struct>
+    <struct name="PackageDepArray" cname="RCPackageDepArray">
+      <field cname="data" type="RCPackageDep**" />
+      <field cname="len" type="guint" />
+      <method name="Copy" cname="rc_package_dep_array_copy">
+        <return-type type="RCPackageDepArray*" />
+      </method>
+      <method name="Free" cname="rc_package_dep_array_free">
+        <return-type type="void" />
+      </method>
+      <method name="FromSlist" cname="rc_package_dep_array_from_slist" shared="true">
+        <return-type type="RCPackageDepArray*" />
+        <parameters>
+          <parameter type="RCPackageDepSList**" name="list" />
+        </parameters>
+      </method>
+    </struct>
+    <alias name="PackageDepSList" cname="RCPackageDepSList" type="GSList" />
+    <struct name="PackageFile" cname="RCPackageFile">
+      <field cname="filename" type="char*" />
+      <field cname="size" type="gsize" />
+      <field cname="md5sum" type="char*" />
+      <field cname="uid" type="guint" />
+      <field cname="gid" type="guint" />
+      <field cname="mode" type="guint16" />
+      <field cname="mtime" type="gint32" />
+      <field cname="ghost" type="gboolean" />
+      <method name="Free" cname="rc_package_file_free">
+        <return-type type="void" />
+      </method>
+      <constructor cname="rc_package_file_new" />
+      <method name="SlistFree" cname="rc_package_file_slist_free" shared="true">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageFileSList*" name="files" />
+        </parameters>
+      </method>
+    </struct>
+    <alias name="PackageFileSList" cname="RCPackageFileSList" type="GSList" />
+    <alias name="PackageHashTableBySpec" cname="RCPackageHashTableBySpec" type="GHashTable" />
+    <alias name="PackageHashTableByString" cname="RCPackageHashTableByString" type="GHashTable" />
+    <struct name="PackageMatch" cname="RCPackageMatch" opaque="true">
+      <method name="Equal" cname="rc_package_match_equal">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCPackageMatch*" name="match2" />
+        </parameters>
+      </method>
+      <method name="Free" cname="rc_package_match_free">
+        <return-type type="void" />
+      </method>
+      <method name="FromXmlNode" cname="rc_package_match_from_xml_node" shared="true">
+        <return-type type="RCPackageMatch*" />
+        <parameters>
+          <parameter type="xmlNode*" name="node" />
+        </parameters>
+      </method>
+      <method name="GetChannelId" cname="rc_package_match_get_channel_id">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetDep" cname="rc_package_match_get_dep">
+        <return-type type="RCPackageDep*" />
+      </method>
+      <method name="GetGlob" cname="rc_package_match_get_glob">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetImportance" cname="rc_package_match_get_importance">
+        <return-type type="RCPackageImportance" />
+        <parameters>
+          <parameter type="gboolean*" name="match_gteq" />
+        </parameters>
+      </method>
+      <constructor cname="rc_package_match_new" />
+      <method name="SetChannel" cname="rc_package_match_set_channel">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCChannel*" name="channel" />
+        </parameters>
+      </method>
+      <method name="SetChannelId" cname="rc_package_match_set_channel_id">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="cid" />
+        </parameters>
+      </method>
+      <method name="SetDep" cname="rc_package_match_set_dep">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageDep*" name="dep" />
+        </parameters>
+      </method>
+      <method name="SetGlob" cname="rc_package_match_set_glob">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="glob_str" />
+        </parameters>
+      </method>
+      <method name="SetImportance" cname="rc_package_match_set_importance">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageImportance" name="importance" />
+          <parameter type="gboolean" name="match_gteq" />
+        </parameters>
+      </method>
+      <method name="Test" cname="rc_package_match_test">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCPackage*" name="package" />
+          <parameter type="_RCWorld*" name="world" />
+        </parameters>
+      </method>
+      <method name="ToXmlNode" cname="rc_package_match_to_xml_node">
+        <return-type type="xmlNode*" />
+      </method>
+    </struct>
+    <struct name="PackageSAXContext" cname="RCPackageSAXContext" opaque="true">
+      <method name="Done" cname="rc_package_sax_context_done">
+        <return-type type="RCPackageSList*" />
+      </method>
+      <constructor cname="rc_package_sax_context_new">
+        <parameters>
+          <parameter type="RCChannel*" name="channel" />
+        </parameters>
+      </constructor>
+      <method name="ParseChunk" cname="rc_package_sax_context_parse_chunk">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="xmlbuf" />
+          <parameter type="int" name="size" />
+        </parameters>
+      </method>
+    </struct>
+    <alias name="PackageSList" cname="RCPackageSList" type="GSList" />
+    <struct name="PackageSpec" cname="RCPackageSpec">
+      <field cname="nameq" type="GQuark" />
+      <field cname="version" type="gchar*" />
+      <field cname="release" type="gchar*" />
+      <field cname="has_epoch" type="gboolean" />
+      <field cname="epoch" type="gint" />
+      <method name="CompareName" cname="rc_package_spec_compare_name" shared="true">
+        <return-type type="gint" />
+        <parameters>
+          <parameter type="void*" name="a" />
+          <parameter type="void*" name="b" />
+        </parameters>
+      </method>
+      <method name="Copy" cname="rc_package_spec_copy">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageSpec*" name="old" />
+        </parameters>
+      </method>
+      <method name="Equal" cname="rc_package_spec_equal" shared="true">
+        <return-type type="gint" />
+        <parameters>
+          <parameter type="gconstpointer" name="ptra" />
+          <parameter type="gconstpointer" name="ptrb" />
+        </parameters>
+      </method>
+      <method name="FreeMembers" cname="rc_package_spec_free_members">
+        <return-type type="void" />
+      </method>
+      <method name="GetName" cname="rc_package_spec_get_name">
+        <return-type type="const-char*" />
+      </method>
+      <method name="Hash" cname="rc_package_spec_hash" shared="true">
+        <return-type type="guint" />
+        <parameters>
+          <parameter type="gconstpointer" name="ptr" />
+        </parameters>
+      </method>
+      <method name="Init" cname="rc_package_spec_init">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-gchar*" name="name" />
+          <parameter type="gboolean" name="has_epoch" />
+          <parameter type="guint32" name="epoch" />
+          <parameter type="const-gchar*" name="version" />
+          <parameter type="const-gchar*" name="release" />
+        </parameters>
+      </method>
+      <method name="NotEqual" cname="rc_package_spec_not_equal" shared="true">
+        <return-type type="gint" />
+        <parameters>
+          <parameter type="gconstpointer" name="a" />
+          <parameter type="gconstpointer" name="b" />
+        </parameters>
+      </method>
+      <method name="SlistFindName" cname="rc_package_spec_slist_find_name" shared="true">
+        <return-type type="gpointer" />
+        <parameters>
+          <parameter type="GSList*" name="specs" />
+          <parameter type="const-gchar*" name="name" />
+        </parameters>
+      </method>
+      <method cname="rc_package_spec_to_str" name="ToString">
+        <return-type type="gchar*" />
+      </method>
+      <method name="ToStrStatic" cname="rc_package_spec_to_str_static" hidden="1">
+        <return-type type="const-gchar*" />
+      </method>
+      <method cname="rc_package_spec_version_to_str" name="VersionToString">
+        <return-type type="gchar*" />
+      </method>
+      <method name="VersionToStrStatic" cname="rc_package_spec_version_to_str_static" hidden="1">
+        <return-type type="const-gchar*" />
+      </method>
+    </struct>
+    <struct name="PackageUpdate" cname="RCPackageUpdate">
+      <field cname="spec" type="RCPackageSpec" />
+      <field cname="package" type="const-RCPackage*" />
+      <field cname="package_url" type="gchar*" />
+      <field cname="package_size" type="guint32" />
+      <field cname="installed_size" type="guint32" />
+      <field cname="signature_url" type="gchar*" />
+      <field cname="signature_size" type="guint32" />
+      <field cname="md5sum" type="gchar*" />
+      <field cname="importance" type="RCPackageImportance" />
+      <field cname="description" type="gchar*" />
+      <field cname="hid" type="guint" />
+      <field cname="license" type="gchar*" />
+      <method name="Copy" cname="rc_package_update_copy">
+        <return-type type="RCPackageUpdate*" />
+      </method>
+      <method name="Free" cname="rc_package_update_free">
+        <return-type type="void" />
+      </method>
+      <constructor cname="rc_package_update_new" />
+      <method name="SlistCopy" cname="rc_package_update_slist_copy" shared="true">
+        <return-type type="RCPackageUpdateSList*" />
+        <parameters>
+          <parameter type="RCPackageUpdateSList*" name="old_update" />
+        </parameters>
+      </method>
+      <method name="SlistFree" cname="rc_package_update_slist_free" shared="true">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageUpdateSList*" name="update_slist" />
+        </parameters>
+      </method>
+      <method name="SlistSort" cname="rc_package_update_slist_sort" shared="true">
+        <return-type type="RCPackageUpdateSList*" />
+        <parameters>
+          <parameter type="RCPackageUpdateSList*" name="old_slist" />
+        </parameters>
+      </method>
+      <method name="ToXmlNode" cname="rc_package_update_to_xml_node">
+        <return-type type="xmlNode*" />
+      </method>
+    </struct>
+    <alias name="PackageUpdateSList" cname="RCPackageUpdateSList" type="GSList" />
+    <struct name="QueueItem" cname="RCQueueItem">
+      <field cname="type" type="RCQueueItemType" />
+      <field cname="priority" type="int" />
+      <field cname="size" type="size_t" />
+      <field cname="pending_info" type="GSList*" />
+      <field cname="world" type="RCWorld*" />
+      <callback cname="is_redundant">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCQueueItem*" name="," />
+        </parameters>
+      </callback>
+      <callback cname="is_satisfied">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCQueueItem*" name="," />
+        </parameters>
+      </callback>
+      <callback cname="process">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCQueueItem*" name="," />
+        </parameters>
+      </callback>
+      <callback cname="destroy">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCQueueItem*" name="arg1" />
+        </parameters>
+      </callback>
+      <callback cname="copy">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-RCQueueItem*" name="src," />
+        </parameters>
+      </callback>
+      <callback cname="cmp">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="const-RCQueueItem*" name="a," />
+        </parameters>
+      </callback>
+      <callback cname="to_string">
+        <return-type type="char*" />
+        <parameters>
+          <parameter type="RCQueueItem*" name="arg1" />
+        </parameters>
+      </callback>
+      <method name="AddInfo" cname="rc_queue_item_add_info">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCResolverInfo*" name="arg1" />
+        </parameters>
+      </method>
+      <method name="BranchAddItem" cname="rc_queue_item_branch_add_item">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCQueueItem*" name="subitem" />
+        </parameters>
+      </method>
+      <method name="BranchContains" cname="rc_queue_item_branch_contains">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCQueueItem*" name="possible_subbranch" />
+        </parameters>
+      </method>
+      <method name="BranchIsEmpty" cname="rc_queue_item_branch_is_empty">
+        <return-type type="gboolean" />
+      </method>
+      <method name="BranchSetLabel" cname="rc_queue_item_branch_set_label">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="str" />
+        </parameters>
+      </method>
+      <method name="Cmp" cname="rc_queue_item_cmp">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="const-RCQueueItem*" name="b" />
+        </parameters>
+      </method>
+      <method name="Copy" cname="rc_queue_item_copy">
+        <return-type type="RCQueueItem*" />
+      </method>
+      <method name="Free" cname="rc_queue_item_free">
+        <return-type type="void" />
+      </method>
+      <method name="GetWorld" cname="rc_queue_item_get_world">
+        <return-type type="RCWorld*" />
+      </method>
+      <method name="GroupAddItem" cname="rc_queue_item_group_add_item">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCQueueItem*" name="subitem" />
+        </parameters>
+      </method>
+      <method name="InstallAddDep" cname="rc_queue_item_install_add_dep">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageDep*" name="dep" />
+        </parameters>
+      </method>
+      <method name="InstallAddNeededBy" cname="rc_queue_item_install_add_needed_by">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackage*" name="package" />
+        </parameters>
+      </method>
+      <method name="InstallGetChannelPriority" cname="rc_queue_item_install_get_channel_priority">
+        <return-type type="int" />
+      </method>
+      <method name="InstallGetOtherPenalty" cname="rc_queue_item_install_get_other_penalty">
+        <return-type type="int" />
+      </method>
+      <method name="InstallSetChannelPriority" cname="rc_queue_item_install_set_channel_priority">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="int" name="arg1" />
+        </parameters>
+      </method>
+      <method name="InstallSetExplicitlyRequested" cname="rc_queue_item_install_set_explicitly_requested">
+        <return-type type="void" />
+      </method>
+      <method name="InstallSetOtherPenalty" cname="rc_queue_item_install_set_other_penalty">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="int" name="arg1" />
+        </parameters>
+      </method>
+      <method name="InstallSetUpgradePackage" cname="rc_queue_item_install_set_upgrade_package">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackage*" name="upgrades" />
+        </parameters>
+      </method>
+      <method name="IsRedundant" cname="rc_queue_item_is_redundant">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCResolverContext*" name="context" />
+        </parameters>
+      </method>
+      <method name="IsSatisfied" cname="rc_queue_item_is_satisfied">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCResolverContext*" name="context" />
+        </parameters>
+      </method>
+      <method name="LogInfo" cname="rc_queue_item_log_info">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCResolverContext*" name="arg1" />
+        </parameters>
+      </method>
+      <constructor cname="rc_queue_item_new_branch">
+        <parameters>
+          <parameter type="RCWorld*" name="arg1" />
+        </parameters>
+      </constructor>
+      <constructor cname="rc_queue_item_new_conflict">
+        <parameters>
+          <parameter type="RCWorld*" name="arg1" />
+          <parameter type="RCPackageDep*" name="dep" />
+          <parameter type="RCPackage*" name="package" />
+        </parameters>
+      </constructor>
+      <constructor cname="rc_queue_item_new_group">
+        <parameters>
+          <parameter type="RCWorld*" name="arg1" />
+        </parameters>
+      </constructor>
+      <constructor cname="rc_queue_item_new_install">
+        <parameters>
+          <parameter type="RCWorld*" name="arg1" />
+          <parameter type="RCPackage*" name="package" />
+        </parameters>
+      </constructor>
+      <constructor cname="rc_queue_item_new_require">
+        <parameters>
+          <parameter type="RCWorld*" name="arg1" />
+          <parameter type="RCPackageDep*" name="dep" />
+        </parameters>
+      </constructor>
+      <constructor cname="rc_queue_item_new_uninstall">
+        <parameters>
+          <parameter type="RCWorld*" name="arg1" />
+          <parameter type="RCPackage*" name="package" />
+          <parameter type="const-char*" name="reason" />
+        </parameters>
+      </constructor>
+      <method name="Process" cname="rc_queue_item_process">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCResolverContext*" name="context" />
+          <parameter type="GSList**" name="arg2" />
+        </parameters>
+      </method>
+      <method name="RequireAddPackage" cname="rc_queue_item_require_add_package">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackage*" name="package" />
+        </parameters>
+      </method>
+      <method name="RequireSetRemoveOnly" cname="rc_queue_item_require_set_remove_only">
+        <return-type type="void" />
+      </method>
+      <method name="ToString" cname="rc_queue_item_to_string">
+        <return-type type="char*" />
+      </method>
+      <method name="Type" cname="rc_queue_item_type" hidden="1">
+        <return-type type="RCQueueItemType" />
+      </method>
+      <method name="UninstallSetDep" cname="rc_queue_item_uninstall_set_dep">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageDep*" name="dep" />
+        </parameters>
+      </method>
+      <method name="UninstallSetDueToConflict" cname="rc_queue_item_uninstall_set_due_to_conflict">
+        <return-type type="void" />
+      </method>
+      <method name="UninstallSetDueToObsolete" cname="rc_queue_item_uninstall_set_due_to_obsolete">
+        <return-type type="void" />
+      </method>
+      <method name="UninstallSetExplicitlyRequested" cname="rc_queue_item_uninstall_set_explicitly_requested">
+        <return-type type="void" />
+      </method>
+      <method name="UninstallSetRemoveOnly" cname="rc_queue_item_uninstall_set_remove_only">
+        <return-type type="void" />
+      </method>
+      <method name="UninstallSetUnlink" cname="rc_queue_item_uninstall_set_unlink">
+        <return-type type="void" />
+      </method>
+      <method name="UninstallSetUpgradedTo" cname="rc_queue_item_uninstall_set_upgraded_to">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackage*" name="packageo" />
+        </parameters>
+      </method>
+    </struct>
+    <struct name="QueueItem_Branch" cname="RCQueueItem_Branch">
+      <field cname="parent" type="RCQueueItem" />
+      <field cname="label" type="char*" />
+      <field cname="possible_items" type="GSList*" />
+    </struct>
+    <struct name="QueueItem_Conflict" cname="RCQueueItem_Conflict">
+      <field cname="parent" type="RCQueueItem" />
+      <field cname="dep" type="RCPackageDep*" />
+      <field cname="conflicting_package" type="RCPackage*" />
+      <field cname="actually_an_obsolete" bits="1" type="guint" />
+    </struct>
+    <struct name="QueueItem_Group" cname="RCQueueItem_Group">
+      <field cname="parent" type="RCQueueItem" />
+      <field cname="subitems" type="GSList*" />
+    </struct>
+    <struct name="QueueItem_Install" cname="RCQueueItem_Install">
+      <field cname="parent" type="RCQueueItem" />
+      <field cname="package" type="RCPackage*" />
+      <field cname="upgrades" type="RCPackage*" />
+      <field cname="deps_satisfied_by_this_install" type="GSList*" />
+      <field cname="needed_by" type="GSList*" />
+      <field cname="channel_priority" type="int" />
+      <field cname="other_penalty" type="int" />
+      <field cname="explicitly_requested" bits="1" type="guint" />
+    </struct>
+    <struct name="QueueItem_Require" cname="RCQueueItem_Require">
+      <field cname="parent" type="RCQueueItem" />
+      <field cname="dep" type="RCPackageDep*" />
+      <field cname="requiring_package" type="RCPackage*" />
+      <field cname="upgraded_package" type="RCPackage*" />
+      <field cname="lost_package" type="RCPackage*" />
+      <field cname="remove_only" bits="1" type="guint" />
+    </struct>
+    <struct name="QueueItem_Uninstall" cname="RCQueueItem_Uninstall">
+      <field cname="parent" type="RCQueueItem" />
+      <field cname="package" type="RCPackage*" />
+      <field cname="reason" type="char*" />
+      <field cname="dep_leading_to_uninstall" type="RCPackageDep*" />
+      <field cname="upgraded_to" type="RCPackage*" />
+      <field cname="explicitly_requested" bits="1" type="guint" />
+      <field cname="remove_only" bits="1" type="guint" />
+      <field cname="due_to_conflict" bits="1" type="guint" />
+      <field cname="due_to_obsolete" bits="1" type="guint" />
+      <field cname="unlink" bits="1" type="guint" />
+    </struct>
+    <boxed name="Resolver" cname="RCResolver" opaque="1">
+      <field cname="current_channel" type="RCChannel*" />
+      <field cname="world" type="RCWorld*" />
+      <field cname="timeout_seconds" type="int" />
+      <field cname="verifying" type="gboolean" />
+      <field cname="initial_items" type="GSList*" />
+      <field cname="packages_to_install" type="GSList*" />
+      <field cname="packages_to_remove" type="GSList*" />
+      <field cname="packages_to_verify" type="GSList*" />
+      <field cname="extra_deps" type="GSList*" />
+      <field cname="extra_conflicts" type="GSList*" />
+      <field cname="pending_queues" type="GSList*" />
+      <field cname="pruned_queues" type="GSList*" />
+      <field cname="complete_queues" type="GSList*" />
+      <field cname="deferred_queues" type="GSList*" />
+      <field cname="invalid_queues" type="GSList*" />
+      <field cname="valid_solution_count" type="int" />
+      <field cname="best_context" type="RCResolverContext*" />
+      <field cname="timed_out" type="gboolean" />
+      <method name="AddExtraConflict" cname="rc_resolver_add_extra_conflict">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageDep*" name="arg1" />
+        </parameters>
+      </method>
+      <method name="AddExtraDependency" cname="rc_resolver_add_extra_dependency">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageDep*" name="arg1" />
+        </parameters>
+      </method>
+      <method name="AddPackageToInstall" cname="rc_resolver_add_package_to_install">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackage*" name="arg1" />
+        </parameters>
+      </method>
+      <method name="AddPackageToRemove" cname="rc_resolver_add_package_to_remove">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackage*" name="arg1" />
+        </parameters>
+      </method>
+      <method name="AddPackagesToInstallFromSlist" cname="rc_resolver_add_packages_to_install_from_slist">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GSList*" name="arg1" />
+        </parameters>
+      </method>
+      <method name="AddPackagesToRemoveFromSlist" cname="rc_resolver_add_packages_to_remove_from_slist">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GSList*" name="arg1" />
+        </parameters>
+      </method>
+      <method name="AddSubscribedChannel" cname="rc_resolver_add_subscribed_channel">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCChannel*" name="arg1" />
+        </parameters>
+      </method>
+      <method name="Free" cname="rc_resolver_free">
+        <return-type type="void" />
+      </method>
+      <method name="GetBestContext" cname="rc_resolver_get_best_context">
+        <return-type type="RCResolverContext*" />
+      </method>
+      <method name="GetType" cname="rc_resolver_get_type" shared="true">
+        <return-type type="GType" />
+      </method>
+      <method name="GetWorld" cname="rc_resolver_get_world">
+        <return-type type="RCWorld*" />
+      </method>
+      <constructor cname="rc_resolver_new" />
+      <method name="ResolveDependencies" cname="rc_resolver_resolve_dependencies">
+        <return-type type="void" />
+      </method>
+      <method name="SetCurrentChannel" cname="rc_resolver_set_current_channel">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCChannel*" name="arg1" />
+        </parameters>
+      </method>
+      <method name="SetTimeout" cname="rc_resolver_set_timeout">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="int" name="seconds" />
+        </parameters>
+      </method>
+      <method name="SetWorld" cname="rc_resolver_set_world">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCWorld*" name="arg1" />
+        </parameters>
+      </method>
+      <method name="VerifySystem" cname="rc_resolver_verify_system">
+        <return-type type="void" />
+      </method>
+    </boxed>
+    <boxed name="ResolverContext" cname="RCResolverContext" opaque="1">
+      <field cname="refs" type="int" />
+      <field cname="world" type="RCWorld*" />
+      <field cname="status" type="GHashTable*" />
+      <field cname="last_checked_package" type="RCPackage*" />
+      <field cname="last_checked_status" type="RCPackageStatus" />
+      <field cname="log" type="GList*" />
+      <field cname="download_size" type="guint32" />
+      <field cname="install_size" type="guint32" />
+      <field cname="total_priority" type="int" />
+      <field cname="min_priority" type="int" />
+      <field cname="max_priority" type="int" />
+      <field cname="other_penalties" type="int" />
+      <field cname="current_channel" type="RCChannel*" />
+      <field cname="parent" type="RCResolverContext*" />
+      <field cname="verifying" bits="1" type="guint" />
+      <field cname="invalid" bits="1" type="guint" />
+      <method name="AddErrorStr" cname="rc_resolver_context_add_error_str">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackage*" name="arg1" />
+          <parameter type="char*" name="str" />
+        </parameters>
+      </method>
+      <method name="AddInfo" cname="rc_resolver_context_add_info">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCResolverInfo*" name="arg1" />
+        </parameters>
+      </method>
+      <method name="AddInfoStr" cname="rc_resolver_context_add_info_str">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackage*" name="arg1" />
+          <parameter type="int" name="priority" />
+          <parameter type="char*" name="str" />
+        </parameters>
+      </method>
+      <method name="Cmp" cname="rc_resolver_context_cmp">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="RCResolverContext*" name="arg1" />
+        </parameters>
+      </method>
+      <method name="ForeachInfo" cname="rc_resolver_context_foreach_info">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackage*" name="arg1" />
+          <parameter type="int" name="priority" />
+          <parameter type="RCResolverInfoFn" name="fn" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="ForeachInstall" cname="rc_resolver_context_foreach_install">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="RCMarkedPackageFn" name="fn" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="ForeachMarkedPackage" cname="rc_resolver_context_foreach_marked_package">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCMarkedPackageFn" name="fn" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="ForeachUninstall" cname="rc_resolver_context_foreach_uninstall">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="RCMarkedPackageFn" name="fn" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="ForeachUpgrade" cname="rc_resolver_context_foreach_upgrade">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="RCMarkedPackagePairFn" name="fn" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="GetChannelPriority" cname="rc_resolver_context_get_channel_priority">
+        <return-type type="gint" />
+        <parameters>
+          <parameter type="RCChannel*" name="arg1" />
+        </parameters>
+      </method>
+      <method name="GetInstalls" cname="rc_resolver_context_get_installs">
+        <return-type type="GSList*" element_type="RC.Package" />
+      </method>
+      <method name="GetMarkedPackages" cname="rc_resolver_context_get_marked_packages">
+        <return-type type="GSList*" element_type="RC.Package" />
+      </method>
+      <method name="GetStatus" cname="rc_resolver_context_get_status">
+        <return-type type="RCPackageStatus" />
+        <parameters>
+          <parameter type="RCPackage*" name="arg1" />
+        </parameters>
+      </method>
+      <method name="GetType" cname="rc_resolver_context_get_type" shared="true">
+        <return-type type="GType" />
+      </method>
+      <method name="GetUninstalls" cname="rc_resolver_context_get_uninstalls">
+        <return-type type="GSList*" element_type="RC.Package" />
+      </method>
+      <method name="GetUpgrades" cname="rc_resolver_context_get_upgrades">
+        <return-type type="GSList*" element_type="RC.Package" />
+      </method>
+      <method name="GetWorld" cname="rc_resolver_context_get_world">
+        <return-type type="RCWorld*" />
+      </method>
+      <method name="InstallCount" cname="rc_resolver_context_install_count">
+        <return-type type="int" />
+      </method>
+      <method name="InstallPackage" cname="rc_resolver_context_install_package">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCPackage*" name="package" />
+          <parameter type="gboolean" name="is_soft" />
+          <parameter type="int" name="other_penalty" />
+        </parameters>
+      </method>
+      <method name="IsInvalid" cname="rc_resolver_context_is_invalid">
+        <return-type type="gboolean" />
+      </method>
+      <method name="IsParallelInstall" cname="rc_resolver_context_is_parallel_install">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCPackage*" name="arg1" />
+        </parameters>
+      </method>
+      <method name="IsValid" cname="rc_resolver_context_is_valid">
+        <return-type type="gboolean" />
+      </method>
+      <constructor cname="rc_resolver_context_new" />
+      <constructor cname="rc_resolver_context_new_child">
+        <parameters>
+          <parameter type="RCResolverContext*" name="parent" />
+        </parameters>
+      </constructor>
+      <method name="PackageIsAbsent" cname="rc_resolver_context_package_is_absent">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCPackage*" name="arg1" />
+        </parameters>
+      </method>
+      <method name="PackageIsPossible" cname="rc_resolver_context_package_is_possible">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCPackage*" name="arg1" />
+        </parameters>
+      </method>
+      <method name="PackageIsPresent" cname="rc_resolver_context_package_is_present">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCPackage*" name="arg1" />
+        </parameters>
+      </method>
+      <method name="PartialCmp" cname="rc_resolver_context_partial_cmp">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="RCResolverContext*" name="arg1" />
+        </parameters>
+      </method>
+      <method name="Ref" cname="rc_resolver_context_ref">
+        <return-type type="RCResolverContext*" />
+      </method>
+      <method name="RequirementIsMet" cname="rc_resolver_context_requirement_is_met">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCPackageDep*" name="dep" />
+        </parameters>
+      </method>
+      <method name="RequirementIsPossible" cname="rc_resolver_context_requirement_is_possible">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCPackageDep*" name="dep" />
+        </parameters>
+      </method>
+      <method name="SetStatus" cname="rc_resolver_context_set_status">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackage*" name="arg1" />
+          <parameter type="RCPackageStatus" name="status" />
+        </parameters>
+      </method>
+      <method name="Spew" cname="rc_resolver_context_spew">
+        <return-type type="void" />
+      </method>
+      <method name="SpewInfo" cname="rc_resolver_context_spew_info">
+        <return-type type="void" />
+      </method>
+      <method name="UninstallCount" cname="rc_resolver_context_uninstall_count">
+        <return-type type="int" />
+      </method>
+      <method name="UninstallPackage" cname="rc_resolver_context_uninstall_package">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCPackage*" name="package" />
+          <parameter type="gboolean" name="part_of_upgrade" />
+          <parameter type="gboolean" name="due_to_obsolete" />
+          <parameter type="gboolean" name="due_to_unlink" />
+        </parameters>
+      </method>
+      <method name="Unref" cname="rc_resolver_context_unref">
+        <return-type type="void" />
+      </method>
+      <method name="UpgradeCount" cname="rc_resolver_context_upgrade_count">
+        <return-type type="int" />
+      </method>
+      <method name="UpgradePackage" cname="rc_resolver_context_upgrade_package">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCPackage*" name="new_package" />
+          <parameter type="RCPackage*" name="old_package" />
+          <parameter type="gboolean" name="is_soft" />
+          <parameter type="int" name="other_penalty" />
+        </parameters>
+      </method>
+    </boxed>
+    <struct name="ResolverInfo" cname="RCResolverInfo">
+      <field cname="type" type="RCResolverInfoType" />
+      <field cname="package" type="RCPackage*" />
+      <field cname="priority" type="int" />
+      <field cname="package_list" type="GSList*" />
+      <field cname="missing_req" type="RCPackageDep*" />
+      <field cname="msg" type="char*" />
+      <field cname="action" type="char*" />
+      <field cname="trigger" type="char*" />
+      <field cname="is_error" bits="1" type="guint" />
+      <field cname="is_important" bits="1" type="guint" />
+      <method name="AddRelatedPackage" cname="rc_resolver_info_add_related_package">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackage*" name="arg1" />
+        </parameters>
+      </method>
+      <method name="ChildOfNew" cname="rc_resolver_info_child_of_new" shared="true">
+        <return-type type="RCResolverInfo*" />
+        <parameters>
+          <parameter type="RCPackage*" name="package" />
+          <parameter type="RCPackage*" name="dependency" />
+        </parameters>
+      </method>
+      <method name="ConflictsWithNew" cname="rc_resolver_info_conflicts_with_new" shared="true">
+        <return-type type="RCResolverInfo*" />
+        <parameters>
+          <parameter type="RCPackage*" name="package" />
+          <parameter type="RCPackage*" name="conflicts_with" />
+        </parameters>
+      </method>
+      <method name="Copy" cname="rc_resolver_info_copy">
+        <return-type type="RCResolverInfo*" />
+      </method>
+      <method name="DependsOnNew" cname="rc_resolver_info_depends_on_new" shared="true">
+        <return-type type="RCResolverInfo*" />
+        <parameters>
+          <parameter type="RCPackage*" name="package" />
+          <parameter type="RCPackage*" name="dependency" />
+        </parameters>
+      </method>
+      <method name="FlagAsError" cname="rc_resolver_info_flag_as_error">
+        <return-type type="void" />
+      </method>
+      <method name="FlagAsImportant" cname="rc_resolver_info_flag_as_important">
+        <return-type type="void" />
+      </method>
+      <method name="Free" cname="rc_resolver_info_free">
+        <return-type type="void" />
+      </method>
+      <method name="IsAbout" cname="rc_resolver_info_is_about">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCPackage*" name="arg1" />
+        </parameters>
+      </method>
+      <method name="IsError" cname="rc_resolver_info_is_error">
+        <return-type type="gboolean" />
+      </method>
+      <method name="IsImportant" cname="rc_resolver_info_is_important">
+        <return-type type="gboolean" />
+      </method>
+      <method name="Mentions" cname="rc_resolver_info_mentions">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCPackage*" name="arg1" />
+        </parameters>
+      </method>
+      <method name="Merge" cname="rc_resolver_info_merge">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCResolverInfo*" name="arg1" />
+        </parameters>
+      </method>
+      <method name="MiscAddAction" cname="rc_resolver_info_misc_add_action">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="char*" name="action_msg" />
+        </parameters>
+      </method>
+      <method name="MiscAddTrigger" cname="rc_resolver_info_misc_add_trigger">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="char*" name="trigger_msg" />
+        </parameters>
+      </method>
+      <method name="MiscNew" cname="rc_resolver_info_misc_new" shared="true">
+        <return-type type="RCResolverInfo*" />
+        <parameters>
+          <parameter type="RCPackage*" name="package" />
+          <parameter type="int" name="priority" />
+          <parameter type="char*" name="msg" />
+        </parameters>
+      </method>
+      <method name="MissingReqNew" cname="rc_resolver_info_missing_req_new" shared="true">
+        <return-type type="RCResolverInfo*" />
+        <parameters>
+          <parameter type="RCPackage*" name="package" />
+          <parameter type="RCPackageDep*" name="missing_req" />
+        </parameters>
+      </method>
+      <method name="NeededAdd" cname="rc_resolver_info_needed_add">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackage*" name="needed_by" />
+        </parameters>
+      </method>
+      <method name="NeededAddSlist" cname="rc_resolver_info_needed_add_slist">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GSList*" name="arg1" />
+        </parameters>
+      </method>
+      <method name="NeededByNew" cname="rc_resolver_info_needed_by_new" shared="true">
+        <return-type type="RCResolverInfo*" />
+        <parameters>
+          <parameter type="RCPackage*" name="package" />
+        </parameters>
+      </method>
+      <method name="ObsoletesNew" cname="rc_resolver_info_obsoletes_new" shared="true">
+        <return-type type="RCResolverInfo*" />
+        <parameters>
+          <parameter type="RCPackage*" name="package" />
+          <parameter type="RCPackage*" name="obsoletes" />
+        </parameters>
+      </method>
+      <method name="PackagesToString" cname="rc_resolver_info_packages_to_string">
+        <return-type type="char*" />
+        <parameters>
+          <parameter type="gboolean" name="names_only" />
+        </parameters>
+      </method>
+      <method name="ToString" cname="rc_resolver_info_to_string">
+        <return-type type="char*" />
+      </method>
+      <method name="Type" cname="rc_resolver_info_type" hidden="1">
+        <return-type type="RCResolverInfoType" />
+      </method>
+      <method name="TypeFromString" cname="rc_resolver_info_type_from_string" shared="true">
+        <return-type type="RCResolverInfoType" />
+        <parameters>
+          <parameter type="const-char*" name="arg1" />
+        </parameters>
+      </method>
+      <method name="TypeToString" cname="rc_resolver_info_type_to_string" shared="true">
+        <return-type type="const-char*" />
+        <parameters>
+          <parameter type="RCResolverInfoType" name="arg1" />
+        </parameters>
+      </method>
+    </struct>
+    <struct name="ResolverQueue" cname="RCResolverQueue">
+      <field cname="context" type="RCResolverContext*" />
+      <field cname="items" type="GSList*" />
+      <method name="AddExtraConflict" cname="rc_resolver_queue_add_extra_conflict">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageDep*" name="dep" />
+        </parameters>
+      </method>
+      <method name="AddExtraDependency" cname="rc_resolver_queue_add_extra_dependency">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageDep*" name="dep" />
+        </parameters>
+      </method>
+      <method name="AddItem" cname="rc_resolver_queue_add_item">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCQueueItem*" name="item" />
+        </parameters>
+      </method>
+      <method name="AddPackageToInstall" cname="rc_resolver_queue_add_package_to_install">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackage*" name="package" />
+        </parameters>
+      </method>
+      <method name="AddPackageToRemove" cname="rc_resolver_queue_add_package_to_remove">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackage*" name="package" />
+          <parameter type="gboolean" name="remove_only_mode" />
+        </parameters>
+      </method>
+      <method name="AddPackageToVerify" cname="rc_resolver_queue_add_package_to_verify">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackage*" name="package" />
+        </parameters>
+      </method>
+      <method name="ContainsOnlyBranches" cname="rc_resolver_queue_contains_only_branches">
+        <return-type type="gboolean" />
+      </method>
+      <method name="Free" cname="rc_resolver_queue_free">
+        <return-type type="void" />
+      </method>
+      <method name="IsEmpty" cname="rc_resolver_queue_is_empty">
+        <return-type type="gboolean" />
+      </method>
+      <method name="IsInvalid" cname="rc_resolver_queue_is_invalid">
+        <return-type type="gboolean" />
+      </method>
+      <constructor cname="rc_resolver_queue_new" />
+      <constructor cname="rc_resolver_queue_new_with_context">
+        <parameters>
+          <parameter type="RCResolverContext*" name="arg1" />
+        </parameters>
+      </constructor>
+      <method name="Process" cname="rc_resolver_queue_process">
+        <return-type type="void" />
+      </method>
+      <method name="ProcessOnce" cname="rc_resolver_queue_process_once">
+        <return-type type="gboolean" />
+      </method>
+      <method name="Spew" cname="rc_resolver_queue_spew">
+        <return-type type="void" />
+      </method>
+      <method name="SplitFirstBranch" cname="rc_resolver_queue_split_first_branch">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GSList**" name="new_queues" />
+          <parameter type="GSList**" name="deferred_queues" />
+        </parameters>
+      </method>
+    </struct>
+    <struct name="RollbackAction" cname="RCRollbackAction" opaque="true">
+      <method name="Free" cname="rc_rollback_action_free">
+        <return-type type="void" />
+      </method>
+      <method name="GetPackage" cname="rc_rollback_action_get_package">
+        <return-type type="RCPackage*" />
+      </method>
+      <method name="GetPackageUpdate" cname="rc_rollback_action_get_package_update">
+        <return-type type="RCPackageUpdate*" />
+      </method>
+      <method name="IsInstall" cname="rc_rollback_action_is_install">
+        <return-type type="gboolean" />
+      </method>
+      <method name="SlistFree" cname="rc_rollback_action_slist_free" shared="true">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCRollbackActionSList*" name="actions" />
+        </parameters>
+      </method>
+    </struct>
+    <alias name="RollbackActionSList" cname="RCRollbackActionSList" type="GSList" />
+    <struct name="RollbackInfo" cname="RCRollbackInfo" opaque="true">
+      <method name="Discard" cname="rc_rollback_info_discard">
+        <return-type type="void" />
+      </method>
+      <method name="Free" cname="rc_rollback_info_free">
+        <return-type type="void" />
+      </method>
+      <constructor cname="rc_rollback_info_new">
+        <parameters>
+          <parameter type="RCWorld*" name="world" />
+          <parameter type="RCPackageSList*" name="install_packages" />
+          <parameter type="RCPackageSList*" name="remove_packages" />
+          <parameter type="GError**" name="err" />
+        </parameters>
+      </constructor>
+      <method name="Save" cname="rc_rollback_info_save">
+        <return-type type="void" />
+      </method>
+    </struct>
+    <struct name="Verification" cname="RCVerification">
+      <field cname="type" type="RCVerificationType" />
+      <field cname="status" type="RCVerificationStatus" />
+      <field cname="info" type="gchar*" />
+      <method name="Free" cname="rc_verification_free">
+        <return-type type="void" />
+      </method>
+      <constructor cname="rc_verification_new" />
+      <method name="SlistFree" cname="rc_verification_slist_free" shared="true">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCVerificationSList*" name="verification_list" />
+        </parameters>
+      </method>
+      <method name="TypeToString" cname="rc_verification_type_to_string" shared="true">
+        <return-type type="const-char*" />
+        <parameters>
+          <parameter type="RCVerificationType" name="type" />
+        </parameters>
+      </method>
+    </struct>
+    <alias name="VerificationSList" cname="RCVerificationSList" type="GSList" />
+    <struct name="RpmProblemOlder" cname="RCrpmProblemOlder">
+      <field cname="pkgNEVR" type="char*" />
+      <field cname="altNEVR" type="char*" />
+      <field cname="key" type="fnpyKey" />
+      <field cname="type" type="rpmProblemType" />
+      <field cname="ignoreProblem" type="int" />
+      <field cname="str1" type="char*" />
+      <field cname="ulong1" type="unsigned long" />
+    </struct>
+    <struct name="Rc_FDIOT" cname="rc_FDIO_t">
+      <field cname="read" type="void*" />
+      <field cname="write" type="void*" />
+      <field cname="seek" type="void*" />
+      <field cname="close" type="void*" />
+      <field cname="_fdref" type="void*" />
+      <field cname="_fdderef" type="void*" />
+      <field cname="_fdnew" type="void*" />
+      <field cname="_fileno" type="void*" />
+      <field cname="_open" type="void*" />
+      <field cname="_fopen" type="void*" />
+      <field cname="_ffileno" type="void*" />
+      <field cname="_fflush" type="void*" />
+      <field cname="_mkdir" type="void*" />
+      <field cname="_chdir" type="void*" />
+      <field cname="_rmdir" type="void*" />
+      <field cname="_rename" type="void*" />
+      <field cname="_unlink" type="void*" />
+    </struct>
+    <struct name="RcDbiIndex" cname="rc_dbiIndex">
+      <field cname="db" type="void*" />
+      <field cname="indexname" type="const-char*" />
+    </struct>
+    <struct name="RcDbiIndexSet" cname="rc_dbiIndexSet">
+      <field cname="recs" type="rc_dbiIndexRecord*" />
+      <field cname="count" type="int" />
+    </struct>
+    <struct name="Sense" cname="sense" opaque="true" />
+    <struct name="RpmProblemSet" cname="rpmProblemSet" opaque="true" />
+    <struct name="RpmTransactionSet" cname="rpmTransactionSet" opaque="true" />
+    <struct name="Rpmps" cname="rpmps" opaque="true" />
+    <struct name="Rpmts" cname="rpmts" opaque="true" />
+    <class name="Global" cname="RCGlobal">
+      <method name="ArchFromString" cname="rc_arch_from_string" shared="true">
+        <return-type type="RCArch" />
+        <parameters>
+          <parameter type="const-char*" name="arch_name" />
+        </parameters>
+      </method>
+      <method name="ArchGetCompatList" cname="rc_arch_get_compat_list" shared="true">
+        <return-type type="GSList*" />
+        <parameters>
+          <parameter type="RCArch" name="arch" />
+        </parameters>
+      </method>
+      <method name="ArchGetCompatScore" cname="rc_arch_get_compat_score" shared="true">
+        <return-type type="gint" />
+        <parameters>
+          <parameter type="GSList*" name="compat_arch_list" />
+          <parameter type="RCArch" name="arch" />
+        </parameters>
+      </method>
+      <method name="ArchGetSystemArch" cname="rc_arch_get_system_arch" shared="true">
+        <return-type type="RCArch" />
+      </method>
+      <method name="ArchToString" cname="rc_arch_to_string" shared="true">
+        <return-type type="const-char*" />
+        <parameters>
+          <parameter type="RCArch" name="arch" />
+        </parameters>
+      </method>
+      <method name="DepStringToOrDepSlist" cname="rc_dep_string_to_or_dep_slist" shared="true">
+        <return-type type="RCPackageDepSList*" />
+        <parameters>
+          <parameter type="const-gchar*" name="munged" />
+        </parameters>
+      </method>
+      <method name="DistmanNew" cname="rc_distman_new" shared="true">
+        <return-type type="RCPackman*" />
+      </method>
+      <method name="ErrorQuark" cname="rc_error_quark" shared="true">
+        <return-type type="GQuark" />
+      </method>
+      <method name="FileExists" cname="rc_file_exists" shared="true">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="const-char*" name="filename" />
+        </parameters>
+      </method>
+      <method name="GetWorld" cname="rc_get_world" shared="true">
+        <return-type type="RCWorld*" />
+      </method>
+      <method name="GunzipMemory" cname="rc_gunzip_memory" shared="true">
+        <return-type type="gint" />
+        <parameters>
+          <parameter type="const-guint8*" name="input_buffer" />
+          <parameter type="guint32" name="input_length" />
+          <parameter type="GByteArray**" name="out_ba" />
+        </parameters>
+      </method>
+      <method name="GzipMemory" cname="rc_gzip_memory" shared="true">
+        <return-type type="gint" />
+        <parameters>
+          <parameter type="const-guint8*" name="input_buffer" />
+          <parameter type="guint32" name="input_length" />
+          <parameter type="GByteArray**" name="out_ba" />
+        </parameters>
+      </method>
+      <method name="MaybeMergePaths" cname="rc_maybe_merge_paths" shared="true">
+        <return-type type="gchar*" />
+        <parameters>
+          <parameter type="const-char*" name="parent_path" />
+          <parameter type="const-char*" name="child_path" />
+        </parameters>
+      </method>
+      <method name="ParseXmlFromBuffer" cname="rc_parse_xml_from_buffer" shared="true">
+        <return-type type="xmlDoc*" />
+        <parameters>
+          <parameter type="const-guint8*" name="input_buffer" />
+          <parameter type="guint32" name="input_length" />
+        </parameters>
+      </method>
+      <method name="ParseXmlFromFile" cname="rc_parse_xml_from_file" shared="true">
+        <return-type type="xmlDoc*" />
+        <parameters>
+          <parameter type="const-char*" name="filename" />
+        </parameters>
+      </method>
+      <method name="SetWorld" cname="rc_set_world" shared="true">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCWorld*" name="world" />
+        </parameters>
+      </method>
+      <method name="StringToGuint32WithDefault" cname="rc_string_to_guint32_with_default" shared="true">
+        <return-type type="guint32" />
+        <parameters>
+          <parameter type="const-char*" name="n" />
+          <parameter type="guint32" name="def" />
+        </parameters>
+      </method>
+      <method name="StringToPackageImportance" cname="rc_string_to_package_importance" shared="true">
+        <return-type type="RCPackageImportance" />
+        <parameters>
+          <parameter type="const-gchar*" name="importance" />
+        </parameters>
+      </method>
+      <method name="StringToPackageSection" cname="rc_string_to_package_section" shared="true">
+        <return-type type="RCPackageSection" />
+        <parameters>
+          <parameter type="const-gchar*" name="section" />
+        </parameters>
+      </method>
+      <method name="UncompressMemory" cname="rc_uncompress_memory" shared="true">
+        <return-type type="gint" />
+        <parameters>
+          <parameter type="const-guint8*" name="input_buffer" />
+          <parameter type="guint32" name="input_length" />
+          <parameter type="GByteArray**" name="out_ba" />
+        </parameters>
+      </method>
+      <method name="UrlIsAbsolute" cname="rc_url_is_absolute" shared="true">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="const-char*" name="url" />
+        </parameters>
+      </method>
+    </class>
+    <class name="Debug" cname="RcDebug_">
+      <method name="AddHandler" cname="rc_debug_add_handler" shared="true">
+        <return-type type="guint" />
+        <parameters>
+          <parameter type="RCDebugFn" name="fn" />
+          <parameter type="RCDebugLevel" name="level" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="Full" cname="rc_debug_full" shared="true">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCDebugLevel" name="level" />
+          <parameter type="const-char*" name="format" />
+          <parameter ellipsis="true" />
+        </parameters>
+      </method>
+      <method name="RemoveHandler" cname="rc_debug_remove_handler" shared="true">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="guint" name="id" />
+        </parameters>
+      </method>
+    </class>
+    <class name="Extract" cname="RcExtract_">
+      <method name="ChannelsFromHelixBuffer" cname="rc_extract_channels_from_helix_buffer" shared="true">
+        <return-type type="gint" />
+        <parameters>
+          <parameter type="const-guint8*" name="data" />
+          <parameter type="int" name="len" />
+          <parameter type="RCChannelFn" name="callback" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="ChannelsFromHelixFile" cname="rc_extract_channels_from_helix_file" shared="true">
+        <return-type type="gint" />
+        <parameters>
+          <parameter type="const-char*" name="filename" />
+          <parameter type="RCChannelFn" name="callback" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="PackagesFromAptrpmBuffer" cname="rc_extract_packages_from_aptrpm_buffer" shared="true">
+        <return-type type="gint" />
+        <parameters>
+          <parameter type="const-guint8*" name="data" />
+          <parameter type="int" name="len" />
+          <parameter type="RCPackman*" name="packman" />
+          <parameter type="RCChannel*" name="channel" />
+          <parameter type="RCPackageFn" name="callback" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="PackagesFromAptrpmFile" cname="rc_extract_packages_from_aptrpm_file" shared="true">
+        <return-type type="gint" />
+        <parameters>
+          <parameter type="const-char*" name="filename" />
+          <parameter type="RCPackman*" name="packman" />
+          <parameter type="RCChannel*" name="channel" />
+          <parameter type="RCPackageFn" name="callback" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="PackagesFromDebianBuffer" cname="rc_extract_packages_from_debian_buffer" shared="true">
+        <return-type type="gint" />
+        <parameters>
+          <parameter type="const-guint8*" name="data" />
+          <parameter type="int" name="len" />
+          <parameter type="RCChannel*" name="channel" />
+          <parameter type="RCPackageFn" name="callback" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="PackagesFromDebianFile" cname="rc_extract_packages_from_debian_file" shared="true">
+        <return-type type="gint" />
+        <parameters>
+          <parameter type="const-char*" name="filename" />
+          <parameter type="RCChannel*" name="channel" />
+          <parameter type="RCPackageFn" name="callback" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="PackagesFromDirectory" cname="rc_extract_packages_from_directory" shared="true">
+        <return-type type="gint" />
+        <parameters>
+          <parameter type="const-char*" name="path" />
+          <parameter type="RCChannel*" name="channel" />
+          <parameter type="RCPackman*" name="packman" />
+          <parameter type="gboolean" name="recursive" />
+          <parameter type="RCPackageFn" name="callback" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="PackagesFromHelixBuffer" cname="rc_extract_packages_from_helix_buffer" shared="true">
+        <return-type type="gint" />
+        <parameters>
+          <parameter type="const-guint8" array="true" name="data" />
+          <parameter type="int" name="len" />
+          <parameter type="RCChannel*" name="channel" />
+          <parameter type="RCPackageFn" name="callback" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="PackagesFromHelixFile" cname="rc_extract_packages_from_helix_file" shared="true">
+        <return-type type="gint" />
+        <parameters>
+          <parameter type="const-char*" name="filename" />
+          <parameter type="RCChannel*" name="channel" />
+          <parameter type="RCPackageFn" name="callback" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="PackagesFromUndumpBuffer" cname="rc_extract_packages_from_undump_buffer" shared="true">
+        <return-type type="gint" />
+        <parameters>
+          <parameter type="const-guint8*" name="data" />
+          <parameter type="int" name="len" />
+          <parameter type="RCChannelAndSubdFn" name="channel_callback" />
+          <parameter type="RCPackageFn" name="package_callback" />
+          <parameter type="RCPackageMatchFn" name="lock_callback" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="PackagesFromUndumpFile" cname="rc_extract_packages_from_undump_file" shared="true">
+        <return-type type="gint" />
+        <parameters>
+          <parameter type="const-char*" name="filename" />
+          <parameter type="RCChannelAndSubdFn" name="channel_callback" />
+          <parameter type="RCPackageFn" name="package_callback" />
+          <parameter type="RCPackageMatchFn" name="lock_callback" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="PackagesFromXmlNode" cname="rc_extract_packages_from_xml_node" shared="true">
+        <return-type type="gint" />
+        <parameters>
+          <parameter type="xmlNode*" name="node" />
+          <parameter type="RCChannel*" name="channel" />
+          <parameter type="RCPackageFn" name="callback" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+    </class>
+    <class name="Gpg" cname="RcGpg_">
+      <method name="Import" cname="rc_gpg_import" shared="true">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="const-gchar*" name="file" />
+          <parameter type="GError**" name="err" />
+        </parameters>
+      </method>
+      <method name="List" cname="rc_gpg_list" shared="true">
+        <return-type type="RCGPGSList*" />
+        <parameters>
+          <parameter type="GError**" name="err" />
+        </parameters>
+      </method>
+      <method name="Remove" cname="rc_gpg_remove" shared="true">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="const-gchar*" name="key" />
+          <parameter type="GError**" name="err" />
+        </parameters>
+      </method>
+      <method name="SetKeyring" cname="rc_gpg_set_keyring" shared="true">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-gchar*" name="t_keyring" />
+        </parameters>
+      </method>
+      <method name="SlistFree" cname="rc_gpg_slist_free" shared="true">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCGPGSList*" name="list" />
+        </parameters>
+      </method>
+      <method name="Verify" cname="rc_gpg_verify" shared="true">
+        <return-type type="RCVerification*" />
+        <parameters>
+          <parameter type="const-gchar*" name="file" />
+          <parameter type="const-gchar*" name="sig" />
+          <parameter type="GError**" name="err" />
+        </parameters>
+      </method>
+    </class>
+    <class name="Hash" cname="RcHash_">
+      <method name="KeysToList" cname="rc_hash_keys_to_list" shared="true">
+        <return-type type="GSList*" />
+        <parameters>
+          <parameter type="GHashTable*" name="hash_table" />
+        </parameters>
+      </method>
+      <method name="ValuesToList" cname="rc_hash_values_to_list" shared="true">
+        <return-type type="GSList*" />
+        <parameters>
+          <parameter type="GHashTable*" name="hash_table" />
+        </parameters>
+      </method>
+    </class>
+    <class name="Memory" cname="RcMemory_">
+      <method name="LooksBzip2ed" cname="rc_memory_looks_bzip2ed" shared="true">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="const-guint8*" name="buffer" />
+        </parameters>
+      </method>
+      <method name="LooksCompressed" cname="rc_memory_looks_compressed" shared="true">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="const-guint8*" name="buffer" />
+          <parameter type="guint32" name="size" />
+        </parameters>
+      </method>
+      <method name="LooksGzipped" cname="rc_memory_looks_gzipped" shared="true">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="const-guint8*" name="buffer" />
+        </parameters>
+      </method>
+    </class>
+    <class name="Rollback" cname="RcRollback_">
+      <method name="GetActions" cname="rc_rollback_get_actions" shared="true">
+        <return-type type="RCRollbackActionSList*" />
+        <parameters>
+          <parameter type="time_t" name="when" />
+        </parameters>
+      </method>
+      <method name="RestoreFiles" cname="rc_rollback_restore_files" shared="true">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCRollbackActionSList*" name="actions" />
+        </parameters>
+      </method>
+    </class>
+    <class name="Str" cname="RcStr_">
+      <method name="CaseEqual" cname="rc_str_case_equal" shared="true">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="gconstpointer" name="v1" />
+          <parameter type="gconstpointer" name="v2" />
+        </parameters>
+      </method>
+      <method name="CaseHash" cname="rc_str_case_hash" shared="true">
+        <return-type type="guint" />
+        <parameters>
+          <parameter type="gconstpointer" name="key" />
+        </parameters>
+      </method>
+    </class>
+    <class name="Subscription" cname="RcSubscription_">
+      <method name="GetStatus" cname="rc_subscription_get_status" shared="true">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCChannel*" name="channel" />
+        </parameters>
+      </method>
+      <method name="SetStatus" cname="rc_subscription_set_status" shared="true">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCChannel*" name="channel" />
+          <parameter type="gboolean" name="channel_is_subscribed" />
+        </parameters>
+      </method>
+    </class>
+    <class name="Xml" cname="RcXml_">
+      <method name="NodeToPackage" cname="rc_xml_node_to_package" shared="true">
+        <return-type type="RCPackage*" />
+        <parameters>
+          <parameter type="const-xmlNode*" name="node" />
+          <parameter type="const-RCChannel*" name="channel" />
+        </parameters>
+      </method>
+      <method name="NodeToPackageDep" cname="rc_xml_node_to_package_dep" shared="true">
+        <return-type type="RCPackageDep*" />
+        <parameters>
+          <parameter type="const-xmlNode*" name="node" />
+        </parameters>
+      </method>
+      <method name="NodeToPackageUpdate" cname="rc_xml_node_to_package_update" shared="true">
+        <return-type type="RCPackageUpdate*" />
+        <parameters>
+          <parameter type="const-xmlNode*" name="node" />
+          <parameter type="const-RCPackage*" name="package" />
+        </parameters>
+      </method>
+    </class>
+  </namespace>
+</api>

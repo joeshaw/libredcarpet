@@ -1,0 +1,4 @@
+public static void Init ()
+{
+    GtkSharp.LibredcarpetSharp.ObjectManager.Initialize ();
+}
