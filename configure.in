@@ -55,8 +55,8 @@ fi
 dnl not everyone has mkdtemp
 AC_CHECK_FUNCS(mkdtemp)
 
-if grep -qs "Red Hat" /etc/redhat-release and \
-   `uname -m` = "x86_64"; then
+if grep -qs "Red Hat" /etc/redhat-release && \
+   [ x`uname -m` = "xx86_64" ]; then
   AC_DEFINE_UNQUOTED(REDHAT_OPTERON, 1,
                      [Enable some hacks for Red Hat on Opteron])
 fi
