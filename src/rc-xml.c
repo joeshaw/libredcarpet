@@ -340,6 +340,8 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
             ctx->current_package->spec.has_epoch = update->spec.has_epoch;
             ctx->current_package->spec.version = g_strdup (update->spec.version);
             ctx->current_package->spec.release = g_strdup (update->spec.release);
+            ctx->current_package->file_size = update->package_size;
+            ctx->current_package->installed_size = update->installed_size;
         }
         else {
             RCPackageDepSList *iter;
