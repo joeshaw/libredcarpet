@@ -9,16 +9,19 @@
         <exclude>../../src/rpm-signature.h</exclude>
         <exclude>../../src/rpm-stubs.h</exclude>
         <exclude>../../src/rpm-ugid.h</exclude>
-   	   <exclude>../../src/rc-rpmman.h</exclude>
-	   <exclude>../../src/rc-rpmman-types.h</exclude>
-	   <exclude>../../src/rc-line-buf.h</exclude>
-	   <exclude>../../src/rc-line-buf-private.h</exclude>
-	   <exclude>../../src/rc-marshal.h</exclude>
-	   <exclude>../../src/rc-md5.h</exclude>
-	   <exclude>../../src/rc-md5-private.h</exclude>
-   	   <exclude>../../src/rc-xml.h</exclude>
-	   <exclude>../../src/xml-util.h</exclude>
-	   <exclude>../../src/rc-debug.h</exclude>
+        <exclude>../../src/rc-rpmman.h</exclude>
+        <exclude>../../src/rc-rpmman-types.h</exclude>
+        <exclude>../../src/rc-debman.h</exclude>
+        <exclude>../../src/rc-debman-general.h</exclude>
+        <exclude>../../src/rc-debman-private.h</exclude>
+        <exclude>../../src/rc-line-buf.h</exclude>
+        <exclude>../../src/rc-line-buf-private.h</exclude>
+        <exclude>../../src/rc-marshal.h</exclude>
+        <exclude>../../src/rc-md5.h</exclude>
+        <exclude>../../src/rc-md5-private.h</exclude>
+        <exclude>../../src/rc-xml.h</exclude>
+        <exclude>../../src/xml-util.h</exclude>
+        <exclude>../../src/rc-debug.h</exclude>
       </namespace>
     </library>
   </api>

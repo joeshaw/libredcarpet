@@ -5,11 +5,11 @@
     {
         writer.WriteStartElement ("update");
 
-        if (this.Spec.HasEpoch)
-            writer.WriteElementString ("epoch", System.Xml.XmlConvert.ToString (this.Spec.Epoch));
+        if (this.HasEpoch)
+            writer.WriteElementString ("epoch", System.Xml.XmlConvert.ToString (this.Epoch));
 
-        writer.WriteElementString ("version", this.Spec.Version);
-        writer.WriteElementString ("release", this.Spec.Release);
+        writer.WriteElementString ("version", this.Version);
+        writer.WriteElementString ("release", this.Release);
 
         if (this.PackageUrl != null)
             writer.WriteElementString ("filename", System.IO.Path.GetFileName (this.PackageUrl));

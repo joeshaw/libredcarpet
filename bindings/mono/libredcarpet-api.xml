@@ -371,35 +371,6 @@
         <parameter type="int" name="flags" />
       </parameters>
     </callback>
-    <object name="Debman" cname="RCDebman" parent="RCPackman">
-      <field cname="priv" type="RCDebmanPrivate*" />
-      <method name="FillDepends" cname="rc_debman_fill_depends" shared="true">
-        <return-type type="RCPackageDepSList*" />
-        <parameters>
-          <parameter type="gchar*" name="input" />
-          <parameter type="gboolean" name="pre" />
-        </parameters>
-      </method>
-      <method name="GetType" cname="rc_debman_get_type" shared="true">
-        <return-type type="GType" />
-      </method>
-      <constructor cname="rc_debman_new" />
-      <method name="ParseVersion" cname="rc_debman_parse_version" shared="true">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-gchar*" name="input" />
-          <parameter type="guint32*" name="epoch" />
-          <parameter type="gchar**" name="version" />
-          <parameter type="gchar**" name="release" />
-        </parameters>
-      </method>
-      <method name="SectionToPackageSection" cname="rc_debman_section_to_package_section" shared="true">
-        <return-type type="RCPackageSection" />
-        <parameters>
-          <parameter type="const-gchar*" name="section" />
-        </parameters>
-      </method>
-    </object>
     <object name="Packman" cname="RCPackman" parent="GObject">
       <field cname="priv" type="RCPackmanPrivate*" />
       <signal name="TransactStart" cname="transact_start" when="LAST">
@@ -1701,16 +1672,7 @@
         </parameters>
       </method>
     </struct>
-    <struct name="GPGKey" cname="RCGPGKey">
-      <field cname="key_id" type="gchar*" />
-      <field cname="user_id" type="gchar*" />
-      <field cname="date" type="gchar*" />
-      <method name="Free" cname="rc_gpg_key_free">
-        <return-type type="void" />
-      </method>
-    </struct>
-    <alias name="GPGSList" cname="RCGPGSList" type="GSList" />
-    <boxed name="Package" cname="RCPackage" opaque="1">
+    <boxed name="Package" cname="RCPackage" opaque="1" parent="RCPackageSpec">
       <field cname="spec" type="RCPackageSpec" />
       <field cname="refs" type="gint" />
       <field cname="arch" type="RCArch" />
@@ -1757,11 +1719,11 @@
       <method name="GetChannel" cname="rc_package_get_channel">
         <return-type type="RCChannel*" />
       </method>
-      <method name="GetChildren" cname="rc_package_get_children">
-        <return-type type="RCPackageDepArray*" />
+      <method name="GetChildren" cname="rc_package_get_children" hidden="1">
+        <return-type type="RCPackageDepSList*" />
       </method>
-      <method name="GetConflicts" cname="rc_package_get_conflicts">
-        <return-type type="RCPackageDepArray*" />
+      <method name="GetConflicts" cname="rc_package_get_conflicts" hidden="1">
+        <return-type type="RCPackageDepSList*" />
       </method>
       <method name="GetDescription" cname="rc_package_get_description">
         <return-type type="const-gchar*" />
@@ -1778,20 +1740,20 @@
       <method name="GetLatestUpdate" cname="rc_package_get_latest_update">
         <return-type type="RCPackageUpdate*" />
       </method>
-      <method name="GetName" cname="rc_package_get_name">
+      <method name="GetName" cname="rc_package_get_name" hidden="1">
         <return-type type="const-char*" />
       </method>
-      <method name="GetObsoletes" cname="rc_package_get_obsoletes">
-        <return-type type="RCPackageDepArray*" />
+      <method name="GetObsoletes" cname="rc_package_get_obsoletes" hidden="1">
+        <return-type type="RCPackageDepSList*" />
       </method>
-      <method name="GetProvides" cname="rc_package_get_provides">
-        <return-type type="RCPackageDepArray*" />
+      <method name="GetProvides" cname="rc_package_get_provides" hidden="1">
+        <return-type type="RCPackageDepSList*" />
       </method>
-      <method name="GetRecommends" cname="rc_package_get_recommends">
-        <return-type type="RCPackageDepArray*" />
+      <method name="GetRecommends" cname="rc_package_get_recommends" hidden="1">
+        <return-type type="RCPackageDepSList*" />
       </method>
-      <method name="GetRequires" cname="rc_package_get_requires">
-        <return-type type="RCPackageDepArray*" />
+      <method name="GetRequires" cname="rc_package_get_requires" hidden="1">
+        <return-type type="RCPackageDepSList*" />
       </method>
       <method name="GetSection" cname="rc_package_get_section">
         <return-type type="RCPackageSection" />
@@ -1799,11 +1761,11 @@
       <method name="GetSignatureFilename" cname="rc_package_get_signature_filename">
         <return-type type="const-gchar*" />
       </method>
-      <method name="GetSpec" cname="rc_package_get_spec">
+      <method name="GetSpec" cname="rc_package_get_spec" hidden="1">
         <return-type type="RCPackageSpec*" />
       </method>
-      <method name="GetSuggests" cname="rc_package_get_suggests">
-        <return-type type="RCPackageDepArray*" />
+      <method name="GetSuggests" cname="rc_package_get_suggests" hidden="1">
+        <return-type type="RCPackageDepSList*" />
       </method>
       <method name="GetSummary" cname="rc_package_get_summary">
         <return-type type="const-gchar*" />
@@ -1867,10 +1829,40 @@
           <parameter type="RCPackageSection" name="section" />
         </parameters>
       </method>
+      <method name="SetArch" cname="rc_package_set_arch">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCArch" name="value" />
+        </parameters>
+      </method>
       <method name="SetChannel" cname="rc_package_set_channel">
         <return-type type="void" />
         <parameters>
           <parameter type="RCChannel*" name="channel" />
+        </parameters>
+      </method>
+      <method name="SetChildren" cname="rc_package_set_children" hidden="1">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageDepSList*" name="value" />
+        </parameters>
+      </method>
+      <method name="SetConflicts" cname="rc_package_set_conflicts" hidden="1">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageDepSList*" name="value" />
+        </parameters>
+      </method>
+      <method name="SetDescription" cname="rc_package_set_description">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-gchar*" name="value" />
+        </parameters>
+      </method>
+      <method name="SetFileSize" cname="rc_package_set_file_size">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="guint32" name="value" />
         </parameters>
       </method>
       <method name="SetFilename" cname="rc_package_set_filename">
@@ -1879,10 +1871,58 @@
           <parameter type="const-char*" name="filename" />
         </parameters>
       </method>
+      <method name="SetInstalledSize" cname="rc_package_set_installed_size">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="guint32" name="value" />
+        </parameters>
+      </method>
+      <method name="SetObsoletes" cname="rc_package_set_obsoletes" hidden="1">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageDepSList*" name="value" />
+        </parameters>
+      </method>
+      <method name="SetProvides" cname="rc_package_set_provides" hidden="1">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageDepSList*" name="value" />
+        </parameters>
+      </method>
+      <method name="SetRecommends" cname="rc_package_set_recommends" hidden="1">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageDepSList*" name="value" />
+        </parameters>
+      </method>
+      <method name="SetRequires" cname="rc_package_set_requires" hidden="1">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageDepSList*" name="value" />
+        </parameters>
+      </method>
+      <method name="SetSection" cname="rc_package_set_section">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageSection" name="value" />
+        </parameters>
+      </method>
       <method name="SetSignatureFilename" cname="rc_package_set_signature_filename">
         <return-type type="void" />
         <parameters>
           <parameter type="const-char*" name="filename" />
+        </parameters>
+      </method>
+      <method name="SetSuggests" cname="rc_package_set_suggests" hidden="1">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageDepSList*" name="value" />
+        </parameters>
+      </method>
+      <method name="SetSummary" cname="rc_package_set_summary">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-gchar*" name="value" />
         </parameters>
       </method>
       <method name="SlistRef" cname="rc_package_slist_ref" shared="true">
@@ -1928,14 +1968,14 @@
         <return-type type="void" />
       </method>
     </boxed>
-    <struct name="PackageDep" cname="RCPackageDep" opaque="true">
+    <struct name="PackageDep" cname="RCPackageDep" opaque="1" parent="RCPackageSpec">
       <method name="GetChannel" cname="rc_package_dep_get_channel">
         <return-type type="RCChannel*" />
       </method>
       <method name="GetRelation" cname="rc_package_dep_get_relation">
         <return-type type="RCPackageRelation" />
       </method>
-      <method name="GetSpec" cname="rc_package_dep_get_spec">
+      <method name="GetSpec" cname="rc_package_dep_get_spec" hidden="1">
         <return-type type="RCPackageSpec*" />
       </method>
       <method name="IsOr" cname="rc_package_dep_is_or">
@@ -2017,11 +2057,8 @@
           <parameter type="RCPackageDepSList**" name="list" />
         </parameters>
       </method>
-      <method name="Nth" cname="rc_package_dep_array_nth">
-        <return-type type="RCPackageDep*" />
-        <parameters>
-          <parameter type="guint" name="n" />
-        </parameters>
+      <method name="ToSlist" cname="rc_package_dep_array_to_slist">
+        <return-type type="RCPackageDepSList*" />
       </method>
     </struct>
     <alias name="PackageDepSList" cname="RCPackageDepSList" type="GSList" />
@@ -2123,7 +2160,7 @@
       </method>
     </struct>
     <alias name="PackageSList" cname="RCPackageSList" type="GSList" />
-    <struct name="PackageSpec" cname="RCPackageSpec">
+    <struct name="PackageSpec" cname="RCPackageSpec" opaque="1">
       <field cname="nameq" type="GQuark" />
       <field cname="version" type="gchar*" />
       <field cname="release" type="gchar*" />
@@ -2152,8 +2189,20 @@
       <method name="FreeMembers" cname="rc_package_spec_free_members">
         <return-type type="void" />
       </method>
+      <method name="GetEpoch" cname="rc_package_spec_get_epoch">
+        <return-type type="gint" />
+      </method>
       <method name="GetName" cname="rc_package_spec_get_name">
         <return-type type="const-char*" />
+      </method>
+      <method name="GetRelease" cname="rc_package_spec_get_release">
+        <return-type type="const-gchar*" />
+      </method>
+      <method name="GetVersion" cname="rc_package_spec_get_version">
+        <return-type type="const-gchar*" />
+      </method>
+      <method name="HasEpoch" cname="rc_package_spec_has_epoch">
+        <return-type type="gboolean" />
       </method>
       <method name="Hash" cname="rc_package_spec_hash" shared="true">
         <return-type type="guint" />
@@ -2178,6 +2227,30 @@
           <parameter type="gconstpointer" name="b" />
         </parameters>
       </method>
+      <method name="SetEpoch" cname="rc_package_spec_set_epoch">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="gint" name="value" />
+        </parameters>
+      </method>
+      <method name="SetName" cname="rc_package_spec_set_name">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="value" />
+        </parameters>
+      </method>
+      <method name="SetRelease" cname="rc_package_spec_set_release">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-gchar*" name="value" />
+        </parameters>
+      </method>
+      <method name="SetVersion" cname="rc_package_spec_set_version">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-gchar*" name="value" />
+        </parameters>
+      </method>
       <method name="SlistFindName" cname="rc_package_spec_slist_find_name" shared="true">
         <return-type type="gpointer" />
         <parameters>
@@ -2198,7 +2271,7 @@
         <return-type type="const-gchar*" />
       </method>
     </struct>
-    <struct name="PackageUpdate" cname="RCPackageUpdate" opaque="1">
+    <struct name="PackageUpdate" cname="RCPackageUpdate" opaque="1" parent="RCPackageSpec">
       <field cname="spec" type="RCPackageSpec" />
       <field cname="package" type="const-RCPackage*" />
       <field cname="package_url" type="gchar*" />
@@ -2250,10 +2323,70 @@
       <method name="GetSignatureUrl" cname="rc_package_update_get_signature_url">
         <return-type type="const-gchar*" />
       </method>
-      <method name="GetSpec" cname="rc_package_update_get_spec">
+      <method name="GetSpec" cname="rc_package_update_get_spec" hidden="1">
         <return-type type="RCPackageSpec*" />
       </method>
       <constructor cname="rc_package_update_new" />
+      <method name="SetDescription" cname="rc_package_update_set_description">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-gchar*" name="value" />
+        </parameters>
+      </method>
+      <method name="SetHid" cname="rc_package_update_set_hid">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="guint" name="value" />
+        </parameters>
+      </method>
+      <method name="SetImportance" cname="rc_package_update_set_importance">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCPackageImportance" name="value" />
+        </parameters>
+      </method>
+      <method name="SetInstalledSize" cname="rc_package_update_set_installed_size">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="guint32" name="value" />
+        </parameters>
+      </method>
+      <method name="SetLicense" cname="rc_package_update_set_license">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-gchar*" name="value" />
+        </parameters>
+      </method>
+      <method name="SetMd5sum" cname="rc_package_update_set_md5sum">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-gchar*" name="value" />
+        </parameters>
+      </method>
+      <method name="SetPackageSize" cname="rc_package_update_set_package_size">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="guint32" name="value" />
+        </parameters>
+      </method>
+      <method name="SetPackageUrl" cname="rc_package_update_set_package_url">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-gchar*" name="value" />
+        </parameters>
+      </method>
+      <method name="SetSignatureSize" cname="rc_package_update_set_signature_size">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="guint32" name="value" />
+        </parameters>
+      </method>
+      <method name="SetSignatureUrl" cname="rc_package_update_set_signature_url">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-gchar*" name="value" />
+        </parameters>
+      </method>
       <method name="SlistCopy" cname="rc_package_update_slist_copy" shared="true">
         <return-type type="RCPackageUpdateSList*" />
         <parameters>
@@ -3424,48 +3557,6 @@
           <parameter type="int" name="len" />
           <parameter type="RCPackman*" name="packman" />
           <parameter type="char*" name="url" />
-        </parameters>
-      </method>
-    </class>
-    <class name="Gpg" cname="RcGpg_">
-      <method name="Import" cname="rc_gpg_import" shared="true">
-        <return-type type="gboolean" />
-        <parameters>
-          <parameter type="const-gchar*" name="file" />
-          <parameter type="GError**" name="err" />
-        </parameters>
-      </method>
-      <method name="List" cname="rc_gpg_list" shared="true">
-        <return-type type="RCGPGSList*" />
-        <parameters>
-          <parameter type="GError**" name="err" />
-        </parameters>
-      </method>
-      <method name="Remove" cname="rc_gpg_remove" shared="true">
-        <return-type type="gboolean" />
-        <parameters>
-          <parameter type="const-gchar*" name="key" />
-          <parameter type="GError**" name="err" />
-        </parameters>
-      </method>
-      <method name="SetKeyring" cname="rc_gpg_set_keyring" shared="true">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-gchar*" name="t_keyring" />
-        </parameters>
-      </method>
-      <method name="SlistFree" cname="rc_gpg_slist_free" shared="true">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="RCGPGSList*" name="list" />
-        </parameters>
-      </method>
-      <method name="Verify" cname="rc_gpg_verify" shared="true">
-        <return-type type="RCVerification*" />
-        <parameters>
-          <parameter type="const-gchar*" name="file" />
-          <parameter type="const-gchar*" name="sig" />
-          <parameter type="GError**" name="err" />
         </parameters>
       </method>
     </class>

@@ -1,3 +1,27 @@
+2004-10-29  Tambet Ingo  <tambet@ximian.com>
+
+	* PackageDepArray.custom: Remove.
+
+	* libredcarpet-api.xml: Regenerated.
+
+	* RC.metadata: Make PackageSpec Opaque type. Inherit Package,
+	PackageUpdate, and PackageDep from PackageSpec.
+	Hide Package dependency getters/setters, these are implemented
+	manually.
+
+	* PackageUpdate.custom: 
+	* PackageSpec.custom: Switch to new API.
+
+	* PackageDep.custom: Add helper functions to convert between
+	PackageDep[] <-> GLib.SList. Switch to new API.
+
+	* Package.custom: Implement all PackageDep[] getters/setters
+	manually. Convert to new API.
+
+2004-10-28  Tambet Ingo  <tambet@ximian.com>
+
+	* libredcarpet-sources.xml: Exclude rc-debman*.
+
 2004-10-14  James Willcox  <james@ximian.com>
 
 	* Extract.custom: synchronize Extract.PackagesFromAptrpmFile

@@ -75,7 +75,6 @@ EXTRA_DIST =				\
 	PackageSpec.custom		\
 	WorldMulti.custom		\
 	ServiceMountException.cs	\
-	PackageDepArray.custom		\
 	PackageMatch.custom		\
 	Package.custom			\
 	PackageUpdate.custom		\

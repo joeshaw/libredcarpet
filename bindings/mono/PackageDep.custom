@@ -1,25 +1,49 @@
 /* -*- Mode: csharp; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 
 //namespace {
+    internal static PackageDep[] FromSListPtr (IntPtr ptr) {
+        if (ptr == IntPtr.Zero)
+            return new PackageDep[0];
+
+        GLib.SList slist = new GLib.SList (ptr, typeof (PackageDep));
+        PackageDep[] ret = new PackageDep[slist.Count];
+
+        int i = 0;
+        foreach (PackageDep d in slist)
+            ret[i++] = d.Ref ();
+
+        PackageDep.SlistFree (slist);
+
+        return ret;
+    }
+
+    internal static GLib.SList ToSList (PackageDep[] deps) {
+        GLib.SList ret = new GLib.SList (typeof (PackageDep));
+        foreach (PackageDep d in deps)
+            ret.Append (d.Handle);
+
+        return ret;
+    }
+
     public void ToXml (System.Xml.XmlTextWriter writer)
     {
         // FIXME: if (this.IsOr) rc_package_dep_or_slist_to_xml_node ()
 
         writer.WriteStartElement ("dep");
 
-        writer.WriteAttributeString ("name", this.Spec.Name);
+        writer.WriteAttributeString ("name", this.Name);
 
         if (this.Relation != PackageRelation.Any) {
             writer.WriteAttributeString ("op", Package.RelationToString (this.Relation, 0));
 
-            if (this.Spec.HasEpoch)
-                writer.WriteAttributeString ("epoch", System.Xml.XmlConvert.ToString (this.Spec.Epoch));
+            if (this.HasEpoch)
+                writer.WriteAttributeString ("epoch", System.Xml.XmlConvert.ToString (this.Epoch));
 
-            if (this.Spec.Version != null)
-                writer.WriteAttributeString ("version", this.Spec.Version);
+            if (this.Version != null)
+                writer.WriteAttributeString ("version", this.Version);
 
-            if (this.Spec.Release != null)
-                writer.WriteAttributeString ("release", this.Spec.Release);
+            if (this.Release != null)
+                writer.WriteAttributeString ("release", this.Release);
         }
 
         writer.WriteEndElement ();

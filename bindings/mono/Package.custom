@@ -1,17 +1,136 @@
-/* -*- Mode: csharp; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-
 //namespace {
+
+    [DllImport("libredcarpet")]
+    static extern IntPtr rc_package_get_children(IntPtr raw);
+
+    [DllImport("libredcarpet")]
+    static extern void rc_package_set_children(IntPtr raw, IntPtr value);
+
+    public PackageDep[] Children { 
+        get {
+            IntPtr raw_ret = rc_package_get_children(Handle);
+            return PackageDep.FromSListPtr (raw_ret);
+        }
+        set {
+            GLib.SList slist = PackageDep.ToSList (value);
+            rc_package_set_children(Handle, slist.Handle);
+        }
+    }
+
+    [DllImport("libredcarpet")]
+    static extern IntPtr rc_package_get_conflicts(IntPtr raw);
+
+    [DllImport("libredcarpet")]
+    static extern void rc_package_set_conflicts(IntPtr raw, IntPtr value);
+
+    public PackageDep[] Conflicts { 
+        get {
+            IntPtr raw_ret = rc_package_get_conflicts(Handle);
+            return PackageDep.FromSListPtr (raw_ret);
+        }
+        set {
+            GLib.SList slist = PackageDep.ToSList (value);
+            rc_package_set_conflicts(Handle, slist.Handle);
+        }
+    }
+
+    [DllImport("libredcarpet")]
+    static extern IntPtr rc_package_get_obsoletes(IntPtr raw);
+
+    [DllImport("libredcarpet")]
+    static extern void rc_package_set_obsoletes(IntPtr raw, IntPtr value);
+
+    public PackageDep[] Obsoletes { 
+        get {
+            IntPtr raw_ret = rc_package_get_obsoletes(Handle);
+            return PackageDep.FromSListPtr (raw_ret);
+        }
+        set {
+            GLib.SList slist = PackageDep.ToSList (value);
+            rc_package_set_obsoletes(Handle, slist.Handle);
+        }
+    }
+
+    [DllImport("libredcarpet")]
+    static extern IntPtr rc_package_get_provides(IntPtr raw);
+
+    [DllImport("libredcarpet")]
+    static extern void rc_package_set_provides(IntPtr raw, IntPtr value);
+
+    public PackageDep[] Provides { 
+        get {
+            IntPtr raw_ret = rc_package_get_provides(Handle);
+            return PackageDep.FromSListPtr (raw_ret);
+        }
+        set {
+            GLib.SList slist = PackageDep.ToSList (value);
+            rc_package_set_provides(Handle, slist.Handle);
+        }
+    }
+    
+    [DllImport("libredcarpet")]
+    static extern IntPtr rc_package_get_recommends(IntPtr raw);
+
+    [DllImport("libredcarpet")]
+    static extern void rc_package_set_recommends(IntPtr raw, IntPtr value);
+
+    public PackageDep[] Recommends { 
+        get {
+            IntPtr raw_ret = rc_package_get_recommends(Handle);
+            return PackageDep.FromSListPtr (raw_ret);
+        }
+        set {
+            GLib.SList slist = PackageDep.ToSList (value);
+            rc_package_set_recommends(Handle, slist.Handle);
+        }
+    }
+
+    [DllImport("libredcarpet")]
+    static extern IntPtr rc_package_get_requires(IntPtr raw);
+
+    [DllImport("libredcarpet")]
+    static extern void rc_package_set_requires(IntPtr raw, IntPtr value);
+
+    public PackageDep[] Requires { 
+        get {
+            IntPtr raw_ret = rc_package_get_requires (Handle);
+            return PackageDep.FromSListPtr (raw_ret);
+        }
+        set {
+            GLib.SList slist = PackageDep.ToSList (value);
+            rc_package_set_requires(Handle, slist.Handle);
+        }
+    }
+
+    [DllImport("libredcarpet")]
+    static extern IntPtr rc_package_get_suggests(IntPtr raw);
+
+    [DllImport("libredcarpet")]
+    static extern void rc_package_set_suggests(IntPtr raw, IntPtr value);
+
+    public PackageDep[] Suggests { 
+        get {
+            IntPtr raw_ret = rc_package_get_suggests(Handle);
+            return PackageDep.FromSListPtr (raw_ret);
+        }
+        set {
+            GLib.SList slist = PackageDep.ToSList (value);
+            rc_package_set_suggests(Handle, slist.Handle);
+        }
+    }
+
+
     public void ToXml (System.Xml.XmlTextWriter writer)
     {
         writer.WriteStartElement ("package");
 
         writer.WriteElementString ("name", this.Name);
 
-        if (this.Spec.HasEpoch)
-            writer.WriteElementString ("epoch", System.Xml.XmlConvert.ToString (this.Spec.Epoch));
+        if (this.HasEpoch)
+            writer.WriteElementString ("epoch", System.Xml.XmlConvert.ToString (this.Epoch));
 
-        writer.WriteElementString ("version", this.Spec.Version);
-        writer.WriteElementString ("release", this.Spec.Release);
+        writer.WriteElementString ("version", this.Version);
+        writer.WriteElementString ("release", this.Release);
         writer.WriteElementString ("summary", this.Summary);
         writer.WriteElementString ("description", this.Description);
         writer.WriteElementString ("arch", RC.Global.ArchToString (this.Arch));
@@ -34,10 +153,10 @@
 
         writer.WriteStartElement ("deps");
 
-        PackageDepArray deps;
+        PackageDep[] deps;
 
         deps = this.Requires;
-        if (deps.Count > 0) {
+        if (deps.Length > 0) {
             writer.WriteStartElement ("requires");
             foreach (PackageDep dep in deps)
                 dep.ToXml (writer);
@@ -45,7 +164,7 @@
         }
 
         deps = this.Recommends;
-        if (deps.Count > 0) {
+        if (deps.Length > 0) {
             writer.WriteStartElement ("recommends");
             foreach (PackageDep dep in deps)
                 dep.ToXml (writer);
@@ -53,7 +172,7 @@
         }
 
         deps = this.Suggests;
-        if (deps.Count > 0) {
+        if (deps.Length > 0) {
             writer.WriteStartElement ("suggests");
             foreach (PackageDep dep in deps)
                 dep.ToXml (writer);
@@ -61,7 +180,7 @@
         }
 
         deps = this.Conflicts;
-        if (deps.Count > 0) {
+        if (deps.Length > 0) {
             writer.WriteStartElement ("conflicts");
             foreach (PackageDep dep in deps)
                 dep.ToXml (writer);
@@ -69,7 +188,7 @@
         }
 
         deps = this.Obsoletes;
-        if (deps.Count > 0) {
+        if (deps.Length > 0) {
             writer.WriteStartElement ("obsoletes");
             foreach (PackageDep dep in deps)
                 dep.ToXml (writer);
@@ -77,7 +196,7 @@
         }
 
         deps = this.Children;
-        if (deps.Count > 0) {
+        if (deps.Length > 0) {
             writer.WriteStartElement ("children");
             foreach (PackageDep dep in deps)
                 dep.ToXml (writer);
@@ -85,7 +204,7 @@
         }
 
         deps = this.Provides;
-        if (deps.Count > 0) {
+        if (deps.Length > 0) {
             writer.WriteStartElement ("provides");
             foreach (PackageDep dep in deps)
                 dep.ToXml (writer);
