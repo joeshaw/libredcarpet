@@ -1,3 +1,8 @@
+2002-08-28  Ian Peters  <itp@ximian.com>
+
+	* rc-debman.c: reinstate the hack in lesser form -- interactive
+	debian packages cause the process to be killed, and an error set.
+
 2002-08-26  Joe Shaw  <joe@ximian.com>
 
 	* rc-util.c (rc_buffer_map_file): Fix a nasty file descriptor leak.

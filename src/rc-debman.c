@@ -267,7 +267,7 @@ unlock_database (RCDebman *debman)
 
     rc_debman_is_database_changed (RC_PACKMAN (debman));
     debman->priv->db_watcher_cb =
-        g_timeout_add (5000, (GSourceFunc) database_check_func,
+        g_timeout_add (300000, (GSourceFunc) database_check_func,
                        (gpointer) debman);
 
     if (!rc_close (debman->priv->lock_fd)) {
@@ -906,9 +906,8 @@ struct _DebmanInstallState {
   stupid-ass interactive Debian package" hack
 */
 
-typedef struct _DebmanHackInfo DebmanHackInfo;
-
-struct _DebmanHackInfo {
+typedef struct {
+/*
     guint poll_write_id;
 
     int master;
@@ -916,7 +915,14 @@ struct _DebmanHackInfo {
     GString *buf;
 
     RCLineBuf *line_buf;
-};
+*/
+
+    guint poll_write_id;
+    GMainLoop *loop;
+    pid_t child_pid;
+    gboolean failure;
+    
+} DebmanHackInfo;
 
 static void
 debman_sigusr2_cb (int signum)
@@ -944,26 +950,38 @@ delete_event_cb (GtkWidget *widget, GdkEvent *event, gpointer data)
 {
     return (TRUE);
 }
+#endif
 
 static gint
 debman_poll_write_cb (gpointer data)
 {
+/*
     GMainLoop *loop;
     GtkWidget *window;
     GtkWidget *entry;
     GtkWidget *label;
     GtkWidget *vbox;
-    DebmanHackInfo *hack_info = (DebmanHackInfo *)data;
     gchar *line;
     struct pollfd check;
     gchar *buf;
     GtkStyle *style;
     GdkFont *font;
+*/
+    DebmanHackInfo *hack_info = (DebmanHackInfo *)data;
 
     if (!child_wants_input) {
         return (TRUE);
     }
 
+    kill (hack_info->child_pid, SIGKILL);
+    hack_info->failure = TRUE;
+    g_main_loop_quit (hack_info->loop);
+
+    child_wants_input = FALSE;
+
+    return TRUE;
+
+#if FIX_THE_HACK
     check.fd = hack_info->master;
     check.events = POLLIN;
 
@@ -1036,8 +1054,8 @@ debman_poll_write_cb (gpointer data)
     child_wants_input = FALSE;
 
     return (TRUE);
-}
 #endif
+}
 
 /*
   All of the crap to handle do_purge.  Basically just fork dpkg
@@ -1066,10 +1084,12 @@ do_purge_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
 
     rc_debug (RC_DEBUG_LEVEL_DEBUG, __FUNCTION__ ": got \"%s\"\n", line);
 
+#if FIX_THE_HACK
     do_purge_info->hack_info.buf =
         g_string_append (do_purge_info->hack_info.buf, line);
     do_purge_info->hack_info.buf =
         g_string_append (do_purge_info->hack_info.buf, "\n");
+#endif
 
     if (!strncmp (line, "Removing", strlen ("Removing"))) {
         guint length = strlen ("Removing ");
@@ -1086,14 +1106,18 @@ do_purge_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
 
         g_free (name);
 
+#if FIX_THE_HACK
         do_purge_info->hack_info.buf =
             g_string_truncate (do_purge_info->hack_info.buf, 0);
+#endif
     }
 
+#if FIX_THE_HACK
     if (!strncmp (line, "Purging", strlen ("Purging"))) {
         do_purge_info->hack_info.buf =
             g_string_truncate (do_purge_info->hack_info.buf, 0);
     }
+#endif
 }
 
 static void
@@ -1202,9 +1226,15 @@ do_purge (RCPackman *packman, DebmanInstallState *install_state)
     do_purge_info.loop = loop;
     do_purge_info.install_state = install_state;
 
+#if FIX_THE_HACK
     do_purge_info.hack_info.buf = g_string_new (NULL);
     do_purge_info.hack_info.master = master;
     do_purge_info.hack_info.line_buf = line_buf;
+#else
+    do_purge_info.hack_info.child_pid = child;
+    do_purge_info.hack_info.loop = loop;
+    do_purge_info.hack_info.failure = FALSE;
+#endif
 
     do_purge_info.read_line_id =
         g_signal_connect (line_buf, "read_line",
@@ -1214,28 +1244,33 @@ do_purge (RCPackman *packman, DebmanInstallState *install_state)
         g_signal_connect (line_buf, "read_done",
                           (GCallback) do_purge_read_done_cb,
                           &do_purge_info);
-#if FIX_THE_HACK
     do_purge_info.hack_info.poll_write_id =
-        gtk_timeout_add (100,
-                         (GtkFunction) debman_poll_write_cb,
-                         (gpointer) &do_purge_info.hack_info);
-#endif
+        g_timeout_add (100,
+                       (GSourceFunc) debman_poll_write_cb,
+                       (gpointer) &do_purge_info.hack_info);
 
     g_main_run (loop);
 
-#if FIX_THE_HACK
-    gtk_timeout_remove (do_purge_info.hack_info.poll_write_id);
-#endif
+    g_source_remove (do_purge_info.hack_info.poll_write_id);
 
     g_object_unref (line_buf);
 
     g_main_destroy (loop);
 
+#if FIX_THE_HACK
     g_string_free (do_purge_info.hack_info.buf, TRUE);
+#endif
 
     close (master);
 
     waitpid (child, &status, 0);
+
+    if (do_purge_info.hack_info.failure) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "interactive configuration of package required, run dpkg --configure --pending");
+
+        return FALSE;
+    }
 
     if (!(lock_database (RC_DEBMAN (packman)))) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
@@ -1356,10 +1391,12 @@ do_unpack_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
 
     rc_debug (RC_DEBUG_LEVEL_DEBUG, __FUNCTION__ ": got \"%s\"\n", line);
 
+#if FIX_THE_HACK
     do_unpack_info->hack_info.buf =
         g_string_append (do_unpack_info->hack_info.buf, line);
     do_unpack_info->hack_info.buf =
         g_string_append (do_unpack_info->hack_info.buf, "\n");
+#endif
 
     if (!strncmp (line, "Unpacking", strlen ("Unpacking")) ||
         !strncmp (line, "Purging", strlen ("Purging")))
@@ -1391,10 +1428,13 @@ do_unpack_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
 
         g_free (name);
 
+#if FIX_THE_HACK
         do_unpack_info->hack_info.buf =
             g_string_truncate (do_unpack_info->hack_info.buf, 0);
+#endif
     }
 
+#if FIX_THE_HACK
     if (!strncmp (line, "(Reading database ...",
                   strlen ("(Reading database ...")) ||
         !strncmp (line, "Preparing to replace ",
@@ -1405,6 +1445,7 @@ do_unpack_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
         do_unpack_info->hack_info.buf =
             g_string_truncate (do_unpack_info->hack_info.buf, 0);
     }
+#endif
 }
 
 static void
@@ -1634,9 +1675,15 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
         do_unpack_info.loop = loop;
         do_unpack_info.install_state = install_state;
 
+#if FIX_THE_HACK
         do_unpack_info.hack_info.buf = g_string_new (NULL);
         do_unpack_info.hack_info.master = master;
         do_unpack_info.hack_info.line_buf = line_buf;
+#else
+        do_unpack_info.hack_info.child_pid = child;
+        do_unpack_info.hack_info.loop = loop;
+        do_unpack_info.hack_info.failure = FALSE;
+#endif
 
         do_unpack_info.read_line_id =
             g_signal_connect (line_buf, "read_line",
@@ -1646,28 +1693,32 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
             g_signal_connect (line_buf, "read_done",
                               (GCallback) do_unpack_read_done_cb,
                               &do_unpack_info);
-#if FIX_THE_HACK
         do_unpack_info.hack_info.poll_write_id =
-            gtk_timeout_add (100,
-                             (GtkFunction) debman_poll_write_cb,
-                             (gpointer) &do_unpack_info.hack_info);
-#endif
+            g_timeout_add (100,
+                           (GSourceFunc) debman_poll_write_cb,
+                           (gpointer) &do_unpack_info.hack_info);
 
         g_main_run (loop);
 
-#if FIX_THE_HACK
-        gtk_timeout_remove (do_unpack_info.hack_info.poll_write_id);
-#endif
+        g_source_remove (do_unpack_info.hack_info.poll_write_id);
             
         g_object_unref (line_buf);
 
         g_main_destroy (loop);
 
+#if FIX_THE_HACK
         g_string_free (do_unpack_info.hack_info.buf, TRUE);
+#endif
 
         close (master);
 
         waitpid (child, &status, 0);
+
+        if (do_unpack_info.hack_info.failure) {
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
+                                  "interactive configuration required, run dpkg --configure --pending");
+            return FALSE;
+        }
 
         if (!(lock_database (RC_DEBMAN (packman)))) {
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
@@ -1729,10 +1780,12 @@ do_configure_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
 
     rc_debug (RC_DEBUG_LEVEL_DEBUG, __FUNCTION__ ": got \"%s\"\n", line);
 
+#if FIX_THE_HACK
     do_configure_info->hack_info.buf =
         g_string_append (do_configure_info->hack_info.buf, line);
     do_configure_info->hack_info.buf =
         g_string_append (do_configure_info->hack_info.buf, "\n");
+#endif
 
     if (!strncmp (line, "Setting up ", strlen ("Setting up "))) {
         guint length = strlen ("Setting up ");
@@ -1749,8 +1802,10 @@ do_configure_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
 
         g_free (name);
 
+#if FIX_THE_HACK
         do_configure_info->hack_info.buf =
             g_string_truncate (do_configure_info->hack_info.buf, 0);
+#endif
     }
 }
 
@@ -1860,9 +1915,15 @@ do_configure (RCPackman *packman, DebmanInstallState *install_state)
     do_configure_info.loop = loop;
     do_configure_info.install_state = install_state;
 
+#if FIX_THE_HACK
     do_configure_info.hack_info.buf = g_string_new (NULL);
     do_configure_info.hack_info.master = master;
     do_configure_info.hack_info.line_buf = line_buf;
+#else
+    do_configure_info.hack_info.child_pid = child;
+    do_configure_info.hack_info.loop = loop;
+    do_configure_info.hack_info.failure = FALSE;
+#endif
 
     do_configure_info.read_line_id =
         g_signal_connect (line_buf, "read_line",
@@ -1872,30 +1933,34 @@ do_configure (RCPackman *packman, DebmanInstallState *install_state)
         g_signal_connect (line_buf, "read_done",
                           (GCallback) do_configure_read_done_cb,
                           &do_configure_info);
-#if FIX_THE_HACK
     do_configure_info.hack_info.poll_write_id =
-        gtk_timeout_add (100,
-                         (GtkFunction) debman_poll_write_cb,
-                         (gpointer) &do_configure_info.hack_info);
-#endif
+        g_timeout_add (100,
+                       (GSourceFunc) debman_poll_write_cb,
+                       (gpointer) &do_configure_info.hack_info);
 
     g_main_run (loop);
 
-#if FIX_THE_HACK
-    gtk_timeout_remove (do_configure_info.hack_info.poll_write_id);
-#endif
+    g_source_remove (do_configure_info.hack_info.poll_write_id);
 
     g_object_unref (line_buf);
 
     g_main_destroy (loop);
 
+#if FIX_THE_HACK
     g_string_free (do_configure_info.hack_info.buf, TRUE);
+#endif
 
     close (master);
 
     waitpid (child, &status, 0);
 
     signal (SIGUSR2, SIG_DFL);
+
+    if (do_configure_info.hack_info.failure) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "interactive configuration required, run dpkg --configure --pending");
+        return FALSE;
+    }
 
     if (!(lock_database (RC_DEBMAN (packman)))) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
@@ -3288,7 +3353,7 @@ rc_debman_init (RCDebman *debman)
     debman->priv->db_mtime = 0;
     rc_debman_is_database_changed (packman);
     debman->priv->db_watcher_cb =
-        g_timeout_add (5000, (GSourceFunc) database_check_func,
+        g_timeout_add (300000, (GSourceFunc) database_check_func,
                        (gpointer) debman);
 
     if (geteuid ()) {
