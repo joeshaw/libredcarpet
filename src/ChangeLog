@@ -1,3 +1,9 @@
+2003-02-04  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-world.c (rc_world_get_system_packages): Unref the contents of
+	system_packages before freeing the slist.  If our system query
+	fails, free the slist.  (Probably fixes most of #37576)
+
 2003-01-24  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-queue-item.c (require_item_process): If there are no

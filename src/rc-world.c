@@ -303,14 +303,17 @@ rc_world_get_system_packages (RCWorld *world)
         rc_debug (RC_DEBUG_LEVEL_MESSAGE,
                   "System query failed: %s",
                   rc_packman_get_reason (world->packman));
-        if (system_packages)
+        if (system_packages) {
             rc_package_slist_unref (system_packages);
+            g_slist_free (system_packages);
+        }
         return FALSE;
     }
 
     rc_world_remove_packages (world, RC_WORLD_SYSTEM_PACKAGES);
     rc_world_add_packages_from_slist (world, system_packages);
 
+    rc_package_slist_unref (system_packages);
     g_slist_free (system_packages);
 
     return TRUE;
