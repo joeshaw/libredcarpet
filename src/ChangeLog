@@ -1,3 +1,23 @@
+2002-03-14  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c (rc_rpmman_transact): reverse the order we run
+	removes and installs in, to work around some previously unknown
+	behaviour with rpm obsoletes.  Also, make one error fatal instead
+	of abort, so that the client will exit correctly.
+
+2002-03-12  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-world.c (foreach_package_cb): Doh!  We weren't using the
+	iter variable.
+
+2002-03-12  Joe Shaw  <joe@ximian.com>
+
+	* rc-packman-private.h: Move RC_PACKMAN_CAP_* out of here, move
+	rc_packman_set_capabilities() into here.
+
+	* rc-packman.h: Move RC_PACKMAN_CAP_* into here, move
+	rc_packman_set_capabilities() out of here.
+
 2002-03-12  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-package-info.c (rc_channel_parse_debian): Store packages

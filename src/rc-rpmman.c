@@ -699,45 +699,6 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
                              state.true_total);
     GTKFLUSH;
 
-    if (install_packages) {
-        install_transaction = rpmman->rpmtransCreateSet (
-            rpmman->db, rpmman->rpmroot);
-
-        if (install_packages && !transaction_add_install_packages (
-                packman, install_transaction, install_packages))
-        {
-            rc_packman_set_error (
-                packman, RC_PACKMAN_ERROR_ABORT,
-                "error processing to-be-installed packages");
-
-            rpmman->rpmtransFree (install_transaction);
-
-            goto ERROR;
-        }
-
-        state.installing = TRUE;
-
-        /* first we're going to install new packages.  no rpmdepCheck on
-         * this ahead of time because the check would probably fail, and i
-         * know it.  we'll fix it in a second, right? */
-        rc = rpmman->rpmRunTransactions (install_transaction, 
-                                         (rpmCallbackFunction) transact_cb,
-                                         (void *) &state, NULL, &probs,
-                                         transaction_flags, problem_filter);
-
-        if (rc > 0) {
-            render_problems (packman, probs);
-
-            rpmman->rpmProblemSetFree (probs);
-
-            goto ERROR;
-        }
-
-        rpmman->rpmProblemSetFree (probs);
-
-        rpmman->rpmtransFree (install_transaction);
-    }
-
     if (remove_packages) {
         remove_transaction = rpmman->rpmtransCreateSet (
             rpmman->db, rpmman->rpmroot);
@@ -772,6 +733,45 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         rpmman->rpmProblemSetFree (probs);
 
         rpmman->rpmtransFree (remove_transaction);
+    }
+
+    if (install_packages) {
+        install_transaction = rpmman->rpmtransCreateSet (
+            rpmman->db, rpmman->rpmroot);
+
+        if (install_packages && !transaction_add_install_packages (
+                packman, install_transaction, install_packages))
+        {
+            rc_packman_set_error (
+                packman, RC_PACKMAN_ERROR_FATAL,
+                "error processing to-be-installed packages");
+
+            rpmman->rpmtransFree (install_transaction);
+
+            goto ERROR;
+        }
+
+        state.installing = TRUE;
+
+        /* first we're going to install new packages.  no rpmdepCheck on
+         * this ahead of time because the check would probably fail, and i
+         * know it.  we'll fix it in a second, right? */
+        rc = rpmman->rpmRunTransactions (install_transaction, 
+                                         (rpmCallbackFunction) transact_cb,
+                                         (void *) &state, NULL, &probs,
+                                         transaction_flags, problem_filter);
+
+        if (rc > 0) {
+            render_problems (packman, probs);
+
+            rpmman->rpmProblemSetFree (probs);
+
+            goto ERROR;
+        }
+
+        rpmman->rpmProblemSetFree (probs);
+
+        rpmman->rpmtransFree (install_transaction);
     }
 
     while (state.seqno < state.true_total) {
