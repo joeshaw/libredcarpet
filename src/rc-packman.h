@@ -85,6 +85,9 @@ typedef enum {
  * set, however, the release field will always be compared, and the
  * requirement in the previous example would be met, because "2.0-10" is
  * greater than "2.0". (Debian)
+ *
+ * PATCHES - Supports patches. Currently, only for querying.
+ *
  */
 
 #define RC_PACKMAN_CAP_NONE                  (0)
@@ -92,6 +95,7 @@ typedef enum {
 #define RC_PACKMAN_CAP_IGNORE_ABSENT_EPOCHS  (1 << 2)
 #define RC_PACKMAN_CAP_ROLLBACK              (1 << 3)
 #define RC_PACKMAN_CAP_ALWAYS_VERIFY_RELEASE (1 << 4)
+#define RC_PACKMAN_CAP_PATCHES               (1 << 5)
 
 #define RC_TRANSACT_FLAG_NONE      (0)
 #define RC_TRANSACT_FLAG_NO_ACT    (1 << 0)
@@ -161,6 +165,9 @@ struct _RCPackmanClass {
 
     RCPackageFileSList *(*rc_packman_real_file_list)(RCPackman *packman,
                                                      RCPackage *package);
+
+    GSList *(*rc_packman_real_patch_parents)(RCPackman *packman,
+                                             RCPackage *package);
 };
 
 GType rc_packman_get_type (void);
@@ -212,6 +219,9 @@ gboolean rc_packman_is_database_changed (RCPackman *packman);
 
 RCPackageFileSList *rc_packman_file_list (RCPackman *packman,
                                           RCPackage *package);
+
+GSList *rc_packman_patch_parents (RCPackman *packman,
+                                  RCPackage *package);
 
 const gchar *rc_packman_get_file_extension(RCPackman *packman);
 

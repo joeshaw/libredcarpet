@@ -532,6 +532,63 @@ rc_rpmman_header_info_free (RCRpmman *rpmman, HeaderInfo *hi)
     g_free (hi);
 }
 
+static GSList *
+read_patch_parents (RCRpmman *rpmman, Header header)
+{
+    int i;
+    GSList *list = NULL;
+    char **names = NULL;
+    char **versions = NULL;
+    guint32 names_count = 0;
+    guint32 versions_count = 0;
+
+    rpmman->headerGetEntry (header, RPMTAG_PATCHESNAME, NULL,
+                            (void **) &names, &names_count);
+
+    rpmman->headerGetEntry (header, RPMTAG_PATCHESVERSION, NULL,
+                            (void **) &versions, &versions_count);
+
+    /* Patches also have flags, usually
+       PREREQ PREUN POSTUN FINDREQUIRES TRIGGERUN TRIGGERPOSTUN PATCHES.
+       Do we need to care about these?
+    */
+
+    if (names_count != versions_count) {
+        rc_debug (RC_DEBUG_LEVEL_WARNING,
+                  "Patch parents names and versions counts do not match");
+        names_count = versions_count = MIN (names_count, versions_count);
+    }
+
+    for (i = 0; i < names_count; i++) {
+        RCPackageSpec *spec;
+        gboolean has_epoch = FALSE;
+        guint32 epoch = 0;
+        char *version = NULL;
+        char *release = NULL;
+
+        if (!rc_packman_parse_version (RC_PACKMAN (rpmman), versions[i],
+                                       &has_epoch, &epoch,
+                                       &version, &release)) {
+            rc_debug (RC_DEBUG_LEVEL_WARNING,
+                      "Can not parse patch parent version %s\n",
+                      versions[i]);
+            continue;
+        }
+
+        spec = rc_package_spec_new ();
+        rc_package_spec_init (spec, names[i],
+                              has_epoch, epoch,
+                              version, release,
+                              RC_ARCH_UNKNOWN);
+
+        list = g_slist_prepend (list, spec);
+    }
+
+    list = g_slist_reverse (list);
+
+    return list;
+}
+
 static HeaderInfo *
 rc_rpmman_read_package_file (RCRpmman *rpmman, const char *filename)
 {
@@ -3027,7 +3084,75 @@ cleanup:
 
     return file_list;
 }
-    
+
+static GSList *
+rc_rpmman_patch_parents (RCPackman *packman, RCPackage *package)
+{
+    RCRpmman *rpmman = RC_RPMMAN (packman);
+    HeaderInfo *hi = NULL;
+    Header header;
+    GSList *parent_list = NULL;
+    gboolean close_db = FALSE;
+    char *package_name = NULL;
+
+    g_return_val_if_fail (package, NULL);
+
+    if (!package->installed) {
+        if (!package->package_filename) {
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "no parent list information available for "
+                                  "patch '%s'",
+                                  g_quark_to_string (package->spec.nameq));
+            return NULL;
+        }
+
+        hi = rc_rpmman_read_package_file (rpmman, package->package_filename);
+    } else {
+        if ((RC_RPMMAN (packman))->db_status < RC_RPMMAN_DB_RDONLY) {
+            if (!open_database (RC_RPMMAN (packman), FALSE)) {
+                rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                      "unable to query packages");
+                return NULL;
+            }
+            close_db = TRUE;
+        }
+
+        package_name = rc_package_to_rpm_name (package);
+        hi = rc_rpmman_find_system_headers (rpmman, package_name);
+    }
+
+    if (!hi)
+        goto cleanup;
+
+    if (g_slist_length (hi->headers) > 1) {
+        rc_debug (RC_DEBUG_LEVEL_WARNING, "Package '%s' matches %d entries",
+                  package_name, g_slist_length (hi->headers));
+    }
+
+    header = (Header) hi->headers->data;
+
+    parent_list = read_patch_parents (rpmman, header);
+
+    {
+        GSList *iter;;
+
+        for (iter = parent_list; iter; iter = iter->next)
+            printf ("%s\n",rc_package_spec_to_str_static (RC_PACKAGE_SPEC (iter->data)));
+    }
+
+ cleanup:
+    if (package_name)
+        g_free (package_name);
+
+    if (hi)
+        rc_rpmman_header_info_free (rpmman, hi);
+
+    if (close_db)
+        close_database (rpmman);
+
+    return parent_list;
+}
+
 
 gboolean
 rc_rpmman_lock (RCPackman *packman)
@@ -3089,6 +3214,7 @@ rc_rpmman_class_init (RCRpmmanClass *klass)
     packman_class->rc_packman_real_is_database_changed =
         rc_rpmman_is_database_changed;
     packman_class->rc_packman_real_file_list = rc_rpmman_file_list;
+    packman_class->rc_packman_real_patch_parents = rc_rpmman_patch_parents;
 } /* rc_rpmman_class_init */
 
 #ifdef STATIC_RPM
@@ -3773,7 +3899,7 @@ rc_rpmman_init (RCRpmman *obj)
 
     capabilities = RC_PACKMAN_CAP_PROVIDE_ALL_VERSIONS |
         RC_PACKMAN_CAP_IGNORE_ABSENT_EPOCHS |
-        RC_PACKMAN_CAP_ROLLBACK;
+        RC_PACKMAN_CAP_ROLLBACK | RC_PACKMAN_CAP_PATCHES;
 
     rc_packman_set_capabilities (packman, capabilities);
 

@@ -1,3 +1,25 @@
+2005-01-04  Tambet Ingo  <tambet@ximian.com>
+
+	Add the beginnings of patch RPM support.
+
+	* rc-xml.h (rc_package_spec_to_xml_node): Declare.
+
+	* rc-xml.c (rc_package_spec_to_xml_node): Implement.
+
+	* rc-rpmman.c (read_patch_parents): Implement.
+	(rc_rpmman_patch_parents): Implement.
+	(rc_rpmman_class_init): Connect patch_parents virtual function.
+	(rc_rpmman_init): Add RC_PACKMAN_CAP_PATCHES to capabilities.
+
+	* rc-packman.h: Add new packman capability, RC_PACKMAN_CAP_PATCHES.
+	Add new virtual function, rc_packman_real_patch_parents.
+
+	* rc-packman.c (rc_packman_patch_parents): Implement.
+
+	* rc-debman.c (rc_rpmman_debman_parents): Add a dummy virtual function,
+	debman doesn't support patches.
+	(rc_debman_class_init): Add virtual function for patch parents.
+
 2005-01-03  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-package-spec.c (rc_package_spec_get_arch): Fix typo.

@@ -177,6 +177,7 @@ rc_packman_class_init (RCPackmanClass *klass)
     klass->rc_packman_real_unlock = NULL;
     klass->rc_packman_real_is_database_changed = NULL;
     klass->rc_packman_real_file_list = NULL;
+    klass->rc_packman_real_patch_parents = NULL;
 }
 
 static void
@@ -546,6 +547,22 @@ rc_packman_file_list (RCPackman *packman, RCPackage *package)
     g_assert (klass->rc_packman_real_file_list);
 
     return klass->rc_packman_real_file_list (packman, package);
+}
+
+GSList *
+rc_packman_patch_parents (RCPackman *packman, RCPackage *package)
+{
+    RCPackmanClass *klass;
+
+    g_return_val_if_fail (packman, NULL);
+
+    rc_packman_clear_error (packman);
+
+    klass = RC_PACKMAN_GET_CLASS (packman);
+
+    g_assert (klass->rc_packman_real_patch_parents);
+
+    return klass->rc_packman_real_patch_parents (packman, package);
 }
 
 void

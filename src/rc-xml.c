@@ -1330,6 +1330,33 @@ sanitize_string (const char *str)
 }
 
 xmlNode *
+rc_package_spec_to_xml_node (RCPackageSpec *spec)
+{
+    xmlNode *spec_node;
+    char buffer[128];
+
+    spec_node = xmlNewNode (NULL, "spec");
+
+    xmlNewTextChild (spec_node, NULL, "name",
+                     g_quark_to_string (spec->nameq));
+
+    if (spec->has_epoch) {
+        g_snprintf (buffer, 128, "%d", spec->epoch);
+        xmlNewTextChild (spec_node, NULL, "epoch", buffer);
+    }
+
+    xmlNewTextChild (spec_node, NULL, "version", spec->version);
+
+    if (spec->release)
+        xmlNewTextChild (spec_node, NULL, "release", spec->release);
+
+    xmlNewTextChild (spec_node, NULL, "arch",
+                     rc_arch_to_string (spec->arch));
+
+    return spec_node;
+}
+
+xmlNode *
 rc_package_to_xml_node (RCPackage *package)
 {
     xmlNode *package_node;

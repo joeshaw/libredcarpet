@@ -3375,6 +3375,13 @@ rc_debman_file_list (RCPackman *packman, RCPackage *package)
     return file_list_info.files;
 }
 
+static GSList *
+rc_rpmman_debman_parents (RCPackman *packman, RCPackage *package)
+{
+    g_error ("Patches are not supported!");
+    return NULL;
+}
+
 static gboolean
 rc_debman_lock (RCPackman *packman)
 {
@@ -3430,6 +3437,7 @@ rc_debman_class_init (RCDebmanClass *klass)
     packman_class->rc_packman_real_is_database_changed =
         rc_debman_is_database_changed;
     packman_class->rc_packman_real_file_list = rc_debman_file_list;
+    packman_class->rc_packman_real_patch_parents = rc_rpmman_debman_parents;
 
     putenv ("DEBIAN_FRONTEND=noninteractive");
 }
