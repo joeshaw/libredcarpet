@@ -1,5 +1,23 @@
 2001-01-21  Ian Peters  <itp@helixcode.com>
 
+	* dpkg-helper.c, libredcarpet.h, rc-channel.c, rc-channel.h,
+	rc-debman-general.c, rc-debman-general.h, rc-debman-private.h,
+	rc-debman.c, rc-debman.h, rc-debug-misc.c, rc-debug-misc.h,
+	rc-debug.c, rc-debug.h, rc-deps.c, rc-deps.h, rc-distman.c,
+	rc-distman.h, rc-distro.c, rc-distro.h, rc-line-buf-private.h,
+	rc-line-buf.c, rc-line-buf.h, rc-package-dep.c, rc-package-dep.h,
+	rc-package-importance.c, rc-package-importance.h,
+	rc-package-info.c, rc-package-info.h, rc-package-section.c,
+	rc-package-section.h, rc-package-set.c, rc-package-set.h,
+	rc-package-spec.c, rc-package-spec.h, rc-package-update.c,
+	rc-package-update.h, rc-package.c, rc-package.h,
+	rc-packman-private.h, rc-packman.c, rc-packman.h, rc-rpmman.c,
+	rc-rpmman.h, rc-util.c, rc-util.h, rc-verification-private.h,
+	rc-verification.c, rc-verification.h, xml-util.c, xml-util.h:
+	fixed licensing and copyright
+
+2001-01-21  Ian Peters  <itp@helixcode.com>
+
 	* rc-debman.c (do_purge): check if dpkg exists in /usr/bin/dpkg
 	before trying to run it
 	(do_unpack): ditto
