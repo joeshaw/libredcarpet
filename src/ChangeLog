@@ -1,5 +1,13 @@
 2001-02-26  Vladimir Vukicevic  <vladimir@ximian.com>
 
+	* rc-deps.c, rc-deps.h: New nifty partial tree stuff.  Should work,
+	I hope.  Any package that is installed on the system is assumed to be
+	"ok", and its dependencies are not checked.
+
+	* rc-deps-util.c: Call rc_dep_resolution_resolve_system
+
+	* rc-distro.c: add linuxppc
+	
 	* rc-rpmman.c: Changed a break to a continue to make the
 	verrev-string splitting thing work.
 
