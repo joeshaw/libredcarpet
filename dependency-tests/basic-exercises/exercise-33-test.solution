@@ -1,10 +1,10 @@
 >!> Installing sendmail from channel channel
 >!> Solution #1:
->!> install sendmail-8.9.3-23[channel]
+>!> install sendmail-0:8.9.3-23[channel]
 >!> remove  exim-3.22-2
->!> |unflag exim-3.12-10.2[channel]
->!> |unflag masqmail-0.0.12-3[channel]
->!> |unflag postfix-0.0.19991231pl11-2[channel]
->!> |unflag ssmtp-2.33-1[channel]
->!> |unflag zmailer-2.99.51.52pre3-2[channel]
+>!> |unflag exim-0:3.12-10.2[channel]
+>!> |unflag masqmail-0:0.0.12-3[channel]
+>!> |unflag postfix-0:0.0.19991231pl11-2[channel]
+>!> |unflag ssmtp-0:2.33-1[channel]
+>!> |unflag zmailer-0:2.99.51.52pre3-2[channel]
 >!> installs=1, upgrades=0, uninstalls=1
