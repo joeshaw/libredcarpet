@@ -1,0 +1,69 @@
+
+##----------------------------------------------------------------------##
+
+# Valgrind errors to suppress by default with RPM 4.0.3 and RPM 4.0.4.
+# It may work with other versions too.
+
+# Format of this file is:
+# {
+#     name_of_suppression
+#     kind: one of Param Value1 Value2 Value4 Value8
+#                   Free Addr1 Addr2 Addr4 Addr8
+#                   Cond (previously known as Value0)
+#     (if Param: name of system call param, if Free: name of free-ing fn)
+#     caller0 name, or /name/of/so/file.so
+#     caller1 name, or ditto
+#     (optionally: caller2 name)
+#     (optionally: caller3 name)
+#  }
+
+{
+   __rawmemchr/intGetEntry(Cond)
+   Cond
+   fun:__rawmemchr
+   fun:intGetEntry
+}
+
+{
+   rpmInitMacros
+   Cond
+   fun:rpmInitMacros
+}
+
+{
+   rpmInitMacros2
+   Cond
+   fun:Fdopen
+   fun:Fopen
+   fun:rpmInitMacros
+}
+
+{
+   rpmGetPath
+   Cond
+   fun:rpmGetPath
+}
+
+{
+   rpmReadRC
+   Cond
+   fun:rpmReadRC
+}
+
+{
+   rpmReadRC2
+   Cond
+   fun:Fdopen
+   fun:Fopen
+   fun:rpmReadRC
+}
+
+{
+   rpmExpand
+   Cond
+   fun:rpmExpand
+}
+
+
+##----------------------------------------------------------------------##
+
