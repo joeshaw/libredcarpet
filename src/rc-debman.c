@@ -564,17 +564,14 @@ rc_debman_query_helper (FILE *fp, RCPackage *pkg)
         } else if (!strncmp (buf, "Depends: ", strlen ("Depends: "))) {
             pkg->requires = rc_debman_fill_depends (buf + strlen ("Depends: "),
                                                     pkg->requires);
-            /*
         } else if (!strncmp (buf, "Recommends: ", strlen ("Recommends: "))) {
             pkg->requires = rc_debman_fill_depends (buf +
                                                     strlen ("Recommends: "),
-                                                    pkg->requires);
-            */
-            /*
+                                                    pkg->recommends);
         } else if (!strncmp (buf, "Suggests: ", strlen ("Suggests: "))) {
             pkg->requires = rc_debman_fill_depends (buf +
                                                     strlen ("Suggests: "),
-                                                    pkg->requires); */
+                                                    pkg->suggests);
         } else if (!strncmp (buf, "Pre-Depends: ", strlen ("Pre-Depends: "))) {
             pkg->requires = rc_debman_fill_depends (buf +
                                                     strlen ("Pre-Depends: "),

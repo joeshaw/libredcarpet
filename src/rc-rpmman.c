@@ -32,6 +32,10 @@
 static void rc_rpmman_class_init (RCRpmmanClass *klass);
 static void rc_rpmman_init       (RCRpmman *obj);
 
+int rc_rpmInstall(const char * rootdir, const char ** fileArgv, int transFlags, 
+                  int interfaceFlags, int probFilter, 
+                  rpmRelocation * relocations);
+
 static gchar *rpmroot;
 
 guint
