@@ -62,6 +62,14 @@ static RCPackmanClass *parent_class;
 /* The Evil Hack */
 gboolean child_wants_input = FALSE;
 
+gchar *helper = LIBDIR "/rc-dpkg-helper.so";
+
+void
+rc_debman_set_helper (const gchar *t_helper)
+{
+    helper = g_strdup (t_helper);
+}
+
 guint
 rc_debman_get_type (void)
 {
@@ -265,6 +273,8 @@ struct _DebmanVerifyStatusInfo {
     int out_fd;
 
     gboolean error;
+    gchar *error_line;
+    guint error_line_number;
 };
 
 static void
@@ -1090,7 +1100,8 @@ do_purge (RCPackman *packman, DebmanInstallState *install_state)
 
         close (slave);
 
-        putenv ("LD_PRELOAD=" LIBDIR "/rc-dpkg-helper.so");
+//        putenv ("LD_PRELOAD=" LIBDIR "/rc-dpkg-helper.so");
+        putenv (g_strdup_printf ("LD_PRELOAD=%s", helper));
         putenv (g_strdup_printf ("RC_READ_NOTIFY_PID=%d", parent));
         putenv ("PAGER=cat");
 
@@ -1543,7 +1554,8 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
 
             close (slave);
 
-            putenv ("LD_PRELOAD=" LIBDIR "/rc-dpkg-helper.so");
+//            putenv ("LD_PRELOAD=" LIBDIR "/rc-dpkg-helper.so");
+            putenv (g_strdup_printf ("LD_PRELOAD=%s", helper));
             putenv (g_strdup_printf ("RC_READ_NOTIFY_PID=%d", parent));
             putenv ("PAGER=cat");
 
@@ -1779,7 +1791,8 @@ do_configure (RCPackman *packman, DebmanInstallState *install_state)
 
         close (slave);
 
-        putenv ("LD_PRELOAD=" LIBDIR "/rc-dpkg-helper.so");
+//        putenv ("LD_PRELOAD=" LIBDIR "/rc-dpkg-helper.so");
+        putenv (g_strdup_printf ("LD_PRELOAD=%s", helper));
         putenv (g_strdup_printf ("RC_READ_NOTIFY_PID=%d", parent));
         putenv ("PAGER=cat");
 

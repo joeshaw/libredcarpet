@@ -34,9 +34,13 @@
 #include "rc-line-buf.h"
 #include "rc-md5.h"
 
-#ifndef SHAREDIR
-#error "SHAREDIR not defined"
-#endif
+gchar *keyring = SHAREDIR "/red-carpet.gpg";
+
+void
+rc_verification_set_keyring (const gchar *t_keyring)
+{
+    keyring = g_strdup (t_keyring);
+}
 
 RCVerification *
 rc_verification_new ()
@@ -165,7 +169,7 @@ gpg_read_done_cb (RCLineBuf *line_buf, RCLineBufStatus status, gpointer data)
 RCVerification *
 rc_verify_gpg (gchar *file, gchar *sig)
 {
-    const gchar *keyring = SHAREDIR "/red-carpet.gpg";
+//    const gchar *keyring = SHAREDIR "/red-carpet.gpg";
     pid_t child;
     int status;
     int fds[2];

@@ -55,4 +55,6 @@ guint rc_debman_get_type (void);
 
 RCDebman *rc_debman_new (void);
 
+void rc_debman_set_helper (const gchar *helper);
+
 #endif /* _RC_DEBMAN_H */

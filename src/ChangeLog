@@ -1,3 +1,9 @@
+2001-03-29  Ian Peters  <itp@ximian.com>
+
+	* rc-debman.c, rc-verification.c, rc-debman.h, rc-verification.h:
+	add some nasty hacks so that joe can override the location of the
+	.so and the .gpg files
+
 2001-03-27  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c (deps_add_anonymous_package): Do a bit of sanity
