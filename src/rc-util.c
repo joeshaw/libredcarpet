@@ -26,6 +26,7 @@
 #include <zlib.h>
 #include <string.h>
 
+#include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -455,3 +456,47 @@ rc_string_to_guint32_with_default(const char *n, guint32 def)
     else
         return z;
 } /* rc_string_to_guint32_with_default */
+
+/* 
+ * This just allows reading from the buffer for now.  It could be extended to
+ * do writing if necessary.
+ */
+RCBuffer *
+rc_buffer_map_file(const char *filename)
+{
+    struct stat s;
+    int fd;
+    gpointer data;
+    RCBuffer *buf;
+
+    g_return_val_if_fail(filename, NULL);
+
+    if (stat(filename, &s) < 0)
+        return NULL;
+
+    fd = open(filename, O_RDONLY);
+
+    if (fd < 0)
+        return NULL;
+
+    data = mmap(NULL, s.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+
+    if (data == MAP_FAILED)
+        return NULL;
+
+    buf = g_new(RCBuffer, 1);
+    buf->data = data;
+    buf->size = s.st_size;
+
+    return buf;
+} /* rc_buffer_map_file */
+
+void
+rc_buffer_unmap_file(RCBuffer *buf)
+{
+    g_return_if_fail(buf);
+
+    munmap(buf->data, buf->size);
+    g_free(buf);
+} /* rc_buffer_unmap_file */
+    

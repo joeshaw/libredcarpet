@@ -71,5 +71,15 @@ gboolean rc_close (int fd);
 
 guint32 rc_string_to_guint32_with_default(const char *n, guint32 def);
 
+typedef struct {
+    gpointer data;
+    gsize size;
+} RCBuffer;
+
+/* mmap()s a file */
+RCBuffer *rc_buffer_map_file(const char *filename);
+
+/* munmap()s the buffer */
+void rc_buffer_unmap_file(RCBuffer *buffer);
 
 #endif
