@@ -34,7 +34,7 @@
 #include "rc-line-buf.h"
 #include "rc-md5.h"
 
-gchar *keyring = NULL;
+static gchar *keyring = NULL;
 
 void
 rc_verification_set_keyring (const gchar *t_keyring)
