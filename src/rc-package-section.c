@@ -28,125 +28,117 @@ const gchar *
 rc_package_section_to_string (RCPackageSection section)
 {
     switch (section) {
-    case SECTION_OFFICE:
-        return ("SECTION_OFFICE");
-    case SECTION_IMAGING:
-        return ("SECTION_IMAGING");
-    case SECTION_PIM:
-        return ("SECTION_PIM");
-    case SECTION_GAME:
-        return ("SECTION_GAME");
-    case SECTION_MISC:
-        return ("SECTION_MISC");
-    case SECTION_MULTIMEDIA:
-        return ("SECTION_MULTIMEDIA");
-    case SECTION_INTERNET:
-        return ("SECTION_INTERNET");
-    case SECTION_UTIL:
-        return ("SECTION_UTIL");
-    case SECTION_SYSTEM:
-        return ("SECTION_SYSTEM");
-    case SECTION_DOC:
-        return ("SECTION_DOC");
-    case SECTION_DEVEL:
-        return ("SECTION_DEVEL");
-    case SECTION_DEVELUTIL:
-        return ("SECTION_DEVELUTIL");
-    case SECTION_LIBRARY:
-        return ("SECTION_LIBRARY");
-    case SECTION_XAPP:
-        return ("SECTION_XAPP");
+    case RC_SECTION_OFFICE:
+        return ("office");
+    case RC_SECTION_IMAGING:
+        return ("imaging");
+    case RC_SECTION_PIM:
+        return ("pim");
+    case RC_SECTION_GAME:
+        return ("game");
+    case RC_SECTION_MISC:
+        return ("misc");
+    case RC_SECTION_MULTIMEDIA:
+        return ("multimedia");
+    case RC_SECTION_INTERNET:
+        return ("internet");
+    case RC_SECTION_UTIL:
+        return ("util");
+    case RC_SECTION_SYSTEM:
+        return ("system");
+    case RC_SECTION_DOC:
+        return ("doc");
+    case RC_SECTION_DEVEL:
+        return ("devel");
+    case RC_SECTION_DEVELUTIL:
+        return ("develutil");
+    case RC_SECTION_LIBRARY:
+        return ("library");
+    case RC_SECTION_XAPP:
+        return ("xapp");
     default:
         rc_debug (RC_DEBUG_LEVEL_WARNING, "invalid section number %d\n",
                   section);
-        return ("SECTION_MISC");
+        return ("misc");
     }
 }
 
 RCPackageSection
 rc_string_to_package_section (const gchar *section)
 {
-    const gchar *ptr;
-
-    if (!section || strncmp (section, "SECTION_", strlen ("SECTION_"))) {
+    if (!section) {
         goto INVALID;
     }
 
-    ptr = section + strlen ("SECTION_");
-
-    if (!*ptr) {
-        goto INVALID;
-    }
-
-    switch (*ptr) {
-    case 'D':
-        if (!strcmp (ptr, "DEVELUTIL")) {
-            return (SECTION_DEVELUTIL);
+    switch (*section) {
+    case 'd':
+        if (!strcmp (section, "develutil")) {
+            return (RC_SECTION_DEVELUTIL);
         }
-        if (!strcmp (ptr, "DEVEL")) {
-            return (SECTION_DEVEL);
+        if (!strcmp (section, "devel")) {
+            return (RC_SECTION_DEVEL);
         }
-        if (!strcmp (ptr, "DOC")) {
-            return (SECTION_DOC);
+        if (!strcmp (section, "doc")) {
+            return (RC_SECTION_DOC);
         }
         goto INVALID;
-    case 'G':
-        if (!strcmp (ptr, "GAME")) {
-            return (SECTION_GAME);
+    case 'g':
+        if (!strcmp (section, "game")) {
+            return (RC_SECTION_GAME);
         }
         goto INVALID;
-    case 'I':
-        if (!strcmp (ptr, "IMAGING")) {
-            return (SECTION_IMAGING);
+    case 'i':
+        if (!strcmp (section, "imaging")) {
+            return (RC_SECTION_IMAGING);
         }
-        if (!strcmp (ptr, "INTERNET")) {
-            return (SECTION_INTERNET);
-        }
-        goto INVALID;
-    case 'L':
-        if (!strcmp (ptr, "LIBRARY")) {
-            return (SECTION_LIBRARY);
+        if (!strcmp (section, "internet")) {
+            return (RC_SECTION_INTERNET);
         }
         goto INVALID;
-    case 'M':
-        if (!strcmp (ptr, "MISC")) {
-            return (SECTION_MISC);
-        }
-        if (!strcmp (ptr, "MULTIMEDIA")) {
-            return (SECTION_MULTIMEDIA);
+    case 'l':
+        if (!strcmp (section, "library")) {
+            return (RC_SECTION_LIBRARY);
         }
         goto INVALID;
-    case 'O':
-        if (!strcmp (ptr, "OFFICE")) {
-            return (SECTION_OFFICE);
+    case 'm':
+        if (!strcmp (section, "misc")) {
+            return (RC_SECTION_MISC);
+        }
+        if (!strcmp (section, "multimedia")) {
+            return (RC_SECTION_MULTIMEDIA);
         }
         goto INVALID;
-    case 'P':
-        if (!strcmp (ptr, "PIM")) {
-            return (SECTION_PIM);
+    case 'o':
+        if (!strcmp (section, "office")) {
+            return (RC_SECTION_OFFICE);
         }
         goto INVALID;
-    case 'S':
-        if (!strcmp (ptr, "SYSTEM")) {
-            return (SECTION_SYSTEM);
+    case 'p':
+        if (!strcmp (section, "pim")) {
+            return (RC_SECTION_PIM);
         }
         goto INVALID;
-    case 'U':
-        if (!strcmp (ptr, "UTIL")) {
-            return (SECTION_UTIL);
+    case 's':
+        if (!strcmp (section, "system")) {
+            return (RC_SECTION_SYSTEM);
         }
         goto INVALID;
-    case 'X':
-        if (!strcmp (ptr, "XAPP")) {
-            return (SECTION_XAPP);
+    case 'u':
+        if (!strcmp (section, "util")) {
+            return (RC_SECTION_UTIL);
+        }
+        goto INVALID;
+    case 'x':
+        if (!strcmp (section, "xapp")) {
+            return (RC_SECTION_XAPP);
         }
         goto INVALID;
     }
 
-    return (SECTION_MISC);
+    return (RC_SECTION_MISC);
 
   INVALID:
     rc_debug (RC_DEBUG_LEVEL_WARNING, "invalid section name %s\n", section);
 
-    return (SECTION_MISC);
+    return (RC_SECTION_MISC);
 }

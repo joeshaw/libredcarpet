@@ -3,32 +3,17 @@
 
 #include <glib.h>
 
-typedef enum _RCPackageImportance RCPackageImportance;
-
 typedef struct _RCPackageUpdate RCPackageUpdate;
 
 typedef GSList RCPackageUpdateSList;
 
-#include <time.h>
+#include "rc-package.h"
+#include "rc-package-spec.h"
+#include "rc-package-importance.h"
 
 #include <gnome-xml/tree.h>
 
-#include <libredcarpet/rc-package.h>
-#include <libredcarpet/rc-package-spec.h>
-
-enum _RCPackageImportance {
-    RC_IMPORTANCE_INVALID = -1,
-
-    RC_IMPORTANCE_NECESSARY,
-    RC_IMPORTANCE_URGENT,
-    RC_IMPORTANCE_SUGGESTED,
-    RC_IMPORTANCE_FEATURE,
-    RC_IMPORTANCE_MINOR,
-
-    RC_IMPORTANCE_NEW,
-
-    RC_IMPORTANCE_MAX
-};
+#include <time.h>
 
 struct _RCPackageUpdate {
     RCPackageSpec spec;
@@ -63,10 +48,6 @@ void rc_package_update_slist_free (RCPackageUpdateSList *update_slist);
 
 RCPackageUpdateSList
 *rc_package_update_slist_sort (RCPackageUpdateSList *old_slist);
-
-RCPackageImportance rc_string_to_package_importance (const gchar *importance);
-
-const gchar *rc_package_importance_to_string (RCPackageImportance importance);
 
 xmlNode *rc_package_update_to_xml_node (RCPackageUpdate *update);
 

@@ -1,5 +1,5 @@
 /* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
-/* rc-package-section.h
+/* rc-package-importance.h
  *
  * Copyright (C) 2000, 2001 Ximian, Inc.
  *
@@ -19,33 +19,29 @@
  * 02111-1307, USA.
  */
 
-#ifndef _RC_PACKAGE_SECTION_H
-#define _RC_PACKAGE_SECTION_H
+#ifndef _RC_PACKAGE_IMPORTANCE_H
+#define _RC_PACKAGE_IMPORTANCE_H
 
 #include <glib.h>
 
-typedef enum _RCPackageSection RCPackageSection;
+typedef enum _RCPackageImportance RCPackageImportance;
 
-enum _RCPackageSection {
-    RC_SECTION_OFFICE = 0,
-    RC_SECTION_IMAGING,
-    RC_SECTION_PIM,
-    RC_SECTION_GAME,
-    RC_SECTION_MULTIMEDIA,
-    RC_SECTION_INTERNET,
-    RC_SECTION_UTIL,
-    RC_SECTION_SYSTEM,
-    RC_SECTION_DOC,
-    RC_SECTION_DEVEL,
-    RC_SECTION_DEVELUTIL,
-    RC_SECTION_LIBRARY,
-    RC_SECTION_XAPP,
-    RC_SECTION_MISC,
-    RC_SECTION_LAST
+enum _RCPackageImportance {
+    RC_IMPORTANCE_INVALID = -1,
+
+    RC_IMPORTANCE_NECESSARY,
+    RC_IMPORTANCE_URGENT,
+    RC_IMPORTANCE_SUGGESTED,
+    RC_IMPORTANCE_FEATURE,
+    RC_IMPORTANCE_MINOR,
+
+    RC_IMPORTANCE_NEW,
+
+    RC_IMPORTANCE_MAX
 };
 
-const gchar *rc_package_section_to_string (RCPackageSection section);
+const gchar *rc_package_importance_to_string (RCPackageImportance importance);
 
-RCPackageSection rc_string_to_package_section (const gchar *section);
+RCPackageImportance rc_string_to_package_importance (const gchar *importance);
 
 #endif

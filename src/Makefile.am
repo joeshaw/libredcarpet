@@ -41,6 +41,8 @@ libredcarpet_a_SOURCES =		\
 	rc-package-dep.h		\
 	rc-package-info.c		\
 	rc-package-info.h		\
+	rc-package-importance.c		\
+	rc-package-importance.h		\
 	rc-package-update.c		\
 	rc-package-update.h		\
 	rc-package-set.c		\

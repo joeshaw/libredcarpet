@@ -1,5 +1,32 @@
 2001-01-19  Ian Peters  <itp@helixcode.com>
 
+	* rc-package-info.c (debian_packages_helper): replace strcmp mess
+	with call to rc_debman_section_to_package_section
+
+	* rc-package-importance.c, rc-package-importance.h: added.
+	contains the RCPackageImportance stuff moved from
+	rc-package-update.[ch], and optimized a bit.
+
+	* rc-package-update.c, rc-package-update.h: remove
+	RCPackageImportance stuff.
+
+	* Makefile.am: add rc-package-importance.[ch] to
+	libredcarpet_a_SOURCES
+
+	* rc-package-update.h: rename SECTION_* to RC_SECTION_*
+
+	* rc-package-update.c: ditto.
+	(rc_package_update_to_string): change strings output from
+	SECTION_FOO to foo
+	(rc_string_to_package_update): ditto
+
+	* rc-debman-general.c (rc_debman_section_to_package_section):
+	s/SECTION_/RC_SECTION_/
+
+	* rc-rpmman.c (rc_rpmman_check_match): s/SECTION_/RC_SECTION_/
+
+2001-01-19  Ian Peters  <itp@helixcode.com>
+
 	* rc-package-update.c (rc_xml_node_to_package_update):
 	s/"installed_size"/"installedsize"/ so we stop getting installed
 	size's of 0

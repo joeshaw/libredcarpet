@@ -451,7 +451,7 @@ rc_rpmman_read_header (Header hdr, gchar **name, guint32 *epoch,
     if (section) {
         gchar *tmpsection;
 
-        *section = SECTION_MISC;
+        *section = RC_SECTION_MISC;
 
         headerGetEntry (hdr, RPMTAG_GROUP, &type, (void **)&tmpsection,
                         &count);
@@ -459,77 +459,77 @@ rc_rpmman_read_header (Header hdr, gchar **name, guint32 *epoch,
         if (count && (type == RPM_STRING_TYPE) && tmpsection &&
             tmpsection[0]) {
             if (!g_strcasecmp (tmpsection, "Amusements/Games")) {
-                *section = SECTION_GAME;
+                *section = RC_SECTION_GAME;
             } else if (!g_strcasecmp (tmpsection, "Amusements/Graphics")) {
-                *section = SECTION_IMAGING;
+                *section = RC_SECTION_IMAGING;
             } else if (!g_strcasecmp (tmpsection, "Applications/Archiving")) {
-                *section = SECTION_UTIL;
+                *section = RC_SECTION_UTIL;
             } else if (!g_strcasecmp (tmpsection,
                                       "Applications/Communications")) {
-                *section = SECTION_INTERNET;
+                *section = RC_SECTION_INTERNET;
             } else if (!g_strcasecmp (tmpsection, "Applications/Databases")) {
-                *section = SECTION_DEVELUTIL;
+                *section = RC_SECTION_DEVELUTIL;
             } else if (!g_strcasecmp (tmpsection, "Applications/Editors")) {
-                *section = SECTION_UTIL;
+                *section = RC_SECTION_UTIL;
             } else if (!g_strcasecmp (tmpsection, "Applications/Emulators")) {
-                *section = SECTION_GAME;
+                *section = RC_SECTION_GAME;
             } else if (!g_strcasecmp (tmpsection,
                                       "Applications/Engineering")) {
-                *section = SECTION_MISC;
+                *section = RC_SECTION_MISC;
             } else if (!g_strcasecmp (tmpsection, "Applications/File")) {
-                *section = SECTION_UTIL;
+                *section = RC_SECTION_UTIL;
             } else if (!g_strcasecmp (tmpsection, "Applications/Internet")) {
-                *section = SECTION_INTERNET;
+                *section = RC_SECTION_INTERNET;
             } else if (!g_strcasecmp (tmpsection, "Applications/Multimedia")) {
-                *section = SECTION_MULTIMEDIA;
+                *section = RC_SECTION_MULTIMEDIA;
             } else if (!g_strcasecmp (tmpsection,
                                       "Applications/Productivity")) {
-                *section = SECTION_PIM;
+                *section = RC_SECTION_PIM;
             } else if (!g_strcasecmp (tmpsection, "Applications/Publishing")) {
-                *section = SECTION_MISC;
+                *section = RC_SECTION_MISC;
             } else if (!g_strcasecmp (tmpsection, "Applications/System")) {
-                *section = SECTION_SYSTEM;
+                *section = RC_SECTION_SYSTEM;
             } else if (!g_strcasecmp (tmpsection, "Applications/Text")) {
-                *section = SECTION_UTIL;
+                *section = RC_SECTION_UTIL;
             } else if (!g_strcasecmp (tmpsection, "Development/Debuggers")) {
-                *section = SECTION_DEVELUTIL;
+                *section = RC_SECTION_DEVELUTIL;
             } else if (!g_strcasecmp (tmpsection, "Development/Languages")) {
-                *section = SECTION_DEVEL;
+                *section = RC_SECTION_DEVEL;
             } else if (!g_strcasecmp (tmpsection, "Development/Libraries")) {
-                *section = SECTION_LIBRARY;
+                *section = RC_SECTION_LIBRARY;
             } else if (!g_strcasecmp (tmpsection, "Development/System")) {
-                *section = SECTION_DEVEL;
+                *section = RC_SECTION_DEVEL;
             } else if (!g_strcasecmp (tmpsection, "Development/Tools")) {
-                *section = SECTION_DEVELUTIL;
+                *section = RC_SECTION_DEVELUTIL;
             } else if (!g_strcasecmp (tmpsection,
                                       "System Environment/Base")) {
-                *section = SECTION_SYSTEM;
+                *section = RC_SECTION_SYSTEM;
             } else if (!g_strcasecmp (tmpsection,
                                       "System Environment/Daemons")) {
-                *section = SECTION_SYSTEM;
+                *section = RC_SECTION_SYSTEM;
             } else if (!g_strcasecmp (tmpsection,
                                       "System Environment/Kernel")) {
-                *section = SECTION_SYSTEM;
+                *section = RC_SECTION_SYSTEM;
             } else if (!g_strcasecmp (tmpsection,
                                       "System Environment/Libraries")) {
-                *section = SECTION_SYSTEM;
+                *section = RC_SECTION_SYSTEM;
             } else if (!g_strcasecmp (tmpsection,
                                       "System Environment/Shells")) {
-                *section = SECTION_SYSTEM;
+                *section = RC_SECTION_SYSTEM;
             } else if (!g_strcasecmp (tmpsection,
                                       "User Interface/Desktops")) {
-                *section = SECTION_XAPP;
+                *section = RC_SECTION_XAPP;
             } else if (!g_strcasecmp (tmpsection,
                                       "User Interface/X")) {
-                *section = SECTION_XAPP;
+                *section = RC_SECTION_XAPP;
             } else if (!g_strcasecmp (tmpsection,
                                       "User Interface/X Hardware Support")) {
-                *section = SECTION_XAPP;
+                *section = RC_SECTION_XAPP;
             } else {
-                *section = SECTION_MISC;
+                *section = RC_SECTION_MISC;
             }
         } else {
-            *section = SECTION_MISC;
+            *section = RC_SECTION_MISC;
         }
     }
 
@@ -810,7 +810,7 @@ rc_rpmman_check_match (Header hdr, RCPackage *pkg)
     gchar *version = NULL, *release = NULL;
     gchar *summary = NULL, *description = NULL;
     guint32 size = 0, epoch = 0;
-    RCPackageSection section = SECTION_MISC;
+    RCPackageSection section = RC_SECTION_MISC;
 
     rc_rpmman_read_header (hdr, NULL, &epoch, &version, &release, &section,
                            &size, &summary, &description);

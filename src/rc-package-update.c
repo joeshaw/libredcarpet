@@ -95,55 +95,6 @@ rc_package_update_slist_sort (RCPackageUpdateSList *old_slist)
     return (new_slist);
 }
 
-RCPackageImportance
-rc_string_to_package_importance (const gchar *importance)
-{
-    g_return_val_if_fail (importance, RC_IMPORTANCE_INVALID);
-    
-    if (!g_strcasecmp (importance, "necessary")) {
-        return (RC_IMPORTANCE_NECESSARY);
-    } else if (!g_strcasecmp (importance, "urgent")) {
-        return (RC_IMPORTANCE_URGENT);
-    } else if (!g_strcasecmp (importance, "suggested")) {
-        return (RC_IMPORTANCE_SUGGESTED);
-    } else if (!g_strcasecmp (importance, "feature")) {
-        return (RC_IMPORTANCE_FEATURE);
-    } else if (!g_strcasecmp (importance, "minor")) {
-        return (RC_IMPORTANCE_MINOR);
-    } else if (!g_strcasecmp (importance, "new")) {
-        return (RC_IMPORTANCE_NEW);
-    } else {
-        return (RC_IMPORTANCE_INVALID);
-    }
-}
-
-const gchar *
-rc_package_importance_to_string (RCPackageImportance importance)
-{
-    switch (importance) {
-    case RC_IMPORTANCE_NECESSARY:
-        return ("necessary");
-        break;
-    case RC_IMPORTANCE_URGENT:
-        return ("urgent");
-        break;
-    case RC_IMPORTANCE_SUGGESTED:
-        return ("suggested");
-        break;
-    case RC_IMPORTANCE_FEATURE:
-        return ("feature");
-        break;
-    case RC_IMPORTANCE_MINOR:
-        return ("minor");
-        break;
-    case RC_IMPORTANCE_NEW:
-        return ("new");
-        break;
-    default:
-        return ("(invalid)");
-    }
-}
-
 xmlNode *
 rc_package_update_to_xml_node (RCPackageUpdate *update)
 {
