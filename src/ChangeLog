@@ -1,3 +1,9 @@
+2002-10-31  Joe Shaw  <joe@ximian.com>
+
+	* distributions.xml: Add Mandrake 9 and SuSE 8.1 as supported
+	distros.  Change Red Hat 8 to supported.  Add Debian Woody as
+	presupported.
+
 2002-10-23  Joe Shaw  <joe@ximian.com>
 
 	* rc-rpmman.c (rc_rpmman_database_filename): Added.  Returns the

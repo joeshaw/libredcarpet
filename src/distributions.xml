@@ -153,6 +153,17 @@
 			<file source="/etc/mandrake-release" substring="8.2"/>
 		</detect>
 	</distro>
+	<distro>
+		<name>Linux Mandrake</name>
+		<version>9.0</version>
+		<arch>i586</arch>
+		<type>rpm</type>
+		<target>mandrake-90-i586</target>
+		<status>supported</status>
+		<detect>
+			<file source="/etc/mandrake-release" substring="9.0"/>
+		</detect>
+	</distro>
 
 	<distro>
 		<name>Red Hat Linux</name>
@@ -240,7 +251,7 @@
 		<arch>i386</arch>
 		<type>rpm</type>
 		<target>redhat-80-i386</target>
-		<status>presupported</status>
+		<status>supported</status>
 		<detect>
 			<file source="/etc/redhat-release" substring="8.0"/>
 		</detect>
@@ -353,6 +364,17 @@
 			<file source="/etc/SuSE-release" substring="8.0"/>
 		</detect>
 	</distro>
+	<distro>
+		<name>SuSE Linux</name>
+		<version>8.1</version>
+		<arch>i386</arch>
+		<type>rpm</type>
+		<target>suse-81-i386</target>
+		<status>supported</status>
+		<detect>
+			<file source="/etc/SuSE-release" substring="8.1"/>
+		</detect>
+	</distro>
 
 	<distro>
 		<name>Debian GNU/Linux</name>
@@ -363,6 +385,17 @@
 		<status>supported</status>
 		<detect>
 			<file source="/etc/debian_version" substring="2.2"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>Debian GNU/Linux</name>
+		<version>3.0 (Woody)</version>
+		<arch>i386</arch>
+		<type>dpkg</type>
+		<target>debian-woody-i386</target>
+		<status>presupported</status>
+		<detect>
+			<file source="/etc/debian_version" substring="3.0"/>
 		</detect>
 	</distro>
 
