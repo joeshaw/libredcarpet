@@ -29,7 +29,7 @@
 #include <rpm/misc.h>
 #include <rpm/header.h>
 
-#if 0
+#if 1
 #    define RPM_ROOTDIR "/home/itp/rpm"
 #else
 #    define RPM_ROOTDIR "/"
@@ -787,9 +787,6 @@ parse_versions (gchar **inputs, guint32 **epochs, gchar ***versions,
 
         g_strfreev (t1);
         g_strfreev (t2);
-
-        printf ("%s becomes %d %s %s\n", inputs[i], (*epochs)[i],
-                (*versions)[i], (*releases)[i]);
     }
 }
 
@@ -885,13 +882,16 @@ rc_rpmman_depends_fill (RCPackage *pkg, Header hdr)
 
             pkg->requires = g_slist_append (pkg->requires, depl);
         }
+
+        g_free (versions[i]);
+        g_free (releases[i]);
     }
 
     free (names);
     free (verrels);
 
-    g_strfreev (versions);
-    g_strfreev (releases);
+    g_free (versions);
+    g_free (releases);
     g_free (epochs);
 
     names = NULL;
@@ -963,6 +963,9 @@ rc_rpmman_depends_fill (RCPackage *pkg, Header hdr)
         depl = g_slist_append (NULL, dep);
 
         pkg->conflicts = g_slist_append (pkg->conflicts, depl);
+
+        g_free (versions[i]);
+        g_free (releases[i]);
     }
 
     /* Only have to free the char** ones */
@@ -970,8 +973,8 @@ rc_rpmman_depends_fill (RCPackage *pkg, Header hdr)
     free (names);
     free (verrels);
 
-    g_strfreev (versions);
-    g_strfreev (releases);
+    g_free (versions);
+    g_free (releases);
     g_free (epochs);
 } /* rc_rpmman_depends_fill */
 
