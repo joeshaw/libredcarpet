@@ -1,5 +1,7 @@
 2001-06-19  Vladimir Vukicevic  <vladimir@ximian.com>
 
+	* rc-package-info.c: forgot to merge
+
 	* merge in from libredcarpet-or-dep-fixup branch
 	
 	* Makefile.am: dist rc-deps-private.h
