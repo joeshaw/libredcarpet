@@ -1,3 +1,14 @@
+2002-03-20  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-world.c (rc_world_get_best_upgrade): Added.  Returns the best
+	upgrade for a package, or NULL if none is available.  Right now
+	this function just returns the package of the same name with the
+	highest version number, but it would be nice to do something a bit
+	more nuanced later.
+	(rc_world_foreach_system_package_with_upgrade): Added.  Iterates
+	across the installed system packages, invoking the callback for
+	each one that has an upgrade.
+
 2002-03-19  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-world.c (rc_world_get_package): Added.  Looks up a

@@ -275,7 +275,7 @@ assemble_upgrade_cb (RCPackage *pkg1,
     p2 = rc_package_to_str (pkg2);
 
     str = g_strdup_printf ("%-7s %s => %s",
-                           "upgrade", p1, p2);
+                           "upgrade", p2, p1);
 
     g_free (p1);
     g_free (p2);
@@ -337,6 +337,21 @@ soln_cb (RCResolverContext *context, gpointer user_data)
 }
 
 static void
+trial_upgrade_cb (RCPackage *original, RCPackage *upgrade, gpointer user_data)
+{
+    RCResolver *resolver = user_data;
+    char *p1, *p2;
+
+    rc_resolver_add_package_to_install (resolver, upgrade);
+
+    p1 = rc_package_to_str (original);
+    p2 = rc_package_to_str (upgrade);
+    g_print (">!> Upgrading %s => %s\n", p1, p2);
+    g_free (p1);
+    g_free (p2);
+}
+
+static void
 parse_xml_trial (xmlNode *node)
 {
     RCResolver *resolver;
@@ -362,7 +377,7 @@ parse_xml_trial (xmlNode *node)
         if (! g_strcasecmp (node->name, "verify")) {
 
             verify = TRUE;
-            
+
         } else if (! g_strcasecmp (node->name, "current")) {
 
             xmlChar *channel_name = xml_get_prop (node, "channel");
@@ -420,13 +435,28 @@ parse_xml_trial (xmlNode *node)
 
             package = get_package ("SYSTEM", package_name);
             if (package) {
-                g_print (">!> Uninstalling %s", package_name);
+                g_print (">!> Uninstalling %s\n", package_name);
                 rc_resolver_add_package_to_remove (resolver, package);
             } else {
                 g_warning ("Unknown system package %s", package_name);
             }
 
             xmlFree (package_name);
+
+        } else if (! g_strcasecmp (node->name, "upgrade")) {
+            
+            int count;
+
+            g_print (">!> Checking for upgrades...\n");
+
+            count = rc_world_foreach_system_package_with_upgrade (rc_get_world (),
+                                                                  trial_upgrade_cb,
+                                                                  resolver);
+
+            if (count == 0)
+                g_print (">!> System is up-to-date, no upgrades required\n");
+            else
+                g_print (">!> Upgrading %d package%s\n", count, count > 1 ? "s" : "");
 
         } else {
             g_warning ("Unknown tag '%s' in trial", node->name);

@@ -574,6 +574,77 @@ rc_world_foreach_upgrade (RCWorld *world,
     return info.count;
 }
 
+static void
+get_best_upgrade_cb (RCPackage *package, gpointer user_data)
+{
+    RCPackage **best_upgrade = user_data;
+    if (rc_package_spec_compare (*best_upgrade, package) < 0) {
+        *best_upgrade = package;
+    }
+}
+
+RCPackage *
+rc_world_get_best_upgrade (RCWorld *world, RCPackage *package)
+{
+    RCPackage *best_upgrade;
+
+    g_return_val_if_fail (world != NULL, NULL);
+    g_return_val_if_fail (package != NULL, NULL);
+
+    best_upgrade = package;
+
+    rc_world_foreach_upgrade (world, package, RC_WORLD_ANY_NON_SYSTEM, get_best_upgrade_cb, &best_upgrade);
+
+    if (best_upgrade == package)
+        best_upgrade = NULL;
+
+    return best_upgrade;
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+struct SystemUpgradeInfo {
+    RCWorld *world;
+    RCPackagePairFn fn;
+    gpointer user_data;
+    int count;
+};
+
+static void
+system_upgrade_cb (RCPackage *package, gpointer user_data)
+{
+    struct SystemUpgradeInfo *info = user_data;
+    RCPackage *upgrade = rc_world_get_best_upgrade (info->world, package);
+
+    if (upgrade) {
+        if (info->fn)
+            info->fn (package, upgrade, info->user_data);
+        ++info->count;
+    }
+}
+
+int
+rc_world_foreach_system_package_with_upgrade (RCWorld *world,
+                                              RCPackagePairFn fn,
+                                              gpointer user_data)
+{
+    struct SystemUpgradeInfo info;
+
+    g_return_val_if_fail (world != NULL, -1);
+    
+    info.world = world;
+    info.fn = fn;
+    info.user_data = user_data;
+    info.count = 0;
+
+    rc_world_foreach_package (world, RC_WORLD_SYSTEM_PACKAGES,
+                              system_upgrade_cb, &info);
+    
+    return info.count;
+}
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
 int
 rc_world_foreach_providing_package (RCWorld *world, RCPackageDep *dep,
                                     RCChannel *channel,

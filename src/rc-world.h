@@ -73,6 +73,11 @@ int        rc_world_foreach_upgrade         (RCWorld *world, RCPackage *package,
                                              RCChannel *channel,
                                              RCPackageFn fn, gpointer user_data);
 
+RCPackage *rc_world_get_best_upgrade        (RCWorld *world, RCPackage *package);
+
+int        rc_world_foreach_system_package_with_upgrade (RCWorld *world, 
+                                                         RCPackagePairFn fn, gpointer user_data);
+
 int        rc_world_foreach_providing_package (RCWorld *world, RCPackageDep *dep, 
                                                RCChannel *channel,
                                                RCPackageAndSpecFn fn, gpointer user_data);
