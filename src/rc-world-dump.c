@@ -189,6 +189,10 @@ rc_world_undump_from_xml (RCWorld *world,
             g_free (alias);
             g_free (id_str);
             g_free (subd_str);
+
+            g_free (priority_str);
+            g_free (priority_unsubd_str);
+            g_free (priority_current_str);
         }
 
         channel_node = channel_node->next;
