@@ -1,3 +1,11 @@
+2001-04-18  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c: Make sure that the require is added with the joined
+	name before we start adding other things, so that we don't get into
+	a nasty loop.  Also break out of a loop of daps after we
+	upgrade_or_remove, as we probably lost the pointer at this point.
+	The duplicate dep bug exists now.
+
 2001-04-18  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c (fill_depends): attempt to handle both the the pre
