@@ -45,6 +45,8 @@ typedef struct _RCWorldUndumpClass RCWorldUndumpClass;
 
 struct _RCWorldUndump {
     RCWorldStore parent;
+
+    GSList *subscriptions; /* RCChannel */
 };
 
 struct _RCWorldUndumpClass {

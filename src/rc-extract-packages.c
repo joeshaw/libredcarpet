@@ -587,6 +587,9 @@ rc_extract_packages_from_undump_buffer (const guint8 *data, int len,
                 rc_channel_set_system (system_channel);
                 rc_channel_set_hidden (system_channel);
             }
+
+            if (channel_callback)
+                channel_callback (system_channel, FALSE, user_data);
             
             subcount = rc_extract_packages_from_xml_node (channel_node,
                                                           system_channel,

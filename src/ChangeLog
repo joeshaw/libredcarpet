@@ -1,3 +1,24 @@
+2003-11-11  Joe Shaw  <joe@ximian.com>
+
+	* rc-extract-packages.c (rc_extract_package_from_undump_buffer):
+	Call the channel callback for the system channel too.
+
+	* rc-world-undump.c (rc_world_undump_class_init): Implement the
+	get_subscribed_fn and set_subscribed_fn virtual methods since we
+	don't want these saved to our subscriptions.xml file.
+	(rc_world_undump_get_subscription): Check to see if the channel is
+	in our GSList of subscribed channels.
+	(rc_world_undump_set_subscription): Add or remove the channel
+	to/from our list of subscribed channels.
+	(rc_world_undump_finalize): Unref the channels in our
+	subscriptions list.
+	(add_channel_cb): Don't set the subscription if the channel is a
+	system channel.
+
+	* rc-world-undump.h (RCWorldUndump): Add a GSList of RCChannels
+	for storing our subscriptions; we never want to save undumped
+	subscriptions to disk.
+
 2003-11-06  Joe Shaw  <joe@ximian.com>
 
 	* distributions.xml: Add support for Fedora Core 1 (fedora-1-i386).
