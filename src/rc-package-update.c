@@ -30,6 +30,8 @@ rc_package_update_new ()
 {
     RCPackageUpdate *update = g_new0 (RCPackageUpdate, 1);
 
+    rc_package_spec_set_name ((RCPackageSpec*)update, "");
+
     return (update);
 } /* rc_package_update_new */
 

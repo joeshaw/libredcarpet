@@ -228,6 +228,7 @@ struct _RCDistro {
     RCArch               arch;
     RCDistroPackageType  type;
     char                *target;
+    char                *role;
     RCDistroStatus       status;
     time_t               death_date;
 };
@@ -298,6 +299,7 @@ typedef enum {
     PARSER_ARCH,
     PARSER_TYPE,
     PARSER_TARGET,
+    PARSER_ROLE,
     PARSER_STATUS,
     PARSER_ENDDATE,
     PARSER_DETECT,
@@ -438,6 +440,14 @@ sax_start_element (void *data, const xmlChar *name, const xmlChar **attrs)
         return;
     }
 
+    if (!strcmp (name, "primary_role")) {
+        if (parser_get_state (state) == PARSER_DISTRO)
+            parser_push_state (state, PARSER_ROLE);
+        else
+            parser_push_state (state, PARSER_UNKNOWN);
+        return;
+    }
+
     if (!strcmp (name, "status")) {
         if (parser_get_state (state) == PARSER_DISTRO)
             parser_push_state (state, PARSER_STATUS);
@@ -570,6 +580,9 @@ sax_end_element (void *data, const xmlChar *name)
         break;
     case PARSER_TARGET:
         state->cur_distro->target = parser_get_chars (state);
+        break;
+    case PARSER_ROLE:
+        state->cur_distro->role = parser_get_chars (state);
         break;
     case PARSER_STATUS:
         tmp = parser_get_chars (state);

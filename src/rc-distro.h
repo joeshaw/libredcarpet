@@ -60,6 +60,7 @@ const char          *rc_distro_get_version      (RCDistro *);
 RCArch               rc_distro_get_arch         (RCDistro *);
 RCDistroPackageType  rc_distro_get_package_type (RCDistro *);
 const char          *rc_distro_get_target       (RCDistro *);
+const char          *rc_distro_get_role         (RCDistro *);
 RCDistroStatus       rc_distro_get_status       (RCDistro *);
 time_t               rc_distro_get_death_date   (RCDistro *);
 

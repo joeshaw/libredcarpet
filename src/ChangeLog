@@ -1,3 +1,9 @@
+2004-11-16  James Willcox  <james@ximian.com>
+
+	* rc-distro.c: (sax_start_element), (sax_end_element):
+	* rc-distro.h: add rc_distro_get_role()
+	* rc-package-update.c: (rc_package_update_new): set the name on the spec
+
 2004-11-08  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-package.c (rc_package_set_channel): Increment channel's reference
