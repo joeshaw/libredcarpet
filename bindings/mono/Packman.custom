@@ -22,3 +22,16 @@
             rc_packman_set_global ((value == null) ? IntPtr.Zero : value.Handle);
         }
     }
+
+    [DllImport("libredcarpet")]
+    static extern IntPtr rc_distman_new();
+
+    public static RC.Packman Distman() {
+        IntPtr raw_ret = rc_distman_new();
+        RC.Packman ret;
+        if (raw_ret == IntPtr.Zero)
+            ret = null;
+        else
+            ret = (RC.Packman) GLib.Object.GetObject(raw_ret, true);
+        return ret;
+    }

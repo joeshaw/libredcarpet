@@ -1,5 +1,9 @@
 2004-11-08  Tambet Ingo  <tambet@ximian.com>
 
+	* Packman.custom: Implement Distman() manually.
+
+	* RC.metadata: Hide Packman.Distman().
+
 	* generated/Package.cs: Comment out constructor Package(IntPtr raw).
 	It's implemented in .custom file with modifications.
 

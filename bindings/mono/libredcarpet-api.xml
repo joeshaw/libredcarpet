@@ -573,9 +573,6 @@
           <parameter type="RCPackageSpec*" name="spec2" />
         </parameters>
       </method>
-      <method cname="rc_distman_new" shared="true" name="Distman">
-        <return-type type="RCPackman*" />
-      </method>
     </object>
     <object name="Pending" cname="RCPending" parent="GObject">
       <field cname="description" type="char*" />
@@ -3337,6 +3334,9 @@
         <parameters>
           <parameter type="const-gchar*" name="munged" />
         </parameters>
+      </method>
+      <method name="DistmanNew" cname="rc_distman_new" shared="true" hidden="1">
+        <return-type type="RCPackman*" />
       </method>
       <method name="ErrorQuark" cname="rc_error_quark" shared="true" hidden="1">
         <return-type type="GQuark" />
