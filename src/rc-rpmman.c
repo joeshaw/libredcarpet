@@ -51,6 +51,8 @@ static void rc_rpmman_init       (RCRpmman *obj);
 
 static GtkObjectClass *parent_class;
 
+extern gchar *rc_libdir;
+
 guint
 rc_rpmman_get_type (void)
 {
@@ -2264,6 +2266,7 @@ rc_rpmman_init (RCRpmman *obj)
     gchar *tmp;
     int flags;
     gchar **rpm_version;
+    gchar *so_file;
 
 #ifdef STATIC_RPM
 
@@ -2281,11 +2284,18 @@ rc_rpmman_init (RCRpmman *obj)
         return;
     }
 
-    obj->rpm_lib = g_module_open (LIBDIR "/rc-rpm-helper.so", 0);
+    so_file = g_strdup_printf ("%s/rc-rpm-helper.so", rc_libdir);
+
+    obj->rpm_lib = g_module_open (so_file, 0);
+
+    g_free (so_file);
 
     if (!obj->rpm_lib) {
-        obj->rpm_lib = g_module_open (
-            LIBDIR "/rc-rpm-helper-with-rpmio.so", 0);
+        so_file = g_strdup_printf ("%s/rc-rpm-helper.so", rc_libdir);
+
+        obj->rpm_lib = g_module_open (so_file, 0);
+
+        g_free (so_file);
     }
 
     if (!obj->rpm_lib) {

@@ -161,4 +161,6 @@ guint rc_packman_get_error (RCPackman *packman);
 
 const gchar *rc_packman_get_reason (RCPackman *packman);
 
+void rc_packman_set_libdir (const gchar *libdir);
+
 #endif /* _RC_PACKMAN_H */

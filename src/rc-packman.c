@@ -25,6 +25,14 @@
 #include "rc-packman.h"
 #include "rc-packman-private.h"
 
+gchar *rc_libdir = LIBDIR;
+
+void
+rc_packman_set_libdir (const gchar *libdir)
+{
+    rc_libdir = g_strdup (libdir);
+}
+
 static void rc_packman_class_init (RCPackmanClass *klass);
 static void rc_packman_init       (RCPackman *obj);
 
