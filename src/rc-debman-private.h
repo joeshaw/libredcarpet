@@ -33,6 +33,9 @@ struct _RCDebmanPrivate {
 
     const gchar *status_file;
     gchar *rc_status_file;
+
+    time_t db_mtime;
+    guint db_watcher_cb;
 };
 
 #endif /* _RC_DEBMAN_PRIVATE_H */

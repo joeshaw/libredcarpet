@@ -81,6 +81,8 @@ struct _RCPackmanClass {
     void (*transact_progress)(RCPackman *packman, gulong amount, gulong total);
     void (*transact_done)(RCPackman *packman);
 
+    void (*database_changed)(RCPackman *packman);
+
     /* Virtual functions */
 
     void (*rc_packman_real_transact)(RCPackman *packman,
@@ -106,6 +108,10 @@ struct _RCPackmanClass {
 
     RCPackage *(*rc_packman_real_find_file)(RCPackman *packman,
                                             const gchar *filename);
+
+    gboolean (*rc_packman_real_lock)(RCPackman *packman);
+
+    void (*rc_packman_real_unlock)(RCPackman *packman);
 };
 
 GType rc_packman_get_type (void);
@@ -135,6 +141,10 @@ RCVerificationSList *rc_packman_verify (RCPackman *packman,
                                         guint32    type);
 
 RCPackage *rc_packman_find_file (RCPackman *packman, const gchar *filename);
+
+gboolean rc_packman_lock (RCPackman *packman);
+
+void rc_packman_unlock (RCPackman *packman);
 
 const gchar *rc_packman_get_file_extension(RCPackman *packman);
 

@@ -43,10 +43,17 @@
 typedef struct _RCRpmman      RCRpmman;
 typedef struct _RCRpmmanClass RCRpmmanClass;
 
+typedef enum {
+    RC_RPMMAN_DB_NONE = 0,
+    RC_RPMMAN_DB_RDONLY,
+    RC_RPMMAN_DB_RDWR
+} RCRpmmanDBStatus;
+
 struct _RCRpmman {
     RCPackman parent;
 
     rpmdb db;
+    int db_status;
 
     gchar *rpmroot;
 
@@ -55,6 +62,9 @@ struct _RCRpmman {
     guint micro_version;
 
     guint version;
+
+    guint db_watcher_cb;
+    time_t db_mtime;
 
 #ifndef STATIC_RPM
     GModule *rpm_lib;

@@ -51,6 +51,7 @@ enum SIGNALS {
     TRANSACT_STEP,
     TRANSACT_PROGRESS,
     TRANSACT_DONE,
+    DATABASE_CHANGED,
     LAST_SIGNAL
 };
 
@@ -144,6 +145,15 @@ rc_packman_class_init (RCPackmanClass *klass)
                       NULL, NULL,
                       rc_marshal_VOID__VOID,
                       G_TYPE_NONE, 0);
+
+    signals[DATABASE_CHANGED] =
+        g_signal_new ("database_changed",
+                      G_TYPE_FROM_CLASS (klass),
+                      G_SIGNAL_RUN_LAST,
+                      G_STRUCT_OFFSET (RCPackmanClass, database_changed),
+                      NULL, NULL,
+                      rc_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);
     
     /* Subclasses should provide real implementations of these functions, and
        we're just NULLing these for clarity (and paranoia!) */
@@ -154,6 +164,8 @@ rc_packman_class_init (RCPackmanClass *klass)
     klass->rc_packman_real_version_compare = NULL;
     klass->rc_packman_real_verify = NULL;
     klass->rc_packman_real_find_file = NULL;
+    klass->rc_packman_real_lock = NULL;
+    klass->rc_packman_real_unlock = NULL;
 }
 
 static void
@@ -396,6 +408,38 @@ rc_packman_find_file (RCPackman *packman, const gchar *filename)
     g_assert (klass->rc_packman_real_find_file);
 
     return (klass->rc_packman_real_find_file (packman, filename));
+}
+
+gboolean
+rc_packman_lock (RCPackman *packman)
+{
+    RCPackmanClass *klass;
+
+    g_return_val_if_fail (packman, FALSE);
+
+    rc_packman_clear_error (packman);
+
+    klass = RC_PACKMAN_GET_CLASS (packman);
+
+    g_assert (klass->rc_packman_real_lock);
+
+    return (klass->rc_packman_real_lock (packman));
+}
+
+void
+rc_packman_unlock (RCPackman *packman)
+{
+    RCPackmanClass *klass;
+
+    g_return_if_fail (packman);
+
+    rc_packman_clear_error (packman);
+
+    klass = RC_PACKMAN_GET_CLASS (packman);
+
+    g_assert (klass->rc_packman_real_unlock);
+
+    klass->rc_packman_real_unlock (packman);
 }
 
 void

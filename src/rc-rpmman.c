@@ -123,6 +123,101 @@ rc_rpm_read (RCRpmman *rpmman, void *buf, size_t size, size_t nmemb, FD_t fd)
     }
 }
 
+static void
+check_database (RCRpmman *rpmman)
+{
+    struct stat buf;
+
+    if (rpmman->version < 40000)
+        stat ("/var/lib/rpm/packages.rpm", &buf);
+    else
+        stat ("/var/lib/rpm/Packages", &buf);
+
+    if (buf.st_mtime != rpmman->db_mtime) {
+        g_signal_emit_by_name (RC_PACKMAN (rpmman), "database_changed");
+        rpmman->db_mtime = buf.st_mtime;
+    }
+}
+
+static gboolean
+database_check_func (RCRpmman *rpmman)
+{
+    check_database (rpmman);
+
+    return TRUE;
+}
+
+static void
+close_database (RCRpmman *rpmman)
+{
+    if (getenv ("RC_RPM_NO_DB"))
+        return;
+
+    rpmman->db_watcher_cb =
+        g_timeout_add (5000, (GSourceFunc) database_check_func,
+                       (gpointer) rpmman);
+
+    if (rpmman->db) {
+        rpmman->rpmdbClose (rpmman->db);
+        rpmman->db = NULL;
+        rpmman->db_status = RC_RPMMAN_DB_NONE;
+    }
+}
+
+static gboolean
+open_database (RCRpmman *rpmman, gboolean write)
+{
+    int flags;
+    gboolean root;
+
+    if (getenv ("RC_RPM_NO_DB"))
+        return FALSE;
+
+    if (rpmman->db)
+        close_database (rpmman);
+
+    root = !geteuid ();
+
+    if (!root && write) {
+        rc_packman_set_error (RC_PACKMAN (rpmman), RC_PACKMAN_ERROR_ABORT,
+                              "write access requires root privileges");
+        goto ERROR;
+    }
+
+    write ?
+        ((flags = O_RDWR) && (rpmman->db_status = RC_RPMMAN_DB_RDWR)) :
+        ((flags = O_RDONLY) && (rpmman->db_status = RC_RPMMAN_DB_RDONLY));
+
+    if (rpmman->rpmdbOpen (rpmman->rpmroot, &rpmman->db, flags, 0644)) {
+        rc_packman_set_error (RC_PACKMAN (rpmman), RC_PACKMAN_ERROR_ABORT,
+                              "rpmdbOpen failed");
+        goto ERROR;
+    }
+
+    if (root && rpmman->version >= 40003) {
+        if (!(rpmman->rpmExpandNumeric ("%{?__dbi_cdb:1}"))) {
+            int i;
+
+            for (i = 0; i < 16; i++) {
+                gchar *filename = g_strdup_printf (
+                    "%s/var/lib/rpm/__db.0%02d", rpmman->rpmroot, i);
+                unlink (filename);
+                g_free (filename);
+            }
+        }
+    }
+
+    g_source_remove (rpmman->db_watcher_cb);
+
+    return TRUE;
+
+  ERROR:
+    rc_packman_set_error (RC_PACKMAN (rpmman), RC_PACKMAN_ERROR_ABORT,
+                          "unable to open RPM database");
+    rpmman->db_status = RC_RPMMAN_DB_NONE;
+    return FALSE;
+}
+
 typedef struct _InstallState InstallState;
 
 struct _InstallState {
@@ -496,6 +591,14 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     RCRpmman *rpmman = RC_RPMMAN (packman);
     RCPackageSList *real_remove_packages = NULL;
     RCPackageSList *obsoleted = NULL;
+    gboolean close_db = FALSE;
+
+    if (rpmman->db_status != RC_RPMMAN_DB_RDWR) {
+        if (!open_database (rpmman, TRUE))
+            /* open_database sets intelligent error messages */
+            goto ERROR;
+        close_db = TRUE;
+    }
 
     if (getenv ("RC_JUST_KIDDING") || !perform)
         transaction_flags = RPMTRANS_FLAG_TEST;
@@ -756,13 +859,19 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     g_signal_emit_by_name (packman, "transact_done");
     GTKFLUSH;
 
-    return;
-
     rc_package_slist_unref (real_remove_packages);
+
+    if (close_db)
+        close_database (rpmman);
+
+    return;
 
   ERROR:
     rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                          "Unable to complete RPM transaction");
+                         "Unable to complete RPM transaction");
+
+    if (close_db)
+        close_database (rpmman);
 
     rc_package_slist_unref (real_remove_packages);
 } /* rc_rpmman_transact */
@@ -1424,11 +1533,28 @@ rc_rpmman_query_v3 (RCPackman *packman, const char *name)
 static RCPackageSList *
 rc_rpmman_query (RCPackman *packman, const char *name)
 {
-    if (RC_RPMMAN (packman)->major_version == 4) {
-        return (rc_rpmman_query_v4 (packman, name));
-    } else {
-        return (rc_rpmman_query_v3 (packman, name));
+    RCPackageSList *ret;
+    gboolean close_db = FALSE;
+
+    if ((RC_RPMMAN (packman))->db_status < RC_RPMMAN_DB_RDONLY) {
+        if (!open_database (RC_RPMMAN (packman), FALSE)) {
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "unable to query packages");
+            return NULL;
+        }
+        close_db = TRUE;
     }
+
+    if (RC_RPMMAN (packman)->major_version == 4) {
+        ret = rc_rpmman_query_v4 (packman, name);
+    } else {
+        ret = rc_rpmman_query_v3 (packman, name);
+    }
+
+    if (close_db)
+        close_database (RC_RPMMAN (packman));
+
+    return ret;
 }
 
 /* Query a file for rpm header information */
@@ -1588,6 +1714,16 @@ rc_rpmman_query_all (RCPackman *packman)
     int i;
     int count;
 #endif
+    gboolean close_db = FALSE;
+
+    if ((RC_RPMMAN (packman))->db_status < RC_RPMMAN_DB_RDONLY) {
+        if (!open_database (RC_RPMMAN (packman), FALSE)) {
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "unable to query packages");
+            return NULL;
+        }
+        close_db = TRUE;
+    }
 
     if (RC_RPMMAN (packman)->major_version == 4) {
         packages = rc_rpmman_query_all_v4 (packman);
@@ -1634,6 +1770,9 @@ rc_rpmman_query_all (RCPackman *packman)
 
     packages = g_slist_prepend (packages, internal);
 #endif
+
+    if (close_db)
+        close_database (RC_RPMMAN (packman));
 
     return packages;
 }
@@ -2117,11 +2256,40 @@ rc_rpmman_find_file_v3 (RCPackman *packman, const gchar *filename)
 static RCPackage *
 rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
 {
-    if (RC_RPMMAN (packman)->major_version == 4) {
-        return (rc_rpmman_find_file_v4 (packman, filename));
-    } else {
-        return (rc_rpmman_find_file_v3 (packman, filename));
+    RCPackage *ret;
+    gboolean close_db = FALSE;
+
+    if ((RC_RPMMAN (packman))->db_status < RC_RPMMAN_DB_RDONLY) {
+        if (!open_database (RC_RPMMAN (packman), FALSE)) {
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "unable to find file");
+            return NULL;
+        }
+        close_db = TRUE;
     }
+
+    if (RC_RPMMAN (packman)->major_version == 4) {
+        ret = rc_rpmman_find_file_v4 (packman, filename);
+    } else {
+        ret = rc_rpmman_find_file_v3 (packman, filename);
+    }
+
+    if (close_db)
+        close_database (RC_RPMMAN (packman));
+
+    return ret;
+}
+
+gboolean
+rc_rpmman_lock (RCPackman *packman)
+{
+    return (open_database (RC_RPMMAN (packman), TRUE));
+}
+
+void
+rc_rpmman_unlock (RCPackman *packman)
+{
+    close_database (RC_RPMMAN (packman));
 }
 
 static void
@@ -2129,9 +2297,7 @@ rc_rpmman_finalize (GObject *obj)
 {
     RCRpmman *rpmman = RC_RPMMAN (obj);
 
-    if (!getenv ("RC_NO_RPM_DB")) {
-        rpmman->rpmdbClose (rpmman->db);
-    }
+    close_database (rpmman);
 
 #ifndef STATIC_RPM
 #if 0
@@ -2163,6 +2329,8 @@ rc_rpmman_class_init (RCRpmmanClass *klass)
     packman_class->rc_packman_real_version_compare = rc_rpmman_version_compare;
     packman_class->rc_packman_real_verify = rc_rpmman_verify;
     packman_class->rc_packman_real_find_file = rc_rpmman_find_file;
+    packman_class->rc_packman_real_lock = rc_rpmman_lock;
+    packman_class->rc_packman_real_unlock = rc_rpmman_unlock;
 } /* rc_rpmman_class_init */
 
 #ifdef STATIC_RPM
@@ -2485,7 +2653,6 @@ rc_rpmman_init (RCRpmman *obj)
 {
     RCPackman *packman = RC_PACKMAN (obj);
     gchar *tmp;
-    int flags;
 #ifndef STATIC_RPM
     gchar **rpm_version;
     gchar *so_file;
@@ -2562,35 +2729,19 @@ rc_rpmman_init (RCRpmman *obj)
         obj->rpmroot = "/";
     }
 
-    /* If we're not root we can't open the database for writing */
-    if (geteuid ()) {
-        flags = O_RDONLY;
-    } else {
-        flags = O_RDWR;
-    }
-
-    if (!getenv ("RC_NO_RPM_DB")) {
-        if (obj->rpmdbOpen (obj->rpmroot, &obj->db, flags, 0644)) {
-            rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
-                                  "unable to open RPM database");
-        }
-    }
-
-    if (obj->version >= 40003) {
-        if (!(obj->rpmExpandNumeric ("%{?__dbi_cdb:1}"))) {
-            int i;
-
-            for (i = 0; i < 16; i++) {
-                gchar *filename = g_strdup_printf
-                    ("%s/var/lib/rpm/__db.0%02d", obj->rpmroot, i);
-                unlink (filename);
-                g_free (filename);
-            }
-        }
-    }
-
     rc_packman_set_file_extension(packman, "rpm");
     rc_packman_set_capabilities(packman, RC_PACKMAN_CAP_PROVIDE_ALL_VERSIONS|RC_PACKMAN_CAP_LEGACY_EPOCH_HANDLING);
+
+    obj->db_status = RC_RPMMAN_DB_NONE;
+
+    /* initialize the mtime */
+    obj->db_mtime = 0;
+    check_database (obj);
+
+    /* Watch for changes */
+    obj->db_watcher_cb =
+        g_timeout_add (5000, (GSourceFunc) database_check_func,
+                       (gpointer) obj);
 
 } /* rc_rpmman_init */
 

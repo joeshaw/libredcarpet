@@ -1,3 +1,18 @@
+2002-07-26  Ian Peters  <itp@ximian.com>
+
+	* rc-packman.c, rc-packman.h: Add _lock and _unlock methods.  Add
+	a database_changed signal.
+
+	* rc-rpmman.c, rc-rpmman.h: Remove the global lock, make each
+	function specifically ask for the minimum lock it requires.  Add
+	_lock and _unlock methods.  Add a timeout to watch for database
+	changes and emit database_changed when it does.
+
+	* rc-debman.c, rc-debman-private.h: pretty much same as above, but
+	I'm less confident about this code.  It's not really my fault,
+	though, because the locking in debian really sucks.  So, let's
+	call it alpha quality.  *shrug*
+
 2002-07-25  Ian Peters  <itp@ximian.com>
 
 	* rc-package.c (rc_package_slist_copy): actually copy.  duh.

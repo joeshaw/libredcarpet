@@ -112,6 +112,27 @@ dump_argv (int level, gchar **argv)
     rc_debug (level, "\n");
 } /* dump_argv */
 
+static void
+check_database (RCDebman *debman)
+{
+    struct stat buf;
+
+    stat ("/var/lib/dpkg/status", &buf);
+
+    if (buf.st_mtime != debman->priv->db_mtime) {
+        g_signal_emit_by_name (RC_PACKMAN (debman), "database_changed");
+        debman->priv->db_mtime = buf.st_mtime;
+    }
+}
+
+static gboolean
+database_check_func (RCDebman *debman)
+{
+    check_database (debman);
+
+    return TRUE;
+}
+
 /*
   Go Wichert, go Wichert
 */
@@ -227,6 +248,8 @@ lock_database (RCDebman *debman)
 
     rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ": acquired lock file\n");
 
+    g_source_remove (debman->priv->db_watcher_cb);
+
     return (TRUE);
 }
 
@@ -236,6 +259,10 @@ unlock_database (RCDebman *debman)
     if (getenv ("RC_ME_EVEN_HARDER") || getenv ("RC_DEBMAN_STATUS_FILE")) {
         return;
     }
+
+    debman->priv->db_watcher_cb =
+        g_timeout_add (5000, (GSourceFunc) database_check_func,
+                       (gpointer) debman);
 
     if (!rc_close (debman->priv->lock_fd)) {
         rc_debug (RC_DEBUG_LEVEL_WARNING,
@@ -445,6 +472,13 @@ verify_status (RCPackman *packman)
     int in_fd, out_fd;
     RCLineBuf *line_buf;
     RCDebman *debman = RC_DEBMAN (packman);
+    gboolean unlock_db = FALSE;
+
+    if (debman->priv->lock_fd == -1) {
+        if (!lock_database (debman))
+            return FALSE;
+        unlock_db = TRUE;
+    }
 
     if ((in_fd = open (debman->priv->status_file, O_RDONLY)) == -1) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
@@ -455,7 +489,7 @@ verify_status (RCPackman *packman)
                   ": failed to open %s for reading\n",
                   debman->priv->status_file);
 
-        return (FALSE);
+        goto ERROR;
     }
 
     if ((out_fd = creat (debman->priv->rc_status_file, 0644)) == -1) {
@@ -469,7 +503,7 @@ verify_status (RCPackman *packman)
 
         close (in_fd);
 
-        return (FALSE);
+        goto ERROR;
     }
 
     line_buf = rc_line_buf_new ();
@@ -513,7 +547,7 @@ verify_status (RCPackman *packman)
                   ": couldn't parse %s\n",
                   debman->priv->status_file);
 
-        return (FALSE);
+        goto ERROR;
     }
 
     if (rename (debman->priv->rc_status_file, debman->priv->status_file)) {
@@ -528,10 +562,16 @@ verify_status (RCPackman *packman)
                   ": couldn't rename %s\n",
                   debman->priv->rc_status_file);
 
-        return (FALSE);
+        goto ERROR;
     }
 
     return (TRUE);
+
+  ERROR:
+    if (unlock_db)
+        unlock_database (debman);
+
+    return FALSE;
 }
 
 /*
@@ -2153,8 +2193,15 @@ rc_debman_transact (RCPackman *packman, RCPackageSList *install_packages,
                     RCPackageSList *remove_packages, gboolean perform)
 {
     DebmanInstallState *install_state = g_new0 (DebmanInstallState, 1);
+    gboolean unlock_db = FALSE;
 
 //    order_packages (install_packages);
+
+    if ((RC_DEBMAN (packman))->priv->lock_fd == -1) {
+        if (!lock_database (RC_DEBMAN (packman)))
+            goto END;
+        unlock_db = TRUE;
+    }
 
     install_state->total = (g_slist_length (install_packages) * 2) +
         g_slist_length (remove_packages);
@@ -2229,6 +2276,8 @@ rc_debman_transact (RCPackman *packman, RCPackageSList *install_packages,
   END:
     g_free (install_state);
     hash_destroy (RC_DEBMAN (packman));
+    if (unlock_db)
+        unlock_database (RC_DEBMAN (packman));
     /* If we screwed up the status file let's "fix" it */
     verify_status (packman);
 }
@@ -3078,6 +3127,18 @@ rc_debman_find_file (RCPackman *packman, const gchar *filename)
     return (NULL);
 }
 
+static gboolean
+rc_debman_lock (RCPackman *packman)
+{
+    return (lock_database (RC_DEBMAN (packman)));
+}
+
+static void
+rc_debman_unlock (RCPackman *packman)
+{
+    unlock_database (RC_DEBMAN (packman));
+}
+
 static void
 rc_debman_finalize (GObject *obj)
 {
@@ -3112,6 +3173,8 @@ rc_debman_class_init (RCDebmanClass *klass)
     packman_class->rc_packman_real_verify = rc_debman_verify;
     packman_class->rc_packman_real_find_file = rc_debman_find_file;
     packman_class->rc_packman_real_version_compare = rc_debman_version_compare;
+    packman_class->rc_packman_real_lock = rc_debman_lock;
+    packman_class->rc_packman_real_unlock = rc_debman_unlock;
 
     putenv ("DEBIAN_FRONTEND=noninteractive");
 
@@ -3145,20 +3208,21 @@ rc_debman_init (RCDebman *debman)
 
     rc_packman_set_capabilities(packman, RC_PACKMAN_CAP_VIRTUAL_CONFLICTS|RC_PACKMAN_CAP_SELF_CONFLICT);
 
+    debman->priv->db_mtime = 0;
+    check_database (debman);
+    debman->priv->db_watcher_cb =
+        g_timeout_add (5000, (GSourceFunc) database_check_func,
+                       (gpointer) debman);
+
     if (geteuid ()) {
         /* We can't really verify the status file or lock the database */
         return;
     }
 
-    if (!lock_database (debman)) {
+    if (!verify_status (packman)) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
-                              "Unable to lock database");
-    } else {
-        if (!verify_status (packman)) {
-            rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
-                                  "Couldn't parse %s",
-                                  debman->priv->status_file);
-        }
+                              "Couldn't parse %s",
+                              debman->priv->status_file);
     }
 }
 
