@@ -91,7 +91,7 @@ transact_cb (const Header h, const rpmCallbackType what,
 {
     const char * filename = pkgKey;
     static FD_t fd;
-    InstallState *state = (InstallState *)data;
+    InstallState *state = (InstallState *) data;
 
     /* heh heh heh */
     GTKFLUSH;
@@ -429,6 +429,13 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         RPMPROB_FILTER_OLDPACKAGE;
 
     transaction = rpmtransCreateSet (rpmman->db, RC_RPMMAN (packman)->rpmroot);
+
+    state.packman = packman;
+    state.seqno = 0;
+    state.install_total = 0;
+    state.install_extra = 0;
+    state.remove_total = 0;
+    state.configuring = FALSE;
 
     if (install_packages) {
         if (!(state.install_total = transaction_add_install_packages (
