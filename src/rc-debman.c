@@ -755,6 +755,20 @@ do_purge (RCPackman *packman, DebmanInstallState *install_state)
 
     RC_ENTRY;
 
+    if (!rc_file_exists ("/usr/bin/dpkg")) {
+        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ ": /usr/bin/dpkg does "
+                  "not exist\n");
+
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
+                              "/usr/bin/dpkg does not exist (suggest "
+                              "'/usr/bin/dpkg --purge --pending' once dpkg "
+                              "is installed)");
+
+        RC_EXIT;
+
+        return (FALSE);
+    }
+
     openpty (&master, &slave, NULL, NULL, NULL);
 
     signal (SIGPIPE, SIG_DFL);
@@ -1042,6 +1056,19 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
         GMainLoop *loop;
         DebmanDoUnpackInfo do_unpack_info;
 
+        if (!rc_file_exists ("/usr/bin/dpkg")) {
+            rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ ": /usr/bin/dpkg "
+                      "does not exist\n");
+
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
+                                  "/usr/bin/dpkg does not exist (suggest "
+                                  "'apt-get -f install')");
+
+            RC_EXIT;
+
+            return (FALSE);
+        }
+
         openpty (&master, &slave, NULL, NULL, NULL);
 
         signal (SIGCHLD, SIG_DFL);
@@ -1258,6 +1285,19 @@ do_configure (RCPackman *packman, DebmanInstallState *install_state)
     GMainLoop *loop;
 
     RC_ENTRY;
+
+    if (!rc_file_exists ("/usr/bin/dpkg")) {
+        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ ": /usr/bin/dpkg "
+                  "does not exist\n");
+
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
+                              "/usr/bin/dpkg does not exist (suggest "
+                              "'dpkg --configure --pending')");
+
+        RC_EXIT;
+
+        return (FALSE);
+    }
 
     openpty (&master, &slave, NULL, NULL, NULL);
 

@@ -1,5 +1,12 @@
 2001-01-21  Ian Peters  <itp@helixcode.com>
 
+	* rc-debman.c (do_purge): check if dpkg exists in /usr/bin/dpkg
+	before trying to run it
+	(do_unpack): ditto
+	(do_configure): ditto
+
+2001-01-21  Ian Peters  <itp@helixcode.com>
+
 	* rc-verification.c (gpg_read_line_cb): don't create the
 	verification in several places, it was already created and passed
 	in initialized
