@@ -1,3 +1,10 @@
+2004-04-09  James Willcox  <james@ximian.com>
+
+	* rc-arch.c:
+	* rc-arch.h:
+
+	Add RC_ARCH_X86_64
+
 2004-04-08  James Willcox  <james@ximian.com>
 
 	* rc-arch.c:  flip the order of ix86 and i386 in the arch table.  This

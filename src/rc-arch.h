@@ -35,6 +35,7 @@ typedef enum {
     RC_ARCH_I486,
     RC_ARCH_I586,
     RC_ARCH_I686,
+    RC_ARCH_X86_64,
     RC_ARCH_ATHLON,
     RC_ARCH_PPC,
     RC_ARCH_PPC64,
