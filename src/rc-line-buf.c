@@ -144,7 +144,7 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
         return (FALSE);
     }
 
-    switch (g_io_channel_read (source, buf, 100, &butes_read)) {
+    switch (g_io_channel_read (source, buf, 100, &bytes_read)) {
     case G_IO_ERROR_AGAIN:
         /* This really shouldn't happen; why on earth would we get called if
            there's no data waiting? */
