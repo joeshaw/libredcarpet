@@ -210,10 +210,17 @@ rc_package_dep_verify_relation (RCPackageDep *dep,
     }
 
     if (dep->spec.version == NULL && dep->spec.release == NULL) {
+        if (unweak_rel == RC_RELATION_NONE) {
 #if DEBUG > 10
-        rc_debug (RC_DEBUG_LEVEL_DEBUG, "PASS (nullrv)\n");
+            rc_debug (RC_DEBUG_LEVEL_DEBUG, "FAIL (nullrv) NONE relation\n");
 #endif
-        return TRUE;
+            return FALSE;
+        } else {
+#if DEBUG > 10
+            rc_debug (RC_DEBUG_LEVEL_DEBUG, "PASS (nullrv)\n");
+#endif
+            return TRUE;
+        }
     }
 
     if (spec->version == NULL && spec->release == NULL)

@@ -1,3 +1,8 @@
+2001-08-01  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* libredcarpet/src/rc-package-dep.c: Don't return TRUE
+	if RC_RELATION_NONE on a dep with no release/version, argh.
+
 2001-07-31  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps-util.c: Don't keep rof as a static struct,
