@@ -1,3 +1,10 @@
+2002-07-29  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-xml.c (rc_package_to_xml_node): Strip 8-bit characters out of
+	the package summary and description that we put into the XML.
+	This is a brute-force solution to make sure we don't end up with
+	something that libxml2 will reject due to invalid UTF-8.
+
 2002-07-27  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-xml.c (rc_xml_node_to_package): Support the epoch, version

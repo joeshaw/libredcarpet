@@ -1079,6 +1079,26 @@ rc_channel_to_xml_node (RCChannel *channel)
     return node;
 }
 
+/* This hack cleans 8-bit characters out of a string.  This is a very
+   problematic "solution" to the problem of non-UTF-8 package info. */
+static gchar *
+sanitize_string (const char *str)
+{
+    gchar *dup = g_strdup (str);
+    gchar *c;
+
+    return dup;
+
+    if (dup) {
+        for (c = dup; *c; ++c) {
+            if ((gint)*c > 0x7f)
+                *c = '_';
+        }
+    }
+
+    return dup;
+}
+
 xmlNode *
 rc_package_to_xml_node (RCPackage *package)
 {
@@ -1087,6 +1107,7 @@ rc_package_to_xml_node (RCPackage *package)
     RCPackageUpdateSList *history_iter;
     RCPackageDepSList *dep_iter;
     char buffer[128];
+    char *tmp_str;
 
     package_node = xmlNewNode (NULL, "package");
 
@@ -1103,9 +1124,13 @@ rc_package_to_xml_node (RCPackage *package)
         xmlNewTextChild (package_node, NULL, "release", package->spec.release);
     }
 
-    xmlNewTextChild (package_node, NULL, "summary", package->summary);
+    tmp_str = sanitize_string (package->summary);
+    xmlNewTextChild (package_node, NULL, "summary", tmp_str);
+    g_free (tmp_str);
 
-    xmlNewTextChild (package_node, NULL, "description", package->description);
+    tmp_str = sanitize_string (package->summary);
+    xmlNewTextChild (package_node, NULL, "description", tmp_str);
+    g_free (tmp_str);
 
     xmlNewTextChild (package_node, NULL, "section",
                      rc_package_section_to_string (package->section));
