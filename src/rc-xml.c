@@ -647,6 +647,7 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
 {
     RCPackage *package;
     const xmlNode *iter;
+    char *epoch = NULL, *version = NULL, *release = NULL;
 
     if (g_strcasecmp (node->name, "package")) {
         return (NULL);
@@ -662,6 +663,12 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
     while (iter) {
         if (!g_strcasecmp (iter->name, "name")) {
             package->spec.name = xml_get_content (iter);
+        } else if (!g_strcasecmp (iter->name, "epoch")) {
+            epoch = xml_get_content (iter);
+        } else if (!g_strcasecmp (iter->name, "version")) {
+            version = xml_get_content (iter);
+        } else if (!g_strcasecmp (iter->name, "release")) {
+            release = xml_get_content (iter);
         } else if (!g_strcasecmp (iter->name, "summary")) {
             package->summary = xml_get_content (iter);
         } else if (!g_strcasecmp (iter->name, "description")) {
@@ -842,7 +849,18 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
         iter = iter->next;
     }
 
-    if (package->history && package->history->data) {
+    if (version) {
+
+        package->spec.has_epoch = (epoch != NULL);
+        package->spec.epoch = epoch ? atoi (epoch) : 0;
+        package->spec.version = version;
+        package->spec.release = release;
+
+        /* We set these to NULL so that they won't get freed when we
+           clean up before returning. */
+        version = release = NULL;
+
+    } else if (package->history && package->history->data) {
 
         /* If possible, we grab the version info from the most
            recent update. */
@@ -874,6 +892,11 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
             }
         }
     }
+
+    /* clean-up */
+    g_free (epoch);
+    g_free (version);
+    g_free (release);
 
     return (package);
 } /* rc_xml_node_to_package */
@@ -1061,7 +1084,6 @@ rc_package_to_xml_node (RCPackage *package)
 {
     xmlNode *package_node;
     xmlNode *tmp_node;
-    xmlNode *deps_node;
     RCPackageUpdateSList *history_iter;
     RCPackageDepSList *dep_iter;
     char buffer[128];
@@ -1089,10 +1111,10 @@ rc_package_to_xml_node (RCPackage *package)
                      rc_package_section_to_string (package->section));
 
     g_snprintf (buffer, 128, "%u", package->file_size);
-    xmlNewTextChild (package_node, NULL, "file_size", buffer);
+    xmlNewTextChild (package_node, NULL, "filesize", buffer);
 
     g_snprintf (buffer, 128, "%u", package->installed_size);
-    xmlNewTextChild (package_node, NULL, "installed_size", buffer);
+    xmlNewTextChild (package_node, NULL, "installedsize", buffer);
 
     if (package->history) {
         tmp_node = xmlNewChild (package_node, NULL, "history", NULL);
@@ -1104,10 +1126,8 @@ rc_package_to_xml_node (RCPackage *package)
         }
     }
 
-    deps_node = xmlNewChild (package_node, NULL, "deps", NULL);
-    
     if (package->requires) {
-        tmp_node = xmlNewChild (deps_node, NULL, "requires", NULL);
+        tmp_node = xmlNewChild (package_node, NULL, "requires", NULL);
         for (dep_iter = package->requires; dep_iter;
              dep_iter = dep_iter->next)
         {
@@ -1118,7 +1138,7 @@ rc_package_to_xml_node (RCPackage *package)
     }
 
     if (package->recommends) {
-        tmp_node = xmlNewChild (deps_node, NULL, "recommends", NULL);
+        tmp_node = xmlNewChild (package_node, NULL, "recommends", NULL);
         for (dep_iter = package->recommends; dep_iter;
              dep_iter = dep_iter->next)
         {
@@ -1129,7 +1149,7 @@ rc_package_to_xml_node (RCPackage *package)
     }
 
     if (package->suggests) {
-        tmp_node = xmlNewChild (deps_node, NULL, "suggests", NULL);
+        tmp_node = xmlNewChild (package_node, NULL, "suggests", NULL);
         for (dep_iter = package->suggests; dep_iter;
              dep_iter = dep_iter->next)
         {
@@ -1140,7 +1160,7 @@ rc_package_to_xml_node (RCPackage *package)
     }
 
     if (package->conflicts) {
-        tmp_node = xmlNewChild (deps_node, NULL, "conflicts", NULL);
+        tmp_node = xmlNewChild (package_node, NULL, "conflicts", NULL);
         for (dep_iter = package->conflicts; dep_iter;
              dep_iter = dep_iter->next)
         {
@@ -1151,7 +1171,7 @@ rc_package_to_xml_node (RCPackage *package)
     }
 
     if (package->obsoletes) {
-        tmp_node = xmlNewChild (deps_node, NULL, "obsoletes", NULL);
+        tmp_node = xmlNewChild (package_node, NULL, "obsoletes", NULL);
         for (dep_iter = package->obsoletes; dep_iter;
              dep_iter = dep_iter->next)
         {
@@ -1162,7 +1182,7 @@ rc_package_to_xml_node (RCPackage *package)
     }
 
     if (package->provides) {
-        tmp_node = xmlNewChild (deps_node, NULL, "provides", NULL);
+        tmp_node = xmlNewChild (package_node, NULL, "provides", NULL);
         for (dep_iter = package->provides; dep_iter;
              dep_iter = dep_iter->next)
         {

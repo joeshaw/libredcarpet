@@ -1,3 +1,11 @@
+2002-07-27  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-xml.c (rc_xml_node_to_package): Support the epoch, version
+	and release tags outside of the history section.  We need to do
+	this to ensure that system packages are properly versioned.
+	(rc_package_to_xml_node): Produce XML that rc_xml_node_to_package
+	can process.  This fixes bugs with dump/undump.
+
 2002-07-27  Ian Peters  <itp@ximian.com>
 
 	* rc-packman.c (rc_packman_real_check_database): g_assert the
