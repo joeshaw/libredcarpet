@@ -767,7 +767,9 @@ do_configure (RCPackman *p, DebmanInstallState *dis)
 
     default:
         close (rfds[1]);
+#if 0
         close (wfds[0]);
+#endif
 
         loop = g_main_new (FALSE);
 
