@@ -372,8 +372,12 @@ rc_xml_node_to_package_dep (const xmlNode *node)
         xmlNode *iter = node->xmlChildrenNode;
 
         while (iter) {
-            or_dep_slist = g_slist_append (or_dep_slist,
-                                           rc_xml_node_to_package_dep_internal (iter));
+            if (iter->type == XML_ELEMENT_NODE) {
+                or_dep_slist = g_slist_append(
+                    or_dep_slist,
+                    rc_xml_node_to_package_dep_internal (iter));
+            }
+
             iter = iter->next;
         }
 
