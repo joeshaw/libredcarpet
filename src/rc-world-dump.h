@@ -30,9 +30,9 @@
 
 #include <rc-world.h>
 
-xmlNode *rc_world_dump_to_xml     (RCWorld *world);
+xmlNode *rc_world_dump_to_xml     (RCWorld *world, xmlNode *extra_xml);
 
-char    *rc_world_dump            (RCWorld *world);
+char    *rc_world_dump            (RCWorld *world, xmlNode *extra_xml);
 
 void     rc_world_undump_from_xml (RCWorld *world, xmlNode *node);
 

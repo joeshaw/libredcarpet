@@ -704,6 +704,7 @@ rc_resolver_context_add_error_str (RCResolverContext *context,
     rc_resolver_context_add_info (context, info);
 }
 
+#if 0
 static void
 rc_resolver_context_propagate_importance (RCResolverContext *context)
 {
@@ -719,7 +720,6 @@ rc_resolver_context_propagate_importance (RCResolverContext *context)
         return;
 
     important_hash = g_hash_table_new (NULL, NULL);
-
 
     do {
         did_something = FALSE;
@@ -790,6 +790,106 @@ rc_resolver_context_propagate_importance (RCResolverContext *context)
 
     context->propagated_importance = TRUE;
 }
+#endif
+
+/*
+  We call a package mentioned by an error info an "error-package".
+  We call a package mentioned by an important info an "important-package".
+  
+  The rules:
+  (1) An info item that mentions an error-package is important.
+  (2) An info item is about an important-package is important.
+*/
+static void
+mark_important_info (GSList *info_slist)
+{
+    GHashTable *important_hash, *error_hash;
+    gboolean did_something;
+    GSList *important_slist = NULL, *error_slist = NULL;
+    GSList *info_iter, *pkg_iter;
+    int pass_num = 1;
+
+    important_hash = g_hash_table_new (NULL, NULL);
+    error_hash     = g_hash_table_new (NULL, NULL);
+
+    /* First of all, store all error-packages in a hash. */
+    for (info_iter = info_slist; info_iter != NULL; info_iter = info_iter->next) {
+        RCResolverInfo *info = info_iter->data;
+            
+        if (info && rc_resolver_info_is_error (info)) {
+
+            if (info->package
+                && g_hash_table_lookup (error_hash, info->package) == NULL) {
+                g_hash_table_insert (error_hash, info->package, (gpointer)1);
+                error_slist = g_slist_prepend (error_slist, info->package);
+            }
+
+            for (pkg_iter = info->package_list; pkg_iter != NULL; pkg_iter = pkg_iter->next) {
+                RCPackage *pkg = pkg_iter->data;
+                if (g_hash_table_lookup (error_hash, pkg) == NULL) {
+                    g_hash_table_insert (error_hash, pkg, (gpointer)1);
+                    error_slist = g_slist_prepend (error_slist, pkg);
+                }
+            }
+        }
+    }             
+        
+    
+    do {
+        
+        ++pass_num;
+        g_assert (pass_num < 10000);
+
+        did_something = FALSE;
+
+        for (info_iter = info_slist; info_iter != NULL; info_iter = info_iter->next) {
+            RCResolverInfo *info = info_iter->data;
+            
+            if (info && ! rc_resolver_info_is_important (info)) {
+                gboolean should_be_important = FALSE;
+
+                for (pkg_iter = error_slist;
+                     pkg_iter != NULL && ! should_be_important;
+                     pkg_iter = pkg_iter->next) {
+                    RCPackage *pkg = pkg_iter->data;
+
+                    if (rc_resolver_info_mentions (info, pkg)) {
+                        should_be_important = TRUE;
+                    }
+                }
+
+                for (pkg_iter = important_slist;
+                     pkg_iter != NULL && ! should_be_important;
+                     pkg_iter = pkg_iter->next) {
+                    RCPackage *pkg = pkg_iter->data;
+                    
+                    if (rc_resolver_info_is_about (info, pkg)) {
+                        should_be_important = TRUE;
+                        break;
+                    }
+                }
+
+                if (should_be_important) {
+                    did_something = TRUE;
+                    rc_resolver_info_flag_as_important (info);
+                    for (pkg_iter = info->package_list; pkg_iter != NULL; pkg_iter = pkg_iter->next) {
+                        RCPackage *pkg = pkg_iter->data;
+                        if (g_hash_table_lookup (important_hash, pkg) == NULL) {
+                            g_hash_table_insert (important_hash, pkg, (gpointer)1);
+                            important_slist = g_slist_prepend (important_slist, pkg);
+                        }
+                    }
+                }
+            }
+        }
+
+    } while (did_something);
+
+    g_hash_table_destroy (error_hash);
+    g_hash_table_destroy (important_hash);
+    g_slist_free (error_slist);
+    g_slist_free (important_slist);
+}
 
 void
 rc_resolver_context_foreach_info (RCResolverContext *context,
@@ -802,9 +902,6 @@ rc_resolver_context_foreach_info (RCResolverContext *context,
 
     g_return_if_fail (context != NULL);
     g_return_if_fail (fn != NULL);
-
-    /* If necessary, propagate importance */
-    rc_resolver_context_propagate_importance (context);
 
     /* Assemble a list of copies of all of the info objects */
     while (context) {
@@ -834,6 +931,8 @@ rc_resolver_context_foreach_info (RCResolverContext *context,
         }
     }
 
+    mark_important_info (info_slist);
+
     /* Walk across the list of info objects and invoke our callback */
     for (info_iter = info_slist; info_iter != NULL; info_iter = info_iter->next) {
         RCResolverInfo *info = info_iter->data;
@@ -853,7 +952,7 @@ spew_cb (RCResolverInfo *info, gpointer user_data)
     if (rc_resolver_info_is_error (info))
         g_print ("[ERROR] ");
     else if (rc_resolver_info_is_important (info))
-        g_print ("[!!!!!] ");
+        g_print ("[>>>>>] ");
     g_print ("%s\n", msg);
     g_free (msg);
 }

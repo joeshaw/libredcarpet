@@ -65,15 +65,20 @@ add_channel_packages_cb (RCChannel *channel,
 }
 
 xmlNode *
-rc_world_dump_to_xml (RCWorld *world)
+rc_world_dump_to_xml (RCWorld *world,
+                      xmlNode *extra_xml)
 {
     xmlNode *parent;
+    xmlNode *info;
     xmlNode *system_packages;
     AddChannelClosure closure;
-    
+   
     g_return_val_if_fail (world != NULL, NULL);
 
     parent = xmlNewNode (NULL, "world");
+    
+    if (extra_xml != NULL)
+        xmlAddChild (parent, extra_xml);
     
     system_packages = xmlNewNode (NULL, "system_packages");
     xmlAddChild (parent, system_packages);
@@ -94,7 +99,7 @@ rc_world_dump_to_xml (RCWorld *world)
 }
 
 char *
-rc_world_dump (RCWorld *world)
+rc_world_dump (RCWorld *world, xmlNode *extra_xml)
 {
     xmlNode *dump;
     xmlDoc *doc;
@@ -103,7 +108,7 @@ rc_world_dump (RCWorld *world)
 
     g_return_val_if_fail (world != NULL, NULL);
 
-    dump = rc_world_dump_to_xml (world);
+    dump = rc_world_dump_to_xml (world, extra_xml);
     g_return_val_if_fail (dump != NULL, NULL);
 
     doc = xmlNewDoc ("1.0");

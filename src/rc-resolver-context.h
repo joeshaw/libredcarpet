@@ -79,7 +79,6 @@ struct _RCResolverContext {
 
     guint allow_conflicts_with_virtual_provides : 1;
     guint invalid : 1;
-    guint propagated_importance : 1;
 };
 
 const char        *rc_package_status_to_string (RCPackageStatus status);

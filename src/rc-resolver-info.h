@@ -57,6 +57,7 @@ struct _RCResolverInfo {
 
     guint is_error     : 1;
     guint is_important : 1;
+    guint is_notable   : 1;
 };
 
 typedef void (*RCResolverInfoFn) (RCResolverInfo *, gpointer);
@@ -69,6 +70,7 @@ char              *rc_resolver_info_to_str           (RCResolverInfo *);
 char              *rc_resolver_info_packages_to_str  (RCResolverInfo *,
                                                       gboolean names_only);
 
+gboolean           rc_resolver_info_is_about            (RCResolverInfo *, RCPackage *);
 gboolean           rc_resolver_info_mentions            (RCResolverInfo *, RCPackage *);
 void               rc_resolver_info_add_related_package (RCResolverInfo *, RCPackage *);
 

@@ -1,3 +1,22 @@
+2002-07-30  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-resolver-context.c
+	(rc_resolver_context_propagate_importance): #ifdef-ed away.
+	(mark_important_info): Added.  A new implementation of importance
+	propagation, with somewhat simpler rules.  This should do a better
+	job of picking out which info items actually matter.
+	(rc_resolver_context_foreach_info): Call mark_important_info on
+	our list.
+
+	* rc-resolver-info.c (rc_resolver_info_is_about): Added.  A
+	convenience method for testing if an info item is about a
+	particular package.
+
+	* rc-world-dump.c (rc_world_dump_to_xml): Added an argument
+	allowing extra XML to be passed in and prepended to the world
+	dump.
+	(rc_world_dump): Ditto.
+
 2002-07-30  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c (depends_fill_helper): plug a small memory leak

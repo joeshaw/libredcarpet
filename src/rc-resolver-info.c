@@ -211,6 +211,16 @@ rc_resolver_info_packages_to_str (RCResolverInfo *info,
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 gboolean
+rc_resolver_info_is_about (RCResolverInfo *info,
+                           RCPackage *package)
+{
+    g_return_val_if_fail (info != NULL, FALSE);
+    g_return_val_if_fail (package != NULL, FALSE);
+
+    return info->package && !strcmp (package->spec.name, info->package->spec.name);
+}
+
+gboolean
 rc_resolver_info_mentions (RCResolverInfo *info,
                            RCPackage *package)
 {
@@ -219,8 +229,7 @@ rc_resolver_info_mentions (RCResolverInfo *info,
     g_return_val_if_fail (info != NULL, FALSE);
     g_return_val_if_fail (package != NULL, FALSE);
 
-    if (info->package 
-        && !strcmp (package->spec.name, info->package->spec.name))
+    if (rc_resolver_info_is_about (info, package))
         return TRUE;
 
     /* Search package_list for any mention of the package. */
@@ -272,7 +281,7 @@ gboolean
 rc_resolver_info_is_important (RCResolverInfo *info)
 {
     g_return_val_if_fail (info != NULL, FALSE);
-    return info->is_error || info->is_important;
+    return info->is_important || info->is_error;
 }
 
 void
