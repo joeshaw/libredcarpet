@@ -77,6 +77,9 @@ RCDistroChunk distro_figurers[] = {
       func_string_in_file, "/etc/redhat-release", "7.0", NULL, CHECK_OP_OR,
       func_string_in_file, "/etc/redhat-release", "Rawhide", NULL },
 
+    { "scyld-20-i386", RC_ARCH_IA32,
+      func_string_in_file, "/etc/redhat-release", "Scyld Beowulf release 2.0", NULL, 0 },
+
     { "turbolinux-60-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/turbolinux-release", "6.0", NULL, 0 },
 
@@ -108,6 +111,8 @@ RCDistroType distro_types[] = {
     { "redhat-61-i386", NULL, "Red Hat Linux", "6.1", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
     { "redhat-62-i386", NULL, "Red Hat Linux", "6.2", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
     { "redhat-70-i386", NULL, "Red Hat Linux", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
+
+    { "scyld-20-i386", NULL, "Scyld Beowulf", "2.0", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
 
     { "turbolinux-60-i386", NULL, "TurboLinux", "6.0", RC_PKG_RPM, RC_ARCH_IA32, "gdmrunlevel=5" },
 
