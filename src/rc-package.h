@@ -86,6 +86,7 @@ void rc_package_slist_free (RCPackageSList *packages);
 
 RCPackageSList *rc_package_slist_sort_by_name (RCPackageSList *packages);
 RCPackageSList *rc_package_slist_sort_by_spec (RCPackageSList *packages);
+RCPackageSList *rc_package_slist_sort_by_pretty_name (RCPackageSList *packages);
 
 RCPackageSList *rc_package_hash_table_by_spec_to_list (RCPackageHashTableBySpec *ht);
 RCPackageSList *rc_package_hash_table_by_string_to_list (RCPackageHashTableBySpec *ht);

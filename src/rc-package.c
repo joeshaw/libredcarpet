@@ -110,6 +110,17 @@ rc_package_slist_sort_by_name (RCPackageSList *packages)
     return (g_slist_sort (packages, (GCompareFunc) rc_package_spec_compare_name));
 } /* rc_package_slist_sort_by_name */
 
+static int pretty_name_package_strcmp (const RCPackage *a, const RCPackage *b)
+{
+    return g_strcasecmp (rc_pretty_name_lookup (a->spec.name), rc_pretty_name_lookup (b->spec.name));
+}
+
+RCPackageUpdateSList *
+rc_package_slist_sort_by_pretty_name (RCPackageSList *packages)
+{
+    return (g_slist_sort (packages, (GCompareFunc) pretty_name_package_strcmp));
+} /* rc_package_slist_sort_by_pretty_name */
+
 RCPackageSList *
 rc_package_slist_sort_by_spec (RCPackageSList *packages)
 {
