@@ -73,4 +73,65 @@ xml_get_prop(xmlNode *node, const gchar *name)
         return NULL;
     }
 } /* xml_get_prop */
+
+gint32 xml_get_gint32_value_default (xmlNode *node, const gchar *name)
+{
+    gint32 z;
+    if (xml_get_gint32_value (node, name, &z))
+        return z;
+    else
+        return 0;
+}
 	       
+gboolean
+xml_get_gint32_value(xmlNode *node, const gchar *name, gint32 *value)
+{
+    gchar *strval, *ret;
+    gint32 z;
+
+    strval = xml_get_value(node, name);
+    if (!strval) {
+        return FALSE;
+    }
+
+    z = strtol (strval, &ret, 10);
+    if (*ret != '\0') {
+        g_free (strval);
+        return FALSE;
+    }
+
+    g_free (strval);
+    *value = z;
+    return TRUE;
+}
+
+guint32 xml_get_guint32_value_default (xmlNode *node, const gchar *name)
+{
+    guint32 z;
+    if (xml_get_guint32_value (node, name, &z))
+        return z;
+    else
+        return 0;
+}
+
+gboolean
+xml_get_guint32_value(xmlNode *node, const gchar *name, guint32 *value)
+{
+    gchar *strval, *ret;
+    gint32 z;
+
+    strval = xml_get_value(node, name);
+    if (!strval) {
+        return FALSE;
+    }
+
+    z = strtoul (strval, &ret, 10);
+    if (*ret != '\0') {
+        g_free (strval);
+        return FALSE;
+    }
+
+    g_free (strval);
+    *value = z;
+    return TRUE;
+}
