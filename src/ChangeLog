@@ -1,5 +1,16 @@
 2001-04-04  Ian Peters  <itp@ximian.com>
 
+	* rc-rpmman.c: the rpmlead and signature includes were the same
+	for rpm 3.0.x and 4.0.x, so just include the one copy regardless
+	of rpm version
+
+	* rpmlead-3-0-x.h, rpmlead-4-0-x.h, signature-3-0-x.h,
+	signature-4-0-x.h: removed
+
+	* rpm-rpmlead.h, rpm-signature.h: added
+
+2001-04-04  Ian Peters  <itp@ximian.com>
+
 	* rc-rpmman.h, rc-rpmman.c: comment out all references to Ferror
 	for the time being.  i was only using this twice, and in both
 	places if there's an error fdOpen should just return NULL anyway,

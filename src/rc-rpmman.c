@@ -34,13 +34,8 @@
 #include "rc-util.h"
 #include "rc-verification-private.h"
 
-#ifdef HAVE_RPM_4_0
-#include "rpmlead-4-0-x.h"
-#include "signature-4-0-x.h"
-#else
-#include "rpmlead-3-0-x.h"
-#include "signature-3-0-x.h"
-#endif
+#include "rpm-rpmlead.h"
+#include "rpm-signature.h"
 
 #define GTKFLUSH {while (gtk_events_pending ()) gtk_main_iteration ();}
 
