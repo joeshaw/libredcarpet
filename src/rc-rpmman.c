@@ -3548,18 +3548,18 @@ write_objects (void)
             { "rc-{rpm_rpmio_rpmdb}-4.1.so",
               rc_rpm_rpmio_rpmdb_4_1_so,
               rc_rpm_rpmio_rpmdb_4_1_so_len },
-            { "rc-{rpm}.so.0",
-              rc_rpm_so_0,
-              rc_rpm_so_0_len },
-            { "rc-{rpm_rpmio}.so.0",
-              rc_rpm_rpmio_so_0,
-              rc_rpm_rpmio_so_0_len },
-            { "rc-{rpm_rpmio_rpmdb}-4.0.3.so",
-              rc_rpm_rpmio_rpmdb_4_0_3_so,
-              rc_rpm_rpmio_rpmdb_4_0_3_so_len },
             { "rc-{rpm_rpmio_rpmdb}-4.0.4.so",
               rc_rpm_rpmio_rpmdb_4_0_4_so,
               rc_rpm_rpmio_rpmdb_4_0_4_so_len },
+            { "rc-{rpm_rpmio_rpmdb}-4.0.3.so",
+              rc_rpm_rpmio_rpmdb_4_0_3_so,
+              rc_rpm_rpmio_rpmdb_4_0_3_so_len },
+            { "rc-{rpm_rpmio}.so.0",
+              rc_rpm_rpmio_so_0,
+              rc_rpm_rpmio_so_0_len },
+            { "rc-{rpm}.so.0",
+              rc_rpm_so_0,
+              rc_rpm_so_0_len },
             { 0 }
         };
 
@@ -3617,12 +3617,12 @@ rc_rpmman_init (RCRpmman *obj)
     gchar *so_file;
     char *object_dir;
     const char *objects[] = {
-        "rc-{rpm}.so.0",
-        "rc-{rpm_rpmio}.so.0",
-        "rc-{rpm_rpmio_rpmdb}-4.0.3.so",
-        "rc-{rpm_rpmio_rpmdb}-4.0.4.so",
-        "rc-{rpm_rpmio_rpmdb}-4.1.so",
         "rc-{rpm_rpmio_rpmdb}-4.2.so",
+        "rc-{rpm_rpmio_rpmdb}-4.1.so",
+        "rc-{rpm_rpmio_rpmdb}-4.0.4.so",
+        "rc-{rpm_rpmio_rpmdb}-4.0.3.so",
+        "rc-{rpm_rpmio}.so.0",
+        "rc-{rpm}.so.0",
         NULL };
     const char **iter;
 #endif

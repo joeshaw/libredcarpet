@@ -164,6 +164,17 @@
 			<file source="/etc/mandrake-release" substring="9.0"/>
 		</detect>
 	</distro>
+	<distro>
+		<name>Mandrake Linux</name>
+		<version>9.1</version>
+		<arch>i586</arch>
+		<type>rpm</type>
+		<target>mandrake-91-i586</target>
+		<status>supported</status>
+		<detect>
+			<file source="/etc/mandrake-release" substring="9.1"/>
+		</detect>
+	</distro>
 
         <distro>
                 <name>Red Hat Enterprise Linux AS</name>
@@ -421,6 +432,17 @@
 		<status>supported</status>
 		<detect>
 			<file source="/etc/SuSE-release" substring="SuSE Linux 8.1"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>SuSE Linux</name>
+		<version>8.2</version>
+		<arch>i586</arch>
+		<type>rpm</type>
+		<target>suse-82-i586</target>
+		<status>supported</status>
+		<detect>
+			<file source="/etc/SuSE-release" substring="SuSE Linux 8.2"/>
 		</detect>
 	</distro>
 
