@@ -1,3 +1,9 @@
+2001-04-20  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c: only mark provides to avoid in provide_require_check
+	if nothing succeeds; otherwise we run the risk of marking something
+	as avoid that's really providing what we want.
+
 2001-04-20  Ian Peters  <itp@ximian.com>
 
 	* rc-debman.c: fix my last commit
