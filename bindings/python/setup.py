@@ -22,6 +22,9 @@ other_libdirs  = ["../../src"]
  
 
 py_tsar_sources = [ "pyutil.c",
+                    "package-spec.c",
+                    "package-dep.c",
+                    "package-match.c",
                     "package.c",
                     "packman.c",
                     "channel.c",

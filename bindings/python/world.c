@@ -26,6 +26,9 @@
 
 #include "world.h"
 #include "packman.h"
+#include "package-match.h"
+#include "package-dep.h"
+#include "package-spec.h"
 #include "package.h"
 #include "channel.h"
 #include "pyutil.h"
@@ -315,6 +318,94 @@ PyWorld_get_channel_by_id (PyObject *self, PyObject *args)
 }
 
 static PyObject *
+PyWorld_add_lock (PyObject *self, PyObject *args)
+{
+	RCWorld *world = PyWorld_get_world (self);
+	PyObject *obj;
+	RCPackageMatch *lock;
+
+	if (! PyArg_ParseTuple (args, "O", &obj))
+		return NULL;
+
+	lock = PyPackageMatch_get_package_match (obj);
+	if (lock == NULL)
+		return NULL;
+
+	rc_world_add_lock (world, lock);
+
+	Py_INCREF (Py_None);
+	return Py_None;
+}
+
+static PyObject *
+PyWorld_remove_lock (PyObject *self, PyObject *args)
+{
+	RCWorld *world = PyWorld_get_world (self);
+	PyObject *obj;
+	RCPackageMatch *lock;
+
+	if (! PyArg_ParseTuple (args, "O", &obj))
+		return NULL;
+
+	lock = PyPackageMatch_get_package_match (obj);
+	if (lock == NULL)
+		return NULL;
+
+	rc_world_remove_lock (world, lock);
+
+	Py_INCREF (Py_None);
+	return Py_None;
+}
+
+static PyObject *
+PyWorld_clear_locks (PyObject *self, PyObject *args)
+{
+	RCWorld *world = PyWorld_get_world (self);
+
+	rc_world_clear_locks (world);
+
+	Py_INCREF (Py_None);
+	return Py_None;
+}
+
+static void
+package_match_cb (RCPackageMatch *match, gpointer user_data)
+{
+	PyObject *list = user_data;
+
+	PyList_Append (list, PyPackageMatch_new (match));
+}
+
+static PyObject *
+PyWorld_get_all_locks (PyObject *self, PyObject *args)
+{
+	RCWorld *world = PyWorld_get_world (self);
+	PyObject *py_list;
+
+	py_list = PyList_New (0);
+	rc_world_foreach_lock (world, package_match_cb, py_list);
+
+	return py_list;
+}
+
+static PyObject *
+PyWorld_pkg_is_locked (PyObject *self, PyObject *args)
+{
+	RCWorld *world = PyWorld_get_world (self);
+	PyObject *obj;
+	RCPackage *pkg;
+
+	if (! PyArg_ParseTuple (args, "O", &obj))
+		return NULL;
+
+	pkg = PyPackage_get_package (obj);
+	if (pkg == NULL)
+		return NULL;
+
+	return Py_BuildValue ("i", rc_world_package_is_locked (world, pkg));
+}
+
+static PyObject *
 PyWorld_freeze (PyObject *self, PyObject *args)
 {
 	RCWorld *world = PyWorld_get_world (self);
@@ -541,6 +632,27 @@ PyWorld_get_all_pkgs_by_name (PyObject *self, PyObject *args)
 }
 
 static PyObject *
+PyWorld_get_all_pkgs_by_match (PyObject *self, PyObject *args)
+{
+	RCWorld *world = PyWorld_get_world (self);
+	PyObject *obj, *py_list;
+	RCPackageMatch *match;
+
+	if (! PyArg_ParseTuple (args, "O", &obj))
+		return NULL;
+
+	match = PyPackageMatch_get_package_match (obj);
+	if (match == NULL)
+		return NULL;
+
+	py_list = PyList_New (0);
+	rc_world_foreach_package_by_match (world, match,
+					   (RCPackageFn) get_all_pkgs_cb,
+					   py_list);
+	return py_list;
+}
+
+static PyObject *
 PyWorld_get_all_upgrades (PyObject *self, PyObject *args)
 {
 	RCWorld *world = PyWorld_get_world (self);
@@ -591,6 +703,149 @@ PyWorld_get_best_upgrade (PyObject *self, PyObject *args)
 	return PyPackage_new (dest_pkg);
 }
 
+static void
+get_all_system_upgrades_cb (RCPackage *old, RCPackage *new, gpointer user_data)
+{
+	PyObject *list = user_data;
+	PyObject *tuple;
+
+	tuple = PyTuple_New(2);
+	if (tuple == NULL)
+		return;
+
+	PyTuple_SetItem (tuple, 0, PyPackage_new (old));
+	PyTuple_SetItem (tuple, 1, PyPackage_new (new));
+
+	PyList_Append (list, tuple);
+}
+
+static PyObject *
+PyWorld_get_all_system_upgrades (PyObject *self, PyObject *args)
+{
+	RCWorld *world = PyWorld_get_world (self);
+	PyObject *py_list;
+	gboolean subscribed_only;
+
+	if (! PyArg_ParseTuple (args, "i", &subscribed_only))
+		return NULL;
+
+	py_list = PyList_New (0);
+	rc_world_foreach_system_upgrade (world, subscribed_only,
+					 get_all_system_upgrades_cb,
+					 py_list);
+	return py_list;
+}
+
+static void
+get_all_providing_pkgs_cb (RCPackage *pkg, RCPackageSpec *spec, gpointer user_data)
+{
+	PyObject *list = user_data;
+	PyObject *tuple;
+
+	tuple = PyTuple_New (2);
+	PyTuple_SetItem (tuple, 0, PyPackage_new (pkg));
+	PyTuple_SetItem (tuple, 1, PyPackageSpec_new (spec));
+
+	PyList_Append (list, tuple);
+}
+
+static PyObject *
+PyWorld_get_all_providing_pkgs (PyObject *self, PyObject *args)
+{
+	RCWorld *world = PyWorld_get_world (self);
+	PyObject *obj, *py_list;
+	RCPackageDep *dep;
+
+	if (! PyArg_ParseTuple (args, "O", &obj))
+		return NULL;
+
+	dep = PyPackageDep_get_package_dep (obj);
+	if (dep == NULL)
+		return NULL;
+
+	py_list = PyList_New (0);
+	rc_world_foreach_providing_package (world, dep,
+					    get_all_providing_pkgs_cb,
+					    py_list);
+	return py_list;
+}
+
+static void
+get_pkg_and_dep_cb (RCPackage *pkg, RCPackageDep *dep, gpointer user_data)
+{
+	PyObject *list = user_data;
+	PyObject *tuple;
+
+	tuple = PyTuple_New (2);
+	PyTuple_SetItem (tuple, 0, PyPackage_new (pkg));
+	PyTuple_SetItem (tuple, 1, PyPackageDep_new (dep));
+
+	PyList_Append (list, tuple);
+}
+
+static PyObject *
+PyWorld_get_all_requiring_pkgs (PyObject *self, PyObject *args)
+{
+	RCWorld *world = PyWorld_get_world (self);
+	PyObject *obj, *py_list;
+	RCPackageDep *dep;
+
+	if (! PyArg_ParseTuple (args, "O", &obj))
+		return NULL;
+
+	dep = PyPackageDep_get_package_dep (obj);
+	if (dep == NULL)
+		return NULL;
+
+	py_list = PyList_New (0);
+	rc_world_foreach_requiring_package (world, dep,
+					    get_pkg_and_dep_cb,
+					    py_list);
+	return py_list;
+}
+
+static PyObject *
+PyWorld_get_all_parent_pkgs (PyObject *self, PyObject *args)
+{
+	RCWorld *world = PyWorld_get_world (self);
+	PyObject *obj, *py_list;
+	RCPackageDep *dep;
+
+	if (! PyArg_ParseTuple (args, "O", &obj))
+		return NULL;
+
+	dep = PyPackageDep_get_package_dep (obj);
+	if (dep == NULL)
+		return NULL;
+
+	py_list = PyList_New (0);
+	rc_world_foreach_parent_package (world, dep,
+					 get_pkg_and_dep_cb,
+					 py_list);
+	return py_list;
+}
+
+static PyObject *
+PyWorld_get_all_conflicting_pkgs (PyObject *self, PyObject *args)
+{
+	RCWorld *world = PyWorld_get_world (self);
+	PyObject *obj, *py_list;
+	RCPackageDep *dep;
+
+	if (! PyArg_ParseTuple (args, "O", &obj))
+		return NULL;
+
+	dep = PyPackageDep_get_package_dep (obj);
+	if (dep == NULL)
+		return NULL;
+
+	py_list = PyList_New (0);
+	rc_world_foreach_conflicting_package (world, dep,
+					      get_pkg_and_dep_cb,
+					      py_list);
+	return py_list;
+}
+
 static PyObject *
 PyWorld_transact (PyObject *self, PyObject *args)
 {
@@ -638,7 +893,11 @@ static PyMethodDef PyWorld_methods[] = {
 	{ "get_channel_by_name",                PyWorld_get_channel_by_name,   METH_VARARGS },
 	{ "get_channel_by_alias",               PyWorld_get_channel_by_alias,  METH_VARARGS },
 	{ "get_channel_by_id",                  PyWorld_get_channel_by_id,     METH_VARARGS },
-
+	{ "add_lock",                           PyWorld_add_lock,              METH_VARARGS },
+	{ "remove_lock",                        PyWorld_remove_lock,           METH_VARARGS },
+	{ "clear_locks",                        PyWorld_clear_locks,           METH_NOARGS  },
+	{ "get_all_locks",                      PyWorld_get_all_locks,         METH_NOARGS  },
+	{ "package_is_locked",                  PyWorld_pkg_is_locked,         METH_VARARGS },
 	{ "freeze",                             PyWorld_freeze,                METH_NOARGS  },
 	{ "thaw",                               PyWorld_thaw,                  METH_NOARGS  },
 	{ "add_package",                        PyWorld_add_package,           METH_VARARGS },
@@ -650,14 +909,25 @@ static PyMethodDef PyWorld_methods[] = {
 	{ "find_installed_version",             PyWorld_find_installed_version,METH_VARARGS },
 	{ "get_package",                        PyWorld_get_package,           METH_VARARGS },
 	{ "guess_package_channel",              PyWorld_guess_package_channel, METH_VARARGS },
-
 	/* rc_world_foreach_package */
 	{ "get_all_packages",                   PyWorld_get_all_pkgs,          METH_VARARGS },
 	/* rc_world_foreach_package_by_name */
 	{ "get_all_packages_by_name",           PyWorld_get_all_pkgs_by_name,  METH_VARARGS },
+	/* rc_world_foreach_package_by_match */
+	{ "get_all_packages_by_match",          PyWorld_get_all_pkgs_by_match, METH_VARARGS },
 	/* rc_world_foreach_upgrade */
 	{ "get_all_upgrades",                   PyWorld_get_all_upgrades,      METH_VARARGS },
 	{ "get_best_upgrade",                   PyWorld_get_best_upgrade,      METH_VARARGS },
+	/* rc_world_foreach_system_upgrade */
+	{ "get_all_system_upgrades",            PyWorld_get_all_system_upgrades, METH_VARARGS },
+	/* rc_world_foreach_providing_package */
+	{ "get_all_providing_packages",         PyWorld_get_all_providing_pkgs,  METH_VARARGS },
+	/* rc_world_foreach_requiring_package */
+	{ "get_all_requiring_packages",         PyWorld_get_all_requiring_pkgs,  METH_VARARGS },
+	/* rc_world_foreach_parent_package */
+	{ "get_all_parent_packages",            PyWorld_get_all_parent_pkgs,   METH_VARARGS },
+	/* rc_world_foreach_conflicting_package */
+	{ "get_all_conflicting_pkgs",           PyWorld_get_all_conflicting_pkgs,METH_VARARGS },
 
 	{ "transact",                           PyWorld_transact,              METH_VARARGS },
 	{ NULL, NULL }

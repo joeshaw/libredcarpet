@@ -100,7 +100,7 @@ PyPackage_init (PyObject *self, PyObject *args, PyObject *kwds)
 	py_package->package = rc_package_new ();
 
 	if (py_package->package == NULL) {
-		PyErr_SetString (PyExc_RuntimeError, "Can't create packman");
+		PyErr_SetString (PyExc_RuntimeError, "Can't create Package");
 		return -1;
 	}
 
@@ -155,7 +155,8 @@ PyPackage_tp_dealloc (PyObject *self)
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
-void PyPackage_register (PyObject *dict)
+void
+PyPackage_register (PyObject *dict)
 {
 	PyPackage_type_info.tp_init    = PyPackage_init;
 	PyPackage_type_info.tp_new     = PyPackage_tp_new;

@@ -96,8 +96,8 @@ PyResolverContext_get_all_uninstall (PyObject *self, PyObject *args)
 
 static void
 get_all_upgrade_cb (RCPackage *pkg_new, RCPackageStatus status_new,
-				RCPackage *pkg_old, RCPackageStatus status_old,
-				gpointer user_data)
+		    RCPackage *pkg_old, RCPackageStatus status_old,
+		    gpointer user_data)
 {
 	PyObject *list = user_data;
 	PyObject *py_pkg;
