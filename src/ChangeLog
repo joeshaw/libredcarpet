@@ -1,3 +1,9 @@
+2002-07-26  Joe Shaw  <joe@ximian.com>
+
+	* rc-world.c (rc_world_register_packman): Connect to the packman's
+	database_changed signal.
+	(database_changed_cb): Added.  Rescans the system packages.
+
 2002-07-26  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c, rc-debman.c (check_database): pass a bool to

@@ -326,6 +326,17 @@ rc_world_free (RCWorld *world)
 
 /* Packmanish operations */
 
+static void
+database_changed_cb (RCPackman *packman, gpointer user_data)
+{
+    RCWorld *world = user_data;
+
+    rc_debug (RC_DEBUG_LEVEL_MESSAGE,
+              "Database changed; rescanning system packages");
+
+    rc_world_get_system_packages (world);
+}
+
 void
 rc_world_register_packman (RCWorld *world,
                            RCPackman *packman)
@@ -339,6 +350,9 @@ rc_world_register_packman (RCWorld *world,
     }
 
     world->packman = packman;
+
+    g_signal_connect (G_OBJECT (packman), "database_changed",
+                      G_CALLBACK (database_changed_cb), world);
 }
 
 RCPackman *
