@@ -547,6 +547,69 @@ rc_world_thaw (RCWorld *world)
     }
 }
 
+#ifdef SIZE_TRACKING_FUNCTIONS
+static int
+spec_size (RCPackageSpec *spec)
+{
+    int size = sizeof (RCPackageSpec);
+    if (spec->name)
+        size += strlen (spec->name);
+    if (spec->version)
+        size += strlen (spec->version);
+    if (spec->release)
+        size += strlen (spec->release);
+    return size;
+}
+
+static int
+dep_size (RCPackageDep *dep)
+{
+    int size = spec_size (&dep->spec);
+    size += sizeof (RCPackageDep) - sizeof (RCPackageSpec);
+
+    return size;
+}
+
+static int
+dep_slist_size (RCPackageDepSList *slist)
+{
+    int size = 0;
+
+    while (slist) {
+        size += sizeof (*slist);
+        size += dep_size (slist->data);
+        slist = slist->next;
+    }
+
+    return size;
+}
+
+static int
+package_size (RCPackage *package)
+{
+    int size = spec_size (&package->spec);
+    size += sizeof (RCPackage) - sizeof (RCPackageSpec);
+    
+    if (package->summary)
+        size += strlen (package->summary);
+    if (package->description)
+        size += strlen (package->description);
+    if (package->package_filename)
+        size += strlen (package->package_filename);
+    if (package->signature_filename)
+        size += strlen (package->signature_filename);
+
+    size += dep_slist_size (package->requires);
+    size += dep_slist_size (package->provides);
+    size += dep_slist_size (package->conflicts);
+    size += dep_slist_size (package->obsoletes);
+    size += dep_slist_size (package->suggests);
+    size += dep_slist_size (package->recommends);
+
+    return size;
+}
+#endif
+
 /**
  * rc_world_add_package:
  * @world: An #RCWorld.
@@ -871,6 +934,63 @@ rc_world_get_package_with_constraint (RCWorld *world,
     }
 
     return pkg;
+}
+
+struct GuessChannelInfo {
+    RCPackage *installed_pkg;
+    RCChannel *guess;
+};
+
+/**
+ * rc_world_guess_package_channel:
+ * @world: An #RCWorld
+ * @package: An #RCPackage
+ *
+ * If @package is an installed package, we try to guess which channel
+ * it originated from.  This cannot be done in a fool-proof manner ---
+ * if we just can't figure out where it came from, %NULL is returned.
+ * This can happen because the package is from a Red Carpet channel
+ * but is too old, or if the package is not available from Red Carpet
+ * and was installed locally from a downloaded package.
+ *
+ * If @package is from a channel, just return the channel.
+ **/
+RCChannel *
+rc_world_guess_package_channel (RCWorld *world,
+                                RCPackage *package)
+{
+    GSList *iter;
+    RCPackageUpdateSList *updates;
+    
+    g_return_val_if_fail (world != NULL, NULL);
+    g_return_val_if_fail (package != NULL, NULL);
+
+    if (package->channel != NULL)
+        return package->channel;
+
+    iter = hashed_slist_get (world->packages_by_name,
+                             RC_PACKAGE_SPEC (package)->name);
+
+    while (iter != NULL) {
+        RCPackage *iter_pkg = iter->data;
+
+        if (iter_pkg && iter_pkg->channel) {
+            updates = iter_pkg->history;
+
+            while (updates != NULL) {
+
+                if (rc_package_spec_equal (RC_PACKAGE_SPEC (updates->data),
+                                           RC_PACKAGE_SPEC (package)))
+                    return iter_pkg->channel;
+                
+                updates = updates->next;
+            }
+        }
+
+        iter = iter->next;
+    }
+    
+    return NULL;
 }
 
 struct ForeachPackageInfo {

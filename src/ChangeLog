@@ -1,3 +1,8 @@
+2002-07-01  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-world.c (rc_world_guess_package_channel): Added.  Guesses
+	which channel a package came from.	
+
 2002-06-14  Joe Shaw  <joe@ximian.com>
 
 	* rc-packman.h: Add a RC_PACKMAN_STEP_PREPARE

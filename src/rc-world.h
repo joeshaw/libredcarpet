@@ -104,6 +104,9 @@ RCPackage *rc_world_get_package_with_constraint (RCWorld *world,
                                                  RCPackageDep *constraint, 
                                                  gboolean is_and);
 
+RCChannel *rc_world_guess_package_channel (RCWorld *world,
+                                           RCPackage *package);
+
 
 /* Iterate across packages */
 
