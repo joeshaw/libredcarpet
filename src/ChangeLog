@@ -1,8 +1,17 @@
+2001-07-24  Vladimir Vukicevic  <vladimir@rain.ximian.com>
+
+	* rc-deps.c: deep copy the dep structure in a DAP; I'm really
+	going to need to get purify working to make sure everything
+	gets cleaned up right.  Also use rpmish from rc-package-dep
+	to decide whether to call debian_find_self_provides.
+
+	* rc-package-dep.c: make rpmish be not static
+
 2001-07-24  Joe Shaw  <joe@ximian.com>
 
 	* rc-packman.h: Fix an erroneous comment about a signal's parameters.
 
-2001-07-24  unknown  <vladimir@rain.ximian.com>
+2001-07-24  Vladimir Vukicevic <vladimir@rain.ximian.com>
 
 	* rc-deps.c: Don't do a stupid check for a dependency
 	based on the name of the package; use the new function
