@@ -389,17 +389,20 @@ rc_uncompress_memory (guint8 *input_buffer, guint32 input_length,
             break;
     }
 
-    if (zret != Z_STREAM_END) {
-        g_warning ("libz inflate failed! (%d)", zret);
-    }
-
     inflateEnd (&zs);
-
     g_free (outbuf);
 
-    g_byte_array_append (ba, "", 1);
+    if (zret != Z_STREAM_END) {
+        g_warning ("libz inflate failed! (%d)", zret);
+        g_byte_array_free (ba, TRUE);
+        ba = NULL;
+    } else {
+        g_byte_array_append (ba, "", 1);
+        zret = 0;
+    }
+
     *out_ba = ba;
-    return 0;
+    return zret;
 }
 
 gboolean

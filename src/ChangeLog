@@ -1,3 +1,10 @@
+2001-10-17  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-util.c: oops, really make it work
+
+	* rc-util.c (rc_unompress_memory): Complain if zlib uncompression
+	fails.  This will require changes to the tools.
+
 2001-10-04  Ian Peters  <itp@ximian.com>
 
 	* Makefile.am: only build rc-dpkg-helper.so when dpkg support
