@@ -29,8 +29,8 @@
 #include <rpm/misc.h>
 #include <rpm/header.h>
 
-#if 0
-#    define RPM_ROOTDIR "/cvs/redhat"
+#if 1
+#    define RPM_ROOTDIR "/home/itp/rpm"
 #else
 #    define RPM_ROOTDIR "/"
 #endif
@@ -762,33 +762,39 @@ parse_versions (gchar **inputs, guint32 **epochs, gchar ***versions,
 {
     guint i;
 
-    *versions = g_new0 (gchar *, count);
-    *releases = g_new0 (gchar *, count);
+    *versions = g_new0 (gchar *, count + 1);
+    *releases = g_new0 (gchar *, count + 1);
     *epochs = g_new0 (guint32, count);
 
     for (i = 0; i < count; i++) {
-        guint j = 0;
-        gchar *endptr;
+        gchar **t1, **t2;
 
-        (*epochs)[i] = strtoul (inputs[i], &endptr, 10);
-
-        if (endptr && endptr[j] == ':') {
-            endptr++;
+        if (!inputs[i] || !inputs[i][0]) {
+            break;
         }
 
-        while (endptr[j] && endptr[j] != '-') {
-            j++;
-        }
+        t1 = g_strsplit (inputs[i], ":", 2);
 
-        if (endptr[j]) {
-            (*versions)[i] = g_strndup (endptr, j);
-            (*releases)[i] = g_strdup (endptr + j + 1);
+        if (t1[1]) {
+            (*epochs)[i] = strtoul (t1[0], NULL, 10);
+            t2 = g_strsplit (t1[1], "-", 2);
         } else {
-            (*versions)[i] = g_strdup (endptr);
-            (*releases)[i] = NULL;
+            t2 = g_strsplit (t1[0], "-", 2);
         }
+
+        (*versions)[i] = g_strdup (t2[0]);
+        (*releases)[i] = g_strdup (t2[1]);
+
+        g_strfreev (t1);
+        g_strfreev (t2);
+
+        printf ("%s becomes %d %s %s\n", inputs[i], (*epochs)[i],
+                (*versions)[i], (*releases)[i]);
     }
 }
+
+/* FIXME FIXME FIXME: the strfreev is leaking all over the place, need to fix
+   that shit nowish but I need sleep */
 
 static void
 rc_rpmman_depends_fill (RCPackage *pkg, Header hdr)
@@ -842,6 +848,8 @@ rc_rpmman_depends_fill (RCPackage *pkg, Header hdr)
     for (i = 0; i < count; i++) {
         RCPackageRelation relation = 0;
 
+//        printf ("%s %d %s %s\n", verrels[i], epochs[i], versions[i], releases[i]);
+                
         if (relations[i] & RPMSENSE_LESS) {
             relation |= RC_RELATION_LESS;
         }
@@ -852,7 +860,7 @@ rc_rpmman_depends_fill (RCPackage *pkg, Header hdr)
             relation |= RC_RELATION_EQUAL;
         }
 
-        if (!versions[i][0]) {
+        if (versions[i] && !versions[i][0]) {
             g_free (versions[i]);
             versions[i] = NULL;
         }
@@ -887,6 +895,7 @@ rc_rpmman_depends_fill (RCPackage *pkg, Header hdr)
     g_free (epochs);
 
     names = NULL;
+    verrels = NULL;
 
     /* Provide myself */
 
@@ -929,7 +938,7 @@ rc_rpmman_depends_fill (RCPackage *pkg, Header hdr)
 
     for (i = 0; i < count; i++) {
         RCPackageRelation relation = 0;
-                
+
         if (relations[i] & RPMSENSE_LESS) {
             relation |= RC_RELATION_LESS;
         }
@@ -940,7 +949,7 @@ rc_rpmman_depends_fill (RCPackage *pkg, Header hdr)
             relation |= RC_RELATION_EQUAL;
         }
 
-        if (!versions[i][0]) {
+        if (versions[i] && !versions[i][0]) {
             versions[i] = NULL;
         }
 
