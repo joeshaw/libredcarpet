@@ -497,7 +497,8 @@ packman_test_install (RCPackman *p, char *line)
         return;
     }
 
-    package = rc_package_new ();
+//    package = rc_package_new ();
+    package = rc_packman_query_file (p, file);
 
     package->package_filename = g_strdup (file);
 

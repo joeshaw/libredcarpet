@@ -188,6 +188,7 @@ rc_packman_transact (RCPackman *packman, RCPackageSList *install_packages,
                      RCPackageSList *remove_packages)
 {
     RCPackmanClass *klass;
+    RCPackageSList *iter;
 
     g_return_if_fail (packman);
 
@@ -196,6 +197,59 @@ rc_packman_transact (RCPackman *packman, RCPackageSList *install_packages,
     if (packman->priv->busy) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL, NULL);
         return;
+    }
+
+    /* Make sure that no entry in install_packages appears more than
+     * once, and that no entry in install_packages is also in
+     * remove_packages */
+
+    for (iter = install_packages; iter; iter = iter->next) {
+        RCPackage *pkg = (RCPackage *)iter->data;
+        RCPackageSList *fpkg;
+
+        fpkg = g_slist_find_custom (
+            iter->next, pkg,
+            (GCompareFunc) rc_package_spec_compare_name);
+
+        if (fpkg) {
+            rc_packman_set_error (
+                packman, RC_PACKMAN_ERROR_ABORT,
+                "multiple requests to install package '%s'",
+                pkg->spec.name);
+            return;
+        }
+
+        fpkg = g_slist_find_custom (
+            remove_packages, pkg,
+            (GCompareFunc) rc_package_spec_compare_name);
+
+        if (fpkg) {
+            rc_packman_set_error (
+                packman, RC_PACKMAN_ERROR_ABORT,
+                "requests to install and remove package '%s'",
+                pkg->spec.name);
+            return;
+        }
+    }
+
+    /* Make sure that no entry in remove_packages appears more than
+     * once */
+
+    for (iter = remove_packages; iter; iter = iter->next) {
+        RCPackage *pkg = (RCPackage *)iter->data;
+        RCPackageSList *fpkg;
+
+        fpkg = g_slist_find_custom (
+            iter->next, pkg,
+            (GCompareFunc) rc_package_spec_compare_name);
+
+        if (fpkg) {
+            rc_packman_set_error (
+                packman, RC_PACKMAN_ERROR_ABORT,
+                "multiple requests to remove package '%s'",
+                pkg->spec.name);
+            return;
+        }
     }
 
     klass = RC_PACKMAN_GET_CLASS (packman);

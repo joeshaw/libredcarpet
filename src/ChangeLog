@@ -1,3 +1,9 @@
+2001-09-24  Ian Peters  <itp@ximian.com>
+
+	* rc-packman.c: add some sanity checks to the rc_packman_transact
+	wrapper to check for duplicate installs, duplicate removes, and
+	install/removes of the same package
+
 2001-09-24  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c: Don't add a package if we're removing a newer
