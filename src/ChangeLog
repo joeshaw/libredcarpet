@@ -1,3 +1,8 @@
+2004-12-01  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-package.c (rc_package_get_latest_update): Do checks for NULL's
+	*before* accessing data.
+
 2004-11-30  James Willcox  <james@ximian.com>
 
 	* rc-resolver-context.c: (get_info_foreach_cb),

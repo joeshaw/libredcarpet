@@ -357,10 +357,10 @@ rc_package_add_update (RCPackage *package,
 }
 
 RCPackageUpdate *
-rc_package_get_latest_update(RCPackage *package)
+rc_package_get_latest_update (RCPackage *package)
 {
-    RCWorld *world = rc_get_world ();
-    RCPackageUpdate *latest = (RCPackageUpdate *) package->history->data;
+    RCWorld *world;
+    RCPackageUpdate *latest;
     GSList *l;
 
     g_return_val_if_fail (package, NULL);
@@ -368,10 +368,14 @@ rc_package_get_latest_update(RCPackage *package)
         return NULL;
     }
 
+    latest = (RCPackageUpdate *) package->history->data;
+
     /* if the absolute latest is not a patch, just return that */
     if (latest->parent == NULL) {
         return latest;
     }
+
+    world = rc_get_world ();
 
     for (l = package->history; l; l = l->next) {
         RCPackageUpdate *update = (RCPackageUpdate *) l->data;
