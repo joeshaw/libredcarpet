@@ -43,4 +43,4 @@ void rc_package_set_slist_free (RCPackageSetSList *set_list);
 
 RCPackageSetSList *rc_package_set_parse (char *buf, int compressed_length);
 
-#endif _RC_PACKAGE_SET_H
+#endif

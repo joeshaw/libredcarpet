@@ -1,5 +1,7 @@
 2001-02-12  Vladimir Vukicevic  <vladimir@ximian.com>
 
+	* rc-package-set.h: Fix #endif to get rid of compiler warning
+
 	* rc-deps.c: Attempt to fix brokenness introduced by earlier
 	commit.  Removes are more intelligent and robust now (we can use
 	upgrade_or_remove knowing that the remove will happen corerctly
