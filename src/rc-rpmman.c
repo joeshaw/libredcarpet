@@ -1215,10 +1215,10 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
                 dep = rc_package_dep_new (tmp, 0, NULL, NULL,
                                           RC_RELATION_ANY);
 
-                g_free (tmp);
-
                 package->provides = g_slist_prepend (package->provides, dep);
             }
+
+            g_free (tmp);
         }
 
         free (basenames);
