@@ -121,4 +121,8 @@ void             rc_package_add_update        (RCPackage *package,
                                                RCPackageUpdate *update);
 RCPackageUpdate *rc_package_get_latest_update (RCPackage *package);
 
+void             rc_package_add_dummy_update  (RCPackage  *package,
+                                               const char *package_filename,
+                                               guint32     package_size);
+
 #endif /* _RC_PACKAGE_H */

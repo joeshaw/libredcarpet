@@ -323,3 +323,24 @@ rc_package_get_latest_update(RCPackage *package)
 
     return (RCPackageUpdate *) package->history->data;
 } /* rc_package_get_latest_update */
+
+void
+rc_package_add_dummy_update (RCPackage  *package,
+                             const char *package_filename,
+                             guint32     package_size)
+{
+    RCPackageUpdate *update;
+
+    g_return_if_fail (package != NULL);
+    g_return_if_fail (package_filename && *package_filename);
+
+    update = rc_package_update_new ();
+    
+    rc_package_spec_copy (&update->spec, &package->spec);
+
+    update->package_url  = g_strdup (package_filename);
+    update->package_size = package_size;
+    update->importance   = RC_IMPORTANCE_SUGGESTED;
+    
+    rc_package_add_update (package, update);
+}
