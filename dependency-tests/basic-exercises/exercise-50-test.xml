@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+
+<test>
+
+<setup>
+  <undump file="exercise-50-dump.xml.gz"/>
+</setup>
+
+<trial>
+  <uninstall package="foo-set"/>
+</trial>
+
+<trial>
+  <uninstall package="zebra"/>
+</trial>
+
+<trial>
+  <install package="bar-set" channel="/home/trow/synth"/>
+  <uninstall package="foo-set"/>
+</trial>
+
+
+</test>

@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+
+<test>
+
+<setup>
+  <undump file="exercise-51-dump.xml.gz"/>
+</setup>
+
+<trial>
+  <uninstall package="foo-set"/>
+  <install package="baz-set" channel="/home/trow/synth"/>
+</trial>
+
+</test>

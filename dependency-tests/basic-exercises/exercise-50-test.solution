@@ -1,0 +1,23 @@
+>!> Uninstalling foo-set
+>!> Solution #1:
+>!> remove  foo-set-1:1.0-1-ximian.1
+>!> remove  xtoolwait-1.3-1
+>!> remove  ytalk-3.1.1-7
+>!> remove  zebra-0.92a-3
+>!> installs=0, upgrades=0, uninstalls=4
+>!> Uninstalling zebra
+>!> Solution #1:
+>!> remove  foo-set-1:1.0-1-ximian.1
+>!> remove  xtoolwait-1.3-1
+>!> remove  ytalk-3.1.1-7
+>!> remove  zebra-0.92a-3
+>!> installs=0, upgrades=0, uninstalls=4
+>!> Installing bar-set from channel /home/trow/synth
+>!> Uninstalling foo-set
+>!> Solution #1:
+>!> install bar-set-1:1.0-1-ximian.1[/home/trow/synth]
+>!> install xosview-0:1.7.3-10[Red Hat Linux 7.3]
+>!> install zsh-0:4.0.4-5[Red Hat Linux 7.3]
+>!> remove  foo-set-1:1.0-1-ximian.1
+>!> remove  xtoolwait-1.3-1
+>!> installs=3, upgrades=0, uninstalls=2
