@@ -1,6 +1,27 @@
+2001-01-26  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* rc-deps.c: VASTLY improved debian dependency code.  Conflits
+	are moslty handled correctly.  Debian stupid-self-conflicts are
+	handled.  Packages are correctly uninstalled.  The code itself
+	has a lot of cruftiness laying around; it's going to need some
+	massaging to look pretty, but it, apparently, works.
+
+	* rc-deps.h: added dep_print_results
+	
+	* rc-debug-misc.c, rc-debug-misc.h: Moved dep_print_results into
+	rc-deps.c.
+
+	* rc-package-dep.c: Oops, keep iterating the list, silly!
+
+	* rc-package-dep.h: new warning about RCPackageDepItem
+
+	* rc-package-info.c: fixed some formatting bugs.
+
+	* ChangeLog: Fixed itp's HR blunder.
+
 2001-01-25  Ian Peters  <itp@ximian.com>
 
-	* rc-rpmman.c (rc_rpmman_query): fuck me.  I hate rpmlib.  Not
+	* rc-rpmman.c (rc_rpmman_query): BLEEP me.  I hate rpmlib.  Not
 	finding something in a database isn't a failure, it's a successful
 	search.
 

@@ -71,6 +71,7 @@ typedef GSList RCPackageDepSList;
 #include <gnome-xml/tree.h>
 #include <libredcarpet/rc-package-spec.h>
 
+/* THE SPEC MUST BE FIRST */
 struct _RCPackageDepItem {
     RCPackageSpec spec;
     RCPackageRelation relation;

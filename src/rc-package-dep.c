@@ -184,6 +184,8 @@ rc_package_dep_verify_and_relation (RCPackageDep *depl,
                     if (fail_out) *fail_out = g_slist_append (*fail_out, di);
                     ret = FALSE;
                 }
+                depl = depl->next;
+                continue;
             }
         }
 
