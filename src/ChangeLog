@@ -1,3 +1,8 @@
+2001-09-24  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c, rc-deps.h: give a reason when we abort, so the GUI
+	can display a useful message.
+
 2001-09-21  Ian Peters  <itp@ximian.com>
 
 	pulled in from red-carpet-1-1 branch
