@@ -1,3 +1,18 @@
+2001-01-24  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c: global cleanup, pkg to package, p to packman, hdr
+	to header, etc
+	(GTKFLUSH): added this macro to flush pending gtk events
+	(transact_cb): add calls to GTKFLUSH after every signal emission
+	(transaction_add_install_packages): renamed, cleaned up, add lots
+	of calls to rc_packman_set_error
+	(transaction_add_remove_packages): ditto
+	(rc_rpmman_transact): updated to name changes, cleanup, error
+	handling
+	(split_rpm): added, does much of the work that used to be in
+	rc_rpmman_verify
+	(rc_rpmman_verify): call split_rpm, factor the code better
+
 2001-01-24  Vladimir Vukicevic  <vladimir@helixcode.com>
 
 	* rc-package-dep.c: If you're going to use autoconf config.h

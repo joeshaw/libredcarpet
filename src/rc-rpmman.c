@@ -39,6 +39,8 @@
 #include "signature-3-0-x.h"
 #endif
 
+#define GTKFLUSH {while (gtk_events_pending ()) gtk_main_iteration ();}
+
 static void rc_rpmman_class_init (RCRpmmanClass *klass);
 static void rc_rpmman_init       (RCRpmman *obj);
 
@@ -69,7 +71,7 @@ rc_rpmman_get_type (void)
 typedef struct _InstallState InstallState;
 
 struct _InstallState {
-    RCPackman *p;
+    RCPackman *packman;
     guint seqno;
     guint install_total;
     guint install_extra;
@@ -97,36 +99,45 @@ transact_cb (const Header h, const rpmCallbackType what,
         break;
 
     case RPMCALLBACK_INST_PROGRESS:
-        gtk_signal_emit_by_name (GTK_OBJECT (state->p), "transaction_progress",
-                                 amount, total);
+        gtk_signal_emit_by_name (GTK_OBJECT (state->packman),
+                                 "transaction_progress", amount, total);
+        GTKFLUSH;
         if (amount == total) {
-            gtk_signal_emit_by_name (GTK_OBJECT (state->p), "transaction_step",
-                                     ++state->seqno, state->install_total +
+            gtk_signal_emit_by_name (GTK_OBJECT (state->packman),
+                                     "transaction_step", ++state->seqno,
+                                     state->install_total +
                                      state->remove_total +
                                      state->install_extra);
+            GTKFLUSH;
         }
         break;
 
     case RPMCALLBACK_TRANS_PROGRESS:
         if (state->configuring) {
-            gtk_signal_emit_by_name (GTK_OBJECT (state->p), "configure_step",
-                                     ++state->seqno, state->install_total);
+            gtk_signal_emit_by_name (GTK_OBJECT (state->packman),
+                                     "configure_step", ++state->seqno,
+                                     state->install_total);
+            GTKFLUSH;
             if (state->seqno == state->install_total) {
                 state->configuring = FALSE;
                 state->seqno = 0;
-                gtk_signal_emit_by_name (GTK_OBJECT (state->p),
+                gtk_signal_emit_by_name (GTK_OBJECT (state->packman),
                                          "configure_done");
-                gtk_signal_emit_by_name (GTK_OBJECT (state->p),
+                GTKFLUSH;
+                gtk_signal_emit_by_name (GTK_OBJECT (state->packman),
                                          "transaction_step", 0,
                                          state->install_total +
                                          state->install_extra +
                                          state->remove_total);
+                GTKFLUSH;
             }
         } else {
-            gtk_signal_emit_by_name (GTK_OBJECT (state->p), "transaction_step",
+            gtk_signal_emit_by_name (GTK_OBJECT (state->packman),
+                                     "transaction_step",
                                      ++state->seqno, state->install_total +
                                      state->remove_total +
                                      state->install_extra);
+            GTKFLUSH;
         }
         break;
 
@@ -151,12 +162,13 @@ transact_cb (const Header h, const rpmCallbackType what,
 } /* transact_cb */
 
 static gboolean
-transaction_add_install_pkgs (RCPackman *p, rpmTransactionSet transaction,
-                              RCPackageSList *install_packages)
+transaction_add_install_packages (RCPackman *packman,
+                                  rpmTransactionSet transaction,
+                                  RCPackageSList *install_packages)
 {
     RCPackageSList *iter;
     FD_t fd;
-    Header hdr;
+    Header header;
     int rc;
 
     for (iter = install_packages; iter; iter = iter->next) {
@@ -165,29 +177,35 @@ transaction_add_install_pkgs (RCPackman *p, rpmTransactionSet transaction,
         fd = Fopen (filename, "r.ufdio");
 
         if (fd == NULL || Ferror (fd)) {
-            /* FIXME: Fatal error opening the file */
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "unable to open %s", filename);
+
             return (FALSE);
         }
 
-        rc = rpmReadPackageHeader (fd, &hdr, NULL, NULL, NULL);
+        rc = rpmReadPackageHeader (fd, &header, NULL, NULL, NULL);
 
         switch (rc) {
         case 1:
             Fclose (fd);
-            /* FIXME: not an RPM package? */
+
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "can't read RPM header in %s", filename);
+
             return (FALSE);
-            break;
 
         default:
             Fclose (fd);
-            /* FIXME: cannot be installed? */
+
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "%s is not installable", filename);
+
             return (FALSE);
-            break;
 
         case 0:
-            rc = rpmtransAddPackage (transaction, hdr, NULL, filename, 1,
+            rc = rpmtransAddPackage (transaction, header, NULL, filename, 1,
                                      NULL);
-            headerFree (hdr);
+            headerFree (header);
             Fclose (fd);
 
             switch (rc) {
@@ -195,14 +213,16 @@ transaction_add_install_pkgs (RCPackman *p, rpmTransactionSet transaction,
                 break;
 
             case 1:
-                /* FIXME: Error reading from file */
+                rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                      "error reading from %s", filename);
+
                 return (FALSE);
-                break;
 
             case 2:
-                /* FIXME: Requires newer RPM */
+                rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                      "%s requires newer rpmlib", filename);
+
                 return (FALSE);
-                break;
             }
         }
     }
@@ -211,22 +231,22 @@ transaction_add_install_pkgs (RCPackman *p, rpmTransactionSet transaction,
 } /* transaction_add_install_pkgs */
 
 static gchar *
-rc_package_to_rpm_name (RCPackage *pkg)
+rc_package_to_rpm_name (RCPackage *package)
 {
     gchar *ret = NULL;
 
-    g_assert (pkg);
-    g_assert (pkg->spec.name);
+    g_assert (package);
+    g_assert (package->spec.name);
 
-    ret = g_strdup (pkg->spec.name);
+    ret = g_strdup (package->spec.name);
 
-    if (pkg->spec.version) {
-        gchar *tmp = g_strconcat (ret, "-", pkg->spec.version, NULL);
+    if (package->spec.version) {
+        gchar *tmp = g_strconcat (ret, "-", package->spec.version, NULL);
         g_free (ret);
         ret = tmp;
 
-        if (pkg->spec.release) {
-            tmp = g_strconcat (ret, "-", pkg->spec.release, NULL);
+        if (package->spec.release) {
+            tmp = g_strconcat (ret, "-", package->spec.release, NULL);
             g_free (ret);
             ret = tmp;
         }
@@ -238,39 +258,54 @@ rc_package_to_rpm_name (RCPackage *pkg)
 #ifdef HAVE_RPM_4_0
 
 static gboolean
-transaction_add_remove_pkgs (RCPackman *p, rpmTransactionSet transaction,
-                             rpmdb db, RCPackageSList *remove_pkgs)
+transaction_add_remove_packages (RCPackman *packman,
+                                 rpmTransactionSet transaction, rpmdb db,
+                                 RCPackageSList *remove_packages)
 {
     RCPackageSList *iter;
 
-    for (iter = remove_pkgs; iter; iter = iter->next) {
-        RCPackage *pkg = (RCPackage *)(iter->data);
-        gchar *pkg_name = rc_package_to_rpm_name (pkg);
+    for (iter = remove_packages; iter; iter = iter->next) {
+        RCPackage *package = (RCPackage *)(iter->data);
+        gchar *package_name = rc_package_to_rpm_name (package);
         rpmdbMatchIterator mi;
-        Header hdr;
+        Header header;
         unsigned int offset;
         int count;
 
-        mi = rpmdbInitIterator (db, RPMDBI_LABEL, pkg_name, 0);
+        mi = rpmdbInitIterator (db, RPMDBI_LABEL, package_name, 0);
         count = rpmdbGetIteratorCount (mi);
 
         if (count <= 0) {
-            /* FIXME: package is not installed */
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "package %s is not installed", package_name);
+
             rpmdbFreeIterator (mi);
+
+            g_free (package_name);
+
             return (FALSE);
         }
 
         if (count > 1) {
-            /* FIXME: we've specified multiple packages? */
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "%s refers to %d packages", package_name,
+                                  count);
+
             rpmdbFreeIterator (mi);
+
+            g_free (package_name);
+
             return (FALSE);
         }
 
-        hdr = rpmdbNextIterator (mi);
+        header = rpmdbNextIterator (mi);
         offset = rpmdbGetIteratorOffset (mi);
 
         rpmtransRemovePackage (transaction, offset);
+
         rpmdbFreeIterator (mi);
+
+        g_free (package_name);
     }
 
     return (TRUE);
@@ -279,33 +314,39 @@ transaction_add_remove_pkgs (RCPackman *p, rpmTransactionSet transaction,
 #else /* !HAVE_RPM_4_0 */
 
 static gboolean
-transaction_add_remove_pkgs (RCPackman *p, rpmTransactionSet transaction,
-                             rpmdb db, RCPackageSList *remove_pkgs)
+transaction_add_remove_packages (RCPackman *packman,
+                                 rpmTransactionSet transaction, rpmdb db,
+                                 RCPackageSList *remove_packages)
 {
     int rc;
     RCPackageSList *iter;
     int i;
     int count;
 
-    for (iter = remove_pkgs; iter; iter = iter->next) {
-        RCPackage *pkg = (RCPackage *)(iter->data);
-        gchar *pkg_name = rc_package_to_rpm_name (pkg);
+    for (iter = remove_packages; iter; iter = iter->next) {
+        RCPackage *package = (RCPackage *)(iter->data);
+        gchar *package_name = rc_package_to_rpm_name (package);
         dbiIndexSet matches;
 
-        rc = rpmdbFindByLabel (db, pkg_name, &matches);
-
-        g_free (pkg_name);
+        rc = rpmdbFindByLabel (db, package_name, &matches);
 
         switch (rc) {
         case 1:
-            /* FIXME: package is not installed */
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "package %s is not installed", package_name);
+
+            g_free (package_name);
+
             return (FALSE);
-            break;
 
         case 2:
-            /* FIXME: couldn't find that package? */
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "unspecified error removing %s",
+                                  package_name);
+
+            g_free (package_name);
+
             return (FALSE);
-            break;
 
         default:
             count = 0;
@@ -316,7 +357,12 @@ transaction_add_remove_pkgs (RCPackman *p, rpmTransactionSet transaction,
             }
 
             if (count > 1) {
-                /* FIXME: multiple matches!  (fucking rpm) */
+                rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                      "%s matches multiple packages",
+                                      package_name);
+
+                g_free (package_name);
+
                 return (FALSE);
             }
 
@@ -325,10 +371,21 @@ transaction_add_remove_pkgs (RCPackman *p, rpmTransactionSet transaction,
 
                 if (offset) {
                     rpmtransRemovePackage (transaction, offset);
+                } else {
+                    rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                          "unable to locate %s",
+                                          package_name);
+
+                    g_free (package_name);
+
+                    return (FALSE);
                 }
             }
 
             dbiFreeIndexRecord (matches);
+
+            g_free (package_name);
+
             break;
         }
     }
@@ -339,7 +396,7 @@ transaction_add_remove_pkgs (RCPackman *p, rpmTransactionSet transaction,
 #endif /* !HAVE_RPM_4_0 */
 
 static void
-rc_rpmman_transact (RCPackman *p, RCPackageSList *install_packages,
+rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
                     RCPackageSList *remove_packages)
 {
     rpmdb db = NULL;
@@ -350,32 +407,58 @@ rc_rpmman_transact (RCPackman *p, RCPackageSList *install_packages,
     guint extras = 0;
     RCPackageSList *iter;
 
-    if (rpmdbOpen (RC_RPMMAN (p)->rpmroot, &db, O_RDWR | O_CREAT, 0644)) {
-        /* FIXME: Fatal error opening the database */
-        return;
+    if (rpmdbOpen (RC_RPMMAN (packman)->rpmroot, &db,
+                   O_RDWR | O_CREAT, 0644))
+    {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "unable to open RPM database");
+
+        goto ERROR;
     }
 
-    transaction = rpmtransCreateSet (db, RC_RPMMAN (p)->rpmroot);
+    transaction = rpmtransCreateSet (db, RC_RPMMAN (packman)->rpmroot);
 
-    if (!(transaction_add_install_pkgs (p, transaction, install_packages))) {
-        /* FIXME: Uh oh */
-        return;
+    if (!(transaction_add_install_packages (packman, transaction,
+                                            install_packages)))
+    {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "error adding packages to install");
+
+        rpmtransFree (transaction);
+
+        rpmdbClose (db);
+
+        goto ERROR;
     }
 
-    if (!(transaction_add_remove_pkgs (p, transaction, db, remove_packages))) {
-        /* FIXME: Uh oh */
-        return;
+    if (!(transaction_add_remove_packages (packman, transaction, db,
+                                           remove_packages)))
+    {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "error adding packages to remove");
+
+        rpmtransFree (transaction);
+
+        rpmdbClose (db);
+
+        goto ERROR;
     }
 
     if (rpmdepOrder (transaction)) {
-        /* FIXME: Failed to order transaction */
-        return;
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "dependencies are not met");
+
+        rpmtransFree (transaction);
+
+        rpmdbClose (db);
+
+        goto ERROR;
     }
 
     for (iter = install_packages; iter; iter = iter->next) {
         RCPackage *package = (RCPackage *)(iter->data);
 
-        package = rc_packman_query_file (p, package->package_filename);
+        package = rc_packman_query_file (packman, package->package_filename);
 
         package->spec.epoch = 0;
         g_free (package->spec.version);
@@ -383,7 +466,7 @@ rc_rpmman_transact (RCPackman *p, RCPackageSList *install_packages,
         g_free (package->spec.release);
         package->spec.release = NULL;
 
-        if ((rc_packman_query (p, package))->installed) {
+        if ((rc_packman_query (packman, package))->installed) {
             extras++;
         }
 
@@ -391,22 +474,32 @@ rc_rpmman_transact (RCPackman *p, RCPackageSList *install_packages,
     }
 
     state = g_new0 (InstallState, 1);
-    state->p = p;
+    state->packman = packman;
     state->seqno = 0;
     state->install_total = g_slist_length (install_packages);
     state->install_extra = extras;
     state->remove_total = g_slist_length (remove_packages);
 
-    gtk_signal_emit_by_name (GTK_OBJECT (p), "transaction_step", 0,
+    gtk_signal_emit_by_name (GTK_OBJECT (packman), "transaction_step", 0,
                              state->install_total + state->remove_total +
                              state->install_extra);
+    GTKFLUSH;
 
     rc = rpmRunTransactions (transaction, transact_cb, (void *) state,
                              NULL, &probs, 0, 0);
 
-    gtk_signal_emit_by_name (GTK_OBJECT (p), "transaction_done");
+    gtk_signal_emit_by_name (GTK_OBJECT (packman), "transaction_done");
+    GTKFLUSH;
+
+    rpmtransFree (transaction);
 
     rpmdbClose (db);
+
+    return;
+
+  ERROR:
+    rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                          "Unable to complete RPM transaction");
 } /* rc_rpmman_transact */
 
 /* Helper function to read values out of an rpm header safely.  If any of the
@@ -415,7 +508,7 @@ rc_rpmman_transact (RCPackman *p, RCPackageSList *install_packages,
    Just remember to free the header later! */
 
 static void
-rc_rpmman_read_header (Header hdr, gchar **name, guint32 *epoch,
+rc_rpmman_read_header (Header header, gchar **name, guint32 *epoch,
                        gchar **version, gchar **release,
                        RCPackageSection *section, guint32 *size,
                        gchar **summary, gchar **description)
@@ -428,7 +521,7 @@ rc_rpmman_read_header (Header hdr, gchar **name, guint32 *epoch,
         g_free (*name);
         *name = NULL;
 
-        headerGetEntry (hdr, RPMTAG_NAME, &type, (void **)&tmpname, &count);
+        headerGetEntry (header, RPMTAG_NAME, &type, (void **)&tmpname, &count);
 
         if (count && (type == RPM_STRING_TYPE) && tmpname && tmpname[0]) {
             *name = g_strdup (tmpname);
@@ -440,7 +533,7 @@ rc_rpmman_read_header (Header hdr, gchar **name, guint32 *epoch,
 
         *epoch = 0;
 
-        headerGetEntry (hdr, RPMTAG_EPOCH, &type, (void **)&tmpepoch, &count);
+        headerGetEntry (header, RPMTAG_EPOCH, &type, (void **)&tmpepoch, &count);
 
         if (count && (type == RPM_INT32_TYPE)) {
             *epoch = *tmpepoch;
@@ -453,7 +546,7 @@ rc_rpmman_read_header (Header hdr, gchar **name, guint32 *epoch,
         g_free (*version);
         *version = NULL;
 
-        headerGetEntry (hdr, RPMTAG_VERSION, &type, (void **)&tmpver, &count);
+        headerGetEntry (header, RPMTAG_VERSION, &type, (void **)&tmpver, &count);
 
         if (count && (type == RPM_STRING_TYPE) && tmpver && tmpver[0]) {
             *version = g_strdup (tmpver);
@@ -466,7 +559,7 @@ rc_rpmman_read_header (Header hdr, gchar **name, guint32 *epoch,
         g_free (*release);
         *release = NULL;
 
-        headerGetEntry (hdr, RPMTAG_RELEASE, &type, (void **)&tmprel, &count);
+        headerGetEntry (header, RPMTAG_RELEASE, &type, (void **)&tmprel, &count);
 
         if (count && (type == RPM_STRING_TYPE) && tmprel && tmprel[0]) {
             *release = g_strdup (tmprel);
@@ -478,7 +571,7 @@ rc_rpmman_read_header (Header hdr, gchar **name, guint32 *epoch,
 
         *section = RC_SECTION_MISC;
 
-        headerGetEntry (hdr, RPMTAG_GROUP, &type, (void **)&tmpsection,
+        headerGetEntry (header, RPMTAG_GROUP, &type, (void **)&tmpsection,
                         &count);
 
         if (count && (type == RPM_STRING_TYPE) && tmpsection &&
@@ -563,7 +656,7 @@ rc_rpmman_read_header (Header hdr, gchar **name, guint32 *epoch,
 
         *size = 0;
 
-        headerGetEntry (hdr, RPMTAG_SIZE, &type, (void **)&tmpsize, &count);
+        headerGetEntry (header, RPMTAG_SIZE, &type, (void **)&tmpsize, &count);
 
         if (count && (type == RPM_INT32_TYPE)) {
             *size = *tmpsize;
@@ -576,7 +669,7 @@ rc_rpmman_read_header (Header hdr, gchar **name, guint32 *epoch,
         g_free (*summary);
         *summary = NULL;
 
-        headerGetEntry (hdr, RPMTAG_SUMMARY, &type, (void **)&tmpsummary,
+        headerGetEntry (header, RPMTAG_SUMMARY, &type, (void **)&tmpsummary,
                         &count);
 
         if (count && (type == RPM_STRING_TYPE)) {
@@ -590,7 +683,7 @@ rc_rpmman_read_header (Header hdr, gchar **name, guint32 *epoch,
         g_free (*description);
         *description = NULL;
 
-        headerGetEntry (hdr, RPMTAG_DESCRIPTION, &type,
+        headerGetEntry (header, RPMTAG_DESCRIPTION, &type,
                         (void **)&tmpdescription, &count);
 
         if (count && (type == RPM_STRING_TYPE)) {
@@ -603,6 +696,9 @@ rc_rpmman_read_header (Header hdr, gchar **name, guint32 *epoch,
    <epoch>:<version>, or <version>-<release>, or <epoch>:<version>-<release>,
    and does the right thing, breaking them into the right parts and returning
    the parts in the arrays epochs, versions, and releases. */
+
+/* FIXME: I can make this faster with str[r]chr when I have more
+ * time */
 
 static void
 parse_versions (gchar **inputs, guint32 **epochs, gchar ***versions,
@@ -639,12 +735,12 @@ parse_versions (gchar **inputs, guint32 **epochs, gchar ***versions,
 }
 
 static void
-rc_rpmman_depends_fill (Header hdr, RCPackage *pkg)
+rc_rpmman_depends_fill (Header header, RCPackage *package)
 {
     gchar **names, **verrels, **versions, **releases;
     guint32 *epochs;
     gint *relations;
-    gint32 count;
+    guint32 count;
     guint i;
     RCPackageDepItem *dep;
     RCPackageDep *depl = NULL;
@@ -652,30 +748,26 @@ rc_rpmman_depends_fill (Header hdr, RCPackage *pkg)
     /* Shouldn't ever ask for dependencies unless you know what you really
        want (name, version, release) */
 
-    g_assert (pkg->spec.name);
-    g_assert (pkg->spec.version);
-    g_assert (pkg->spec.release);
+    g_assert (package->spec.name);
+    g_assert (package->spec.version);
+    g_assert (package->spec.release);
 
     /* Better safe than sorry, eh? */
 
-    rc_package_dep_slist_free (pkg->requires);
-    pkg->requires = NULL;
-    rc_package_dep_slist_free (pkg->conflicts);
-    pkg->conflicts = NULL;
-    rc_package_dep_slist_free (pkg->provides);
-    pkg->provides = NULL;
+    rc_package_dep_slist_free (package->requires);
+    package->requires = NULL;
+    rc_package_dep_slist_free (package->conflicts);
+    package->conflicts = NULL;
+    rc_package_dep_slist_free (package->provides);
+    package->provides = NULL;
 
     /* Query the RPM database for the packages required by this package, and
        all associated information */
 
-    headerGetEntry (hdr, RPMTAG_REQUIREFLAGS, NULL, (void **)&relations,
+    headerGetEntry (header, RPMTAG_REQUIREFLAGS, NULL, (void **)&relations,
                     &count);
-    headerGetEntry (hdr, RPMTAG_REQUIRENAME, NULL, (void **)&names, &count);
-    headerGetEntry (hdr, RPMTAG_REQUIREVERSION, NULL, (void **)&verrels,
-                    &count);
-
-    /* Break this useless information into version and release fields.
-       FIXME: this needs to do the epoch too */
+    headerGetEntry (header, RPMTAG_REQUIRENAME, NULL, (void **)&names, NULL);
+    headerGetEntry (header, RPMTAG_REQUIREVERSION, NULL, (void **)&verrels, NULL);
 
     /* Some packages, such as setup and termcap, store a NULL in the
        RPMTAG_REQUIREVERSION, yet set the count to 1. That's pretty damned
@@ -691,8 +783,6 @@ rc_rpmman_depends_fill (Header hdr, RCPackage *pkg)
     for (i = 0; i < count; i++) {
         RCPackageRelation relation = 0;
 
-//        printf ("%s %d %s %s\n", verrels[i], epochs[i], versions[i], releases[i]);
-                
         if (relations[i] & RPMSENSE_LESS) {
             relation |= RC_RELATION_LESS;
         }
@@ -722,13 +812,12 @@ rc_rpmman_depends_fill (Header hdr, RCPackage *pkg)
             /* This is a "seekret" message for rpmlib only */
         } else {
             /* Add the dependency to the list of dependencies */
-
             dep = rc_package_dep_item_new (names[i], epochs[i], versions[i],
                                            releases[i], relation);
 
             depl = g_slist_append (NULL, dep);
 
-            pkg->requires = g_slist_append (pkg->requires, depl);
+            package->requires = g_slist_append (package->requires, depl);
         }
 
         g_free (versions[i]);
@@ -747,18 +836,18 @@ rc_rpmman_depends_fill (Header hdr, RCPackage *pkg)
 
     /* Provide myself */
 
-    dep = rc_package_dep_item_new (pkg->spec.name, pkg->spec.epoch,
-                                   pkg->spec.version, pkg->spec.release,
-                                   RC_RELATION_EQUAL);
+    dep = rc_package_dep_item_new (package->spec.name, package->spec.epoch,
+                                   package->spec.version,
+                                   package->spec.release, RC_RELATION_EQUAL);
 
     depl = g_slist_append (NULL, dep);
 
-    pkg->provides = g_slist_append (pkg->provides, depl);
+    package->provides = g_slist_append (package->provides, depl);
 
     /* RPM doesn't do versioned provides (as of 3.0.4), so we only need to find
        out the name of things that this package provides */
 
-    headerGetEntry (hdr, RPMTAG_PROVIDENAME, NULL, (void **)&names, &count);
+    headerGetEntry (header, RPMTAG_PROVIDENAME, NULL, (void **)&names, &count);
 
     for (i = 0; i < count; i++) {
         dep = rc_package_dep_item_new (names[i], 0, NULL, NULL,
@@ -766,7 +855,7 @@ rc_rpmman_depends_fill (Header hdr, RCPackage *pkg)
 
         depl = g_slist_append (NULL, dep);
 
-        pkg->provides = g_slist_append (pkg->provides, depl);
+        package->provides = g_slist_append (package->provides, depl);
     }
 
     /* Only have to free the char** ones */
@@ -776,10 +865,10 @@ rc_rpmman_depends_fill (Header hdr, RCPackage *pkg)
 
     /* Find full information on anything that this package conflicts with */
 
-    headerGetEntry (hdr, RPMTAG_CONFLICTFLAGS, NULL, (void **)&relations,
+    headerGetEntry (header, RPMTAG_CONFLICTFLAGS, NULL, (void **)&relations,
                     &count);
-    headerGetEntry (hdr, RPMTAG_CONFLICTNAME, NULL, (void **)&names, &count);
-    headerGetEntry (hdr, RPMTAG_CONFLICTVERSION, NULL, (void **)&verrels,
+    headerGetEntry (header, RPMTAG_CONFLICTNAME, NULL, (void **)&names, &count);
+    headerGetEntry (header, RPMTAG_CONFLICTVERSION, NULL, (void **)&verrels,
                     &count);
 
     parse_versions (verrels, &epochs, &versions, &releases, count);
@@ -810,7 +899,7 @@ rc_rpmman_depends_fill (Header hdr, RCPackage *pkg)
 
         depl = g_slist_append (NULL, dep);
 
-        pkg->conflicts = g_slist_append (pkg->conflicts, depl);
+        package->conflicts = g_slist_append (package->conflicts, depl);
 
         g_free (versions[i]);
         g_free (releases[i]);
@@ -831,14 +920,14 @@ rc_rpmman_depends_fill (Header hdr, RCPackage *pkg)
    those criteria. */
 
 static gboolean
-rc_rpmman_check_match (Header hdr, RCPackage *pkg)
+rc_rpmman_check_match (Header header, RCPackage *package)
 {
     gchar *version = NULL, *release = NULL;
     gchar *summary = NULL, *description = NULL;
     guint32 size = 0, epoch = 0;
     RCPackageSection section = RC_SECTION_MISC;
 
-    rc_rpmman_read_header (hdr, NULL, &epoch, &version, &release, &section,
+    rc_rpmman_read_header (header, NULL, &epoch, &version, &release, &section,
                            &size, &summary, &description);
 
     /* FIXME: this could potentially be a big problem if an rpm can have
@@ -846,22 +935,22 @@ rc_rpmman_check_match (Header hdr, RCPackage *pkg)
        ignore that for now, because I need to get this stuff done and it
        doesn't seem very likely, but... */
 
-    if ((!pkg->spec.version || !strcmp (pkg->spec.version, version)) &&
-        (!pkg->spec.release || !strcmp (pkg->spec.release, release)) &&
-        (!pkg->spec.epoch || pkg->spec.epoch == epoch)) {
+    if ((!package->spec.version || !strcmp (package->spec.version, version)) &&
+        (!package->spec.release || !strcmp (package->spec.release, release)) &&
+        (!package->spec.epoch || package->spec.epoch == epoch)) {
 
-        g_free (pkg->spec.version);
-        g_free (pkg->spec.release);
+        g_free (package->spec.version);
+        g_free (package->spec.release);
 
-        pkg->spec.epoch = epoch;
-        pkg->spec.version = version;
-        pkg->spec.release = release;
-        pkg->summary = summary;
-        pkg->description = description;
-        pkg->installed = TRUE;
-        pkg->installed_size = size;
+        package->spec.epoch = epoch;
+        package->spec.version = version;
+        package->spec.release = release;
+        package->summary = summary;
+        package->description = description;
+        package->installed = TRUE;
+        package->installed_size = size;
 
-        rc_rpmman_depends_fill (hdr, pkg);
+        rc_rpmman_depends_fill (header, package);
 
         return (TRUE);
     } else {
@@ -877,91 +966,127 @@ rc_rpmman_check_match (Header hdr, RCPackage *pkg)
 #ifdef HAVE_RPM_4_0
 
 static RCPackage *
-rc_rpmman_query (RCPackman *p, RCPackage *pkg)
+rc_rpmman_query (RCPackman *packman, RCPackage *package)
 {
     rpmdb db;
     rpmdbMatchIterator mi = NULL;
-    Header hdr;
+    Header header;
 
-    if (rpmdbOpen (RC_RPMMAN (p)->rpmroot, &db, O_RDONLY, 0444)) {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
-                              "Unable to open RPM database");
-        return (pkg);
+    if (rpmdbOpen (RC_RPMMAN (packman)->rpmroot, &db, O_RDONLY, 0444)) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "unable to open RPM database");
+
+        goto ERROR;
     }
 
-    mi = rpmdbInitIterator (db, RPMDBI_LABEL, pkg->spec.name, 0);
+    mi = rpmdbInitIterator (db, RPMDBI_LABEL, package->spec.name, 0);
+
+    /* I think this is an error? */
+    /* I guess not */
 
     if (!mi) {
-        pkg->installed = FALSE;
-        pkg->installed_size = 0;
-        return (pkg);
+#if 0
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "unable to initialize database search");
+#endif
+
+        rpmdbClose (db);
+
+#if 0
+        goto ERROR;
+#else
+        return (package);
+#endif
     }
 
-    while ((hdr = rpmdbNextIterator (mi))) {
-        if (rc_rpmman_check_match (hdr, pkg)) {
+    while ((header = rpmdbNextIterator (mi))) {
+        if (rc_rpmman_check_match (header, package)) {
             rpmdbFreeIterator (mi);
             rpmdbClose (db);
-            return (pkg);
+
+            package->installed = TRUE;
+
+            return (package);
         }
     }
 
-    pkg->installed = FALSE;
-    pkg->installed_size = 0;
+    package->installed = FALSE;
 
     rpmdbFreeIterator (mi);
     rpmdbClose (db);
 
-    return (pkg);
+    return (package);
+
+  ERROR:
+    rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                          "System query failed");
+
+    package->installed = FALSE;
+
+    return (package);
 } /* rc_packman_query */
 
 #else /* !HAVE_RPM_4_0 */
 
 static RCPackage *
-rc_rpmman_query (RCPackman *p, RCPackage *pkg)
+rc_rpmman_query (RCPackman *packman, RCPackage *package)
 {
     rpmdb db;
     dbiIndexSet matches;
     guint i;
 
-    if (rpmdbOpen (RC_RPMMAN (p)->rpmroot, &db, O_RDONLY, 0444)) {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
-                              "Unable to open RPM database");
-        return (pkg);
+    if (rpmdbOpen (RC_RPMMAN (packman)->rpmroot, &db, O_RDONLY, 0444)) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "unable to open RPM database");
+
+        goto ERROR;
     }
 
-    if (rpmdbFindPackage (db, pkg->spec.name, &matches)) {
+    if (rpmdbFindPackage (db, package->spec.name, &matches)) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "unable to initialize database search");
+
         rpmdbClose (db);
 
-        pkg->installed = FALSE;
-
-        return (pkg);
+        goto ERROR;
     }
 
     for (i = 0; i < matches.count; i++) {
-        Header hdr;
+        Header header;
 
-        if (!(hdr = rpmdbGetRecord (db, matches.recs[i].recOffset))) {
+        if (!(header = rpmdbGetRecord (db, matches.recs[i].recOffset))) {
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "unable to fetch RPM header from database");
+
             rpmdbClose (db);
-            rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
-                                  "Unable to fetch RPM header from database");
-            return (pkg);
+
+            goto ERROR;
         }
 
-        if (rc_rpmman_check_match (hdr, pkg)) {
-            headerFree (hdr);
+        if (rc_rpmman_check_match (header, package)) {
+            headerFree (header);
             dbiFreeIndexRecord (matches);
             rpmdbClose (db);
-            return (pkg);
+            return (package);
         }
+
+        headerFree (header);
     }
 
-    pkg->installed = FALSE;
-    pkg->installed_size = 0;
+    package->installed = FALSE;
 
     dbiFreeIndexRecord (matches);
     rpmdbClose (db);
 
-    return (pkg);
+    return (package);
+
+  ERROR:
+    rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                          "System query failed");
+
+    package->installed = FALSE;
+
+    return (package);
 } /* rc_packman_query */
 
 #endif /* !HAVE_RPM_4_0 */
@@ -969,32 +1094,40 @@ rc_rpmman_query (RCPackman *p, RCPackage *pkg)
 /* Query a file for rpm header information */
 
 static RCPackage *
-rc_rpmman_query_file (RCPackman *p, const gchar *filename)
+rc_rpmman_query_file (RCPackman *packman, const gchar *filename)
 {
     FD_t fd;
-    Header hdr;
-    RCPackage *pkg = rc_package_new ();
+    Header header;
+    RCPackage *package;
 
     fd = fdOpen (filename, O_RDONLY, 0444);
 
-    if (rpmReadPackageHeader (fd, &hdr, NULL, NULL, NULL)) {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
-                              "Unable to read package header");
-        rc_package_free (pkg);
-        return (NULL);
+    if (rpmReadPackageHeader (fd, &header, NULL, NULL, NULL)) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "unable to read package header");
+
+        goto ERROR;
     }
 
-    rc_rpmman_read_header (hdr, &pkg->spec.name, &pkg->spec.epoch,
-                           &pkg->spec.version, &pkg->spec.release,
-                           &pkg->section, &pkg->installed_size,
-                           &pkg->summary, &pkg->description);
+    package = rc_package_new ();
 
-    rc_rpmman_depends_fill (hdr, pkg);
+    rc_rpmman_read_header (header, &package->spec.name, &package->spec.epoch,
+                           &package->spec.version, &package->spec.release,
+                           &package->section, &package->installed_size,
+                           &package->summary, &package->description);
 
-    headerFree (hdr);
+    rc_rpmman_depends_fill (header, package);
+
+    headerFree (header);
     fdClose (fd);
 
-    return (pkg);
+    return (package);
+
+  ERROR:
+    rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                          "File query failed");
+
+    return (NULL);
 } /* rc_packman_query_file */
 
 /* Query all of the packages on the system */
@@ -1002,244 +1135,341 @@ rc_rpmman_query_file (RCPackman *p, const gchar *filename)
 #ifdef HAVE_RPM_4_0
 
 static RCPackageSList *
-rc_rpmman_query_all (RCPackman *p)
+rc_rpmman_query_all (RCPackman *packman)
 {
     rpmdb db;
     RCPackageSList *list = NULL;
     rpmdbMatchIterator mi = NULL;
-    Header hdr;
+    Header header;
 
-    if (rpmdbOpen (RC_RPMMAN (p)->rpmroot, &db, O_RDONLY, 0444)) {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
-                              "Unable to open RPM database");
-        return (NULL);
+    if (rpmdbOpen (RC_RPMMAN (packman)->rpmroot, &db, O_RDONLY, 0444)) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "unable to open RPM database");
+
+        goto ERROR;
     }
 
     mi = rpmdbInitIterator (db, RPMDBI_PACKAGES, NULL, 0);
 
     if (!mi) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "unable to initialize database search");
+
         rpmdbClose (db);
-        return (NULL);
+
+        goto ERROR;
     }
 
-    while ((hdr = rpmdbNextIterator (mi))) {
-        RCPackage *pkg = rc_package_new ();
+    while ((header = rpmdbNextIterator (mi))) {
+        RCPackage *package = rc_package_new ();
 
-        rc_rpmman_read_header (hdr, &pkg->spec.name, &pkg->spec.epoch,
-                               &pkg->spec.version, &pkg->spec.release,
-                               &pkg->section,
-                               &pkg->installed_size, &pkg->summary,
-                               &pkg->description);
-        pkg->installed = TRUE;
+        rc_rpmman_read_header (header, &package->spec.name, &package->spec.epoch,
+                               &package->spec.version, &package->spec.release,
+                               &package->section,
+                               &package->installed_size, &package->summary,
+                               &package->description);
 
-        rc_rpmman_depends_fill (hdr, pkg);
+        package->installed = TRUE;
 
-        list = g_slist_append (list, pkg);
+        rc_rpmman_depends_fill (header, package);
+
+        list = g_slist_append (list, package);
+
+        headerFree (header);
     }
 
     rpmdbClose (db);
 
     return (list);
+
+  ERROR:
+    rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                          "System query failed");
+
+    return (NULL);
 } /* rc_rpmman_query_all */
 
 #else /* !HAVE_RPM_4_0 */
 
 static RCPackageSList *
-rc_rpmman_query_all (RCPackman *p)
+rc_rpmman_query_all (RCPackman *packman)
 {
     rpmdb db;
     RCPackageSList *list = NULL;
     guint recno;
 
-    if (rpmdbOpen (RC_RPMMAN (p)->rpmroot, &db, O_RDONLY, 0444)) {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
-                              "Unable to open RPM database");
-        return (NULL);
+    if (rpmdbOpen (RC_RPMMAN (packman)->rpmroot, &db, O_RDONLY, 0444)) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "unable to open RPM database");
+
+        goto ERROR;
     }
 
     if (!(recno = rpmdbFirstRecNum (db))) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "unable to access RPM database");
+
         rpmdbClose (db);
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
-                              "Unable to access RPM database");
-        return (NULL);
+
+        goto ERROR;
     }
 
     for (; recno; recno = rpmdbNextRecNum (db, recno)) {
-        Header hdr;
-        RCPackage *pkg = rc_package_new ();
+        RCPackage *package;
+        Header header;
         
-        if (!(hdr = rpmdbGetRecord (db, recno))) {
-            rpmdbClose (db);
-            rc_package_slist_free (list);
-            rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
+        if (!(header = rpmdbGetRecord (db, recno))) {
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "Unable to read RPM database entry");
-            return (NULL);
+
+            rpmdbClose (db);
+
+            rc_package_slist_free (list);
+
+            goto ERROR;
         }
 
-        rc_rpmman_read_header (hdr, &pkg->spec.name, &pkg->spec.epoch,
-                               &pkg->spec.version, &pkg->spec.release,
-                               &pkg->section, &pkg->installed_size,
-                               &pkg->summary, &pkg->description);
-        pkg->installed = TRUE;
+        package = rc_package_new ();
 
-        rc_rpmman_depends_fill (hdr, pkg);
+        rc_rpmman_read_header (header, &package->spec.name, &package->spec.epoch,
+                               &package->spec.version, &package->spec.release,
+                               &package->section, &package->installed_size,
+                               &package->summary, &package->description);
 
-        list = g_slist_append (list, pkg);
-#if 1
-        /* So, this line seems to have issues. It frees data that the package
-           needs, and doing so ends up corrupting the linked list. Ick. */
-        /* Ok, I think I've fixed this.  I need to test it, but can't, because
-           I don't have a convenient RPM-based machine.  Suck. */
-        headerFree(hdr);
-#endif
+        package->installed = TRUE;
+
+        rc_rpmman_depends_fill (header, package);
+
+        list = g_slist_append (list, package);
+
+        headerFree(header);
     }
 
     rpmdbClose (db);
 
     return (list);
+
+  ERROR:
+    rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                          "System query failed");
+
+    return (NULL);
 } /* rc_rpmman_query_all */
 
 #endif /* !HAVE_RPM_4_0 */
 
-static RCVerificationSList *
-rc_rpmman_verify (RCPackman *p, RCPackage *pkg)
+static gboolean
+split_rpm (RCPackman *packman, RCPackage *package, gchar **signature_filename,
+           gchar **payload_filename, guint8 **md5sum, guint32 *size)
 {
+    FD_t rpm_fd = NULL;
+    int signature_fd;
+    int payload_fd;
     struct rpmlead lead;
-    FD_t in_fd = NULL;
-    Header sig_hdr = NULL;
-    int data_fd = 0;
-    int sig_fd = 0;
-    RCVerificationSList *ret = NULL;
-    RCVerification *rcv = NULL;
-    char *sig_name = g_strdup ("/tmp/rpm-sig-XXXXXX");
-    char *data_name = g_strdup ("/tmp/rpm-data-XXXXXX");
-    gint32 count;
+    Header signature_header;
+    gchar *buf;
+    guint32 count = 0;
     guchar buffer[128];
     ssize_t num_bytes;
-    gboolean gpg_sig = FALSE, md5_sig = FALSE, size_sig = FALSE;
-    guint8 *md5 = NULL;
-    guint32 size = 0;
-    gchar *buf;
 
-    if (!pkg->package_filename) {
-        goto END;
+    if (!package->package_filename) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "no file name specified");
+
+        return (FALSE);
     }
 
-    in_fd = Fopen (pkg->package_filename, "r.ufdio");
-    if (in_fd == NULL || Ferror (in_fd)) {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
-                              "Unable to open the RPM for verification");
-        goto END;
+    rpm_fd = Fopen (package->package_filename, "r.ufdio");
+
+    if (!rpm_fd || Ferror (rpm_fd)) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "unable to open %s", package->package_filename);
+
+        return (FALSE);
     }
 
-    if (readLead (in_fd, &lead)) {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
-                              "Unable to read the RPM file for verification");
-        goto END;
+    if (readLead (rpm_fd, &lead)) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "unable to read from %s",
+                              package->package_filename);
+
+        Fclose (rpm_fd);
+
+        return (FALSE);
     }
 
-    if (rpmReadSignature (in_fd, &sig_hdr, lead.signature_type) ||
-        (sig_hdr == NULL))
+    if (rpmReadSignature (rpm_fd, &signature_header, lead.signature_type) ||
+        (signature_header == NULL))
     {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
-                              "Unable to read the RPM signature section");
-        goto END;
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "failed to read RPM signature section");
+
+        return (FALSE);
     }
 
-    count = 0;
-    headerGetEntry (sig_hdr, RPMSIGTAG_GPG, NULL, (void **)&buf, &count);
+    headerGetEntry (signature_header, RPMSIGTAG_GPG, NULL, (void **)&buf,
+                    &count);
+
     if (count > 0) {
-        if ((sig_fd = mkstemp (sig_name)) == -1) {
-            rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
-                                  "Unable to create a temporary signature "
-                                  "file");
-            goto END;
-        }
-        if (!rc_write (sig_fd, buf, count)) {
-            rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
-                                  "Unable to write a temporary signature "
-                                  "file");
-            goto END;
-        }
-        close (sig_fd);
-        gpg_sig = TRUE;
-    }
+        if ((signature_fd = mkstemp (*signature_filename)) == -1) {
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "failed to create temporary signature file");
 
-    count = 0;
-    headerGetEntry (sig_hdr, RPMSIGTAG_MD5, NULL, (void **)&buf, &count);
-    if (count > 0) {
-        md5_sig = TRUE;
-        md5 = g_new (guint8, count);
-        memcpy (md5, buf, count);
-    }
+            headerFree (signature_header);
 
-    count = 0;
-    headerGetEntry (sig_hdr, RPMSIGTAG_SIZE, NULL, (void **)&buf, &count);
-    if (count > 0) {
-        size_sig = TRUE;
-        size = *((guint32 *)buf);
-    }
+            Fclose (rpm_fd);
 
-    if (gpg_sig || md5_sig || size_sig) {
-        if ((data_fd = mkstemp (data_name)) == -1) {
-            rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
-                                  "Unable to create temporary payload file");
-            goto END;
+            return (FALSE);
         }
 
+        if (!rc_write (signature_fd, buf, count)) {
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "failed to write temporary signature file");
+
+            headerFree (signature_header);
+
+            Fclose (rpm_fd);
+
+            return (FALSE);
+        }
+
+        close (signature_fd);
+    } else {
+        g_free (*signature_filename);
+
+        *signature_filename = NULL;
+    }
+
+    if ((payload_fd = mkstemp (*payload_filename)) == -1) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "failed to create temporary payload file");
+
+        headerFree (signature_header);
+
+        g_free (*payload_filename);
+
+        *payload_filename = NULL;
+    } else {
         while ((num_bytes = Fread (buffer, sizeof (char), sizeof (buffer),
-                                   in_fd)) > 0) {
-            if (!rc_write (data_fd, buffer, num_bytes)) {
-                rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
-                                      "Unable to write a temporary payload "
+                                   rpm_fd)) > 0)
+        {
+            if (!rc_write (payload_fd, buffer, num_bytes)) {
+                rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                      "unable to write temporary payload "
                                       "file");
-                goto END;
+
+                rc_close (payload_fd);
+
+                headerFree (signature_header);
+
+                Fclose (rpm_fd);
+
+                return (FALSE);
             }
         }
-
-        close (data_fd);
     }
 
-    if (gpg_sig) {
-        rcv = rc_verify_gpg (data_name, sig_name);
+    Fclose (rpm_fd);
 
-        ret = g_slist_append (ret, rcv);
-    }
+    count = 0;
 
-    if (md5_sig) {
-        rcv = rc_verify_md5 (data_name, md5);
+    headerGetEntry (signature_header, RPMSIGTAG_MD5, NULL, (void **)&buf,
+                    &count);
 
-        ret = g_slist_append (ret, rcv);
-    }
+    if (count > 0) {
+        *md5sum = g_new (guint8, count);
 
-    if (size_sig) {
-        rcv = rc_verify_size (data_name, size);
-
-        ret = g_slist_append (ret, rcv);
+        memcpy (*md5sum, buf, count);
+    } else {
+        *md5sum = NULL;
     }
 
-  END:
-    if (gpg_sig) {
-        unlink (sig_name);
+    count = 0;
+
+    headerGetEntry (signature_header, RPMSIGTAG_SIZE, NULL, (void **)&buf,
+                    &count);
+
+    if (count > 0) {
+        *size = *((guint32 *)buf);
+    } else {
+        *size = 0;
     }
-    if (gpg_sig || md5_sig || size_sig) {
-        unlink (data_name);
+
+    headerFree (signature_header);
+
+    return (TRUE);
+}
+
+static RCVerificationSList *
+rc_rpmman_verify (RCPackman *packman, RCPackage *package)
+{
+    RCVerificationSList *ret = NULL;
+    RCVerification *verification = NULL;
+    gchar *signature_filename = g_strdup ("/tmp/rpm-sig-XXXXXX");
+    gchar *payload_filename = g_strdup ("/tmp/rpm-data-XXXXXX");
+    guint8 *md5sum;
+    guint32 size;
+
+    if (!split_rpm (packman, package, &signature_filename, &payload_filename,
+                    &md5sum, &size))
+    {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "couldn't prepare package signature");
+
+        if (signature_filename) {
+            unlink (signature_filename);
+        }
+
+        if (payload_filename) {
+            unlink (payload_filename);
+        }
+
+        g_free (signature_filename);
+        g_free (payload_filename);
+
+        g_free (md5sum);
+
+        goto ERROR;
     }
-    if (in_fd) {
-        Fclose (in_fd);
+
+    if (signature_filename) {
+        verification = rc_verify_gpg (payload_filename, signature_filename);
+
+        ret = g_slist_append (ret, verification);
     }
-    g_free (sig_name);
-    g_free (data_name);
-    g_free (md5);
-    headerFree (sig_hdr);
-    if (sig_fd) {
-        close (sig_fd);
+
+    if (md5sum) {
+        verification = rc_verify_md5 (payload_filename, md5sum);
+
+        ret = g_slist_append (ret, verification);
     }
-    if (data_fd) {
-        close (data_fd);
+
+    if (size > 0) {
+        verification = rc_verify_size (payload_filename, size);
+
+        ret = g_slist_append (ret, verification);
     }
+
+    if (signature_filename) {
+        unlink (signature_filename);
+    }
+
+    if (payload_filename) {
+        unlink (payload_filename);
+    }
+
+    g_free (signature_filename);
+    g_free (payload_filename);
+
+    g_free (md5sum);
 
     return (ret);
+
+  ERROR:
+    rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                          "Couldn't verify signatures");
+
+    return (NULL);
 } /* rc_rpmman_verify */
 
 /* This was stolen from RPM */
@@ -1392,7 +1622,7 @@ rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
 {
     rpmdb db;
     rpmdbMatchIterator mi = NULL;
-    Header hdr;
+    Header header;
     RCPackage *package;
 
     if (rpmdbOpen (RC_RPMMAN (packman)->rpmroot, &db, O_RDONLY, 0444)) {
@@ -1413,7 +1643,7 @@ rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
         goto ERROR;
     }
 
-    hdr = rpmdbNextIterator (mi);
+    header = rpmdbNextIterator (mi);
 
     if (rpmdbNextIterator (mi)) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
@@ -1427,7 +1657,7 @@ rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
 
     package = rc_package_new ();
 
-    rc_rpmman_read_header (hdr, &package->spec.name, &package->spec.epoch,
+    rc_rpmman_read_header (header, &package->spec.name, &package->spec.epoch,
                            &package->spec.version, &package->spec.release,
                            &package->section, &package->installed_size,
                            &package->summary, &package->description);
@@ -1439,7 +1669,7 @@ rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
 
   ERROR:
     rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                          "find_file failed");
+                          "Find file failed");
 
     return (NULL);
 }
@@ -1451,7 +1681,7 @@ rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
 {
     rpmdb db;
     dbiIndexSet matches;
-    Header hdr;
+    Header header;
     RCPackage *package;
 
     if (rpmdbOpen (RC_RPMMAN (packman)->rpmroot, &db, O_RDONLY, 0444)) {
@@ -1479,7 +1709,7 @@ rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
         goto ERROR;
     }
 
-    if (!(hdr = rpmdbGetRecord (db, matches.recs[0].recOffset))) {
+    if (!(header = rpmdbGetRecord (db, matches.recs[0].recOffset))) {
         rpmdbClose (db);
 
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
@@ -1490,7 +1720,7 @@ rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
 
     package = rc_package_new ();
 
-    rc_rpmman_read_header (hdr, &package->spec.name, &package->spec.epoch,
+    rc_rpmman_read_header (header, &package->spec.name, &package->spec.epoch,
                            &package->spec.version, &package->spec.release,
                            &package->section, &package->installed_size,
                            &package->summary, &package->description);
@@ -1502,7 +1732,7 @@ rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
 
   ERROR:
     rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
-                          "find_file failed");
+                          "Find file failed");
 
     return (NULL);
 }
@@ -1512,9 +1742,9 @@ rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
 static void
 rc_rpmman_destroy (GtkObject *obj)
 {
-    RCRpmman *r = RC_RPMMAN (obj);
+    RCRpmman *rpmman = RC_RPMMAN (obj);
 
-    g_free (r->rpmroot);
+    g_free (rpmman->rpmroot);
 
     if (GTK_OBJECT_CLASS (parent_class)->destroy)
         (* GTK_OBJECT_CLASS (parent_class)->destroy) (obj);
@@ -1524,32 +1754,28 @@ static void
 rc_rpmman_class_init (RCRpmmanClass *klass)
 {
     GtkObjectClass *object_class = (GtkObjectClass *) klass;
-    RCPackmanClass *hpc = (RCPackmanClass *) klass;
+    RCPackmanClass *packman_class = (RCPackmanClass *) klass;
 
     object_class->destroy = rc_rpmman_destroy;
 
     parent_class = gtk_type_class (rc_packman_get_type ());
 
-    hpc->rc_packman_real_transact = rc_rpmman_transact;
-    hpc->rc_packman_real_query = rc_rpmman_query;
-    hpc->rc_packman_real_query_all = rc_rpmman_query_all;
-    hpc->rc_packman_real_query_file = rc_rpmman_query_file;
-    hpc->rc_packman_real_version_compare = rc_rpmman_version_compare;
-    hpc->rc_packman_real_verify = rc_rpmman_verify;
-    hpc->rc_packman_real_find_file = rc_rpmman_find_file;
+    packman_class->rc_packman_real_transact = rc_rpmman_transact;
+    packman_class->rc_packman_real_query = rc_rpmman_query;
+    packman_class->rc_packman_real_query_all = rc_rpmman_query_all;
+    packman_class->rc_packman_real_query_file = rc_rpmman_query_file;
+    packman_class->rc_packman_real_version_compare = rc_rpmman_version_compare;
+    packman_class->rc_packman_real_verify = rc_rpmman_verify;
+    packman_class->rc_packman_real_find_file = rc_rpmman_find_file;
 } /* rc_rpmman_class_init */
 
 static void
 rc_rpmman_init (RCRpmman *obj)
 {
-    RCPackman *p = RC_PACKMAN (obj);
-    /*
-    rpmdb db;
-    */
-
+    RCPackman *packman = RC_PACKMAN (obj);
     gchar *tmp;
 
-    rpmReadConfigFiles( NULL, NULL );
+    rpmReadConfigFiles (NULL, NULL);
 
     tmp = getenv ("RC_RPM_ROOT");
 
@@ -1559,7 +1785,7 @@ rc_rpmman_init (RCRpmman *obj)
         obj->rpmroot = g_strdup ("/");
     }
 
-    p->priv->features =
+    packman->priv->features =
         RC_PACKMAN_FEATURE_PRE_CONFIG |
         RC_PACKMAN_FEATURE_PKG_PROGRESS;
 } /* rc_rpmman_init */
@@ -1567,8 +1793,8 @@ rc_rpmman_init (RCRpmman *obj)
 RCRpmman *
 rc_rpmman_new (void)
 {
-    RCRpmman *new =
+    RCRpmman *rpmman =
         RC_RPMMAN (gtk_type_new (rc_rpmman_get_type ()));
 
-    return new;
+    return rpmman;
 } /* rc_rpmman_new */
