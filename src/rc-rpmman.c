@@ -41,7 +41,9 @@
 #include "rc-verification-private.h"
 #include "rc-arch.h"
 
+#ifndef STATIC_RPM
 #include "rpm-stubs.h"
+#endif
 
 #include "rpm-rpmlead.h"
 #include "rpm-signature.h"
@@ -1733,6 +1735,8 @@ rc_rpmman_query_file (RCPackman *packman, const gchar *filename)
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "unable to read package header");
 
+        rc_rpm_close (rpmman, fd);
+
         return NULL;
     }
     
@@ -2823,6 +2827,7 @@ parse_rpm_version (RCRpmman *rpmman, const gchar *version)
 
 #define OBJECTDIR "/tmp"
 
+#ifndef STATIC_RPM
 static char *
 write_objects (void)
 {
@@ -2935,6 +2940,7 @@ write_objects (void)
 
     return NULL;
 }
+#endif
 
 static void
 rc_rpmman_init (RCRpmman *obj)

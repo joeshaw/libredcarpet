@@ -1,3 +1,10 @@
+2002-10-18  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c: only include rpm-stubs.h in the non-static case
+	(rc_rpmman_query_file): if we've opened the file but it's not a
+	valid RPM file, we still have to close it before we return.
+	(write_object): only compile in the non-static case
+
 2002-10-17  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-package-match.c (rc_package_match_new): Initialize the
