@@ -1,3 +1,10 @@
+2002-05-23  Jon Trowbridge  <trow@ximian.com>
+
+	* Makefile.am: Fixed to install libredcarpet and its headers like
+	any other library.
+
+	* rc-package.c (rc_package_get_best_upgrade): Added.
+
 2002-05-10  Jon Trowbridge  <trow@ximian.com>
 
         * rc-queue-item.c (install_item_process): When installing,

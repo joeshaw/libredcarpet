@@ -95,7 +95,8 @@ void       rc_package_spew_leaks (void);
 char       *rc_package_to_str        (RCPackage *package);
 const char *rc_package_to_str_static (RCPackage *package);
 
-gboolean rc_package_is_installed (RCPackage *package);
+gboolean   rc_package_is_installed     (RCPackage *package);
+RCPackage *rc_package_get_best_upgrade (RCPackage *package);
 
 void rc_package_slist_unref (RCPackageSList *packages);
 

@@ -1,0 +1,9 @@
+2002-05-23  Jon Trowbridge  <trow@ximian.com>
+
+	* libredcarpet-2.0.pc.in: Added.
+
+	* Makefile.am: Add libredcarpet-2.0.pc.in to EXTRA_DIST, specify
+	an install path for our .pc file.
+
+	* configure.in: Build the libredcarpet-2.0.pc file.
+

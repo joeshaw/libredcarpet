@@ -18,11 +18,15 @@
  * 02111-1307, USA.
  */
 
+#include <config.h>
+#include "rc-package.h"
+
 #include <stdlib.h>
 #include <string.h>
 
-#include "rc-package.h"
 #include "rc-pretty-name.h"
+#include "rc-channel-private.h"
+#include "rc-world.h"
 
 #ifdef RC_PACKAGE_FIND_LEAKS
 static GHashTable *leaked_packages = NULL;
@@ -197,6 +201,17 @@ rc_package_is_installed (RCPackage *package)
     g_return_val_if_fail (package != NULL, FALSE);
 
     return package->channel == NULL || package->installed;
+}
+
+RCPackage *
+rc_package_get_best_upgrade (RCPackage *package)
+{
+    g_return_val_if_fail (package != NULL, NULL);
+
+    if (package->channel == NULL || package->channel->world)
+        return NULL;
+
+    return rc_world_get_best_upgrade (package->channel->world, package);
 }
 
 void
