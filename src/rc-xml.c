@@ -465,7 +465,7 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
     else if (!strcmp(name, "install_only")) {
         ctx->current_package->install_only = TRUE;
     }
-    else if (!strcmp(name, "is_packageset")) {
+    else if (!strcmp(name, "package_set")) {
         ctx->current_package->package_set = TRUE;
     }
 } /* parser_package_end */
@@ -1006,7 +1006,7 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
             g_free (tmp);
         } else if (!g_strcasecmp (iter->name, "install_only")) {
             package->install_only = TRUE;
-        } else if (!g_strcasecmp (iter->name, "is_packageset")) {
+        } else if (!g_strcasecmp (iter->name, "package_set")) {
             package->package_set = TRUE;
         } else if (!g_strcasecmp (iter->name, "history")) {
             const xmlNode *iter2;
@@ -1385,7 +1385,7 @@ rc_package_to_xml_node (RCPackage *package)
     }
 
     if (package->package_set) {
-        xmlNewTextChild (package_node, NULL, "is_packageset", "1");
+        xmlNewTextChild (package_node, NULL, "package_set", "1");
     }
 
     if (package->history) {

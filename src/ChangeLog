@@ -1,3 +1,14 @@
+2003-08-27  Joe Shaw  <joe@ximian.com>
+
+	* rc-rollback.c: Use rc_debug() instead of g_warning() throughout.
+	(dump_file_changes, get_action_from_xml_node): Remove some
+	debugging output.
+
+	* rc-xml.c (parser_package_end, rc_xml_node_to_package,
+	rc_package_to_xml_node): Change "is_packageset" to "package_set"
+	to match server implementation and to more closely match the
+	structure definition.
+
 2003-08-26  Joe Shaw  <joe@ximian.com>
 
 	* rc-package.c: Remove the "hold" bit, it wasn't being used for

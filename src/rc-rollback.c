@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include "rc-debug.h"
 #include "rc-md5.h"
 #include "rc-packman-private.h"
 #include "rc-world.h"
@@ -583,22 +584,6 @@ get_file_changes (xmlNode *changes_node)
     return changes;
 }
 
-static void
-dump_file_changes (GSList *changes)
-{
-    GSList *iter;
-
-    for (iter = changes; iter; iter = iter->next) {
-        FileChange *change = iter->data;
-
-        printf ("filename: %s\n", change->filename);
-        printf ("was removed: %d\n", change->was_removed);
-        printf ("uid: %d\n", change->uid);
-        printf ("gid: %d\n", change->gid);
-        printf ("mode: %d\n\n", change->mode);
-    }
-}
-
 static RCRollbackAction *
 get_action_from_xml_node (xmlNode    *node,
                           time_t      trans_time,
@@ -612,7 +597,8 @@ get_action_from_xml_node (xmlNode    *node,
 
     name = xml_get_prop (node, "name");
     if (!name) {
-        g_warning ("No package name available");
+        rc_debug (RC_DEBUG_LEVEL_ERROR,
+                  "No package name available in rollback db");
         return NULL;
     }
 
@@ -665,8 +651,9 @@ get_action_from_xml_node (xmlNode    *node,
     rc_package_dep_unref (pmi.dep_to_match);
 
     if (!pmi.matching_package) {
-        g_warning ("Unable to find a matching package for %s %s-%s",
-                   name, version, release);
+        rc_debug (RC_DEBUG_LEVEL_WARNING,
+                  "Unable to find a matching package for %s %s-%s",
+                  name, version, release);
         return NULL;
     }
 
@@ -677,10 +664,8 @@ get_action_from_xml_node (xmlNode    *node,
     action->update = rc_package_update_copy (pmi.matching_update);
 
     changes_node = xml_get_node (node, "changes");
-    if (changes_node) {
+    if (changes_node)
         action->file_changes = get_file_changes (changes_node);
-        dump_file_changes (action->file_changes);
-    }
     else
         action->file_changes = NULL;
 
@@ -703,14 +688,16 @@ rc_rollback_get_actions (time_t when)
 
     doc = xmlParseFile (RC_ROLLBACK_XML);
     if (!doc) {
-        g_warning ("Unable to parse rollback XML file");
+        rc_debug (RC_DEBUG_LEVEL_CRITICAL,
+                  "Unable to parse rollback XML file");
         return NULL;
     }
 
     root = xmlDocGetRootElement (doc);
     if (g_strcasecmp (root->name, "transactions") != 0) {
-        g_warning ("Unknown root element in rollback XML file: %s",
-                   root->name);
+        rc_debug (RC_DEBUG_LEVEL_CRITICAL,
+                  "Unknown root element in rollback XML file: %s",
+                  root->name);
         return NULL;
     }
 
@@ -731,10 +718,12 @@ rc_rollback_get_actions (time_t when)
         trans_time = atoll (timestamp);
         g_free (timestamp);
 
-        if (!trans_time)
-            g_warning ("Unable to parse timestamp: %s", timestamp);
+        if (!trans_time) {
+            rc_debug (RC_DEBUG_LEVEL_WARNING,
+                      "Unable to parse timestamp: %s", timestamp);
+        }
 
-        if (when <= trans_time)
+        if (trans_time && when <= trans_time)
             get_action_from_xml_node (node, trans_time, action_hash);
     }
 
@@ -807,8 +796,9 @@ rc_rollback_restore_files (RCRollbackActionSList *actions)
                     g_free (tmp);
 
                     if (rc_cp (backup_filename, change->filename) < 0) {
-                        g_warning ("Unable to copy saved '%s' to '%s'!",
-                                   backup_filename, change->filename);
+                        rc_debug (RC_DEBUG_LEVEL_CRITICAL,
+                                  "Unable to copy saved '%s' to '%s'!",
+                                  backup_filename, change->filename);
                     }
 
                     g_free (backup_filename);
