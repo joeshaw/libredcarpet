@@ -55,7 +55,7 @@
  * and have changed cordering from version to version.  It could be
  * very dangerous to call the wrong function.
  */
-#define LATEST_SUPPORTED_RPM_VERSION 40301
+#define LATEST_SUPPORTED_RPM_VERSION 40303
 
 #define GTKFLUSH {while (g_main_pending ()) g_main_iteration (TRUE);}
 
@@ -3401,7 +3401,7 @@ load_rpm_syms (RCRpmman *rpmman)
             rpmman->headerLoad = *(*hdrfuncs + 9);
         }
         else if (rpmman->version >= 40100 &&
-                 rpmman->version <= 40301) { /* RPM 4.1-4.3.1 inclusive */
+                 rpmman->version <= 40303) { /* RPM 4.1-4.3.3 inclusive */
             rpmman->headerFree = *(*hdrfuncs + 2);
             rpmman->headerGetEntry = *(*hdrfuncs + 16);
             rpmman->headerSizeof = *(*hdrfuncs + 6);

@@ -276,6 +276,61 @@
 		</detect>
 	</distro>
 	<distro>
+		<name>Red Hat Enterprise Linux AS</name>
+		<version>4</version>
+		<arch>i386</arch>
+		<type>rpm</type>
+		<target>rhel-4as-i386</target>
+		<status>supported</status>
+		<detect>
+			<file source="/etc/redhat-release" substring="Red Hat Enterprise Linux AS release 4"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>Red Hat Enterprise Linux ES</name>
+		<version>4</version>
+		<arch>i386</arch>
+		<type>rpm</type>
+		<target>rhel-4es-i386</target>
+		<status>supported</status>
+		<detect>
+			<file source="/etc/redhat-release" substring="Red Hat Enterprise Linux ES release 4"/>
+		</detect>
+	</distro>
+        <distro>
+                <name>Red Hat Enterprise Linux ES</name>
+                <version>4</version>
+                <arch>x86_64</arch>
+                <type>rpm</type>
+                <target>rhel-4es-x86_64</target>
+                <status>supported</status>
+                <detect>
+                        <file source="/etc/redhat-release" substring="Red Hat Enterprise Linux ES release 4"/>
+                </detect>
+        </distro>
+        <distro>
+                <name>Red Hat Enterprise Linux WS</name>
+                <version>4</version>
+                <arch>x86_64</arch>
+                <type>rpm</type>
+                <target>rhel-4ws-x86_64</target>
+                <status>supported</status>
+                <detect>
+                        <file source="/etc/redhat-release" substring="Red Hat Enterprise Linux WS release 4"/>
+                </detect>
+        </distro>
+	<distro>
+   		<name>Red Hat Enterprise Linux WS</name>
+   		<version>4</version>
+   		<arch>i386</arch>
+   		<type>rpm</type>
+   		<target>rhel-4ws-i386</target>
+   		<status>supported</status>
+   		<detect>
+			<file source="/etc/redhat-release" substring="Red Hat Enterprise Linux WS release 4"/>
+		</detect>
+	</distro>
+	<distro>
 		<name>Red Hat Linux</name>
 		<version>6.0</version>
 		<arch>i386</arch>

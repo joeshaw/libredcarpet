@@ -1,3 +1,8 @@
+2005-01-17  James Willcox  <james@ximian.com>
+                                                                                                            
+        * rc-rpmman.c: Up the supported rpm version, to support 4.3.3
+        * distributions.xml: Add rhel4 platforms
+
 2005-02-03  Peter Teichman  <peter@ximian.com>
 
 	* rc-rpmman.c (rc_rpmman_patch_parents): remove debugging printf
