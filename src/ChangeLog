@@ -1,3 +1,7 @@
+2004-08-30  James Willcox  <james@ximian.com>
+
+	* distributions.xml: Add rhel-3es-x86_64
+
 2004-08-18  James Willcox  <james@ximian.com>
 
 	* rc-resolver-context.c: (get_info_foreach_cb),
