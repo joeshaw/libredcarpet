@@ -92,7 +92,7 @@ RCDistroChunk distro_figurers[] = {
       func_string_in_file, "/etc/redhat-release", "LinuxPPC 2000", NULL, 0 },
 
     { "yellowdog-12-ppc", RC_ARCH_PPC,
-      func_string_in_file, "/etc/yellowdog-release", "Yellow Dog Linux 1.2",
+      func_string_in_file, "/etc/yellowdog-release", "Champion Server release 1.2",
       NULL, 0 },
 
     { "mandrake-70-i586", RC_ARCH_IA32,

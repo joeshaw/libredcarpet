@@ -1,3 +1,8 @@
+2001-05-01  Joe Shaw  <joe@ximian.com>
+
+	* rc-distro.c: Change the string for Yellow Dog because it was totally
+	wrong before.
+
 2001-04-23  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c: if the provide we read out of the
