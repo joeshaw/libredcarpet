@@ -51,6 +51,12 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
+/* If this isn't defined, we are using an ancient readline (like the
+   one that ships w/ RH62) */
+#ifdef RL_READLINE_VERSION
+#define ENABLE_RL_COMPLETION 1
+#endif
+
 static void packman_test_clear (RCPackman *p, gchar *buf);
 static void packman_test_find_file (RCPackman *p, gchar *buf);
 static void packman_test_help (RCPackman *p, gchar *buf);
@@ -575,6 +581,7 @@ packman_test_run (RCPackman *p, char *line)
     transaction.remove_pkgs = NULL;
 }
 
+#ifdef ENABLE_RL_COMPLETION
 char *
 packman_completion_generator (const char *text, int state)
 {
@@ -607,6 +614,7 @@ packman_completion (char *text, int start, int end)
 
     return matches;
 }
+#endif
 
 int main (int argc, char **argv)
 {
@@ -641,7 +649,9 @@ int main (int argc, char **argv)
                       (GCallback) transact_done_cb, NULL);
 
     rl_readline_name = "packman_test";
+#ifdef ENABLE_RL_COMPLETION
     rl_attempted_completion_function = (CPPFunction *)packman_completion;
+#endif
 
     while (!done) {
         char *buf, *line, *command;

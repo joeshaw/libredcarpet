@@ -1,3 +1,11 @@
+2002-09-06  Jon Trowbridge  <trow@ximian.com>
+
+	* packman_test.c: Disable command completion if we are using a
+	very old version of readline... like, for example, the one that
+	ships with RH62.  In a perfect world we would use proper configure
+	tests to detect the capabilities of our readline and support both
+	the old and new APIs, but it just doesn't seem worth it.
+
 2002-08-28  Ian Peters  <itp@ximian.com>
 
 	* pkg-vercmp.c (main): no more rc_packman_set_packman
