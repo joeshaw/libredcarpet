@@ -1738,8 +1738,13 @@ add_channel_xml_cb (RCChannel *channel, gpointer user_data)
 {
     AddChannelClosure *closure = user_data;
     xmlNode *node;
+    char *tmp;
 
     node = xmlNewNode (NULL, "channel");
+    tmp = g_strdup_printf ("%d", rc_channel_get_id (channel));
+    xmlNewProp (node, "id", tmp);
+    g_free (tmp);
+    xmlNewProp (node, "name", rc_channel_get_name (channel));
     xmlAddChild (closure->node, node);
 
     rc_world_foreach_package (closure->world, channel,

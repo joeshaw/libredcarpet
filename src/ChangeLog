@@ -1,5 +1,10 @@
 2002-07-09  Joe Shaw  <joe@ximian.com>
 
+	* rc-world.c (add_channel_xml_cb): Include the channel name and ID
+	when listing the channel packages.
+
+2002-07-09  Joe Shaw  <joe@ximian.com>
+
 	* rc-world.c (rc_world_dump): First pass at a function which will
 	XMLify the RCWorld.  Currently dumps subscriptions, system
 	packages, and packages in each channel, so output is huuuuuuuuge.
