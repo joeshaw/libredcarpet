@@ -1,3 +1,11 @@
+2002-12-16  Joe Shaw  <joe@ximian.com>
+
+	* rc-distro.c: Get rid of <command> tags and replace them with
+	<os_name> and <os_release>
+
+	* distributions.xml: Replace <command> tags with <os_name> and
+	<os_release> tags.
+
 2002-12-10  Joe Shaw  <joe@ximian.com>
 
 	* rc-resolver-info.c (rc_resolver_info_to_string): Change

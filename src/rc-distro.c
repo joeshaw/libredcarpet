@@ -30,6 +30,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/utsname.h>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -45,7 +46,8 @@
 
 typedef enum {
     DISTRO_CHECK_TYPE_FILE,
-    DISTRO_CHECK_TYPE_COMMAND,
+    DISTRO_CHECK_TYPE_OS_NAME,
+    DISTRO_CHECK_TYPE_OS_RELEASE,
 } DistroCheckType;
 
 typedef struct {
@@ -136,6 +138,12 @@ distro_check_file_eval (DistroCheck *check)
     int fd;
     gboolean ret;
 
+    if (!check->source) {
+        rc_debug (RC_DEBUG_LEVEL_WARNING,
+                  "incomplete distro check tag: no source for file check");
+        return FALSE;
+    }
+
     if ((fd = open (check->source, O_RDONLY)) == -1)
         return FALSE;
 
@@ -147,38 +155,30 @@ distro_check_file_eval (DistroCheck *check)
     return ret;
 }
 
-/* Run a command, look for a string */
-
-void
-child_setup_func (gpointer user_data)
-{
-    /* We'll take output either on stdout or stderr */
-    dup2 (STDOUT_FILENO, STDERR_FILENO);
-}
-
 static gboolean
-distro_check_command_eval (DistroCheck *check)
+distro_check_os_info (DistroCheck *check)
 {
-    gboolean ret;
-    char *argv[] = { "/bin/sh", "-c", check->source, NULL };
-    gint stdout_fd;
-    GError *error;
+    struct utsname uname_buf;
+    char *buf_to_check;
 
-    error = NULL;
-    if (!g_spawn_async_with_pipes (NULL, argv, NULL, 0, child_setup_func,
-                                   NULL, NULL, NULL, &stdout_fd, NULL, &error))
-    {
-        rc_debug (RC_DEBUG_LEVEL_ERROR,
-                  "g_spawn failed: %s", error->message);
-        g_error_free (error);
+    if (uname (&uname_buf) < 0) {
+        g_warning ("Unable to get uname info");
         return FALSE;
     }
 
-    ret = distro_check_eval_fd (check, stdout_fd);
+    switch (check->type) {
+    case DISTRO_CHECK_TYPE_OS_NAME:
+        buf_to_check = uname_buf.sysname;
+        break;
+    case DISTRO_CHECK_TYPE_OS_RELEASE:
+        buf_to_check = uname_buf.release;
+        break;
+    default:
+        g_assert_not_reached ();
+        return FALSE;
+    }
 
-    close (stdout_fd);
-
-    return ret;
+    return (strstr (buf_to_check, check->substring) != NULL);
 }
 
 /* Run a check for a distribution */
@@ -189,8 +189,9 @@ distro_check_eval (DistroCheck *check)
     switch (check->type) {
     case DISTRO_CHECK_TYPE_FILE:
         return distro_check_file_eval (check);
-    case DISTRO_CHECK_TYPE_COMMAND:
-        return distro_check_command_eval (check);
+    case DISTRO_CHECK_TYPE_OS_NAME:
+    case DISTRO_CHECK_TYPE_OS_RELEASE:
+        return distro_check_os_info (check);
     }
 
     return FALSE;
@@ -257,7 +258,8 @@ typedef enum {
     PARSER_ENDDATE,
     PARSER_DETECT,
     PARSER_FILE,
-    PARSER_COMMAND,
+    PARSER_OS_NAME,
+    PARSER_OS_RELEASE,
     PARSER_UNKNOWN,
 } ParserState;
 
@@ -426,16 +428,26 @@ sax_start_element (void *data, const xmlChar *name, const xmlChar **attrs)
         goto CHECK;
     }
 
-    if (!strcmp (name, "command")) {
+    if (!strcmp (name, "os_name")) {
         if (parser_get_state (state) == PARSER_DETECT) {
-            parser_push_state (state, PARSER_COMMAND);
+            parser_push_state (state, PARSER_OS_NAME);
             check = distro_check_new ();
-            check->type = DISTRO_CHECK_TYPE_COMMAND;
+            check->type = DISTRO_CHECK_TYPE_OS_NAME;
         } else
             parser_push_state (state, PARSER_UNKNOWN);
         goto CHECK;
     }
 
+    if (!strcmp (name, "os_release")) {
+        if (parser_get_state (state) == PARSER_DETECT) {
+            parser_push_state (state, PARSER_OS_RELEASE);
+            check = distro_check_new ();
+            check->type = DISTRO_CHECK_TYPE_OS_RELEASE;
+        } else
+            parser_push_state (state, PARSER_UNKNOWN);
+        goto CHECK;
+    }
+        
     parser_push_state (state, PARSER_UNKNOWN);
     return;
 
@@ -447,11 +459,11 @@ sax_start_element (void *data, const xmlChar *name, const xmlChar **attrs)
             check->substring = g_strdup (attrs[i + 1]);
     }
 
-    if (check->source && check->substring)
+    if (check->substring)
         state->cur_checks = g_slist_prepend (state->cur_checks, check);
     else {
         rc_debug (RC_DEBUG_LEVEL_WARNING,
-                  "incomplete distro check tag");
+                  "incomplete distro check tag: no substring");
         distro_check_free (check);
     }
 }
@@ -540,9 +552,8 @@ sax_end_element (void *data, const xmlChar *name)
         /* We'll run the checks when we finish the distro tag, not the
          * detect tag */
     case PARSER_FILE:
-        /* All handled by attributes */
-        break;
-    case PARSER_COMMAND:
+    case PARSER_OS_NAME:
+    case PARSER_OS_RELEASE:
         /* All handled by attributes */
         break;
     case PARSER_DISTRO:

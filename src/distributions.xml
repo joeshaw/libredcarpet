@@ -1,7 +1,7 @@
 <distros>
-  <distro>
-    <name>LinuxPPC</name>
-    <version>2000</version>
+	<distro>
+		<name>LinuxPPC</name>
+		<version>2000</version>
 		<arch>ppc</arch>
 		<type>rpm</type>
 		<target>linuxppc-2000-ppc</target>
@@ -11,9 +11,9 @@
 			<file source="/etc/redhat-release" substring="LinuxPPC 2000"/>
 		</detect>
 	</distro>
-  <distro>
-    <name>Linux/PPC</name>
-    <version>2000 Q4</version>
+	<distro>
+		<name>Linux/PPC</name>
+		<version>2000 Q4</version>
 		<arch>ppc</arch>
 		<type>rpm</type>
 		<target>linuxppc-2000q4-ppc</target>
@@ -408,8 +408,8 @@
 		<status>retired</status>
 		<enddate>0</enddate>
 		<detect>
-			<command source="uname -s" substring="SunOS"/>
-			<command source="uname -r" substring="5.7"/>
+			<os_name    substring="SunOS"/>
+			<os_release substring="5.7"/>
 		</detect>
 	</distro>
 	<distro>
@@ -421,8 +421,8 @@
 		<status>supported</status>
 		<enddate>0</enddate>
 		<detect>
-			<command source="uname -s" substring="SunOS"/>
-			<command source="uname -r" substring="5.8"/>
+			<os_name    substring="SunOS"/>
+			<os_release substring="5.8"/>
 		</detect>
 	</distro>
 </distros>
