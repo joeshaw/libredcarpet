@@ -412,55 +412,73 @@ rc_package_set_filename (RCPackage *package, const char *filename)
 RCPackageSpec *
 rc_package_get_spec (RCPackage *package)
 {
+    g_return_val_if_fail (package != NULL, NULL);
+
     return &package->spec;
 }
 
 RCArch
 rc_package_get_arch (RCPackage *package)
 {
+    g_return_val_if_fail (package != NULL, RC_ARCH_UNKNOWN);
+
     return package->arch;
 }
 
 RCPackageSection
 rc_package_get_section (RCPackage *package)
 {
+    g_return_val_if_fail (package != NULL, RC_SECTION_MISC);
+
     return package->section;
 }
 
 guint32
 rc_package_get_file_size (RCPackage  *package)
 {
+    g_return_val_if_fail (package != NULL, 0);
+
     return package->file_size;
 }
 
 guint32
 rc_package_get_installed_size (RCPackage *package)
 {
+    g_return_val_if_fail (package != NULL, 0);
+
     return package->installed_size;
 }
 
-gchar *
+const gchar *
 rc_package_get_summary (RCPackage *package)
 {
-    return g_strdup (package->summary);
+    g_return_val_if_fail (package != NULL, NULL);
+
+    return package->summary;
 }
 
-gchar *
+const gchar *
 rc_package_get_description (RCPackage *package)
 {
-    return g_strdup (package->description);
+    g_return_val_if_fail (package != NULL, NULL);
+
+    return package->description;
 }
 
-gchar *
+const gchar *
 rc_package_get_signature_filename (RCPackage *package)
 {
-    return g_strdup (package->signature_filename);
+    g_return_val_if_fail (package != NULL, NULL);
+
+    return package->signature_filename;
 }
 
 void
 rc_package_set_signature_filename (RCPackage *package,
                                    const char *filename)
 {
+    g_return_if_fail (package != NULL);
+
     package->signature_filename = g_strdup (filename);
 }
 

@@ -64,6 +64,19 @@ RCPackageUpdate *rc_package_update_copy (RCPackageUpdate *old_update);
 
 void rc_package_update_free (RCPackageUpdate *update);
 
+RCPackageSpec *rc_package_update_get_spec    (RCPackageUpdate *update);
+const RCPackage     *rc_package_update_get_package (RCPackageUpdate *update);
+RCPackageImportance rc_package_update_get_importance (RCPackageUpdate *update);
+const gchar *rc_package_update_get_package_url   (RCPackageUpdate *update);
+const gchar *rc_package_update_get_signature_url (RCPackageUpdate *update);
+const gchar *rc_package_update_get_md5sum        (RCPackageUpdate *update);
+const gchar *rc_package_update_get_description   (RCPackageUpdate *update);
+const gchar *rc_package_update_get_license       (RCPackageUpdate *update);
+guint32 rc_package_update_get_package_size   (RCPackageUpdate *update);
+guint32 rc_package_update_get_installed_size (RCPackageUpdate *update);
+guint32 rc_package_update_get_signature_size (RCPackageUpdate *update);
+guint   rc_package_update_get_hid            (RCPackageUpdate *update);
+
 RCPackageUpdateSList
 *rc_package_update_slist_copy (RCPackageUpdateSList *old_update);
 

@@ -134,20 +134,20 @@ void             rc_package_add_dummy_update  (RCPackage  *package,
 
 RCChannel       *rc_package_get_channel       (RCPackage *package);
 void             rc_package_set_channel       (RCPackage *package,
-					       RCChannel *channel);
+                                               RCChannel *channel);
 
 const char      *rc_package_get_filename      (RCPackage  *package);
 void             rc_package_set_filename      (RCPackage  *package,
-					       const char *filename);
+                                               const char *filename);
 
 RCPackageSpec   *rc_package_get_spec          (RCPackage  *package);
 RCArch           rc_package_get_arch          (RCPackage  *package);
 RCPackageSection rc_package_get_section       (RCPackage  *package);
 guint32          rc_package_get_file_size     (RCPackage  *package);
 guint32          rc_package_get_installed_size (RCPackage *package);
-gchar           *rc_package_get_summary       (RCPackage  *package);
-gchar           *rc_package_get_description   (RCPackage  *package);
-gchar           *rc_package_get_signature_filename (RCPackage *package);
+const gchar     *rc_package_get_summary       (RCPackage  *package);
+const gchar     *rc_package_get_description   (RCPackage  *package);
+const gchar     *rc_package_get_signature_filename (RCPackage *package);
 void             rc_package_set_signature_filename (RCPackage  *package,
                                                     const char *filename);
 

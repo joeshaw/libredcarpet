@@ -74,6 +74,102 @@ rc_package_update_free (RCPackageUpdate *update)
     g_free (update);
 } /* rc_package_update_free */
 
+RCPackageSpec *
+rc_package_update_get_spec (RCPackageUpdate *update)
+{
+    g_return_val_if_fail (update != NULL, NULL);
+
+    return &update->spec;
+}
+
+const RCPackage *
+rc_package_update_get_package (RCPackageUpdate *update)
+{
+    g_return_val_if_fail (update != NULL, NULL);
+
+    return update->package;
+}
+
+RCPackageImportance
+rc_package_update_get_importance (RCPackageUpdate *update)
+{
+    g_return_val_if_fail (update != NULL, RC_IMPORTANCE_INVALID);
+
+    return update->importance;
+}
+
+const gchar *
+rc_package_update_get_package_url (RCPackageUpdate *update)
+{
+    g_return_val_if_fail (update != NULL, NULL);
+
+    return update->package_url;
+}
+
+const gchar *
+rc_package_update_get_signature_url (RCPackageUpdate *update)
+{
+    g_return_val_if_fail (update != NULL, NULL);
+
+    return update->signature_url;
+}
+
+const gchar *
+rc_package_update_get_md5sum (RCPackageUpdate *update)
+{
+    g_return_val_if_fail (update != NULL, NULL);
+
+    return update->md5sum;
+}
+
+const gchar *
+rc_package_update_get_description (RCPackageUpdate *update)
+{
+    g_return_val_if_fail (update != NULL, NULL);
+
+    return update->description;
+}
+
+const gchar *
+rc_package_update_get_license (RCPackageUpdate *update)
+{
+    g_return_val_if_fail (update != NULL, NULL);
+
+    return update->license;
+}
+
+guint32
+rc_package_update_get_package_size (RCPackageUpdate *update)
+{
+    g_return_val_if_fail (update != NULL, 0);
+
+    return update->package_size;
+}
+
+guint32
+rc_package_update_get_installed_size (RCPackageUpdate *update)
+{
+    g_return_val_if_fail (update != NULL, 0);
+
+    return update->installed_size;
+}
+
+guint32
+rc_package_update_get_signature_size (RCPackageUpdate *update)
+{
+    g_return_val_if_fail (update != NULL, 0);
+
+    return update->signature_size;
+}
+
+guint
+rc_package_update_get_hid (RCPackageUpdate *update)
+{
+    g_return_val_if_fail (update != NULL, 0);
+
+    return update->hid;
+}
+
 void
 rc_package_update_slist_free (RCPackageUpdateSList *update_slist)
 {

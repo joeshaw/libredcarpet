@@ -1,3 +1,14 @@
+2004-09-20  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-package.h: Make some accessor functions to use 'const gchar*'
+	to unify the logic.
+
+	* rc-package.c: Ditto. Add g_return_if_fail checks to accessors.
+
+2004-09-17  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-package-update.[ch]: Add accessor functions for all members.
+
 2004-09-10  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-resolver-info.h: Add argument names to virtual function
