@@ -98,6 +98,9 @@ transact_step_cb (RCPackman *packman, gint seqno, RCPackmanStep step,
     const char *oper;
 
     switch (step) {
+    case RC_PACKMAN_STEP_PREPARE:
+        oper = "Preparing";
+        break;
     case RC_PACKMAN_STEP_CONFIGURE:
         oper = "Configuring";
         break;

@@ -1,5 +1,10 @@
 2002-07-25  Ian Peters  <itp@ximian.com>
 
+	* packman_test.c (transact_step_cb): preparing was never added to
+	the list of possible transaction steps here
+
+2002-07-25  Ian Peters  <itp@ximian.com>
+
 	* packman_test.c: the "run" command can now be followed by the
 	word test; if it is, _transact is called with FALSE, and the
 	transaction will have no effect (but will still be run).
