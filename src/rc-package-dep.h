@@ -51,4 +51,7 @@ void rc_package_dep_slist_free (RCPackageDepSList *rcpdsl);
 gboolean rc_package_dep_verify_relation (RCPackageDep *dep, RCPackageSpec *spec);
 gboolean rc_package_dep_item_verify_relation (RCPackageDepItem *dep, RCPackageSpec *spec);
 
+/* Misc */
+const gchar *rc_relation_string (gint rel);
+
 #endif /* _RC_PACKAGE_DEP_H */

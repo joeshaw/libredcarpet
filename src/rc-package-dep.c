@@ -240,3 +240,23 @@ rc_package_dep_item_verify_relation (RCPackageDepItem *dep, RCPackageSpec *spec)
 #endif
     return FALSE;
 }
+
+const gchar *
+rc_relation_string (gint rel, gboolean words)
+{
+    if (rel == RC_RELATION_ANY)
+        return "(any)";
+    if (rel == RC_RELATION_GREATER)
+        return (words ? "greater than" : ">");
+    if (rel == (RC_RELATION_GREATER | RC_RELATION_EQUAL))
+        return (words ? "greater than or equal to" : ">=");
+    if (rel == RC_RELATION_LESS)
+        return (words ? "less than" : "<");
+    if (rel == (RC_RELATION_LESS | RC_RELATION_EQUAL))
+        return (words ? "less than or equal to" : "<=");
+    if (rel == (RC_RELATION_LESS | RC_RELATION_GREATER))
+        return (words ? "not equal to" : "!=");
+
+    return "(?)";
+}
+

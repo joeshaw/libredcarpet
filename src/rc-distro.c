@@ -124,8 +124,6 @@ RCDistroType distro_types[] = {
     { NULL }
 };
 
-
-
 static gint
 suck_file (gchar *filename, gchar **out_buf)
 {
@@ -251,6 +249,10 @@ func_sys (gpointer arg1, gpointer arg2, gpointer arg3)
 
     return check_string_in_data (call_system, cmd, str, exact);
 }
+
+/* These are here to shut gcc up about unused functions */
+void *foo_unused__func_nth_string_in_file = func_nth_string_in_file;
+void *foo_unused__func_sys = func_sys;
 
 /* We try to determine the architecture in many sneaky ways here */
 static RCDistroArch

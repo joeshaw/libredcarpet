@@ -103,6 +103,9 @@ lock_database (RCDebman *p)
     int fd;
     struct flock fl;
 
+    if (getenv ("RC_ME_EVEN_HARDER") || getenv ("RC_DEBMAN_STATUS_FILE"))
+        return TRUE;
+
     g_return_val_if_fail (p->lock_fd == -1, 0);
 
     fd = open ("/var/lib/dpkg/lock", O_RDWR | O_CREAT | O_TRUNC, 0640);
@@ -139,6 +142,9 @@ lock_database (RCDebman *p)
 static void
 unlock_database (RCDebman *p)
 {
+    if (getenv ("RC_ME_EVEN_HARDER") || getenv ("RC_DEBMAN_STATUS_FILE"))
+        return;
+
     close (p->lock_fd);
     p->lock_fd = -1;
 }
@@ -1090,6 +1096,13 @@ query_all_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
        "purge ok installed". */
     if (!strcmp (line, "Status: install ok installed")) {
         dqi->buf_pkg->spec.installed = TRUE;
+        return;
+    }
+
+    if (!strcmp (line, "Status: hold ok installed")) {
+        dqi->buf_pkg->spec.installed = TRUE;
+        dqi->buf_pkg->hold = TRUE;
+        fprintf (stderr, "HOLDING PACKAGE %s\n", dqi->buf_pkg->spec.name);
         return;
     }
 
