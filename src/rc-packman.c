@@ -83,6 +83,23 @@ rc_packman_destroy (GtkObject *obj)
         (* GTK_OBJECT_CLASS(rc_packman_parent)->destroy) (obj);
 }
 
+typedef void (*GtkSignal_NONE__LONG_LONG) (GtkObject *object, 
+                                           glong arg1,
+                                           glong arg2,
+                                           gpointer user_data);
+static void gtk_marshal_NONE__LONG_LONG (GtkObject    *object, 
+                                         GtkSignalFunc func, 
+                                         gpointer      func_data, 
+                                         GtkArg       *args)
+{
+    GtkSignal_NONE__LONG_LONG rfunc;
+    rfunc = (GtkSignal_NONE__LONG_LONG) func;
+    (* rfunc) (object,
+               GTK_VALUE_LONG(args[0]),
+               GTK_VALUE_LONG(args[1]),
+               func_data);
+}
+
 static void
 rc_packman_class_init (RCPackmanClass *klass)
 {
@@ -117,10 +134,10 @@ rc_packman_class_init (RCPackmanClass *klass)
                         GTK_RUN_LAST,
                         object_class->type,
                         GTK_SIGNAL_OFFSET (RCPackmanClass, transact_progress),
-                        gtk_marshal_NONE__INT_INT,
+                        gtk_marshal_NONE__LONG_LONG,
                         GTK_TYPE_NONE, 2,
-                        GTK_TYPE_INT,
-                        GTK_TYPE_INT);
+                        GTK_TYPE_LONG,
+                        GTK_TYPE_LONG);
 
     signals[TRANSACT_DONE] =
         gtk_signal_new ("transact_done",

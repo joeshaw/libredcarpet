@@ -74,7 +74,7 @@ struct _RCPackmanClass {
     void (*transact_start)(RCPackman *packman, gint total_steps);
     void (*transact_step)(RCPackman *packman, gint seqno, RCPackmanStep step,
                           gchar *name);
-    void (*transact_progress)(RCPackman *packman, gint amount, gint total);
+    void (*transact_progress)(RCPackman *packman, gulong amount, gulong total);
     void (*transact_done)(RCPackman *packman);
 
     /* Virtual functions */
