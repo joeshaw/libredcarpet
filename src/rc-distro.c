@@ -546,14 +546,25 @@ sax_end_element (void *data, const xmlChar *name)
         /* All handled by attributes */
         break;
     case PARSER_DISTRO:
-        if (rc_arch_get_compat_score (
-                state->compat_arch_list, state->cur_distro->arch) &&
-            distro_check_eval_list (state->cur_checks))
-        {
-            state->our_distro = state->cur_distro;
-            sax_parser_disable (state);
-        } else
-            distro_free (state->cur_distro);
+        if (getenv ("RC_DISTRO_TARGET")) {
+            if (strcmp (getenv ("RC_DISTRO_TARGET"),
+                        state->cur_distro->target) == 0)
+            {
+                state->our_distro = state->cur_distro;
+                sax_parser_disable (state);
+            } else
+                distro_free (state->cur_distro);
+        }
+        else {
+            if (rc_arch_get_compat_score (
+                    state->compat_arch_list, state->cur_distro->arch) &&
+                distro_check_eval_list (state->cur_checks))
+            {
+                state->our_distro = state->cur_distro;
+                sax_parser_disable (state);
+            } else
+                distro_free (state->cur_distro);
+        }
         g_slist_foreach (state->cur_checks, (GFunc) distro_check_free, NULL);
         g_slist_free (state->cur_checks);
         state->cur_checks = NULL;

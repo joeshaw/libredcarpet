@@ -1,3 +1,9 @@
+2002-08-07  Joe Shaw  <joe@ximian.com>
+
+	* rc-distro.c (sax_end_element): If RC_DISTRO_TARGET is set, use
+	it instead of whatever it should be.  It ain't pretty, but it
+	works.
+
 2002-08-07  Ian Peters  <itp@ximian.com>
 
 	* rc-verification.c (rc_verify_gpg): refactored to use g_spawn
