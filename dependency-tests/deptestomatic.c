@@ -102,7 +102,7 @@ load_channel (const char *name,
     }
 
     channel = rc_world_add_channel_from_buffer (world,
-                                                name, 666,
+                                                name, "foo", 666,
                                                 channel_type, buffer,
                                                 is_compressed ? file_size : 0);
 
