@@ -210,6 +210,7 @@
                         <file source="/etc/redhat-release" substring="Red Hat Enterprise Linux WS release 2.1 (Tampa)"/>
                 </detect>
         </distro>
+
 	<distro>
 		<name>Red Hat Linux</name>
 		<version>6.0</version>
@@ -341,12 +342,12 @@
         <distro>
                 <name>SuSE Linux Enterprise Client</name>
                 <version>1</version>
-                <arch>i386</arch>
+                <arch>i586</arch>
                 <type>rpm</type>
-                <target>slec-1-i386</target>
+                <target>slec-1-i586</target>
                 <status>supported</status>
                 <detect>
-                        <file source="/etc/SuSE-release" substring="SLEC-1"/>
+                        <file source="/etc/SuSE-release" substring="SuSE Linux Desktop 1.0"/>
                 </detect>
         </distro>
 

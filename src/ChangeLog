@@ -1,4 +1,8 @@
-2003-05-15    <jose@ximian.com>
+2003-05-21  Joe Shaw  <joe@ximian.com>
+
+	* distributions.xml: Update the detection and arch for SLEC
+
+2003-05-15  Jose Mercado  <jose@ximian.com>
 
 	* distributions.xml: Added rhel-21es-i386 and rhel-21ws-i386.
 
