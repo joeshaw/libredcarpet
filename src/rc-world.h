@@ -366,6 +366,10 @@ RCWorld *rc_world_dup (RCWorld *world);
 
 void       rc_world_spew (RCWorld *world, FILE *out);
 
+/* only used for bindings */
+void       rc_world_set_refresh_function (RCWorld *world,
+                                          RCWorldRefreshFn refresh_fn);
+    
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

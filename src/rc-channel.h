@@ -55,6 +55,8 @@ int rc_channel_priority_parse (const char *);
 RCChannel *rc_channel_ref   (RCChannel *channel);
 void       rc_channel_unref (RCChannel *channel);
 
+GType      rc_channel_get_type ();
+    
 /* Constructor / setters */
 
 RCChannel *rc_channel_new (const char *id,
@@ -109,7 +111,7 @@ gboolean rc_channel_is_immutable   (RCChannel *channel);
 
 struct _RCWorld *rc_channel_get_world    (RCChannel *channel);
 
-RCChannelType rc_channel_get_type        (RCChannel *channel);
+RCChannelType rc_channel_get_channel_type (RCChannel *channel);
 
 const char   *rc_channel_get_id          (RCChannel *channel);
 

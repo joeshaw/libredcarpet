@@ -1854,3 +1854,11 @@ rc_world_spew (RCWorld *world, FILE *out)
         rc_world_foreach_package (world, RC_CHANNEL_ANY, spew_cb, out);
     }
 }
+
+void
+rc_world_set_refresh_function (RCWorld *world,
+                               RCWorldRefreshFn refresh_fn)
+{
+	RCWorldClass *class = RC_WORLD_GET_CLASS (world);
+	class->refresh_fn = refresh_fn;
+}

@@ -96,5 +96,9 @@ GType rc_world_service_lookup     (const char *scheme);
 
 RCWorld  *rc_world_service_mount (const char *url, GError **error);
 
+/* only used for bindings */
+void      rc_world_service_set_assemble_function (RCWorldService *service,
+                                                  RCWorldServiceAssembleFn assemble_fn);
+
 #endif /* __RC_WORLD_SERVICE_H__ */
 

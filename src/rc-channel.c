@@ -155,6 +155,21 @@ rc_channel_unref (RCChannel *channel)
     }
 } /* rc_channel_unref */
 
+
+GType
+rc_channel_get_type (void)
+{
+    static GType boxed_type = 0;
+
+    if (!boxed_type) {
+        boxed_type = g_boxed_type_register_static ("RCChannel",
+                                        (GBoxedCopyFunc)rc_channel_ref,
+                                        (GBoxedFreeFunc)rc_channel_unref);
+    }
+
+    return boxed_type;
+}
+
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 RCChannel *
@@ -371,7 +386,7 @@ rc_channel_get_world (RCChannel *channel)
 }
 
 RCChannelType
-rc_channel_get_type (RCChannel *channel)
+rc_channel_get_channel_type (RCChannel *channel)
 {
     g_return_val_if_fail (channel != NULL, RC_CHANNEL_TYPE_UNKNOWN);
 

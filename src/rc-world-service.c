@@ -300,3 +300,11 @@ rc_world_service_mount (const char *url, GError **error)
 
     return RC_WORLD (worldserv);
 }
+
+void
+rc_world_service_set_assemble_function (RCWorldService *world,
+                                        RCWorldServiceAssembleFn assemble_fn)
+{
+	RCWorldServiceClass *class = RC_WORLD_SERVICE_GET_CLASS (world);
+	class->assemble_fn = assemble_fn;
+}
