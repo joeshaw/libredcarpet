@@ -1,5 +1,8 @@
 2001-04-20  Vladimir Vukicevic  <vladimir@ximian.com>
 
+	* rc-distro.c: Mandrake uses -i586, debian potato is
+	debian-potato-i386, not -22-.
+
 	* rc-distro.c: recognize RH 7.1 by 7.1 in redhat-release, not
 	7.0.9
 

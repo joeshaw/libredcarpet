@@ -74,11 +74,11 @@ RCDistroChunk distro_figurers[] = {
     { "linuxppc-2000-ppc", RC_ARCH_PPC,
       func_string_in_file, "/etc/redhat-release", "LinuxPPC 2000", NULL, 0 },
 
-    { "mandrake-70-i386", RC_ARCH_IA32,
+    { "mandrake-70-i586", RC_ARCH_IA32,
       func_string_in_file, "/etc/mandrake-release", "7.0", NULL, 0 },
-    { "mandrake-71-i386", RC_ARCH_IA32,
+    { "mandrake-71-i586", RC_ARCH_IA32,
       func_string_in_file, "/etc/mandrake-release", "7.1", NULL, 0 },
-    { "mandrake-72-i386", RC_ARCH_IA32,
+    { "mandrake-72-i586", RC_ARCH_IA32,
       func_string_in_file, "/etc/mandrake-release", "7.2", NULL, 0 },
 
     { "redhat-60-i386", RC_ARCH_IA32,
@@ -107,7 +107,7 @@ RCDistroChunk distro_figurers[] = {
     { "suse-70-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/SuSE-release", "7.0", NULL, 0 },
 
-    { "debian-22-i386", RC_ARCH_IA32,
+    { "debian-potato-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/debian_version", "2.2", NULL, 0},
     { "debian-woody-i386", RC_ARCH_IA32,
       func_string_in_file, "/etc/debian_version", "woody", NULL, 0},
@@ -135,13 +135,13 @@ RCDistroType distro_types[] = {
     { "suse-64-i386", NULL, "SuSE", "6.4", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=3, non-gdm-runlevel=2" },
     { "suse-70-i386", NULL, "SuSE", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=3, non-gdm-runlevel=2" },
 
-    { "mandrake-70-i386", NULL, "Linux Mandrake", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "mandrake-71-i386", NULL, "Linux Mandrake", "7.1", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
-    { "mandrake-72-i386", NULL, "Linux Mandrake", "7.2", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "mandrake-70-i586", NULL, "Linux Mandrake", "7.0", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "mandrake-71-i586", NULL, "Linux Mandrake", "7.1", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
+    { "mandrake-72-i586", NULL, "Linux Mandrake", "7.2", RC_PKG_RPM, RC_ARCH_IA32, "gdm-runlevel=5, non-gdm-runlevel=3" },
 
     { "debian-sid-i386", NULL, "Debian GNU/Linux", "sid", RC_PKG_DPKG, RC_ARCH_IA32, NULL },
     { "debian-woody-i386", NULL, "Debian GNU/Linux", "woody", RC_PKG_DPKG, RC_ARCH_IA32, NULL },
-    { "debian-22-i386", NULL, "Debian GNU/Linux", "2.2", RC_PKG_DPKG, RC_ARCH_IA32, NULL },
+    { "debian-potato-i386", NULL, "Debian GNU/Linux", "potato", RC_PKG_DPKG, RC_ARCH_IA32, NULL },
 
     { "linuxppc-2000-ppc", NULL, "LinuxPPC 2000", "2000", RC_PKG_RPM, RC_ARCH_PPC, "gdm-runlevel=5, non-gdm-runlevel=3" },
 
