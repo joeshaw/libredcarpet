@@ -34,7 +34,7 @@
 #include "rc-line-buf.h"
 #include "rc-md5.h"
 
-gchar *keyring = SHAREDIR "/red-carpet.gpg";
+gchar *keyring = NULL;
 
 void
 rc_verification_set_keyring (const gchar *t_keyring)
@@ -145,7 +145,6 @@ gpg_read_done_cb (RCLineBuf *line_buf, RCLineBufStatus status, gpointer data)
 RCVerification *
 rc_verify_gpg (gchar *file, gchar *sig)
 {
-//    const gchar *keyring = SHAREDIR "/red-carpet.gpg";
     pid_t child;
     int status;
     int fds[2];
@@ -160,6 +159,9 @@ rc_verify_gpg (gchar *file, gchar *sig)
 
     verification->type = RC_VERIFICATION_TYPE_GPG;
     verification->status = RC_VERIFICATION_STATUS_UNDEF;
+
+    if (!keyring)
+        return verification;
 
     gpg_command = rc_is_program_in_path ("gpg");
 

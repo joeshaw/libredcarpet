@@ -36,6 +36,8 @@
 #include "rc-verification-private.h"
 #include "rc-arch.h"
 
+#include "rpm-stubs.h"
+
 #include "rpm-rpmlead.h"
 #include "rpm-signature.h"
 
@@ -64,8 +66,6 @@ static void rc_rpmman_class_init (RCRpmmanClass *klass);
 static void rc_rpmman_init       (RCRpmman *obj);
 
 static GObjectClass *parent_class;
-
-extern gchar *rc_libdir;
 
 GType
 rc_rpmman_get_type (void)
@@ -2744,6 +2744,121 @@ parse_rpm_version (RCRpmman *rpmman, const gchar *version)
     g_free (tmp);
 }
 
+#define OBJECTDIR "/tmp"
+
+static char *
+write_objects (void)
+{
+    GByteArray *buf;
+    int fd = -1;
+    char *object_dir = NULL;
+    char *file = NULL;
+    mode_t mask;
+
+    /* First we need to create a secure directory */
+
+    mask = umask (0077);
+
+    object_dir = g_strdup (OBJECTDIR "/rc-rpm-XXXXXX");
+    if (!mkdtemp (object_dir)) {
+        g_free (object_dir);
+        object_dir = NULL;
+        goto ERROR;
+    }
+
+    umask (mask);
+
+    /* Now, write out each of the objects */
+
+    file = g_strconcat (object_dir, "/rc-{rpm}.so.0", NULL);
+    if ((fd = open (file, O_RDWR | O_CREAT | O_EXCL, S_IRWXU)) == -1) {
+        goto ERROR;
+    }
+    g_free (file);
+    file = NULL;
+    if (rc_uncompress_memory ((char *)rc_rpm_so_0, rc_rpm_so_0_len, &buf)) {
+        goto ERROR;
+    }
+    if (!rc_write (fd, buf->data, buf->len)) {
+        goto ERROR;
+    }
+    rc_close (fd);
+    fd = -1;
+    g_byte_array_free (buf, TRUE);
+    buf = NULL;
+
+    file = g_strconcat (object_dir, "/rc-{rpm_rpmio}.so.0", NULL);
+    if ((fd = open (file, O_RDWR | O_CREAT | O_EXCL, S_IRWXU)) == -1) {
+        goto ERROR;
+    }
+    g_free (file);
+    file = NULL;
+    if (rc_uncompress_memory ((char *)rc_rpm_rpmio_so_0, rc_rpm_rpmio_so_0_len,
+                              &buf))
+    {
+        goto ERROR;
+    }
+    if (!rc_write (fd, buf->data, buf->len)) {
+        goto ERROR;
+    }
+    rc_close (fd);
+    fd = -1;
+    g_byte_array_free (buf, TRUE);
+    buf = NULL;
+
+    file = g_strconcat (object_dir, "/rc-{rpm_rpmio_rpmdb}-4.0.3.so", NULL);
+    if ((fd = open (file, O_RDWR | O_CREAT | O_EXCL, S_IRWXU)) == -1) {
+        goto ERROR;
+    }
+    g_free (file);
+    file = NULL;
+    if (rc_uncompress_memory ((char *)rc_rpm_rpmio_rpmdb_4_0_3_so,
+                              rc_rpm_rpmio_rpmdb_4_0_3_so_len, &buf))
+    {
+        goto ERROR;
+    }
+    if (!rc_write (fd, buf->data, buf->len)) {
+        goto ERROR;
+    }
+    rc_close (fd);
+    fd = -1;
+    g_byte_array_free (buf, TRUE);
+    buf = NULL;
+
+    file = g_strconcat (object_dir, "/rc-{rpm_rpmio_rpmdb}-4.0.4.so", NULL);
+    if ((fd = open (file, O_RDWR | O_CREAT | O_EXCL, S_IRWXU)) == -1) {
+        goto ERROR;
+    }
+    g_free (file);
+    file = NULL;
+    if (rc_uncompress_memory ((char *)rc_rpm_rpmio_rpmdb_4_0_4_so,
+                              rc_rpm_rpmio_rpmdb_4_0_4_so_len, &buf))
+    {
+        goto ERROR;
+    }
+    if (!rc_write (fd, buf->data, buf->len)) {
+        goto ERROR;
+    }
+    rc_close (fd);
+    fd = -1;
+    g_byte_array_free (buf, TRUE);
+    buf = NULL;
+
+    return object_dir;
+
+  ERROR:
+    if (file)
+        g_free (file);
+    if (fd != -1)
+        rc_close (fd);
+    if (buf)
+        g_byte_array_free (buf, TRUE);
+    if (object_dir)
+        rc_rmdir (object_dir);
+
+    return NULL;
+}
+
 static void
 rc_rpmman_init (RCRpmman *obj)
 {
@@ -2752,12 +2867,12 @@ rc_rpmman_init (RCRpmman *obj)
 #ifndef STATIC_RPM
     gchar **rpm_version;
     gchar *so_file;
+    char *object_dir;
     const char *objects[] = {
         "rc-{rpm}.so.0",
         "rc-{rpm_rpmio}.so.0",
         "rc-{rpm_rpmio_rpmdb}-4.0.3.so",
         "rc-{rpm_rpmio_rpmdb}-4.0.4.so",
-        "rc-{rpm_rpmio_rpmdb}.so",
         NULL };
     const char **iter;
 #endif
@@ -2780,14 +2895,23 @@ rc_rpmman_init (RCRpmman *obj)
         return;
     }
 
+    if (!(object_dir = write_objects ())) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
+                              "unable to write rpm stub files");
+        return;
+    }
+
     iter = objects;
 
     while (*iter && !obj->rpm_lib) {
-        so_file = g_strdup_printf ("%s/%s", rc_libdir, *iter);
+        so_file = g_strdup_printf ("%s/%s", object_dir, *iter);
         obj->rpm_lib = g_module_open (so_file, G_MODULE_BIND_LAZY);
         g_free (so_file);
         iter++;
     }
+
+    rc_rmdir (object_dir);
+    g_free (object_dir);
 
     if (!obj->rpm_lib) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,

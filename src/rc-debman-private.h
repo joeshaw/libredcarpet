@@ -35,6 +35,8 @@ struct _RCDebmanPrivate {
 
     time_t db_mtime;
     guint db_watcher_cb;
+
+    char *helper_object;
 };
 
 #endif /* _RC_DEBMAN_PRIVATE_H */

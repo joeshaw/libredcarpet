@@ -1,3 +1,9 @@
+2002-08-06  Ian Peters  <itp@ximian.com>
+
+	* Makefile.am: install pkg_to_xml
+
+	* cur_to_xml.c (main): remove the call to _set_libdir
+
 2002-08-05  Ian Peters  <itp@ximian.com>
 
 	* packman_test.c (pretty_print_pkg): get rid of the deps printing

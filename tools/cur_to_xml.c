@@ -41,9 +41,6 @@ main (int argc, char **argv)
 
     g_type_init ();
 
-    if (argc > 1)
-        rc_packman_set_libdir (g_strconcat (argv[1], "/lib/redcarpet", NULL));
-
     packman = rc_distman_new ();
 
     if (!packman)

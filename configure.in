@@ -5,11 +5,14 @@ AC_INIT(src/libredcarpet.h)
 AM_CONFIG_HEADER(config.h)
 
 dnl libtool versioning
-LT_CURRENT=0
-LT_REVISION=0
-LT_AGE=0
+LIBREDCARPET_MAJOR_VERSION=0
+LIBREDCARPET_MINOR_VERSION=5
+LIBREDCARPET_MICRO_VERSION=0
 
-VERSION=$LT_CURRENT.$LT_REVISION.$LT_AGE
+MAJOR=0
+MINOR=
+
+VERSION=$LIBREDCARPET_MAJOR_VERSION.$LIBREDCARPET_MINOR_VERSION.$LIBREDCARPET_MICRO_VERSION
 PACKAGE=libredcarpet
 
 AC_SUBST(LT_CURRENT)
@@ -29,21 +32,16 @@ AM_PROG_LIBTOOL
 dnl endianness check, just for dobey ;-)
 AC_C_BIGENDIAN
 
-PKG_CHECK_MODULES(LIBREDCARPET, glib-2.0 gthread-2.0 gobject-2.0 gmodule-2.0 libxml-2.0)
+PKG_CHECK_MODULES(LIBREDCARPET, glib-2.0 gobject-2.0 gmodule-2.0 libxml-2.0)
 
 AC_SUBST(LIBREDCARPET_CFLAGS)
 AC_SUBST(LIBREDCARPET_LIBS)
 
+LIBREDCARPET_LIBS="$LIBREDCARPET_LIBS -lpthread -lrt"
+
 dnl Check for libz to handle compressed xml files
 AC_CHECK_LIB(z, inflate, LIBREDCARPET_LIBS="$LIBREDCARPET_LIBS -lz",
   AC_ERROR([libredcarpet requires zlib]))
-
-dnl Where should we put our library private files?
-AC_ARG_WITH(private-namespace, 
-  [  --with-private-namespace=NAME  subdir of $libdir and $datadir where private libraries/data will be installed (redcarpet) ],
-  [PRIVATE_NAMESPACE="$withval"], [PRIVATE_NAMESPACE="redcarpet"])
-
-AC_SUBST(PRIVATE_NAMESPACE)
 
 dnl The available backends
 AC_ARG_ENABLE(backend-dpkg, [  --enable-backend-dpkg   include DPKG backend],
@@ -179,6 +177,6 @@ Configuration:
   Include DPKG support:         ${enable_backend_dpkg}
   Include RPM support:          ${enable_backend_rpm}
 
-  LIBREDCARPET_LIBS:            ${LIBREDCARPET_LIBS}
   LIBREDCARPET_CFLAGS:          ${LIBREDCARPET_CFLAGS}
+  LIBREDCARPET_LIBS:            ${LIBREDCARPET_LIBS}
 "

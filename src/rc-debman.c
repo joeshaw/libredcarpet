@@ -30,6 +30,8 @@
 #include "rc-verification-private.h"
 #include "rc-debman-general.h"
 
+#include "dpkg-helper.h"
+
 #include <sys/wait.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -67,8 +69,6 @@ static GObjectClass *parent_class;
 
 /* The Evil Hack */
 gboolean child_wants_input = FALSE;
-
-extern gchar *rc_libdir;
 
 GType
 rc_debman_get_type (void)
@@ -1167,9 +1167,8 @@ do_purge (RCPackman *packman, DebmanInstallState *install_state)
 
         close (slave);
 
-//        putenv ("LD_PRELOAD=" LIBDIR "/rc-dpkg-helper.so");
-        putenv (g_strdup_printf ("LD_PRELOAD=%s/rc-dpkg-helper.so",
-                                 rc_libdir));
+        putenv (g_strdup_printf ("LD_PRELOAD=%s",
+                                 RC_DEBMAN (packman)->priv->helper_object));
         putenv (g_strdup_printf ("RC_READ_NOTIFY_PID=%d", parent));
         putenv ("PAGER=cat");
 
@@ -1603,9 +1602,9 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
 
             close (slave);
 
-//            putenv ("LD_PRELOAD=" LIBDIR "/rc-dpkg-helper.so");
-            putenv (g_strdup_printf ("LD_PRELOAD=%s/rc-dpkg-helper.so",
-                                     rc_libdir));
+            putenv (g_strdup_printf (
+                        "LD_PRELOAD=%s",
+                        RC_DEBMAN (packman)->priv->helper_object));
             putenv (g_strdup_printf ("RC_READ_NOTIFY_PID=%d", parent));
             putenv ("PAGER=cat");
 
@@ -1826,9 +1825,8 @@ do_configure (RCPackman *packman, DebmanInstallState *install_state)
 
         close (slave);
 
-//        putenv ("LD_PRELOAD=" LIBDIR "/rc-dpkg-helper.so");
-        putenv (g_strdup_printf ("LD_PRELOAD=%s/rc-dpkg-helper.so",
-                                 rc_libdir));
+        putenv (g_strdup_printf ("LD_PRELOAD=%s",
+                                 RC_DEBMAN (packman)->priv->helper_object));
         putenv (g_strdup_printf ("RC_READ_NOTIFY_PID=%d", parent));
         putenv ("PAGER=cat");
 
@@ -3183,6 +3181,9 @@ rc_debman_finalize (GObject *obj)
 {
     RCDebman *debman = RC_DEBMAN (obj);
 
+    unlink (debman->priv->helper_object);
+    g_free (debman->priv->helper_object);
+
     unlock_database (debman);
 
     hash_destroy (debman);
@@ -3227,8 +3228,33 @@ static void
 rc_debman_init (RCDebman *debman)
 {
     RCPackman *packman = RC_PACKMAN (debman);
+    int fd = -1;
+    GByteArray *buf = NULL;
+    mode_t mask;
 
     debman->priv = g_new0 (RCDebmanPrivate, 1);
+
+    debman->priv->helper_object = g_strdup ("/tmp/rc-dpkg-helper.so-XXXXXX");
+    mask = umask (0077);
+    if ((fd = mkstemp (debman->priv->helper_object)) == -1) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
+                              "Unable to create rc-dpkg-helper");
+        return;
+    }
+    umask (mask);
+    if (rc_uncompress_memory ((char *)rc_dpkg_helper_so, rc_dpkg_helper_so_len,
+                              &buf))
+    {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
+                              "Unable to create rc-dpkg-helper");
+        return;
+    }
+    if (!rc_write (fd, buf->data, buf->len)) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
+                              "Unable to create rc-dpkg-helper");
+        return;
+    }
+    rc_close (fd);
 
     debman->priv->lock_fd = -1;
 

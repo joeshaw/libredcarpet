@@ -2,9 +2,7 @@ INCLUDES = 						\
 	-I$(top_srcdir) -Wall		 		\
 	$(RPMLIB_CFLAGS) 				\
 	$(LIBREDCARPET_CFLAGS)				\
-	-DG_LOG_DOMAIN=\"libredcarpet\" 		\
-	-DSHAREDIR=\""$(datadir)/@PRIVATE_NAMESPACE@"\" \
-	-DLIBDIR=\""$(libdir)/@PRIVATE_NAMESPACE@"\"
+	-DG_LOG_DOMAIN=\"libredcarpet\"
 
 noinst_LIBRARIES = libredcarpettmp.a
 
@@ -13,25 +11,38 @@ rpm_sources =			\
 	rc-rpmman.h		\
 	rc-rpmman-types.h	\
 	rpm-rpmlead.h		\
-	rpm-signature.h		
+	rpm-signature.h
+
+rpm_built_sources =		\
+	rpm-stubs.h
 
 dpkg_sources =			\
 	rc-debman.c		\
 	rc-debman.h		\
 	rc-debman-private.h
 
+dpkg_built_sources =		\
+	dpkg-helper.h
+
 if ENABLE_RPM
 rpm_sources2 = $(rpm_sources)
+if STATIC_RPM
+else
+rpm_built_sources2 = $(rpm_built_sources)
+endif
 endif
 
 if ENABLE_DPKG
 dpkg_sources2 = $(dpkg_sources)
+dpkg_built_sources2 = $(dpkg_built_sources)
 endif
 
 BUILT_SOURCES =				\
 	distributions-xml.h		\
 	rc-marshal.c			\
-	rc-marshal.h
+	rc-marshal.h			\
+	$(rpm_built_sources2)		\
+	$(dpkg_built_sources2)
 
 libredcarpet_public_headers = 		\
 	libredcarpet.h			\
@@ -112,7 +123,9 @@ libredcarpettmp_a_SOURCES =		\
         xml-util.c                      \
 	$(libredcarpet_public_headers)	\
 	$(dpkg_sources2)		\
-	$(rpm_sources2)
+	$(rpm_sources2)			\
+	$(rpm_built_sources2)		\
+	$(dpkg_built_sources2)
 
 EXTRA_DIST =				\
 	$(rpm_sources)			\
@@ -120,33 +133,34 @@ EXTRA_DIST =				\
 	rc-channel-private.h		\
 	rc-dpkg-helper.c 		\
 	make_stub.sh			\
+	distributions.xml		\
 	packer.pl			\
 	rc-marshal.list
 
-if ENABLE_DPKG
-dpkghelperdir = $(libdir)/@PRIVATE_NAMESPACE@
-dpkghelper_DATA = \
-	rc-dpkg-helper.so
-CLEANFILES += rc-dpkg-helper.so
-endif
+dpkg-helper.h: rc-dpkg-helper.so
+	cd $(srcdir) && \
+	gzip -9 -c rc-dpkg-helper.so > rc-dpkg-helper.so.gz && \
+	./packer.pl rc-dpkg-helper.so.gz rc-dpkg-helper.so > dpkg-helper.h && \
+	rm rc-dpkg-helper.so.gz
 
 rc-dpkg-helper.so: $(srcdir)/rc-dpkg-helper.c
 	gcc -fPIC -c -o rc-dpkg-helper.o $(srcdir)/rc-dpkg-helper.c
 	ld -soname rc-dpkg-helper -shared -o rc-dpkg-helper.so rc-dpkg-helper.o
 
-if ENABLE_RPM
-if STATIC_RPM
-else
-rpmhelperdir = $(libdir)/@PRIVATE_NAMESPACE@
-rpmhelper_DATA = \
-	rc-{rpm}.so.0 \
-	rc-{rpm_rpmio}.so.0 \
-	rc-{rpm_rpmio_rpmdb}-4.0.3.so \
-	rc-{rpm_rpmio_rpmdb}-4.0.4.so \
-	rc-{rpm_rpmio_rpmdb}.so
-CLEANFILES += rc-{rpm}.so.0 rc-{rpm_rpmio}.so.0 rc-{rpm_rpmio_rpmdb}-4.0.3.so rc-{rpm_rpmio_rpmdb}-4.0.4.so rc-{rpm_rpmio_rpmdb}.so
-endif
-endif
+CLEANFILES += dpkg-helper.h rc-dpkg-helper.so
+
+RPM_STUBS = rc-{rpm}.so.0 rc-{rpm_rpmio}.so.0 rc-{rpm_rpmio_rpmdb}-4.0.3.so rc-{rpm_rpmio_rpmdb}-4.0.4.so
+
+rpm-stubs.h: $(RPM_STUBS) packer.pl 
+	cd $(srcdir) && \
+	rm -f rpm-stubs.h && \
+	for stub in $(RPM_STUBS) ; do \
+		gzip -c -9 $$stub > $$stub.gz && \
+		./packer.pl $$stub.gz $$stub >> rpm-stubs.h && \
+		rm $$stub.gz; \
+	done;
+
+CLEANFILES += rpm-stubs.h $(RPM_STUBS)
 
 rc-{rpm}.so.0:
 	./make_stub.sh rc-{rpm}.so.0 librpm.so.0
@@ -160,11 +174,7 @@ rc-{rpm_rpmio_rpmdb}-4.0.3.so:
 rc-{rpm_rpmio_rpmdb}-4.0.4.so:
 	./make_stub.sh rc-{rpm_rpmio_rpmdb}-4.0.4.so librpm-4.0.4.so librpmio-4.0.4.so librpmdb-4.0.4.so
 
-rc-{rpm_rpmio_rpmdb}.so:
-	./make_stub.sh rc-{rpm_rpmio_rpmdb}.so librpm.so librpmio.so librpmdb.so
-
 all-local: libredcarpet.a
-
 
 lib_LIBRARIES = libredcarpet.a
 
@@ -175,6 +185,7 @@ libredcarpetincludedir = $(includedir)/libredcarpet-2.0
 libredcarpetinclude_HEADERS = \
 	$(libredcarpet_public_headers)
 
+CLEANFILES += libredcarpet.a
 libredcarpet.a: libredcarpettmp.a
 if STATIC_RPM
 	rm -f libredcarpetbuild.a; \
@@ -198,14 +209,18 @@ else
 	cp libredcarpettmp.a libredcarpet.a
 endif
 
+CLEANFILES += distributions-xml.h
 distributions-xml.h: distributions.xml packer.pl
-	gzip -9 -c distributions.xml > distributions.xml.gz \
+	cd $(srcdir) \
+	&& gzip -9 -c distributions.xml > distributions.xml.gz \
 	&& ./packer.pl distributions.xml.gz distros_xml > distributions-xml.h \
 	&& rm distributions.xml.gz
 
 ###
 ### Deal with auto-generating the signal marshallers
 ###
+
+CLEANFILES += rc-marshal.c rc-marshal.h
 
 rc-marshal.h: rc-marshal.list
 	cd $(srcdir) \
@@ -219,7 +234,4 @@ rc-marshal.c: rc-marshal.list
 	&& (cmp -s xgen-gmc rc-marshal.c || cp xgen-gmc rc-marshal.c) \
 	&& rm -f xgen-gmc xgen-gmc~
 
-clean-local:
-	rm -f libredcarpet.a
-	rm -f distributions-xml.h
-	rm -f rc-marshal.c rc-marshal.h
+CLEANFILES += $(MAYBECLEAN)

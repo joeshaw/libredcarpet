@@ -1,10 +1,14 @@
 #!/usr/bin/perl
 
+$name = $ARGV[1];
+$name =~ s/[{}]//g;
+$name =~ s/[-\.]/_/g;
+
 open FOO, "$ARGV[0]";
 
 $total = 0;
 
-print "static const char ", $ARGV[1], "[] = { ";
+print "static const char ", $name, "[] = { ";
 
 while ($len = read (FOO, $buf, 100)) {
     $total += $len;
@@ -14,4 +18,4 @@ while ($len = read (FOO, $buf, 100)) {
 }
 
 print "};\n";
-print "static unsigned int ", $ARGV[1], "_len = ", $total, ";\n";
+print "static unsigned int ", $name, "_len = ", $total, ";\n";
