@@ -21,18 +21,67 @@
 #ifndef _RC_PACKAGE_H
 #define _RC_PACKAGE_H
 
+#include <glib.h>
+
+typedef enum _RCPackageSection RCPackageSection;
+
+typedef struct _RCPackage RCPackage;
+
+typedef GSList RCPackageSList;
+
+/* Used if key is a string, i.e. name */
+typedef GHashTable RCPackageHashTableByString;
+
+/* Used if key is a spec */
+typedef GHashTable RCPackageHashTableBySpec;
+
 #include <libredcarpet/rc-package-spec.h>
 #include <libredcarpet/rc-package-dep.h>
 #include <libredcarpet/rc-package-update.h>
+#include <libredcarpet/rc-channel.h>
 
 #include <gnome-xml/tree.h>
 
-typedef struct _RCPackage RCPackage;
+/*
+ * RCPackageSection stuff (doesn't really deserve its own files
+ */
+
+enum _RCPackageSection {
+    SECTION_OFFICE = 0,
+    SECTION_IMAGING,
+    SECTION_PIM,
+    SECTION_GAME,
+    SECTION_MULTIMEDIA,
+    SECTION_INTERNET,
+    SECTION_UTIL,
+    SECTION_SYSTEM,
+    SECTION_DOC,
+    SECTION_DEVEL,
+    SECTION_DEVELUTIL,
+    SECTION_LIBRARY,
+    SECTION_XAPP,
+    SECTION_MISC,
+    SECTION_LAST
+};
+
+const gchar *rc_package_section_to_string (RCPackageSection section);
+
+RCPackageSection rc_string_to_package_section (gchar *section);
+
+/*
+ * RCPackage proper
+ */
 
 struct _RCPackage {
     RCPackageSpec spec;
 
-    gboolean already_installed;
+    RCPackageSection section;
+
+    gboolean installed;
+
+    guint32 installed_size;
+
+    const RCSubchannel *subchannel;
 
     /* Filled in by the package manager or dependency XML */
     RCPackageDepSList *requires;
@@ -58,19 +107,11 @@ struct _RCPackage {
     gchar *signature_filename;
 };
 
-/* Used if key is a string, i.e. name */
-typedef GHashTable RCPackageHashTableByString;
-
-/* Used if key is a spec */
-typedef GHashTable RCPackageHashTableBySpec;
-
 RCPackage *rc_package_new (void);
 
 RCPackage *rc_package_copy (RCPackage *);
 
 void rc_package_free (RCPackage *rcp);
-
-typedef GSList RCPackageSList;
 
 void rc_package_slist_free (RCPackageSList *rcpsl);
 
@@ -88,7 +129,7 @@ RCPackageSList *rc_package_hash_table_by_string_to_list (RCPackageHashTableBySpe
 
 xmlNode *rc_package_to_xml_node (RCPackage *);
 
-RCPackage *rc_xml_node_to_package (xmlNode *, const gchar *url_prefix,
-                                   guint channel_id, guint subchannel_id);
+RCPackage *rc_xml_node_to_package (const xmlNode *,
+                                   const RCSubchannel *subchannel);
 
 #endif /* _RC_PACKAGE_H */

@@ -22,16 +22,28 @@
 #ifndef _RC_CHANNEL_H
 #define _RC_CHANNEL_H
 
+#include <glib.h>
+
+typedef struct _RCSubchannel RCSubchannel;
+
+typedef GSList RCSubchannelSList;
+
+typedef enum _RCChannelType RCChannelType;
+
+typedef struct _RCChannel RCChannel;
+
+typedef GSList RCChannelSList;
+
 #include <gnome-xml/tree.h>
 
 #include <libredcarpet/rc-package.h>
 #include <libredcarpet/rc-package-set.h>
 
-typedef struct _RCSubchannel RCSubchannel;
-
 struct _RCSubchannel {
     gchar *name;
     guint32 preference;
+
+    const RCChannel *channel;
 
     RCPackageHashTableByString *packages;
 
@@ -42,19 +54,15 @@ RCSubchannel *rc_subchannel_new (void);
 
 void rc_subchannel_free (RCSubchannel *rcs);
 
-typedef GSList RCSubchannelSList;
-
 void rc_subchannel_slist_free(RCSubchannelSList *rcsl);
 
-typedef enum _RCChannelType {
+enum _RCChannelType {
     RC_CHANNEL_TYPE_HELIX,      /* packageinfo.xml */
     RC_CHANNEL_TYPE_DEBIAN,     /* debian Packages.gz */
     RC_CHANNEL_TYPE_REDHAT,     /* redhat up2date RDF [?] */
     RC_CHANNEL_TYPE_UNKNOWN,
     RC_CHANNEL_TYPE_LAST
-} RCChannelType;
-
-typedef struct _RCChannel RCChannel;
+};
 
 struct _RCChannel {
     guint32 id;
@@ -92,8 +100,6 @@ struct _RCChannel {
 RCChannel *rc_channel_new (void);
 
 void rc_channel_free (RCChannel *rcc);
-
-typedef GSList RCChannelSList;
 
 void rc_channel_slist_free(RCChannelSList *rccl);
 

@@ -490,8 +490,11 @@ rc_package_slist_add_package (RCPackageSList *pkgs, gchar *name,
 {
     RCPackage *pkg = rc_package_new ();
 
-    rc_package_spec_init (RC_PACKAGE_SPEC (pkg), name, epoch, version, release,
-                          installed, installed_size, 0, 0);
+    rc_package_spec_init (RC_PACKAGE_SPEC (pkg), name, epoch, version,
+                          release);
+
+    pkg->installed = installed;
+    pkg->installed_size = installed_size;
 
     pkgs = g_slist_append (pkgs, pkg);
 

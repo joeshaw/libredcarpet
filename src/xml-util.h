@@ -31,16 +31,21 @@
 /* The former will get either a property or a tag, whereas the latter will
    get only a property */
 
-gchar *xml_get_value(xmlNode *node, const gchar *name);
-gboolean xml_get_gint32_value(xmlNode *node, const gchar *name, gint32 *value);
-gint32 xml_get_gint32_value_default (xmlNode *node, const gchar *name, gint32 def);
-gboolean xml_get_guint32_value(xmlNode *node, const gchar *name, guint32 *value);
-guint32 xml_get_guint32_value_default (xmlNode *node, const gchar *name, guint32 def);
+gchar *xml_get_value(const xmlNode *node, const gchar *name);
+gboolean xml_get_gint32_value(const xmlNode *node, const gchar *name,
+                              gint32 *value);
+gint32 xml_get_gint32_value_default (const xmlNode *node, const gchar *name,
+                                     const gint32 def);
+gboolean xml_get_guint32_value(const xmlNode *node, const gchar *name,
+                               guint32 *value);
+guint32 xml_get_guint32_value_default (const xmlNode *node, const gchar *name,
+                                       const guint32 def);
 
-gchar *xml_get_prop(xmlNode *node, const gchar *name);
-guint32 xml_get_guint32_prop_default (xmlNode *node, const gchar *name,
-                                      guint32 def);
-gchar *xml_get_content (xmlNode *);
-guint32 xml_get_guint32_content_default (xmlNode *node, guint32 def);
+gchar *xml_get_prop(const xmlNode *node, const gchar *name);
+guint32 xml_get_guint32_prop_default (const xmlNode *node, const gchar *name,
+                                      const guint32 def);
+gchar *xml_get_content (const xmlNode *);
+guint32 xml_get_guint32_content_default (const xmlNode *node,
+                                         const guint32 def);
 
 #endif /* __SOFTMGR_XML_UTIL_H */

@@ -1,15 +1,20 @@
 #ifndef _RC_PACKAGE_UPDATE_H
 #define _RC_PACKAGE_UPDATE_H
 
-#include <time.h>
-
 #include <glib.h>
+
+typedef enum _RCPackageImportance RCPackageImportance;
+
+typedef struct _RCPackageUpdate RCPackageUpdate;
+
+typedef GSList RCPackageUpdateSList;
+
+#include <time.h>
 
 #include <gnome-xml/tree.h>
 
+#include <libredcarpet/rc-package.h>
 #include <libredcarpet/rc-package-spec.h>
-
-typedef enum _RCPackageImportance RCPackageImportance;
 
 enum _RCPackageImportance {
     RC_IMPORTANCE_INVALID = -1,
@@ -25,13 +30,15 @@ enum _RCPackageImportance {
     RC_IMPORTANCE_MAX
 };
 
-typedef struct _RCPackageUpdate RCPackageUpdate;
-
 struct _RCPackageUpdate {
     RCPackageSpec spec;
 
+    const RCPackage *package;
+
     gchar *package_url;
     guint32 package_size;
+
+    guint32 installed_size;
 
     gchar *signature_url;
     guint32 signature_size;
@@ -49,8 +56,6 @@ RCPackageUpdate *rc_package_update_copy (RCPackageUpdate *old);
 
 void rc_package_update_free (RCPackageUpdate *rcpu);
 
-typedef GSList RCPackageUpdateSList;
-
 RCPackageUpdateSList *rc_package_update_slist_copy (RCPackageUpdateSList *old);
 
 void rc_package_update_slist_free (RCPackageUpdateSList *rcpusl);
@@ -63,8 +68,7 @@ const gchar *rc_package_importance_to_string (RCPackageImportance importance);
 
 xmlNode *rc_package_update_to_xml_node (RCPackageUpdate *);
 
-RCPackageUpdate *rc_xml_node_to_package_update (xmlNode *,
-                                                const gchar *url_prefix,
-                                                const gchar *name);
+RCPackageUpdate *rc_xml_node_to_package_update (const xmlNode *,
+                                                const RCPackage *package);
 
 #endif /* _RC_PACKAGE_UPDATE_H */

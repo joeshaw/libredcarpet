@@ -26,13 +26,13 @@
 #include "xml-util.h"
 
 gchar *
-xml_get_value(xmlNode *node, const gchar *name)
+xml_get_value(const xmlNode *node, const gchar *name)
 {
     gchar *ret;
     xmlChar *xml_s;
     xmlNode *child;
 
-    xml_s = xmlGetProp(node, name);
+    xml_s = xmlGetProp((xmlNode *)node, name);
     if (xml_s) {
         ret = g_strdup (xml_s);
         xmlFree (xml_s);
@@ -60,7 +60,9 @@ xml_get_value(xmlNode *node, const gchar *name)
     return NULL;
 } /* xml_get_value */
 
-gint32 xml_get_gint32_value_default (xmlNode *node, const gchar *name, gint32 def)
+gint32
+xml_get_gint32_value_default (const xmlNode *node, const gchar *name,
+                              const gint32 def)
 {
     gint32 z;
     if (xml_get_gint32_value (node, name, &z))
@@ -70,7 +72,7 @@ gint32 xml_get_gint32_value_default (xmlNode *node, const gchar *name, gint32 de
 }
 	       
 gboolean
-xml_get_gint32_value(xmlNode *node, const gchar *name, gint32 *value)
+xml_get_gint32_value(const xmlNode *node, const gchar *name, gint32 *value)
 {
     gchar *strval, *ret;
     gint32 z;
@@ -91,7 +93,9 @@ xml_get_gint32_value(xmlNode *node, const gchar *name, gint32 *value)
     return TRUE;
 }
 
-guint32 xml_get_guint32_value_default (xmlNode *node, const gchar *name, guint32 def)
+guint32
+xml_get_guint32_value_default (const xmlNode *node, const gchar *name,
+                               const guint32 def)
 {
     guint32 z;
     if (xml_get_guint32_value (node, name, &z))
@@ -101,7 +105,7 @@ guint32 xml_get_guint32_value_default (xmlNode *node, const gchar *name, guint32
 }
 
 gboolean
-xml_get_guint32_value(xmlNode *node, const gchar *name, guint32 *value)
+xml_get_guint32_value (const xmlNode *node, const gchar *name, guint32 *value)
 {
     gchar *strval, *ret;
     gint32 z;
@@ -123,12 +127,12 @@ xml_get_guint32_value(xmlNode *node, const gchar *name, guint32 *value)
 }
 
 gchar *
-xml_get_prop(xmlNode *node, const gchar *name)
+xml_get_prop (const xmlNode *node, const gchar *name)
 {
     xmlChar *ret;
     gchar *gs;
 
-    ret = xmlGetProp(node, name);
+    ret = xmlGetProp((xmlNode *)node, name);
     if (ret) {
         gs = g_strdup (ret);
         xmlFree (ret);
@@ -139,12 +143,13 @@ xml_get_prop(xmlNode *node, const gchar *name)
 } /* xml_get_prop */
 
 guint32
-xml_get_guint32_prop_default (xmlNode *node, const gchar *name, guint32 def)
+xml_get_guint32_prop_default (const xmlNode *node, const gchar *name,
+                              const guint32 def)
 {
     xmlChar *buf;
     guint32 ret;
 
-    buf = xmlGetProp (node, name);
+    buf = xmlGetProp ((xmlNode *)node, name);
 
     if (buf) {
         ret = strtol (buf, NULL, 10);
@@ -156,12 +161,12 @@ xml_get_guint32_prop_default (xmlNode *node, const gchar *name, guint32 def)
 } /* xml_get_guint32_prop_default */
 
 gchar *
-xml_get_content (xmlNode *node)
+xml_get_content (const xmlNode *node)
 {
     xmlChar *buf;
     gchar *ret;
 
-    buf = xmlNodeGetContent (node);
+    buf = xmlNodeGetContent ((xmlNode *)node);
 
     ret = g_strdup (buf);
 
@@ -171,12 +176,12 @@ xml_get_content (xmlNode *node)
 }
 
 guint32
-xml_get_guint32_content_default (xmlNode *node, guint32 def)
+xml_get_guint32_content_default (const xmlNode *node, const guint32 def)
 {
     xmlChar *buf;
     guint32 ret;
 
-    buf = xmlNodeGetContent (node);
+    buf = xmlNodeGetContent ((xmlNode *)node);
 
     if (buf) {
         ret = strtol (buf, NULL, 10);

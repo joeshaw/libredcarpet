@@ -1296,20 +1296,20 @@ query_all_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
        initialization, so that we don't have to worry about things like
        "purge ok installed". */
     if (!strcmp (line, "Status: install ok installed")) {
-        dqi->buf_pkg->spec.installed = TRUE;
+        dqi->buf_pkg->installed = TRUE;
         return;
     }
 
     /* We now also recognize "hold ok installed", and we set the hold bit
        appropriately.  Yay for us! */
     if (!strcmp (line, "Status: hold ok installed")) {
-        dqi->buf_pkg->spec.installed = TRUE;
+        dqi->buf_pkg->installed = TRUE;
         dqi->buf_pkg->hold = TRUE;
         return;
     }
 
     if (!strncmp (line, "Installed-Size:", strlen ("Installed-Size:"))) {
-        dqi->buf_pkg->spec.installed_size =
+        dqi->buf_pkg->installed_size =
             strtoul (line + strlen ("Installed-Size:"), NULL, 10) * 1024;
         return;
     }
@@ -1350,61 +1350,61 @@ query_all_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
         }
 
         if (!g_strcasecmp (sec, "admin")) {
-            dqi->buf_pkg->spec.section = SECTION_SYSTEM;
+            dqi->buf_pkg->section = SECTION_SYSTEM;
         } else if (!g_strcasecmp (sec, "base")) {
-            dqi->buf_pkg->spec.section = SECTION_SYSTEM;
+            dqi->buf_pkg->section = SECTION_SYSTEM;
         } else if (!g_strcasecmp (sec, "comm")) {
-            dqi->buf_pkg->spec.section = SECTION_INTERNET;
+            dqi->buf_pkg->section = SECTION_INTERNET;
         } else if (!g_strcasecmp (sec, "devel")) {
-            dqi->buf_pkg->spec.section = SECTION_DEVEL;
+            dqi->buf_pkg->section = SECTION_DEVEL;
         } else if (!g_strcasecmp (sec, "doc")) {
-            dqi->buf_pkg->spec.section = SECTION_DOC;
+            dqi->buf_pkg->section = SECTION_DOC;
         } else if (!g_strcasecmp (sec, "editors")) {
-            dqi->buf_pkg->spec.section = SECTION_UTIL;
+            dqi->buf_pkg->section = SECTION_UTIL;
         } else if (!g_strcasecmp (sec, "electronics")) {
-            dqi->buf_pkg->spec.section = SECTION_MISC;
+            dqi->buf_pkg->section = SECTION_MISC;
         } else if (!g_strcasecmp (sec, "games")) {
-            dqi->buf_pkg->spec.section = SECTION_GAME;
+            dqi->buf_pkg->section = SECTION_GAME;
         } else if (!g_strcasecmp (sec, "graphics")) {
-            dqi->buf_pkg->spec.section = SECTION_IMAGING;
+            dqi->buf_pkg->section = SECTION_IMAGING;
         } else if (!g_strcasecmp (sec, "hamradio")) {
-            dqi->buf_pkg->spec.section = SECTION_MISC;
+            dqi->buf_pkg->section = SECTION_MISC;
         } else if (!g_strcasecmp (sec, "interpreters")) {
-            dqi->buf_pkg->spec.section = SECTION_DEVELUTIL;
+            dqi->buf_pkg->section = SECTION_DEVELUTIL;
         } else if (!g_strcasecmp (sec, "libs")) {
-            dqi->buf_pkg->spec.section = SECTION_LIBRARY;
+            dqi->buf_pkg->section = SECTION_LIBRARY;
         } else if (!g_strcasecmp (sec, "mail")) {
-            dqi->buf_pkg->spec.section = SECTION_PIM;
+            dqi->buf_pkg->section = SECTION_PIM;
         } else if (!g_strcasecmp (sec, "math")) {
-            dqi->buf_pkg->spec.section = SECTION_MISC;
+            dqi->buf_pkg->section = SECTION_MISC;
         } else if (!g_strcasecmp (sec, "misc")) {
-            dqi->buf_pkg->spec.section = SECTION_MISC;
+            dqi->buf_pkg->section = SECTION_MISC;
         } else if (!g_strcasecmp (sec, "net")) {
-            dqi->buf_pkg->spec.section = SECTION_INTERNET;
+            dqi->buf_pkg->section = SECTION_INTERNET;
         } else if (!g_strcasecmp (sec, "news")) {
-            dqi->buf_pkg->spec.section = SECTION_INTERNET;
+            dqi->buf_pkg->section = SECTION_INTERNET;
         } else if (!g_strcasecmp (sec, "oldlibs")) {
-            dqi->buf_pkg->spec.section = SECTION_LIBRARY;
+            dqi->buf_pkg->section = SECTION_LIBRARY;
         } else if (!g_strcasecmp (sec, "otherosfs")) {
-            dqi->buf_pkg->spec.section = SECTION_MISC;
+            dqi->buf_pkg->section = SECTION_MISC;
         } else if (!g_strcasecmp (sec, "science")) {
-            dqi->buf_pkg->spec.section = SECTION_MISC;
+            dqi->buf_pkg->section = SECTION_MISC;
         } else if (!g_strcasecmp (sec, "shells")) {
-            dqi->buf_pkg->spec.section = SECTION_SYSTEM;
+            dqi->buf_pkg->section = SECTION_SYSTEM;
         } else if (!g_strcasecmp (sec, "sound")) {
-            dqi->buf_pkg->spec.section = SECTION_MULTIMEDIA;
+            dqi->buf_pkg->section = SECTION_MULTIMEDIA;
         } else if (!g_strcasecmp (sec, "tex")) {
-            dqi->buf_pkg->spec.section = SECTION_MISC;
+            dqi->buf_pkg->section = SECTION_MISC;
         } else if (!g_strcasecmp (sec, "text")) {
-            dqi->buf_pkg->spec.section = SECTION_UTIL;
+            dqi->buf_pkg->section = SECTION_UTIL;
         } else if (!g_strcasecmp (sec, "utils")) {
-            dqi->buf_pkg->spec.section = SECTION_UTIL;
+            dqi->buf_pkg->section = SECTION_UTIL;
         } else if (!g_strcasecmp (sec, "web")) {
-            dqi->buf_pkg->spec.section = SECTION_INTERNET;
+            dqi->buf_pkg->section = SECTION_INTERNET;
         } else if (!g_strcasecmp (sec, "x11")) {
-            dqi->buf_pkg->spec.section = SECTION_XAPP;
+            dqi->buf_pkg->section = SECTION_XAPP;
         } else {
-            dqi->buf_pkg->spec.section = SECTION_MISC;
+            dqi->buf_pkg->section = SECTION_MISC;
         }
 
         g_free (tmp);
@@ -1522,7 +1522,7 @@ rc_debman_query_all_real (RCPackman *p)
     for (iter = dqi.pkgs; iter; iter = iter->next) {
         RCPackage *pkg = (RCPackage *)(iter->data);
 
-        if (pkg->spec.installed) {
+        if (pkg->installed) {
             pkg->provides =
                 g_slist_append (pkg->provides,
                                 rc_package_dep_new_with_item (

@@ -827,8 +827,8 @@ rc_rpmman_check_match (Header hdr, RCPackage *pkg)
         pkg->spec.release = release;
         pkg->summary = summary;
         pkg->description = description;
-        pkg->spec.installed = TRUE;
-        pkg->spec.installed_size = size;
+        pkg->installed = TRUE;
+        pkg->installed_size = size;
 
         rc_rpmman_depends_fill (hdr, pkg);
 
@@ -923,8 +923,8 @@ rc_rpmman_query (RCPackman *p, RCPackage *pkg)
         }
     }
 
-    pkg->spec.installed = FALSE;
-    pkg->spec.installed_size = 0;
+    pkg->installed = FALSE;
+    pkg->installed_size = 0;
 
     dbiFreeIndexRecord (matches);
     rpmdbClose (db);
@@ -954,9 +954,8 @@ rc_rpmman_query_file (RCPackman *p, gchar *filename)
 
     rc_rpmman_read_header (hdr, &pkg->spec.name, &pkg->spec.epoch,
                            &pkg->spec.version, &pkg->spec.release,
-                           &pkg->spec.section,
-                           &pkg->spec.installed_size, &pkg->summary,
-                           &pkg->description);
+                           &pkg->section, &pkg->installed_size,
+                           &pkg->summary, &pkg->description);
 
     rc_rpmman_depends_fill (hdr, pkg);
 
@@ -1047,10 +1046,9 @@ rc_rpmman_query_all (RCPackman *p)
 
         rc_rpmman_read_header (hdr, &pkg->spec.name, &pkg->spec.epoch,
                                &pkg->spec.version, &pkg->spec.release,
-                               &pkg->spec.section,
-                               &pkg->spec.installed_size, &pkg->summary,
-                               &pkg->description);
-	pkg->spec.installed = TRUE;
+                               &pkg->section, &pkg->installed_size,
+                               &pkg->summary, &pkg->description);
+	pkg->installed = TRUE;
 
         rc_rpmman_depends_fill (hdr, pkg);
 

@@ -310,7 +310,6 @@ rc_channel_parse_apt_sources(const char *filename)
 } /* rc_channel_parse_apt_sources */
 #endif	    
 
-        
 int
 rc_channel_get_id_by_name(RCChannelSList *channels, char *name)
 {
@@ -462,16 +461,18 @@ rc_channel_to_xml_node (RCChannel *channel)
 }
 
 static RCSubchannel *
-rc_xml_node_to_subchannel (xmlNode *node, gchar *url_prefix, guint channel_id)
+rc_xml_node_to_subchannel (xmlNode *node, const RCChannel *channel)
 {
     RCSubchannel *subchannel;
-    xmlNode *iter;
+    const xmlNode *iter;
 
     if (g_strcasecmp (node->name, "subchannel")) {
         return (NULL);
     }
 
     subchannel = rc_subchannel_new ();
+
+    subchannel->channel = channel;
 
     subchannel->name = xml_get_prop (node, "name");
     subchannel->preference =
@@ -492,22 +493,22 @@ rc_xml_node_to_subchannel (xmlNode *node, gchar *url_prefix, guint channel_id)
 
     while (iter) {
         RCPackage *package;
-        RCPackageDepSList *prov_iter;
+        const RCPackageDepSList *prov_iter;
 
-        package = rc_xml_node_to_package (iter, url_prefix, channel_id,
-                                          subchannel->preference);
+        package = rc_xml_node_to_package (iter, subchannel);
 
         for (prov_iter = package->provides; prov_iter;
              prov_iter = prov_iter->next)
         {
-            RCPackageDep *dep = (RCPackageDep *)(prov_iter->data);
-            RCPackageDep *dep_iter;
+            const RCPackageDep *dep = (RCPackageDep *)(prov_iter->data);
+            const RCPackageDep *dep_iter;
 
             for (dep_iter = dep; dep_iter; dep_iter = dep_iter->next) {
-                RCPackageDepItem *dep_item =
+                const RCPackageDepItem *dep_item =
                     (RCPackageDepItem *)(dep_iter->data);
-                g_hash_table_insert (subchannel->dep_table, &dep_item->spec,
-                                     package);
+                g_hash_table_insert (subchannel->dep_table,
+                                     (gpointer)&dep_item->spec,
+                                     (gpointer)package);
             }
         }
             
@@ -542,9 +543,7 @@ rc_xml_node_to_channel (RCChannel *channel, xmlNode *node)
     while (iter) {
         channel->subchannels =
             g_slist_append (channel->subchannels,
-                            rc_xml_node_to_subchannel (iter,
-                                                       channel->file_path,
-                                                       channel->id));
+                            rc_xml_node_to_subchannel (iter, channel));
         iter = iter->next;
     }
 

@@ -17,7 +17,7 @@ rc_package_dep_item_new (gchar *name,
     RCPackageDepItem *rcpdi = g_new0 (RCPackageDepItem, 1);
 
     rc_package_spec_init (RC_PACKAGE_SPEC (rcpdi), name, epoch, version,
-                          release, FALSE, 0, 0, 0);
+                          release);
 
     rcpdi->relation = relation;
 
@@ -485,7 +485,7 @@ rc_package_dep_item_is_subset (RCPackageDepItem *a, RCPackageDepItem *b)
 }
 
 static xmlNode *
-rc_package_dep_item_to_xml_node (RCPackageDepItem *dep_item)
+rc_package_dep_item_to_xml_node (const RCPackageDepItem *dep_item)
 {
     xmlNode *dep_node;
 
@@ -518,7 +518,7 @@ rc_package_dep_item_to_xml_node (RCPackageDepItem *dep_item)
 }
 
 xmlNode *
-rc_package_dep_to_xml_node (RCPackageDep *dep)
+rc_package_dep_to_xml_node (const RCPackageDep *dep)
 {
     if (!dep->next) {
         /* The simple case, a single non-OR dependency */
@@ -527,7 +527,7 @@ rc_package_dep_to_xml_node (RCPackageDep *dep)
                 ((RCPackageDepItem *)dep->data));
     } else {
         xmlNode *or_node;
-        RCPackageDep *dep_iter;
+        const RCPackageDep *dep_iter;
 
         or_node = xmlNewNode (NULL, "or");
 
@@ -541,7 +541,7 @@ rc_package_dep_to_xml_node (RCPackageDep *dep)
 }
 
 static RCPackageDepItem *
-rc_xml_node_to_package_dep_item (xmlNode *node)
+rc_xml_node_to_package_dep_item (const xmlNode *node)
 {
     RCPackageDepItem *dep_item;
     gchar *tmp;
@@ -572,7 +572,7 @@ rc_xml_node_to_package_dep_item (xmlNode *node)
 }
 
 RCPackageDep *
-rc_xml_node_to_package_dep (xmlNode *node)
+rc_xml_node_to_package_dep (const xmlNode *node)
 {
     RCPackageDep *dep = NULL;
 

@@ -1,19 +1,25 @@
 #ifndef _RC_PACKAGE_DEP_H
 #define _RC_PACKAGE_DEP_H
 
-#include <glib.h>
-
-#include <gnome-xml/tree.h>
-
-#include <libredcarpet/rc-package-spec.h>
-
 #define RELATION_ANY 0
 #define RELATION_EQUAL (1 << 0)
 #define RELATION_LESS (1 << 1)
 #define RELATION_GREATER (1 << 2)
 
+#include <glib.h>
+
 /* This enum is here so that gdb can give us pretty strings */
 typedef enum _RCPackageRelation RCPackageRelation;
+
+typedef struct _RCPackageDepItem RCPackageDepItem;
+
+typedef GSList RCPackageDep;
+
+typedef GSList RCPackageDepSList;
+
+#include <gnome-xml/tree.h>
+
+#include <libredcarpet/rc-package-spec.h>
 
 enum _RCPackageRelation {
     RC_RELATION_INVALID = -1,
@@ -25,8 +31,6 @@ enum _RCPackageRelation {
     RC_RELATION_GREATER_EQUAL = RELATION_GREATER | RELATION_EQUAL,
     RC_RELATION_NOT_EQUAL = RELATION_LESS | RELATION_GREATER
 };
-
-typedef struct _RCPackageDepItem RCPackageDepItem;
 
 struct _RCPackageDepItem {
     RCPackageSpec spec;
@@ -47,15 +51,11 @@ RCPackageDepItem *rc_package_dep_item_copy (RCPackageDepItem *rcpdi);
 
 void rc_package_dep_item_free (RCPackageDepItem *rcpdi);
 
-typedef GSList RCPackageDep;
-
 RCPackageDep *rc_package_dep_new_with_item (RCPackageDepItem *rcpdi);
 
 RCPackageDep *rc_package_dep_copy (RCPackageDep *orig);
 
 void rc_package_dep_free (RCPackageDep *rcpd);
-
-typedef GSList RCPackageDepSList;
 
 RCPackageDepSList *rc_package_dep_slist_copy (RCPackageDepSList *old);
 
@@ -74,8 +74,8 @@ RCPackageRelation rc_string_to_package_relation (const gchar *relation);
 const gchar *rc_package_relation_to_string (RCPackageRelation relation,
                                             gboolean words);
 
-xmlNode *rc_package_dep_to_xml_node (RCPackageDep *);
+xmlNode *rc_package_dep_to_xml_node (const RCPackageDep *);
 
-RCPackageDep *rc_xml_node_to_package_dep (xmlNode *);
+RCPackageDep *rc_xml_node_to_package_dep (const xmlNode *);
 
 #endif /* _RC_PACKAGE_DEP_H */

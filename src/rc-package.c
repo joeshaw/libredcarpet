@@ -23,6 +23,89 @@
 
 #include <gnome-xml/tree.h>
 
+const gchar *
+rc_package_section_to_string (RCPackageSection section)
+{
+    switch (section) {
+    case SECTION_OFFICE:
+        return ("SECTION_OFFICE");
+        break;
+    case SECTION_IMAGING:
+        return ("SECTION_IMAGINE");
+        break;
+    case SECTION_PIM:
+        return ("SECTION_PIM");
+        break;
+    case SECTION_GAME:
+        return ("SECTION_GAME");
+        break;
+    case SECTION_MULTIMEDIA:
+        return ("SECTION_MULTIMEDIA");
+        break;
+    case SECTION_INTERNET:
+        return ("SECTION_INTERNET");
+        break;
+    case SECTION_UTIL:
+        return ("SECTION_UTIL");
+        break;
+    case SECTION_SYSTEM:
+        return ("SECTION_SYSTEM");
+        break;
+    case SECTION_DOC:
+        return ("SECTION_DOC");
+        break;
+    case SECTION_DEVEL:
+        return ("SECTION_DEVEL");
+        break;
+    case SECTION_DEVELUTIL:
+        return ("SECTION_DEVELUTIL");
+        break;
+    case SECTION_LIBRARY:
+        return ("SECTION_LIBRARY");
+        break;
+    case SECTION_XAPP:
+        return ("SECTION_XAPP");
+        break;
+    default:
+        return ("SECTION_MISC");
+        break;
+    }
+}
+
+RCPackageSection
+rc_string_to_package_section (gchar *section)
+{
+    if (!strcmp (section, "SECTION_OFFICE")) {
+        return (SECTION_OFFICE);
+    } else if (!strcmp (section, "SECTION_IMAGING")) {
+        return (SECTION_IMAGING);
+    } else if (!strcmp (section, "SECTION_PIM")) {
+        return (SECTION_PIM);
+    } else if (!strcmp (section, "SECTION_GAME")) {
+        return (SECTION_GAME);
+    } else if (!strcmp (section, "SECTION_MULTIMEDIA")) {
+        return (SECTION_MULTIMEDIA);
+    } else if (!strcmp (section, "SECTION_INTERNET")) {
+        return (SECTION_INTERNET);
+    } else if (!strcmp (section, "SECTION_UTIL")) {
+        return (SECTION_UTIL);
+    } else if (!strcmp (section, "SECTION_SYSTEM")) {
+        return (SECTION_SYSTEM);
+    } else if (!strcmp (section, "SECTION_DOC")) {
+        return (SECTION_DOC);
+    } else if (!strcmp (section, "SECTION_DEVEL")) {
+        return (SECTION_DEVEL);
+    } else if (!strcmp (section, "SECTION_DEVELUTIL")) {
+        return (SECTION_DEVELUTIL);
+    } else if (!strcmp (section, "SECTION_LIBRARY")) {
+        return (SECTION_LIBRARY);
+    } else if (!strcmp (section, "SECTION_XAPP")) {
+        return (SECTION_XAPP);
+    } else {
+        return (SECTION_MISC);
+    }
+}
+
 RCPackage *
 rc_package_new (void)
 {
@@ -40,7 +123,13 @@ rc_package_copy (RCPackage *old_pkg)
 
     rc_package_spec_copy ((RCPackageSpec *)old_pkg, (RCPackageSpec *)pkg);
 
-    pkg->already_installed = old_pkg->already_installed;
+    pkg->section = old_pkg->section;
+
+    pkg->installed = old_pkg->installed;
+
+    pkg->installed_size = old_pkg->installed_size;
+
+    pkg->subchannel = old_pkg->subchannel;
 
     pkg->requires = rc_package_dep_slist_copy (old_pkg->requires);
     pkg->provides = rc_package_dep_slist_copy (old_pkg->provides);
@@ -226,7 +315,7 @@ rc_package_to_xml_node (RCPackage *package)
     xmlNewTextChild (package_node, NULL, "description", package->description);
 
     xmlNewTextChild (package_node, NULL, "section",
-                     rc_package_section_to_string (package->spec.section));
+                     rc_package_section_to_string (package->section));
 
     if (package->history) {
         tmp_node = xmlNewChild (package_node, NULL, "history", NULL);
@@ -297,18 +386,18 @@ rc_package_to_xml_node (RCPackage *package)
 }
 
 RCPackage *
-rc_xml_node_to_package (xmlNode *node, const gchar *url_prefix,
-                        guint channel_id, guint subchannel_id)
+rc_xml_node_to_package (const xmlNode *node, const RCSubchannel *subchannel)
 {
     RCPackage *package;
-    xmlNode *iter;
-    RCPackageUpdateSList *update_iter;
+    const xmlNode *iter;
 
     if (g_strcasecmp (node->name, "package")) {
         return (NULL);
     }
 
     package = rc_package_new ();
+
+    package->subchannel = subchannel;
 
 #if LIBXML_VERSION < 20000
     iter = node->childs;
@@ -325,11 +414,10 @@ rc_xml_node_to_package (xmlNode *node, const gchar *url_prefix,
             package->description = xml_get_content (iter);
         } else if (!g_strcasecmp (iter->name, "section")) {
             gchar *tmp = xml_get_content (iter);
-            package->spec.section =
-                rc_string_to_package_section (tmp);
+            package->section = rc_string_to_package_section (tmp);
             g_free (tmp);
         } else if (!g_strcasecmp (iter->name, "history")) {
-            xmlNode *iter2;
+            const xmlNode *iter2;
 #if LIBXML_VERSION < 20000
             iter2 = iter->childs;
 #else
@@ -338,8 +426,7 @@ rc_xml_node_to_package (xmlNode *node, const gchar *url_prefix,
             while (iter2) {
                 RCPackageUpdate *update;
 
-                update = rc_xml_node_to_package_update (iter2, url_prefix,
-                                                        package->spec.name);
+                update = rc_xml_node_to_package_update (iter2, package);
 
                 package->history =
                     g_slist_append (package->history, update);
@@ -347,7 +434,7 @@ rc_xml_node_to_package (xmlNode *node, const gchar *url_prefix,
                 iter2 = iter2->next;
             }
         } else if (!g_strcasecmp (iter->name, "requires")) {
-            xmlNode *iter2;
+            const xmlNode *iter2;
 #if LIBXML_VERSION < 20000
             iter2 = iter->childs;
 #else
@@ -360,7 +447,7 @@ rc_xml_node_to_package (xmlNode *node, const gchar *url_prefix,
                 iter2 = iter2->next;
             }
         } else if (!g_strcasecmp (iter->name, "recommends")) {
-            xmlNode *iter2;
+            const xmlNode *iter2;
 #if LIBXML_VERSION < 20000
             iter2 = iter->childs;
 #else
@@ -373,7 +460,7 @@ rc_xml_node_to_package (xmlNode *node, const gchar *url_prefix,
                 iter2 = iter2->next;
             }
         } else if (!g_strcasecmp (iter->name, "suggests")) {
-            xmlNode *iter2;
+            const xmlNode *iter2;
 #if LIBXML_VERSION < 20000
             iter2 = iter->childs;
 #else
@@ -386,7 +473,7 @@ rc_xml_node_to_package (xmlNode *node, const gchar *url_prefix,
                 iter2 = iter2->next;
             }
         } else if (!g_strcasecmp (iter->name, "conflicts")) {
-            xmlNode *iter2;
+            const xmlNode *iter2;
 #if LIBXML_VERSION < 20000
             iter2 = iter->childs;
 #else
@@ -399,7 +486,7 @@ rc_xml_node_to_package (xmlNode *node, const gchar *url_prefix,
                 iter2 = iter2->next;
             }
         } else if (!g_strcasecmp (iter->name, "provides")) {
-            xmlNode *iter2;
+            const xmlNode *iter2;
 #if LIBXML_VERSION < 20000
             iter2 = iter->childs;
 #else
@@ -425,8 +512,7 @@ rc_xml_node_to_package (xmlNode *node, const gchar *url_prefix,
     package->spec.release = g_strdup (
         ((RCPackageUpdate *)package->history->data)->spec.release);
 
-    package->spec.channel = channel_id;
-    package->spec.subchannel = subchannel_id;
+    package->subchannel = subchannel;
 
     return (package);
 }

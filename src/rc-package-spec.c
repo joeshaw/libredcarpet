@@ -10,11 +10,7 @@ rc_package_spec_init (RCPackageSpec *rcps,
                       gchar *name,
                       guint32 epoch,
                       gchar *version,
-                      gchar *release,
-                      gboolean installed,
-                      guint32 installed_size,
-                      guint32 channel,
-                      guint32 subchannel)
+                      gchar *release)
 {
     g_assert (rcps);
 
@@ -22,20 +18,13 @@ rc_package_spec_init (RCPackageSpec *rcps,
     rcps->epoch = epoch;
     rcps->version = g_strdup (version);
     rcps->release = g_strdup (release);
-
-    rcps->installed = installed;
-    rcps->installed_size = installed_size;
-
-    rcps->channel = channel;
-    rcps->subchannel = subchannel;
 } /* rc_package_spec_init */
 
 void
 rc_package_spec_copy (RCPackageSpec *old, RCPackageSpec *new)
 {
     rc_package_spec_init (new, old->name, old->epoch, old->version,
-                          old->release, old->installed, old->installed_size,
-                          old->channel, old->subchannel);
+                          old->release);
 }
 
 void
@@ -58,8 +47,6 @@ rc_package_spec_compare_name (void *a, void *b)
 }
 
 static int vercmp(char * a, char * b);
-
-
 
 gchar *
 rc_package_spec_to_str (RCPackageSpec *spec)
@@ -305,87 +292,4 @@ vercmp(char * a, char * b)
 
     /* whichever version still has characters left over wins */
     if (!*one) return -1; else return 1;
-}
-
-const gchar *
-rc_package_section_to_string (RCPackageSection section)
-{
-    switch (section) {
-    case SECTION_OFFICE:
-        return ("SECTION_OFFICE");
-        break;
-    case SECTION_IMAGING:
-        return ("SECTION_IMAGINE");
-        break;
-    case SECTION_PIM:
-        return ("SECTION_PIM");
-        break;
-    case SECTION_GAME:
-        return ("SECTION_GAME");
-        break;
-    case SECTION_MULTIMEDIA:
-        return ("SECTION_MULTIMEDIA");
-        break;
-    case SECTION_INTERNET:
-        return ("SECTION_INTERNET");
-        break;
-    case SECTION_UTIL:
-        return ("SECTION_UTIL");
-        break;
-    case SECTION_SYSTEM:
-        return ("SECTION_SYSTEM");
-        break;
-    case SECTION_DOC:
-        return ("SECTION_DOC");
-        break;
-    case SECTION_DEVEL:
-        return ("SECTION_DEVEL");
-        break;
-    case SECTION_DEVELUTIL:
-        return ("SECTION_DEVELUTIL");
-        break;
-    case SECTION_LIBRARY:
-        return ("SECTION_LIBRARY");
-        break;
-    case SECTION_XAPP:
-        return ("SECTION_XAPP");
-        break;
-    default:
-        return ("SECTION_MISC");
-        break;
-    }
-}
-
-RCPackageSection
-rc_string_to_package_section (gchar *section)
-{
-    if (!strcmp (section, "SECTION_OFFICE")) {
-        return (SECTION_OFFICE);
-    } else if (!strcmp (section, "SECTION_IMAGING")) {
-        return (SECTION_IMAGING);
-    } else if (!strcmp (section, "SECTION_PIM")) {
-        return (SECTION_PIM);
-    } else if (!strcmp (section, "SECTION_GAME")) {
-        return (SECTION_GAME);
-    } else if (!strcmp (section, "SECTION_MULTIMEDIA")) {
-        return (SECTION_MULTIMEDIA);
-    } else if (!strcmp (section, "SECTION_INTERNET")) {
-        return (SECTION_INTERNET);
-    } else if (!strcmp (section, "SECTION_UTIL")) {
-        return (SECTION_UTIL);
-    } else if (!strcmp (section, "SECTION_SYSTEM")) {
-        return (SECTION_SYSTEM);
-    } else if (!strcmp (section, "SECTION_DOC")) {
-        return (SECTION_DOC);
-    } else if (!strcmp (section, "SECTION_DEVEL")) {
-        return (SECTION_DEVEL);
-    } else if (!strcmp (section, "SECTION_DEVELUTIL")) {
-        return (SECTION_DEVELUTIL);
-    } else if (!strcmp (section, "SECTION_LIBRARY")) {
-        return (SECTION_LIBRARY);
-    } else if (!strcmp (section, "SECTION_XAPP")) {
-        return (SECTION_XAPP);
-    } else {
-        return (SECTION_MISC);
-    }
 }

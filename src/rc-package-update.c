@@ -23,6 +23,8 @@ rc_package_update_copy (RCPackageUpdate *old)
     new->package_url = g_strdup (old->package_url);
     new->package_size = old->package_size;
 
+    new->installed_size = old->installed_size;
+
     new->signature_url = g_strdup (old->signature_url);
     new->signature_size = old->signature_size;
 
@@ -151,7 +153,7 @@ rc_package_update_to_xml_node (RCPackageUpdate *update)
     xmlNewTextChild (update_node, NULL, "filesize", tmp_string);
     g_free (tmp_string);
 
-    tmp_string = g_strdup_printf ("%d", update->spec.installed_size);
+    tmp_string = g_strdup_printf ("%d", update->installed_size);
     xmlNewTextChild (update_node, NULL, "installedsize", tmp_string);
     g_free (tmp_string);
 
@@ -177,11 +179,11 @@ rc_package_update_to_xml_node (RCPackageUpdate *update)
 }
 
 RCPackageUpdate *
-rc_xml_node_to_package_update (xmlNode *node, const gchar *url_prefix,
-                               const gchar *name)
+rc_xml_node_to_package_update (const xmlNode *node, const RCPackage *package)
 {
     RCPackageUpdate *update;
-    xmlNode *iter;
+    const xmlNode *iter;
+    const gchar *url_prefix = NULL;
 
     /* Make sure this is an update node */
     if (g_strcasecmp (node->name, "update")) {
@@ -189,6 +191,16 @@ rc_xml_node_to_package_update (xmlNode *node, const gchar *url_prefix,
     }
 
     update = rc_package_update_new ();
+
+    update->package = package;
+
+    update->spec.name = g_strdup (package->spec.name);
+
+    if (package->subchannel && package->subchannel->channel &&
+        package->subchannel->channel->file_path)
+    {
+        url_prefix = package->subchannel->channel->file_path;
+    }
 
 #if LIBXML_VERSION < 20000
     iter = node->childs;
@@ -217,7 +229,7 @@ rc_xml_node_to_package_update (xmlNode *node, const gchar *url_prefix,
             update->package_size =
                 xml_get_guint32_content_default (iter, 0);
         } else if (!g_strcasecmp (iter->name, "installed_size")) {
-            update->spec.installed_size =
+            update->installed_size =
                 xml_get_guint32_content_default (iter, 0);
         } else if (!g_strcasecmp (iter->name, "signaturename")) {
             if (url_prefix) {
@@ -247,8 +259,6 @@ rc_xml_node_to_package_update (xmlNode *node, const gchar *url_prefix,
 
         iter = iter->next;
     }
-
-    update->spec.name = g_strdup (name);
 
     return (update);
 }

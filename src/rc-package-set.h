@@ -25,17 +25,18 @@
 #define _RC_PACKAGE_SET_H
 
 #include <glib.h>
-#include <libredcarpet/rc-package.h>
 
 typedef struct _RCPackageSet RCPackageSet;
+
+typedef GSList RCPackageSetSList;
+
+#include <libredcarpet/rc-package.h>
 
 struct _RCPackageSet {
     gchar *name;
     gchar *description;
     GSList *packages; /* of gchar *, string names of packages */
 };
-
-typedef GSList RCPackageSetSList;
 
 RCPackageSet *rc_package_set_new (void);
 
