@@ -28,7 +28,10 @@
 
 #include <glib.h>
 
-guint8 *rc_md5 (const gchar *filename);
-gchar *rc_md5_string (const gchar *filename);
+guint8 *rc_md5        (const gchar *filename);
+gchar  *rc_md5_digest (const gchar *filename);
+
+guint8 *rc_md5_from_string        (const gchar *str);
+gchar  *rc_md5_digest_from_string (const gchar *str);
 
 #endif /* RC_MD5 */

@@ -337,13 +337,56 @@ rc_md5 (const gchar *filename)
 }
 
 gchar *
-rc_md5_string (const gchar *filename)
+rc_md5_digest (const gchar *filename)
 {
     guint8 *buf;
     gchar *result;
     int i;
 
     buf = rc_md5 (filename);
+
+    if (!buf) {
+        return (NULL);
+    }
+
+    result = g_new0 (gchar, 33);
+
+    for (i = 0; i < 16; i++) {
+        result[i * 2] = nibble_to_hex ((buf[i] & 0xf0) >> 4);
+        result[i * 2 + 1] = nibble_to_hex (buf[i] & 0xf);
+    }
+
+    return (result);
+}
+
+guint8 *
+rc_md5_from_string (const gchar *str)
+{
+    MD5Context context;
+    guint8 *buf;
+
+    g_return_val_if_fail (str, NULL);
+
+    MD5Init (&context);
+
+    buf = g_new (guint8, 16);
+
+    MD5Update (&context, str, strlen (str));
+    MD5Final (buf, &context);
+
+    return (buf);
+}
+
+gchar *
+rc_md5_digest_from_string (const gchar *str)
+{
+    guint8 *buf;
+    gchar *result;
+    int i;
+
+    g_return_val_if_fail (str, NULL);
+
+    buf = rc_md5_from_string (str);
 
     if (!buf) {
         return (NULL);

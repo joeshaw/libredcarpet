@@ -1,3 +1,11 @@
+2002-10-11  Joe Shaw  <joe@ximian.com>
+
+	* rc-md5.c (rc_md5_string): Renamed to rc_md5_digest().
+	(rc_md5_from_string, rc_md5_digest_from_string): Added.
+
+	* rc-verification.c (rc_verify_md5_string): Change to
+	rc_md5_digest().
+
 2002-10-10  Joe Shaw  <joe@ximian.com>
 
 	* rc-rpmman.h (RCRpmman): rpmDefineMacro() actually takes a

@@ -278,7 +278,7 @@ rc_verify_md5_string (gchar *filename, gchar *md5)
     gchar *cmd5;
     RCVerification *verification;
 
-    cmd5 = rc_md5_string (filename);
+    cmd5 = rc_md5_digest (filename);
 
     verification = rc_verification_new ();
 
