@@ -19,7 +19,6 @@
  */
 
 #include <stdlib.h>
-#include <gnome-xml/xmlmemory.h>
 
 #include "xml-util.h"
 

@@ -180,6 +180,11 @@ parse_xml_setup (xmlNode *node)
 
     node = node->xmlChildrenNode;
     while (node) {
+        if (node->type != XML_ELEMENT_NODE) {
+            node = node->next;
+            continue;
+        }
+
         if (! g_strcasecmp (node->name, "system")) {
             xmlChar *file = xml_get_prop (node, "file");
             g_assert (file);
@@ -384,6 +389,11 @@ parse_xml_trial (xmlNode *node)
 
     node = node->xmlChildrenNode;
     while (node) {
+        if (node->type != XML_ELEMENT_NODE) {
+            node = node->next;
+            continue;
+        }
+
         if (! g_strcasecmp (node->name, "verify")) {
 
             verify = TRUE;
@@ -521,13 +531,14 @@ parse_xml_test (xmlNode *node)
     node = node->xmlChildrenNode;
 
     while (node) {
-        
-        if (! g_strcasecmp (node->name, "setup")) {
-            parse_xml_setup (node);
-        } else if (! g_strcasecmp (node->name, "trial")) {
-            parse_xml_trial (node);
-        } else {
-            g_warning ("Unknown tag '%s' in test", node->name);
+        if (node->type == XML_ELEMENT_NODE) {
+            if (! g_strcasecmp (node->name, "setup")) {
+                parse_xml_setup (node);
+            } else if (! g_strcasecmp (node->name, "trial")) {
+                parse_xml_trial (node);
+            } else {
+                g_warning ("Unknown tag '%s' in test", node->name);
+            }
         }
         
         node = node->next;

@@ -24,7 +24,6 @@
 #include "rc-package.h"
 #include "rc-pretty-name.h"
 #include "xml-util.h"
-#include "gnome-xml/xmlmemory.h"
 
 RCPackage *
 rc_package_new (void)
@@ -268,6 +267,11 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
             iter2 = iter->xmlChildrenNode;
 
             while (iter2) {
+                if (iter2->type != XML_ELEMENT_NODE) {
+                    iter2 = iter2->next;
+                    continue;
+                }
+
                 package->requires =
                     g_slist_prepend (package->requires,
                                      rc_xml_node_to_package_dep (iter2));
@@ -282,6 +286,11 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
             iter2 = iter->xmlChildrenNode;
 
             while (iter2) {
+                if (iter2->type != XML_ELEMENT_NODE) {
+                    iter2 = iter2->next;
+                    continue;
+                }
+
                 package->recommends =
                     g_slist_prepend (package->recommends,
                                      rc_xml_node_to_package_dep (iter2));
@@ -296,6 +305,11 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
             iter2 = iter->xmlChildrenNode;
 
             while (iter2) {
+                if (iter2->type != XML_ELEMENT_NODE) {
+                    iter2 = iter2->next;
+                    continue;
+                }
+
                 package->suggests =
                     g_slist_prepend (package->suggests,
                                      rc_xml_node_to_package_dep (iter2));
@@ -317,7 +331,14 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
             xmlFree (obs);
 
             while (iter2) {
-                RCPackageDep *dep = rc_xml_node_to_package_dep (iter2);
+                RCPackageDep *dep;
+
+                if (iter2->type != XML_ELEMENT_NODE) {
+                    iter2 = iter2->next;
+                    continue;
+                }
+
+                dep = rc_xml_node_to_package_dep (iter2);
 
                 if (! all_are_obs) {
                     this_is_obs = FALSE;
@@ -346,6 +367,11 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
             iter2 = iter->xmlChildrenNode;
 
             while (iter2) {
+                if (iter2->type != XML_ELEMENT_NODE) {
+                    iter2 = iter2->next;
+                    continue;
+                }
+
                 package->obsoletes = 
                     g_slist_prepend (package->obsoletes,
                                      rc_xml_node_to_package_dep (iter2));
@@ -360,6 +386,11 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
             iter2 = iter->xmlChildrenNode;
 
             while (iter2) {
+                if (iter2->type != XML_ELEMENT_NODE) {
+                    iter2 = iter2->next;
+                    continue;
+                }
+
                 package->provides =
                     g_slist_prepend (package->provides,
                                      rc_xml_node_to_package_dep (iter2));

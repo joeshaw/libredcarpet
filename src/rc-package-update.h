@@ -24,7 +24,7 @@
 #include <glib.h>
 #include <time.h>
 
-#include <gnome-xml/tree.h>
+#include <libxml/tree.h>
 
 typedef struct _RCPackageUpdate RCPackageUpdate;
 

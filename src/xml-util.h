@@ -23,8 +23,8 @@
 
 #include <glib.h>
 
-#include <gnome-xml/parser.h>
-#include <gnome-xml/tree.h>
+#include <libxml/parser.h>
+#include <libxml/tree.h>
 
 /* The former will get either a property or a tag, whereas the latter will
    get only a property */

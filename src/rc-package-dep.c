@@ -32,7 +32,7 @@
 #include "rc-debug.h"
 #include "rc-dep-or.h"
 
-#include <gnome-xml/tree.h>
+#include <libxml/tree.h>
 
 #undef DEBUG
 

@@ -21,7 +21,7 @@
 #include <glib.h>
 #include <stdlib.h>
 
-#include <gnome-xml/tree.h>
+#include <libxml/tree.h>
 
 #include "rc-package-update.h"
 #include "xml-util.h"

@@ -23,7 +23,7 @@
 #include <ctype.h>
 #include <glib.h>
 
-#include <gnome-xml/tree.h>
+#include <libxml/tree.h>
 
 #include "rc-world.h"
 #include "rc-channel.h"

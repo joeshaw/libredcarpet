@@ -67,7 +67,7 @@ typedef GSList RCPackageDepSList;
 
 /* These are included later, so as to avoid circular #include hell */
 
-#include <gnome-xml/tree.h>
+#include <libxml/tree.h>
 
 #include "rc-package-spec.h"
 #include "rc-package.h"

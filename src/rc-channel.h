@@ -23,7 +23,7 @@
 
 #include <glib.h>
 
-#include <gnome-xml/tree.h>
+#include <libxml/tree.h>
 
 typedef struct _RCChannel RCChannel;
 

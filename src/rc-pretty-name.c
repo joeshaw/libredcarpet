@@ -22,7 +22,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#include <gnome-xml/xmlmemory.h>
+#include <libxml/xmlmemory.h>
 
 #include "xml-util.h"
 #include "rc-pretty-name.h"

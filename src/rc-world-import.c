@@ -28,8 +28,8 @@
 #include <config.h>
 #include "rc-world-import.h"
 
-#include <gnome-xml/xmlmemory.h>
-#include <gnome-xml/parser.h>
+#include <libxml/xmlmemory.h>
+#include <libxml/parser.h>
 
 #include <string.h>
 #include <ctype.h>
@@ -80,8 +80,14 @@ rc_world_add_packages_from_xml (RCWorld *world, RCChannel *channel, xmlNode *nod
 
     rc_world_freeze (world);
 
-    while (node && g_strcasecmp (node->name, "package"))
+    while (node && g_strcasecmp (node->name, "package")) {
+        if (node->type != XML_ELEMENT_NODE) {
+            node = node->next;
+            continue;
+        }
+
         node = node->xmlChildrenNode;
+    }
 
     while (node) {
 
@@ -151,7 +157,8 @@ rc_world_parse_channel (RCWorld *world,
 static guint
 rc_world_parse_helix (RCWorld *world, RCChannel *channel, gchar *buf)
 {
-    xmlDocPtr xml_doc;
+    xmlDoc *xml_doc;
+    xmlNode *root;
     guint count = 0;
 
     g_assert (buf);
@@ -162,7 +169,8 @@ rc_world_parse_helix (RCWorld *world, RCChannel *channel, gchar *buf)
         return 0;
     }
 
-    count = rc_world_add_packages_from_xml (world, channel, xml_doc->root);
+    root = xmlDocGetRootElement (xml_doc);
+    count = rc_world_add_packages_from_xml (world, channel, root);
 
     xmlFreeDoc (xml_doc);
 
