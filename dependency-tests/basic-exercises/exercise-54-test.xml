@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+
+<test>
+
+<!-- In this test we lock one of foo-set's children and make sure that
+     the update fails. -->
+
+<setup>
+  <undump file="exercise-52-dump.xml.gz"/>
+  <lock package="xtoolwait" channel="SYSTEM"/>
+</setup>
+
+<trial>
+  <upgrade/>
+</trial>
+
+</test>

@@ -2,6 +2,8 @@
 
 <test>
 
+<!-- This test checks package set installation. -->
+
 <setup>
   <undump file="exercise-49-dump.xml.gz"/>
 </setup>

@@ -2,6 +2,9 @@
 
 <test>
 
+<!-- This test checks that unlinked packages can be reinstated later
+     on in the dep resolution process. -->
+
 <setup>
   <undump file="exercise-51-dump.xml.gz"/>
 </setup>

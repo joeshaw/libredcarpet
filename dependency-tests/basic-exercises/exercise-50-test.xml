@@ -2,6 +2,8 @@
 
 <test>
 
+<!-- In test checks package set removal. -->
+
 <setup>
   <undump file="exercise-50-dump.xml.gz"/>
 </setup>

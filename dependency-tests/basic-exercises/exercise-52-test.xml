@@ -2,6 +2,10 @@
 
 <test>
 
+<!-- In this case foo-set is installed, and an update is available.
+     The update's children are different than the installed version:
+     one child has been replaced. -->
+
 <setup>
   <undump file="exercise-52-dump.xml.gz"/>
 </setup>

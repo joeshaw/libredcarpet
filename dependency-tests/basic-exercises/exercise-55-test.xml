@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+
+<test>
+
+<!-- In this test we lock one of foo-set's invariant children.  Since
+     the locked child doesn't need to be changed, the update should
+     go through. -->
+
+<setup>
+  <undump file="exercise-52-dump.xml.gz"/>
+  <lock package="ytalk" channel="SYSTEM"/>
+</setup>
+
+<trial>
+  <upgrade/>
+</trial>
+
+</test>

@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+
+<test>
+
+<!-- In this test we lock foo-set and make sure that it doesn't get upgraded,
+     even though there is an update available. -->
+
+<setup>
+  <undump file="exercise-52-dump.xml.gz"/>
+  <lock package="foo-set" channel="SYSTEM"/>
+</setup>
+
+<trial>
+  <upgrade/>
+</trial>
+
+</test>
