@@ -1,3 +1,13 @@
+2002-07-31  Joe Shaw  <joe@ximian.com>
+
+	* rc-xml.c (parser_package_start): Add a comment about the deps
+	tag being ignored in the SAX parser.
+	(extract_dep_info): Extract parsing of the various dependency
+	fields, like requires, provides, etc. into here.
+	(rc_xml_node_to_package): If we get a deps tag, call
+	extract_dep_info() on our children, and set a flag.  If the flag
+	isn't set, extract our deps like we used to.
+
 2002-07-30  Ian Peters  <itp@ximian.com>
 
 	* rc-channel.c, rc-debman-general.c, rc-line-buf.c,

@@ -114,6 +114,13 @@ parser_package_start(RCPackageSAXContext *ctx,
     if (!strcmp(name, "history")) {
         ctx->state = PARSER_HISTORY;
     }
+    else if (!strcmp (name, "deps")) {
+        /*
+         * We can get a <deps> tag surrounding the actual package
+         * dependency sections (requires, provides, conflicts, etc).
+         * In this case, we'll just ignore this tag quietly.
+         */
+    }
     else if (!strcmp(name, "requires")) {
         ctx->state = PARSER_DEP;
         ctx->current_dep_list = ctx->toplevel_dep_list =
@@ -642,6 +649,149 @@ rc_package_sax_context_new(RCChannel *channel)
 
 /* ------ */
 
+static void
+extract_dep_info (const xmlNode *iter, RCPackage *package)
+{
+    if (!g_strcasecmp (iter->name, "requires")) {
+        const xmlNode *iter2;
+        
+        iter2 = iter->xmlChildrenNode;
+
+        while (iter2) {
+            if (iter2->type != XML_ELEMENT_NODE) {
+                iter2 = iter2->next;
+                continue;
+            }
+
+            package->requires =
+                g_slist_prepend (package->requires,
+                                 rc_xml_node_to_package_dep (iter2));
+            iter2 = iter2->next;
+        }
+
+        package->requires = g_slist_reverse (package->requires);
+
+    } else if (!g_strcasecmp (iter->name, "recommends")) {
+        const xmlNode *iter2;
+
+        iter2 = iter->xmlChildrenNode;
+
+        while (iter2) {
+            if (iter2->type != XML_ELEMENT_NODE) {
+                iter2 = iter2->next;
+                continue;
+            }
+
+            package->recommends =
+                g_slist_prepend (package->recommends,
+                                 rc_xml_node_to_package_dep (iter2));
+            iter2 = iter2->next;
+        }
+
+        package->recommends = g_slist_reverse (package->recommends);
+
+    } else if (!g_strcasecmp (iter->name, "suggests")) {
+        const xmlNode *iter2;
+
+        iter2 = iter->xmlChildrenNode;
+
+        while (iter2) {
+            if (iter2->type != XML_ELEMENT_NODE) {
+                iter2 = iter2->next;
+                continue;
+            }
+
+            package->suggests =
+                g_slist_prepend (package->suggests,
+                                 rc_xml_node_to_package_dep (iter2));
+            iter2 = iter2->next;
+        }
+
+        package->suggests = g_slist_reverse (package->suggests);
+
+    } else if (!g_strcasecmp (iter->name, "conflicts")) {
+        xmlNode *iter2;
+        gboolean all_are_obs = FALSE, this_is_obs = FALSE;
+        xmlChar *obs;
+
+        iter2 = iter->xmlChildrenNode;
+
+        obs = xmlGetProp ((xmlNode *) iter, "obsoletes"); /* cast out const */
+        if (obs)
+            all_are_obs = TRUE;
+        xmlFree (obs);
+
+        while (iter2) {
+            RCPackageDep *dep;
+
+            if (iter2->type != XML_ELEMENT_NODE) {
+                iter2 = iter2->next;
+                continue;
+            }
+
+            dep = rc_xml_node_to_package_dep (iter2);
+
+            if (! all_are_obs) {
+                this_is_obs = FALSE;
+                obs = xmlGetProp (iter2, "obsoletes");
+                if (obs) 
+                    this_is_obs = TRUE;
+                xmlFree (obs);
+            }
+                
+            if (all_are_obs || this_is_obs) {
+                package->obsoletes =
+                    g_slist_prepend (package->obsoletes, dep);
+            } else {
+                package->conflicts =
+                    g_slist_prepend (package->conflicts, dep);
+            }
+                
+            iter2 = iter2->next;
+        }
+
+        package->conflicts = g_slist_reverse (package->conflicts);
+
+    } else if (!g_strcasecmp (iter->name, "obsoletes")) {
+        const xmlNode *iter2;
+
+        iter2 = iter->xmlChildrenNode;
+
+        while (iter2) {
+            if (iter2->type != XML_ELEMENT_NODE) {
+                iter2 = iter2->next;
+                continue;
+            }
+
+            package->obsoletes = 
+                g_slist_prepend (package->obsoletes,
+                                 rc_xml_node_to_package_dep (iter2));
+            iter2 = iter2->next;
+        }
+
+        package->obsoletes = g_slist_reverse (package->obsoletes);
+
+    } else if (!g_strcasecmp (iter->name, "provides")) {
+        const xmlNode *iter2;
+
+        iter2 = iter->xmlChildrenNode;
+
+        while (iter2) {
+            if (iter2->type != XML_ELEMENT_NODE) {
+                iter2 = iter2->next;
+                continue;
+            }
+
+            package->provides =
+                g_slist_prepend (package->provides,
+                                 rc_xml_node_to_package_dep (iter2));
+            iter2 = iter2->next;
+        }
+
+        package->provides = g_slist_reverse (package->provides);
+    }
+}
+
 RCPackage *
 rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
 {
@@ -661,6 +811,8 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
     iter = node->xmlChildrenNode;
 
     while (iter) {
+        gboolean extracted_deps = FALSE;
+
         if (!g_strcasecmp (iter->name, "name")) {
             package->spec.name = xml_get_content (iter);
         } else if (!g_strcasecmp (iter->name, "epoch")) {
@@ -704,146 +856,24 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
 
                 iter2 = iter2->next;
             }
-        } else if (!g_strcasecmp (iter->name, "requires")) {
+        } else if (!g_strcasecmp (iter->name, "deps")) {
             const xmlNode *iter2;
 
-            iter2 = iter->xmlChildrenNode;
-
-            while (iter2) {
-                if (iter2->type != XML_ELEMENT_NODE) {
-                    iter2 = iter2->next;
+            for (iter2 = iter->xmlChildrenNode; iter2; iter2 = iter2->next) {
+                if (iter2->type != XML_ELEMENT_NODE)
                     continue;
-                }
 
-                package->requires =
-                    g_slist_prepend (package->requires,
-                                     rc_xml_node_to_package_dep (iter2));
-                iter2 = iter2->next;
+                extract_dep_info (iter2, package);
             }
 
-            package->requires = g_slist_reverse (package->requires);
-
-        } else if (!g_strcasecmp (iter->name, "recommends")) {
-            const xmlNode *iter2;
-
-            iter2 = iter->xmlChildrenNode;
-
-            while (iter2) {
-                if (iter2->type != XML_ELEMENT_NODE) {
-                    iter2 = iter2->next;
-                    continue;
-                }
-
-                package->recommends =
-                    g_slist_prepend (package->recommends,
-                                     rc_xml_node_to_package_dep (iter2));
-                iter2 = iter2->next;
+            extracted_deps = TRUE;
+        }
+        else {
+            if (!extracted_deps)
+                extract_dep_info (iter, package);
+            else {
+                /* FIXME: Bitch to the user here? */
             }
-
-            package->recommends = g_slist_reverse (package->recommends);
-
-        } else if (!g_strcasecmp (iter->name, "suggests")) {
-            const xmlNode *iter2;
-
-            iter2 = iter->xmlChildrenNode;
-
-            while (iter2) {
-                if (iter2->type != XML_ELEMENT_NODE) {
-                    iter2 = iter2->next;
-                    continue;
-                }
-
-                package->suggests =
-                    g_slist_prepend (package->suggests,
-                                     rc_xml_node_to_package_dep (iter2));
-                iter2 = iter2->next;
-            }
-
-            package->suggests = g_slist_reverse (package->suggests);
-
-        } else if (!g_strcasecmp (iter->name, "conflicts")) {
-            xmlNode *iter2;
-            gboolean all_are_obs = FALSE, this_is_obs = FALSE;
-            xmlChar *obs;
-
-            iter2 = iter->xmlChildrenNode;
-
-            obs = xmlGetProp ((xmlNode *) iter, "obsoletes"); /* cast out const */
-            if (obs)
-                all_are_obs = TRUE;
-            xmlFree (obs);
-
-            while (iter2) {
-                RCPackageDep *dep;
-
-                if (iter2->type != XML_ELEMENT_NODE) {
-                    iter2 = iter2->next;
-                    continue;
-                }
-
-                dep = rc_xml_node_to_package_dep (iter2);
-
-                if (! all_are_obs) {
-                    this_is_obs = FALSE;
-                    obs = xmlGetProp (iter2, "obsoletes");
-                    if (obs) 
-                        this_is_obs = TRUE;
-                    xmlFree (obs);
-                }
-                
-                if (all_are_obs || this_is_obs) {
-                    package->obsoletes =
-                        g_slist_prepend (package->obsoletes, dep);
-                } else {
-                    package->conflicts =
-                        g_slist_prepend (package->conflicts, dep);
-                }
-                
-                iter2 = iter2->next;
-            }
-
-            package->conflicts = g_slist_reverse (package->conflicts);
-
-        } else if (!g_strcasecmp (iter->name, "obsoletes")) {
-            const xmlNode *iter2;
-
-            iter2 = iter->xmlChildrenNode;
-
-            while (iter2) {
-                if (iter2->type != XML_ELEMENT_NODE) {
-                    iter2 = iter2->next;
-                    continue;
-                }
-
-                package->obsoletes = 
-                    g_slist_prepend (package->obsoletes,
-                                     rc_xml_node_to_package_dep (iter2));
-                iter2 = iter2->next;
-            }
-
-            package->obsoletes = g_slist_reverse (package->obsoletes);
-
-        } else if (!g_strcasecmp (iter->name, "provides")) {
-            const xmlNode *iter2;
-
-            iter2 = iter->xmlChildrenNode;
-
-            while (iter2) {
-                if (iter2->type != XML_ELEMENT_NODE) {
-                    iter2 = iter2->next;
-                    continue;
-                }
-
-                package->provides =
-                    g_slist_prepend (package->provides,
-                                     rc_xml_node_to_package_dep (iter2));
-                iter2 = iter2->next;
-            }
-
-            package->provides = g_slist_reverse (package->provides);
-
-        } else {
-            /* FIXME: do we want to bitch to the user here? */
         }
 
         iter = iter->next;
@@ -1153,7 +1183,7 @@ rc_package_to_xml_node (RCPackage *package)
     }
 
     deps_node = xmlNewChild (package_node, NULL, "deps", NULL);
-    
+
     if (package->requires) {
         tmp_node = xmlNewChild (deps_node, NULL, "requires", NULL);
         for (dep_iter = package->requires; dep_iter;
