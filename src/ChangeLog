@@ -1,5 +1,13 @@
 2001-01-24  Ian Peters  <itp@ximian.com>
 
+	* rc-package-info.c (debian_packages_helper): Instead of "No
+	information available", we instead say "Upstream Debian release"
+
+	* rc-debman.c (do_unpack): add the --auto-deconfigure option to
+	the unpack line
+
+2001-01-24  Ian Peters  <itp@ximian.com>
+
 	* rc-rpmman.c: global cleanup, pkg to package, p to packman, hdr
 	to header, etc
 	(GTKFLUSH): added this macro to flush pending gtk events
