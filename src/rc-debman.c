@@ -189,9 +189,12 @@ typedef struct _DebmanMarkPurgeInfo DebmanMarkPurgeInfo;
 
 struct _DebmanMarkPurgeInfo {
     gboolean rewrite;
+    gboolean error;
     int out_fd;
     RCPackageSList *remove_pkgs;
     GMainLoop *loop;
+    guint read_line_id;
+    guint read_done_id;
 };
 
 static void
@@ -201,8 +204,10 @@ mark_purge_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
 
     /* Is this a status line we want to fixicate? */
     if (dmpi->rewrite && !strncmp (line, "Status:", strlen ("Status:"))) {
-        write (dmpi->out_fd, "Status: purge ok installed\n",
-               strlen ("Status: purge ok installed\n"));
+        if (!rc_write (dmpi->out_fd, "Status: purge ok installed\n",
+                       strlen ("Status: purge ok installed\n"))) {
+            goto BROKEN;
+        }
 
         dmpi->rewrite = FALSE;
 
@@ -214,17 +219,28 @@ mark_purge_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
          (!strncmp (line, "Package:", strlen ("Package:")))))
     {
         /* FIXME: somehow this is malformed */
-        dmpi->rewrite = FALSE;
+        goto BROKEN;
 
         return;
     }
 
-    write (dmpi->out_fd, line, strlen (line));
-    write (dmpi->out_fd, "\n", 1);
+    if (!rc_write (dmpi->out_fd, line, strlen (line)) ||
+        !rc_write (dmpi->out_fd, "\n", 1))
+    {
+        goto BROKEN;
+    }
 
     if (package_accept (line, dmpi->remove_pkgs)) {
         dmpi->rewrite = TRUE;
     }
+
+    return;
+
+  BROKEN:
+    dmpi->error = TRUE;
+    gtk_signal_disconnect (GTK_OBJECT (lb), dmpi->read_line_id);
+    gtk_signal_disconnect (GTK_OBJECT (lb), dmpi->read_done_id);
+    g_main_quit (dmpi->loop);
 }
 
 static void
@@ -232,12 +248,10 @@ mark_purge_read_done_cb (RCLineBuf *lb, RCLineBufStatus status, gpointer data)
 {
     DebmanMarkPurgeInfo *dmpi = (DebmanMarkPurgeInfo *)data;
 
-    gtk_signal_disconnect_by_func (GTK_OBJECT (lb),
-                                   GTK_SIGNAL_FUNC (mark_purge_read_line_cb),
-                                   data);
-    gtk_signal_disconnect_by_func (GTK_OBJECT (lb),
-                                   GTK_SIGNAL_FUNC (mark_purge_read_done_cb),
-                                   data);
+    gtk_signal_disconnect (GTK_OBJECT (lb),
+                           dmpi->read_line_id);
+    gtk_signal_disconnect (GTK_OBJECT (lb),
+                           dmpi->read_done_id);
 
     g_main_quit (dmpi->loop);
 }
@@ -270,18 +284,21 @@ mark_purge (RCPackman *p, RCPackageSList *remove_pkgs)
     loop = g_main_new (FALSE);
 
     dmpi.rewrite = FALSE;
+    dmpi.error = FALSE;
     dmpi.out_fd = out_fd;
     dmpi.remove_pkgs = remove_pkgs;
     dmpi.loop = loop;
 
     lb = rc_line_buf_new ();
 
-    gtk_signal_connect (GTK_OBJECT (lb), "read_line",
-                        (GtkSignalFunc) mark_purge_read_line_cb,
-                        (gpointer) &dmpi);
-    gtk_signal_connect (GTK_OBJECT (lb), "read_done",
-                        (GtkSignalFunc) mark_purge_read_done_cb,
-                        (gpointer) &dmpi);
+    dmpi.read_line_id =
+        gtk_signal_connect (GTK_OBJECT (lb), "read_line",
+                            (GtkSignalFunc) mark_purge_read_line_cb,
+                            (gpointer) &dmpi);
+    dmpi.read_done_id =
+        gtk_signal_connect (GTK_OBJECT (lb), "read_done",
+                            (GtkSignalFunc) mark_purge_read_done_cb,
+                            (gpointer) &dmpi);
 
     rc_line_buf_set_fd (lb, in_fd);
 
@@ -294,6 +311,14 @@ mark_purge (RCPackman *p, RCPackageSList *remove_pkgs)
 
     close (in_fd);
     close (out_fd);
+
+    if (dmpi.error) {
+        unlink (rc_status_file);
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+                              "The application was unable to mark the "
+                              "selected packages for removal on your system.");
+        return (FALSE);
+    }
 
     if (rename (rc_status_file, status_file)) {
         unlink (rc_status_file);
@@ -1499,15 +1524,19 @@ struct _DebmanVerifyStatusInfo {
 static void
 verify_status_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
 {
-    gchar **tokens;
-    gchar *tmp;
+    gchar **tokens = NULL;
+    gchar *tmp = NULL;
     DebmanVerifyStatusInfo *dvsi = (DebmanVerifyStatusInfo *)data;
+    int out_fd = dvsi->out_fd; /* Just for sanity */
 
     if (strncmp (line, "Status:", strlen ("Status:"))) {
         /* This isn't a status line, so we don't need to do anything other than
            to write it to the new file */
-        write (dvsi->out_fd, line, strlen (line));
-        write (dvsi->out_fd, "\n", 1);
+        if (!rc_write (out_fd, line, strlen (line)) ||
+            !rc_write (out_fd, "\n", 1))
+        {
+            goto BROKEN;
+        }
         return;
     }
 
@@ -1539,13 +1568,20 @@ verify_status_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
        whatever middle token the user had */
     if (!strcmp (tokens[2], "installed")) {
         if (!strcmp (tokens[0], "install") || !strcmp (tokens[0], "hold")) {
-            write (dvsi->out_fd, line, strlen (line));
-            write (dvsi->out_fd, "\n", 1);
+            if (!rc_write (out_fd, line, strlen (line)) ||
+                !rc_write (out_fd, "\n", 1))
+            {
+                goto BROKEN;
+            }
             goto END;
         }
-        write (dvsi->out_fd, "Status: install ", strlen ("Status: install "));
-        write (dvsi->out_fd, tokens[1], strlen (tokens[1]));
-        write (dvsi->out_fd, " installed\n", strlen (" installed\n"));
+        if (!rc_write (out_fd, "Status: install ",
+                       strlen ("Status: install ")) ||
+            !rc_write (out_fd, tokens[1], strlen (tokens[1])) ||
+            !rc_write (out_fd, " installed\n", strlen (" installed\n")))
+        {
+            goto BROKEN;
+        }
         goto END;
     }
 
@@ -1554,28 +1590,41 @@ verify_status_read_line_cb (RCLineBuf *lb, gchar *line, gpointer data)
        Of course, use whatever middle token the user had. */
     if (!strcmp (tokens[2], "not-installed")) {
         if (!strcmp (tokens[0], "purge")) {
-            write (dvsi->out_fd, line, strlen (line));
-            write (dvsi->out_fd, "\n", 1);
+            if (!rc_write (out_fd, line, strlen (line)) ||
+                !rc_write (out_fd, "\n", 1))
+            {
+                goto BROKEN;
+            }
             goto END;
         }
         if (!strcmp (tokens[0], "deinstall")) {
-            write (dvsi->out_fd, line, strlen (line));
-            write (dvsi->out_fd, "\n", 1);
+            if (!rc_write (out_fd, line, strlen (line)) ||
+                !rc_write (out_fd, "\n", 1))
+            {
+                goto BROKEN;
+            }
             goto END;
         }
-        write (dvsi->out_fd, "Status: purge ", strlen ("Status: purge "));
-        write (dvsi->out_fd, tokens[1], strlen (tokens[1]));
-        write (dvsi->out_fd, " not-installed\n", strlen (" not-installed\n"));
+        if (!rc_write (out_fd, "Status: purge ", strlen ("Status: purge ")) ||
+            !rc_write (out_fd, tokens[1], strlen (tokens[1])) ||
+            !rc_write (out_fd, " not-installed\n",
+                       strlen (" not-installed\n")))
+        {
+            goto BROKEN;
+        }
         goto END;
     }
 
     /* If the package is config-files only, set the selection to deinstall,
        middle token as the user had it. */
     if (!strcmp (tokens[2], "config-files")) {
-        write (dvsi->out_fd, "Status: deinstall ",
-               strlen ("Status: deinstall "));
-        write (dvsi->out_fd, tokens[1], strlen (tokens[1]));
-        write (dvsi->out_fd, " config-files\n", strlen (" config-files\n"));
+        if (!rc_write (out_fd, "Status: deinstall ",
+                       strlen ("Status: deinstall ")) ||
+            !rc_write (out_fd, tokens[1], strlen (tokens[1])) ||
+            !rc_write (out_fd, " config-files\n", strlen (" config-files\n")))
+        {
+            goto BROKEN;
+        }
         goto END;
     }
 
@@ -1656,6 +1705,7 @@ verify_status (RCPackman *p)
     close (out_fd);
 
     if (dvsi.error) {
+        unlink ("/var/lib/dpkg/status.redcarpet");
         rc_packman_set_error (p, RC_PACKMAN_ERROR_FATAL,
                               "The /var/lib/dpkg/status file appears to have "
                               "errors or be malformed.  Until these errors "
