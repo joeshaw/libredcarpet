@@ -1,3 +1,8 @@
+2003-08-28  Joe Shaw  <joe@ximian.com>
+
+	* rc-world-multi.c (rc_world_multi_mount_service): See if we have
+	mounted another service with the same id.
+
 2003-08-28  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-world-multi.c (rc_world_multi_lookup_service_by_id):

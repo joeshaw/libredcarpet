@@ -977,9 +977,20 @@ rc_world_multi_mount_service (RCWorldMulti *multi, const char *url)
     world = rc_world_service_mount (url);
 
     if (world) {
-        rc_world_multi_add_subworld (multi, world);
+        gboolean success;
+
+        /* We can't check this until after we've already mounted, bah. */
+        if (rc_world_multi_lookup_service_by_id (multi,
+                                                 RC_WORLD_SERVICE (world)->unique_id)) {
+            success = FALSE;
+        } else {
+            rc_world_multi_add_subworld (multi, world);
+            success = TRUE;
+        }
+
         g_object_unref (world);
-        return TRUE;
+
+        return success;
     } else
         return FALSE;
 }
