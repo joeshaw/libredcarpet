@@ -641,8 +641,13 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
             g_string_sprintfa (report, "\n%s",
                                rpmman->rpmProblemString (problem));
 #else
-            g_string_sprintfa (report, "\n%s",
-                               rpmman->rpmProblemString (*problem));
+            if (rpmman->major_version == 4 && rpmman->micro_version == 2) {
+                g_string_sprintfa (report, "\n%s",
+                                   rpmman->rpmProblemString (problem));
+            } else {
+                g_string_sprintfa (report, "\n%s",
+                                   rpmman->rpmProblemString (*problem));
+            }
 #endif
             problem++;
         }
