@@ -1,3 +1,8 @@
+2001-02-06  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* rc-deps.c: Fix for fixing RPM systems.  Debian might
+	feel ignored.
+
 2001-02-05  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c: finish moving the db into the RCRpmman struct
