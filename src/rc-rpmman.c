@@ -2436,9 +2436,10 @@ rc_rpmman_init (RCRpmman *obj)
     gchar **rpm_version;
     gchar *so_file;
     const char *objects[] = {
-        "rc-rpm-helper-1.so",
-        "rc-rpm-helper-2.so",
-        "rc-rpm-helper-3.so",
+	"[rpm].so.0",
+	"[rpm_rpmio].so.0",
+	"[rpm_rpmio_rpmdb]-4.0.3.so",
+	"[rpm_rpmio_rpmdb].so",
         NULL };
     const char **iter;
 

@@ -80,18 +80,20 @@ libredcarpettmp_a_SOURCES =		\
 
 EXTRA_DIST = \
 	$(rpm_sources) $(dpkg_sources) rc-dpkg-helper.c \
-	rc-rpm-helper-1.so \
-	rc-rpm-helper-2.so \
-	rc-rpm-helper-3.so
+	[rpm].so.0 \
+	[rpm_rpmio].so.0 \
+	[rpm_rpmio_rpmdb]-4.0.3.so \
+	[rpm_rpmio_rpmdb].so
 
 if ENABLE_RPM
 if STATIC_RPM
 else
 rpmhelperdir = $(libdir)/redcarpet
 rpmhelper_DATA = \
-	rc-rpm-helper-1.so \
-	rc-rpm-helper-2.so \
-	rc-rpm-helper-3.so
+	[rpm].so.0 \
+	[rpm_rpmio].so.0 \
+	[rpm_rpmio_rpmdb]-4.0.3.so \
+	[rpm_rpmio_rpmdb].so
 endif
 endif
 

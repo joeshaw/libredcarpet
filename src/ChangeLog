@@ -1,3 +1,13 @@
+2001-09-21  Ian Peters  <itp@ximian.com>
+
+	* rc-rpm-helper-1.so, rc-rpm-helper-2.so, rc-rpm-helper-3.so:
+	removed.
+
+	* [rpm].so.0, [rpm_rpmio].so.0, [rpm_rpmio_rpmdb]-4.0.3.so,
+	[rpm_rpmio_rpmdb].so: added
+
+	* Makefile.am, rc-rpmman.c: handle the new shared stubs.
+
 2001-09-20  Ian Peters  <itp@ximian.com>
 
 	* rc-rpm-helper-1.so, rc-rpm-helper-2.so, rc-rpm-helper-3.so:
