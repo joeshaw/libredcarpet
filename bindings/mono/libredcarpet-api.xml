@@ -515,7 +515,7 @@
       <method name="GetFileExtension" cname="rc_packman_get_file_extension">
         <return-type type="const-gchar*" />
       </method>
-      <method name="GetGlobal" cname="rc_packman_get_global" shared="true">
+      <method name="GetGlobal" cname="rc_packman_get_global" shared="true" hidden="1">
         <return-type type="RCPackman*" />
       </method>
       <method name="GetReason" cname="rc_packman_get_reason">
@@ -568,7 +568,7 @@
           <parameter type="GSList*" name="filenames" />
         </parameters>
       </method>
-      <method name="SetGlobal" cname="rc_packman_set_global">
+      <method name="SetGlobal" cname="rc_packman_set_global" hidden="1">
         <return-type type="void" />
       </method>
       <method name="SetRollbackEnabled" cname="rc_packman_set_rollback_enabled">
@@ -1764,7 +1764,7 @@
         <return-type type="RCPackageDepArray*" />
       </method>
       <method name="GetDescription" cname="rc_package_get_description">
-        <return-type type="gchar*" />
+        <return-type type="const-gchar*" />
       </method>
       <method name="GetFileSize" cname="rc_package_get_file_size">
         <return-type type="guint32" />
@@ -1797,7 +1797,7 @@
         <return-type type="RCPackageSection" />
       </method>
       <method name="GetSignatureFilename" cname="rc_package_get_signature_filename">
-        <return-type type="gchar*" />
+        <return-type type="const-gchar*" />
       </method>
       <method name="GetSpec" cname="rc_package_get_spec">
         <return-type type="RCPackageSpec*" />
@@ -1806,7 +1806,7 @@
         <return-type type="RCPackageDepArray*" />
       </method>
       <method name="GetSummary" cname="rc_package_get_summary">
-        <return-type type="gchar*" />
+        <return-type type="const-gchar*" />
       </method>
       <method name="GetType" cname="rc_package_get_type" shared="true">
         <return-type type="GType" />
@@ -2198,7 +2198,7 @@
         <return-type type="const-gchar*" />
       </method>
     </struct>
-    <struct name="PackageUpdate" cname="RCPackageUpdate">
+    <struct name="PackageUpdate" cname="RCPackageUpdate" opaque="1">
       <field cname="spec" type="RCPackageSpec" />
       <field cname="package" type="const-RCPackage*" />
       <field cname="package_url" type="gchar*" />
@@ -2216,6 +2216,42 @@
       </method>
       <method name="Free" cname="rc_package_update_free">
         <return-type type="void" />
+      </method>
+      <method name="GetDescription" cname="rc_package_update_get_description">
+        <return-type type="const-gchar*" />
+      </method>
+      <method name="GetHid" cname="rc_package_update_get_hid">
+        <return-type type="guint" />
+      </method>
+      <method name="GetImportance" cname="rc_package_update_get_importance">
+        <return-type type="RCPackageImportance" />
+      </method>
+      <method name="GetInstalledSize" cname="rc_package_update_get_installed_size">
+        <return-type type="guint32" />
+      </method>
+      <method name="GetLicense" cname="rc_package_update_get_license">
+        <return-type type="const-gchar*" />
+      </method>
+      <method name="GetMd5sum" cname="rc_package_update_get_md5sum">
+        <return-type type="const-gchar*" />
+      </method>
+      <method name="GetPackage" cname="rc_package_update_get_package">
+        <return-type type="const-RCPackage*" />
+      </method>
+      <method name="GetPackageSize" cname="rc_package_update_get_package_size">
+        <return-type type="guint32" />
+      </method>
+      <method name="GetPackageUrl" cname="rc_package_update_get_package_url">
+        <return-type type="const-gchar*" />
+      </method>
+      <method name="GetSignatureSize" cname="rc_package_update_get_signature_size">
+        <return-type type="guint32" />
+      </method>
+      <method name="GetSignatureUrl" cname="rc_package_update_get_signature_url">
+        <return-type type="const-gchar*" />
+      </method>
+      <method name="GetSpec" cname="rc_package_update_get_spec">
+        <return-type type="RCPackageSpec*" />
       </method>
       <constructor cname="rc_package_update_new" />
       <method name="SlistCopy" cname="rc_package_update_slist_copy" shared="true">

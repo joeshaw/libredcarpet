@@ -50,6 +50,7 @@
   <attr path="/api/namespace/boxed[@cname='RCChannel']" name="opaque">1</attr>
   <attr path="/api/namespace/boxed[@cname='RCResolver']" name="opaque">1</attr>
   <attr path="/api/namespace/boxed[@cname='RCResolverContext']" name="opaque">1</attr>
+  <attr path="/api/namespace/struct[@cname='RCPackageUpdate']" name="opaque">1</attr>
   <attr path="/api/namespace/object[@cname='RCWorldMulti']/method[@cname='rc_world_multi_mount_service']" name="hidden">1</attr>
   <attr path="/api/namespace/boxed[@cname='RCResolver']/method[@cname='rc_resolver_get_invalid_queues']/return-type" name="element_type">RC.ResolverQueue</attr>
 <!--
@@ -61,9 +62,11 @@
   <attr path="/api/namespace/object[@cname='RCPackman']/method[@cname='rc_packman_file_list']/return-type" name="element_type">RC.PackageFile</attr>
   <attr path="/api/namespace/object[@cname='RCPackman']/method[@cname='rc_packman_find_file']/return-type" name="element_type">RC.Package</attr>
 
+  <attr path="/api/namespace/object[@cname='RCPackman']/method[@cname='rc_packman_get_global']" name="hidden">1</attr>
+  <attr path="/api/namespace/object[@cname='RCPackman']/method[@cname='rc_packman_set_global']" name="hidden">1</attr>
+
    <!-- Hide methods. These are not required and make reading of gapi-fixup hard -->
 
-   <attr path="/api/namespace/struct[@cname='RCPackageUpdate']/method[@cname='rc_package_update_to_xml_node']" name="hidden">1</attr>
    <attr path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_parse_xml_from_buffer']" name="hidden">1</attr>
    <attr path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_parse_xml_from_file']" name="hidden">1</attr>
    <attr path="/api/namespace/class[@cname='RcExtract_']/method[@cname='rc_extract_packages_from_xml_node']" name="hidden">1</attr>

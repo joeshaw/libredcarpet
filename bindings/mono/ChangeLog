@@ -1,3 +1,14 @@
+2004-09-20  Tambet Ingo  <tambet@ximian.com>
+
+	* Packman.custom: Add. 
+
+	* RC.metadata: Hide rc_packman_get|set_global, they are wrapped
+	manually.
+
+2004-09-17  Tambet Ingo  <tambet@ximian.com>
+
+	* RC.metadata: Mark RCPackageUpdate as opaque date type.
+
 2004-09-15  Tambet Ingo  <tambet@ximian.com>
 
 	* PackageMatch.custom: Rewrite PackageMatch reading from xml using
