@@ -6,4 +6,5 @@ includedir=@includedir@
 Name: libredcarpet-sharp
 Description: LIBREDCARPET - Red Carpet Library C# bindings
 Version: @VERSION@
+Requires: gtk-sharp
 Libs: -r:@libdir@/mono/libredcarpet-sharp/libredcarpet-sharp.dll
