@@ -1652,6 +1652,7 @@ rc_rpmman_query_file (RCPackman *packman, const gchar *filename)
     Header header;
     RCPackage *package;
     RCRpmman *rpmman = RC_RPMMAN (packman);
+    gboolean close = FALSE;
 
     if (!rc_file_exists(filename)) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
@@ -1661,8 +1662,10 @@ rc_rpmman_query_file (RCPackman *packman, const gchar *filename)
 
     /* This shouldn't be necessary, but it takes care of a valgrind
      * error regarding unitialized values in Fdopen in rpm */
-    if (!open_database (rpmman, FALSE)) {
-        return NULL;
+    if (rpmman->db_status < RC_RPMMAN_DB_RDONLY) {
+        if (!open_database (rpmman, FALSE))
+            return NULL;
+        close = TRUE;
     }
 
     fd = rc_rpm_open (rpmman, filename, "r.fdio", O_RDONLY, 0444);
@@ -1689,7 +1692,8 @@ rc_rpmman_query_file (RCPackman *packman, const gchar *filename)
     rpmman->headerFree (header);
     rc_rpm_close (rpmman, fd);
 
-    close_database (rpmman);
+    if (close)
+        close_database (rpmman);
 
     return (package);
 
