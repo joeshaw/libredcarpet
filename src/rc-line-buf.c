@@ -18,10 +18,11 @@
  * 02111-1307, USA.
  */
 
-#include <gtk/gtk.h>
-
-#include "rc-debug.h"
+#include <config.h>
 #include "rc-line-buf.h"
+
+#include "rc-marshal.h"
+#include "rc-debug.h"
 #include "rc-line-buf-private.h"
 
 #define BUF_SIZE 1023
@@ -29,7 +30,7 @@
 static void rc_line_buf_class_init (RCLineBufClass *klass);
 static void rc_line_buf_init       (RCLineBuf *obj);
 
-static GtkObjectClass *parent_class;
+static GObjectClass *parent_class;
 
 enum SIGNALS {
     READ_LINE,
@@ -45,25 +46,28 @@ enum {
     ARG_FD,
 };
 
-guint
+GType
 rc_line_buf_get_type (void)
 {
-    static guint type = 0;
+    static GType type = 0;
 
     RC_ENTRY;
 
     if (!type) {
-        GtkTypeInfo type_info = {
-            "RCLineBuf",
-            sizeof (RCLineBuf),
+        static GTypeInfo type_info = {
             sizeof (RCLineBufClass),
-            (GtkClassInitFunc) rc_line_buf_class_init,
-            (GtkObjectInitFunc) rc_line_buf_init,
-            (GtkArgSetFunc) NULL,
-            (GtkArgGetFunc) NULL,
+            NULL, NULL,
+            (GClassInitFunc) rc_line_buf_class_init,            
+            NULL, NULL,
+            sizeof (RCLineBuf),
+            0,
+            (GInstanceInitFunc) rc_line_buf_init
         };
 
-        type = gtk_type_unique (gtk_object_get_type (), &type_info);
+        type = g_type_register_static (G_TYPE_OBJECT,
+                                       "RCLineBuf",
+                                       &type_info,
+                                       0);
     }
 
     RC_EXIT;
@@ -72,7 +76,7 @@ rc_line_buf_get_type (void)
 } /* rc_line_buf_get_type */
 
 static void
-rc_line_buf_destroy (GtkObject *obj)
+rc_line_buf_finalize (GObject *obj)
 {
     RCLineBuf *line_buf;
 
@@ -95,11 +99,13 @@ rc_line_buf_destroy (GtkObject *obj)
 
     g_free (line_buf->priv);
 
-    GTK_OBJECT_CLASS (parent_class)->destroy (obj);
+    if (parent_class->finalize)
+        parent_class->finalize (obj);
 
     RC_EXIT;
-} /* rc_line_buf_destroy */
+} /* rc_line_buf_finalize */
 
+#if 0
 static void
 rc_line_buf_set_arg (GtkObject *object, GtkArg *arg, guint arg_id)
 {
@@ -139,50 +145,53 @@ rc_line_buf_get_arg (GtkObject *object, GtkArg *arg, guint arg_id)
         break;
     }
 } /* rc_line_buf_get_arg */
+#endif
 
 static void
 rc_line_buf_class_init (RCLineBufClass *klass)
 {
-    GtkObjectClass *object_class;
+    GObjectClass *object_class = (GObjectClass *) klass;
 
     RC_ENTRY;
 
-    object_class = GTK_OBJECT_CLASS (klass);
+    object_class->finalize = rc_line_buf_finalize;
 
-    object_class->destroy = rc_line_buf_destroy;
-
+#if 0
     object_class->get_arg = rc_line_buf_get_arg;
     object_class->set_arg = rc_line_buf_set_arg;
+#endif
 
     klass->read_line  = NULL;
     klass->read_done  = NULL;
 
-    parent_class = gtk_type_class (gtk_object_get_type ());
+    parent_class = g_type_class_peek_parent (klass);
 
     signals[READ_LINE] =
-        gtk_signal_new ("read_line",
-                        GTK_RUN_FIRST,
-                        object_class->type,
-                        GTK_SIGNAL_OFFSET (RCLineBufClass, read_line),
-                        gtk_marshal_NONE__STRING,
-                        GTK_TYPE_NONE, 1,
-                        GTK_TYPE_STRING);
+        g_signal_new ("read_line",
+                      G_TYPE_FROM_CLASS (klass),
+                      G_SIGNAL_RUN_FIRST,
+                      G_STRUCT_OFFSET (RCLineBufClass, read_line),
+                      NULL, NULL,
+                      rc_marshal_VOID__STRING,
+                      G_TYPE_NONE, 1,
+                      G_TYPE_STRING);
 
     signals[READ_DONE] =
-        gtk_signal_new ("read_done",
-                        GTK_RUN_LAST,
-                        object_class->type,
-                        GTK_SIGNAL_OFFSET (RCLineBufClass, read_done),
-                        gtk_marshal_NONE__ENUM,
-                        GTK_TYPE_NONE, 1,
-                        GTK_TYPE_ENUM);
+        g_signal_new ("read_done",
+                      G_TYPE_FROM_CLASS (klass),
+                      G_SIGNAL_RUN_LAST,
+                      G_STRUCT_OFFSET (RCLineBufClass, read_done),
+                      NULL, NULL,
+                      rc_marshal_VOID__ENUM,
+                      G_TYPE_NONE, 1,
+                      G_TYPE_ENUM);
 
-    gtk_object_class_add_signals (object_class, signals, LAST_SIGNAL);
-
+#if 0
     gtk_object_add_arg_type ("RCLineBuf::fd",
                              GTK_TYPE_INT,
                              GTK_ARG_READWRITE,
                              ARG_FD);
+#endif
 
     RC_EXIT;
 } /* rc_line_buf_class_init */
@@ -233,8 +242,8 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
                       "%s: got G_IO_ERROR_[INVAL|UNKNOWN], ending read\n",
                       __FUNCTION__);
 
-            gtk_signal_emit (GTK_OBJECT (line_buf), signals[READ_DONE],
-                             RC_LINE_BUF_ERROR);
+            g_signal_emit (line_buf, signals[READ_DONE], 0,
+                           RC_LINE_BUF_ERROR);
 
             /* I don't think I should have to do this, but this is the
                solution to the infamous big bad oh-what-the-fuck bug,
@@ -255,8 +264,8 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
                           "%s: read 0 bytes, we're done here\n", __FUNCTION__);
 #endif
 
-                gtk_signal_emit (GTK_OBJECT (line_buf), signals[READ_DONE],
-                                 RC_LINE_BUF_OK);
+                g_signal_emit (line_buf, signals[READ_DONE], 0,
+                               RC_LINE_BUF_OK);
 
                 /* I don't think I should have to do this, but this is
                    the solution to the infamous big bad
@@ -292,8 +301,8 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
                               line_buf->priv->buf->str);
 #endif
 
-                    gtk_signal_emit (GTK_OBJECT (line_buf), signals[READ_LINE],
-                                     line_buf->priv->buf->str);
+                    g_signal_emit (line_buf, signals[READ_LINE], 0,
+                                   line_buf->priv->buf->str);
 
                     g_string_truncate (line_buf->priv->buf, 0);
 
@@ -309,8 +318,8 @@ rc_line_buf_cb (GIOChannel *source, GIOCondition condition,
             return (TRUE);
         }
     } else {
-        gtk_signal_emit (GTK_OBJECT (line_buf), signals[READ_DONE],
-                         RC_LINE_BUF_OK);
+        g_signal_emit (line_buf, signals[READ_DONE], 0,
+                       RC_LINE_BUF_OK);
 
         g_source_remove (line_buf->priv->cb_id);
         line_buf->priv->cb_id = 0;
@@ -339,7 +348,7 @@ rc_line_buf_new ()
 
     RC_ENTRY;
 
-    line_buf = RC_LINE_BUF (gtk_type_new (rc_line_buf_get_type ()));
+    line_buf = RC_LINE_BUF (g_object_new (rc_line_buf_get_type (), NULL));
 
     RC_EXIT;
 

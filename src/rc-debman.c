@@ -60,7 +60,7 @@
 static void rc_debman_class_init (RCDebmanClass *klass);
 static void rc_debman_init       (RCDebman *obj);
 
-static RCPackmanClass *parent_class;
+static GObjectClass *parent_class;
 
 #define DEBMAN_DEFAULT_STATUS_FILE "/var/lib/dpkg/status"
 
@@ -69,23 +69,26 @@ gboolean child_wants_input = FALSE;
 
 extern gchar *rc_libdir;
 
-guint
+GType
 rc_debman_get_type (void)
 {
-    static guint type = 0;
+    static GType type = 0;
 
     if (!type) {
-        GtkTypeInfo type_info = {
-            "RCDebman",
-            sizeof (RCDebman),
+        static GTypeInfo type_info = {
             sizeof (RCDebmanClass),
-            (GtkClassInitFunc) rc_debman_class_init,
-            (GtkObjectInitFunc) rc_debman_init,
-            (GtkArgSetFunc) NULL,
-            (GtkArgGetFunc) NULL,
+            NULL, NULL,
+            (GClassInitFunc) rc_debman_class_init,
+            NULL, NULL,
+            sizeof (RCDebman),
+            0,
+            (GInstanceInitFunc) rc_debman_init,
         };
 
-        type = gtk_type_unique (rc_packman_get_type (), &type_info);
+        type = g_type_register_static (rc_packman_get_type (), 
+                                       "RCDebman",
+                                       &type_info,
+                                       0);
     }
 
     return type;
@@ -407,10 +410,10 @@ verify_status_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
 
   BROKEN:
     verify_status_info->error = TRUE;
-    gtk_signal_disconnect (GTK_OBJECT (line_buf),
-                           verify_status_info->read_line_id);
-    gtk_signal_disconnect (GTK_OBJECT (line_buf),
-                           verify_status_info->read_done_id);
+    g_signal_handler_disconnect (line_buf,
+                                 verify_status_info->read_line_id);
+    g_signal_handler_disconnect (line_buf,
+                                 verify_status_info->read_done_id);
     g_main_quit (verify_status_info->loop);
 
   END:
@@ -424,10 +427,10 @@ verify_status_read_done_cb (RCLineBuf *line_buf, RCLineBufStatus status,
     DebmanVerifyStatusInfo *verify_status_info =
         (DebmanVerifyStatusInfo *)data;
 
-    gtk_signal_disconnect (GTK_OBJECT (line_buf),
-                           verify_status_info->read_line_id);
-    gtk_signal_disconnect (GTK_OBJECT (line_buf),
-                           verify_status_info->read_done_id);
+    g_signal_handler_disconnect (line_buf,
+                                 verify_status_info->read_line_id);
+    g_signal_handler_disconnect (line_buf,
+                                 verify_status_info->read_done_id);
 
     g_main_quit (verify_status_info->loop);
 }
@@ -477,17 +480,20 @@ verify_status (RCPackman *packman)
     verify_status_info.loop = loop;
 
     verify_status_info.read_line_id =
-        gtk_signal_connect (GTK_OBJECT (line_buf), "read_line",
-                            GTK_SIGNAL_FUNC (verify_status_read_line_cb),
-                            (gpointer) &verify_status_info);
+        g_signal_connect (line_buf,
+                          "read_line",
+                          (GCallback) verify_status_read_line_cb,
+                          &verify_status_info);
+    
     verify_status_info.read_done_id =
-        gtk_signal_connect (GTK_OBJECT (line_buf), "read_done",
-                            GTK_SIGNAL_FUNC (verify_status_read_done_cb),
-                            (gpointer) &verify_status_info);
+        g_signal_connect (line_buf,
+                          "read_done",
+                          (GCallback) verify_status_read_done_cb,
+                          &verify_status_info);
 
     g_main_run (loop);
 
-    gtk_object_unref (GTK_OBJECT (line_buf));
+    g_object_unref (line_buf);
 
     g_main_destroy (loop);
 
@@ -711,10 +717,10 @@ mark_status_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
   BROKEN:
     mark_status_info->error = TRUE;
 
-    gtk_signal_disconnect (GTK_OBJECT (line_buf),
-                           mark_status_info->read_line_id);
-    gtk_signal_disconnect (GTK_OBJECT (line_buf),
-                           mark_status_info->read_done_id);
+    g_signal_handler_disconnect (line_buf,
+                                 mark_status_info->read_line_id);
+    g_signal_handler_disconnect (line_buf,
+                                 mark_status_info->read_done_id);
 
     g_main_quit (mark_status_info->loop);
 }
@@ -725,10 +731,10 @@ mark_status_read_done_cb (RCLineBuf *line_buf, RCLineBufStatus status,
 {
     DebmanMarkStatusInfo *mark_status_info = (DebmanMarkStatusInfo *)data;
 
-    gtk_signal_disconnect (GTK_OBJECT (line_buf),
-                           mark_status_info->read_line_id);
-    gtk_signal_disconnect (GTK_OBJECT (line_buf),
-                           mark_status_info->read_done_id);
+    g_signal_disconnect (line_buf,
+                         mark_status_info->read_line_id);
+    g_signal_disconnect (line_buf,
+                         mark_status_info->read_done_id);
 
     g_main_quit (mark_status_info->loop);
 }
@@ -786,17 +792,19 @@ mark_status (RCPackman *packman, RCPackageSList *install_packages,
     rc_line_buf_set_fd (line_buf, in_fd);
 
     mark_status_info.read_line_id =
-        gtk_signal_connect (GTK_OBJECT (line_buf), "read_line",
-                            GTK_SIGNAL_FUNC (mark_status_read_line_cb),
-                            (gpointer) &mark_status_info);
+        g_signal_connect (line_buf,
+                          "read_line",
+                          (GCallback) mark_status_read_line_cb,
+                          &mark_status_info);
     mark_status_info.read_done_id =
-        gtk_signal_connect (GTK_OBJECT (line_buf), "read_done",
-                            GTK_SIGNAL_FUNC (mark_status_read_done_cb),
-                            (gpointer) &mark_status_info);
+        g_signal_connect (line_buf,
+                          "read_done",
+                          (GCallback) mark_status_read_done_cb,
+                          &mark_status_info);
 
     g_main_run (loop);
 
-    gtk_object_unref (GTK_OBJECT (line_buf));
+    g_object_unref (line_buf);
 
     g_main_destroy (loop);
 
@@ -1017,10 +1025,10 @@ do_purge_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
         ptr = strchr (line + length, ' ');
         name = g_strndup (line + length, ptr - (line + length));
 
-        gtk_signal_emit_by_name (GTK_OBJECT (do_purge_info->packman),
-                                 "transact_step",
-                                 ++do_purge_info->install_state->seqno,
-                                 RC_PACKMAN_STEP_REMOVE, name);
+        g_signal_emit_by_name (do_purge_info->packman,
+                               "transact_step",
+                               ++do_purge_info->install_state->seqno,
+                               RC_PACKMAN_STEP_REMOVE, name);
 
         g_free (name);
 
@@ -1040,8 +1048,8 @@ do_purge_read_done_cb (RCLineBuf *line_buf, RCLineBufStatus status,
 {
     DebmanDoPurgeInfo *do_purge_info = (DebmanDoPurgeInfo *)data;
 
-    gtk_signal_disconnect (GTK_OBJECT (line_buf), do_purge_info->read_line_id);
-    gtk_signal_disconnect (GTK_OBJECT (line_buf), do_purge_info->read_done_id);
+    g_signal_handler_disconnect (line_buf, do_purge_info->read_line_id);
+    g_signal_handler_disconnect (line_buf, do_purge_info->read_done_id);
 
     g_main_quit (do_purge_info->loop);
 }

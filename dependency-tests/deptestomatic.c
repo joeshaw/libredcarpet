@@ -30,7 +30,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <gtk/gtk.h>
+#include <glib-object.h>
 #include <gnome-xml/parser.h>
 #include <gnome-xml/xmlmemory.h>
 #include "libredcarpet.h"
@@ -553,7 +553,7 @@ process_xml_test_file (const char *filename)
 int
 main (int argc, char *argv[])
 {
-    gtk_init (&argc, &argv);
+    g_type_init ();
 
     packman = rc_distman_new ();
     rc_packman_set_packman (packman);

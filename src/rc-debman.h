@@ -21,22 +21,20 @@
 #ifndef _RC_DEBMAN_H
 #define _RC_DEBMAN_H
 
-#include <glib.h>
-#include <gtk/gtk.h>
-
+#include <glib-object.h>
 #include "rc-packman.h"
 #include "rc-debman-private.h"
 
-#define GTK_TYPE_RC_DEBMAN        (rc_debman_get_type ())
-#define RC_DEBMAN(obj)            (GTK_CHECK_CAST ((obj), \
-                                   GTK_TYPE_RC_DEBMAN, RCDebman))
-#define RC_DEBMAN_CLASS(klass)    (GTK_CHECK_CLASS_CAST ((klass), \
-                                   GTK_TYPE_RC_DEBMAN, \
+#define RC_TYPE_DEBMAN            (rc_debman_get_type ())
+#define RC_DEBMAN(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), \
+                                   RC_TYPE_DEBMAN, RCDebman))
+#define RC_DEBMAN_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), \
+                                   RC_TYPE_DEBMAN, \
                                    RCDebmanClass))
-#define IS_RC_DEBMAN(obj)         (GTK_CHECK_TYPE ((obj), \
-                                   GTK_TYPE_RC_DEBMAN))
-#define IS_RC_DEBMAN_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), \
-                                   GTK_TYPE_RC_DEBMAN))
+#define IS_RC_DEBMAN(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), \
+                                   RC_TYPE_DEBMAN))
+#define IS_RC_DEBMAN_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), \
+                                   RC_TYPE_DEBMAN))
 
 typedef struct _RCDebman        RCDebman;
 typedef struct _RCDebmanClass   RCDebmanClass;

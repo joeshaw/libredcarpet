@@ -1,7 +1,7 @@
 INCLUDES = 					\
 	-I$(top_srcdir)				\
 	-I$(top_srcdir)/src			\
-	$(GLIB_CFLAGS) $(GTK_CFLAGS)		\
+	$(LIBREDCARPET_CFLAGS)			\
 	$(XML_CFLAGS)				\
 	-DG_LOG_DOMAIN=\"dependency-tests\"	\
 	-Wall
@@ -13,5 +13,5 @@ deptestomatic_SOURCES = \
 
 deptestomatic_LDADD = \
 	../src/libredcarpet.a \
-	$(GLIB_LIBS) $(GTK_LIBS) $(XML_LIBS)
+	$(LIBREDCARPET_LIBS)
 

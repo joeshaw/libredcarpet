@@ -495,11 +495,14 @@ rc_figure_distro (void)
         }
     }
 
+    g_print ("foo=[%s]\n", distro_name);
+    g_print ("bar=[%s]\n", dtype->full_name);
+
     if (dtype) {
 #ifndef RC_DISTRO_NO_GLIB
         dtype->extra_hash = g_hash_table_new(g_str_hash, g_str_equal);
         if (dtype->extra_stuff) {
-            options = g_strsplit(dtype->extra_stuff, ",", 0);
+            options = g_strsplit(dtype->extra_stuff, ",", 100);
             for (i = 0; options[i]; i++) {
                 char **parseit;
             

@@ -39,7 +39,10 @@
 #include "rpm-rpmlead.h"
 #include "rpm-signature.h"
 
+#if 0
 #define GTKFLUSH {while (gtk_events_pending ()) gtk_main_iteration ();}
+#endif
+#define GTKFLUSH {g_warning ("Ignored request for GTKFLUSH!");}
 
 #undef rpmdbNextIterator
 
@@ -63,27 +66,30 @@
 static void rc_rpmman_class_init (RCRpmmanClass *klass);
 static void rc_rpmman_init       (RCRpmman *obj);
 
-static GtkObjectClass *parent_class;
+static GObjectClass *parent_class;
 
 extern gchar *rc_libdir;
 
-guint
+GType
 rc_rpmman_get_type (void)
 {
-    static guint type = 0;
+    static GType type = 0;
 
     if (!type) {
-        GtkTypeInfo type_info = {
-            "RCRpmman",
-            sizeof (RCRpmman),
+        static GTypeInfo type_info = {
             sizeof (RCRpmmanClass),
-            (GtkClassInitFunc) rc_rpmman_class_init,
-            (GtkObjectInitFunc) rc_rpmman_init,
-            (GtkArgSetFunc) NULL,
-            (GtkArgGetFunc) NULL,
+            NULL, NULL,
+            (GClassInitFunc) rc_rpmman_class_init,
+            NULL, NULL,
+            sizeof (RCRpmman),
+            0,
+            (GInstanceInitFunc) rc_rpmman_init,
         };
 
-        type = gtk_type_unique (rc_packman_get_type (), &type_info);
+        type = g_type_register_static (rc_packman_get_type (),
+                                       "RCRpmman",
+                                       &type_info,
+                                       0);
     }
 
     return type;
@@ -144,8 +150,10 @@ transact_cb (const Header h, const rpmCallbackType what,
     char *filename_copy;
     const char *base;
 
+#if 0
     /* heh heh heh */
     GTKFLUSH;
+#endif
 
     switch (what) {
     case RPMCALLBACK_INST_OPEN_FILE:
@@ -158,8 +166,8 @@ transact_cb (const Header h, const rpmCallbackType what,
         break;
 
     case RPMCALLBACK_INST_PROGRESS:
-        gtk_signal_emit_by_name (GTK_OBJECT (state->packman),
-                                 "transact_progress", amount, total);
+        g_signal_emit_by_name (state->packman, "transact_progress",
+                               amount, total);
         GTKFLUSH;
         break;
 
@@ -171,9 +179,8 @@ transact_cb (const Header h, const rpmCallbackType what,
             } else {
                 step = RC_PACKMAN_STEP_CONFIGURE;
             }
-            gtk_signal_emit_by_name (GTK_OBJECT (state->packman),
-                                     "transact_step", ++state->seqno,
-                                     step, NULL);
+            g_signal_emit_by_name (state->packman, "transact_step",
+                                   ++state->seqno, step, NULL);
             GTKFLUSH;
         }
         break;
@@ -182,9 +189,8 @@ transact_cb (const Header h, const rpmCallbackType what,
         if (state->seqno < state->true_total) {
             filename_copy = g_strdup (pkgKey);
             base = basename (filename_copy);
-            gtk_signal_emit_by_name (GTK_OBJECT (state->packman),
-                                     "transact_step", ++state->seqno,
-                                     RC_PACKMAN_STEP_INSTALL, base);
+            g_signal_emit_by_name (state->packman, "transact_step",
+                                   ++state->seqno, RC_PACKMAN_STEP_INSTALL, base);
             g_free (filename_copy);
         }
         break;
@@ -696,8 +702,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
 
     rpmman->rpmtransFree (transaction);
 
-    gtk_signal_emit_by_name (GTK_OBJECT (packman), "transact_start",
-                             state.true_total);
+    g_signal_emit_by_name (packman, "transact_start", state.true_total);
     GTKFLUSH;
 
     if (remove_packages) {
@@ -776,13 +781,12 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
     }
 
     while (state.seqno < state.true_total) {
-        gtk_signal_emit_by_name (GTK_OBJECT (packman), "transact_step",
-                                 ++state.seqno, RC_PACKMAN_STEP_UNKNOWN,
-                                 NULL);
+        g_signal_emit_by_name (packman, "transact_step",
+                               ++state.seqno, RC_PACKMAN_STEP_UNKNOWN, NULL);
         GTKFLUSH;
     }
 
-    gtk_signal_emit_by_name (GTK_OBJECT (packman), "transact_done");
+    g_signal_emit_by_name (packman, "transact_done");
     GTKFLUSH;
 
     return;
@@ -2251,7 +2255,7 @@ rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
 }
 
 static void
-rc_rpmman_destroy (GtkObject *obj)
+rc_rpmman_finalize (GObject *obj)
 {
     RCRpmman *rpmman = RC_RPMMAN (obj);
 
@@ -2268,19 +2272,19 @@ rc_rpmman_destroy (GtkObject *obj)
 #endif
 #endif
 
-    if (GTK_OBJECT_CLASS (parent_class)->destroy)
-        (* GTK_OBJECT_CLASS (parent_class)->destroy) (obj);
+    if (parent_class->finalize)
+        parent_class->finalize (obj);
 }
 
 static void
 rc_rpmman_class_init (RCRpmmanClass *klass)
 {
-    GtkObjectClass *object_class = (GtkObjectClass *) klass;
+    GObjectClass *object_class = (GObjectClass *) klass;
     RCPackmanClass *packman_class = (RCPackmanClass *) klass;
 
-    object_class->destroy = rc_rpmman_destroy;
+    object_class->finalize = rc_rpmman_finalize;
 
-    parent_class = gtk_type_class (rc_packman_get_type ());
+    parent_class = g_type_class_peek_parent (klass);
 
     packman_class->rc_packman_real_transact = rc_rpmman_transact;
     packman_class->rc_packman_real_query = rc_rpmman_query;
@@ -2722,7 +2726,7 @@ RCRpmman *
 rc_rpmman_new (void)
 {
     RCRpmman *rpmman =
-        RC_RPMMAN (gtk_type_new (rc_rpmman_get_type ()));
+        RC_RPMMAN (g_object_new (rc_rpmman_get_type (), NULL));
 
     return rpmman;
 } /* rc_rpmman_new */

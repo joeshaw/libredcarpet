@@ -19,12 +19,15 @@
  * 02111-1307, USA.
  */
 
-#include <gtk/gtk.h>
+#include <config.h>
+#include "rc-packman.h"
+
 #include <stdarg.h>
 #include <ctype.h>
 
-#include "rc-packman.h"
 #include "rc-packman-private.h"
+
+#include "rc-marshal.h"
 
 gchar *rc_libdir = LIBDIR;
 
@@ -39,7 +42,7 @@ rc_packman_set_libdir (const gchar *libdir)
 static void rc_packman_class_init (RCPackmanClass *klass);
 static void rc_packman_init       (RCPackman *obj);
 
-static GtkObjectClass *rc_packman_parent;
+static GObjectClass *rc_packman_parent;
 
 enum SIGNALS {
     TRANSACT_START,
@@ -51,30 +54,33 @@ enum SIGNALS {
 
 static guint signals[LAST_SIGNAL] = { 0 };
 
-guint
+GType
 rc_packman_get_type (void)
 {
-    static guint type = 0;
+    static GType type = 0;
 
     if (!type) {
-        GtkTypeInfo type_info = {
-            "RCPackman",
-            sizeof (RCPackman),
+        static GTypeInfo type_info = {
             sizeof (RCPackmanClass),
-            (GtkClassInitFunc) rc_packman_class_init,
-            (GtkObjectInitFunc) rc_packman_init,
-            (GtkArgSetFunc) NULL,
-            (GtkArgGetFunc) NULL,
+            NULL, NULL,
+            (GClassInitFunc) rc_packman_class_init,
+            NULL, NULL,
+            sizeof (RCPackman),
+            0,
+            (GInstanceInitFunc) rc_packman_init
         };
 
-        type = gtk_type_unique (gtk_object_get_type (), &type_info);
+        type = g_type_register_static (G_TYPE_OBJECT,
+                                       "RCPackman",
+                                       &type_info,
+                                       0);
     }
 
     return type;
 }
 
 static void
-rc_packman_destroy (GtkObject *obj)
+rc_packman_finalize (GObject *obj)
 {
     RCPackman *packman = RC_PACKMAN (obj);
 
@@ -82,76 +88,61 @@ rc_packman_destroy (GtkObject *obj)
 
     g_free (packman->priv);
 
-    if (GTK_OBJECT_CLASS(rc_packman_parent)->destroy)
-        (* GTK_OBJECT_CLASS(rc_packman_parent)->destroy) (obj);
-}
-
-typedef void (*GtkSignal_NONE__LONG_LONG) (GtkObject *object, 
-                                           glong arg1,
-                                           glong arg2,
-                                           gpointer user_data);
-static void gtk_marshal_NONE__LONG_LONG (GtkObject    *object, 
-                                         GtkSignalFunc func, 
-                                         gpointer      func_data, 
-                                         GtkArg       *args)
-{
-    GtkSignal_NONE__LONG_LONG rfunc;
-    rfunc = (GtkSignal_NONE__LONG_LONG) func;
-    (* rfunc) (object,
-               GTK_VALUE_LONG(args[0]),
-               GTK_VALUE_LONG(args[1]),
-               func_data);
+    if (rc_packman_parent->finalize)
+        rc_packman_parent->finalize (obj);
 }
 
 static void
 rc_packman_class_init (RCPackmanClass *klass)
 {
-    GtkObjectClass *object_class = (GtkObjectClass *) klass;
+    GObjectClass *object_class = (GObjectClass *) klass;
 
-    object_class->destroy = rc_packman_destroy;
+    object_class->finalize = rc_packman_finalize;
 
-    rc_packman_parent = gtk_type_class (gtk_object_get_type ());
+    rc_packman_parent = g_type_class_peek_parent (klass);
 
     signals[TRANSACT_START] =
-        gtk_signal_new ("transact_start",
-                        GTK_RUN_LAST,
-                        object_class->type,
-                        GTK_SIGNAL_OFFSET (RCPackmanClass, transact_start),
-                        gtk_marshal_NONE__INT,
-                        GTK_TYPE_NONE, 1,
-                        GTK_TYPE_INT);
+        g_signal_new ("transact_start",
+                      G_TYPE_FROM_CLASS (klass),
+                      G_SIGNAL_RUN_LAST,
+                      G_STRUCT_OFFSET (RCPackmanClass, transact_start),
+                      NULL, NULL,
+                      rc_marshal_VOID__INT,
+                      G_TYPE_NONE, 1,
+                      G_TYPE_INT);
 
     signals[TRANSACT_STEP] =
-        gtk_signal_new ("transact_step",
-                        GTK_RUN_LAST,
-                        object_class->type,
-                        GTK_SIGNAL_OFFSET (RCPackmanClass, transact_step),
-                        gtk_marshal_NONE__INT_INT_POINTER,
-                        GTK_TYPE_NONE, 3,
-                        GTK_TYPE_INT,
-                        GTK_TYPE_INT,
-                        GTK_TYPE_STRING);
+        g_signal_new ("transact_step",
+                      G_TYPE_FROM_CLASS (klass),
+                      G_SIGNAL_RUN_LAST,
+                      G_STRUCT_OFFSET (RCPackmanClass, transact_step),
+                      NULL, NULL,
+                      rc_marshal_VOID__INT_INT_STRING,
+                      G_TYPE_NONE, 3,
+                      G_TYPE_INT,
+                      G_TYPE_INT,
+                      G_TYPE_STRING);
 
     signals[TRANSACT_PROGRESS] =
-        gtk_signal_new ("transact_progress",
-                        GTK_RUN_LAST,
-                        object_class->type,
-                        GTK_SIGNAL_OFFSET (RCPackmanClass, transact_progress),
-                        gtk_marshal_NONE__LONG_LONG,
-                        GTK_TYPE_NONE, 2,
-                        GTK_TYPE_LONG,
-                        GTK_TYPE_LONG);
+        g_signal_new ("transact_progress",
+                      G_TYPE_FROM_CLASS (klass),
+                      G_SIGNAL_RUN_LAST,
+                      G_STRUCT_OFFSET (RCPackmanClass, transact_progress),
+                      NULL, NULL,
+                      rc_marshal_VOID__LONG_LONG,
+                      G_TYPE_NONE, 2,
+                      G_TYPE_LONG,
+                      G_TYPE_LONG);
 
     signals[TRANSACT_DONE] =
-        gtk_signal_new ("transact_done",
-                        GTK_RUN_LAST | GTK_RUN_NO_RECURSE,
-                        object_class->type,
-                        GTK_SIGNAL_OFFSET (RCPackmanClass, transact_done),
-                        gtk_marshal_NONE__NONE,
-                        GTK_TYPE_NONE, 0);
+        g_signal_new ("transact_done",
+                      G_TYPE_FROM_CLASS (klass),
+                      G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE,
+                      G_STRUCT_OFFSET (RCPackmanClass, transact_done),
+                      NULL, NULL,
+                      rc_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);
     
-    gtk_object_class_add_signals (object_class, signals, LAST_SIGNAL);
-
     /* Subclasses should provide real implementations of these functions, and
        we're just NULLing these for clarity (and paranoia!) */
     klass->rc_packman_real_transact = NULL;
@@ -181,7 +172,7 @@ RCPackman *
 rc_packman_new (void)
 {
     RCPackman *packman =
-        RC_PACKMAN (gtk_type_new (rc_packman_get_type ()));
+        RC_PACKMAN (g_object_new (rc_packman_get_type (), NULL));
 
     return packman;
 }

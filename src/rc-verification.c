@@ -159,8 +159,8 @@ gpg_read_done_cb (RCLineBuf *line_buf, RCLineBufStatus status, gpointer data)
 
     RC_ENTRY;
 
-    gtk_signal_disconnect (GTK_OBJECT (line_buf), gpg_info->read_line_id);
-    gtk_signal_disconnect (GTK_OBJECT (line_buf), gpg_info->read_done_id);
+    g_signal_handler_disconnect (line_buf, gpg_info->read_line_id);
+    g_signal_handler_disconnect (line_buf, gpg_info->read_done_id);
 
     g_main_quit (gpg_info->loop);
 
@@ -294,17 +294,20 @@ rc_verify_gpg (gchar *file, gchar *sig)
     gpg_info.verification = verification;
 
     gpg_info.read_line_id =
-        gtk_signal_connect (GTK_OBJECT (line_buf), "read_line",
-                            GTK_SIGNAL_FUNC (gpg_read_line_cb),
-                            (gpointer) &gpg_info);
+        g_signal_connect (line_buf,
+                          "read_line",
+                          (GCallback) gpg_read_line_cb,
+                          &gpg_info);
+    
     gpg_info.read_done_id =
-        gtk_signal_connect (GTK_OBJECT (line_buf), "read_done",
-                            GTK_SIGNAL_FUNC (gpg_read_done_cb),
-                            (gpointer) &gpg_info);
+        g_signal_connect (line_buf,
+                          "read_done",
+                          (GCallback) gpg_read_done_cb,
+                          &gpg_info);
 
     g_main_run (loop);
 
-    gtk_object_unref (GTK_OBJECT (line_buf));
+    g_object_unref (line_buf);
 
     g_main_destroy (loop);
 

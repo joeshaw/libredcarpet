@@ -19,11 +19,11 @@
  */
 
 #include "config.h"
-
-#include <stdlib.h>
-
-#include "rc-distro.h"
 #include "rc-distman.h"
+
+#include <glib.h>
+#include <stdlib.h>
+#include "rc-distro.h"
 
 #ifdef ENABLE_DPKG
 #include "rc-debman.h"

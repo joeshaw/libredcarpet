@@ -1,8 +1,7 @@
 INCLUDES = 						\
 	-I$(top_srcdir) -Wall		 		\
 	$(RPMLIB_CFLAGS) 				\
-	$(GLIB_CFLAGS) $(GTK_CFLAGS) 			\
-	$(XML_CFLAGS) 					\
+	$(LIBREDCARPET_CFLAGS)				\
 	-DG_LOG_DOMAIN=\"libredcarpet\" 		\
 	-DSHAREDIR=\""$(datadir)/@PRIVATE_NAMESPACE@"\" \
 	-DLIBDIR=\""$(libdir)/@PRIVATE_NAMESPACE@"\"
@@ -28,6 +27,10 @@ endif
 if ENABLE_DPKG
 dpkg_sources2 = $(dpkg_sources)
 endif
+
+BUILT_SOURCES =				\
+	rc-marshal.h			\
+	rc-marshal.c
 
 libredcarpettmp_a_SOURCES =		\
 	libredcarpet.h			\
@@ -93,11 +96,16 @@ libredcarpettmp_a_SOURCES =		\
 	rc-line-buf-private.h		\
 	rc-debman-general.c		\
 	rc-debman-general.h		\
+	rc-marshal.c			\
 	$(dpkg_sources2)		\
 	$(rpm_sources2)
 
-EXTRA_DIST = \
-	$(rpm_sources) $(dpkg_sources) rc-dpkg-helper.c make_stub.sh
+EXTRA_DIST =				\
+	$(rpm_sources)			\
+	$(dpkg_sources)			\
+	rc-dpkg-helper.c 		\
+	make_stub.sh			\
+	rc-marshal.list
 
 if ENABLE_DPKG
 dpkghelperdir = $(libdir)/@PRIVATE_NAMESPACE@
@@ -163,6 +171,28 @@ if STATIC_RPM
 else
 	cp libredcarpettmp.a libredcarpet.a
 endif
+
+###
+### Deal with auto-generating the signal marshallers
+###
+
+rc-marshal.h: stamp-rc-marshal.h
+	@true   
+
+rc-marshal.c: stamp-rc-marshal.c
+	@true
+
+stamp-rc-marshal.h: rc-marshal.list
+	cd $(srcdir) \
+	&& glib-genmarshal --prefix=rc_marshal rc-marshal.list --header >> xgen-gmh \
+	&& (cmp -s xgen-gmh rc-marshal.h || cp xgen-gmh rc-marshal.h) \
+	&& rm -f xgen-gmh xgen-gmh~
+
+stamp-rc-marshal.c: rc-marshal.list
+	cd $(srcdir) \
+	&& glib-genmarshal --prefix=rc_marshal rc-marshal.list --body >> xgen-gmc \
+	&& (cmp -s xgen-gmc rc-marshal.c || cp xgen-gmc rc-marshal.c) \
+	&& rm -f xgen-gmc xgen-gmc~
 
 clean-local:
 	rm -f libredcarpet.a

@@ -21,16 +21,16 @@
 #ifndef _RC_LINE_BUF_H
 #define _RC_LINE_BUF_H
 
-#include <gtk/gtk.h>
+#include <glib-object.h>
 
 #define RC_TYPE_LINE_BUF            (rc_line_buf_get_type ())
-#define RC_LINE_BUF(obj)            (GTK_CHECK_CAST ((obj), \
+#define RC_LINE_BUF(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), \
                                      RC_TYPE_LINE_BUF, RCLineBuf))
-#define RC_LINE_BUF_CLASS(klass)    (GTK_CHECK_CLASS_CAST ((klass), \
+#define RC_LINE_BUF_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), \
                                      RC_TYPE_LINE_BUF, RCLineBufClass))
-#define IS_RC_LINE_BUF(obj)         (GTK_CHECK_TYPE ((obj), \
+#define IS_RC_LINE_BUF(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), \
                                      RC_TYPE_LINE_BUF))
-#define IS_RC_LINE_BUF_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), \
+#define IS_RC_LINE_BUF_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), \
                                      RC_TYPE_LINE_BUF))
 
 typedef enum {
@@ -43,13 +43,13 @@ typedef struct _RCLineBufClass   RCLineBufClass;
 typedef struct _RCLineBufPrivate RCLineBufPrivate;
 
 struct _RCLineBuf {
-    GtkObject parent;
+    GObject parent;
 
     RCLineBufPrivate *priv;
 };
 
 struct _RCLineBufClass {
-    GtkObjectClass parent_class;
+    GObjectClass parent_class;
 
     /* Signals */
 
@@ -57,7 +57,7 @@ struct _RCLineBufClass {
     void (*read_done)(RCLineBuf *line_buf, RCLineBufStatus status);
 };
 
-guint rc_line_buf_get_type (void);
+GType rc_line_buf_get_type (void);
 
 RCLineBuf *rc_line_buf_new (void);
 

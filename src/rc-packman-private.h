@@ -22,7 +22,7 @@
 #ifndef _RC_PACKMAN_PRIVATE_H
 #define _RC_PACKMAN_PRIVATE_H
 
-#include <gtk/gtk.h>
+#include <glib.h>
 
 typedef struct _RCPackmanPrivate RCPackmanPrivate;
 

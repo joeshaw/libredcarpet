@@ -1,9 +1,9 @@
 #include <gnome-xml/tree.h>
 
-#include <gtk/gtk.h>
 #include "libredcarpet.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 int
 main (int argc, char **argv)
@@ -16,7 +16,7 @@ main (int argc, char **argv)
     xmlNode *channel_node;
     xmlNode *subchannel_node;
 
-    gtk_type_init ();
+    g_type_init ();
 
     packman = rc_distman_new ();
 

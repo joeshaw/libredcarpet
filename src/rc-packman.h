@@ -21,19 +21,19 @@
 #ifndef _RC_PACKMAN_H
 #define _RC_PACKMAN_H
 
-#include <gtk/gtk.h>
+#include <glib-object.h>
 
 #define RC_TYPE_PACKMAN            (rc_packman_get_type ())
-#define RC_PACKMAN(obj)            (GTK_CHECK_CAST ((obj), \
+#define RC_PACKMAN(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), \
                                     RC_TYPE_PACKMAN, RCPackman))
-#define RC_PACKMAN_CLASS(klass)    (GTK_CHECK_CLASS_CAST ((klass), \
+#define RC_PACKMAN_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), \
                                     RC_TYPE_PACKMAN, \
                                     RCPackmanClass))
-#define RC_IS_PACKMAN(obj)         (GTK_CHECK_TYPE ((obj), \
+#define RC_IS_PACKMAN(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), \
                                     RC_TYPE_PACKMAN))
-#define RC_IS_PACKMAN_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), \
+#define RC_IS_PACKMAN_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), \
                                     RC_TYPE_PACKMAN))
-#define RC_PACKMAN_GET_CLASS(obj)  (RC_PACKMAN_CLASS (GTK_OBJECT (obj)->klass))
+#define RC_PACKMAN_GET_CLASS(obj)  (RC_PACKMAN_CLASS (G_OBJECT_GET_CLASS (obj)))
 
 typedef struct _RCPackman        RCPackman;
 typedef struct _RCPackmanClass   RCPackmanClass;
@@ -65,13 +65,13 @@ typedef enum {
 #include "rc-verification.h"
 
 struct _RCPackman {
-    GtkObject parent;
+    GObject parent;
 
     RCPackmanPrivate *priv;
 };
 
 struct _RCPackmanClass {
-    GtkObjectClass parent_class;
+    GObjectClass parent_class;
 
     void (*transact_start)(RCPackman *packman, gint total_steps);
     void (*transact_step)(RCPackman *packman, gint seqno, RCPackmanStep step,
@@ -104,7 +104,7 @@ struct _RCPackmanClass {
                                             const gchar *filename);
 };
 
-guint rc_packman_get_type (void);
+GType rc_packman_get_type (void);
 
 RCPackman *rc_packman_new (void);
 

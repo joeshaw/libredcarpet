@@ -24,17 +24,15 @@ dnl Check for required programs
 AC_PROG_CC
 AC_ISC_POSIX
 AC_HEADER_STDC
-AC_ARG_PROGRAM
 AC_PROG_LIBTOOL
 
 dnl endianness check, just for dobey ;-)
 AC_C_BIGENDIAN
 
-dnl glib???
-AM_PATH_GLIB(1.2.0)
+PKG_CHECK_MODULES(LIBREDCARPET, glib-2.0 gobject-2.0 gmodule-2.0 libxml-2.0)
 
-dnl gtk
-AM_PATH_GTK(1.2.0)
+AC_SUBST(LIBREDCARPET_CFLAGS)
+AC_SUBST(LIBREDCARPET_LIBS)
 
 dnl Check for libz to handle compressed xml files
 AC_CHECK_LIB(z, inflate)
@@ -161,20 +159,6 @@ fi
 dnl gtk-doc
 AM_CONDITIONAL(ENABLE_GTK_DOC, test x$enable_gtk_doc = xyes)
 
-dnl libxml
-AC_SUBST(XML_LIBS)
-AC_SUBST(XML_CFLAGS)
-
-XML_LIBS=`xml-config --libs`
-XML_CFLAGS=`xml-config --cflags`
-
-dnl aargh
-XML_CFLAGS=`echo $XML_CFLAGS | sed "s/\/gnome-xml//g"`
-
-if test "x$XML_LIBS" = "x"; then
-  AC_MSG_ERROR(couldn't find xml-config)
-fi
-
 save_CPPFLAGS="$CPPFLAGS"
 CPPFLAGS="$CPPFLAGS $XML_CFLAGS"
 save_LDFLAGS="$LDFLAGS"
@@ -204,6 +188,7 @@ Configuration:
 
   Source code location:         ${srcdir}
   Compiler:                     ${CC}
+
   Include DPKG support:         ${enable_backend_dpkg}
   Include dynamic RPM support:  ${enable_backend_rpm}
   Include static RPM3 support:  ${enable_backend_rpm3_static}

@@ -21,24 +21,24 @@
 #ifndef _RC_RPMMAN_H
 #define _RC_RPMMAN_H
 
+#include <glib-object.h>
 #include <gmodule.h>
-#include <gtk/gtk.h>
 
 #include <rpm/rpmlib.h>
 
 #include "rc-packman.h"
 #include "rc-rpmman-types.h"
 
-#define GTK_TYPE_RC_RPMMAN        (rc_rpmman_get_type ())
-#define RC_RPMMAN(obj)            (GTK_CHECK_CAST ((obj), \
-                                   GTK_TYPE_RC_RPMMAN, RCRpmman))
-#define RC_RPMMAN_CLASS(klass)    (GTK_CHECK_CLASS_CAST ((klass), \
-                                   GTK_TYPE_RC_RPMMAN, \
+#define RC_TYPE_RPMMAN            (rc_rpmman_get_type ())
+#define RC_RPMMAN(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), \
+                                   RC_TYPE_RPMMAN, RCRpmman))
+#define RC_RPMMAN_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), \
+                                   RC_TYPE_RPMMAN, \
                                    RCRpmmanClass))
-#define IS_RC_RPMMAN(obj)         (GTK_CHECK_TYPE ((obj), \
-                                   GTK_TYPE_RC_RPMMAN))
-#define IS_RC_RPMMAN_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), \
-                                   GTK_TYPE_RC_RPMMAN))
+#define IS_RC_RPMMAN(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), \
+                                   RC_TYPE_RPMMAN))
+#define IS_RC_RPMMAN_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), \
+                                   RC_TYPE_RPMMAN))
 
 typedef struct _RCRpmman      RCRpmman;
 typedef struct _RCRpmmanClass RCRpmmanClass;
@@ -145,7 +145,7 @@ struct _RCRpmmanClass {
     RCPackmanClass parent_class;
 };
 
-guint rc_rpmman_get_type (void);
+GType rc_rpmman_get_type (void);
 
 RCRpmman *rc_rpmman_new (void);
 
