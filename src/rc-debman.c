@@ -1209,10 +1209,14 @@ make_unpack_commands (gchar **command, RCPackageSList *packages)
 
     RC_ENTRY;
 
+#if 0
     arg_max = sysconf (_SC_ARG_MAX);
     if (arg_max == -1) {
         arg_max = 16384;
     }
+#else
+    arg_max = 0x7FFFFFFF;
+#endif
 
     iter1 = packages;
 
