@@ -83,7 +83,10 @@ libredcarpet_a_SOURCES =		\
 #	rc-crypto.c			\
 #	rc-crypto.h			\
 
-EXTRA_DIST = $(rpm_sources) $(dpkg_sources) dpkg-helper.c
+gpgdir = $(datadir)/redcarpet
+gpg_DATA = red-carpet.gpg
+
+EXTRA_DIST = $(rpm_sources) $(dpkg_sources) dpkg-helper.c $(gpg_DATA)
 
 helperdir = $(datadir)/redcarpet
 helper_DATA = \

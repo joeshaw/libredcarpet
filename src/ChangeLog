@@ -1,5 +1,12 @@
 2001-01-18  Ian Peters  <itp@helixcode.com>
 
+	* red-carpet.gpg: added.  contains our public key, so far
+
+	* Makefile.am: install red-carpet.gpg in $(datadir)/redcarpet, and
+	put it in EXTRA_DIST
+
+2001-01-18  Ian Peters  <itp@helixcode.com>
+
 	* rc-deps.c, rc-deps.h (rc_dep_resolution_new): remove the packman
 	paramater
 	(rc_dep_set_packman): added
