@@ -822,6 +822,31 @@ add_fake_history (RCPackage *pkg)
     rc_package_add_update (pkg, up);
 }
 
+typedef struct {
+    RCPackageFn user_callback;
+    gpointer    user_data;
+    const gchar *path;
+} PackagesFromDirInfo;
+
+static gboolean
+packages_from_dir_cb (RCPackage *package, gpointer user_data)
+{
+    PackagesFromDirInfo *info = user_data;
+    RCPackageUpdate *update;
+
+    /* Set package path */
+    update = rc_package_get_latest_update (package);
+    if (update && update->package_url)
+        package->package_filename = g_build_path (G_DIR_SEPARATOR_S,
+                                                  info->path,
+                                                  update->package_url,
+                                                  NULL);
+    if (info->user_callback)
+        return info->user_callback (package, info->user_data);
+
+    return TRUE;
+}
+
 gint
 rc_extract_packages_from_directory (const char *path,
                                     RCChannel *channel,
@@ -906,14 +931,42 @@ rc_extract_packages_from_directory (const char *path,
     }
 #endif
 
-    /* If pkginfo_magic is set and if a pkginfo.xml or
-       pkginfo.xml.gz file exists in the directory, use it
+    /* If pkginfo_magic is set and if a packageinfo.xml or
+       packageinfo.xml.gz file exists in the directory, use it
        instead of just scanning the files in the directory
        looking for packages. */
-#if 0
-    if (pkginfo_magic)
-        g_warning ("pkginfo_magic not implemented --- scanning directory");
-#endif
+
+    if (pkginfo_magic) {
+        int i, count;
+        gchar *pkginfo_path;
+        const gchar *pkginfo[] = { "packageinfo.xml",
+                                   "packageinfo.xml.gz",
+                                   NULL };
+
+        for (i = 0; pkginfo[i]; i++) {
+            pkginfo_path = g_build_path (G_DIR_SEPARATOR_S, path, pkginfo[i], NULL);
+            if (g_file_test (pkginfo_path, G_FILE_TEST_EXISTS))
+                break;
+
+            g_free (pkginfo_path);
+            pkginfo_path = NULL;
+        }
+
+        if (pkginfo_path) {
+            PackagesFromDirInfo info;
+
+            info.user_callback = callback;
+            info.user_data = user_data;
+            info.path = path;
+
+            count = rc_extract_packages_from_helix_file (pkginfo_path,
+                                                         channel,
+                                                         packages_from_dir_cb,
+                                                         &info);
+            g_free (pkginfo_path);
+            return count;
+        }
+    }
 
     dir = g_dir_open (path, 0, NULL);
     if (dir == NULL)
