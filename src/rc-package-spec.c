@@ -25,6 +25,7 @@
 /* #define DEBUG 50 */
 
 #include "rc-package-spec.h"
+#include "rc-packman.h"
 
 void
 rc_package_spec_init (RCPackageSpec *rcps,
@@ -144,4 +145,15 @@ gint rc_package_spec_equal (gconstpointer a, gconstpointer b)
 gint rc_package_spec_not_equal (gconstpointer a, gconstpointer b)
 {
     return ! rc_package_spec_equal (a, b);
+}
+
+extern RCPackman *das_global_packman;
+
+gint
+rc_package_spec_compare (void *a, void *b)
+{
+    RCPackage *apkg = a;
+    RCPackage *bpkg = b;
+
+    return rc_packman_version_compare (das_global_packman, &apkg->spec, &bpkg->spec);
 }

@@ -1,3 +1,14 @@
+2001-01-23  Vladimir Vukicevic  <vladimir@helixcode.com>
+
+	* rc-package-dep.c: Use rpmish semantics only if RPM is compiled in
+
+	* rc-deps.c: use rc_package_slist_sort_by_spec, not the one that
+	got renamed to _by_name!
+
+	* rc-package-spec.c, rc-package-spec.h: rc_package_spec_compare
+
+	* rc-package.c, rc-package.h: rc_package_slist_sort_by_spec
+
 2001-01-23  Ian Peters  <itp@ximian.com>
 
 	* red-carpet.gpg: added keys for Red Hat, Caldera, TurboLinux,

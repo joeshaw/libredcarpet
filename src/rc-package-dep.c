@@ -30,6 +30,12 @@
 
 #define DEBUG 50 
 
+#if defined(HAVE_RPM3) || defined(HAVE_RPM4)
+static gboolean rpmish = TRUE;
+#else
+static gboolean rpmish = FALSE;
+#endif
+
 extern RCPackman *das_global_packman;
 
 RCPackageDepItem *
@@ -168,10 +174,12 @@ rc_package_dep_verify_and_relation (RCPackageDep *depl,
 
         /* HACK-2: debian can't have versioned deps fulfilled by virtual provides. */
         /* this should be some sort of if (debianish) { .. } */
-        if (is_virtual && (unweak_rel != RC_RELATION_ANY && unweak_rel != RC_RELATION_NONE)) {
-            if (!strcmp (di->spec.name, spec->name)) {
-                if (fail_out) *fail_out = g_slist_append (*fail_out, di);
-                ret = FALSE;
+        if (!rpmish) {
+            if (is_virtual && (unweak_rel != RC_RELATION_ANY && unweak_rel != RC_RELATION_NONE)) {
+                if (!strcmp (di->spec.name, spec->name)) {
+                    if (fail_out) *fail_out = g_slist_append (*fail_out, di);
+                    ret = FALSE;
+                }
             }
         }
 
@@ -278,14 +286,16 @@ rc_package_dep_item_verify_relation (RCPackageDepItem *dep,
      * reflect that. So, if we're looking for an exact match, we ignore the release when
      * comparing.
      */
-    if (unweak_rel == RC_RELATION_EQUAL && (dep->spec.release == NULL || dep->spec.epoch == 0)) {
-        /* it's not depending on any particular release */
-        newspecspec.name = spec->name;
-        newspecspec.epoch = dep->spec.epoch ? spec->epoch : 0;
-        newspecspec.version = spec->version;
-        newspecspec.release = dep->spec.release ? spec->release : NULL;
-
-        use_newspecspec = TRUE;
+    if (rpmish) {
+        if (unweak_rel == RC_RELATION_EQUAL && (dep->spec.release == NULL || dep->spec.epoch == 0)) {
+            /* it's not depending on any particular release */
+            newspecspec.name = spec->name;
+            newspecspec.epoch = dep->spec.epoch ? spec->epoch : 0;
+            newspecspec.version = spec->version;
+            newspecspec.release = dep->spec.release ? spec->release : NULL;
+            
+            use_newspecspec = TRUE;
+        }
     }
 
     compare_ret = rc_packman_version_compare (das_global_packman, &dep->spec,
