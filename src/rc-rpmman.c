@@ -29,7 +29,7 @@
 #include <rpm/misc.h>
 #include <rpm/header.h>
 
-#if 1
+#if 0
 #    define RPM_ROOTDIR "/cvs/redhat"
 #else
 #    define RPM_ROOTDIR "/"
@@ -440,7 +440,6 @@ static void
 rc_rpmman_install (RCPackman *p, GSList *pkgs)
 {
     GSList *iter = pkgs;
-    gchar *ptr;
     guint length;
     gchar **pkgv;
     int i;
@@ -451,10 +450,13 @@ rc_rpmman_install (RCPackman *p, GSList *pkgs)
     pkgv = g_new0 (char *, length + 1);
 
     for (i = 0; i < length; i++) {
-        ptr = (gchar *)(iter->data);
+        gchar *ptr = (gchar *)(iter->data);
+
         /* Gotta give a filename */
         g_assert (ptr);
+
         pkgv[i] = g_strdup (ptr);
+
         iter = iter->next;
     }
 
@@ -467,24 +469,29 @@ rc_rpmman_install (RCPackman *p, GSList *pkgs)
 
     g_strfreev (pkgv);
 
-    /* I have no idea what return codes are possible */
+    /* I have no idea what return codes are possible, so I hope I'm
+       interpreting how rpmlib works correctly.  Given my track record,
+       probably not, but... */
 
     if (ret) {
-        g_free (p->reason);
-        p->reason = g_strdup ("RPM installation failed.");
+        rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
+                              "RPM installation failed.");
         rc_packman_install_done (p, RC_PACKMAN_FAIL);
     } else {
         rc_packman_install_done (p, RC_PACKMAN_COMPLETE);
     }
 } /* rc_rpmman_install */
 
-/* Much like _install, once again FIXME check the return code */
+/* Given a list of packages to remove, with names and optionally versions and
+   releases, remove them from the system.  The epoch isn't taken into
+   consideration, because rpmlib can't, it seems.  Doesn't matter, because
+   vlad tells me you can't have two packages installed which differ only in
+   epoch.  So oh well. */
 
 static void
 rc_rpmman_remove (RCPackman *p, RCPackageSList *pkgs)
 {
     RCPackageSList *iter = pkgs;
-    RCPackage *ptr;
     guint length;
     gchar **pkgv;
     int i;
@@ -495,9 +502,13 @@ rc_rpmman_remove (RCPackman *p, RCPackageSList *pkgs)
     pkgv = g_new0 (gchar *, length + 1);
 
     for (i = 0; i < length; i++) {
-        ptr = (RCPackage *)(iter->data);
+        RCPackage *ptr = (RCPackage *)(iter->data);
 
-        /* FIXME: what the hell does RPM do with the epoch?! */
+        /* Must at least name the package */
+        g_assert (p->spec.name);
+
+        /* If you've got a release, you've gotta have a version */
+        g_assert (!p->spec.release || p->spec.version);
 
         if (ptr->spec.version && ptr->spec.release) {
             pkgv[i] = g_strconcat (ptr->spec.name, "-", ptr->spec.version, "-",
@@ -519,19 +530,22 @@ rc_rpmman_remove (RCPackman *p, RCPackageSList *pkgs)
     /* I have no idea what error codes are possible... */
 
     if (ret) {
-        g_free (p->reason);
-        p->reason = g_strdup ("RPM removal failed");
+        rc_packman_set_error (p, RC_PACKMAN_OPERATION_FAILED,
+                              "RPM removal failed");
         rc_packman_remove_done (p, RC_PACKMAN_FAIL);
     } else {
         rc_packman_remove_done (p, RC_PACKMAN_COMPLETE);
     }
 } /* rc_rpmman_remove */
 
+/* Query for information about a package (version, release, installed status,
+   installed size...).  If you specify more than just a name, it tries to match
+   those criteria. */
+
 static RCPackage *
 rc_rpmman_query (RCPackman *p, RCPackage *pkg)
 {
     rpmdb db;
-    Header hdr;
     int_32 count;
     dbiIndexSet matches;
     guint i;
@@ -550,6 +564,7 @@ rc_rpmman_query (RCPackman *p, RCPackage *pkg)
     }
 
     for (i = 0; i < matches.count; i++) {
+        Header hdr;
         gchar *version = NULL, *release = NULL;
         guint32 size = 0, epoch = 0;
 
@@ -571,7 +586,8 @@ rc_rpmman_query (RCPackman *p, RCPackage *pkg)
            doesn't seem very likely, but... */
 
         if ((!pkg->spec.version || !strcmp (pkg->spec.version, version)) &&
-            (!pkg->spec.release || !strcmp (pkg->spec.release, release))) {
+            (!pkg->spec.release || !strcmp (pkg->spec.release, release)) &&
+            (!pkg->spec.epoch || pkg->spec.epoch == epoch)) {
 
             g_free (pkg->spec.version);
             g_free (pkg->spec.release);
@@ -600,6 +616,8 @@ rc_rpmman_query (RCPackman *p, RCPackage *pkg)
 
     return (pkg);
 } /* rc_packman_query */
+
+/* Query a file for rpm header information */
 
 static RCPackage *
 rc_rpmman_query_file (RCPackman *p, gchar *filename)
@@ -637,6 +655,8 @@ rc_rpmman_query_file (RCPackman *p, gchar *filename)
 
     return (pkg);
 } /* rc_packman_query_file */
+
+/* Query all of the packages on the system */
 
 static RCPackageSList *
 rc_rpmman_query_all (RCPackman *p)
@@ -731,85 +751,40 @@ rc_rpmman_version_compare (RCPackman *p, RCPackageSpec *s1, RCPackageSpec *s2)
         return rpmvercmp(r1, r2);
 }
 
-#if 0
-
-/* Return -1 if the package is too old or a problem makes it uninstallable
-   Return  0 if the package is the same version and release as installed
-   Return  1 if the package is newer than the currently installed one
-*/
-
-/* Alternatively, return 1 if the first package is greater than the second,
-   0 if the packages are the same, and -1 if the first package is smaller than
-   the second */
-
-static gint
-rc_rpmman_version_compare (RCPackman *p, gchar *v1, gchar *r1,
-                           gchar *v2, gchar *r2)
-{
-    int stat;
-
-    g_return_val_if_fail(p, -1);
-
-    /* Are we requiring that they provide strings for v1, r1, v2, and r2? If
-       so, we can just remove the following code and put some
-       g_return_val_if_fails instead. Otherwise... 
-    */
-
-    /* I don't think we should require that; this code looks correct.  Any
-       non-NULL string should be interpreted as a "later" version than a NULL
-       string. */
-
-    if (v1 && !v2)
-        return 1;
-    else if (v2 && !v1)
-        return -1;
-    else if (!v1 && !v2)
-        stat = 0;
-    else
-        stat = rpmvercmp(v1, v2);
-
-    if (stat)
-        return stat;
-    
-    if (r1 && !r2)
-        return 1;
-    else if (r2 && !r1)
-        return -1;
-    else if (!r1 && !r2)
-        return 0;
-    else
-        return rpmvercmp(r1, r2);
-} /* rc_rpmman_version_compare */
-
-#endif
-
-/* This function takes an array of strings of the form <version>-<release>, and
-   breaks them into two arrays of strings of <version> and <release>. */
-
-/* FIXME: this function isn't handling the epoch at all, and needs to.
-   FUCKING rpmlib. */
+/* Takes an array of strings, which may be of the form <version>, or
+   <epoch>:<version>, or <version>-<release>, or <epoch>:<version>-<release>,
+   and does the right thing, breaking them into the right parts and returning
+   the parts in the arrays epochs, versions, and releases. */
 
 static void
-parse_versions (gchar **inputs, gchar ***versions, gchar ***releases,
-                gint count)
+parse_versions (gchar **inputs, guint32 **epochs, gchar ***versions,
+                gchar ***releases, guint count)
 {
-    int i = 0, j;
+    guint i;
 
     *versions = g_new0 (gchar *, count);
     *releases = g_new0 (gchar *, count);
+    *epochs = g_new0 (guint32, count);
 
     for (i = 0; i < count; i++) {
-        j = 0;
+        guint j = 0;
+        gchar *endptr;
 
-        while (inputs[i][j] && inputs[i][j] != '-') {
+        (*epochs)[i] = strtoul (inputs[i], &endptr, 10);
+
+        if (endptr && endptr[j] == ':') {
+            endptr++;
+        }
+
+        while (endptr[j] && endptr[j] != '-') {
             j++;
         }
 
-        if (inputs[i][j]) {
-            (*versions)[i] = g_strndup (inputs[i], j);
-            (*releases)[i] = g_strdup (inputs[i] + j + 1);
+        if (endptr[j]) {
+            (*versions)[i] = g_strndup (endptr, j);
+            (*releases)[i] = g_strdup (endptr + j + 1);
         } else {
-            (*versions)[i] = g_strdup (inputs[i]);
+            (*versions)[i] = g_strdup (endptr);
             (*releases)[i] = NULL;
         }
     }
@@ -819,6 +794,7 @@ static void
 rc_rpmman_depends_fill (RCPackage *pkg, Header hdr)
 {
     gchar **names, **verrels, **versions, **releases;
+    guint32 *epochs;
     gint *relations;
     gint32 count;
     guint i;
@@ -861,7 +837,7 @@ rc_rpmman_depends_fill (RCPackage *pkg, Header hdr)
     if (verrels == NULL)
 	count = 0;
 
-    parse_versions (verrels, &versions, &releases, count);
+    parse_versions (verrels, &epochs, &versions, &releases, count);
 
     for (i = 0; i < count; i++) {
         RCPackageRelation relation = 0;
@@ -894,7 +870,7 @@ rc_rpmman_depends_fill (RCPackage *pkg, Header hdr)
         } else {
             /* Add the dependency to the list of dependencies */
 
-            dep = rc_package_dep_item_new (names[i], 0, versions[i],
+            dep = rc_package_dep_item_new (names[i], epochs[i], versions[i],
                                            releases[i], relation);
 
             depl = g_slist_append (NULL, dep);
@@ -905,6 +881,10 @@ rc_rpmman_depends_fill (RCPackage *pkg, Header hdr)
 
     free (names);
     free (verrels);
+
+    g_strfreev (versions);
+    g_strfreev (releases);
+    g_free (epochs);
 
     names = NULL;
 
@@ -942,10 +922,10 @@ rc_rpmman_depends_fill (RCPackage *pkg, Header hdr)
     headerGetEntry (hdr, RPMTAG_CONFLICTFLAGS, NULL, (void **)&relations,
                     &count);
     headerGetEntry (hdr, RPMTAG_CONFLICTNAME, NULL, (void **)&names, &count);
-    headerGetEntry (hdr, RPMTAG_CONFLICTVERSION, NULL, (void **)&versions,
+    headerGetEntry (hdr, RPMTAG_CONFLICTVERSION, NULL, (void **)&verrels,
                     &count);
 
-    parse_versions (versions, &versions, &releases, count);
+    parse_versions (verrels, &epochs, &versions, &releases, count);
 
     for (i = 0; i < count; i++) {
         RCPackageRelation relation = 0;
@@ -968,8 +948,8 @@ rc_rpmman_depends_fill (RCPackage *pkg, Header hdr)
             releases[i] = NULL;
         }
 
-        dep = rc_package_dep_item_new (names[i], 0, versions[i], releases[i],
-                                       relation);
+        dep = rc_package_dep_item_new (names[i], epochs[i], versions[i],
+                                       releases[i], relation);
 
         depl = g_slist_append (NULL, dep);
 
@@ -981,6 +961,9 @@ rc_rpmman_depends_fill (RCPackage *pkg, Header hdr)
     free (names);
     free (versions);
 
+    g_strfreev (versions);
+    g_strfreev (releases);
+    g_free (epochs);
 } /* rc_rpmman_depends_fill */
 
 /* Given a GSList of RCPackmanPackage, fills in the three dependency lists
