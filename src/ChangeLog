@@ -1,5 +1,8 @@
 2005-01-04  Tambet Ingo  <tambet@ximian.com>
 
+	* rc-debman.c (query_all_read_line_cb): Fix the leftover from arch
+	moving.
+
 	Add the beginnings of patch RPM support.
 
 	* rc-xml.h (rc_package_spec_to_xml_node): Declare.
