@@ -1,3 +1,7 @@
+2004-07-21  James Willcox  <james@ximian.com>
+
+	* Makefile.am:
+
 2004-07-20  James Willcox  <james@ximian.com>
 
 	* rc-channel.c: (rc_channel_get_type),

@@ -200,6 +200,7 @@ rc-{rpm_rpmio_rpmdb}-4.3.so:
 	$(srcdir)/make_stub.sh rc-{rpm_rpmio_rpmdb}-4.3.so librpm-4.3.so librpmio-4.3.so librpmdb-4.3.so libpopt.so.0
 
 lib_LTLIBRARIES = libredcarpet.la
+libredcarpet_la_LDFLAGS = $(LIBREDCARPET_LIBS)
 
 libredcarpetincludedir = $(includedir)/libredcarpet
 
