@@ -123,7 +123,7 @@ static void * showProgress(const Header h, const rpmCallbackType what,
    redefine the callback used by rpmRunTransactions to emit packman signals.
    It's ugly, I know. */
 
-int rpmInstall(const char * rootdir, const char ** fileArgv, int transFlags, 
+int rc_rpmInstall(const char * rootdir, const char ** fileArgv, int transFlags, 
                int interfaceFlags, int probFilter, 
                rpmRelocation * relocations)
 {
@@ -469,7 +469,7 @@ rc_rpmman_install (RCPackman *p, GSList *pkgs)
 
     RC_RPMMAN (p)->package_count = 0;
 
-    ret = rpmInstall (rpmroot, (const char **)pkgv, 0,
+    ret = rc_rpmInstall (rpmroot, (const char **)pkgv, 0,
                       INSTALL_NOORDER | INSTALL_UPGRADE | INSTALL_NODEPS, 0,
                       NULL);
 
