@@ -1,5 +1,5 @@
 /* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
-/* libredcarpet.h
+/* rc-pretty-name.h
  * Copyright (C) 2000, 2001 Ximian, Inc.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,39 +18,14 @@
  * 02111-1307, USA.
  */
 
-#ifndef _LIBREDCARPET_H
-#define _LIBREDCARPET_H
+#ifndef _RC_PRETTY_NAME_H
+#define _RC_PRETTY_NAME_H
 
-#include "rc-debug.h"
+#include <glib.h>
 
-#include "rc-util.h"
+void rc_pretty_name_parse_xml (gchar *buf, gint compressed_length);
 
-#include "rc-line-buf.h"
+const gchar *rc_pretty_name_lookup (const gchar *package);
 
-#include "rc-package-spec.h"
-#include "rc-package-importance.h"
-#include "rc-package-update.h"
-#include "rc-package-dep.h"
-#include "rc-package-section.h"
-#include "rc-package.h"
-#include "rc-package-set.h"
-
-#include "rc-channel.h"
-
-#include "rc-package-info.h"
-
-#include "rc-deps.h"
-
-#include "rc-distro.h"
-
-#include "rc-md5.h"
-#include "rc-verification.h"
-
-#include "rc-debman-general.h"
-
-#include "rc-packman.h"
-#include "rc-distman.h"
-
-#include "rc-pretty-name.h"
 
 #endif

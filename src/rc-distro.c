@@ -99,13 +99,17 @@ RCDistroChunk distro_figurers[] = {
       func_string_in_file, "/etc/mandrake-release", "7.2", NULL, 0 },
 
     { "debian-22-i386", RC_ARCH_IA32,
-      func_string_in_file, "/etc/debian_version", "2.2", NULL, 0 },
+      func_string_in_file, "/etc/debian_version", "2.2", NULL, CHECK_OP_AND,
+      func_sys, "/bin/arch", "86", 0 },
     { "debian-woody-i386", RC_ARCH_IA32,
-      func_string_in_file, "/etc/debian_version", "woody", NULL, 0 },
+      func_string_in_file, "/etc/debian_version", "woody", NULL, CHECK_OP_AND,
+      func_sys, "/bin/arch", "86", 0 },
     { "debian-sid-i386", RC_ARCH_IA32,
-      func_string_in_file, "/etc/debian_version", "sid", NULL, 0 },
+      func_string_in_file, "/etc/debian_version", "sid", NULL, CHECK_OP_AND,
+      func_sys, "/bin/arch", "86", 0 },
     { "debian-sid-i386", RC_ARCH_IA32,
-      func_string_in_file, "/etc/debian_version", "unstable", NULL, 0 },
+      func_string_in_file, "/etc/debian_version", "unstable", NULL, CHECK_OP_AND,
+      func_sys, "/bin/arch", "86", 0 },
     { NULL }
 };
 

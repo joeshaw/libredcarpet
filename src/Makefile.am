@@ -64,6 +64,8 @@ libredcarpet_a_SOURCES =		\
         rc-md5-private.h                \
 	rc-debug-misc.c			\
 	rc-debug-misc.h			\
+	rc-pretty-name.c		\
+	rc-pretty-name.h		\
         xml-util.c                      \
         xml-util.h                      \
 	rc-line-buf.c			\

@@ -1,3 +1,10 @@
+2001-01-29  Vladimir Vukicevic  <vladimir@ximian.com>
+
+	* Makefile.am, rc-pretty-name.c, rc-pretty-name.h, libredcarpet.h:
+	Pretty names, pretty names.
+
+	* rc-distro.c: Figure out that debian is x86, assbarn.
+
 2001-01-28  Ian Peters  <itp@ximian.com>
 
 	* rc-distman.c: change the ENABLE_RPM3 / ENABLE_RPM4 to ENABLE_RPM

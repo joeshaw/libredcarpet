@@ -82,9 +82,8 @@ rc_debman_parse_version (gchar *input, guint32 *epoch, gchar **version,
     if (release_ptr) {
         *release = g_strdup (release_ptr);
     }
-
-    rc_debug (RC_DEBUG_LEVEL_DEBUG, "-- parsed %s into %d %s %s\n",
-              input, *epoch, *version, *release);
+//    rc_debug (RC_DEBUG_LEVEL_DEBUG, "-- parsed %s into %d %s %s\n",
+//              input, *epoch, *version, *release);
 
     RC_EXIT;
 }
