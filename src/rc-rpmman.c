@@ -443,7 +443,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
         goto ERROR;
     }
 
-    if (rpmdepCheck (transaction, &conflicts, &rc)) {
+    if (rpmdepCheck (transaction, &conflicts, &rc) || rc) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "dependencies are not met");
 
