@@ -1,3 +1,7 @@
+2005-01-03  Tambet Ingo  <tambet@ximian.com>
+
+	* package-spec.c (PyPackageSpec_init): Update.
+
 2004-11-30  Tambet Ingo  <tambet@ximian.com>
 
 	* packman.c (PyPackman_query_file): Update rc_packaman_query_file call.

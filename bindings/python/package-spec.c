@@ -114,13 +114,15 @@ PyPackageSpec_init (PyObject *self, PyObject *args, PyObject *kwds)
 	const char *name, *version, *release;
 	gboolean has_epoch;
 	int epoch;
+	RCArch arch;
 
-	if (! PyArg_ParseTuple (args, "siiss", &name, &has_epoch, &epoch,
-				&version, &release))
+	if (! PyArg_ParseTuple (args, "siissi", &name, &has_epoch, &epoch,
+				&version, &release, &arch))
 		return -1;
 
 	py_spec->spec = g_new0 (RCPackageSpec, 1);
-	rc_package_spec_init (py_spec->spec, name, has_epoch, epoch, version, release);
+	rc_package_spec_init (py_spec->spec, name, has_epoch, epoch,
+			      version, release, arch);
 
 	return 0;
 }
