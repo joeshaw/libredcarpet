@@ -1,5 +1,21 @@
 2003-08-26  Joe Shaw  <joe@ximian.com>
 
+	* rc-package.c: Remove the "hold" bit, it wasn't being used for
+	anything, and add a "package_set" bit, which tells us if we're
+	dealing with a package set or not.  (Just checking the children
+	isn't sufficient, since we could have an empty package set)
+	(rc_package_is_package_set): Update this to just check the bit,
+	instead of the children.
+
+	* rc-world.c (rc_world_package_is_locked): Remove a reference to
+	the hold bit.
+
+	* rc-xml.c (parser_package_end, rc_xml_node_to_package): Set the
+	package set bit when "is_packageset" is set in the XML.
+	(rc_package_to_xml_node): Serialize the package set bit.
+
+2003-08-26  Joe Shaw  <joe@ximian.com>
+
 	* rc-rollback.c (rc_rollback_info_new): Unref the list of packages
 	after the query.  Fixes a leak.
 

@@ -620,9 +620,6 @@ rc_world_package_is_locked (RCWorld   *world,
     g_return_val_if_fail (world != NULL, FALSE);
     g_return_val_if_fail (package != NULL, FALSE);
 
-    if (package->hold)
-        return TRUE;
-
     info.package = package;
     info.world   = world;
     info.is_locked = FALSE;

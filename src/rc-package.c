@@ -137,8 +137,8 @@ rc_package_copy (RCPackage *src)
 
     dest->installed     = src->installed;
     dest->local_package = src->local_package;
-    dest->hold          = src->hold;
     dest->install_only  = src->install_only;
+    dest->package_set   = src->package_set;
 
     return dest;
 }
@@ -222,7 +222,7 @@ rc_package_is_package_set (RCPackage *package)
 {
     g_return_val_if_fail (package != NULL, FALSE);
 
-    return package->children_a != NULL && package->children_a->len > 0;
+    return package->package_set;
 }
 
 gboolean
