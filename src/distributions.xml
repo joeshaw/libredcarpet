@@ -566,7 +566,17 @@
 			<file source="/etc/SuSE-release" substring="SuSE Linux 9.0"/>
 		</detect>
 	</distro>
-
+	<distro>
+		<name>SuSE Linux</name>
+		<version>9.1</version>
+		<arch>i586</arch>
+		<type>rpm</type>
+		<target>suse-91-i586</target>
+		<status>supported</status>
+		<detect>
+			<file source="/etc/SuSE-release" substring="SuSE Linux 9.1"/>
+		</detect>
+	</distro>
 	<distro>
 		<name>Debian GNU/Linux</name>
 		<version>2.2 (Potato)</version>

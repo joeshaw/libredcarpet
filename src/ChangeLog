@@ -1,3 +1,9 @@
+2004-05-06  James Willcox  <james@ximian.com>
+
+	* distributions.xml:
+
+	Add SUSE 9.1 support
+
 2004-04-09  James Willcox  <james@ximian.com>
 
 	* rc-arch.c:
