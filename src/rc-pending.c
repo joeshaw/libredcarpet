@@ -102,7 +102,20 @@ rc_pending_update_handler (RCPending *pending)
 static void
 rc_pending_complete_handler (RCPending *pending)
 {
-    rc_debug (RC_DEBUG_LEVEL_MESSAGE,
+    int debug_level;
+
+    switch (pending->status) {
+    case RC_PENDING_STATUS_ABORTED:
+    case RC_PENDING_STATUS_FAILED:
+        debug_level = RC_DEBUG_LEVEL_WARNING;
+        break;
+
+    default:
+        debug_level = RC_DEBUG_LEVEL_INFO;
+        break;
+    }
+
+    rc_debug (debug_level,
               "id=%d COMPLETE '%s' time=%ds (%s)",
               pending->id, pending->description,
               rc_pending_get_elapsed_secs (pending),
@@ -344,7 +357,7 @@ rc_pending_begin (RCPending *pending)
 
     rc_pending_update (pending, 0);
 
-    rc_debug (RC_DEBUG_LEVEL_MESSAGE,
+    rc_debug (RC_DEBUG_LEVEL_INFO,
               "id=%d BEGIN '%s' (%s)",
               pending->id, pending->description,
               rc_pending_status_to_string (pending->status));

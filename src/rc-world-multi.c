@@ -297,19 +297,26 @@ pending_update_cb (RCPending *pending, gpointer user_data)
 
     num_pendings = g_slist_length (refresh_info->multi->subworld_pendings);
 
-    if (!num_pendings) {
+    /* No pendings, the refresh must be done. */
+    if (!num_pendings)
         percent_complete = 100.0;
-    } else {
+    else {
         for (iter = refresh_info->multi->subworld_pendings;
-             iter; iter = iter->next) {
+             iter; iter = iter->next)
+        {
             RCPending *pending = RC_PENDING (iter->data);
-
+            
             percent_complete += (1.0 / num_pendings) *
                 rc_pending_get_percent_complete (pending);
         }
     }
 
-    rc_pending_update (refresh_info->multi_pending, percent_complete);
+    if (rc_pending_is_active (refresh_info->multi_pending) &&
+        rc_pending_get_status (refresh_info->multi_pending) !=
+        RC_PENDING_STATUS_PRE_BEGIN)
+    {
+        rc_pending_update (refresh_info->multi_pending, percent_complete);
+    }
 }
 
 static void
@@ -320,7 +327,8 @@ pending_complete_cb (RCPending *pending, gpointer user_data)
     GSList *iter;
 
     for (iter = refresh_info->multi->subworld_pendings;
-         iter; iter = iter->next) {
+         iter; iter = iter->next)
+    {
         RCPending *pending = RC_PENDING (iter->data);
 
         if (rc_pending_is_active (pending)) {
@@ -329,7 +337,7 @@ pending_complete_cb (RCPending *pending, gpointer user_data)
         }
     }
 
-    if (all_complete) {
+    if (all_complete && rc_pending_is_active (refresh_info->multi_pending)) {
         rc_pending_finished (refresh_info->multi_pending, 0);
     }
 
@@ -356,55 +364,55 @@ rc_world_multi_refresh_fn (RCWorld *world)
         RefreshInfo *refresh_info;
         RCPending *subworld_pending;
 
-        if (rc_world_has_refresh (info->subworld)) {
-            info->refreshed_subworld = rc_world_dup (info->subworld);
+        if (!rc_world_has_refresh (info->subworld)) {
+            info->refreshed_ready = TRUE;
+            continue;
+        }
 
-            refresh_info = g_new0 (RefreshInfo, 1);
-            refresh_info->subworld = g_object_ref (info->subworld);
-            refresh_info->refreshed_subworld =
-                g_object_ref (info->refreshed_subworld);
-            refresh_info->multi = g_object_ref (multi);
-            refresh_info->refreshed_id = -1;
-            refresh_info->update_id = -1;
-            refresh_info->complete_id = -1;
-            refresh_info->refreshed_id =
-                g_signal_connect (refresh_info->refreshed_subworld,
-                                  "refreshed",
-                                  (GCallback) refreshed_cb,
+        info->refreshed_subworld = rc_world_dup (info->subworld);
+
+        refresh_info = g_new0 (RefreshInfo, 1);
+        refresh_info->subworld = g_object_ref (info->subworld);
+        refresh_info->refreshed_subworld =
+            g_object_ref (info->refreshed_subworld);
+        refresh_info->multi = g_object_ref (multi);
+        refresh_info->refreshed_id = -1;
+        refresh_info->update_id = -1;
+        refresh_info->complete_id = -1;
+        refresh_info->refreshed_id =
+            g_signal_connect (refresh_info->refreshed_subworld,
+                              "refreshed",
+                              (GCallback) refreshed_cb,
+                              refresh_info);
+
+        subworld_pending = rc_world_refresh (info->refreshed_subworld);
+
+        if (subworld_pending) {
+            if (!pending) {
+                pending = rc_pending_new ("Refreshing multi world");
+                refresh_info->multi_pending = pending;
+                rc_pending_begin (pending);
+            } else
+                refresh_info->multi_pending = g_object_ref (pending);
+
+            refresh_info->subworld_pending =
+                g_object_ref (subworld_pending);
+
+            multi->subworld_pendings =
+                g_slist_prepend (multi->subworld_pendings,
+                                 g_object_ref (refresh_info->subworld_pending));
+
+            refresh_info->update_id =
+                g_signal_connect (refresh_info->subworld_pending,
+                                  "update",
+                                  (GCallback) pending_update_cb,
                                   refresh_info);
 
-            subworld_pending = rc_world_refresh (info->refreshed_subworld);
-
-            if (subworld_pending) {
-                if (!pending) {
-                    pending = rc_pending_new ("Refreshing multi world");
-                    refresh_info->multi_pending = pending;
-                    rc_pending_begin (pending);
-                } else
-                    refresh_info->multi_pending = g_object_ref (pending);
-
-                refresh_info->subworld_pending =
-                    g_object_ref (subworld_pending);
-
-                multi->subworld_pendings =
-                    g_slist_prepend (multi->subworld_pendings,
-                                     g_object_ref (refresh_info->subworld_pending));
-
-                refresh_info->update_id =
-                    g_signal_connect (refresh_info->subworld_pending,
-                                      "update",
-                                      (GCallback) pending_update_cb,
-                                      refresh_info);
-
-                refresh_info->complete_id =
-                    g_signal_connect (refresh_info->subworld_pending,
-                                      "complete",
-                                      (GCallback) pending_complete_cb,
-                                      refresh_info);
-            }
-        }
-        else {
-            info->refreshed_ready = TRUE;
+            refresh_info->complete_id =
+                g_signal_connect (refresh_info->subworld_pending,
+                                  "complete",
+                                  (GCallback) pending_complete_cb,
+                                  refresh_info);
         }
     }
 

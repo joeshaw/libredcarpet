@@ -1,3 +1,16 @@
+2003-09-04  Joe Shaw  <joe@ximian.com>
+
+	* rc-pending.c (rc_pending_complete_handler): The pending debug
+	messages are getting chatty, so make aborted and failed output at
+	level WARNING and everything else up to INFO.
+
+	* rc-world-multi.c (pending_update_cb): Only call
+	rc_pending_update() if the pending is active.  Fixes some
+	g_warnings.
+	(pending_complete_cb): Ditto, for rc_pending_finished().
+	(rc_world_multi_refresh_fn): Reorganize this to reduce an
+	indentation level in the more common (and much longer) case.
+
 2003-08-28  Joe Shaw  <joe@ximian.com>
 
 	* rc-world-multi.c (rc_world_multi_refresh_fn): Begin the pending
