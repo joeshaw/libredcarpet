@@ -2553,7 +2553,7 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
             ptr++;
         }
 
-        list = rc_debman_fill_depends (ptr);
+        list = rc_debman_fill_depends (ptr, FALSE);
 
         while ((tmp = g_slist_find_custom (
                     list, query_info->package_buf,
@@ -2576,7 +2576,7 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
         }
 
         query_info->recommends_buf = g_slist_concat (
-            query_info->recommends_buf, rc_debman_fill_depends (ptr));
+            query_info->recommends_buf, rc_debman_fill_depends (ptr, FALSE));
 
         return;
     }
@@ -2587,7 +2587,7 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
             ptr++;
         }
         query_info->suggests_buf = g_slist_concat (
-            query_info->suggests_buf, rc_debman_fill_depends (ptr));
+            query_info->suggests_buf, rc_debman_fill_depends (ptr, FALSE));
         return;
     }
 
@@ -2599,7 +2599,7 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
             ptr++;
         }
 
-        tmp = rc_debman_fill_depends (ptr);
+        tmp = rc_debman_fill_depends (ptr, TRUE);
 
         for (iter = tmp; iter; iter = iter->next) {
             ((RCPackageDep *)(iter->data))->pre = 1;
@@ -2617,7 +2617,7 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
             ptr++;
         }
         query_info->conflicts_buf = g_slist_concat (
-            query_info->conflicts_buf, rc_debman_fill_depends (ptr));
+            query_info->conflicts_buf, rc_debman_fill_depends (ptr, FALSE));
         return;
     }
 
@@ -2627,7 +2627,7 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
             ptr++;
         }
         query_info->provides_buf = g_slist_concat (
-            query_info->provides_buf, rc_debman_fill_depends (ptr));
+            query_info->provides_buf, rc_debman_fill_depends (ptr, FALSE));
         return;
     }
 
