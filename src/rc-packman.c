@@ -148,15 +148,11 @@ rc_packman_class_init (RCPackmanClass *klass)
 static void
 rc_packman_init (RCPackman *obj)
 {
-    /* RCPackman *hp = RC_PACKMAN (obj); */
-
     obj->error = RC_PACKMAN_NONE;
 
     obj->reason = NULL;
 
-    /*
-    obj->status = 
-    */
+    obj->busy = FALSE;
 }
 
 RCPackman *
@@ -165,7 +161,7 @@ rc_packman_new (void)
     RCPackman *new =
         RC_PACKMAN (gtk_type_new (rc_packman_get_type ()));
 
-    new->status = RC_PACKMAN_IDLE;
+    new->busy = FALSE;
 
     return new;
 }
@@ -175,31 +171,62 @@ rc_packman_new (void)
 void
 rc_packman_install (RCPackman *p, GSList *files)
 {
-    g_assert (_CLASS (p)->rc_packman_real_install);
-
     rc_packman_set_error (p, RC_PACKMAN_NONE, NULL);
 
+    if (p->busy) {
+        rc_packman_set_error (p, RC_PACKMAN_BUSY, NULL);
+        return;
+    }
+
+    g_assert (_CLASS (p)->rc_packman_real_install);
+
+    p->busy = TRUE;
+
     _CLASS (p)->rc_packman_real_install (p, files);
+
+    p->busy = FALSE;
 }
 
 void
 rc_packman_remove (RCPackman *p, RCPackageSList *pkgs)
 {
-    g_assert (_CLASS (p)->rc_packman_real_remove);
-
     rc_packman_set_error (p, RC_PACKMAN_NONE, NULL);
 
+    if (p->busy) {
+        rc_packman_set_error (p, RC_PACKMAN_BUSY, NULL);
+        return;
+    }
+
+    g_assert (_CLASS (p)->rc_packman_real_remove);
+
+    p->busy = TRUE;
+
     _CLASS (p)->rc_packman_real_remove (p, pkgs);
+
+    p->busy = FALSE;
 }
 
 RCPackage *
 rc_packman_query (RCPackman *p, RCPackage *pkg)
 {
-    g_assert (_CLASS (p)->rc_packman_real_query);
+    RCPackage *ret = NULL;
 
     rc_packman_set_error (p, RC_PACKMAN_NONE, NULL);
 
-    return (_CLASS (p)->rc_packman_real_query (p, pkg));
+    if (p->busy) {
+        rc_packman_set_error (p, RC_PACKMAN_BUSY, NULL);
+        return (pkg);
+    }
+
+    g_assert (_CLASS (p)->rc_packman_real_query);
+
+    p->busy = TRUE;
+
+    ret = _CLASS (p)->rc_packman_real_query (p, pkg);
+
+    p->busy = FALSE;
+
+    return (ret);
 }
 
 RCPackageSList *
@@ -225,11 +252,24 @@ rc_packman_query_list (RCPackman *p, RCPackageSList *pkgs)
 RCPackage *
 rc_packman_query_file (RCPackman *p, gchar *filename)
 {
-    g_assert (_CLASS (p)->rc_packman_real_query_file);
+    RCPackage *ret = NULL;
 
     rc_packman_set_error (p, RC_PACKMAN_NONE, NULL);
 
-    return (_CLASS (p)->rc_packman_real_query_file (p, filename));
+    if (p->busy) {
+        rc_packman_set_error (p, RC_PACKMAN_BUSY, NULL);
+        return (NULL);
+    }
+
+    g_assert (_CLASS (p)->rc_packman_real_query_file);
+
+    p->busy = TRUE;
+
+    ret =  _CLASS (p)->rc_packman_real_query_file (p, filename);
+
+    p->busy = FALSE;
+
+    return (ret);
 }
 
 RCPackageSList *
@@ -261,11 +301,24 @@ rc_packman_query_file_list (RCPackman *p, GSList *filenames)
 RCPackageSList *
 rc_packman_query_all (RCPackman *p)
 {
-    g_assert (_CLASS (p)->rc_packman_real_query_all);
+    RCPackageSList *ret = NULL;
 
     rc_packman_set_error (p, RC_PACKMAN_NONE, NULL);
 
-    return (_CLASS (p)->rc_packman_real_query_all (p));
+    if (p->busy) {
+        rc_packman_set_error (p, RC_PACKMAN_BUSY, NULL);
+        return (NULL);
+    }
+
+    g_assert (_CLASS (p)->rc_packman_real_query_all);
+
+    p->busy = TRUE;
+
+    ret =  _CLASS (p)->rc_packman_real_query_all (p);
+
+    p->busy = FALSE;
+
+    return (ret);
 }
 
 gint
@@ -283,11 +336,24 @@ rc_packman_version_compare (RCPackman *p,
 gboolean
 rc_packman_verify (RCPackman *p, RCPackage *pkg)
 {
-    g_assert (_CLASS (p)->rc_packman_real_verify);
+    gboolean ret = FALSE;
 
     rc_packman_set_error (p, RC_PACKMAN_NONE, NULL);
 
-    return (_CLASS (p)->rc_packman_real_verify (p, pkg));
+    if (p->busy) {
+        rc_packman_set_error (p, RC_PACKMAN_BUSY, NULL);
+        return (FALSE);
+    }
+
+    g_assert (_CLASS (p)->rc_packman_real_verify);
+
+    p->busy = TRUE;
+
+    ret = _CLASS (p)->rc_packman_real_verify (p, pkg);
+
+    p->busy = FALSE;
+
+    return (ret);
 }
 
 /* Public functions to emit signals */

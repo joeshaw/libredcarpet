@@ -47,18 +47,12 @@ typedef enum _RCPackmanOperationStatus {
     RC_PACKMAN_ABORT,         /* Error detected, operation aborted */
 } RCPackmanOperationStatus;
 
-typedef enum _RCPackmanStatus {
-    RC_PACKMAN_IDLE,      /* Object is not performing any operations */
-    RC_PACKMAN_INSTALL,   /* Object is installing packages */
-    RC_PACKMAN_REMOVE,    /* Object is removing packages */
-    RC_PACKMAN_QUERY,     /* Object is querying installed packages */
-} RCPackmanStatus;
-
 typedef enum _RCPackmanError {
     RC_PACKMAN_NONE = 0,         /* No error */
     RC_PACKMAN_NO_BACKEND,       /* You're not using a subclass of RCPackman */
     RC_PACKMAN_NOT_IMPLEMENTED,  /* Current object doesn't support operation */
     RC_PACKMAN_OPERATION_FAILED, /* Package system specific failure */
+    RC_PACKMAN_BUSY,             /* Some other operation is in progress */
 } RCPackmanError;
 
 struct _RCPackman {
@@ -73,7 +67,7 @@ struct _RCPackman {
     gchar *reason;
 
     /* Current status of the object */
-    guint status;
+    gboolean busy;
 };
 
 struct _RCPackmanClass {
