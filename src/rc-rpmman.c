@@ -1188,14 +1188,17 @@ parse_versions (char **inputs, guint32 **epochs, char ***versions,
         }
 
         if ((vptr = strchr (inputs[i], ':'))) {
+            /* We might have an epoch here, depending */
             char *endptr;
             (*epochs)[i] = strtoul (inputs[i], &endptr, 10);
-#if 0
-            /* FIXME: this assert is bad on some people's machines,
-               not sure why */
-            g_assert (endptr == vptr);
-#endif
-            vptr++;
+
+            if (endptr != vptr) {
+                /* No epoch here, just a : in the version string */
+                (*epochs)[i] = 0;
+                vptr = inputs[i];
+            } else {
+                vptr++;
+            }
         } else {
             vptr = inputs[i];
         }

@@ -1,3 +1,7 @@
+2002-03-20  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c: minor fix to how we parse EVRs
+
 2002-03-20  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-world.c (rc_world_get_best_upgrade): Added.  Returns the best
