@@ -1,5 +1,8 @@
 2004-12-01  Tambet Ingo  <tambet@ximian.com>
 
+	* rc-rpmman.c (rc_rpmman_get_file_deps): If we're not asked to filter
+	anything out, don't. No white listing, you get 'em all.
+
 	* rc-package.c (rc_package_get_latest_update): Do checks for NULL's
 	*before* accessing data.
 

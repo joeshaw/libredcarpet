@@ -1928,19 +1928,6 @@ rc_rpmman_parse_version (RCPackman    *packman,
     return parse_version (input, has_epoch, epoch, version, release);
 }
 
-static gboolean
-in_set (gchar *item, const gchar **set) {
-    const gchar **iter;
-
-    for (iter = set; *iter; iter++) {
-        if (strncmp (*iter, item, strlen (*iter)) == 0) {
-            return (TRUE);
-        }
-    }
-
-    return (FALSE);
-}
-
 static void
 free_n (char **strv, int len)
 {
@@ -2035,26 +2022,6 @@ rc_rpmman_get_file_deps (RCRpmman *rpmman,
     guint32 *dirindexes;
     int count, i;
 
-    const gchar *file_dep_set[] = {
-        "/bin/",
-        "/usr/bin/",
-        "/usr/X11R6/bin/",
-        "/sbin/",
-        "/usr/sbin/",
-        "/lib/",
-        "/usr/games/",
-        "/usr/share/dict/words",
-        "/usr/share/magic.mime",
-        "/etc/",
-        "/opt/gnome/bin",
-        "/opt/gnome/sbin",
-        "/opt/gnome/etc",
-        "/opt/gnome/games",
-        "/usr/local/bin",   /* /usr/local shouldn't be required, but */
-        "/usr/local/sbin",  /* apparently msc linux uses it */
-        NULL
-    };
-
     if (!filter_file_deps) {
         rpmman->headerGetEntry (header, RPMTAG_BASENAMES, NULL,
                                 (void **)&basenames, &count);
@@ -2068,14 +2035,12 @@ rc_rpmman_get_file_deps (RCRpmman *rpmman,
                                       basenames[i], NULL);
 
             if (g_utf8_validate (tmp, -1, NULL)) {
-                if (in_set (tmp, file_dep_set)) {
-                    dep = rc_package_dep_new (tmp, 0, 0, NULL, NULL,
-                                              RC_RELATION_ANY,
-                                              RC_CHANNEL_ANY,
-                                              FALSE, FALSE);
+                dep = rc_package_dep_new (tmp, 0, 0, NULL, NULL,
+                                          RC_RELATION_ANY,
+                                          RC_CHANNEL_ANY,
+                                          FALSE, FALSE);
 
-                    *provides = g_slist_prepend (*provides, dep);
-                }
+                *provides = g_slist_prepend (*provides, dep);
             } else {
                 rc_debug (RC_DEBUG_LEVEL_INFO,
                           "File '%s' is not valid UTF-8; dropping it from "
@@ -2093,13 +2058,11 @@ rc_rpmman_get_file_deps (RCRpmman *rpmman,
                             (void **)&basenames, &count);
 
     for (i = 0; i < count; i++) {
-        if (in_set (basenames[i], file_dep_set)) {
-            dep = rc_package_dep_new (basenames[i], 0, 0, NULL, NULL,
-                                      RC_RELATION_ANY, RC_CHANNEL_ANY,
-                                      FALSE, FALSE);
+        dep = rc_package_dep_new (basenames[i], 0, 0, NULL, NULL,
+                                  RC_RELATION_ANY, RC_CHANNEL_ANY,
+                                  FALSE, FALSE);
 
-            *provides = g_slist_prepend (*provides, dep);
-        }
+        *provides = g_slist_prepend (*provides, dep);
     }
 
     free (basenames);
