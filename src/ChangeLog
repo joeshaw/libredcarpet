@@ -1,5 +1,9 @@
 2001-09-14  Ian Peters  <itp@ximian.com>
 
+	* src/rc-rpmman.h: forgot the 04000* comparisons here
+
+2001-09-14  Ian Peters  <itp@ximian.com>
+
 	* src/rc-distro.c: add RH 7.2 support
 
 	* src/rc-rpmman.c: sigh, forgot all about that octal shit... get

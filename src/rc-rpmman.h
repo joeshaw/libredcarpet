@@ -86,7 +86,7 @@ struct _RCRpmman {
     void (*rpmtransRemovePackage)(rpmTransactionSet, int);
     rpmTransactionSet (*rpmtransCreateSet)(rpmdb, const char *);
     void (*rpmtransFree)(rpmTransactionSet);
-#if RPM_VERSION >= 040003
+#if RPM_VERSION >= 40003
     int (*rpmdepCheck)(rpmTransactionSet, rpmDependencyConflict *,
                        int *);
     void (*rpmdepFreeConflicts)(rpmDependencyConflict, int);
@@ -105,7 +105,7 @@ struct _RCRpmman {
     int (*rpmReadConfigFiles)(const char *, const char *);
     int (*rpmdbOpen)(const char *, rpmdb *, int, int);
     void (*rpmdbClose)(rpmdb);
-#if RPM_VERSION >= 040002
+#if RPM_VERSION >= 40002
     const char * (*rpmProblemString)(rpmProblem);
 #else
     const char * (*rpmProblemString)(rpmProblem *);
