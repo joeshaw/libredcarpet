@@ -146,7 +146,7 @@ file_changes_to_xml (RCRollbackInfo *rollback_info, RCPackage *package)
         }
 
         if (file_node->xmlChildrenNode) {
-            if (!was_removed) {
+            if (!was_removed && S_ISREG (st.st_mode)) {
                 char *escapename;
                 char *newfile;
 
@@ -790,19 +790,21 @@ rc_rollback_restore_files (RCRollbackActionSList *actions)
             if (change->was_removed)
                 unlink (change->filename);
             else {
-                char *tmp;
-                char *backup_filename;
+                if (S_ISREG (change->mode)) {
+                    char *tmp;
+                    char *backup_filename;
 
-                tmp = escape_pathname (change->filename);
-                backup_filename = g_strconcat (change_dir, "/", tmp, NULL);
-                g_free (tmp);
+                    tmp = escape_pathname (change->filename);
+                    backup_filename = g_strconcat (change_dir, "/", tmp, NULL);
+                    g_free (tmp);
 
-                if (rc_cp (backup_filename, change->filename) < 0) {
-                    g_warning ("Unable to copy saved '%s' to '%s'!",
-                               backup_filename, change->filename);
+                    if (rc_cp (backup_filename, change->filename) < 0) {
+                        g_warning ("Unable to copy saved '%s' to '%s'!",
+                                   backup_filename, change->filename);
+                    }
+
+                    g_free (backup_filename);
                 }
-
-                g_free (backup_filename);
 
                 chown (change->filename, change->uid, change->gid);
             

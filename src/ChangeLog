@@ -1,3 +1,16 @@
+2003-05-28  Joe Shaw  <joe@ximian.com>
+
+	* rc-rollback.c (file_changes_to_xml): We only want to copy the
+	file if it's a regular file.
+	(rc_rollback_restore_files): We only want to copy the file back if
+	it was a regular file (but we still want to chown and chmod it
+	regardless).
+
+	* rc-rollback.h: Add a previously missing prototype for
+	rc_rollback_restore_files().
+
+	* rc-util.c (rc_cp): Correctly handle zero-byte files.
+
 2003-05-27  Joe Shaw  <joe@ximian.com>
 
 	* rc-rollback.c (strip_whitespace_node_recursive): Added, removes

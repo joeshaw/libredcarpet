@@ -290,6 +290,12 @@ rc_cp (const char *fromfile, const char *tofile)
     if (fdout < 0)
         goto out;
 
+    /* Zero-byte file */
+    if (!st.st_size) {
+        ret = 0;
+        goto out;
+    }
+
     if (lseek (fdout, st.st_size - 1, SEEK_SET) < 0)
         goto out;
 
