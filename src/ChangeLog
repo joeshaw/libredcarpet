@@ -1,3 +1,8 @@
+2001-11-08  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c (parse_versions): take out an unnecessary assert
+	that caused problems for a customer :-)
+
 2001-11-08  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c, rc-deps.h: rc_dep_resolution_new now takes a flage as

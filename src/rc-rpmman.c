@@ -1095,7 +1095,11 @@ parse_versions (char **inputs, guint32 **epochs, char ***versions,
         if ((vptr = strchr (inputs[i], ':'))) {
             char *endptr;
             (*epochs)[i] = strtoul (inputs[i], &endptr, 10);
+#if 0
+            /* FIXME: this assert is bad on some people's machines,
+               not sure why */
             g_assert (endptr == vptr);
+#endif
             vptr++;
         } else {
             vptr = inputs[i];
