@@ -1,3 +1,10 @@
+2003-02-06  Joe Shaw  <joe@ximian.com>
+
+	* configure.in: Make the default RPM version 4.0.4.  Look in
+	/usr/include/rpm-(version) for headers so we'll build against
+	4.0.4 out of the box on Red Hat 8.  If we fail, fall back on
+	checking /usr/include/rpm.
+
 2003-02-04  Joe Shaw  <joe@ximian.com>
 
 	* configure.in: 1.2.0
