@@ -27,6 +27,8 @@
 
 gchar *rc_libdir = LIBDIR;
 
+RCPackman *das_global_packman = NULL;
+
 void
 rc_packman_set_libdir (const gchar *libdir)
 {
@@ -540,4 +542,10 @@ rc_packman_generic_version_compare (RCPackageSpec *spec1,
     }
 
     return (0);
+}
+
+void
+rc_packman_set_packman (RCPackman *packman)
+{
+    das_global_packman = packman;
 }

@@ -107,7 +107,7 @@ const char *rc_package_dep_to_str_static (RCPackageDep *dep);
 
 /* Dep verification */
 gboolean rc_package_dep_verify_relation (RCPackageDep *dep,
-                                         RCPackageSpec *spec);
+                                         RCPackageDep *prov);
 gboolean rc_package_dep_verify_package_relation (RCPackageDep *dep,
                                                  RCPackage *pkg);
 

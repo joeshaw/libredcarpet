@@ -35,6 +35,8 @@
 #include <gnome-xml/xmlmemory.h>
 #include "libredcarpet.h"
 
+#include "xml-util.h"
+
 static GHashTable *channel_hash = NULL;
 static RCPackman *packman = NULL;
 
@@ -517,7 +519,7 @@ main (int argc, char *argv[])
     gtk_init (&argc, &argv);
 
     packman = rc_distman_new ();
-    rc_dep_set_packman (packman);
+    rc_packman_set_packman (packman);
 
     if (argc != 2) {
         g_print ("Usage: deptestomatic testfile.xml\n");

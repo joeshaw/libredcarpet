@@ -26,7 +26,7 @@
 #include "rc-debman-general.h"
 #include "rc-debug.h"
 #include "rc-package.h"
-#include "rc-deps-util.h"
+#include "rc-dep-or.h"
 
 /*
  * Takes a string of format [<epoch>:]<version>[-<release>], and returns those

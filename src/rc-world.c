@@ -29,7 +29,7 @@
 #include "rc-world.h"
 
 #include "rc-util.h"
-#include "rc-deps-util.h"
+#include "rc-dep-or.h"
 
 typedef struct _RCPackageAndDep RCPackageAndDep;
 struct _RCPackageAndDep {
@@ -570,7 +570,7 @@ rc_world_foreach_providing_package (RCWorld *world, RCPackageDep *dep,
 
         if (pad
             && (channel == RC_WORLD_ANY_CHANNEL || pad->package->channel == channel)
-            && rc_package_dep_verify_relation (dep, &pad->dep->spec)) {
+            && rc_package_dep_verify_relation (dep, pad->dep)) {
 
             /* If we have multiple identical packages in RCWorld, we want to only
                include the package that is installed and skip the rest. */
@@ -636,7 +636,7 @@ rc_world_check_providing_package (RCWorld *world, RCPackageDep *dep,
 
         if (pad
             && (channel == RC_WORLD_ANY_CHANNEL || pad->package->channel == channel)
-            && rc_package_dep_verify_relation (dep, &pad->dep->spec)) {
+            && rc_package_dep_verify_relation (dep, pad->dep)) {
 
             /* Skip uninstalled dups */
             if ((! filter_dups_of_installed) 
@@ -657,7 +657,7 @@ rc_world_check_providing_package (RCWorld *world, RCPackageDep *dep,
 }
 
 int
-rc_world_foreach_requiring_package (RCWorld *world, RCPackageSpec *spec,
+rc_world_foreach_requiring_package (RCWorld *world, RCPackageDep *dep,
                                     RCChannel *channel,
                                     RCPackageAndDepFn fn, gpointer user_data)
 {
@@ -666,10 +666,10 @@ rc_world_foreach_requiring_package (RCWorld *world, RCPackageSpec *spec,
     int count = 0;
 
     g_return_val_if_fail (world != NULL, -1);
-    g_return_val_if_fail (spec != NULL, -1);
+    g_return_val_if_fail (dep != NULL, -1);
 
     slist = (GSList *) g_hash_table_lookup (world->requires_by_name,
-                                            spec->name);
+                                            dep->spec.name);
 
     installed = g_hash_table_new (rc_package_spec_hash,
                                   rc_package_spec_equal);
@@ -685,7 +685,7 @@ rc_world_foreach_requiring_package (RCWorld *world, RCPackageSpec *spec,
 
         if (pad
             && (channel == RC_WORLD_ANY_CHANNEL || pad->package->channel == channel)
-            && rc_package_dep_verify_relation (pad->dep, spec)) {
+            && rc_package_dep_verify_relation (pad->dep, dep)) {
 
             /* Skip dups if one of them in installed. */
             if (rc_package_is_installed (pad->package)

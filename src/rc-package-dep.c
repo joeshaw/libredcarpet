@@ -29,7 +29,7 @@
 #include "rc-packman.h"
 #include "xml-util.h"
 #include "rc-debug.h"
-#include "rc-deps-util.h"
+#include "rc-dep-or.h"
 
 #include <gnome-xml/tree.h>
 
@@ -151,65 +151,23 @@ rc_package_dep_to_str_static (RCPackageDep *dep)
     return str;
 }
 
-gboolean
-rc_package_dep_slist_verify_relation (RCPackageDepSList *depl,
-                                      RCPackageSpec *spec,
-                                      RCPackageDepSList **fail_out,
-                                      gboolean is_virtual)
-{
-    gboolean ret = TRUE;
-
-    while (depl) {
-        RCPackageDep *d = (RCPackageDep *) depl->data;
-        RCPackageRelation unweak_rel = d->relation & ~RC_RELATION_WEAK;
-
-        /* HACK-2: debian can't have versioned deps fulfilled by virtual provides. */
-        /* this should be some sort of if (debianish) { .. } */
-        if (!rpmish) {
-            if (is_virtual && (unweak_rel != RC_RELATION_ANY && unweak_rel != RC_RELATION_NONE)) {
-                if (!strcmp (d->spec.name, spec->name)) {
-                    if (fail_out && !g_slist_find (*fail_out, d))
-                        *fail_out = g_slist_prepend (*fail_out, d);
-                    ret = FALSE;
-                }
-                depl = depl->next;
-                continue;
-            }
-        }
-
-        /* HACK-3: rpm conflicts don't apply to virtual provides */
-        if (rpmish) {
-            if (is_virtual && d->relation & RC_RELATION_WEAK) {
-                depl = depl->next;
-                continue;
-            }
-        }
-
-        if (!rc_package_dep_verify_relation (d, spec)) {
-            if (fail_out && !g_slist_find (*fail_out, d))
-                *fail_out = g_slist_prepend (*fail_out, d);
-
-            ret = FALSE;
-        }
-        depl = depl->next;
-    }
-
-    return ret;
-}
-
 /* Note that we make the assumption that if we're in this function,
  * we're checking a dep on the same package (so this function won't
  * check whether they're the same name for an ANY relation
  */
 gboolean
 rc_package_dep_verify_relation (RCPackageDep *dep,
-                                RCPackageSpec *spec)
+                                RCPackageDep *prov)
 {
     gboolean use_newspecspec = FALSE;
     RCPackageSpec newspecspec;
     gint compare_ret;
 
     gint unweak_rel = dep->relation & ~RC_RELATION_WEAK;
+
+    /* FIXME: for compat until pzb changes this function to work
+       correctly with the provide */
+    RCPackageSpec *spec = RC_PACKAGE_SPEC (prov);
 
     g_assert (dep);
     g_assert (spec);
@@ -339,18 +297,12 @@ rc_package_dep_verify_package_relation (RCPackageDep *dep, RCPackage *pkg)
 {
     RCPackageDepSList *prov_iter;
 
-    /* if the package is the same name as the dep, then we use it to verify */
-    if (strcmp (dep->spec.name, pkg->spec.name) == 0) {
-        return rc_package_dep_verify_relation (dep, &pkg->spec);
-    }
-
-    /* otherwise, we hunt for a provide with the same name */
     prov_iter = pkg->provides;
     while (prov_iter) {
         RCPackageDep *prov = (RCPackageDep *) prov_iter->data;
 
         if (strcmp (dep->spec.name, prov->spec.name) == 0) {
-            return rc_package_dep_verify_relation (dep, &prov->spec);
+            return rc_package_dep_verify_relation (dep, prov);
         }
 
         prov_iter = prov_iter->next;

@@ -1,3 +1,53 @@
+2002-03-09  Ian Peters  <itp@ximian.com>
+
+	* rc-deps.c, rc-deps.h, rc-deps-util.c, rc-deps-util.h,
+	rc-deps-private.h: removed
+
+	* rc-dep-or.c: added
+
+	* rc-dep-or.h: added
+
+	* Makefile.am: remove and add the above files from the build
+
+	* libredcarpet.h: remove rc-deps.h
+
+	* rc-debman-general.c: s/rc-deps-util.h/rc-dep-or.h/
+
+	* rc-debman.c: remove rc-deps.h
+
+	* rc-debug-misc.h: remove rc-deps.h
+
+	* rc-package-dep.h (rc_package_dep_verify_relation): take a second
+	RCPackageDep, not an RCPackageSpec
+
+	* rc-package-dep.c: s/rc-deps-util.h/rc-dep-or.h
+	(rc_package_dep_slist_verify_relation): removed
+	(rc_package_dep_verify_relation): take a second RCPackageDep, not
+	an RCPackageSpec
+	(rc_package_dep_verify_package_relation): update for new
+	rc_package_dep_verify_relation, no need to check the package by
+	hand, since it provides itself
+
+	* rc-package-info.c (pkginfo_find_package_with_constraint): update
+	to handle new rc_package_dep_verify_relation -- this one is
+	special, because we don't have an RCPackageDep here, so we make
+	one
+
+	* rc-package-spec.c: minor das_global_packman changes
+
+	* rc-packman.h, rc-packman.c (rc_packman_set_packman): added
+
+	* rc-queue-item.c (uninstall_item_process): new
+	rc_package_dep_verify_relation behaviour
+
+	* rc-world.h (rc_world_foreach_requiring_package): take an
+	RCPackageDep, not an RCPackageSpec
+
+	* rc-world.c: s/rc-deps-util.h/rc-dep-or.h/
+	(rc_world_foreach_providing_package): pass pad->dep, not
+	pad->dep->spec, to rc_package_dep_verify_relation
+	(rc_world_foreach_requiring_package): take a dep not a spec
+
 2002-03-09  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-world.c (remove_package_structs_generic): Uh, don't go

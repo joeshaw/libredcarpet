@@ -39,8 +39,6 @@
 
 #include "rc-package-info.h"
 
-#include "rc-deps.h"
-
 #include "rc-distro.h"
 
 #include "rc-md5.h"

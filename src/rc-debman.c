@@ -27,7 +27,6 @@
 #include "rc-debman-private.h"
 #include "rc-util.h"
 #include "rc-line-buf.h"
-#include "rc-deps.h"
 #include "rc-verification.h"
 #include "rc-verification-private.h"
 #include "rc-debman-general.h"

@@ -1271,7 +1271,7 @@ uninstall_item_process (RCQueueItem *item,
             info.require_items = new_items;
             info.remove_only = uninstall->remove_only;
             
-            rc_world_foreach_requiring_package (world, & dep->spec,
+            rc_world_foreach_requiring_package (world, dep,
                                                 RC_WORLD_ANY_CHANNEL,
                                                 uninstall_process_cb, &info);
         }
