@@ -115,7 +115,9 @@ gboolean   rc_package_is_installed     (RCPackage *package);
 gboolean   rc_package_is_local         (RCPackage *package);
 gboolean   rc_package_is_package_set   (RCPackage *package);
 gboolean   rc_package_is_synthetic     (RCPackage *package);
-gboolean   rc_package_is_install_only  (RCPackage *package);
+
+gboolean   rc_package_get_install_only  (RCPackage *package);
+void       rc_package_set_install_only  (RCPackage *package, gboolean val);
 
 RCPackageSList *rc_package_slist_ref   (RCPackageSList *packages);
 void            rc_package_slist_unref (RCPackageSList *packages);

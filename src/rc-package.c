@@ -254,11 +254,19 @@ rc_package_is_synthetic (RCPackage *package)
 }
 
 gboolean
-rc_package_is_install_only (RCPackage *package)
+rc_package_get_install_only (RCPackage *package)
 {
     g_return_val_if_fail (package != NULL, FALSE);
 
     return package->install_only;
+}
+
+void
+rc_package_set_install_only (RCPackage *package, gboolean val)
+{
+    g_return_val_if_fail (package != NULL, FALSE);
+
+    package->install_only = val;
 }
 
 RCPackageSList *
