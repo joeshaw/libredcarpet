@@ -1,3 +1,16 @@
+2001-01-26  Ian Peters  <itp@ximian.com>
+
+	* rc-debman.c (make_unpack_commands): overhauled, made it use
+	const strings, since that's all that was ever there, a little more
+	efficient I think
+	(do_unpack): make all dpkg --unpack commands once first with the
+	--no-act option, and only if this succeeds do we proceed to
+	actually screw things up
+	(rc_debman_init): add call to rc_package_dep_system_is_rpmish
+
+	* rc-rpmman.c (rc_rpmman_init): add call to
+	rc_package_dep_system_is_rpmish
+
 2001-01-26  Vladimir Vukicevic  <vladimir@helixcode.com>
 
 	* rc-package-dep.c, rc-package-dep.h: New

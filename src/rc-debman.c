@@ -904,61 +904,77 @@ do_purge (RCPackman *packman, DebmanInstallState *install_state)
 */
 
 static GSList *
-make_unpack_commands (GSList *commands, RCPackageSList *packages)
+make_unpack_commands (gchar **command, RCPackageSList *packages)
 {
-    GSList *package_iter;
-    GSList *command_iter;
+    GSList *iter1, *iter2;
+    gchar **iter3;
+
+    GSList *lines = NULL;
+    GSList *line = NULL;
+    guint line_length = 0;
 
     GSList *ret = NULL;
-    GArray *buf = NULL;
-    guint buf_length = 0;
 
     RC_ENTRY;
 
-    package_iter = packages;
+    iter1 = packages;
 
-    while (package_iter) {
+    while (iter1) {
         gchar *filename =
-            g_strdup (((RCPackage *)(package_iter->data))->package_filename);
+            ((RCPackage *)(iter1->data))->package_filename;
+        /* Is it necessary to count the spaces? */
         guint filename_length = strlen (filename) + 1;
 
-        if (!buf) {
-            buf = g_array_new (TRUE, FALSE, sizeof (gchar *));
-            buf_length = 0;
-
-            for (command_iter = commands; command_iter;
-                 command_iter = command_iter->next)
-            {
-                gchar *command = g_strdup ((gchar *)(command_iter->data));
-
-                buf = g_array_append_val (buf, command);
-                buf_length += strlen (command) + 1;
+        if (!line) {
+            for (iter3 = command; *iter3; iter3++) {
+                line = g_slist_append (line, *iter3);
+                line_length += strlen (*iter3) + 1;
             }
 
-            buf_length -= 1;
+            /* We've counted one extra space for the first argument */
+            line_length -= 1;
         }
 
-        if (buf_length + filename_length > 4096) {
-            ret = g_slist_append (ret, buf->data);
-
-            g_array_free (buf, FALSE);
-            buf = NULL;
-
-            g_free (filename);
+        /* FIXME: I've picked 16384 as a somewhat arbitrary value that
+         * should be safe on Linux and yet not suck too much.  Some
+         * day I shall slog through Stevens and find out the right
+         * number to put here. */
+        if (line_length + filename_length > 16384) {
+            lines = g_slist_append (lines, line);
+            line = NULL;
         } else {
-            buf = g_array_append_val (buf, filename);
-            buf_length += filename_length;
+            line = g_slist_append (line, filename);
+            line_length += filename_length;
 
-            package_iter = package_iter->next;
+            iter1 = iter1->next;
         }
     }
 
-    if (buf) {
-        ret = g_slist_append (ret, buf->data);
-
-        g_array_free (buf, FALSE);
-        buf = NULL;
+    /* Don't forget the last line may not have been full */
+    if (line) {
+        lines = g_slist_append (lines, line);
     }
+
+    /* We now need to convert these to argv-style arrays that execv
+     * can deal with */
+    for (iter1 = lines; iter1; iter1 = iter1->next) {
+        guint count = 0;
+        gchar **argv;
+
+        line = (GSList *)(iter1->data);
+
+        argv = g_new0 (gchar *, g_slist_length (line) + 1);
+
+        for (iter2 = line; iter2; iter2 = iter2->next) {
+            argv[count++] = (gchar *)(iter2->data);
+        }
+
+        ret = g_slist_append (ret, argv);
+
+        g_slist_free (line);
+    }
+
+    g_slist_free (lines);
 
     RC_EXIT;
 
@@ -1015,10 +1031,14 @@ do_unpack_read_done_cb (RCLineBuf *line_buf, RCLineBufStatus status,
 
     RC_ENTRY;
 
-    gtk_signal_disconnect (GTK_OBJECT (line_buf),
-                           do_unpack_info->read_line_id);
-    gtk_signal_disconnect (GTK_OBJECT (line_buf),
-                           do_unpack_info->read_done_id);
+    if (do_unpack_info->read_line_id) {
+        gtk_signal_disconnect (GTK_OBJECT (line_buf),
+                               do_unpack_info->read_line_id);
+    }
+    if (do_unpack_info->read_done_id) {
+        gtk_signal_disconnect (GTK_OBJECT (line_buf),
+                               do_unpack_info->read_done_id);
+    }
 
     g_main_quit (do_unpack_info->loop);
 
@@ -1030,22 +1050,116 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
            DebmanInstallState *install_state)
 {
     GSList *argvl = NULL;
-    GSList *args = NULL;
-
     GSList *iter;
+    gchar *command[] = { "/usr/bin/dpkg", "--no-act",
+                         "--auto-deconfigure", "--unpack", NULL };
+    RCLineBuf *line_buf;
+    GMainLoop *loop;
+    DebmanDoUnpackInfo do_unpack_info;
 
     RC_ENTRY;
 
     g_return_val_if_fail (g_slist_length (packages) > 0, TRUE);
 
-    args = g_slist_append (args, g_strdup ("dpkg"));
-    args = g_slist_append (args, g_strdup ("--auto-deconfigure"));
-    args = g_slist_append (args, g_strdup ("--unpack"));
+    signal (SIGCHLD, SIG_DFL);
+    signal (SIGPIPE, SIG_DFL);
 
-    argvl = make_unpack_commands (args, packages);
+    argvl = make_unpack_commands (command, packages);
 
-    g_slist_foreach (args, (GFunc) g_free, NULL);
-    g_slist_free (args);
+    for (iter = argvl; iter; iter = iter->next) {
+        gchar **argv = (gchar **)(iter->data);
+
+        pid_t child;
+        int status;
+        int fds[2];
+
+        if (pipe (fds)) {
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "pipe failed");
+
+            g_slist_foreach (argvl, (GFunc) g_free, NULL);
+            g_slist_free (argvl);
+
+            RC_EXIT;
+
+            return (FALSE);
+        }
+
+        child = fork ();
+
+        switch (child) {
+        case -1:
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "fork failed");
+
+            rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__, ": fork failed\n");
+
+            g_slist_foreach (argvl, (GFunc) g_free, NULL);
+            g_slist_free (argvl);
+
+            close (fds[0]);
+            close (fds[1]);
+
+            RC_EXIT;
+
+            return (FALSE);
+
+        case 0:
+            close (fds[0]);
+
+            rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ ":");
+            dump_argv (RC_DEBUG_LEVEL_ERROR, argv);
+
+            fflush (stdout);
+            dup2 (fds[1], STDOUT_FILENO);
+
+            fflush (stderr);
+            dup2 (fds[1], STDERR_FILENO);
+
+            execv ("/usr/bin/dpkg", argv);
+            break;
+
+        default:
+            break;
+        }
+
+        close (fds[1]);
+
+        loop = g_main_new (FALSE);
+
+        line_buf = rc_line_buf_new ();
+        rc_line_buf_set_fd (line_buf, fds[0]);
+
+        do_unpack_info.loop = loop;
+        do_unpack_info.read_line_id = 0;
+
+        do_unpack_info.read_done_id =
+            gtk_signal_connect (GTK_OBJECT (line_buf), "read_done",
+                                GTK_SIGNAL_FUNC (do_unpack_read_done_cb),
+                                (gpointer) &do_unpack_info);
+
+        g_main_run (loop);
+
+        gtk_object_unref (GTK_OBJECT (line_buf));
+
+        g_main_destroy (loop);
+
+        close (fds[0]);
+
+        waitpid (child, &status, 0);
+
+        if (!(WIFEXITED (status)) || WEXITSTATUS (status)) {
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "dry run failed");
+
+            g_slist_foreach (argvl, (GFunc) g_free, NULL);
+            g_slist_free (argvl);
+
+            RC_EXIT;
+
+            return (FALSE);
+        }
+    }
 
     for (iter = argvl; iter; iter = iter->next) {
         gchar **argv = (gchar **)(iter->data);
@@ -1054,9 +1168,12 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
         pid_t parent;
         int master, slave;
         int status;
-        RCLineBuf *line_buf;
-        GMainLoop *loop;
-        DebmanDoUnpackInfo do_unpack_info;
+
+        /* So this is a crufy hack, but I need something to replace
+         * the --no-act with, and there doesn't seem to be a --yes-act
+         * option.  Since --abort-after=50 is the default, this should
+         * be harmless, no? */
+         argv[1] = "--abort-after=50";
 
         if (!rc_file_exists ("/usr/bin/dpkg")) {
             rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ ": /usr/bin/dpkg "
@@ -1073,8 +1190,6 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
 
         openpty (&master, &slave, NULL, NULL, NULL);
 
-        signal (SIGCHLD, SIG_DFL);
-        signal (SIGPIPE, SIG_DFL);
         signal (SIGUSR2, debman_sigusr2_cb);
 
         parent = getpid ();
@@ -1094,7 +1209,7 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
             close (master);
             close (slave);
 
-            g_slist_foreach (argvl, (GFunc) g_strfreev, NULL);
+            g_slist_foreach (argvl, (GFunc) g_free, NULL);
             g_slist_free (argvl);
 
             RC_EXIT;
@@ -1178,7 +1293,7 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
             rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
                       ": lost database lock!\n");
 
-            g_slist_foreach (argvl, (GFunc) g_strfreev, NULL);
+            g_slist_foreach (argvl, (GFunc) g_free, NULL);
             g_slist_free (argvl);
 
             RC_EXIT;
@@ -1193,7 +1308,7 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
             rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
                       ": dpkg exited abnormally\n");
 
-            g_slist_foreach (argvl, (GFunc) g_strfreev, NULL);
+            g_slist_foreach (argvl, (GFunc) g_free, NULL);
             g_slist_free (argvl);
 
             RC_EXIT;
@@ -1202,7 +1317,7 @@ do_unpack (RCPackman *packman, RCPackageSList *packages,
         }
     }
 
-    g_slist_foreach (argvl, (GFunc) g_strfreev, NULL);
+    g_slist_foreach (argvl, (GFunc) g_free, NULL);
     g_slist_free (argvl);
 
     return (TRUE);
@@ -1471,9 +1586,14 @@ rc_debman_transact (RCPackman *packman, RCPackageSList *install_packages,
         if (!(do_unpack (packman, install_packages, install_state))) {
             rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ ": unpack failed\n");
 
-            rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
-                                  "Unable to unpack selected packages " \
-                                  "(suggest 'dpkg --unpack --pending')");
+            if (rc_packman_get_error (packman) == RC_PACKMAN_ERROR_FATAL) {
+                rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL,
+                                      "Unable to unpack selected packages " \
+                                      "(suggest 'apt-get -f install')");
+            } else {
+                rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                      "Unable to unpack selected packages");
+            }
 
             RC_EXIT;
 
@@ -2672,6 +2792,8 @@ rc_debman_init (RCDebman *debman)
                                   debman->priv->status_file);
         }
     }
+
+    rc_package_dep_system_is_rpmish (FALSE);
 
     RC_EXIT;
 }

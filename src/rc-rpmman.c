@@ -1799,6 +1799,8 @@ rc_rpmman_init (RCRpmman *obj)
     packman->priv->features =
         RC_PACKMAN_FEATURE_PRE_CONFIG |
         RC_PACKMAN_FEATURE_PKG_PROGRESS;
+
+    rc_package_dep_system_is_rpmish (TRUE);
 } /* rc_rpmman_init */
 
 RCRpmman *
