@@ -134,6 +134,14 @@ rc_channel_get_id (const RCChannel *channel)
     return channel->id;
 }
 
+guint32
+rc_channel_get_base_id (const RCChannel *channel)
+{
+    g_return_val_if_fail (channel != NULL, 0);
+
+    return channel->base_id;
+}
+
 const char *
 rc_channel_get_name (const RCChannel *channel)
 {

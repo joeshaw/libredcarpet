@@ -58,6 +58,7 @@ RCChannel *rc_world_add_channel         (RCWorld      *world,
                                          const char   *channel_name,
                                          const char   *alias,
                                          guint32       channel_id,
+                                         guint32       base_id,
                                          RCChannelType type);
 
 void       rc_world_remove_channel      (RCWorld      *world,
@@ -75,6 +76,9 @@ RCChannel *rc_world_get_channel_by_alias (RCWorld     *world,
 
 RCChannel *rc_world_get_channel_by_id   (RCWorld      *world,
                                          guint32       channel_id);
+
+RCChannel *rc_world_get_channel_by_base_id (RCWorld   *world,
+                                            guint32    base_id);
 
 
 /* Add/remove package operations */

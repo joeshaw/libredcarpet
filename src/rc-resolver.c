@@ -69,6 +69,9 @@ rc_resolver_free (RCResolver *resolver)
         if (resolver->extra_deps)
             rc_package_dep_slist_free (resolver->extra_deps);
 
+        if (resolver->extra_conflicts)
+            rc_package_dep_slist_free (resolver->extra_conflicts);
+
         g_slist_free (resolver->packages_to_install);
         g_slist_free (resolver->packages_to_remove);
         g_slist_free (resolver->packages_to_verify);
@@ -160,7 +163,7 @@ rc_resolver_add_packages_to_remove_from_slist (RCResolver *resolver,
 }
 
 void
-rc_resolver_add_extra_dependency (RCResolver *resolver,
+rc_resolver_add_extra_dependency (RCResolver   *resolver,
                                   RCPackageDep *dep)
 {
     g_return_if_fail (resolver != NULL);
@@ -168,6 +171,17 @@ rc_resolver_add_extra_dependency (RCResolver *resolver,
 
     resolver->extra_deps = 
         g_slist_prepend (resolver->extra_deps, rc_package_dep_ref (dep));
+}
+
+void
+rc_resolver_add_extra_conflict (RCResolver   *resolver,
+                                RCPackageDep *dep)
+{
+    g_return_if_fail (resolver != NULL);
+    g_return_if_fail (dep != NULL);
+
+    resolver->extra_conflicts =
+        g_slist_prepend (resolver->extra_conflicts, rc_package_dep_ref (dep));
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
@@ -227,7 +241,7 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
     local_pkg_channel = rc_world_add_channel (world,
                                               "Local Packages",
                                               "local-pkg-alias-blah-blah-blah",
-                                              0,
+                                              0, 0,
                                               RC_CHANNEL_TYPE_UNKNOWN);
 
     initial_queue = rc_resolver_queue_new ();
@@ -237,7 +251,7 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
     initial_queue->context->world = world;
     
     initial_queue->context->current_channel = resolver->current_channel;
-
+    
     for (iter = resolver->packages_to_install; iter != NULL; iter = iter->next) {
         RCPackage *pkg = iter->data;
         
@@ -264,6 +278,11 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
     for (iter = resolver->extra_deps; iter != NULL; iter = iter->next) {
         rc_resolver_queue_add_extra_dependency (initial_queue,
                                                 (RCPackageDep *) iter->data);
+    }
+
+    for (iter = resolver->extra_conflicts; iter != NULL; iter = iter->next) {
+        rc_resolver_queue_add_extra_conflict (initial_queue,
+                                              (RCPackageDep *) iter->data);
     }
 
     resolver->pending_queues = g_slist_prepend (resolver->pending_queues, initial_queue);

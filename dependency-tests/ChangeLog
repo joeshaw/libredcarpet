@@ -1,3 +1,10 @@
+2002-08-19  Jon Trowbridge  <trow@ximian.com>
+
+	* deptestomatic.c (load_channel): Set a fake base-id when creating
+	channels.
+	(parse_xml_trial): Allow conflicts to be added to solvedeps
+	trials.
+
 2002-08-16  Jon Trowbridge  <trow@ximian.com>
 
 	* deptestomatic.c (undump): Added support for undumping compressed

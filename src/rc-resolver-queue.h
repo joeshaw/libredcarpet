@@ -50,6 +50,8 @@ void             rc_resolver_queue_add_package_to_verify  (RCResolverQueue *queu
                                                            RCPackage *package);
 void             rc_resolver_queue_add_extra_dependency   (RCResolverQueue *queue,
                                                            RCPackageDep *dep);
+void             rc_resolver_queue_add_extra_conflict     (RCResolverQueue *queue,
+                                                           RCPackageDep *dep);
 
 gboolean         rc_resolver_queue_is_empty (RCResolverQueue *);
 gboolean         rc_resolver_queue_is_invalid (RCResolverQueue *);

@@ -34,6 +34,8 @@ struct _RCChannel {
     struct _RCWorld *world;
 
     guint32 id;
+    guint32 base_id;
+
     gchar *name;
     gchar *alias;
     gchar *description;

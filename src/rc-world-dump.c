@@ -147,8 +147,8 @@ rc_world_undump_from_xml (RCWorld *world,
 
             char *name;
             char *alias;
-            char *id_str;
-            guint32 id;
+            char *id_str, *bid_str;
+            guint32 id, bid;
             static guint32 dummy_id = 0xdeadbeef;
             char *subd_str;
             int subd;
@@ -161,7 +161,10 @@ rc_world_undump_from_xml (RCWorld *world,
             
             id_str = xml_get_prop (channel_node, "id");
             id = id_str ? atoi (id_str) : (dummy_id++);
-            
+
+            bid_str = xml_get_prop (channel_node, "bid");
+            bid = bid_str ? atoi (bid_str) : (dummy_id++);
+                        
             subd_str = xml_get_prop (channel_node, "subscribed");
             subd = subd_str ? atoi (subd_str) : 0;
 
@@ -171,7 +174,7 @@ rc_world_undump_from_xml (RCWorld *world,
             current_channel = rc_world_add_channel (world,
                                                     name,
                                                     alias ? alias : "foo",
-                                                    id,
+                                                    id, bid,
                                                     RC_CHANNEL_TYPE_HELIX);
 
             if (current_channel) {

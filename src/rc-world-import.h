@@ -42,6 +42,7 @@ RCChannel *rc_world_add_channel_from_buffer (RCWorld *world,
                                              const char *channel_name,
                                              const char *alias,
                                              guint32 channel_id,
+                                             guint32 base_id,
                                              RCChannelType type,
                                              gchar *buf,
                                              gint compressed_length);

@@ -1283,7 +1283,8 @@ conflict_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data
     char *pkg_str, *spec_str, *msg;
     RCResolverInfo *log_info;
 
-    if (rc_package_spec_equal (& package->spec, & info->conflicting_package->spec))
+    if (info->conflicting_package
+        && rc_package_spec_equal (& package->spec, & info->conflicting_package->spec))
         return;
 
     /* Obsoletes don't apply to virtual provides, only the packages
@@ -1341,7 +1342,8 @@ conflict_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data
                                               msg);
 
         rc_resolver_info_flag_as_error (log_info);
-        rc_resolver_info_add_related_package (log_info, info->conflicting_package);
+        if (info->conflicting_package)
+            rc_resolver_info_add_related_package (log_info, info->conflicting_package);
 
         rc_resolver_context_add_info (info->context, log_info);
 
@@ -1357,7 +1359,8 @@ conflict_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data
                            info->dep_str,
                            " (",
                            spec_str,
-                           ") from ",
+                           ")",
+                           info->pkg_str ? " from " : NULL,
                            info->pkg_str,
                            NULL);
 
@@ -1366,7 +1369,8 @@ conflict_process_cb (RCPackage *package, RCPackageSpec *spec, gpointer user_data
                                               msg);
 
         rc_resolver_info_add_related_package (log_info, package);
-        rc_resolver_info_add_related_package (log_info, info->conflicting_package);
+        if (info->conflicting_package)
+            rc_resolver_info_add_related_package (log_info, info->conflicting_package);
         
         rc_resolver_context_add_info (info->context, log_info);
 
@@ -1400,8 +1404,13 @@ conflict_item_process (RCQueueItem *item,
     info.dep                  = conflict->dep;
     info.context              = context;
     info.new_items            = new_items;
-    info.pkg_str              = rc_package_spec_to_str (& conflict->conflicting_package->spec);
-    info.dep_str              = g_strconcat (
+
+    if (conflict->conflicting_package)
+        info.pkg_str = rc_package_spec_to_str (& conflict->conflicting_package->spec);
+    else
+        info.pkg_str = NULL;
+
+    info.dep_str = g_strconcat (
         rc_package_relation_to_string (
             rc_package_dep_get_relation (conflict->dep), 0),
         " ",
@@ -1442,9 +1451,10 @@ static char *
 conflict_item_to_string (RCQueueItem *item)
 {
     RCQueueItem_Conflict *conflict = (RCQueueItem_Conflict *) item;
-    char *str, *package_str;
+    char *str, *package_str = NULL;
 
-    package_str = rc_package_to_str (conflict->conflicting_package);
+    if (conflict->conflicting_package)
+        package_str = rc_package_to_str (conflict->conflicting_package);
 
     str = g_strconcat (
         "conflict ",
@@ -1452,7 +1462,7 @@ conflict_item_to_string (RCQueueItem *item)
             rc_package_dep_get_relation (conflict->dep), 0),
         " ",
         rc_package_spec_to_str_static (RC_PACKAGE_SPEC (conflict->dep)),
-        " from ",
+        package_str ? " from " : NULL,
         package_str,
         NULL);
 
@@ -1469,7 +1479,6 @@ rc_queue_item_new_conflict (RCWorld *world, RCPackageDep *dep, RCPackage *packag
     RCQueueItem *item;
 
     g_return_val_if_fail (dep != NULL, NULL);
-    g_return_val_if_fail (package != NULL, NULL);
 
     conflict = g_new0 (RCQueueItem_Conflict, 1);
     item = (RCQueueItem *) conflict;

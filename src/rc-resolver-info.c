@@ -435,7 +435,6 @@ rc_resolver_info_conflicts_with_new (RCPackage *package,
     RCResolverInfo *info;
 
     g_return_val_if_fail (package != NULL, NULL);
-    g_return_val_if_fail (conflicts_with != NULL, NULL);
 
     info = g_new0 (RCResolverInfo, 1);
     
@@ -443,8 +442,9 @@ rc_resolver_info_conflicts_with_new (RCPackage *package,
     info->package  = rc_package_ref (package);
     info->priority = RC_RESOLVER_INFO_PRIORITY_USER;
 
-    info->package_list = g_slist_prepend (info->package_list,
-                                          rc_package_ref (conflicts_with));
+    if (conflicts_with)
+        info->package_list = g_slist_prepend (info->package_list,
+                                              rc_package_ref (conflicts_with));
 
     return info;
 }
@@ -456,7 +456,6 @@ rc_resolver_info_obsoletes_new (RCPackage *package,
     RCResolverInfo *info;
 
     g_return_val_if_fail (package != NULL, NULL);
-    g_return_val_if_fail (obsoletes != NULL, NULL);
 
     info = g_new0 (RCResolverInfo, 1);
     
@@ -464,8 +463,9 @@ rc_resolver_info_obsoletes_new (RCPackage *package,
     info->package  = rc_package_ref (package);
     info->priority = RC_RESOLVER_INFO_PRIORITY_USER;
 
-    info->package_list = g_slist_prepend (info->package_list,
-                                          rc_package_ref (obsoletes));
+    if (obsoletes)
+        info->package_list = g_slist_prepend (info->package_list,
+                                              rc_package_ref (obsoletes));
 
     return info;
 }

@@ -78,7 +78,7 @@ load_channel (const char *name,
     channel = rc_world_add_channel_from_buffer (world,
                                                 name, /* name */
                                                 name, /* alias */
-                                                666,
+                                                0xdead, 0xbeef, /* fake IDs */
                                                 channel_type, buffer,
                                                 is_compressed ? file_size : 0);
 
@@ -541,9 +541,15 @@ parse_xml_trial (xmlNode *node)
                 /* We just skip over anything that doesn't look like a
                    dep. */
                 if (dep) {
-                    g_print (">!> Solvedeps %s\n",
+                    char *conflict_str = xml_get_prop (iter, "conflict");
+
+                    g_print (">!> Solvedeps %s%s\n",
+                             conflict_str ? "conflict " : "",
                              rc_package_dep_to_string_static (dep));
+
                     rc_resolver_add_extra_dependency (resolver, dep);
+
+                    g_free (conflict_str);
                 }
                 iter = iter->next;
             }

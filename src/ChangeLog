@@ -1,5 +1,42 @@
 2002-08-19  Jon Trowbridge  <trow@ximian.com>
 
+	* rc-xml.c (rc_channel_to_xml_node): Put the base-id in the XML.
+
+	* rc-world-import.c (rc_world_add_channels_from_xml): Handle the
+	base-id.
+	(rc_world_add_channel_from_buffer): Added an argument for the
+	base-id.
+
+	* rc-world-dump.c (rc_world_undump_from_xml): Get the base-id from
+	the channel XML.
+
+	* rc-world.c (rc_world_add_channel): Added an argument for
+	specifying a base-id.
+	(rc_world_get_channel_by_base_id): Added.
+
+	* rc-resolver-queue.c (rc_resolver_queue_add_extra_dependency): Added.
+
+	* rc-resolver.c (rc_resolver_free): Clean up our extra conflicts.
+	(rc_resolver_add_extra_conflict): Added.
+	(rc_resolver_resolve_dependencies): Specify a fake base-id for our
+	temporary local packages channel.
+	(rc_resolver_resolve_dependencies): Iterate over our extra
+	conflicts, adding them to the queue.
+
+	* rc-resolver-info.c (rc_resolver_info_conflicts_with_new): Handle
+	a NULL conflicts_with.
+	(rc_resolver_info_obsoletes_new): Handle a NULL obsoletes.
+
+	* rc-queue-item.c (conflict_process_cb): Respond gracefully when
+	conflicting_package is NULL.
+	(conflict_item_process): Ditto.
+	(conflict_item_to_string): Ditto.
+	(rc_queue_item_new_conflict): Ditto.
+
+	* rc-channel.c (rc_channel_get_base_id): Added accessor.
+
+	* rc-channel-private.h: Added base_id field to RCChannel struct.
+
 	* rc-resolver.c (rc_resolver_free): Clean up after our deferred
 	branch list.
 	(rc_resolver_resolve_dependencies): Added deferred branching

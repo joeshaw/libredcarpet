@@ -55,6 +55,8 @@ void       rc_channel_unref (RCChannel *channel);
  
 guint32       rc_channel_get_id          (const RCChannel *channel);
 
+guint32       rc_channel_get_base_id     (const RCChannel *channel);
+
 const char   *rc_channel_get_name        (const RCChannel *channel);
 
 const char   *rc_channel_get_alias       (const RCChannel *channel);

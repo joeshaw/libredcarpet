@@ -149,6 +149,23 @@ rc_resolver_queue_add_extra_dependency (RCResolverQueue *queue,
     queue->items = g_slist_prepend (queue->items, item);
 }
 
+void
+rc_resolver_queue_add_extra_conflict (RCResolverQueue *queue,
+                                      RCPackageDep *dep)
+{
+    RCWorld *world;
+    RCQueueItem *item;
+
+    g_return_if_fail (queue != NULL);
+    g_return_if_fail (dep != NULL);
+
+    world = rc_resolver_context_get_world (queue->context);
+
+    item = rc_queue_item_new_conflict (world, dep, NULL);
+
+    queue->items = g_slist_prepend (queue->items, item);
+}
+
 gboolean
 rc_resolver_queue_is_empty (RCResolverQueue *queue)
 {

@@ -1261,6 +1261,9 @@ rc_channel_to_xml_node (RCChannel *channel)
     sprintf (tmp, "%d", rc_channel_get_id (channel));
     xmlNewProp (node, "id", tmp);
 
+    sprintf (tmp, "%d", rc_channel_get_base_id (channel));
+    xmlNewProp (node, "bid", tmp);
+
     xmlNewProp (node, "name", rc_channel_get_name (channel));
 
     if (rc_channel_get_alias (channel))

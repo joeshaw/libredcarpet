@@ -431,6 +431,7 @@ rc_world_add_channel (RCWorld *world,
                       const char *channel_name,
                       const char *alias,
                       guint32 channel_id,
+                      guint32 base_id,
                       RCChannelType type)
 {
     RCChannel *channel;
@@ -443,18 +444,19 @@ rc_world_add_channel (RCWorld *world,
 
     channel = rc_channel_new ();
 
-    channel->world = world;
-    channel->id    = channel_id;
-    channel->name  = g_strdup (channel_name);
-    channel->alias = g_strdup (alias);
-    channel->type  = type;
+    channel->world   = world;
+    channel->id      = channel_id;
+    channel->base_id = base_id;
+    channel->name    = g_strdup (channel_name);
+    channel->alias   = g_strdup (alias);
+    channel->type    = type;
     
     world->channels = g_slist_prepend (world->channels,
                                        channel);
 
     rc_debug (RC_DEBUG_LEVEL_DEBUG,
-              "Adding channel '%s' (%d)",
-              channel_name, channel_id);
+              "Adding channel '%s' (cid=%d, bid=%d)",
+              channel_name, channel_id, base_id);
 
     return channel;
 }
@@ -561,6 +563,23 @@ rc_world_get_channel_by_id (RCWorld *world,
     for (iter = world->channels; iter != NULL; iter = iter->next) {
         RCChannel *channel = iter->data;
         if (channel->id == channel_id)
+            return channel;
+    }
+
+    return NULL;
+}
+
+RCChannel *
+rc_world_get_channel_by_base_id (RCWorld *world,
+                                 guint32 base_id)
+{
+    GSList *iter;
+
+    g_return_val_if_fail (world != NULL, NULL);
+
+    for (iter = world->channels; iter != NULL; iter = iter->next) {
+        RCChannel *channel = iter->data;
+        if (channel->base_id == base_id)
             return channel;
     }
 
