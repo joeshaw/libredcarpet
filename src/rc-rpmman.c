@@ -859,7 +859,8 @@ rc_rpmman_query (RCPackman *p, RCPackage *pkg)
         return (pkg);
     }
 
-    mi = rpmdbInitIterator (db, RPMDBI_LABEL, pkg->spec.name, 0);
+//    mi = rpmdbInitIterator (db, RPMDBI_LABEL, pkg->spec.name, 0);
+    mi = rpmdbInitIterator (db, RPMDBI_NAME, pkg->spec.name, 0);
 
     if (!mi) {
         pkg->installed = FALSE;
@@ -1362,13 +1363,53 @@ rc_rpmman_find_file (RCPackman *packman, const gchar *filename)
     rpmdb db;
     rpmdbMatchIterator mi = NULL;
     Header hdr;
+    RCPackage *package;
 
     if (rpmdbOpen (RC_RPMMAN (packman)->rpmroot, &db, O_RDONLY, 0444)) {
         rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                               "unable to open rpm database");
 
-        return (NULL);
+        goto ERROR;
     }
+
+    mi = rpmdbInitIterator (db, RPMTAG_BASENAMES, filename, 0);
+
+    if (!mi) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "unable to initialize database iterator");
+
+        rpmdbClose (db);
+
+        goto ERROR;
+    }
+
+    hdr = rpmdbNextIterator (mi);
+
+    if (rpmdbNextIterator (mi)) {
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                              "found owners != 1");
+
+        rpmdbFreeIterator (mi);
+        rpmdbClose (db);
+
+        goto ERROR;
+    }
+
+    package = rc_package_new ();
+
+    rc_rpmman_read_header (hdr, &package->spec.name, &package->spec.epoch,
+                           &package->spec.version, &package->spec.release,
+                           &package->section, &package->installed_size,
+                           &package->summary, &package->description);
+
+    rpmdbFreeIterator (mi);
+    rpmdbClose (db);
+
+    return (package);
+
+  ERROR:
+    rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                          "find_file failed");
 
     return (NULL);
 }
