@@ -116,7 +116,7 @@ rc_resolver_queue_add_package_to_verify (RCResolverQueue *queue,
 
     if (package->requires_a)
         for (i = 0; i < package->requires_a->len; i++) {
-            RCPackageDep *dep = package->requires_a->data + i;
+            RCPackageDep *dep = package->requires_a->data[i];
             RCQueueItem *item;
             item = rc_queue_item_new_require (world, dep);
             rc_queue_item_require_add_package (item, package);
@@ -125,7 +125,7 @@ rc_resolver_queue_add_package_to_verify (RCResolverQueue *queue,
 
     if (package->conflicts_a)
         for (i = 0; i < package->conflicts_a->len; i++) {
-            RCPackageDep *dep = package->conflicts_a->data + i;
+            RCPackageDep *dep = package->conflicts_a->data[i];
             RCQueueItem *item;
             item = rc_queue_item_new_conflict (world, dep, package);
             queue->items = g_slist_prepend (queue->items, item);

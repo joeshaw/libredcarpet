@@ -1,3 +1,86 @@
+2002-08-07  Ian Peters  <itp@ximian.com>
+
+	* rc-package-dep.c, rc-package-dep.h: RCPackageDep is now a ref
+	counted structure.  It really should be an opaque struct, too, but
+	that'll come.  rc_package_dep_new now tries to return a pointer to
+	an existing RCPackageDep struct rather than creating a new one.
+	(struct _RCPackageDepArray): data now has to be an array of
+	RCPackageDep *
+	(struct _RCPackageDep): add a ref count
+	(rc_package_dep_ref): added
+	(rc_package_dep_unref): added
+	(rc_package_dep_new): now takes a pre and is_or parameter
+	(rc_package_dep_new_from_spec): ditto
+	(rc_package_dep_free): removed
+	(rc_package_dep_slist_remove_duplicates): removed
+	(rc_package_dep_array_from_slist): updated to new
+	RCPackageDepArray
+	(rc_package_dep_array_free): ditto
+	(rc_package_dep_array_copy): ditto
+
+	* rc-debman-general.c, rc-debman-general.h
+	(rc_debman_fill_depends): take a pre parameter, pass it along to
+	rc_package_dep_new
+
+	* rc-debman.c (query_all_read_line_cb): add FALSE, FALSE to
+	rc_package_dep_new when we self-provide
+	(rc_debman_query_all): ditto
+
+	* rc-dep-or.c: this file really needs some loving and rewriting.
+	yikes.
+	(rc_dep_or_new_provide): add FALSE, TRUE to rc_package_dep_new
+	(rc_dep_string_to_or_dep_slist): we can't assemble the dep bit by
+	bit; accumulate the elements and create the RCPackageDep at the
+	end
+
+	* rc-queue-item.c (install_item_process): change the way we
+	iterate over RCPackageDepArrays, again.  Add FALSE, FALSE to the
+	end of rc_package_dep_new_from_spec.
+	s/rc_package_dep_free/rc_package_dep_unref.
+
+	* rc-resolver-context.c (rc_resolver_context_package_is_possible):
+	change the way we iterate over RCPackageDepArrays
+
+	* rc-resolver-queue.c (rc_resolver_queue_add_package_to_verify):
+	change the way we ... etc
+
+	* rc-rpmman.c (rc_rpmman_transact): change the ... blah blah.  add
+	FALSE, FALSE to the end of rc_package_dep_new, and of course,
+	_unref instead of _free.
+	(depends_fill_helper): FALSE, FALSE to rc_package_dep_new in a few
+	places
+	(rc_rpmman_depends_fill): FALSE, FALSE yadda yadda
+
+	* rc-world-import.c (debian_packages_helper): add FALSE to every
+	call to rc_debman_fill_depends except for our pre-requires, which
+	get TRUE.  Also, for our self-provide, add FALSE, FALSE to
+	_dep_new_from_spec.
+
+	* rc-world.c (struct _RCPackageAndDep): kill the own_dep field
+	(rc_package_and_dep_new_package): add FALSE, FALSE to
+	_dep_new_from_spec, remove the own_dep
+	(rc_package_and_dep_new_pair): remove the own_dep stuff, and ref
+	the dep we're passed
+	(rc_package_and_dep_free): always unref our dep, no own_dep
+	(rc_world_add_package): change the way we iterate over
+	RCPackageDepArrays
+	(rc_world_get_package_with_constraint): add FALSE, FALSE to
+	rc_package_dep_new_from_spec, and unref, don't free, the dep when
+	we're done
+
+	* rc-xml.c (dep_attrs): we're no longer given a dep to fill out,
+	but a dep pointer that we're to allocate and return.  We have to
+	create it at the end, so we accumulate all of the members and
+	create it at the end.
+	(parser_dep_start): don't create our own dep, get one from
+	dep_attrs
+	(rc_xml_node_to_package): change the way we iterate over
+	RCPackageDepArrays
+	(rc_xml_node_to_package_dep_internal): don't create a dep and then
+	fill it out, accumulate the members we need and then create it
+	(rc_package_to_xml_node): change the way we iterate over
+	RCPackageDepArrays
+
 2002-08-07  Jon Trowbridge  <trow@ximian.com>
 
 	* rc-world-dump.c: s/xmlGetProp/xml_get_prop/.

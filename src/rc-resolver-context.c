@@ -1052,7 +1052,7 @@ rc_resolver_context_package_is_possible (RCResolverContext *context,
 
     if (package->requires_a)
         for (i = 0; i < package->requires_a->len; i++) {
-            RCPackageDep *dep = package->requires_a->data + i;
+            RCPackageDep *dep = package->requires_a->data[i];
             if (! rc_resolver_context_requirement_is_possible (context, dep)) {
                 return FALSE;
             }

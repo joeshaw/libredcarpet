@@ -54,7 +54,6 @@ typedef struct _RCPackageAndDep RCPackageAndDep;
 struct _RCPackageAndDep {
     RCPackage *package;
     RCPackageDep *dep;
-    guint own_dep : 1;
 };
 
 static RCPackageAndDep *
@@ -65,9 +64,9 @@ rc_package_and_dep_new_package (RCPackage *package)
     pad = g_new0 (RCPackageAndDep, 1);
     pad->package = rc_package_ref (package);
     pad->dep = rc_package_dep_new_from_spec (&package->spec,
-                                             RC_RELATION_EQUAL);
+                                             RC_RELATION_EQUAL,
+                                             FALSE, FALSE);
     pad->dep->spec.type = RC_PACKAGE_SPEC_TYPE_PACKAGE;
-    pad->own_dep = TRUE;
 
     return pad;
 }
@@ -79,8 +78,7 @@ rc_package_and_dep_new_pair (RCPackage *package, RCPackageDep *dep)
 
     pad = g_new0 (RCPackageAndDep, 1);
     pad->package = rc_package_ref (package);
-    pad->dep = dep;
-    pad->own_dep = FALSE;
+    pad->dep = rc_package_dep_ref (dep);
 
     return pad;
 }
@@ -89,8 +87,7 @@ void
 rc_package_and_dep_free (RCPackageAndDep *pad)
 {
     if (pad) {
-        if (pad->own_dep)
-            rc_package_dep_free (pad->dep);
+        rc_package_dep_unref (pad->dep);
         rc_package_unref (pad->package);
         g_free (pad);
     }
@@ -720,7 +717,7 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
     if (package->provides_a)
         for (i = 0; i < package->provides_a->len; i++) {
             pad = rc_package_and_dep_new_pair (
-                package, package->provides_a->data + i);
+                package, package->provides_a->data[i]);
 
             hashed_slist_add (world->provides_by_name,
                               pad->dep->spec.name,
@@ -732,7 +729,7 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
     if (package->requires_a)
         for (i = 0; i < package->requires_a->len; i++) {
             pad = rc_package_and_dep_new_pair (
-                package, package->requires_a->data + i);
+                package, package->requires_a->data[i]);
 
             hashed_slist_add (world->requires_by_name,
                               pad->dep->spec.name,
@@ -744,7 +741,7 @@ rc_world_add_package (RCWorld *world, RCPackage *package)
     if (package->conflicts_a)
         for (i = 0; i < package->conflicts_a->len; i++) {
             pad = rc_package_and_dep_new_pair (
-                package, package->conflicts_a->data + i);
+                package, package->conflicts_a->data[i]);
 
             hashed_slist_add (world->conflicts_by_name,
                               pad->dep->spec.name,
@@ -1005,10 +1002,11 @@ rc_world_get_package_with_constraint (RCWorld *world,
 
     if (pkg != NULL && constraint != NULL) {
         RCPackageDep *dep;
-        dep = rc_package_dep_new_from_spec (&(pkg->spec), RC_RELATION_EQUAL);
+        dep = rc_package_dep_new_from_spec (&(pkg->spec), RC_RELATION_EQUAL,
+                                            FALSE, FALSE);
         if (! rc_package_dep_verify_relation (constraint, dep))
             pkg = NULL;
-        rc_package_dep_free (dep);
+        rc_package_dep_unref (dep);
     }
 
     return pkg;

@@ -216,7 +216,7 @@ parser_history_start(RCPackageSAXContext *ctx,
 }
 
 static gboolean
-parse_dep_attrs(RCPackageDep *dep, const xmlChar **attrs)
+parse_dep_attrs(RCPackageDep **dep, const xmlChar **attrs)
 {
     int i;
     gboolean op_present = FALSE;
@@ -226,6 +226,8 @@ parse_dep_attrs(RCPackageDep *dep, const xmlChar **attrs)
     char *tmp_version = NULL;
     char *tmp_release = NULL;
     gboolean is_obsolete = FALSE;
+    RCPackageRelation relation = RC_RELATION_ANY;
+    char *tmp_name = NULL;
 
     for (i = 0; attrs[i]; i++) {
         char *attr = g_strdup(attrs[i++]);
@@ -234,10 +236,10 @@ parse_dep_attrs(RCPackageDep *dep, const xmlChar **attrs)
         g_strdown(attr);
 
         if (!strcmp(attr, "name"))
-            dep->spec.name = g_strdup(value);
+            tmp_name = g_strdup(value);
         else if (!strcmp(attr, "op")) {
             op_present = TRUE;
-            dep->relation = rc_string_to_package_relation(value);
+            relation = rc_string_to_package_relation(value);
         }
         else if (!strcmp(attr, "epoch")) {
             tmp_epoch = rc_string_to_guint32_with_default(value, 0);
@@ -256,17 +258,12 @@ parse_dep_attrs(RCPackageDep *dep, const xmlChar **attrs)
         g_free(attr);
     }
 
-    if (op_present) {
-        dep->spec.epoch = tmp_epoch;
-        dep->spec.has_epoch = has_epoch;
-        dep->spec.version = tmp_version;
-        dep->spec.release = tmp_release;
-    }
-    else {
-        dep->relation = RC_RELATION_ANY;
-        g_free(tmp_version);
-        g_free(tmp_release);
-    }
+    *dep = rc_package_dep_new (tmp_name, has_epoch, tmp_epoch, tmp_version,
+                               tmp_release, relation, FALSE, FALSE);
+
+    g_free (tmp_name);
+    g_free (tmp_version);
+    g_free (tmp_release);
 
     return is_obsolete;
 } /* parse_dep_attrs */
@@ -281,9 +278,7 @@ parser_dep_start(RCPackageSAXContext *ctx,
     if (!strcmp(name, "dep")) {
         gboolean is_obsolete;
 
-        dep = g_new0(RCPackageDep, 1);
-
-        is_obsolete = parse_dep_attrs(dep, attrs);
+        is_obsolete = parse_dep_attrs(&dep, attrs);
         
         if (is_obsolete)
             ctx->current_obsoletes =
@@ -1066,7 +1061,7 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
 
         if (package->provides_a)
             for (i = 0; i < package->provides_a->len; i++) {
-                RCPackageDep *dep = package->provides_a->data + i;
+                RCPackageDep *dep = package->provides_a->data[i];
             
                 if (dep->relation == RC_RELATION_EQUAL
                     && ! strcmp (dep->spec.name, package->spec.name)) {
@@ -1094,35 +1089,38 @@ rc_xml_node_to_package (const xmlNode *node, const RCChannel *channel)
 static RCPackageDep *
 rc_xml_node_to_package_dep_internal (const xmlNode *node)
 {
-    RCPackageDep *dep_item;
+//    RCPackageDep *dep_item;
+    gchar *name = NULL, *version = NULL, *release = NULL;
+    gboolean has_epoch = FALSE;
+    guint32 epoch = 0;
+    RCPackageRelation relation;
+    
     gchar *tmp;
 
     if (g_strcasecmp (node->name, "dep")) {
         return (NULL);
     }
 
-    /* FIXME: this sucks */
-    dep_item = g_new0 (RCPackageDep, 1);
-
-    dep_item->spec.name = xml_get_prop (node, "name");
+    name = xml_get_prop (node, "name");
     tmp = xml_get_prop (node, "op");
     if (tmp) {
         guint epoch;
-        dep_item->relation = rc_string_to_package_relation (tmp);
+        relation = rc_string_to_package_relation (tmp);
         if (xml_get_guint32_value (node, "epoch", &epoch)) {
-            dep_item->spec.has_epoch = 1;
-            dep_item->spec.epoch = epoch;
+            has_epoch = 1;
+            epoch = epoch;
         }
-        dep_item->spec.version =
+        version =
             xml_get_prop (node, "version");
-        dep_item->spec.release =
+        release =
             xml_get_prop (node, "release");
         g_free (tmp);
     } else {
-        dep_item->relation = RC_RELATION_ANY;
+        relation = RC_RELATION_ANY;
     }
 
-    return (dep_item);
+    return rc_package_dep_new (
+        name, has_epoch, epoch, version, release, relation, FALSE, FALSE);
 } /* rc_xml_node_to_package_dep_internal */
 
 RCPackageDep *
@@ -1365,7 +1363,7 @@ rc_package_to_xml_node (RCPackage *package)
     if (package->requires_a) {
         tmp_node = xmlNewChild (deps_node, NULL, "requires", NULL);
         for (i = 0; i < package->requires_a->len; i++) {
-            RCPackageDep *dep = package->requires_a->data + i;
+            RCPackageDep *dep = package->requires_a->data[i];
 
             xmlAddChild (tmp_node, rc_package_dep_to_xml_node (dep));
         }
@@ -1374,7 +1372,7 @@ rc_package_to_xml_node (RCPackage *package)
     if (package->recommends_a) {
         tmp_node = xmlNewChild (deps_node, NULL, "recommends", NULL);
         for (i = 0; i < package->recommends_a->len; i++) {
-            RCPackageDep *dep = package->recommends_a->data + i;
+            RCPackageDep *dep = package->recommends_a->data[i];
 
             xmlAddChild (tmp_node, rc_package_dep_to_xml_node (dep));
         }
@@ -1383,7 +1381,7 @@ rc_package_to_xml_node (RCPackage *package)
     if (package->suggests_a) {
         tmp_node = xmlNewChild (deps_node, NULL, "suggests", NULL);
         for (i = 0; i < package->suggests_a->len; i++) {
-            RCPackageDep *dep = package->suggests_a->data + i;
+            RCPackageDep *dep = package->suggests_a->data[i];
 
             xmlAddChild (tmp_node, rc_package_dep_to_xml_node (dep));
         }
@@ -1392,7 +1390,7 @@ rc_package_to_xml_node (RCPackage *package)
     if (package->conflicts_a) {
         tmp_node = xmlNewChild (deps_node, NULL, "conflicts", NULL);
         for (i = 0; i < package->conflicts_a->len; i++) {
-            RCPackageDep *dep = package->conflicts_a->data + i;
+            RCPackageDep *dep = package->conflicts_a->data[i];
 
             xmlAddChild (tmp_node, rc_package_dep_to_xml_node (dep));
         }
@@ -1401,7 +1399,7 @@ rc_package_to_xml_node (RCPackage *package)
     if (package->obsoletes_a) {
         tmp_node = xmlNewChild (deps_node, NULL, "obsoletes", NULL);
         for (i = 0; i < package->obsoletes_a->len; i++) {
-            RCPackageDep *dep = package->obsoletes_a->data + i;
+            RCPackageDep *dep = package->obsoletes_a->data[i];
 
             xmlAddChild (tmp_node, rc_package_dep_to_xml_node (dep));
         }
@@ -1410,7 +1408,7 @@ rc_package_to_xml_node (RCPackage *package)
     if (package->provides_a) {
         tmp_node = xmlNewChild (deps_node, NULL, "provides", NULL);
         for (i = 0; i < package->provides_a->len; i++) {
-            RCPackageDep *dep = package->provides_a->data + i;
+            RCPackageDep *dep = package->provides_a->data[i];
 
             xmlAddChild (tmp_node, rc_package_dep_to_xml_node (dep));
         }

@@ -2375,7 +2375,7 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
                 g_slist_prepend (query_info->provides_buf,
                                  rc_package_dep_new_from_spec (
                                      &query_info->package_buf->spec,
-                                     RC_RELATION_EQUAL));
+                                     RC_RELATION_EQUAL, FALSE, FALSE));
             query_info->package_buf->requires_a =
                 rc_package_dep_array_from_slist (&query_info->requires_buf);
             query_info->package_buf->recommends_a =
@@ -2889,7 +2889,7 @@ rc_debman_query_file (RCPackman *packman, const gchar *filename)
            anyway) */
     dep = rc_package_dep_new_from_spec (
         (RCPackageSpec *)query_info.package_buf,
-        RC_RELATION_EQUAL);
+        RC_RELATION_EQUAL, FALSE, FALSE);
 
     query_info.provides_buf =
         g_slist_prepend (query_info.provides_buf, dep);

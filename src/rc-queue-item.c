@@ -389,7 +389,7 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
        unsatisfied. */
     if (package->requires_a)
         for (i = 0; i < package->requires_a->len; i++) {
-            RCPackageDep *dep = package->requires_a->data + i;
+            RCPackageDep *dep = package->requires_a->data[i];
 
             if (!rc_resolver_context_requirement_is_met (context, dep)) {
                 RCQueueItem *req_item = rc_queue_item_new_require (rc_queue_item_get_world (item), dep);
@@ -402,7 +402,7 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
     /* Construct conflict items for each of the package's conflicts. */
     if (package->conflicts_a)
         for (i = 0; i < package->conflicts_a->len; i++) {
-            RCPackageDep *dep = package->conflicts_a->data + i;
+            RCPackageDep *dep = package->conflicts_a->data[i];
             RCQueueItem *conflict_item = rc_queue_item_new_conflict (rc_queue_item_get_world (item),
                                                                      dep, package);
         
@@ -412,7 +412,7 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
     /* Construct conflict items for each of the package's obsoletes. */
     if (package->obsoletes_a)
         for (i = 0; i < package->obsoletes_a->len; i++) {
-            RCPackageDep *dep = package->obsoletes_a->data + i;
+            RCPackageDep *dep = package->obsoletes_a->data[i];
             RCQueueItem *conflict_item = rc_queue_item_new_conflict (rc_queue_item_get_world (item),
                                                                      dep, package);
             ((RCQueueItem_Conflict *)conflict_item)->actually_an_obsolete = TRUE;
@@ -423,7 +423,8 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
     /* Constuct uninstall items for things that conflict with us. */
     conflicts = NULL;
     pkg_dep = rc_package_dep_new_from_spec (&package->spec,
-                                            RC_RELATION_EQUAL);
+                                            RC_RELATION_EQUAL,
+                                            FALSE, FALSE);
     rc_world_foreach_conflicting_package (rc_queue_item_get_world (item),
                                           pkg_dep,
                                           NULL,
@@ -437,7 +438,7 @@ install_item_process (RCQueueItem *item, RCResolverContext *context, GSList **ne
         *new_items = g_slist_prepend (*new_items, uninstall_item);
     }
     
-    rc_package_dep_free (pkg_dep);
+    rc_package_dep_unref (pkg_dep);
     g_slist_free (conflicts);
     
  finished:
@@ -775,7 +776,7 @@ require_item_process (RCQueueItem *item,
                             if (upgrade_package->requires_a) {
                                 for (i = 0; i < upgrade_package->requires_a->len; i++) {
                                     RCPackageDep *req =
-                                        upgrade_package->requires_a->data + i;
+                                        upgrade_package->requires_a->data[i];
                                     if (! rc_resolver_context_requirement_is_met (context, req))
                                         break;
                                 }
@@ -1425,7 +1426,7 @@ uninstall_item_process (RCQueueItem *item,
 
         if (uninstall->package->provides_a)
             for (i = 0; i < uninstall->package->provides_a->len; i++) {
-                RCPackageDep *dep = uninstall->package->provides_a->data + i;
+                RCPackageDep *dep = uninstall->package->provides_a->data[i];
                 struct UninstallProcessInfo info;
             
                 info.world = rc_queue_item_get_world (item);

@@ -31,9 +31,113 @@
 
 #include <libxml/tree.h>
 
-#undef DEBUG
-
 extern RCPackman *das_global_packman;
+
+static GHashTable *global_deps = NULL;
+
+RCPackageDep *
+rc_package_dep_ref (RCPackageDep *dep)
+{
+    if (dep) {
+        g_assert (dep->refs > 0);
+        ++dep->refs;
+    }
+
+    return dep;
+}
+
+void
+rc_package_dep_unref (RCPackageDep *dep)
+{
+
+    if (dep) {
+        g_assert (dep->refs > 0);
+        --dep->refs;
+
+        if (dep->refs == 0) {
+            GSList *list;
+
+            /* Remove this dep from the hash table */
+            g_assert (global_deps);
+
+            list = g_hash_table_lookup (global_deps, dep->spec.name);
+            g_assert (list);
+            list = g_slist_remove (list, dep);
+            if (list)
+                g_hash_table_replace (
+                    global_deps,
+                    ((RCPackageDep *)(list->data))->spec.name,
+                    list);
+            else
+                g_hash_table_remove (global_deps, dep->spec.name);
+
+            /* Free the dep */
+            rc_package_spec_free_members (RC_PACKAGE_SPEC (dep));
+            g_free (dep);
+        }
+    }
+}
+
+static RCPackageDep *
+dep_new (const gchar *name,
+         gboolean has_epoch,
+         guint32 epoch,
+         const gchar *version,
+         const gchar *release,
+         RCPackageRelation relation,
+         gboolean pre,
+         gboolean is_or)
+{
+    RCPackageDep *dep = g_new0 (RCPackageDep, 1);
+
+    rc_package_spec_init (RC_PACKAGE_SPEC (dep), name, has_epoch, epoch,
+                          version, release);
+
+    dep->relation = relation;
+    dep->pre      = pre;
+    dep->is_or    = is_or;
+
+    dep->refs     = 1;
+
+    return dep;
+}
+
+static gboolean
+dep_equal (RCPackageDep *dep,
+           const gchar *name,
+           gboolean has_epoch,
+           guint32 epoch,
+           const gchar *version,
+           const gchar *release,
+           RCPackageRelation relation,
+           gboolean pre,
+           gboolean is_or)
+{
+    if (strcmp (dep->spec.name, name))
+        return FALSE;
+    if (dep->spec.has_epoch != has_epoch)
+        return FALSE;
+    if (dep->spec.epoch != epoch)
+        return FALSE;
+    if ((dep->spec.version && !version) ||
+        (!dep->spec.version && version))
+        return FALSE;
+    if (version && strcmp (dep->spec.version, version))
+        return FALSE;
+    if ((dep->spec.release && !release) ||
+        (!dep->spec.release && release))
+        return FALSE;
+    if (release && strcmp (dep->spec.release, release))
+        return FALSE;
+    if (dep->relation != relation)
+        return FALSE;
+    if (dep->pre != pre)
+        return FALSE;
+    if (dep->is_or != is_or)
+        return FALSE;
+
+    return TRUE;
+}
 
 RCPackageDep *
 rc_package_dep_new (const gchar *name,
@@ -41,65 +145,72 @@ rc_package_dep_new (const gchar *name,
                     guint32 epoch,
                     const gchar *version,
                     const gchar *release,
-                    RCPackageRelation relation)
+                    RCPackageRelation relation,
+                    gboolean pre,
+                    gboolean is_or)
 {
-    RCPackageDep *rcpd = g_new0 (RCPackageDep, 1);
+    GSList *list;
 
-    rc_package_spec_init (RC_PACKAGE_SPEC (rcpd), name, has_epoch, epoch,
-                          version, release);
+    if (!global_deps)
+        global_deps = g_hash_table_new (g_str_hash, g_str_equal);
 
-    rcpd->relation = relation;
-    rcpd->pre      = FALSE;
-    rcpd->is_or    = FALSE;
+    list = g_hash_table_lookup (global_deps, name);
 
-    return (rcpd);
-} /* rc_package_dep_new */
+    if (!list) {
+        RCPackageDep *dep;
+
+        dep = dep_new (name, has_epoch, epoch, version, release, relation,
+                       pre, is_or);
+        list = g_slist_append (NULL, dep);
+        g_hash_table_insert (global_deps, dep->spec.name, list);
+
+        return dep;
+    } else {
+        GSList *iter;
+        RCPackageDep *dep;
+
+        iter = list;
+        while (iter) {
+            dep = iter->data;
+            if (dep_equal (dep, name, has_epoch, epoch, version, release,
+                           relation, pre, is_or))
+            {
+                rc_package_dep_ref (dep);
+                return dep;
+            }
+            iter = iter->next;
+        }
+
+        dep = dep_new (name, has_epoch, epoch, version, release, relation,
+                       pre, is_or);
+        list = g_slist_prepend (list, dep);
+        g_hash_table_replace (
+            global_deps,
+            ((RCPackageDep *)(list->data))->spec.name,
+            list);
+
+        return dep;
+    }
+}
 
 RCPackageDep *
 rc_package_dep_new_from_spec (RCPackageSpec *spec,
-                              RCPackageRelation relation)
+                              RCPackageRelation relation,
+                              gboolean pre,
+                              gboolean is_or)
 {
-    RCPackageDep *rcpd = rc_package_dep_new (
+    return rc_package_dep_new (
         spec->name, spec->has_epoch, spec->epoch, spec->version,
-        spec->release, relation);
-
-    return (rcpd);
-} /* rc_package_dep_new_from_spec */
-
-static void
-rc_package_dep_copy_with_dest (RCPackageDep *dest,
-                               RCPackageDep *src)
-{
-    rc_package_spec_copy (RC_PACKAGE_SPEC (dest), RC_PACKAGE_SPEC (src));
-
-    dest->relation = src->relation;
-    dest->is_or = src->is_or;
-    dest->pre = src->pre;
+        spec->release, relation, pre, is_or);
 }
 
 RCPackageDep *
-rc_package_dep_copy (RCPackageDep *rcpd)
+rc_package_dep_copy (RCPackageDep *dep)
 {
-    RCPackageDep *new = g_new0 (RCPackageDep, 1); /* That sucks */
+    rc_package_dep_ref (dep);
 
-    rc_package_dep_copy_with_dest (new, rcpd);
-
-    return (new);
-} /* rc_package_dep_copy */
-
-static void
-rc_package_dep_free_members (RCPackageDep *dep)
-{
-    rc_package_spec_free_members (RC_PACKAGE_SPEC (dep));
+    return dep;
 }
-
-void
-rc_package_dep_free (RCPackageDep *rcpd)
-{
-    rc_package_dep_free_members (rcpd);
-
-    g_free (rcpd);
-} /* rc_package_dep_free */
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
@@ -110,22 +221,21 @@ rc_package_dep_slist_copy (RCPackageDepSList *old)
     RCPackageDepSList *new = NULL;
 
     for (iter = old; iter; iter = iter->next) {
-        RCPackageDep *old_dep = (RCPackageDep *)(iter->data);
-        RCPackageDep *dep = rc_package_dep_copy (old_dep);
+        RCPackageDep *dep = iter->data;
 
+        rc_package_dep_ref (dep);
         new = g_slist_append (new, dep);
     }
 
-    return (new);
-} /* rc_package_dep_slist_copy */
+    return new;
+}
 
 void
-rc_package_dep_slist_free (RCPackageDepSList *rcpdsl)
+rc_package_dep_slist_free (RCPackageDepSList *list)
 {
-    g_slist_foreach (rcpdsl, (GFunc) rc_package_dep_free, NULL);
-
-    g_slist_free (rcpdsl);
-} /* rc_package_dep_slist_free */
+    g_slist_foreach (list, (GFunc) rc_package_dep_unref, NULL);
+    g_slist_free (list);
+}
 
 char *
 rc_package_dep_to_str (RCPackageDep *dep)
@@ -327,29 +437,6 @@ rc_package_relation_to_string (RCPackageRelation relation, gint words)
     }
 } /* rc_package_dep_slist_remove_duplicates */
 
-RCPackageDepSList *
-rc_package_dep_slist_remove_duplicates (RCPackageDepSList *deps)
-{
-    RCPackageDepSList *out = NULL;
-    RCPackageDepSList *it;
-    gchar *last_name = NULL;
-
-    deps = g_slist_sort (deps, (GCompareFunc) rc_package_spec_compare_name);
-
-    it = deps;
-    while (it) {
-        RCPackageDep *dep = (RCPackageDep *) it->data;
-        if (!last_name || strcmp (last_name, dep->spec.name)) {
-            last_name = dep->spec.name;
-            out = g_slist_prepend (out, dep);
-        }
-        it = it->next;
-    }
-
-    g_slist_free (deps);
-    return out;
-} /* rc_package_dep_slist_remove_duplicates */
-
 /* Consumes *list */
 RCPackageDepArray *
 rc_package_dep_array_from_slist (RCPackageDepSList **list)
@@ -360,14 +447,13 @@ rc_package_dep_array_from_slist (RCPackageDepSList **list)
 
     array = g_new0 (RCPackageDepArray, 1);
     array->len = g_slist_length (*list);
-    array->data = g_new0 (RCPackageDep, array->len);
+    array->data = g_new0 (RCPackageDep *, array->len);
 
     i = 0;
     iter = *list;
 
     while (iter) {
-        memcpy (array->data + i, iter->data, sizeof (RCPackageDep));
-        g_free (iter->data);
+        array->data[i] = iter->data;
         iter = iter->next;
         i++;
     }
@@ -388,7 +474,7 @@ rc_package_dep_array_free (RCPackageDepArray *array)
         return;
 
     for (i = 0; i < array->len; i++)
-        rc_package_dep_free_members (array->data + i);
+        rc_package_dep_unref (array->data[i]);
 
     g_free (array->data);
 
@@ -406,11 +492,12 @@ rc_package_dep_array_copy (RCPackageDepArray *old)
 
     new = g_new0 (RCPackageDepArray, 1);
     new->len = old->len;
-    new->data = g_new0 (RCPackageDep, old->len);
+    new->data = g_new0 (RCPackageDep *, old->len);
 
-    for (i = 0; i < old->len; i++)
-        rc_package_dep_copy_with_dest (new->data + i,
-                                       old->data + i);
+    for (i = 0; i < old->len; i++) {
+        new->data[i] = old->data[i];
+        rc_package_dep_ref (new->data[i]);
+    }
 
     return new;
 }

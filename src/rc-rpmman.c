@@ -727,7 +727,7 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
 
             if (install_package->obsoletes_a)
                 for (i = 0; i < install_package->obsoletes_a->len; i++) {
-                    RCPackageDep *obsolete = install_package->obsoletes_a->data + i;
+                    RCPackageDep *obsolete = install_package->obsoletes_a->data[i];
                     GSList *remove_iter;
 
                     for (remove_iter = real_remove_packages; remove_iter;
@@ -743,14 +743,14 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
                             remove_package->spec.epoch,
                             remove_package->spec.version,
                             remove_package->spec.release,
-                            RC_RELATION_EQUAL);
+                            RC_RELATION_EQUAL, FALSE, FALSE);
 
                         if (rc_package_dep_verify_relation (obsolete, prov)) {
                             obsoleted =
                                 g_slist_prepend (obsoleted, remove_package);
                         }
 
-                        rc_package_dep_free (prov);
+                        rc_package_dep_unref (prov);
                     }
                 }
         }
@@ -1402,9 +1402,11 @@ depends_fill_helper (RCRpmman *rpmman, Header header, int names_tag,
                 }
             }
             dep = rc_package_dep_new (names[i], has_epochs[i], epochs[i],
-                                      versions[i], releases[i], relation);
+                                      versions[i], releases[i], relation,
+                                      FALSE, FALSE);
         } else {
-            dep = rc_package_dep_new (names[i], 0, 0, NULL, NULL, relation);
+            dep = rc_package_dep_new (names[i], 0, 0, NULL, NULL, relation,
+                                      FALSE, FALSE);
         }
 
         *deps = g_slist_prepend (*deps, dep);
@@ -1459,7 +1461,8 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
     if (rpmman->version < 40000) {
         dep = rc_package_dep_new (
             package->spec.name, package->spec.has_epoch, package->spec.epoch,
-            package->spec.version, package->spec.release, RC_RELATION_EQUAL);
+            package->spec.version, package->spec.release, RC_RELATION_EQUAL,
+            FALSE, FALSE);
         provides = g_slist_prepend (provides, dep);
     }
 
@@ -1502,7 +1505,7 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
 
             if (in_set (tmp, file_dep_set)) {
                 dep = rc_package_dep_new (tmp, 0, 0, NULL, NULL,
-                                          RC_RELATION_ANY);
+                                          RC_RELATION_ANY, FALSE, FALSE);
 
                 provides = g_slist_prepend (provides, dep);
             }
@@ -1519,7 +1522,7 @@ rc_rpmman_depends_fill (RCRpmman *rpmman, Header header, RCPackage *package)
         for (i = 0; i < count; i++) {
             if (in_set (basenames[i], file_dep_set)) {
                 dep = rc_package_dep_new (basenames[i], 0, 0, NULL, NULL,
-                                          RC_RELATION_ANY);
+                                          RC_RELATION_ANY, FALSE, FALSE);
 
                 provides = g_slist_prepend (provides, dep);
             }

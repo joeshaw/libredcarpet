@@ -67,7 +67,7 @@ typedef struct _RCPackageDepArray RCPackageDepArray;
 typedef GSList RCPackageDepSList;
 
 struct _RCPackageDepArray {
-    RCPackageDep *data;
+    RCPackageDep **data;
     guint len;
 };
 
@@ -89,25 +89,32 @@ typedef void (*RCPackageAndDepFn) (RCPackage *, RCPackageDep *, gpointer);
 /* THE SPEC MUST BE FIRST */
 struct _RCPackageDep {
     RCPackageSpec spec;
+    gint refs;
     gint relation : 28;
     guint is_or : 1;
     guint pre   : 1;
 };
+
+RCPackageDep *rc_package_dep_ref (RCPackageDep *dep);
+
+void rc_package_dep_unref (RCPackageDep *dep);
 
 RCPackageDep *rc_package_dep_new (const gchar *name,
                                   gboolean has_epoch,
                                   guint32 epoch,
                                   const gchar *version,
                                   const gchar *release,
-                                  RCPackageRelation relation);
+                                  RCPackageRelation relation,
+                                  gboolean pre,
+                                  gboolean is_or);
 
 RCPackageDep *rc_package_dep_new_from_spec (
     RCPackageSpec *spec,
-    RCPackageRelation relation);
+    RCPackageRelation relation,
+    gboolean pre,
+    gboolean is_or);
 
 RCPackageDep *rc_package_dep_copy (RCPackageDep *rcpdi);
-
-void rc_package_dep_free (RCPackageDep *rcpdi);
 
 RCPackageSList *rc_package_dep_slist_copy (RCPackageSList *old);
 RCPackageDepArray *rc_package_dep_array_copy (RCPackageDepArray *old);

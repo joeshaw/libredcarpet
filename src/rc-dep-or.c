@@ -81,8 +81,7 @@ rc_dep_or_new_provide (RCDepOr *dor)
     RCPackageDep *new_dep;
 
     new_dep = rc_package_dep_new (dor->or_dep, 0, 0, NULL, NULL,
-                                  RC_RELATION_ANY);
-    new_dep->is_or = TRUE;
+                                  RC_RELATION_ANY, FALSE, TRUE);
     dor->created_provides = g_slist_prepend (dor->created_provides, new_dep);
 
     return new_dep;
@@ -198,10 +197,12 @@ rc_dep_string_to_or_dep_slist (gchar *munged)
         RCPackageDep *cur_item;
         char *z;
         gchar *name;
+        guint32 epoch;
+        gchar *version = NULL;
+        gchar *release = NULL;
+        RCPackageRelation relation = RC_RELATION_ANY;
 
         /* grab the name */
-
-        cur_item = g_new0 (RCPackageDep, 1);
 
         z = strchr (s, '|');
         p = strchr (s, '&');
@@ -216,10 +217,8 @@ rc_dep_string_to_or_dep_slist (gchar *munged)
         }
 
         name = g_strndup (s, p ? p - s : (z ? z - s : zz - s));
-        cur_item->spec.name = name;
 
         if (p) {
-            guint epoch;
             char *e;
             char op[4];
             char *vstr;
@@ -235,7 +234,7 @@ rc_dep_string_to_or_dep_slist (gchar *munged)
             /* text between p and e is an operator */
             strncpy (op, p, e - p);
             op[e - p] = 0;
-            cur_item->relation = rc_string_to_package_relation (op);
+            relation = rc_string_to_package_relation (op);
 
             e++;
             if (z) {
@@ -246,13 +245,12 @@ rc_dep_string_to_or_dep_slist (gchar *munged)
 
             /* e .. p is the epoch:version-release */
             vstr = g_strndup (e, p - e);
-            rc_debman_parse_version (vstr, &epoch,
-                                     &cur_item->spec.version,
-                                     &cur_item->spec.release);
-            cur_item->spec.epoch = epoch;
+            rc_debman_parse_version (vstr, &epoch, &version, &release);
             g_free (vstr);
         }
 
+        cur_item = rc_package_dep_new (name, 1, epoch, version, release,
+                                       relation, FALSE, FALSE);
         out_dep = g_slist_append (out_dep, cur_item);
         s = z + 1;
 
