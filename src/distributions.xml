@@ -176,7 +176,7 @@
 		</detect>
 	</distro>
         <distro>
-                <name>Linux Mandrake</name>
+                <name>Mandrake Linux</name>
                 <version>9.2</version>
                 <arch>i586</arch>
                 <type>rpm</type>
