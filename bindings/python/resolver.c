@@ -27,6 +27,7 @@
 #include "resolver.h"
 #include "resolver-context.h"
 #include "resolver-queue.h"
+#include "package-dep.h"
 #include "package.h"
 #include "channel.h"
 #include "world.h"
@@ -208,6 +209,46 @@ PyResolver_add_packages_to_remove (PyObject *self, PyObject *args)
 }
 
 static PyObject *
+PyResolver_add_extra_dependency (PyObject *self, PyObject *args)
+{
+	RCResolver *resolver = PyResolver_get_resolver (self);
+	PyObject *obj;
+	RCPackageDep *dep;
+
+	if (! PyArg_ParseTuple (args, "O", &obj))
+		return NULL;
+
+	dep = PyPackageDep_get_package_dep (obj);
+	if (dep == NULL)
+		return NULL;
+
+	rc_resolver_add_extra_dependency (resolver, dep);
+
+	Py_INCREF (Py_None);
+	return Py_None;
+}
+
+static PyObject *
+PyResolver_add_extra_conflict (PyObject *self, PyObject *args)
+{
+	RCResolver *resolver = PyResolver_get_resolver (self);
+	PyObject *obj;
+	RCPackageDep *dep;
+
+	if (! PyArg_ParseTuple (args, "O", &obj))
+		return NULL;
+
+	dep = PyPackageDep_get_package_dep (obj);
+	if (dep == NULL)
+		return NULL;
+
+	rc_resolver_add_extra_conflict (resolver, dep);
+
+	Py_INCREF (Py_None);
+	return Py_None;
+}
+
+static PyObject *
 PyResolver_verify_system (PyObject *self, PyObject *args)
 {
 	RCResolver *resolver = PyResolver_get_resolver (self);
@@ -240,7 +281,8 @@ static PyMethodDef PyResolver_methods[] = {
 /*	{ "add_subscribed_channel",  PyResolver_add_subscribed_channel,  METH_VARARGS }, */
 	{ "add_packages_to_install", PyResolver_add_packages_to_install, METH_VARARGS },
 	{ "add_packages_to_remove",  PyResolver_add_packages_to_remove,  METH_VARARGS },
-
+	{ "add_extra_dependency",    PyResolver_add_extra_dependency,    METH_VARARGS },
+	{ "add_extra_conflict",      PyResolver_add_extra_conflict,      METH_VARARGS },
 	{ "verify_system",           PyResolver_verify_system,           METH_NOARGS  },
 	{ "resolve_dependencies",    PyResolver_resolve_dependencies,    METH_NOARGS  },
 	{ NULL, NULL }
@@ -291,7 +333,8 @@ PyResolver_tp_dealloc (PyObject *self)
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
-void PyResolver_register (PyObject *dict)
+void
+PyResolver_register (PyObject *dict)
 {
 	PyResolver_type_info.tp_init    = PyResolver_init;
 	PyResolver_type_info.tp_new     = PyResolver_tp_new;

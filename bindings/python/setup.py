@@ -22,10 +22,13 @@ other_libdirs  = ["../../src"]
  
 
 py_tsar_sources = [ "pyutil.c",
+                    "distro.c",
+                    "verification.c",
                     "package-importance.c",
                     "package-spec.c",
                     "package-dep.c",
                     "package-match.c",
+                    "package-update.c",
                     "package.c",
                     "packman.c",
                     "channel.c",

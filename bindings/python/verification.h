@@ -1,12 +1,10 @@
-/* This is -*- C -*- */
-/* vim: set sw=2: */
-/* $Id$ */
-
+/* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
- * pyutil.h
+ * verification.c
  *
- * Copyright (C) 2002 Ximian, Inc.
+ * Copyright (C) 2003 The Free Software Foundation, Inc.
  *
+ * Developed by Tambet Ingo <tambet@ximian.com>
  */
 
 /*
@@ -26,18 +24,20 @@
  * USA.
  */
 
-#ifndef __PYUTIL_H__
-#define __PYUTIL_H__
+#ifndef __VERIFICATION_H__
+#define __VERIFICATION_H__
 
 #include <Python.h>
+#include <libredcarpet.h>
 
-void pyutil_register_type (PyObject *dict,
-			   PyTypeObject *type);
+void        PyVerification_register     (PyObject *dict);
+int         PyVerification_check        (PyObject *obj);
 
-void pyutil_register_methods      (PyObject *dict, PyMethodDef *methods);
-void pyutil_register_int_constant (PyObject *dict,
-							const char *name,
-							int value);
+PyObject   *PyVerification_new          (RCVerification *verification);
+RCVerification *PyVerification_get_verification (PyObject *obj);
 
-#endif /* __PYUTIL_H__ */
+/* STEALS OWNERSHIP, DESTROYS slist!!!! */
+PyObject *RCVerificationSList_to_py_list (RCVerificationSList *slist);
 
+
+#endif /* __VERIFICATION_H__ */

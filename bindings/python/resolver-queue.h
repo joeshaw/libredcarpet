@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
- * resolver-queue.c
+ * resolver-queue.h
  *
  * Copyright (C) 2003 The Free Software Foundation, Inc.
  *

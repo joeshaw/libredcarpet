@@ -28,8 +28,10 @@
  */
 
 #include "packman.h"
-#include "pyutil.h"
+#include "package-spec.h"
 #include "package.h"
+#include "verification.h"
+#include "pyutil.h"
 
 typedef struct {
   PyObject_HEAD;
@@ -95,6 +97,7 @@ static PyObject *
 PyPackman_query (PyObject *self, PyObject *args)
 {
 	RCPackman *packman = PyPackman_get_packman (self);
+	PyObject *py_list;
 	RCPackageSList *slist;
 	char *name;
 
@@ -107,13 +110,17 @@ PyPackman_query (PyObject *self, PyObject *args)
 		return Py_None;
 	}
 
-	return rc_package_slist_to_PyList (slist);
+	py_list = rc_package_slist_to_PyList (slist);
+	rc_package_slist_unref (slist);
+
+	return py_list;
 }
 
 static PyObject *
 PyPackman_query_all (PyObject *self, PyObject *args)
 {
 	RCPackman *packman = PyPackman_get_packman (self);
+	PyObject *py_list;
 	RCPackageSList *slist;
 
 	slist = rc_packman_query_all (packman);
@@ -122,7 +129,30 @@ PyPackman_query_all (PyObject *self, PyObject *args)
 		return Py_None;
 	}
 
-	return rc_package_slist_to_PyList (slist);
+	py_list = rc_package_slist_to_PyList (slist);
+	rc_package_slist_unref (slist);
+
+	return py_list;
+}
+
+static PyObject *
+PyPackman_version_compare (PyObject *self, PyObject *args)
+{
+  RCPackman *packman = PyPackman_get_packman (self);
+  PyObject *obj1, *obj2;
+  RCPackageSpec *spec1, *spec2;
+
+  if (! PyArg_ParseTuple (args, "OO", &obj1, &obj2))
+	  return NULL;
+
+  spec1 = PyPackageSpec_get_package_spec (obj1);
+  spec2 = PyPackageSpec_get_package_spec (obj2);
+
+  if (spec1 == NULL || spec2 == NULL)
+	  return NULL;
+
+  return Py_BuildValue ("i",
+				    rc_packman_version_compare (packman, spec1, spec2));
 }
 
 static PyObject *
@@ -153,6 +183,27 @@ PyPackman_parse_version (PyObject *self, PyObject *args)
   g_free (release);
 
   return retval;
+}
+
+static PyObject *
+PyPackman_verify (PyObject *self, PyObject *args)
+{
+	RCPackman *packman = PyPackman_get_packman (self);
+	PyObject *obj;
+	RCPackage *package;
+	RCVerificationType type;
+	RCVerificationSList *slist;
+
+	if (! PyArg_ParseTuple (args, "Oi", &obj, &type))
+		return NULL;
+
+	package = PyPackage_get_package (obj);
+	if (package == NULL)
+		return NULL;
+
+	slist = rc_packman_verify (packman, package, type);
+
+	return RCVerificationSList_to_py_list (slist);
 }
 
 static PyObject *
@@ -212,6 +263,13 @@ PyPackman_get_file_extension (PyObject *self, PyObject *args)
 }
 
 static PyObject *
+PyPackman_get_capabilities (PyObject *self, PyObject *args)
+{
+  RCPackman *packman = PyPackman_get_packman (self);
+  return Py_BuildValue ("i", rc_packman_get_capabilities (packman));
+}
+
+static PyObject *
 PyPackman_get_error (PyObject *self, PyObject *args)
 {
   RCPackman *packman = PyPackman_get_packman (self);
@@ -251,13 +309,16 @@ static PyMethodDef PyPackman_methods[] = {
   { "query_file",          PyPackman_query_file,          METH_VARARGS },
   { "query",               PyPackman_query,               METH_VARARGS },
   { "query_all",           PyPackman_query_all,           METH_NOARGS  },
+  { "version_compare",     PyPackman_version_compare,     METH_VARARGS },
   { "parse_version",       PyPackman_parse_version,       METH_VARARGS },
+  { "verify",              PyPackman_verify,              METH_VARARGS },
   { "find_file",           PyPackman_find_file,           METH_VARARGS },
   { "is_locked",           PyPackman_is_locked,           METH_NOARGS  },
   { "lock",                PyPackman_lock,                METH_NOARGS  },
   { "unlock",              PyPackman_unlock,              METH_NOARGS  },
   { "is_database_changed", PyPackman_is_database_changed, METH_NOARGS  },
   { "get_file_extension",  PyPackman_get_file_extension,  METH_NOARGS  },
+  { "get_capabilities",    PyPackman_get_capabilities,    METH_NOARGS  },
   { "get_error",           PyPackman_get_error,           METH_NOARGS  },
   { "get_reason",          PyPackman_get_reason,          METH_NOARGS  },
   { "get_repackage_dir",   PyPackman_get_repackage_dir,   METH_NOARGS  },
@@ -304,6 +365,17 @@ PyPackman_register (PyObject *dict)
   PyPackman_type_info.tp_methods = PyPackman_methods;
 
   pyutil_register_type (dict, &PyPackman_type_info);
+
+  pyutil_register_int_constant (dict, "PACKMAN_CAP_NONE",
+						  RC_PACKMAN_CAP_NONE);
+  pyutil_register_int_constant (dict, "PACKMAN_CAP_PROVIDE_ALL_VERSIONS",
+						  RC_PACKMAN_CAP_PROVIDE_ALL_VERSIONS);
+  pyutil_register_int_constant (dict, "PACKMAN_CAP_IGNORE_ABSENT_EPOCHS",
+						  RC_PACKMAN_CAP_IGNORE_ABSENT_EPOCHS);
+  pyutil_register_int_constant (dict, "PACKMAN_CAP_ROLLBACK",
+						  RC_PACKMAN_CAP_ROLLBACK);
+  pyutil_register_int_constant (dict, "PACKMAN_CAP_ALWAYS_VERIFY_RELEASE",
+						  RC_PACKMAN_CAP_ALWAYS_VERIFY_RELEASE);
 
   pyutil_register_int_constant (dict, "TRANSACT_FLAG_NONE",
 						  RC_TRANSACT_FLAG_NONE);

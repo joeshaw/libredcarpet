@@ -869,6 +869,26 @@ PyWorld_transact (PyObject *self, PyObject *args)
 	return Py_None;
 }
 
+/* Methods from rc-world-import.c */
+
+static PyObject *
+PyWorld_add_channel_from_dir (PyObject *self, PyObject *args)
+{
+	RCWorld *world = PyWorld_get_world (self);
+	RCChannel *channel;
+	const char *channel_name, *alias, *directory;
+
+	if (! PyArg_ParseTuple (args, "sss", &channel_name, &alias, &directory))
+		return NULL;
+
+	channel = rc_world_add_channel_from_directory (world,
+						       channel_name,
+						       alias,
+						       directory);
+
+	return PyChannel_new (channel);
+}
+
 static PyMethodDef PyWorld_methods[] = {
 	{ "set",                                PyWorld_set,                   METH_NOARGS  },
 	{ "get_package_sequence_number",        PyWorld_get_package_seq_num,   METH_NOARGS  },
@@ -926,6 +946,11 @@ static PyMethodDef PyWorld_methods[] = {
 	{ "get_all_conflicting_pkgs",           PyWorld_get_all_conflicting_pkgs,METH_VARARGS },
 
 	{ "transact",                           PyWorld_transact,              METH_VARARGS },
+
+	/* Methods from rc-world-import.c */
+
+	{ "add_channel_from_directory",         PyWorld_add_channel_from_dir,  METH_VARARGS },
+	
 	{ NULL, NULL }
 };
 

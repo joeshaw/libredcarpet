@@ -78,7 +78,7 @@ PyPackageImportance_tp_str (PyObject *self)
 {
 	PyPackageImportance *py_importance = (PyPackageImportance *) self;
 	return Py_BuildValue ("s",
-					  rc_package_importance_to_string (py_importance->importance));
+			      rc_package_importance_to_string (py_importance->importance));
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
@@ -93,17 +93,17 @@ PyPackageImportance_register (PyObject *dict)
 	pyutil_register_type (dict, &PyPackageImportance_type_info);
 
 	pyutil_register_int_constant (dict, "IMPORTANCE_INVALID",
-							RC_IMPORTANCE_INVALID);
+				      RC_IMPORTANCE_INVALID);
 	pyutil_register_int_constant (dict, "IMPORTANCE_NECESSARY",
-							RC_IMPORTANCE_NECESSARY);
+				      RC_IMPORTANCE_NECESSARY);
 	pyutil_register_int_constant (dict, "IMPORTANCE_URGENT",
-							RC_IMPORTANCE_URGENT);
+				      RC_IMPORTANCE_URGENT);
 	pyutil_register_int_constant (dict, "IMPORTANCE_SUGGESTED",
-							RC_IMPORTANCE_SUGGESTED);
+				      RC_IMPORTANCE_SUGGESTED);
 	pyutil_register_int_constant (dict, "IMPORTANCE_FEATURE",
-							RC_IMPORTANCE_FEATURE);
+				      RC_IMPORTANCE_FEATURE);
 	pyutil_register_int_constant (dict, "IMPORTANCE_MINOR",
-							RC_IMPORTANCE_MINOR);
+				      RC_IMPORTANCE_MINOR);
 }
 
 int
@@ -116,7 +116,7 @@ PyObject *
 PyPackageImportance_new (RCPackageImportance importance)
 {
 	PyObject *py_importance = PyPackageImportance_tp_new (&PyPackageImportance_type_info,
-						    NULL, NULL);
+							      NULL, NULL);
 	((PyPackageImportance *) importance)->importance = importance;
 
 	return py_importance;

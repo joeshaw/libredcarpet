@@ -264,14 +264,25 @@ PyChannel_tp_dealloc (PyObject *self)
 		PyObject_Del (self);
 }
 
+static int
+PyChannel_tp_cmp (PyObject *obj_x, PyObject *obj_y)
+{
+	RCChannel *channel_x = ((PyChannel *) obj_x)->channel;
+	RCChannel *channel_y = ((PyChannel *) obj_y)->channel;
+
+	return rc_channel_equal (channel_x, channel_y);
+}
+
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
-void PyChannel_register (PyObject *dict)
+void
+PyChannel_register (PyObject *dict)
 {
 	/* PyChannel_type_info.tp_init = PyChannel_init; */
-	PyChannel_type_info.tp_new  = PyChannel_tp_new;
+	PyChannel_type_info.tp_new     = PyChannel_tp_new;
 	PyChannel_type_info.tp_dealloc = PyChannel_tp_dealloc;
 	PyChannel_type_info.tp_methods = PyChannel_methods;
+	PyChannel_type_info.tp_compare = PyChannel_tp_cmp;
 
 	pyutil_register_type (dict, &PyChannel_type_info);
 

@@ -25,6 +25,7 @@
  */
 
 #include "package.h"
+#include "package-update.h"
 #include "pyutil.h"
 
 typedef struct {
@@ -82,11 +83,23 @@ PyPackage_get_best_upgrade (PyObject *self, PyObject *args)
 	return PyPackage_new (upgrade);
 }
 
+static PyObject *
+PyPackage_get_latest_update (PyObject *self, PyObject *args)
+{
+	RCPackage *package = PyPackage_get_package (self);
+	RCPackageUpdate *update;
+
+	update = rc_package_get_latest_update (package);
+
+	return PyPackageUpdate_new (update);
+}
+
 static PyMethodDef PyPackage_methods[] = {
 	{ "is_installed",       PyPackage_is_installed,       METH_NOARGS  },
 	{ "is_package_set",     PyPackage_is_package_set,     METH_NOARGS  },
 	{ "is_synthetic",       PyPackage_is_synthetic,       METH_NOARGS  },
 	{ "get_best_upgrade",   PyPackage_get_best_upgrade,   METH_VARARGS },
+	{ "get_latest_update",  PyPackage_get_latest_update,  METH_NOARGS  },
 	{ NULL, NULL }
 };
 

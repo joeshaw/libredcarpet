@@ -100,7 +100,8 @@ PyResolverQueue_tp_dealloc (PyObject *self)
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
-void PyResolverQueue_register (PyObject *dict)
+void
+PyResolverQueue_register (PyObject *dict)
 {
 	PyResolverQueue_type_info.tp_init    = PyResolverQueue_init;
 	PyResolverQueue_type_info.tp_new     = PyResolverQueue_tp_new;

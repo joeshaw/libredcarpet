@@ -1,12 +1,10 @@
-/* This is -*- C -*- */
-/* vim: set sw=2: */
-/* $Id$ */
-
+/* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
- * pyutil.h
+ * distro.h
  *
- * Copyright (C) 2002 Ximian, Inc.
+ * Copyright (C) 2003 The Free Software Foundation, Inc.
  *
+ * Developed by Tambet Ingo <tambet@ximian.com>
  */
 
 /*
@@ -26,18 +24,12 @@
  * USA.
  */
 
-#ifndef __PYUTIL_H__
-#define __PYUTIL_H__
+#ifndef __DISTRO_H__
+#define __DISTRO_H__
 
 #include <Python.h>
+#include <libredcarpet.h>
 
-void pyutil_register_type (PyObject *dict,
-			   PyTypeObject *type);
+void       PyDistro_register (PyObject *dict);
 
-void pyutil_register_methods      (PyObject *dict, PyMethodDef *methods);
-void pyutil_register_int_constant (PyObject *dict,
-							const char *name,
-							int value);
-
-#endif /* __PYUTIL_H__ */
-
+#endif /* __DISTRO_H__ */

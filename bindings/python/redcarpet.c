@@ -28,10 +28,13 @@
 
 #include <Python.h>
 
+#include "distro.h"
+#include "verification.h"
 #include "package-importance.h"
 #include "package-spec.h"
 #include "package-dep.h"
 #include "package-match.h"
+#include "package-update.h"
 #include "package.h"
 #include "packman.h"
 #include "channel.h"
@@ -53,10 +56,13 @@ static InitFns redcarpet_init_fns[] = {
 
 typedef void (*RegistrationFn) (PyObject *dict);
 static RegistrationFn redcarpet_registration_fns[] = {
+	PyDistro_register,
+	PyVerification_register,
 	PyPackageImportance_register,
 	PyPackageSpec_register,
 	PyPackageDep_register,
 	PyPackageMatch_register,
+	PyPackageUpdate_register,
 	PyPackage_register,
 	PyPackman_register,
 	PyChannel_register,

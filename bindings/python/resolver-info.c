@@ -25,6 +25,7 @@
  */
 
 #include "resolver-info.h"
+#include "package.h"
 #include "pyutil.h"
 
 typedef struct {
@@ -43,6 +44,29 @@ static PyTypeObject PyResolverInfo_type_info = {
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 static PyObject *
+PyResolverInfo_get_packages (PyObject *self, PyObject *args)
+{
+	RCResolverInfo *info = PyResolverInfo_get_resolver_info (self);
+	PyObject *py_list;
+	GSList *iter;
+
+	py_list = PyList_New (0);
+	for (iter = info->package_list; iter != NULL; iter = iter->next) {
+		RCPackage *pkg = iter->data;
+		PyList_Append (py_list, PyPackage_new (pkg));
+	}
+
+	return py_list;
+}
+
+static PyObject *
+PyResolverInfo_type (PyObject *self, PyObject *args)
+{
+	RCResolverInfo *info = PyResolverInfo_get_resolver_info (self);
+	return Py_BuildValue ("i", rc_resolver_info_type (info));
+}
+
+static PyObject *
 PyResolverInfo_is_error (PyObject *self, PyObject *args)
 {
 	RCResolverInfo *info = PyResolverInfo_get_resolver_info (self);
@@ -57,8 +81,28 @@ PyResolverInfo_is_important (PyObject *self, PyObject *args)
 }
 
 static PyMethodDef PyResolverInfo_methods[] = {
+	{ "get_packages", PyResolverInfo_get_packages, METH_NOARGS },
+	{ "type",         PyResolverInfo_type,         METH_NOARGS },
 	{ "is_error",     PyResolverInfo_is_error,     METH_NOARGS },
 	{ "is_important", PyResolverInfo_is_important, METH_NOARGS },
+	{ NULL, NULL }
+};
+
+/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+static PyObject *
+resolver_info_type_to_string (PyObject *self, PyObject *args)
+{
+	RCResolverInfoType type;
+
+	if (! PyArg_ParseTuple (args, "i", &type))
+		return NULL;
+
+	return Py_BuildValue ("s", rc_resolver_info_type_to_string (type));
+}
+
+static PyMethodDef PyResolverInfo_unbound_methods[] = {
+	{ "resolver_info_type_to_string", resolver_info_type_to_string, METH_VARARGS },
 	{ NULL, NULL }
 };
 
@@ -125,6 +169,25 @@ PyResolverInfo_register (PyObject *dict)
 	PyResolverInfo_type_info.tp_str     = PyResolverInfo_tp_str;
 
 	pyutil_register_type (dict, &PyResolverInfo_type_info);
+	pyutil_register_methods (dict, PyResolverInfo_unbound_methods);
+
+	pyutil_register_int_constant (dict, "RESOLVER_INFO_TYPE_INVALID",
+				      RC_RESOLVER_INFO_TYPE_INVALID);
+	pyutil_register_int_constant (dict, "RESOLVER_INFO_TYPE_NEEDED_BY",
+				      RC_RESOLVER_INFO_TYPE_NEEDED_BY);
+	pyutil_register_int_constant (dict, "RESOLVER_INFO_TYPE_CONFLICTS_WITH",
+				      RC_RESOLVER_INFO_TYPE_CONFLICTS_WITH);
+	pyutil_register_int_constant (dict, "RESOLVER_INFO_TYPE_OBSOLETES",
+				      RC_RESOLVER_INFO_TYPE_OBSOLETES);
+	pyutil_register_int_constant (dict, "RESOLVER_INFO_TYPE_DEPENDS_ON",
+				      RC_RESOLVER_INFO_TYPE_DEPENDS_ON);
+	pyutil_register_int_constant (dict, "RESOLVER_INFO_TYPE_CHILD_OF",
+				      RC_RESOLVER_INFO_TYPE_CHILD_OF);
+	pyutil_register_int_constant (dict, "RESOLVER_INFO_TYPE_MISSING_REQ",
+				      RC_RESOLVER_INFO_TYPE_MISSING_REQ);
+	pyutil_register_int_constant (dict, "RESOLVER_INFO_TYPE_MISC",
+				      RC_RESOLVER_INFO_TYPE_MISC);
+	
 }
 
 int

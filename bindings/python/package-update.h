@@ -1,12 +1,10 @@
-/* This is -*- C -*- */
-/* vim: set sw=2: */
-/* $Id$ */
-
+/* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
- * pyutil.h
+ * package-update.h
  *
- * Copyright (C) 2002 Ximian, Inc.
+ * Copyright (C) 2003 The Free Software Foundation, Inc.
  *
+ * Developed by Tambet Ingo <tambet@ximian.com>
  */
 
 /*
@@ -26,18 +24,16 @@
  * USA.
  */
 
-#ifndef __PYUTIL_H__
-#define __PYUTIL_H__
+#ifndef __PACKAGE_UPDATE_H__
+#define __PACKAGE_UPDATE_H__
 
 #include <Python.h>
+#include <libredcarpet.h>
 
-void pyutil_register_type (PyObject *dict,
-			   PyTypeObject *type);
+void       PyPackageUpdate_register    (PyObject *dict);
+int        PyPackageUpdate_check       (PyObject *obj);
+PyObject  *PyPackageUpdate_new         (RCPackageUpdate *update);
 
-void pyutil_register_methods      (PyObject *dict, PyMethodDef *methods);
-void pyutil_register_int_constant (PyObject *dict,
-							const char *name,
-							int value);
+RCPackageUpdate *PyPackageUpdate_get_package_update (PyObject *obj);
 
-#endif /* __PYUTIL_H__ */
-
+#endif /* __PACKAGE_UPDATE_H__ */

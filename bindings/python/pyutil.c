@@ -79,20 +79,21 @@ pyutil_register_type (PyObject *dict,
 }
 
 void
-pyutil_register_function (PyObject *dict, const char *name)
+pyutil_register_methods (PyObject *dict, PyMethodDef *methods)
 {
 	PyObject *v;
+	PyMethodDef *ml;
 
-	v = PyCFunction_New ((char *) name, NULL);
-	if (v == NULL)
-		return;
-
-	if (PyDict_SetItemString (dict, (char *) name, v) != 0) {
+	for (ml = methods; ml->ml_name != NULL; ml++) {
+		v = PyCFunction_New (ml, NULL);
+		if (v == NULL)
+			return;
+		if (PyDict_SetItemString (dict, ml->ml_name, v) != 0) {
+			Py_DECREF (v);
+			return;
+		}
 		Py_DECREF (v);
-		return;
 	}
-
-	Py_DECREF (v);
 }
 
 void

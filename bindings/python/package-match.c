@@ -237,6 +237,15 @@ PyPackageMatch_tp_dealloc (PyObject *self)
 		PyObject_Del (self);
 }
 
+static int
+PyPackageMatch_tp_cmp (PyObject *obj_x, PyObject *obj_y)
+{
+	RCPackageMatch *match_x = ((PyPackageMatch *) obj_x)->match;
+	RCPackageMatch *match_y = ((PyPackageMatch *) obj_y)->match;
+
+	return rc_package_match_equal (match_x, match_y);
+}
+
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 void PyPackageMatch_register (PyObject *dict)
@@ -245,6 +254,7 @@ void PyPackageMatch_register (PyObject *dict)
 	PyPackageMatch_type_info.tp_new     = PyPackageMatch_tp_new;
 	PyPackageMatch_type_info.tp_dealloc = PyPackageMatch_tp_dealloc;
 	PyPackageMatch_type_info.tp_methods = PyPackageMatch_methods;
+	PyPackageMatch_type_info.tp_compare = PyPackageMatch_tp_cmp;
 
 	pyutil_register_type (dict, &PyPackageMatch_type_info);
 }
