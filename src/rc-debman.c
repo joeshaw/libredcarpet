@@ -2218,6 +2218,7 @@ struct _DebmanQueryInfo {
 
     RCPackage *package_buf;
     GString *desc_buf;
+    RCPackageDepSList *replaces;
 
     gboolean error;
 };
@@ -2248,11 +2249,29 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
        /var/lib/dpkg/status, so save out our current buffer */
     if (!line[0]) {
         if (query_info->package_buf) {
+            RCPackageDepSList *iter;
+
             if (query_info->desc_buf && query_info->desc_buf->len) {
                 query_info->package_buf->description =
                     get_description (query_info->desc_buf);
                 query_info->desc_buf = NULL;
             }
+
+            for (iter = query_info->replaces; iter; iter = iter->next) {
+                RCPackageDep *dep = (RCPackageDep *)(iter->data);
+
+                if (rc_package_dep_slist_has_dep (
+                        query_info->package_buf->conflicts, dep))
+                {
+                    query_info->package_buf->provides = g_slist_prepend (
+                        query_info->package_buf->provides, dep);
+                } else {
+                    rc_package_dep_free (dep);
+                }
+            }
+
+            g_slist_free (query_info->replaces);
+            query_info->replaces = NULL;
 
             query_info->packages = g_slist_prepend (query_info->packages,
                                                     query_info->package_buf);
@@ -2490,6 +2509,15 @@ query_all_read_line_cb (RCLineBuf *line_buf, gchar *status_line, gpointer data)
             query_info->package_buf->provides, rc_debman_fill_depends (ptr));
         return;
     }
+
+    if (!strncmp (line, "replaces:", strlen ("replaces:"))) {
+        ptr = line + strlen ("replaces:");
+        while (*ptr && isspace (*ptr)) {
+            ptr++;
+        }
+        query_info->replaces = rc_debman_fill_depends (ptr);
+        return;
+    }
 }
 
 static void
@@ -2534,6 +2562,7 @@ rc_debman_query_all_real (RCPackman *packman)
     query_info.packages = NULL;
     query_info.package_buf = NULL;
     query_info.desc_buf = NULL;
+    query_info.replaces = NULL;
     query_info.error = FALSE;
     query_info.loop = loop;
 

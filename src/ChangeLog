@@ -1,3 +1,8 @@
+2001-07-12  Ian Peters  <itp@ximian.com>
+
+	* rc-debman.c (query_all_read_line_cb): some code to handle
+	Conflicts: + Replaces: == Provides:
+
 2001-07-11  Vladimir Vukicevic  <vladimir@ximian.com>
 
 	* rc-deps.c: Fix merging of require short-circuit; it isn't working
