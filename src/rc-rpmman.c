@@ -305,13 +305,12 @@ transaction_add_remove_packages (RCPackman *packman,
 #endif
 
         while (header = rpmdbNextIterator (mi)) {
-            header = rpmdbNextIterator (mi);
             offset = rpmdbGetIteratorOffset (mi);
 
             rpmtransRemovePackage (transaction, offset);
-
-            rpmdbFreeIterator (mi);
         }
+
+        rpmdbFreeIterator (mi);
 
         g_free (package_name);
     }
@@ -1352,9 +1351,9 @@ rc_rpmman_query_all (RCPackman *packman)
         rc_rpmman_depends_fill (header, package);
 
         list = g_slist_append (list, package);
-
-        headerFree (header);
     }
+
+    rpmdbFreeIterator(mi);
 
     return (list);
 

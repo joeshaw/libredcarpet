@@ -1,3 +1,11 @@
+2001-03-06  Ian Peters  <itp@ximian.com>
+
+	* rc-rpmman.c (transaction_add_remove_packages): move the
+	rpmdbFreeIterator call to outside of the while look, I'm a moron,
+	and remove a spurious call to rpmdbNextIterator, I'm a moron
+	(rc_rpmman_query_all): remove an unneeded call to headerFree, and
+	free the iterator at the end of the scan
+
 2001-03-05  Ian Peters  <itp@ximian.com>
 
 	* rc-rpmman.c (transaction_add_remove_packages): comment out the
