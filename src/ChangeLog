@@ -1,5 +1,10 @@
 2001-03-12  Ian Peters  <itp@ximian.com>
 
+	* rc-rpmman.c (rc_rpmman_read_header): revert last, we'll fix it
+	in vercmp instead, otherwise users would see this in the GUI
+
+2001-03-12  Ian Peters  <itp@ximian.com>
+
 	* rc-rpmman.c (rc_rpmman_read_header): handle the broken "mdk"
 	parts of the release when dealing with Mandrake, sigh
 
