@@ -47,13 +47,8 @@ typedef enum _RCPackmanError RCPackmanError;
 enum _RCPackmanError {
     /* No error */
     RC_PACKMAN_ERROR_NONE = 0,
-    /* Packman object is busy in another operation */
-    RC_PACKMAN_ERROR_BUSY,
-    /* The requested operation was aborted due to detected error */
+    /* The requested operation failed, but is non-fatal to program execution */
     RC_PACKMAN_ERROR_ABORT,
-    /* An error occured at the package manager level or lower, and the
-       requested operation did not complete */
-    RC_PACKMAN_ERROR_FAIL,
     /* An error from which we cannot and should not attempt to recover */
     RC_PACKMAN_ERROR_FATAL,
 };

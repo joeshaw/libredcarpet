@@ -6,8 +6,11 @@
 struct _RCDebmanPrivate {
     int lock_fd;
 
-    GHashTable *pkg_hash;
+    GHashTable *package_hash;
     gboolean hash_valid;
+
+    gchar *status_file;
+    gchar *rc_status_file;
 };
 
 #endif /* _RC_DEBMAN_PRIVATE_H */

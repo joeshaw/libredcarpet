@@ -321,7 +321,8 @@ rc_uncompress_memory (guint8 *input_buffer, guint32 input_length,
     return 0;
 }
 
-gboolean rc_write (int fd, const void *buf, size_t count)
+gboolean
+rc_write (int fd, const void *buf, size_t count)
 {
     size_t bytes_remaining = count;
     const void *ptr = buf;
@@ -345,6 +346,18 @@ gboolean rc_write (int fd, const void *buf, size_t count)
 
     if (bytes_remaining) {
         return (FALSE);
+    }
+
+    return (TRUE);
+}
+
+gboolean
+rc_close (int fd)
+{
+    while (close (fd) == -1) {
+        if (errno != EAGAIN && errno != EINTR) {
+            return (FALSE);
+        }
     }
 
     return (TRUE);

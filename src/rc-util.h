@@ -58,4 +58,7 @@ gint rc_uncompress_memory (guint8 *input_buffer, guint32 input_length,
 /* Safely write a buffer to a fd (handle all those pesky EINTR issues) */
 gboolean rc_write (int fd, const void *buf, size_t count);
 
+/* Close a file descriptor (didn't know it was this hard, did you?) */
+gboolean rc_close (int fd);
+
 #endif

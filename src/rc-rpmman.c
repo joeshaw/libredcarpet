@@ -20,9 +20,18 @@
 
 #include <config.h>
 
-#include <libredcarpet/rc-packman-private.h>
-#include <libredcarpet/rc-rpmman.h>
-#include <libredcarpet/rc-util.h>
+#include "rc-packman-private.h"
+#include "rc-rpmman.h"
+#include "rc-util.h"
+#include "rc-verification-private.h"
+
+#ifdef HAVE_RPM_4_0
+#include "rpmlead-4-0-x.h"
+#include "signature-4-0-x.h"
+#else
+#include "rpmlead-3-0-x.h"
+#include "signature-3-0-x.h"
+#endif
 
 #include <fcntl.h>
 #include <string.h>
@@ -33,18 +42,10 @@
 #include <rpm/header.h>
 #include <rpm/rpmlib.h>
 
-#ifdef HAVE_RPM_4_0
-#include <libredcarpet/rpmlead-4-0-x.h>
-#include <libredcarpet/signature-4-0-x.h>
-#else
-#include <libredcarpet/rpmlead-3-0-x.h>
-#include <libredcarpet/signature-3-0-x.h>
-#endif
-
 static void rc_rpmman_class_init (RCRpmmanClass *klass);
 static void rc_rpmman_init       (RCRpmman *obj);
 
-static GtkObjectClass *rc_rpmman_parent;
+static GtkObjectClass *parent_class;
 
 guint
 rc_rpmman_get_type (void)
@@ -856,7 +857,7 @@ rc_rpmman_query (RCPackman *p, RCPackage *pkg)
     Header hdr;
 
     if (rpmdbOpen (RC_RPMMAN (p)->rpmroot, &db, O_RDONLY, 0444)) {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
                               "Unable to open RPM database");
         return (pkg);
     }
@@ -896,14 +897,14 @@ rc_rpmman_query (RCPackman *p, RCPackage *pkg)
     guint i;
 
     if (rpmdbOpen (RC_RPMMAN (p)->rpmroot, &db, O_RDONLY, 0444)) {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
                               "Unable to open RPM database");
         return (pkg);
     }
 
     if (rpmdbFindPackage (db, pkg->spec.name, &matches)) {
         rpmdbClose (db);
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
                               "Unable to perform RPM database search");
         return (pkg);
     }
@@ -913,7 +914,7 @@ rc_rpmman_query (RCPackman *p, RCPackage *pkg)
 
         if (!(hdr = rpmdbGetRecord (db, matches.recs[i].recOffset))) {
             rpmdbClose (db);
-            rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+            rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
                                   "Unable to fetch RPM header from database");
             return (pkg);
         }
@@ -949,7 +950,7 @@ rc_rpmman_query_file (RCPackman *p, const gchar *filename)
     fd = fdOpen (filename, O_RDONLY, 0444);
 
     if (rpmReadPackageHeader (fd, &hdr, NULL, NULL, NULL)) {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
                               "Unable to read package header");
         rc_package_free (pkg);
         return (NULL);
@@ -981,7 +982,7 @@ rc_rpmman_query_all (RCPackman *p)
     Header hdr;
 
     if (rpmdbOpen (RC_RPMMAN (p)->rpmroot, &db, O_RDONLY, 0444)) {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
                               "Unable to open RPM database");
         return (NULL);
     }
@@ -1023,14 +1024,14 @@ rc_rpmman_query_all (RCPackman *p)
     guint recno;
 
     if (rpmdbOpen (RC_RPMMAN (p)->rpmroot, &db, O_RDONLY, 0444)) {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
                               "Unable to open RPM database");
         return (NULL);
     }
 
     if (!(recno = rpmdbFirstRecNum (db))) {
         rpmdbClose (db);
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
                               "Unable to access RPM database");
         return (NULL);
     }
@@ -1042,7 +1043,7 @@ rc_rpmman_query_all (RCPackman *p)
         if (!(hdr = rpmdbGetRecord (db, recno))) {
             rpmdbClose (db);
             rc_package_slist_free (list);
-            rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+            rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
                                   "Unable to read RPM database entry");
             return (NULL);
         }
@@ -1138,13 +1139,13 @@ rc_rpmman_verify (RCPackman *p, RCPackage *pkg)
 
     in_fd = Fopen (pkg->package_filename, "r.ufdio");
     if (in_fd == NULL || Ferror (in_fd)) {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
                               "Unable to open the RPM for verification");
         goto END;
     }
 
     if (readLead (in_fd, &lead)) {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
                               "Unable to read the RPM file for verification");
         goto END;
     }
@@ -1152,7 +1153,7 @@ rc_rpmman_verify (RCPackman *p, RCPackage *pkg)
     if (rpmReadSignature (in_fd, &sig_hdr, lead.signature_type) ||
         (sig_hdr == NULL))
     {
-        rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+        rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
                               "Unable to read the RPM signature section");
         goto END;
     }
@@ -1161,13 +1162,13 @@ rc_rpmman_verify (RCPackman *p, RCPackage *pkg)
     headerGetEntry (sig_hdr, RPMSIGTAG_GPG, NULL, (void **)&buf, &count);
     if (count > 0) {
         if ((sig_fd = mkstemp (sig_name)) == -1) {
-            rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+            rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
                                   "Unable to create a temporary signature "
                                   "file");
             goto END;
         }
         if (!rc_write (sig_fd, buf, count)) {
-            rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+            rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
                                   "Unable to write a temporary signature "
                                   "file");
             goto END;
@@ -1193,7 +1194,7 @@ rc_rpmman_verify (RCPackman *p, RCPackage *pkg)
 
     if (gpg_sig || md5_sig || size_sig) {
         if ((data_fd = mkstemp (data_name)) == -1) {
-            rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+            rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
                                   "Unable to create temporary payload file");
             goto END;
         }
@@ -1201,7 +1202,7 @@ rc_rpmman_verify (RCPackman *p, RCPackage *pkg)
         while ((num_bytes = Fread (buffer, sizeof (char), sizeof (buffer),
                                    in_fd)) > 0) {
             if (!rc_write (data_fd, buffer, num_bytes)) {
-                rc_packman_set_error (p, RC_PACKMAN_ERROR_FAIL,
+                rc_packman_set_error (p, RC_PACKMAN_ERROR_ABORT,
                                       "Unable to write a temporary payload "
                                       "file");
                 goto END;
@@ -1260,8 +1261,8 @@ rc_rpmman_destroy (GtkObject *obj)
 
     g_free (r->rpmroot);
 
-    if (GTK_OBJECT_CLASS (rc_rpmman_parent)->destroy)
-        (* GTK_OBJECT_CLASS (rc_rpmman_parent)->destroy) (obj);
+    if (GTK_OBJECT_CLASS (parent_class)->destroy)
+        (* GTK_OBJECT_CLASS (parent_class)->destroy) (obj);
 }
 
 static void
@@ -1272,7 +1273,7 @@ rc_rpmman_class_init (RCRpmmanClass *klass)
 
     object_class->destroy = rc_rpmman_destroy;
 
-    rc_rpmman_parent = gtk_type_class (rc_packman_get_type ());
+    parent_class = gtk_type_class (rc_packman_get_type ());
 
     hpc->rc_packman_real_transact = rc_rpmman_transact;
     hpc->rc_packman_real_query = rc_rpmman_query;

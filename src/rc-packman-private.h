@@ -32,7 +32,9 @@ struct _RCPackmanPrivate {
     RCPackmanFeatures features;
 };
 
+void rc_packman_clear_error (RCPackman *packman);
+
 void rc_packman_set_error (RCPackman *packman, RCPackmanError error,
-                           const gchar *reason);
+                           const gchar *format, ...);
 
 #endif

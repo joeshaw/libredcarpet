@@ -1,37 +1,41 @@
-/*
- * rc-package.c: Verification structures...
- *
+/* rc-package.c
  * Copyright (C) 2000 Helix Code, Inc.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+ * along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+ * 02111-1307, USA.
  */
 
-#include <libredcarpet/rc-verification.h>
-#include <libredcarpet/rc-util.h>
-#include <libredcarpet/rc-line-buf.h>
-#include <libredcarpet/rc-md5.h>
+#include "rc-debug.h"
+#include "rc-verification.h"
+#include "rc-verification-private.h"
+#include "rc-util.h"
+#include "rc-line-buf.h"
+#include "rc-md5.h"
 
 #include <unistd.h>
+#include <fcntl.h>
 #include <string.h>
+#include <signal.h>
 
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
 
 #ifndef SHAREDIR
-#define SHAREDIR "/home/itp/gnome/red-carpet/share/redcarpet/"
+#error "SHAREDIR not defined"
+// #define SHAREDIR "/home/itp/gnome/red-carpet/share/redcarpet/"
 #endif
 
 RCVerification *
@@ -39,82 +43,130 @@ rc_verification_new ()
 {
     RCVerification *new;
 
+    RC_ENTRY;
+
     new = g_new0 (RCVerification, 1);
 
+    RC_EXIT;
+
     return (new);
-}
+} /* rc_verification_new */
 
 void
-rc_verification_free (RCVerification *rcv)
+rc_verification_free (RCVerification *verification)
 {
-    g_free (rcv->info);
+    RC_ENTRY;
 
-    g_free (rcv);
-}
+    g_free (verification->info);
+
+    g_free (verification);
+
+    RC_EXIT;
+} /* rc_verification_free */
 
 void
-rc_verification_slist_free (RCVerificationSList *rcvsl)
+rc_verification_slist_free (RCVerificationSList *verification_list)
 {
-    g_slist_foreach (rcvsl, (GFunc) rc_verification_free, NULL);
+    RC_ENTRY;
 
-    g_slist_free (rcvsl);
-}
+    g_slist_foreach (verification_list, (GFunc) rc_verification_free, NULL);
+
+    g_slist_free (verification_list);
+
+    RC_EXIT;
+} /* rc_verification_slist_free */
 
 typedef struct _GPGInfo GPGInfo;
 
 struct _GPGInfo {
     GMainLoop *loop;
-    RCVerification *rcv;
+
+    RCVerification *verification;
+
     guint read_line_id;
     guint read_done_id;
 };
 
 static void
-gpg_read_line_cb (RCLineBuf *rlb, gchar *line, gpointer data)
+gpg_read_line_cb (RCLineBuf *line_buf, gchar *line, gpointer data)
 {
-    GPGInfo *gpgi = (GPGInfo *)data;
-    gchar *ptr = line + strlen ("[GNUPG:] ");
+    GPGInfo *gpg_info = (GPGInfo *)data;
+    const gchar *ptr;
+
+    RC_ENTRY;
+
+    rc_debug (RC_DEBUG_LEVEL_DEBUG, __FUNCTION__ ": got \"%s\"\n", line);
+
+    ptr = line + strlen ("[GNUPG:] ");
 
     if (!strncmp (ptr, "GOODSIG ", strlen ("GOODSIG "))) {
-        gpgi->rcv = rc_verification_new ();
-        gpgi->rcv->type = RC_VERIFICATION_TYPE_GPG;
-        gpgi->rcv->status = RC_VERIFICATION_STATUS_PASS;
+        rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ": good GPG signature\n");
+
+        gpg_info->verification = rc_verification_new ();
+        gpg_info->verification->type = RC_VERIFICATION_TYPE_GPG;
+        gpg_info->verification->status = RC_VERIFICATION_STATUS_PASS;
+
         ptr = strstr (ptr + strlen ("GOODSIG "), " ");
+
         if (ptr) {
-            gpgi->rcv->info = g_strdup (ptr + 1);
+            rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ \
+                      ": signer is \"%s\"\n", ptr + 1);
+            gpg_info->verification->info = g_strdup (ptr + 1);
         }
+
+        RC_EXIT;
+
         return;
     }
 
     if (!strncmp (ptr, "BADSIG ", strlen ("BADSIG "))) {
-        gpgi->rcv = rc_verification_new ();
-        gpgi->rcv->type = RC_VERIFICATION_TYPE_GPG;
-        gpgi->rcv->status = RC_VERIFICATION_STATUS_FAIL;
+        rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ": bad GPG signature\n");
+
+        gpg_info->verification = rc_verification_new ();
+        gpg_info->verification->type = RC_VERIFICATION_TYPE_GPG;
+        gpg_info->verification->status = RC_VERIFICATION_STATUS_FAIL;
+
         ptr = strstr (ptr + strlen ("BADSIG "), " ");
+
         if (ptr) {
-            gpgi->rcv->info = g_strdup (ptr + 1);
+            rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ \
+                      ": signer is \"%s\"\n", ptr + 1);
+            gpg_info->verification->info = g_strdup (ptr + 1);
         }
+
+        RC_EXIT;
+
         return;
     }
 
     if (!strncmp (ptr, "ERRSIG ", strlen ("ERRSIG "))) {
-        gpgi->rcv = rc_verification_new ();
-        gpgi->rcv->type = RC_VERIFICATION_TYPE_GPG;
-        gpgi->rcv->status = RC_VERIFICATION_STATUS_UNDEF;
+        rc_debug (RC_DEBUG_LEVEL_WARNING, __FUNCTION__ \
+                  ": error checking GPG signature\n");
+
+        gpg_info->verification = rc_verification_new ();
+        gpg_info->verification->type = RC_VERIFICATION_TYPE_GPG;
+        gpg_info->verification->status = RC_VERIFICATION_STATUS_UNDEF;
+
+        RC_EXIT;
+
         return;
     }
-}
+} /* gpg_read_line_cb */
 
 static void
-gpg_read_done_cb (RCLineBuf *rlb, RCLineBufStatus status, gpointer data)
+gpg_read_done_cb (RCLineBuf *line_buf, RCLineBufStatus status, gpointer data)
 {
-    GPGInfo *gpgi = (GPGInfo *)data;
+    GPGInfo *gpg_info = (GPGInfo *)data;
 
-    gtk_signal_disconnect (GTK_OBJECT (rlb), gpgi->read_line_id);
-    gtk_signal_disconnect (GTK_OBJECT (rlb), gpgi->read_done_id);
+    RC_ENTRY;
 
-    g_main_quit (gpgi->loop);
-}
+    gtk_signal_disconnect (GTK_OBJECT (line_buf), gpg_info->read_line_id);
+    gtk_signal_disconnect (GTK_OBJECT (line_buf), gpg_info->read_done_id);
+
+    g_main_quit (gpg_info->loop);
+
+    RC_EXIT;
+} /* gpg_read_done_cb */
 
 RCVerification *
 rc_verify_gpg (gchar *file, gchar *sig)
@@ -123,36 +175,46 @@ rc_verify_gpg (gchar *file, gchar *sig)
     pid_t child;
     int status;
     int fds[2];
-    GPGInfo gpgi;
-    RCLineBuf *rlb;
+    GPGInfo gpg_info;
+    RCLineBuf *line_buf;
     GMainLoop *loop;
+
+    RC_ENTRY;
 
     if (pipe (fds)) {
         return (NULL);
     }
 
+    fcntl (fds[0], F_SETFL, O_NONBLOCK);
+    fcntl (fds[1], F_SETFL, O_NONBLOCK);
+
+    signal (SIGCHLD, SIG_DFL);
+
     child = fork ();
 
     switch (child) {
     case -1:
+        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ ": fork() failed\n");
+
         close (fds[0]);
         close (fds[1]);
+
         return (NULL);
-        break;
 
     case 0:
-        fclose (stderr);
         close (fds[0]);
+
         fflush (stdout);
-        dup2 (fds[1], 1);
+        dup2 (fds[1], STDOUT_FILENO);
+
         close (fds[1]);
 
         execlp ("gpg", "gpg", "--batch", "--quiet", "--no-secmem-warning",
                 "--no-default-keyring", "--no-auto-key-retrieve", "--keyring",
                 keyring, "--status-fd", "1", "--logger-fd", "2", "--verify",
                 sig, file, NULL);
+
         return (NULL);
-        break;
 
     default:
         break;
@@ -160,24 +222,24 @@ rc_verify_gpg (gchar *file, gchar *sig)
 
     close (fds[1]);
 
+    line_buf = rc_line_buf_new ();
+    rc_line_buf_set_fd (line_buf, fds[0]);
+
     loop = g_main_new (FALSE);
+    gpg_info.loop = loop;
 
-    gpgi.loop = loop;
-
-    rlb = rc_line_buf_new (fds[0]);
-
-    gpgi.read_line_id =
-        gtk_signal_connect (GTK_OBJECT (rlb), "read_line",
+    gpg_info.read_line_id =
+        gtk_signal_connect (GTK_OBJECT (line_buf), "read_line",
                             GTK_SIGNAL_FUNC (gpg_read_line_cb),
-                            (gpointer) &gpgi);
-    gpgi.read_done_id =
-        gtk_signal_connect (GTK_OBJECT (rlb), "read_done",
+                            (gpointer) &gpg_info);
+    gpg_info.read_done_id =
+        gtk_signal_connect (GTK_OBJECT (line_buf), "read_done",
                             GTK_SIGNAL_FUNC (gpg_read_done_cb),
-                            (gpointer) &gpgi);
+                            (gpointer) &gpg_info);
 
     g_main_run (loop);
 
-    gtk_object_unref (GTK_OBJECT (rlb));
+    gtk_object_unref (GTK_OBJECT (line_buf));
 
     g_main_destroy (loop);
 
@@ -186,68 +248,113 @@ rc_verify_gpg (gchar *file, gchar *sig)
     waitpid (child, &status, 0);
 
     if (!(WIFEXITED (status)) || (WEXITSTATUS (status) > 2)) {
+        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
+                  ": gpg exited abnormally\n");
+
+        RC_EXIT;
+
         return (NULL);
     }
 
-    return (gpgi.rcv);
-}
+    RC_EXIT;
+
+    return (gpg_info.verification);
+} /* rc_verify_gpg */
 
 RCVerification *
 rc_verify_md5 (gchar *filename, guint8 *md5)
 {
-    guint8 *cmd5 = rc_md5 (filename);
-    RCVerification *rcv = rc_verification_new ();
+    guint8 *cmd5;
+    RCVerification *verification;
 
-    rcv->type = RC_VERIFICATION_TYPE_MD5;
+    RC_ENTRY;
+
+    cmd5 = rc_md5 (filename);
+
+    verification = rc_verification_new ();
+
+    verification->type = RC_VERIFICATION_TYPE_MD5;
 
     if (!memcmp (md5, cmd5, 16)) {
-        rcv->status = RC_VERIFICATION_STATUS_PASS;
+        rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ": good md5\n");
+
+        verification->status = RC_VERIFICATION_STATUS_PASS;
     } else {
-        rcv->status = RC_VERIFICATION_STATUS_FAIL;
+        rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ": bad md5\n");
+
+        verification->status = RC_VERIFICATION_STATUS_FAIL;
     }
 
     g_free (cmd5);
 
-    return (rcv);
-}
+    RC_EXIT;
+
+    return (verification);
+} /* rc_verify_md5 */
 
 RCVerification *
 rc_verify_md5_string (gchar *filename, gchar *md5)
 {
-    gchar *cmd5 = rc_md5_string (filename);
-    RCVerification *rcv = rc_verification_new ();
+    gchar *cmd5;
+    RCVerification *verification;
 
-    rcv->type = RC_VERIFICATION_TYPE_MD5;
+    RC_ENTRY;
+
+    cmd5 = rc_md5_string (filename);
+
+    verification = rc_verification_new ();
+
+    verification->type = RC_VERIFICATION_TYPE_MD5;
 
     if (!strcmp (md5, cmd5)) {
-        rcv->status = RC_VERIFICATION_STATUS_PASS;
+        rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ": good md5\n");
+
+        verification->status = RC_VERIFICATION_STATUS_PASS;
     } else {
-        rcv->status = RC_VERIFICATION_STATUS_FAIL;
+        rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ": bad md5\n");
+
+        verification->status = RC_VERIFICATION_STATUS_FAIL;
     }
 
     g_free (cmd5);
 
-    return (rcv);
-}
+    return (verification);
+} /* rc_verify_md5_string */
 
 RCVerification *
 rc_verify_size (gchar *filename, guint32 size)
 {
     struct stat buf;
-    RCVerification *rcv = rc_verification_new ();
+    RCVerification *verification;
 
-    rcv->type = RC_VERIFICATION_TYPE_SIZE;
+    RC_ENTRY;
+
+    verification = rc_verification_new ();
+
+    verification->type = RC_VERIFICATION_TYPE_SIZE;
 
     if (stat (filename, &buf) == -1) {
-        rcv->status = RC_VERIFICATION_STATUS_UNDEF;
-        return (rcv);
+        rc_debug (RC_DEBUG_LEVEL_WARNING, __FUNCTION__ \
+                  ": couldn't stat file\n");
+
+        verification->status = RC_VERIFICATION_STATUS_UNDEF;
+
+        RC_EXIT;
+
+        return (verification);
     }
 
     if (buf.st_size == size) {
-        rcv->status = RC_VERIFICATION_STATUS_PASS;
+        rc_debug (RC_DEBUG_LEVEL_INFO, __FUNCTION__ ": good size check\n");
+
+        verification->status = RC_VERIFICATION_STATUS_PASS;
     } else {
-        rcv->status = RC_VERIFICATION_STATUS_FAIL;
+        rc_debug (RC_DEBUG_LEVEL_WARNING, __FUNCTION__ ": bad size check\n");
+
+        verification->status = RC_VERIFICATION_STATUS_FAIL;
     }
 
-    return (rcv);
-}
+    RC_EXIT;
+
+    return (verification);
+} /* rc_verify_size */

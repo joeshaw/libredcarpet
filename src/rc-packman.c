@@ -21,6 +21,8 @@
 #include "rc-packman.h"
 #include "rc-packman-private.h"
 
+#include <stdarg.h>
+
 static void rc_packman_class_init (RCPackmanClass *klass);
 static void rc_packman_init       (RCPackman *obj);
 
@@ -190,10 +192,10 @@ rc_packman_transact (RCPackman *packman, RCPackageSList *install_packages,
 
     g_return_if_fail (packman);
 
-    rc_packman_set_error (packman, RC_PACKMAN_ERROR_NONE, NULL);
+    rc_packman_clear_error (packman);
 
     if (packman->priv->busy) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_BUSY, NULL);
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL, NULL);
         return;
     }
 
@@ -216,10 +218,10 @@ rc_packman_query (RCPackman *packman, RCPackage *package)
 
     g_return_val_if_fail (packman, NULL);
 
-    rc_packman_set_error (packman, RC_PACKMAN_ERROR_NONE, NULL);
+    rc_packman_clear_error (packman);
 
     if (packman->priv->busy) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_BUSY, NULL);
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL, NULL);
         return (package);
     }
 
@@ -237,7 +239,7 @@ rc_packman_query_list (RCPackman *packman, RCPackageSList *packages)
 
     g_return_val_if_fail (packman, NULL);
 
-    rc_packman_set_error (packman, RC_PACKMAN_ERROR_NONE, NULL);
+    rc_packman_clear_error (packman);
 
     for (iter = packages; iter; iter = iter->next) {
         RCPackage *package = (RCPackage *)(iter->data);
@@ -259,10 +261,10 @@ rc_packman_query_file (RCPackman *packman, const gchar *filename)
 
     g_return_val_if_fail (packman, NULL);
 
-    rc_packman_set_error (packman, RC_PACKMAN_ERROR_NONE, NULL);
+    rc_packman_clear_error (packman);
 
     if (packman->priv->busy) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_BUSY, NULL);
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL, NULL);
         return (NULL);
     }
 
@@ -281,7 +283,7 @@ rc_packman_query_file_list (RCPackman *packman, GSList *filenames)
 
     g_return_val_if_fail (packman, NULL);
 
-    rc_packman_set_error (packman, RC_PACKMAN_ERROR_NONE, NULL);
+    rc_packman_clear_error (packman);
 
     for (iter = filenames; iter; iter = iter->next) {
         gchar *filename = (gchar *)(iter->data);
@@ -307,10 +309,10 @@ rc_packman_query_all (RCPackman *packman)
 
     g_return_val_if_fail (packman, NULL);
 
-    rc_packman_set_error (packman, RC_PACKMAN_ERROR_NONE, NULL);
+    rc_packman_clear_error (packman);
 
     if (packman->priv->busy) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_BUSY, NULL);
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL, NULL);
         return (NULL);
     }
 
@@ -330,7 +332,7 @@ rc_packman_version_compare (RCPackman *packman,
 
     g_return_val_if_fail (packman, 0);
 
-    rc_packman_set_error (packman, RC_PACKMAN_ERROR_NONE, NULL);
+    rc_packman_clear_error (packman);
 
     klass = RC_PACKMAN_GET_CLASS (packman);
 
@@ -346,10 +348,10 @@ rc_packman_verify (RCPackman *packman, RCPackage *package)
 
     g_return_val_if_fail (packman, NULL);
 
-    rc_packman_set_error (packman, RC_PACKMAN_ERROR_NONE, NULL);
+    rc_packman_clear_error (packman);
 
     if (packman->priv->busy) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_BUSY, NULL);
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL, NULL);
         return (NULL);
     }
 
@@ -367,10 +369,10 @@ rc_packman_find_file (RCPackman *packman, const gchar *filename)
 
     g_return_val_if_fail (packman, NULL);
 
-    rc_packman_set_error (packman, RC_PACKMAN_ERROR_NONE, NULL);
+    rc_packman_clear_error (packman);
 
     if (packman->priv->busy) {
-        rc_packman_set_error (packman, RC_PACKMAN_ERROR_BUSY, NULL);
+        rc_packman_set_error (packman, RC_PACKMAN_ERROR_FATAL, NULL);
         return (NULL);
     }
 
@@ -384,21 +386,52 @@ rc_packman_find_file (RCPackman *packman, const gchar *filename)
 /* Methods to access the error stuff */
 
 void
-rc_packman_set_error (RCPackman *packman, RCPackmanError error,
-                      const gchar *reason)
+rc_packman_clear_error (RCPackman *packman)
 {
     g_return_if_fail (packman);
 
     g_free (packman->priv->reason);
 
-    packman->priv->error = error;
-    packman->priv->reason = g_strdup (reason);
+    packman->priv->error = RC_PACKMAN_ERROR_NONE;
+    packman->priv->reason = NULL;
+}
+
+void
+rc_packman_set_error (RCPackman *packman, RCPackmanError error,
+                      const gchar *format, ...)
+{
+    va_list args;
+    gchar *reason;
+
+    g_return_if_fail (packman);
+    g_return_if_fail (format);
+
+    va_start (args, format);
+
+    if (error > packman->priv->error) {
+        packman->priv->error = error;
+    }
+
+    reason = g_strdup_vprintf (format, args);
+
+    if (packman->priv->reason) {
+        gchar *tmp = packman->priv->reason;
+
+        packman->priv->reason = g_strconcat (reason, ": ", tmp, NULL);
+
+        g_free (reason);
+        g_free (tmp);
+    } else {
+        packman->priv->reason = reason;
+    }
+
+    va_end (args);
 }
 
 guint
 rc_packman_get_error (RCPackman *packman)
 {
-    g_return_val_if_fail (packman, RC_PACKMAN_ERROR_FAIL);
+    g_return_val_if_fail (packman, RC_PACKMAN_ERROR_ABORT);
 
     return (packman->priv->error);
 }

@@ -1,3 +1,49 @@
+2001-01-16  Ian Peters  <itp@helixcode.com>
+
+	* rc-util.c, rc-util.h: Added rc_close
+
+	* rc-line-buf.c, rc-line-buf.h, rc-line-buf-private.h: Added
+	license information.  Made the fd get/settable via GtkArg.
+	rc_line_buf_new now takes no paramaters, use rc_line_buf_set_fd
+
+	* rc-verification.c, rc-verification.h: update to the new
+	RCLineBuf API, generic cleanups, license information, #include
+	file fixes, and debugging code added
+
+	* rc-rpmman.c: #include file fixes, twiddle with some calls to
+	rc_packman_set_error
+
+	* rc-packman.h: tweak the RCPackmanError values
+
+	* rc-packman-private.h: Add rc_packman_clear_error, and make
+	rc_packman_set_error use varargs, and prepend the passed string,
+	colon separated, to the current error reason, and calculate the
+	new RCPackmanError value
+
+	* rc-packman.c: add some calls to rc_packman_clear_error, change
+	some calls to rc_packman_set_error to reflect the new
+	RCPackmanError values, add rc_packman_clear_error, and rewrite
+	rc_packman_set_error
+
+	* rc-debman-general.h: fix some #include lines, add
+	rc_debman_section_to_package_section
+
+	* rc-debman-general.c: add rc_debman_section_to_package_section
+
+	* rc-debman-private.h: move status_file and rc_status_file into
+	the RCDebmanPrivate struct
+
+	* rc-debman.c: where oh where to start.  Handle all the possible
+	Debian interactive cases, including interactive unpack,
+	interactive configure, interactive purge.  Handle the broken
+	conf-file crap to STDERR.  Make the little dialog use a fixed
+	width font.  Catch all sorts of error conditions, and call
+	rc_packman_set_error appropriately, including the severity and a
+	valid description of what occured.  Change lots of calls to use
+	rc_debug.  Clean up a lot of code.  Push the PAGER environment
+	variable as cat to avoid some nasty surprises.  Lots of other
+	stuff that I'm forgetting, but it's all good.  ;-)
+	
 2001-01-06  Vladimir Vukicevic  <vladimir@helixcode.com>
 
 	* rc-deps.c, rc-deps.h: Fix some more conflict handling

@@ -22,6 +22,7 @@
 
 #include "rc-debman-general.h"
 #include "rc-debug.h"
+#include "rc-package.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -233,4 +234,117 @@ rc_debman_fill_depends (gchar *input, RCPackageDepSList *list)
     RC_EXIT;
 
     return (list);
+}
+
+RCPackageSection
+rc_debman_section_to_package_section (const gchar *section)
+{
+    switch (section[0]) {
+    case 'a':
+        if (!g_strcasecmp (section, "admin")) {
+            return (SECTION_SYSTEM);
+        } else {
+            return (SECTION_MISC);
+        }
+    case 'b':
+        if (!g_strcasecmp (section, "base")) {
+            return (SECTION_SYSTEM);
+        } else {
+            return (SECTION_MISC);
+        }
+    case 'c':
+        if (!g_strcasecmp (section, "comm")) {
+            return (SECTION_INTERNET);
+        } else {
+            return (SECTION_MISC);
+        }
+    case 'd':
+        if (!g_strcasecmp (section, "devel")) {
+            return (SECTION_DEVEL);
+        } else if (!g_strcasecmp (section, "doc")) {
+            return (SECTION_DOC);
+        } else {
+            return (SECTION_MISC);
+        }
+    case 'e':
+        if (!g_strcasecmp (section, "editors")) {
+            return (SECTION_UTIL);
+        } else {
+            return (SECTION_MISC);
+        }
+    case 'g':
+        if (!g_strcasecmp (section, "games")) {
+            return (SECTION_GAME);
+        } else if (!g_strcasecmp (section, "graphics")) {
+            return (SECTION_IMAGING);
+        } else {
+            return (SECTION_MISC);
+        }
+    case 'i':
+        if (!g_strcasecmp (section, "interpreters")) {
+            return (SECTION_DEVELUTIL);
+        } else {
+            return (SECTION_MISC);
+        }
+    case 'l':
+        if (!g_strcasecmp (section, "libs")) {
+            return (SECTION_LIBRARY);
+        } else {
+            return (SECTION_MISC);
+        }
+    case 'm':
+        if (!g_strcasecmp (section, "mail")) {
+            return (SECTION_PIM);
+        } else {
+            return (SECTION_MISC);
+        }
+    case 'n':
+        if (!g_strcasecmp (section, "net") ||
+            !g_strcasecmp (section, "news"))
+        {
+            return (SECTION_INTERNET);
+        } else {
+            return (SECTION_MISC);
+        }
+    case 'o':
+        if (!g_strcasecmp (section, "oldlibs")) {
+            return (SECTION_LIBRARY);
+        } else {
+            return (SECTION_MISC);
+        }
+    case 's':
+        if (!g_strcasecmp (section, "shells")) {
+            return (SECTION_SYSTEM);
+        } else if (!g_strcasecmp (section, "sound")) {
+            return (SECTION_MULTIMEDIA);
+        } else {
+            return (SECTION_MISC);
+        }
+    case 't':
+        if (!g_strcasecmp (section, "text")) {
+            return (SECTION_UTIL);
+        } else {
+            return (SECTION_MISC);
+        }
+    case 'u':
+        if (!g_strcasecmp (section, "utils")) {
+            return (SECTION_UTIL);
+        } else {
+            return (SECTION_MISC);
+        }
+    case 'w':
+        if (!g_strcasecmp (section, "web")) {
+            return (SECTION_INTERNET);
+        } else {
+            return (SECTION_MISC);
+        }
+    case 'x':
+        if (!g_strcasecmp (section, "x11")) {
+            return (SECTION_XAPP);
+        } else {
+            return (SECTION_MISC);
+        }
+    default:
+        return (SECTION_MISC);
+    }
 }

@@ -21,12 +21,14 @@
 #ifndef _RC_DEBMAN_GENERAL_H
 #define _RC_DEBMAN_GENERAL_H
 
-#include <libredcarpet/rc-package-dep.h>
+#include "rc-package.h"
+#include "rc-package-dep.h"
 
 void rc_debman_parse_version (gchar *input, guint32 *epoch, gchar **version,
                               gchar **release);
 RCPackageDepSList *rc_debman_fill_depends (gchar *input,
                                            RCPackageDepSList *list);
 
+RCPackageSection rc_debman_section_to_package_section (const gchar *section);
 
 #endif /* _RC_DEBMAN_GENERAL_H */
