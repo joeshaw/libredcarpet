@@ -1,3 +1,7 @@
+2005-04-06  James Willcox  <james@ximian.com>
+
+	* libredcarpet-sharp.pc.in: put glib-sharp in the Libs line
+
 2005-03-18  Tambet Ingo  <tambet@ximian.com>
 
 	* libredcarpet-sharp.pc.in: Add gtk-sharp for Requires.

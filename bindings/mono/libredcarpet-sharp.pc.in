@@ -7,4 +7,4 @@ Name: libredcarpet-sharp
 Description: LIBREDCARPET - Red Carpet Library C# bindings
 Version: @VERSION@
 Requires:
-Libs: -r:@libdir@/mono/libredcarpet-sharp/libredcarpet-sharp.dll
+Libs: -r:@GLIB_SHARP_LIBDIR@/mono/gtk-sharp/glib-sharp.dll -r:@libdir@/mono/libredcarpet-sharp/libredcarpet-sharp.dll
