@@ -96,6 +96,7 @@ libredcarpettmp_a_SOURCES =		\
 	rc-channel-private.c		\
 	rc-xml.c			\
 	rc-util.c			\
+	distributions-xml.h		\
 	rc-distro.c			\
 	rc-dep-or.c			\
         rc-distman.c                    \
