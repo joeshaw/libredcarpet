@@ -243,7 +243,7 @@
     <callback name="PackageMatchFn" cname="RCPackageMatchFn">
       <return-type type="gboolean" />
       <parameters>
-        <parameter type="struct" name="_RCPackageMatch*" />
+        <parameter type="RCPackageMatch*" name="arg1" />
         <parameter type="gpointer" name="arg2" />
       </parameters>
     </callback>
@@ -565,13 +565,13 @@
         </parameters>
       </virtual_method>
       <method name="FileList" cname="rc_packman_file_list">
-        <return-type type="RCPackageFileSList*" />
+        <return-type type="RCPackageFileSList*" element_type="RC.PackageFile" />
         <parameters>
           <parameter type="RCPackage*" name="package" />
         </parameters>
       </method>
       <method name="FindFile" cname="rc_packman_find_file">
-        <return-type type="RCPackageSList*" />
+        <return-type type="RCPackageSList*" element_type="RC.Package" />
         <parameters>
           <parameter type="const-gchar*" name="filename" />
         </parameters>

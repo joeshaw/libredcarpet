@@ -1,3 +1,8 @@
+2004-09-02  Tambet Ingo  <tambet@ximian.com>
+
+	* RC.metadata: Set the element_type for rc_packman_file_list.
+	Set the element_type for rc_packman_find_file.
+
 2004-09-01  James Willcox  <james@ximian.com>
 
 	* Makefile.am: fix the dist
