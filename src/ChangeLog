@@ -1,7 +1,7 @@
 2003-10-07  Joe Shaw  <joe@ximian.com>
 
 	* rc-queue-item.c (uninstall_item_process): If the system can't
-	provide a package set's children when we're trying to remove it,
+	provide a package set's child when we're trying to remove it,
 	don't assert.  It's entirely possible that the child was removed
 	using rpm -e.
 
