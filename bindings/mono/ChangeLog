@@ -1,3 +1,9 @@
+2004-11-11  Tambet Ingo  <tambet@ximian.com>
+
+	* RC.metadata: Hide rc_package_get_updates. One less GLib.SList in api.
+
+	* Package.custom: Implement GetUpdates().
+
 2004-11-08  Tambet Ingo  <tambet@ximian.com>
 
 	* Packman.custom: Implement Distman() manually.
