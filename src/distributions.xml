@@ -486,17 +486,6 @@
         <distro>
                 <name>SuSE Linux Enterprise Server</name>
                 <version>9</version>
-                <arch>i686</arch>
-                <type>rpm</type>
-                <target>sles-9-i686</target>
-                <status>supported</status>
-                <detect>
-                        <file source="/etc/SuSE-release" substring="SUSE LINUX Enterprise Server 9"/>
-                </detect>
-        </distro>
-        <distro>
-                <name>SuSE Linux Enterprise Server</name>
-                <version>9</version>
                 <arch>ia64</arch>
                 <type>rpm</type>
                 <target>sles-9-ia64</target>

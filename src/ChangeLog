@@ -1,3 +1,7 @@
+2004-08-06  James Willcox  <james@ximian.com>
+
+      * distributions.xml:  Apparently there is also no i686 sles9.  Oops.
+
 2004-08-04  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-extract-packages.c (rc_extract_packages_from_directory): Implement
