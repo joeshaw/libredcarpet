@@ -1,3 +1,15 @@
+2004-05-20  Vladimir Vukicevic  <vladimir@pobox.com>
+
+	* Makefile.am: Added 4.3 stub (rpm 4.3 .so links against the
+	right libs, so maybe we can dispense with the stub, but it's
+	easier to just keep it there)
+
+	* rc-rpmman.c bumped LATEST_SUPPORTED_RPM_VERSION to 40301.
+	(load_fake_syms): the hdrVec entries for 4.1-4.2.2 are valid for 4.3.1
+	(load_rpm_syms): the hdrVec entries for 4.1-4.2.2 are valid for 4.3.1
+	
+	* distributions.xml: added fc2
+
 2004-05-18  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-extract-channels.c (rc_extract_channels_from_helix_buffer):
