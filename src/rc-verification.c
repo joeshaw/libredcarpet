@@ -207,63 +207,30 @@ rc_verify_gpg (gchar *file, gchar *sig)
      * the off chance that we're wrong, as gpg by itself just blocks
      * waiting for input in normal operation. */
 
-    homedir = g_get_home_dir ();
-    gpgdir = g_strconcat (homedir, "/.gnupg");
-    g_free (homedir);
+    gpgdir = g_strconcat (g_get_home_dir (), "/.gnupg", NULL);
 
     if (!rc_file_exists (gpgdir)) {
-        child = fork ();
+        gchar *command;
+        int result;
 
-        switch (child) {
-        case -1:
-            rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ ": fork() failed\n");
+        command = g_strconcat (gpg_command, " --list-keys", NULL);
+        result = system (command);
+        g_free (command);
 
+        if (!rc_file_exists (gpgdir)) {
             verification->status = RC_VERIFICATION_STATUS_UNDEF;
-            verification->info =
-                g_strdup ("unable to exec gpg to verify signature");
+            verification->info = g_strdup (
+                "gpg was unable to create ~/.gnupg");
 
             g_free (gpgdir);
 
+            RC_EXIT;
+
             return (verification);
-
-        case 0:
-            execl (gpg_command, gpg_command, "--list-keys", NULL);
-
-        default:
-            break;
         }
-    }
-
-    waitpid (child, &status, 0);
-
-    if (!(WIFEXITED (status)) || (WEXITSTATUS (status) != 0)) {
-        rc_debug (RC_DEBUG_LEVEL_ERROR, __FUNCTION__ \
-                  ": gpg exited abnormally while creating ~/.gnupg\n");
-
-        verification->status = RC_VERIFICATION_STATUS_UNDEF;
-        verification->info = g_strdup (
-            "gpg returned an unknown error code while creating ~/.gnupg");
 
         g_free (gpgdir);
-
-        RC_EXIT;
-
-        return (verification);
     }
-
-    if (!rc_file_exists (gpgdir)) {
-        verification->status = RC_VERIFICATION_STATUS_UNDEF;
-        verification->info = g_strdup (
-            "gpg was unable to create ~/.gnupg");
-
-        g_free (gpgdir);
-
-        RC_EXIT;
-
-        return (verification);
-    }
-
-    g_free (gpgdir);
 
     if (pipe (fds)) {
         verification->status = RC_VERIFICATION_STATUS_UNDEF;
