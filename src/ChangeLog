@@ -1,3 +1,12 @@
+2002-07-11  Jon Trowbridge  <trow@ximian.com>
+
+	* rc-xml.c (rc_package_to_xml_node): Add the file_size and
+	installed_size to the XML.
+
+	* rc-packman.c (rc_packman_query_file): Stat the file and set
+	the file_size of the RCPackage, but only if the implementation
+	of query_file didn't do so already.
+
 2002-07-10  Joe Shaw  <joe@ximian.com>
 
 	* rc-xml.c (rc_package_to_xml_node): Add back in writing out the

@@ -24,6 +24,8 @@
 
 #include <stdarg.h>
 #include <ctype.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "rc-packman-private.h"
 
@@ -302,6 +304,7 @@ RCPackage *
 rc_packman_query_file (RCPackman *packman, const gchar *filename)
 {
     RCPackmanClass *klass;
+    RCPackage *package;
 
     g_return_val_if_fail (packman, NULL);
 
@@ -311,7 +314,17 @@ rc_packman_query_file (RCPackman *packman, const gchar *filename)
 
     g_assert (klass->rc_packman_real_query_file);
 
-    return (klass->rc_packman_real_query_file (packman, filename));
+    package = klass->rc_packman_real_query_file (packman, filename);
+
+    /* Get the file size if the rc_packman_real_query_file didn't do
+       so already. */
+    if (package->file_size == 0) {
+        struct stat statbuf;
+        if (stat (filename, &statbuf) == 0)
+            package->file_size = statbuf.st_size;
+    }
+
+    return package;
 }
 
 RCPackageSList *

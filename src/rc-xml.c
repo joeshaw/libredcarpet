@@ -999,17 +999,15 @@ rc_package_to_xml_node (RCPackage *package)
     xmlNode *tmp_node;
     RCPackageUpdateSList *history_iter;
     RCPackageDepSList *dep_iter;
+    char buffer[128];
 
     package_node = xmlNewNode (NULL, "package");
 
     xmlNewTextChild (package_node, NULL, "name", package->spec.name);
 
     if (package->spec.has_epoch) {
-        char *tmp_string;
-
-        tmp_string = g_strdup_printf ("%d", package->spec.epoch);
-        xmlNewTextChild (package_node, NULL, "epoch", tmp_string);
-        g_free (tmp_string);
+        g_snprintf (buffer, 128, "%d", package->spec.epoch);
+        xmlNewTextChild (package_node, NULL, "epoch", buffer);
     }
 
     xmlNewTextChild (package_node, NULL, "version", package->spec.version);
@@ -1024,6 +1022,12 @@ rc_package_to_xml_node (RCPackage *package)
 
     xmlNewTextChild (package_node, NULL, "section",
                      rc_package_section_to_string (package->section));
+
+    g_snprintf (buffer, 128, "%u", package->file_size);
+    xmlNewTextChild (package_node, NULL, "file_size", buffer);
+
+    g_snprintf (buffer, 128, "%u", package->installed_size);
+    xmlNewTextChild (package_node, NULL, "installed_size", buffer);
 
     if (package->history) {
         tmp_node = xmlNewChild (package_node, NULL, "history", NULL);
