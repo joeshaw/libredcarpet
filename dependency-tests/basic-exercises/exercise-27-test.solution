@@ -1,3 +1,5 @@
 >!> Installing gaim-gnome from channel channel
 >!> Solution #1:
->!> +gaim-gnome-1:0.11.0pre9-ximian.3 -gaim-1:0.11.0pre9-ximian.3 
+>!> install gaim-gnome-1:0.11.0pre9-ximian.3[channel]
+>!> remove  gaim-1:0.11.0pre9-ximian.3
+>!> installs=1, upgrades=0, uninstalls=1

@@ -233,22 +233,61 @@ parse_xml_setup (xmlNode *node)
 }
 
 static void
-assemble_work_cb (RCPackage *package,
-                  RCPackageStatus status,
-                  gpointer user_data)
+assemble_install_cb (RCPackage *package,
+                     RCPackageStatus status,
+                     gpointer user_data)
 {
-    GList **items = user_data;
+    GList **list = (GList **) user_data;
     char *str;
-    char *symb = "?";
 
-    if (status == RC_PACKAGE_STATUS_TO_BE_INSTALLED)
-        symb = package->channel == NULL ? "|+" : "+";
-    else if (status == RC_PACKAGE_STATUS_TO_BE_UNINSTALLED)
-        symb = package->channel == NULL ? "-" : "|-";
-    
-    str = g_strdup_printf ("%s%s ", symb, rc_package_spec_to_str_static (&package->spec));
+    str = g_strdup_printf ("%-7s %s",
+                           package->channel == NULL ? "|flag" : "install",
+                           rc_package_to_str_static (package));
 
-    *items = g_list_prepend (*items, str);
+    *list = g_list_prepend (*list, str);
+}
+
+static void
+assemble_uninstall_cb (RCPackage *package,
+                       RCPackageStatus status,
+                       gpointer user_data)
+{
+    GList **list = (GList **) user_data;
+    char *str;
+
+    str = g_strdup_printf ("%-7s %s",
+                           package->channel == NULL ? "remove" : "|unflag",
+                           rc_package_to_str_static (package));
+
+    *list = g_list_prepend (*list, str);
+}
+
+static void
+assemble_upgrade_cb (RCPackage *pkg1,
+                     RCPackageStatus status1,
+                     RCPackage *pkg2,
+                     RCPackageStatus status2,
+                     gpointer user_data)
+{
+    GList **list = (GList **) user_data;
+    char *str, *p1, *p2;
+
+    p1 = rc_package_to_str (pkg1);
+    p2 = rc_package_to_str (pkg2);
+
+    str = g_strdup_printf ("%-7s %s => %s",
+                           "upgrade", p1, p2);
+
+    g_free (p1);
+    g_free (p2);
+
+    *list = g_list_prepend (*list, str);
+}
+
+static void
+print_important (gpointer user_data)
+{
+    g_print (">!> %s\n", (const char *) user_data);
 }
 
 static void
@@ -262,11 +301,12 @@ soln_cb (RCResolverContext *context, gpointer user_data)
         g_print (">!> Solution #%d:\n", *count);
         ++*count;
         
-        rc_resolver_context_foreach_marked_package (context, assemble_work_cb, &items);
+        rc_resolver_context_foreach_install (context, assemble_install_cb, &items);
+        rc_resolver_context_foreach_uninstall (context, assemble_uninstall_cb, &items);
+        rc_resolver_context_foreach_upgrade (context, assemble_upgrade_cb, &items);
+
         items = g_list_sort (items, (GCompareFunc) strcmp);
-        g_print (">!> ");
-        g_list_foreach (items, (GFunc) g_print, NULL);
-        g_print ("\n");
+        g_list_foreach (items, (GFunc) print_important, NULL);
         g_list_foreach (items, (GFunc) g_free, NULL);
         g_list_free (items);
 
@@ -274,7 +314,7 @@ soln_cb (RCResolverContext *context, gpointer user_data)
         g_print (">!> Failed Attempt:\n");
     }
 
-    g_print ("installs=%d, upgrades=%d, uninstalls=%d\n",
+    g_print (">!> installs=%d, upgrades=%d, uninstalls=%d\n",
              context->install_count,
              context->upgrade_count,
              context->uninstall_count);

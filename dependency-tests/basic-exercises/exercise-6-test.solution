@@ -1,3 +1,6 @@
 >!> Installing CC from channel test
 >!> Solution #1:
->!> +AA-1.0-1 +CC-1.0-1 -A-1.0-1 
+>!> install AA-1.0-1[test]
+>!> install CC-1.0-1[test]
+>!> remove  A-1.0-1
+>!> installs=2, upgrades=0, uninstalls=1
