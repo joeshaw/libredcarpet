@@ -1,5 +1,7 @@
 2001-07-26  Vladimir Vukicevic  <vladimir@ximian.com>
 
+	* rc-distro.c: Add solaris 5.7
+
 	* rc-deps.c: Fixed memory corruption resulting from using
 	uninitialized variable; also fixes bug with removes
 	and the "control center" issue
