@@ -1,5 +1,11 @@
 2001-01-18  Ian Peters  <itp@helixcode.com>
 
+	* rc-deps.c, rc-deps.h (rc_dep_resolution_new): remove the packman
+	paramater
+	(rc_dep_set_packman): added
+
+2001-01-18  Ian Peters  <itp@helixcode.com>
+
 	* rc-package-section.c, rc-package-section.h: added.  Some stuff
 	moved out of rc-package.[ch]
 
