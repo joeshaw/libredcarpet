@@ -1,5 +1,10 @@
 2003-08-16  Joe Shaw  <joe@ximian.com>
 
+	* rc-world.c (rc_world_remove_lock_impl): Fix a cut-and-paste bug
+	that was causing locks to be duplicated, not removed.
+
+2003-08-16  Joe Shaw  <joe@ximian.com>
+
 	* Land libredcarpet-multiserver-branch onto the trunk.  Adds
 	multiple worlds, which makes the implementation of package sets
 	and undumped worlds much cleaner and allows us to have multiple

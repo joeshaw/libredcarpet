@@ -81,7 +81,7 @@ static void
 rc_world_remove_lock_impl (RCWorld        *world,
                            RCPackageMatch *lock)
 {
-    world->lock_store = g_list_prepend (world->lock_store, lock);
+    world->lock_store = g_list_remove (world->lock_store, lock);
 }
 
 static void
