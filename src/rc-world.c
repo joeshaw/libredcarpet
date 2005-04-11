@@ -1262,15 +1262,11 @@ foreach_system_upgrade_cb (RCPackage *upgrade, gpointer user_data)
                                           RC_PACKAGE_SPEC (best_up),
                                           RC_PACKAGE_SPEC (upgrade));
 
-        if (cmp < 0) {
+        if (cmp <= 0) {
             /* We have a new best package... */
             g_slist_free (info->best_upgrades);
             info->best_upgrades = g_slist_prepend (NULL, upgrade);
-        } else if (cmp == 0) {
-            /* Package is exactly the same as our previous best, add it */
-            info->best_upgrades = g_slist_prepend (info->best_upgrades,
-                                                   upgrade);
-        }
+        } 
     }
 
     return TRUE;

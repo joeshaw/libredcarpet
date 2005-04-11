@@ -1,3 +1,10 @@
+2005-04-10  James Willcox  <james@ximian.com>
+
+	* rc-world.c: (foreach_system_upgrade_cb):
+
+	Do not append a package of the same name and version to the list.
+	Avoids duplicate packages in the list of packages to update.
+
 2005-03-24  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-world-multi.c (rc_world_multi_foreach_subworld): Make a private
