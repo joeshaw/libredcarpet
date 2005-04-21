@@ -12,7 +12,16 @@ namespace RC {
 	public struct PackageFile {
 
 		public string Filename;
-		public uint Size;
+		private UIntPtr size;
+
+		public ulong Size {
+			get {
+				return (ulong) size;
+			}
+			set {
+				size = new UIntPtr (value);
+			}
+		}
 		public string Md5sum;
 		public uint Uid;
 		public uint Gid;

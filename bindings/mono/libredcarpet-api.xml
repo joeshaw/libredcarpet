@@ -32,6 +32,16 @@
       <member cname="RC_CHANNEL_TYPE_APTRPM" name="Aptrpm" />
       <member cname="RC_CHANNEL_TYPE_YUM" name="Yum" />
     </enum>
+    <enum name="DebugLevel" cname="RCDebugLevel" type="enum">
+      <member cname="RC_DEBUG_LEVEL_ALWAYS" name="Always" value="-1" />
+      <member cname="RC_DEBUG_LEVEL_NONE" name="None" />
+      <member cname="RC_DEBUG_LEVEL_ERROR" name="Error" value="1" />
+      <member cname="RC_DEBUG_LEVEL_CRITICAL" name="Critical" value="2" />
+      <member cname="RC_DEBUG_LEVEL_WARNING" name="Warning" value="3" />
+      <member cname="RC_DEBUG_LEVEL_MESSAGE" name="Message" value="4" />
+      <member cname="RC_DEBUG_LEVEL_INFO" name="Info" value="5" />
+      <member cname="RC_DEBUG_LEVEL_DEBUG" name="Debug" value="6" />
+    </enum>
     <enum name="DistroPackageType" cname="RCDistroPackageType" type="enum">
       <member cname="RC_DISTRO_PACKAGE_TYPE_UNKNOWN" name="Unknown" />
       <member cname="RC_DISTRO_PACKAGE_TYPE_RPM" name="Rpm" />
@@ -157,6 +167,14 @@
       <parameters>
         <parameter type="RCChannel*" name="channel" />
         <parameter type="gpointer" name="data" />
+      </parameters>
+    </callback>
+    <callback name="DebugFn" cname="RCDebugFn">
+      <return-type type="void" />
+      <parameters>
+        <parameter type="const-char*" name="message" />
+        <parameter type="RCDebugLevel" name="level" />
+        <parameter type="gpointer" name="user_data" />
       </parameters>
     </callback>
     <callback cname="RCMarkedPackageFn" name="MarkedPackageDelegate">
@@ -3491,6 +3509,30 @@
         <return-type type="const-gchar*" />
         <parameters>
           <parameter type="RCPackageImportance" name="importance" />
+        </parameters>
+      </method>
+    </class>
+    <class name="Debug" cname="RcDebug_">
+      <method name="AddHandler" cname="rc_debug_add_handler" shared="true">
+        <return-type type="guint" />
+        <parameters>
+          <parameter type="RCDebugFn" name="fn" />
+          <parameter type="RCDebugLevel" name="level" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
+      </method>
+      <method name="Full" cname="rc_debug_full" shared="true">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCDebugLevel" name="level" />
+          <parameter type="const-char*" name="format" />
+          <parameter ellipsis="true" />
+        </parameters>
+      </method>
+      <method name="RemoveHandler" cname="rc_debug_remove_handler" shared="true">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="guint" name="id" />
         </parameters>
       </method>
     </class>

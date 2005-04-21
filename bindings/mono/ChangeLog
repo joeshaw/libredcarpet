@@ -1,3 +1,12 @@
+2005-04-21  James Willcox  <james@ximian.com>
+
+	* generated/Buffer.cs:
+	* generated/PackageFile.cs:
+	* libredcarpet-api.xml:
+	* libredcarpet-sources.xml:
+	
+	De-exclude the rc-debug.h header, regen.
+
 2005-04-06  James Willcox  <james@ximian.com>
 
 	* libredcarpet-sharp.pc.in: put glib-sharp in the Libs line

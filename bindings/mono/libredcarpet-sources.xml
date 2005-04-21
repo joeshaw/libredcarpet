@@ -21,7 +21,6 @@
         <exclude>../../src/rc-md5-private.h</exclude>
         <exclude>../../src/rc-xml.h</exclude>
         <exclude>../../src/xml-util.h</exclude>
-        <exclude>../../src/rc-debug.h</exclude>
       </namespace>
     </library>
   </api>
