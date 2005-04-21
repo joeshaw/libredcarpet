@@ -1,5 +1,9 @@
 2005-04-20  James Willcox  <james@ximian.com>
 
+	* rc-rpmman.c: (rc_rpmman_query): check for a NULL header
+
+2005-04-20  James Willcox  <james@ximian.com>
+
 	* distributions.xml: add suse-93-*
 
 2005-04-10  James Willcox  <james@ximian.com>

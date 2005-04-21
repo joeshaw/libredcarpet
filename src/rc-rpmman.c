@@ -2232,6 +2232,9 @@ rc_rpmman_query (RCPackman *packman, const char *name)
         for (iter = hi->headers; iter; iter = iter->next) {
             Header header = iter->data;
             RCPackage *package;
+
+            if (header == NULL)
+                continue;
             
             package = rc_package_new ();
             rc_rpmman_read_header (RC_RPMMAN (packman), header, package);
