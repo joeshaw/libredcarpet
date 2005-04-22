@@ -257,6 +257,9 @@ if test "x$enable_mono" != xno; then
   GTK_SHARP_LIBDIR=`$PKG_CONFIG --variable=libdir gtk-sharp`
   AC_SUBST(GTK_SHARP_LIBDIR)
 
+  GLIB_SHARP_PREFIX=`$PKG_CONFIG --variable=prefix gtk-sharp`
+  AC_SUBST(GLIB_SHARP_PREFIX)
+
   AC_PATH_PROG(GAPI_PARSER, gapi-parser, no)
   if test "x$GAPI_PARSER" = "xno"; then
 	  AC_MSG_ERROR([You need to install gtk-sharp-gapi])

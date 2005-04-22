@@ -1,3 +1,7 @@
+2005-04-22  Dan Mills  <thunder@ximian.com>
+
+	* configure.in: Set GLIB_SHARP_PREFIX.
+
 2005-04-06  James Willcox  <james@ximian.com>
 
 	* configure.in: set GLIB_SHARP_LIBDIR
