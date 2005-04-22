@@ -1,3 +1,10 @@
+2005-04-22  Dan Mills  <thunder@ximian.com>
+
+	* libredcarpet-sharp.pc.in: Add a "libdir_managed" variable to
+	find managed-code libraries in 64-bit platforms.  Additionally,
+	use GLIB_SHARP_PREFIX instead of _LIBDIR, because it's managed
+	code, so it's never in lib64.
+
 2005-04-21  James Willcox  <james@ximian.com>
 
 	* generated/Buffer.cs:
