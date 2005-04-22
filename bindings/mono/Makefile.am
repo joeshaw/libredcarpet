@@ -86,6 +86,6 @@ dist-hook:
 	cp -r $(srcdir)/en/RC/*.xml $(distdir)/en/RC
 
 install-data-hook:
-	$(GACUTIL) /i $(ASSEMBLY) /package libredcarpet-sharp /gacdir $(libdir) /root $(DESTDIR)$(libdir)
+	$(GACUTIL) /i $(ASSEMBLY) /package libredcarpet-sharp /gacdir $(prefix)/lib /root $(DESTDIR)$(libdir)
 
 CLEANFILES = $(ASSEMBLY)

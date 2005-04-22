@@ -1,5 +1,8 @@
 2005-04-22  Dan Mills  <thunder@ximian.com>
 
+	* Makefile.am (install-data-hook): Install managed code into
+	$(prefix)/lib instead of $(libdir).
+
 	* libredcarpet-sharp.pc.in: Add a "libdir_managed" variable to
 	find managed-code libraries in 64-bit platforms.  Additionally,
 	use GLIB_SHARP_PREFIX instead of _LIBDIR, because it's managed
