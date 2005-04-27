@@ -703,8 +703,13 @@ rc_rpmman_find_system_headers_v4 (RCRpmman *rpmman, const char *name)
     hi = g_new0 (HeaderInfo, 1);
     hi->mi = mi;
 
-    while ((header = rpmman->rpmdbNextIterator (mi)))
+    while ((header = rpmman->rpmdbNextIterator (mi))) {
+
+        if (rpmman->headerLink != NULL)
+            header = rpmman->headerLink (header);
+
         hi->headers = g_slist_prepend (hi->headers, header);
+    }
 
     /*
      * We can't free the match iterator here because it'll free the
@@ -2233,9 +2238,6 @@ rc_rpmman_query (RCPackman *packman, const char *name)
             Header header = iter->data;
             RCPackage *package;
 
-            if (header == NULL)
-                continue;
-            
             package = rc_package_new ();
             rc_rpmman_read_header (RC_RPMMAN (packman), header, package);
             package->installed = TRUE;
@@ -3405,6 +3407,7 @@ load_rpm_syms (RCRpmman *rpmman)
         }
         else if (rpmman->version >= 40100 &&
                  rpmman->version <= 40303) { /* RPM 4.1-4.3.3 inclusive */
+            rpmman->headerLink = **hdrfuncs;
             rpmman->headerFree = *(*hdrfuncs + 2);
             rpmman->headerGetEntry = *(*hdrfuncs + 16);
             rpmman->headerSizeof = *(*hdrfuncs + 6);

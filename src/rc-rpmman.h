@@ -173,6 +173,7 @@ struct _RCRpmman {
     /*
      * RPM 4.1.x and 4.2 only functions
      */
+    Header (*headerLink) (Header header);
     int (*rpmReadPackageFile) (rpmts, FD_t, const char *, Header *);
     int (*rpmReadSignature)(FD_t, Header *, short, const char **);
     rc_rpmdbMatchIterator (*rpmtsInitIterator) (const rpmts, int, const void *,
