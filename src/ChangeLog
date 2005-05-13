@@ -1,3 +1,10 @@
+2005-05-12  James Willcox  <james@ximian.com>
+
+	* rc-rollback.c: (file_changes_to_xml), (get_file_changes),
+	(rc_rollback_restore_files):
+
+	Store symlink targets, and restore them after rollback.
+
 2005-04-27  James Willcox  <james@ximian.com>
 
         * rc-rpmman.c: (rc_rpmman_find_system_headers_v4),

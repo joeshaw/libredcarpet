@@ -2998,6 +2998,7 @@ rc_rpmman_file_list (RCPackman *packman, RCPackage *package)
     guint16 *filemodes = NULL;
     gint32 *filemtimes = NULL;
     gint32 *fileflags = NULL;
+    char **filelinks = NULL;
 
     g_return_val_if_fail (package, NULL);
 
@@ -3066,6 +3067,8 @@ rc_rpmman_file_list (RCPackman *packman, RCPackage *package)
                             (void **) &filemtimes, NULL);
     rpmman->headerGetEntry (header, RPMTAG_FILEFLAGS, NULL,
                             (void **) &fileflags, NULL);
+    rpmman->headerGetEntry (header, RPMTAG_FILELINKTOS, NULL,
+                            (void **) &filelinks, NULL);
 
     for (i = 0; i < count; i++) {
         file = rc_package_file_new ();
@@ -3076,6 +3079,7 @@ rc_rpmman_file_list (RCPackman *packman, RCPackage *package)
         file->md5sum = g_strdup (md5sums[i]);
         file->mode = filemodes[i];
         file->mtime = filemtimes[i];
+        file->link_target = g_strdup (filelinks[i]);
 
         if (fileflags[i] & RPMFILE_GHOST)
             file->ghost = TRUE;

@@ -93,12 +93,13 @@ file_changes_to_xml (RCRollbackInfo *rollback_info,
         struct stat st;
         xmlNode *file_node;
         gboolean was_removed = FALSE;
+        gboolean is_link = FALSE;
 
         file_node = xmlNewNode (NULL, "file");
         xmlNewProp (file_node, "filename", file->filename);
 
         errno = 0;
-        if (stat (file->filename, &st) < 0) {
+        if (lstat (file->filename, &st) < 0) {
             if (errno == ENOENT) {
                 xmlNewTextChild (file_node, NULL, "was_removed", "1");
                 was_removed = TRUE;
@@ -150,6 +151,26 @@ file_changes_to_xml (RCRollbackInfo *rollback_info,
                     xmlNewTextChild (file_node, NULL, "md5sum", tmp);
                 g_free (tmp);
             }
+
+            /* get symlink info */
+            if (S_ISLNK (st.st_mode)) {
+                tmp = g_malloc0 (PATH_MAX);
+
+                if (readlink (file->filename, tmp, PATH_MAX) < 0) {
+                    g_set_error (err, RC_ERROR, RC_ERROR,
+                                 "Unable to dereference symbolic link (%s): %s",
+                                 file->filename, strerror (errno));
+                    g_free (tmp);
+                    goto ERROR;
+                }
+
+                if (strcmp (tmp, file->link_target) != 0) {
+                    xmlNewTextChild (file_node, NULL, "link_target", tmp);
+                    is_link = TRUE;
+                }
+
+                g_free (tmp);
+            }       
         }
 
         if (file_node->xmlChildrenNode) {
@@ -162,7 +183,7 @@ file_changes_to_xml (RCRollbackInfo *rollback_info,
                                        escapename, NULL);
                 g_free (escapename);
 
-                if (rc_cp (file->filename, newfile) < 0) {
+                if (!is_link && rc_cp (file->filename, newfile) < 0) {
                     g_set_error (err, RC_ERROR, RC_ERROR,
                                  "Unable to copy '%s' to '%s' for "
                                  "transaction tracking", 
@@ -446,6 +467,7 @@ typedef struct {
     uid_t uid;
     gid_t gid;
     mode_t mode;
+    char *link_target;
 } FileChange;
 
 struct _RCRollbackAction {
@@ -620,6 +642,10 @@ get_file_changes (xmlNode *changes_node)
             if (tmp)
                 item->mode = atoi (tmp);
             g_free (tmp);
+
+            tmp = xml_get_value (iter, "link_target");
+            if (tmp)
+                item->link_target = tmp;
         }
 
         changes = g_slist_prepend (changes, item);
@@ -839,7 +865,14 @@ rc_rollback_restore_files (RCRollbackActionSList *actions)
                     backup_filename = g_strconcat (change_dir, "/", tmp, NULL);
                     g_free (tmp);
 
-                    if (rc_cp (backup_filename, change->filename) < 0) {
+                    if (change->link_target != NULL) {
+                        unlink (change->filename);
+                        
+                        if (symlink (change->link_target, change->filename) < 0)
+                            rc_debug (RC_DEBUG_LEVEL_CRITICAL,
+                                      "Unable to restore link '%s' -> '%s'",
+                                      change->filename, change->link_target);
+                    } else if (rc_cp (backup_filename, change->filename) < 0) {
                         rc_debug (RC_DEBUG_LEVEL_CRITICAL,
                                   "Unable to copy saved '%s' to '%s'!",
                                   backup_filename, change->filename);

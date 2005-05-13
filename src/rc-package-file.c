@@ -38,6 +38,7 @@ rc_package_file_free (RCPackageFile *file)
 
     g_free (file->filename);
     g_free (file->md5sum);
+    g_free (file->link_target);
 
     g_free (file);
 }
