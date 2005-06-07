@@ -1,3 +1,8 @@
+2005-06-07  Dan Mills  <thunder@ximian.com>
+
+	* rc-extract-packages.c (rc_extract_packages_from_aptrpm_buffer):
+	Get aptrpm-specific tags for package filename.
+
 2005-05-12  James Willcox  <james@ximian.com>
 
 	* rc-rollback.c: (file_changes_to_xml), (get_file_changes),

@@ -36,6 +36,22 @@
 
 #ifdef ENABLE_RPM
 #  include "rc-rpmman.h"
+
+/* apt-specific rpm header tags.  wow, this sucks. */
+
+#define CRPMTAG_FILENAME          1000000
+#define CRPMTAG_FILESIZE          1000001
+#define CRPMTAG_MD5               1000005
+#define CRPMTAG_SHA1              1000006
+
+#define CRPMTAG_DIRECTORY         1000010
+#define CRPMTAG_BINARY            1000011
+
+#define CRPMTAG_UPDATE_SUMMARY    1000020
+#define CRPMTAG_UPDATE_IMPORTANCE 1000021
+#define CRPMTAG_UPDATE_DATE       1000022
+#define CRPMTAG_UPDATE_URL        1000023
+
 #endif
 
 gint
@@ -481,6 +497,7 @@ rc_extract_packages_from_aptrpm_buffer (const guint8 *data, int len,
         char *tmpc;
         int typ, n;
         char *archstr;
+        char *filename;
 
         h = rpmman->headerLoad (cur_ptr);
 
@@ -499,6 +516,25 @@ rc_extract_packages_from_aptrpm_buffer (const guint8 *data, int len,
             goto cleanup;
         }
 
+        rpmman->headerGetEntry (h, CRPMTAG_FILENAME, &typ, (void **)&tmpc, &n);
+        if (n && (typ == RPM_STRING_TYPE) && tmpc && tmpc[0]) {
+            if (g_utf8_validate (tmpc, -1, NULL)) {
+                filename = g_strdup (tmpc);
+            } else {
+                filename = g_convert_with_fallback (tmpc, -1,
+                                                    "UTF-8",
+                                                    "ISO-8859-1",
+                                                    "?", NULL, NULL,
+                                                    NULL);
+            }
+        } else {
+            filename = g_strdup_printf ("%s-%s-%s.%s.rpm",
+                                        g_quark_to_string (p->spec.nameq),
+                                        p->spec.version,
+                                        p->spec.release,
+                                        archstr);
+        }
+
         p = rc_package_new ();
 
         rc_rpmman_read_header (rpmman, h, p);
@@ -510,15 +546,9 @@ rc_extract_packages_from_aptrpm_buffer (const guint8 *data, int len,
         rc_package_spec_copy (RC_PACKAGE_SPEC (pu), RC_PACKAGE_SPEC (p));
         pu->importance = RC_IMPORTANCE_SUGGESTED;
         pu->description = g_strdup ("No information available.");
-
-        /* Build a filename from the spec */
-        pu->package_url = g_strdup_printf ("%s/%s-%s-%s.%s.rpm",
+        pu->package_url = g_strdup_printf ("%s/%s",
                                            rc_channel_get_file_path (channel),
-                                           g_quark_to_string (p->spec.nameq),
-                                           p->spec.version,
-                                           p->spec.release,
-                                           archstr);
-
+                                           filename);
         p->history = g_slist_append (p->history, pu);
 
         if (callback)
