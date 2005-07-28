@@ -1,3 +1,9 @@
+2005-07-28  Dan Mills  <thunder@ximian.com>
+
+	* rc-extract-packages.c (rc_extract_packages_from_aptrpm_buffer):
+	Fix some bugs with my last commit.  Use rc_package_spec_to_str
+	instead of trying to do that ourselves here.
+
 2005-06-07  Dan Mills  <thunder@ximian.com>
 
 	* rc-extract-packages.c (rc_extract_packages_from_aptrpm_buffer):
