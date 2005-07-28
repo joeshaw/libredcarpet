@@ -743,8 +743,9 @@ rc_world_find_installed_version (RCWorld *world,
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
 struct GetPackageInfo {
-    RCChannel *channel;
-    RCPackage *package;
+    RCChannel     *channel;
+    RCPackageSpec *spec;
+    RCPackage     *package;
 };
 
 static gboolean
@@ -752,7 +753,8 @@ get_package_cb (RCPackage *pkg, gpointer user_data)
 {
     struct GetPackageInfo *info = user_data;
     
-    if (rc_channel_equal (pkg->channel, info->channel)) {
+    if (rc_channel_equal (pkg->channel, info->channel) &&
+        rc_package_spec_equal ((RCPackageSpec *) pkg, info->spec)) {
         info->package = pkg;
         return FALSE;
     }
@@ -763,33 +765,36 @@ get_package_cb (RCPackage *pkg, gpointer user_data)
  * rc_world_get_package:
  * @world: An #RCWorld.
  * @channel: A non-wildcard #RCChannel.
- * @name: The name of a package.
+ * @spec: The spec of a package.
  * 
  * Searches @world for a package in the specified channel
- * with the specified name.  @channel must be an actual
+ * with the specified spec.  @channel must be an actual
  * channel, not a wildcard.
  * 
  * Return value: The matching package, or %NULL if no such
  * package exists.
  **/
 RCPackage *
-rc_world_get_package (RCWorld *world,
-                      RCChannel *channel,
-                      const char *name)
+rc_world_get_package (RCWorld       *world,
+                      RCChannel     *channel,
+                      RCPackageSpec *spec)
 {
     struct GetPackageInfo info;
 
     g_return_val_if_fail (world != NULL, NULL);
     g_return_val_if_fail (channel != RC_CHANNEL_ANY
                           && channel != RC_CHANNEL_NON_SYSTEM, NULL);
-    g_return_val_if_fail (name && *name, NULL);
+    g_return_val_if_fail (spec != NULL, NULL);
 
     rc_world_sync_conditional (world, channel);
 
     info.channel = channel;
+    info.spec    = spec;
     info.package = NULL;
 
-    rc_world_foreach_package_by_name (world, name, channel,
+    rc_world_foreach_package_by_name (world,
+                                      rc_package_spec_get_name (spec),
+                                      channel,
                                       get_package_cb, &info);
 
     return info.package;
@@ -817,7 +822,6 @@ rc_world_get_package (RCWorld *world,
 RCPackage *
 rc_world_get_package_with_constraint (RCWorld *world,
                                       RCChannel *channel,
-                                      const char *name,
                                       RCPackageDep *constraint,
                                       gboolean is_and)
 {
@@ -826,13 +830,13 @@ rc_world_get_package_with_constraint (RCWorld *world,
     g_return_val_if_fail (world != NULL, NULL);
     g_return_val_if_fail (channel != RC_CHANNEL_ANY
                           && channel != RC_CHANNEL_NON_SYSTEM, NULL);
-    g_return_val_if_fail (name && *name, NULL);
+    g_return_val_if_fail (constraint != NULL, NULL);
 
     /* rc_world_get_package will call rc_world_sync */
     
-    pkg = rc_world_get_package (world, channel, name);
+    pkg = rc_world_get_package (world, channel, (RCPackageSpec *) constraint);
 
-    if (pkg != NULL && constraint != NULL) {
+    if (pkg) {
         RCPackman *packman;
         RCPackageDep *dep;
 
@@ -843,7 +847,7 @@ rc_world_get_package_with_constraint (RCWorld *world,
                                             RC_RELATION_EQUAL,
                                             pkg->channel,
                                             FALSE, FALSE);
-        
+
         if (! rc_package_dep_verify_relation (packman, constraint, dep))
             pkg = NULL;
 

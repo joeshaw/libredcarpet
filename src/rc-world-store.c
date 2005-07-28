@@ -773,7 +773,6 @@ rc_world_store_add_package (RCWorldStore *store,
     RCWorld *world = (RCWorld *) store;
     GSList *compat_arch_list;
     RCPackageAndDep *pad;
-    const char *package_name;
     int i, arch_score;
     gboolean actually_added_package = FALSE;
 
@@ -808,12 +807,9 @@ rc_world_store_add_package (RCWorldStore *store,
             goto finished;
         }
 
-        
-        package_name = g_quark_to_string (RC_PACKAGE_SPEC (package)->nameq);
         dup_package = rc_world_get_package ((RCWorld *) store,
                                             package->channel,
-                                            package_name);
-
+                                            (RCPackageSpec *) package);
 
         /* This shouldn't happen (and would be caught by the check
            below, because cmp will equal 0), but it never hurts to
@@ -822,7 +818,7 @@ rc_world_store_add_package (RCWorldStore *store,
         if (package == dup_package) {
             rc_debug (RC_DEBUG_LEVEL_WARNING,
                       "Ignoring re-add of package '%s'",
-                      package_name);
+                      rc_package_get_name (package));
             goto finished;
         }
 

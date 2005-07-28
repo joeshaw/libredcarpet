@@ -1,3 +1,27 @@
+2005-07-28  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-world.h: Update function signatures.
+
+	* rc-world.c (rc_world_get_package): Use package spec instead of name
+	for searching. There's nothing useful to do with a random version of
+	package from a channel.
+	(rc_world_get_package_with_constraint): Use updated version of
+	rc_world_get_package(). Remove name argument, it's already included
+	in constraint.
+
+	* rc-world-store.c (rc_world_store_add_package): Use updated version
+	of rc_world_get_package().
+
+	* rc-rollback.c (add_tracked_package): Store arch of both old and
+	new package.
+	(get_action_from_xml_node): Handle archs.
+	Free memory when done with it.
+	Use updated version of rc_world_get_package().
+
+	* rc-extract-packages.c (rc_extract_packages_from_directory):
+	Initialize pkginfo_path to NULL before using to make the compiler
+	happy.
+
 2005-07-28  Dan Mills  <thunder@ximian.com>
 
 	* rc-extract-packages.c (rc_extract_packages_from_aptrpm_buffer):

@@ -956,7 +956,7 @@ rc_extract_packages_from_directory (const char *path,
 
     if (pkginfo_magic) {
         int i, count;
-        gchar *pkginfo_path;
+        gchar *pkginfo_path = NULL;
         const gchar *pkginfo[] = { "packageinfo.xml",
                                    "packageinfo.xml.gz",
                                    NULL };
