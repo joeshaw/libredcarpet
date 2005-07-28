@@ -12,22 +12,14 @@ namespace RC {
 	public struct PackageFile {
 
 		public string Filename;
-		private UIntPtr size;
-
-		public ulong Size {
-			get {
-				return (ulong) size;
-			}
-			set {
-				size = new UIntPtr (value);
-			}
-		}
+		public uint Size;
 		public string Md5sum;
 		public uint Uid;
 		public uint Gid;
 		public ushort Mode;
 		public int Mtime;
 		public bool Ghost;
+		public string LinkTarget;
 
 		public static RC.PackageFile Zero = new RC.PackageFile ();
 

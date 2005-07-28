@@ -12,16 +12,7 @@ namespace RC {
 	public struct Buffer {
 
 		private IntPtr _data;
-		private UIntPtr size;
-
-		public ulong Size {
-			get {
-				return (ulong) size;
-			}
-			set {
-				size = new UIntPtr (value);
-			}
-		}
+		public uint Size;
 		public bool IsMmapped;
 
 		public static RC.Buffer Zero = new RC.Buffer ();

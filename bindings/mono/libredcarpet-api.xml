@@ -957,7 +957,7 @@
         <return-type type="RCPackage*" />
         <parameters>
           <parameter type="RCChannel*" name="channel" />
-          <parameter type="const-char*" name="name" />
+          <parameter type="RCPackageSpec*" name="spec" />
         </parameters>
       </method>
       <method name="GetPackageSequenceNumber" cname="rc_world_get_package_sequence_number">
@@ -967,7 +967,6 @@
         <return-type type="RCPackage*" />
         <parameters>
           <parameter type="RCChannel*" name="channel" />
-          <parameter type="const-char*" name="name" />
           <parameter type="RCPackageDep*" name="constraint" />
           <parameter type="gboolean" name="is_and" />
         </parameters>
@@ -2105,6 +2104,7 @@
       <field cname="mode" type="guint16" />
       <field cname="mtime" type="gint32" />
       <field cname="ghost" type="gboolean" />
+      <field cname="link_target" type="char*" />
       <method name="Free" cname="rc_package_file_free">
         <return-type type="void" />
       </method>

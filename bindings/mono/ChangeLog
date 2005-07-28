@@ -1,3 +1,8 @@
+2005-07-28  Tambet Ingo  <tambet@ximian.com>
+
+	* libredcarpet-api.xml: Regenerate.
+	* generated/*: Regenerate.
+
 2005-04-22  Dan Mills  <thunder@ximian.com>
 
 	* Makefile.am (install-data-hook): Install managed code into
