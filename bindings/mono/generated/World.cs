@@ -505,10 +505,10 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_world_get_package_with_constraint(IntPtr raw, IntPtr channel, IntPtr constraint, bool is_and);
+		static extern IntPtr rc_world_get_package_with_constraint(IntPtr raw, IntPtr channel, string name, IntPtr constraint, bool is_and);
 
-		public RC.Package GetPackageWithConstraint(RC.Channel channel, RC.PackageDep constraint, bool is_and) {
-			IntPtr raw_ret = rc_world_get_package_with_constraint(Handle, channel.Handle, constraint.Handle, is_and);
+		public RC.Package GetPackageWithConstraint(RC.Channel channel, string name, RC.PackageDep constraint, bool is_and) {
+			IntPtr raw_ret = rc_world_get_package_with_constraint(Handle, channel.Handle, name, constraint.Handle, is_and);
 			RC.Package ret;
 			if (raw_ret == IntPtr.Zero)
 				ret = null;
@@ -518,10 +518,10 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_world_get_package(IntPtr raw, IntPtr channel, IntPtr spec);
+		static extern IntPtr rc_world_get_package(IntPtr raw, IntPtr channel, string name);
 
-		public RC.Package GetPackage(RC.Channel channel, RC.PackageSpec spec) {
-			IntPtr raw_ret = rc_world_get_package(Handle, channel.Handle, spec.Handle);
+		public RC.Package GetPackage(RC.Channel channel, string name) {
+			IntPtr raw_ret = rc_world_get_package(Handle, channel.Handle, name);
 			RC.Package ret;
 			if (raw_ret == IntPtr.Zero)
 				ret = null;

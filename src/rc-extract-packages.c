@@ -496,7 +496,8 @@ rc_extract_packages_from_aptrpm_buffer (const guint8 *data, int len,
         int bytesleft, i;
         char *tmpc;
         int typ, n;
-        char *filename = NULL;
+        char *archstr;
+        char *filename;
 
         h = rpmman->headerLoad (cur_ptr);
 
@@ -506,12 +507,14 @@ rc_extract_packages_from_aptrpm_buffer (const guint8 *data, int len,
             return 0;
         }
 
-        p = rc_package_new ();
+        rpmman->headerGetEntry (h, RPMTAG_ARCH, &typ, (void **) &tmpc, &n);
 
-        rc_rpmman_read_header (rpmman, h, p);
-        rc_rpmman_depends_fill (rpmman, h, p, TRUE);
-
-        p->channel = rc_channel_ref (channel);
+        if (n && typ == RPM_STRING_TYPE)
+            archstr = tmpc;
+        else {
+            rc_debug (RC_DEBUG_LEVEL_WARNING, "No arch available!");
+            goto cleanup;
+        }
 
         rpmman->headerGetEntry (h, CRPMTAG_FILENAME, &typ, (void **)&tmpc, &n);
         if (n && (typ == RPM_STRING_TYPE) && tmpc && tmpc[0]) {
@@ -525,9 +528,19 @@ rc_extract_packages_from_aptrpm_buffer (const guint8 *data, int len,
                                                     NULL);
             }
         } else {
-            filename = g_strdup_printf ("%s.rpm",
-                                        rc_package_spec_to_str (RC_PACKAGE_SPEC (p)));
+            filename = g_strdup_printf ("%s-%s-%s.%s.rpm",
+                                        g_quark_to_string (p->spec.nameq),
+                                        p->spec.version,
+                                        p->spec.release,
+                                        archstr);
         }
+
+        p = rc_package_new ();
+
+        rc_rpmman_read_header (rpmman, h, p);
+        rc_rpmman_depends_fill (rpmman, h, p, TRUE);
+
+        p->channel = rc_channel_ref (channel);
 
         pu = rc_package_update_new ();
         rc_package_spec_copy (RC_PACKAGE_SPEC (pu), RC_PACKAGE_SPEC (p));
@@ -547,7 +560,6 @@ rc_extract_packages_from_aptrpm_buffer (const guint8 *data, int len,
 
     cleanup:
         rpmman->headerFree (h);
-        g_free (filename);
 
         /* This chunk of ugly could be removed if a) memmem() was portable;
          * or b) if rpmlib didn't suck, and I could figure out how much

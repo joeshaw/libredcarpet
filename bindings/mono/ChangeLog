@@ -1,3 +1,7 @@
+2005-07-29  Dan Mills  <thunder@ximian.com>
+
+	* Revert Tambet's changes from yesterday.
+
 2005-07-28  Tambet Ingo  <tambet@ximian.com>
 
 	* libredcarpet-api.xml: Regenerate.

@@ -252,8 +252,6 @@ add_tracked_package (RCRollbackInfo *rollback_info,
 
         xmlNewProp (package_node, "old_version", old_package->spec.version);
         xmlNewProp (package_node, "old_release", old_package->spec.release);
-        xmlNewProp (package_node, "old_arch",
-                    rc_arch_to_string (old_package->spec.arch));
     }
 
     if (new_package) {
@@ -265,8 +263,6 @@ add_tracked_package (RCRollbackInfo *rollback_info,
 
         xmlNewProp (package_node, "new_version", new_package->spec.version);
         xmlNewProp (package_node, "new_release", new_package->spec.release);
-        xmlNewProp (package_node, "new_arch",
-                    rc_arch_to_string (new_package->spec.arch));
     }
 
     if (old_package && !rc_package_is_synthetic (old_package)) {
@@ -664,8 +660,10 @@ get_action_from_xml_node (xmlNode    *node,
                           GHashTable *action_hash)
 {
     RCWorld *world = rc_get_world ();
-    char *name, *epoch, *version, *release, *arch_str;
+    char *name, *epoch, *version, *release;
     RCRollbackAction *action, *old_action;
+    PackageMatchInfo pmi;
+    xmlNode *changes_node;
 
     name = xml_get_prop (node, "name");
     if (!name) {
@@ -673,9 +671,6 @@ get_action_from_xml_node (xmlNode    *node,
                   "No package name available in rollback db");
         return NULL;
     }
-
-    epoch = version = release = arch_str = NULL;
-    action = NULL;
 
     old_action = g_hash_table_lookup (action_hash, name);
 
@@ -685,92 +680,66 @@ get_action_from_xml_node (xmlNode    *node,
             rc_rollback_action_free (old_action);
         }
         else
-            goto cleanup;
+            return NULL;
     }
 
     version = xml_get_prop (node, "old_version");
-
     if (!version) {
         /* This was an install and has to be removed */
-        RCPackageSpec *spec;
-
-        version = xml_get_prop (node, "new_version");
-        release = xml_get_prop (node, "new_release");
-        epoch   = xml_get_prop (node, "new_epoch");
-        arch_str = xml_get_prop (node, "new_arch");
-
-        spec = rc_package_spec_new ();
-        rc_package_spec_init (spec, name,
-                              epoch != NULL ? TRUE : FALSE,
-                              epoch != NULL ? atoi (epoch) : 0,
-                              version, release,
-                              rc_arch_from_string (arch_str));
 
         RCPackage *package = rc_world_get_package (world,
                                                    RC_CHANNEL_SYSTEM,
-                                                   spec);
-        rc_package_spec_free (spec);
+                                                   name);
 
         action = g_new0 (RCRollbackAction, 1);
         action->is_install = FALSE;
         action->timestamp = trans_time;
         action->package = rc_package_ref (package);
         action->update = NULL;
-    } else {
-        PackageMatchInfo pmi;
-        xmlNode *changes_node;
-
-        epoch = xml_get_prop (node, "old_epoch");
-        release = xml_get_prop (node, "old_release");
-        arch_str = xml_get_prop (node, "old_arch");
-
-        pmi.packman = rc_packman_get_global ();
-
-        /* FIXME: Handle arch */
-        pmi.dep_to_match = rc_package_dep_new (name,
-                                               epoch != NULL ? TRUE : FALSE,
-                                               epoch != NULL ? atoi (epoch) : 0,
-                                               version, release,
-                                               RC_RELATION_EQUAL,
-                                               RC_CHANNEL_ANY,
-                                               FALSE, FALSE);
-        pmi.matching_package = NULL;
-        pmi.matching_update = NULL;
-
-        rc_world_foreach_package (world, RC_CHANNEL_NON_SYSTEM,
-                                  package_match_cb, &pmi);
-
-        rc_package_dep_unref (pmi.dep_to_match);
-
-        if (!pmi.matching_package) {
-            rc_debug (RC_DEBUG_LEVEL_WARNING,
-                      "Unable to find a matching package for %s %s-%s",
-                      name, version, release);
-            goto cleanup;
-        }
-
-        action = g_new0 (RCRollbackAction, 1);
-        action->is_install = TRUE;
-        action->timestamp = trans_time;
-        action->package = rc_package_ref (pmi.matching_package);
-        action->update = rc_package_update_copy (pmi.matching_update);
-
-        changes_node = xml_get_node (node, "changes");
-        if (changes_node)
-            action->file_changes = get_file_changes (changes_node);
-        else
-            action->file_changes = NULL;
-    }
-
-    if (action)
         g_hash_table_insert (action_hash, name, action);
 
- cleanup:
-    g_free (name);
-    g_free (version);
-    g_free (release);
-    g_free (epoch);
-    g_free (arch_str);
+        return action;
+    }
+
+    epoch = xml_get_prop (node, "old_epoch");
+    release = xml_get_prop (node, "old_release");
+
+    pmi.packman = rc_packman_get_global ();
+    pmi.dep_to_match = rc_package_dep_new (name,
+                                           epoch != NULL ? TRUE : FALSE,
+                                           epoch != NULL ? atoi (epoch) : 0,
+                                           version, release,
+                                           RC_RELATION_EQUAL,
+                                           RC_CHANNEL_ANY,
+                                           FALSE, FALSE);
+    pmi.matching_package = NULL;
+    pmi.matching_update = NULL;
+
+    rc_world_foreach_package (world, RC_CHANNEL_NON_SYSTEM,
+                              package_match_cb, &pmi);
+
+    rc_package_dep_unref (pmi.dep_to_match);
+
+    if (!pmi.matching_package) {
+        rc_debug (RC_DEBUG_LEVEL_WARNING,
+                  "Unable to find a matching package for %s %s-%s",
+                  name, version, release);
+        return NULL;
+    }
+
+    action = g_new0 (RCRollbackAction, 1);
+    action->is_install = TRUE;
+    action->timestamp = trans_time;
+    action->package = rc_package_ref (pmi.matching_package);
+    action->update = rc_package_update_copy (pmi.matching_update);
+
+    changes_node = xml_get_node (node, "changes");
+    if (changes_node)
+        action->file_changes = get_file_changes (changes_node);
+    else
+        action->file_changes = NULL;
+
+    g_hash_table_insert (action_hash, name, action);
 
     return action;
 }

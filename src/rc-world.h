@@ -261,10 +261,11 @@ RCPackage *rc_world_find_installed_version      (RCWorld *world,
 
 RCPackage *rc_world_get_package                 (RCWorld *world,
                                                  RCChannel *channel,
-                                                 RCPackageSpec *spec);
+                                                 const char *name);
 
 RCPackage *rc_world_get_package_with_constraint (RCWorld *world,
                                                  RCChannel *channel,
+                                                 const char *name,
                                                  RCPackageDep *constraint, 
                                                  gboolean is_and);
 
