@@ -1,0 +1,30 @@
+Building libredcarpet-sharp.
+
+* Whenever any public API changes in libredcarpet, the following steps need to
+  be done:
+
+rm libredcarpet-api.xml
+rm generated/*.cs
+make
+vi generated/Package.cs and remove these two lines:
+   [DllImport("libredcarpet")]
+   static extern IntPtr rc_package_new();
+
+make
+
+
+* Whenever you add/modify any *.custom files, you need to:
+
+make update-generated
+vi generated/Package.cs and remove these two lines:
+   [DllImport("libredcarpet")]
+   static extern IntPtr rc_package_new();
+
+make
+
+
+* Committing to CVS
+
+Note that generated files (generated/*.cs) are also checked into CVS. That's
+partly because of the required manual step, partly to make building for
+packagers easier.
