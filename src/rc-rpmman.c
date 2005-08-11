@@ -1429,7 +1429,8 @@ rc_rpmman_transact (RCPackman *packman, RCPackageSList *install_packages,
             /* Success */
             break;
         case -1:
-            /* Error, but no idea why. */
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "%s", rpmman->rpmlogMessage ());
             goto ERROR;
         default:
             /* New problem set */
@@ -3311,6 +3312,7 @@ load_fake_syms (RCRpmman *rpmman)
     rpmman->rpmtsVSFlags = &rpmtsVSFlags;
     rpmman->rpmtsSetVSFlags = &rpmtsSetVSFlags;
     rpmman->rpmpsFree = &rpmpsFree;
+    rpmman->rpmlogMessage = &rpmlogMessage;
 #else
 #  if RPM_VERSION >= 40000
     rpmman->rpmdbInitIterator = &rpmdbInitIterator;
@@ -3568,6 +3570,10 @@ load_rpm_syms (RCRpmman *rpmman)
         }
         if (!g_module_symbol (rpmman->rpm_lib, "rpmtsSetVSFlags",
                               ((gpointer)&rpmman->rpmtsSetVSFlags))) {
+            return (FALSE);
+        }
+        if (!g_module_symbol (rpmman->rpm_lib, "rpmlogMessage",
+                              ((gpointer)&rpmman->rpmlogMessage))) {
             return (FALSE);
         }
     } else {

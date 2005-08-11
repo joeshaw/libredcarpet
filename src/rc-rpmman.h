@@ -194,6 +194,7 @@ struct _RCRpmman {
     rpmps (*rpmpsFree) (rpmps);
     int (*rpmtsVSFlags) (rpmts);
     int (*rpmtsSetVSFlags) (rpmts, int);
+    const char *(*rpmlogMessage) (void);
 };
 
 struct _RCRpmmanClass {
