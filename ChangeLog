@@ -1,3 +1,7 @@
+2005-08-19  James Willcox  <james@ximian.com>
+
+	* configure.in: jack version to 7.0.0
+
 2005-04-22  Dan Mills  <thunder@ximian.com>
 
 	* configure.in: Set GLIB_SHARP_PREFIX.
