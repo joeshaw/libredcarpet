@@ -146,5 +146,36 @@
    <attr path="/api/namespace/class[@cname='RCGlobal']/method[@cname='rc_distman_new']" name="hidden">1</attr>
 
    <move-node path="/api/namespace/boxed[@cname='RCPackage']/method[@cname='rc_package_importance_to_string']">/api/namespace/class[@cname='RCGlobal']</move-node>
+
+   <attr path="/api/namespace/enum[@name='PackageRelation']/member[@cname='RC_RELATION_ANY']" name="value">0</attr>
+   <attr path="/api/namespace/enum[@name='PackageRelation']/member[@cname='RC_RELATION_EQUAL']" name="value">1</attr>
+   <attr path="/api/namespace/enum[@name='PackageRelation']/member[@cname='RC_RELATION_LESS']" name="value">2</attr>
+   <attr path="/api/namespace/enum[@name='PackageRelation']/member[@cname='RC_RELATION_LESS_EQUAL']" name="value">3</attr>
+   <attr path="/api/namespace/enum[@name='PackageRelation']/member[@cname='RC_RELATION_GREATER']" name="value">4</attr>
+   <attr path="/api/namespace/enum[@name='PackageRelation']/member[@cname='RC_RELATION_GREATER_EQUAL']" name="value">5</attr>
+   <attr path="/api/namespace/enum[@name='PackageRelation']/member[@cname='RC_RELATION_NOT_EQUAL']" name="value">6</attr>
+   <attr path="/api/namespace/enum[@name='PackageRelation']/member[@cname='RC_RELATION_NONE']" name="value">8</attr>
+
+   <attr path="/api/namespace/boxed[@cname='RCResolver']/field[@cname='invalid_queues']" name="writeable">false</attr>
+   <attr path="/api/namespace/boxed[@cname='RCResolver']/field[@cname='best_context']" name="writeable">false</attr>
+   <attr path="/api/namespace/struct[@cname='RCResolverQueue']/field[@cname='context']" name="writeable">false</attr>
+   <attr path="/api/namespace/struct[@cname='RCPackageSpec']/field[@cname='nameq']" name="hidden">1</attr>
+   <attr path="/api/namespace/struct[@cname='RCPackageSpec']/field[@cname='has_epoch']" name="hidden">1</attr>
+   <attr path="/api/namespace/struct[@cname='RCResolverInfo']/field[@cname='is_important']" name="hidden">1</attr>
+   <attr path="/api/namespace/struct[@cname='RCResolverInfo']/field[@cname='is_error']" name="hidden">1</attr>
+   <attr path="/api/namespace/boxed[@cname='RCPackage']/field[@cname='refs']" name="hidden">1</attr>
+   <attr path="/api/namespace/boxed[@cname='RCPackage']/field[@cname='requires_a']" name="hidden">1</attr>
+   <attr path="/api/namespace/boxed[@cname='RCPackage']/field[@cname='provides_a']" name="hidden">1</attr>
+   <attr path="/api/namespace/boxed[@cname='RCPackage']/field[@cname='conflicts_a']" name="hidden">1</attr>
+   <attr path="/api/namespace/boxed[@cname='RCPackage']/field[@cname='obsoletes_a']" name="hidden">1</attr>
+   <attr path="/api/namespace/boxed[@cname='RCPackage']/field[@cname='children_a']" name="hidden">1</attr>
+   <attr path="/api/namespace/boxed[@cname='RCPackage']/field[@cname='suggests_a']" name="hidden">1</attr>
+   <attr path="/api/namespace/boxed[@cname='RCPackage']/field[@cname='recommends_a']" name="hidden">1</attr>
+   <attr path="/api/namespace/boxed[@cname='RCPackage']/field[@cname='pretty_name']" name="hidden">1</attr>
+   <attr path="/api/namespace/boxed[@cname='RCPackage']/field[@cname='package_filename']" name="hidden">1</attr>
+   <attr path="/api/namespace/struct[@cname='RCVerification']/field[@cname='info']" name="writeable">false</attr>
+   <attr path="/api/namespace/struct[@cname='RCPackageFile']/field[@cname='filename']" name="writeable">false</attr>
+   <attr path="/api/namespace/struct[@cname='RCPackageFile']/field[@cname='link_target']" name="writeable">false</attr>
+   <attr path="/api/namespace/struct[@cname='RCPackageFile']/field[@cname='md5sum']" name="writeable">false</attr>
    
 </metadata>

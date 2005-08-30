@@ -20,14 +20,27 @@ namespace RC {
 		public WorldLocalDir(IntPtr raw) : base(raw) {}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_world_local_dir_new(string path);
+		static extern IntPtr rc_world_local_dir_new(IntPtr path);
 
 		public WorldLocalDir (string path) : base (IntPtr.Zero)
 		{
 			if (GetType () != typeof (WorldLocalDir)) {
 				throw new InvalidOperationException ("Can't override this constructor.");
 			}
-			Raw = rc_world_local_dir_new(path);
+			IntPtr path_as_native = GLib.Marshaller.StringToPtrGStrdup (path);
+			Raw = rc_world_local_dir_new(path_as_native);
+			GLib.Marshaller.Free (path_as_native);
+		}
+
+		[DllImport("libredcarpet")]
+		static extern void rc_world_local_dir_set_alias(IntPtr raw, IntPtr alias);
+
+		public string Alias {
+			set  {
+				IntPtr alias_as_native = GLib.Marshaller.StringToPtrGStrdup (value);
+				rc_world_local_dir_set_alias(Handle, alias_as_native);
+				GLib.Marshaller.Free (alias_as_native);
+			}
 		}
 
 		[DllImport("libredcarpet")]
@@ -38,15 +51,6 @@ namespace RC {
 				IntPtr raw_ret = rc_world_local_dir_get_type();
 				GLib.GType ret = new GLib.GType(raw_ret);
 				return ret;
-			}
-		}
-
-		[DllImport("libredcarpet")]
-		static extern void rc_world_local_dir_set_alias(IntPtr raw, string alias);
-
-		public string Alias { 
-			set {
-				rc_world_local_dir_set_alias(Handle, value);
 			}
 		}
 

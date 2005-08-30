@@ -11,19 +11,258 @@ namespace RC {
 	public class Package : RC.PackageSpec {
 
 		[DllImport("libredcarpet")]
+		static extern IntPtr rc_package_get_signature_filename(IntPtr raw);
+
+		[DllImport("libredcarpet")]
+		static extern void rc_package_set_signature_filename(IntPtr raw, IntPtr filename);
+
+		public string SignatureFilename {
+			get  {
+				IntPtr raw_ret = rc_package_get_signature_filename(Handle);
+				string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
+				return ret;
+			}
+			set  {
+				IntPtr filename_as_native = GLib.Marshaller.StringToPtrGStrdup (value);
+				rc_package_set_signature_filename(Handle, filename_as_native);
+				GLib.Marshaller.Free (filename_as_native);
+			}
+		}
+
+		[DllImport ("libredcarpetsharpglue-0")]
+		extern static uint rcsharp_rc_package_get_local_package_offset ();
+
+		static uint local_package_offset = rcsharp_rc_package_get_local_package_offset ();
+		public bool LocalPackage {
+			get {
+				unsafe {
+					bool* raw_ptr = (bool*)(((byte*)Handle) + local_package_offset);
+					return (*raw_ptr);
+				}
+			}
+			set {
+				unsafe {
+					bool* raw_ptr = (bool*)(((byte*)Handle) + local_package_offset);
+					*raw_ptr = value;
+				}
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern IntPtr rc_package_get_channel(IntPtr raw);
+
+		[DllImport("libredcarpet")]
+		static extern void rc_package_set_channel(IntPtr raw, IntPtr channel);
+
+		public RC.Channel Channel {
+			get  {
+				IntPtr raw_ret = rc_package_get_channel(Handle);
+				RC.Channel ret = raw_ret == IntPtr.Zero ? null : (RC.Channel) GLib.Opaque.GetOpaque (raw_ret, typeof (RC.Channel), false);
+				return ret;
+			}
+			set  {
+				rc_package_set_channel(Handle, value == null ? IntPtr.Zero : value.Handle);
+			}
+		}
+
+		[DllImport ("libredcarpetsharpglue-0")]
+		extern static uint rcsharp_rc_package_get_package_set_offset ();
+
+		static uint package_set_offset = rcsharp_rc_package_get_package_set_offset ();
+		public bool PackageSet {
+			get {
+				unsafe {
+					bool* raw_ptr = (bool*)(((byte*)Handle) + package_set_offset);
+					return (*raw_ptr);
+				}
+			}
+			set {
+				unsafe {
+					bool* raw_ptr = (bool*)(((byte*)Handle) + package_set_offset);
+					*raw_ptr = value;
+				}
+			}
+		}
+
+		[DllImport("libredcarpet")]
 		static extern int rc_package_get_section(IntPtr raw);
 
 		[DllImport("libredcarpet")]
 		static extern void rc_package_set_section(IntPtr raw, int value);
 
-		public RC.PackageSection Section { 
-			get {
+		public RC.PackageSection Section {
+			get  {
 				int raw_ret = rc_package_get_section(Handle);
 				RC.PackageSection ret = (RC.PackageSection) raw_ret;
 				return ret;
 			}
-			set {
+			set  {
 				rc_package_set_section(Handle, (int) value);
+			}
+		}
+
+		[DllImport ("libredcarpetsharpglue-0")]
+		extern static uint rcsharp_rc_package_get_history_offset ();
+
+		static uint history_offset = rcsharp_rc_package_get_history_offset ();
+		public GLib.SList History {
+			get {
+				unsafe {
+					IntPtr* raw_ptr = (IntPtr*)(((byte*)Handle) + history_offset);
+					return new GLib.SList((*raw_ptr));
+				}
+			}
+			set {
+				unsafe {
+					IntPtr* raw_ptr = (IntPtr*)(((byte*)Handle) + history_offset);
+					*raw_ptr = value.Handle;
+				}
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern bool rc_package_get_install_only(IntPtr raw);
+
+		[DllImport("libredcarpet")]
+		static extern void rc_package_set_install_only(IntPtr raw, bool val);
+
+		public bool InstallOnly {
+			get  {
+				bool raw_ret = rc_package_get_install_only(Handle);
+				bool ret = raw_ret;
+				return ret;
+			}
+			set  {
+				rc_package_set_install_only(Handle, value);
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern IntPtr rc_package_get_description(IntPtr raw);
+
+		[DllImport("libredcarpet")]
+		static extern void rc_package_set_description(IntPtr raw, IntPtr value);
+
+		public string Description {
+			get  {
+				IntPtr raw_ret = rc_package_get_description(Handle);
+				string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
+				return ret;
+			}
+			set  {
+				IntPtr value_as_native = GLib.Marshaller.StringToPtrGStrdup (value);
+				rc_package_set_description(Handle, value_as_native);
+				GLib.Marshaller.Free (value_as_native);
+			}
+		}
+
+		[DllImport ("libredcarpetsharpglue-0")]
+		extern static uint rcsharp_rc_package_get_installed_offset ();
+
+		static uint installed_offset = rcsharp_rc_package_get_installed_offset ();
+		public bool Installed {
+			get {
+				unsafe {
+					bool* raw_ptr = (bool*)(((byte*)Handle) + installed_offset);
+					return (*raw_ptr);
+				}
+			}
+			set {
+				unsafe {
+					bool* raw_ptr = (bool*)(((byte*)Handle) + installed_offset);
+					*raw_ptr = value;
+				}
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern uint rc_package_get_installed_size(IntPtr raw);
+
+		[DllImport("libredcarpet")]
+		static extern void rc_package_set_installed_size(IntPtr raw, uint value);
+
+		public uint InstalledSize {
+			get  {
+				uint raw_ret = rc_package_get_installed_size(Handle);
+				uint ret = raw_ret;
+				return ret;
+			}
+			set  {
+				rc_package_set_installed_size(Handle, value);
+			}
+		}
+
+		[DllImport ("libredcarpetsharpglue-0")]
+		extern static uint rcsharp_rc_package_get_spec_offset ();
+
+		static uint spec_offset = rcsharp_rc_package_get_spec_offset ();
+		public RC.PackageSpec Spec {
+			get {
+				unsafe {
+					IntPtr* raw_ptr = (IntPtr*)(((byte*)Handle) + spec_offset);
+					return (*raw_ptr) == IntPtr.Zero ? null : (RC.PackageSpec) GLib.Opaque.GetOpaque ((*raw_ptr), typeof (RC.PackageSpec), false);
+				}
+			}
+			set {
+				unsafe {
+					IntPtr* raw_ptr = (IntPtr*)(((byte*)Handle) + spec_offset);
+					*raw_ptr = value == null ? IntPtr.Zero : value.Handle;
+				}
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern IntPtr rc_package_get_summary(IntPtr raw);
+
+		[DllImport("libredcarpet")]
+		static extern void rc_package_set_summary(IntPtr raw, IntPtr value);
+
+		public string Summary {
+			get  {
+				IntPtr raw_ret = rc_package_get_summary(Handle);
+				string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
+				return ret;
+			}
+			set  {
+				IntPtr value_as_native = GLib.Marshaller.StringToPtrGStrdup (value);
+				rc_package_set_summary(Handle, value_as_native);
+				GLib.Marshaller.Free (value_as_native);
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern uint rc_package_get_file_size(IntPtr raw);
+
+		[DllImport("libredcarpet")]
+		static extern void rc_package_set_file_size(IntPtr raw, uint value);
+
+		public uint FileSize {
+			get  {
+				uint raw_ret = rc_package_get_file_size(Handle);
+				uint ret = raw_ret;
+				return ret;
+			}
+			set  {
+				rc_package_set_file_size(Handle, value);
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern IntPtr rc_package_get_id(IntPtr raw);
+
+		[DllImport("libredcarpet")]
+		static extern void rc_package_set_id(IntPtr raw, IntPtr id);
+
+		public string Id {
+			get  {
+				IntPtr raw_ret = rc_package_get_id(Handle);
+				string ret = GLib.Marshaller.PtrToStringGFree(raw_ret);
+				return ret;
+			}
+			set  {
+				IntPtr id_as_native = GLib.Marshaller.StringToPtrGStrdup (value);
+				rc_package_set_id(Handle, id_as_native);
+				GLib.Marshaller.Free (id_as_native);
 			}
 		}
 
@@ -31,50 +270,18 @@ namespace RC {
 		static extern void rc_package_add_update(IntPtr raw, IntPtr update);
 
 		public void AddUpdate(RC.PackageUpdate update) {
-			rc_package_add_update(Handle, update.Handle);
+			rc_package_add_update(Handle, update == null ? IntPtr.Zero : update.Handle);
 		}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_package_get_description(IntPtr raw);
-
-		[DllImport("libredcarpet")]
-		static extern void rc_package_set_description(IntPtr raw, string value);
-
-		public string Description { 
-			get {
-				IntPtr raw_ret = rc_package_get_description(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
-				return ret;
-			}
-			set {
-				rc_package_set_description(Handle, value);
-			}
-		}
-
-		[DllImport("libredcarpet")]
-		static extern int rc_package_relation_from_string(string relation);
+		static extern int rc_package_relation_from_string(IntPtr relation);
 
 		public static RC.PackageRelation RelationFromString(string relation) {
-			int raw_ret = rc_package_relation_from_string(relation);
+			IntPtr relation_as_native = GLib.Marshaller.StringToPtrGStrdup (relation);
+			int raw_ret = rc_package_relation_from_string(relation_as_native);
 			RC.PackageRelation ret = (RC.PackageRelation) raw_ret;
+			GLib.Marshaller.Free (relation_as_native);
 			return ret;
-		}
-
-		[DllImport("libredcarpet")]
-		static extern IntPtr rc_package_get_summary(IntPtr raw);
-
-		[DllImport("libredcarpet")]
-		static extern void rc_package_set_summary(IntPtr raw, string value);
-
-		public string Summary { 
-			get {
-				IntPtr raw_ret = rc_package_get_summary(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
-				return ret;
-			}
-			set {
-				rc_package_set_summary(Handle, value);
-			}
 		}
 
 		[DllImport("libredcarpet")]
@@ -91,7 +298,7 @@ namespace RC {
 
 		public static string SectionToUserString(RC.PackageSection section) {
 			IntPtr raw_ret = rc_package_section_to_user_string((int) section);
-			string ret = Marshal.PtrToStringAnsi(raw_ret);
+			string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
 			return ret;
 		}
 
@@ -129,7 +336,7 @@ namespace RC {
 
 		public static string StatusToString(RC.PackageStatus status) {
 			IntPtr raw_ret = rc_package_status_to_string((int) status);
-			string ret = Marshal.PtrToStringAnsi(raw_ret);
+			string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
 			return ret;
 		}
 
@@ -149,42 +356,8 @@ namespace RC {
 
 		public static string RelationToString(RC.PackageRelation relation, int words) {
 			IntPtr raw_ret = rc_package_relation_to_string((int) relation, words);
-			string ret = Marshal.PtrToStringAnsi(raw_ret);
+			string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
 			return ret;
-		}
-
-		[DllImport("libredcarpet")]
-		static extern IntPtr rc_package_get_id(IntPtr raw);
-
-		[DllImport("libredcarpet")]
-		static extern void rc_package_set_id(IntPtr raw, string id);
-
-		public string Id { 
-			get {
-				IntPtr raw_ret = rc_package_get_id(Handle);
-				string ret = GLib.Marshaller.PtrToStringGFree(raw_ret);
-				return ret;
-			}
-			set {
-				rc_package_set_id(Handle, value);
-			}
-		}
-
-		[DllImport("libredcarpet")]
-		static extern IntPtr rc_package_get_signature_filename(IntPtr raw);
-
-		[DllImport("libredcarpet")]
-		static extern void rc_package_set_signature_filename(IntPtr raw, string filename);
-
-		public string SignatureFilename { 
-			get {
-				IntPtr raw_ret = rc_package_get_signature_filename(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
-				return ret;
-			}
-			set {
-				rc_package_set_signature_filename(Handle, value);
-			}
 		}
 
 		[DllImport("libredcarpet")]
@@ -194,27 +367,6 @@ namespace RC {
 			IntPtr raw_ret = rc_package_to_str(Handle);
 			string ret = GLib.Marshaller.PtrToStringGFree(raw_ret);
 			return ret;
-		}
-
-		[DllImport("libredcarpet")]
-		static extern IntPtr rc_package_get_channel(IntPtr raw);
-
-		[DllImport("libredcarpet")]
-		static extern void rc_package_set_channel(IntPtr raw, IntPtr channel);
-
-		public RC.Channel Channel { 
-			get {
-				IntPtr raw_ret = rc_package_get_channel(Handle);
-				RC.Channel ret;
-				if (raw_ret == IntPtr.Zero)
-					ret = null;
-				else
-					ret = new RC.Channel(raw_ret);
-				return ret;
-			}
-			set {
-				rc_package_set_channel(Handle, value.Handle);
-			}
 		}
 
 		[DllImport("libredcarpet")]
@@ -238,23 +390,6 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern bool rc_package_get_install_only(IntPtr raw);
-
-		[DllImport("libredcarpet")]
-		static extern void rc_package_set_install_only(IntPtr raw, bool val);
-
-		public bool InstallOnly { 
-			get {
-				bool raw_ret = rc_package_get_install_only(Handle);
-				bool ret = raw_ret;
-				return ret;
-			}
-			set {
-				rc_package_set_install_only(Handle, value);
-			}
-		}
-
-		[DllImport("libredcarpet")]
 		static extern IntPtr rc_package_hash_table_by_spec_to_list(System.IntPtr ht);
 
 		public static GLib.SList HashTableBySpecToList(System.IntPtr ht) {
@@ -264,33 +399,12 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern uint rc_package_get_file_size(IntPtr raw);
-
-		[DllImport("libredcarpet")]
-		static extern void rc_package_set_file_size(IntPtr raw, uint value);
-
-		public uint FileSize { 
-			get {
-				uint raw_ret = rc_package_get_file_size(Handle);
-				uint ret = raw_ret;
-				return ret;
-			}
-			set {
-				rc_package_set_file_size(Handle, value);
-			}
-		}
-
-		[DllImport("libredcarpet")]
 		static extern IntPtr rc_package_get_latest_update(IntPtr raw);
 
 		public RC.PackageUpdate LatestUpdate { 
 			get {
 				IntPtr raw_ret = rc_package_get_latest_update(Handle);
-				RC.PackageUpdate ret;
-				if (raw_ret == IntPtr.Zero)
-					ret = null;
-				else
-					ret = new RC.PackageUpdate(raw_ret);
+				RC.PackageUpdate ret = raw_ret == IntPtr.Zero ? null : (RC.PackageUpdate) GLib.Opaque.GetOpaque (raw_ret, typeof (RC.PackageUpdate), false);
 				return ret;
 			}
 		}
@@ -328,33 +442,18 @@ namespace RC {
 		static extern IntPtr rc_package_get_filename(IntPtr raw);
 
 		[DllImport("libredcarpet")]
-		static extern void rc_package_set_filename(IntPtr raw, string filename);
+		static extern void rc_package_set_filename(IntPtr raw, IntPtr filename);
 
 		public string Filename { 
 			get {
 				IntPtr raw_ret = rc_package_get_filename(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
+				string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
 				return ret;
 			}
 			set {
-				rc_package_set_filename(Handle, value);
-			}
-		}
-
-		[DllImport("libredcarpet")]
-		static extern uint rc_package_get_installed_size(IntPtr raw);
-
-		[DllImport("libredcarpet")]
-		static extern void rc_package_set_installed_size(IntPtr raw, uint value);
-
-		public uint InstalledSize { 
-			get {
-				uint raw_ret = rc_package_get_installed_size(Handle);
-				uint ret = raw_ret;
-				return ret;
-			}
-			set {
-				rc_package_set_installed_size(Handle, value);
+				IntPtr filename_as_native = GLib.Marshaller.StringToPtrGStrdup (value);
+				rc_package_set_filename(Handle, filename_as_native);
+				GLib.Marshaller.Free (filename_as_native);
 			}
 		}
 
@@ -363,7 +462,7 @@ namespace RC {
 
 		public static string SectionToString(RC.PackageSection section) {
 			IntPtr raw_ret = rc_package_section_to_string((int) section);
-			string ret = Marshal.PtrToStringAnsi(raw_ret);
+			string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
 			return ret;
 		}
 
@@ -375,11 +474,15 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern void rc_package_add_dummy_update(IntPtr raw, string package_filename, uint package_size);
+		static extern void rc_package_add_dummy_update(IntPtr raw, IntPtr package_filename, uint package_size);
 
 		public void AddDummyUpdate(string package_filename, uint package_size) {
-			rc_package_add_dummy_update(Handle, package_filename, package_size);
+			IntPtr package_filename_as_native = GLib.Marshaller.StringToPtrGStrdup (package_filename);
+			rc_package_add_dummy_update(Handle, package_filename_as_native, package_size);
+			GLib.Marshaller.Free (package_filename_as_native);
 		}
+
+		public Package(IntPtr raw) : base(raw) {}
 
 		[DllImport("libredcarpet")]
 		static extern IntPtr rc_package_new();
@@ -416,33 +519,8 @@ namespace RC {
     [DllImport("libredcarpet")]
     static extern IntPtr rc_package_ref(IntPtr raw);
 
-    public Package (IntPtr raw, bool owned_ref) : base (raw) {
-        if (!owned_ref)
-            rc_package_ref (Handle);
-    }
-
-    public Package(IntPtr raw) : this(raw, false) {}
-
-    private bool disposed = false;
-
-    public void Dispose () {
-        Dispose (true);
-        GC.SuppressFinalize (this);
-    }
-
     [DllImport("libredcarpet")]
     static extern void rc_package_unref(IntPtr raw);
-
-    private void Dispose (bool disposing) {
-        if (!disposed) {
-            rc_package_unref (Handle);
-            disposed = true;
-        }
-    }
-
-    ~Package () {
-        Dispose (false);
-    }
 
     [DllImport("libredcarpet")]
     static extern IntPtr rc_package_copy(IntPtr raw);
@@ -450,11 +528,7 @@ namespace RC {
     // ICloneable
     public Object Clone () {
         IntPtr raw_ret = rc_package_copy(Handle);
-        RC.Package ret;
-        if (raw_ret == IntPtr.Zero)
-            ret = null;
-        else
-            ret = new RC.Package(raw_ret, true);
+        RC.Package ret = raw_ret == IntPtr.Zero ? null : (RC.Package) GLib.Opaque.GetOpaque (raw_ret, typeof (RC.Package), false);
         return ret;
     }
 

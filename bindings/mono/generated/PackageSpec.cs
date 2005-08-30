@@ -11,6 +11,78 @@ namespace RC {
 	public class PackageSpec : GLib.Opaque {
 
 		[DllImport("libredcarpet")]
+		static extern IntPtr rc_package_spec_get_release(IntPtr raw);
+
+		[DllImport("libredcarpet")]
+		static extern void rc_package_spec_set_release(IntPtr raw, IntPtr value);
+
+		public string Release {
+			get  {
+				IntPtr raw_ret = rc_package_spec_get_release(Handle);
+				string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
+				return ret;
+			}
+			set  {
+				IntPtr value_as_native = GLib.Marshaller.StringToPtrGStrdup (value);
+				rc_package_spec_set_release(Handle, value_as_native);
+				GLib.Marshaller.Free (value_as_native);
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern IntPtr rc_package_spec_get_version(IntPtr raw);
+
+		[DllImport("libredcarpet")]
+		static extern void rc_package_spec_set_version(IntPtr raw, IntPtr value);
+
+		public string Version {
+			get  {
+				IntPtr raw_ret = rc_package_spec_get_version(Handle);
+				string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
+				return ret;
+			}
+			set  {
+				IntPtr value_as_native = GLib.Marshaller.StringToPtrGStrdup (value);
+				rc_package_spec_set_version(Handle, value_as_native);
+				GLib.Marshaller.Free (value_as_native);
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern int rc_package_spec_get_arch(IntPtr raw);
+
+		[DllImport("libredcarpet")]
+		static extern void rc_package_spec_set_arch(IntPtr raw, int value);
+
+		public RC.Arch Arch {
+			get  {
+				int raw_ret = rc_package_spec_get_arch(Handle);
+				RC.Arch ret = (RC.Arch) raw_ret;
+				return ret;
+			}
+			set  {
+				rc_package_spec_set_arch(Handle, (int) value);
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern int rc_package_spec_get_epoch(IntPtr raw);
+
+		[DllImport("libredcarpet")]
+		static extern void rc_package_spec_set_epoch(IntPtr raw, int value);
+
+		public int Epoch {
+			get  {
+				int raw_ret = rc_package_spec_get_epoch(Handle);
+				int ret = raw_ret;
+				return ret;
+			}
+			set  {
+				rc_package_spec_set_epoch(Handle, value);
+			}
+		}
+
+		[DllImport("libredcarpet")]
 		static extern bool rc_package_spec_has_epoch(IntPtr raw);
 
 		public bool HasEpoch { 
@@ -34,16 +106,18 @@ namespace RC {
 		static extern IntPtr rc_package_spec_get_name(IntPtr raw);
 
 		[DllImport("libredcarpet")]
-		static extern void rc_package_spec_set_name(IntPtr raw, string value);
+		static extern void rc_package_spec_set_name(IntPtr raw, IntPtr value);
 
 		public string Name { 
 			get {
 				IntPtr raw_ret = rc_package_spec_get_name(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
+				string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
 				return ret;
 			}
 			set {
-				rc_package_spec_set_name(Handle, value);
+				IntPtr value_as_native = GLib.Marshaller.StringToPtrGStrdup (value);
+				rc_package_spec_set_name(Handle, value_as_native);
+				GLib.Marshaller.Free (value_as_native);
 			}
 		}
 
@@ -66,23 +140,6 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern int rc_package_spec_get_arch(IntPtr raw);
-
-		[DllImport("libredcarpet")]
-		static extern void rc_package_spec_set_arch(IntPtr raw, int value);
-
-		public RC.Arch Arch { 
-			get {
-				int raw_ret = rc_package_spec_get_arch(Handle);
-				RC.Arch ret = (RC.Arch) raw_ret;
-				return ret;
-			}
-			set {
-				rc_package_spec_set_arch(Handle, (int) value);
-			}
-		}
-
-		[DllImport("libredcarpet")]
 		static extern uint rc_package_spec_hash(IntPtr ptr);
 
 		public static uint Hash(IntPtr ptr) {
@@ -92,60 +149,27 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_package_spec_slist_find_name(IntPtr specs, string name);
+		static extern IntPtr rc_package_spec_slist_find_name(IntPtr specs, IntPtr name);
 
 		public static IntPtr SlistFindName(GLib.SList specs, string name) {
-			IntPtr raw_ret = rc_package_spec_slist_find_name(specs.Handle, name);
+			IntPtr name_as_native = GLib.Marshaller.StringToPtrGStrdup (name);
+			IntPtr raw_ret = rc_package_spec_slist_find_name(specs.Handle, name_as_native);
 			IntPtr ret = raw_ret;
+			GLib.Marshaller.Free (name_as_native);
 			return ret;
 		}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_package_spec_get_version(IntPtr raw);
-
-		[DllImport("libredcarpet")]
-		static extern void rc_package_spec_set_version(IntPtr raw, string value);
-
-		public string Version { 
-			get {
-				IntPtr raw_ret = rc_package_spec_get_version(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
-				return ret;
-			}
-			set {
-				rc_package_spec_set_version(Handle, value);
-			}
-		}
-
-		[DllImport("libredcarpet")]
-		static extern void rc_package_spec_init(IntPtr raw, string name, bool has_epoch, uint epoch, string version, string release, int arch);
+		static extern void rc_package_spec_init(IntPtr raw, IntPtr name, bool has_epoch, uint epoch, IntPtr version, IntPtr release, int arch);
 
 		public void Init(string name, bool has_epoch, uint epoch, string version, string release, RC.Arch arch) {
-			rc_package_spec_init(Handle, name, has_epoch, epoch, version, release, (int) arch);
-		}
-
-		[DllImport("libredcarpet")]
-		static extern void rc_package_spec_free(IntPtr raw);
-
-		public void Free() {
-			rc_package_spec_free(Handle);
-		}
-
-		[DllImport("libredcarpet")]
-		static extern int rc_package_spec_get_epoch(IntPtr raw);
-
-		[DllImport("libredcarpet")]
-		static extern void rc_package_spec_set_epoch(IntPtr raw, int value);
-
-		public int Epoch { 
-			get {
-				int raw_ret = rc_package_spec_get_epoch(Handle);
-				int ret = raw_ret;
-				return ret;
-			}
-			set {
-				rc_package_spec_set_epoch(Handle, value);
-			}
+			IntPtr name_as_native = GLib.Marshaller.StringToPtrGStrdup (name);
+			IntPtr version_as_native = GLib.Marshaller.StringToPtrGStrdup (version);
+			IntPtr release_as_native = GLib.Marshaller.StringToPtrGStrdup (release);
+			rc_package_spec_init(Handle, name_as_native, has_epoch, epoch, version_as_native, release_as_native, (int) arch);
+			GLib.Marshaller.Free (name_as_native);
+			GLib.Marshaller.Free (version_as_native);
+			GLib.Marshaller.Free (release_as_native);
 		}
 
 		[DllImport("libredcarpet")]
@@ -156,27 +180,10 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_package_spec_get_release(IntPtr raw);
-
-		[DllImport("libredcarpet")]
-		static extern void rc_package_spec_set_release(IntPtr raw, string value);
-
-		public string Release { 
-			get {
-				IntPtr raw_ret = rc_package_spec_get_release(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
-				return ret;
-			}
-			set {
-				rc_package_spec_set_release(Handle, value);
-			}
-		}
-
-		[DllImport("libredcarpet")]
 		static extern void rc_package_spec_copy(IntPtr raw, IntPtr old);
 
 		public void Copy(RC.PackageSpec old) {
-			rc_package_spec_copy(Handle, old.Handle);
+			rc_package_spec_copy(Handle, old == null ? IntPtr.Zero : old.Handle);
 		}
 
 		public PackageSpec(IntPtr raw) : base(raw) {}
@@ -187,6 +194,14 @@ namespace RC {
 		public PackageSpec () 
 		{
 			Raw = rc_package_spec_new();
+		}
+
+		[DllImport("libredcarpet")]
+		static extern void rc_package_spec_free(IntPtr raw);
+
+		protected override void Free (IntPtr raw)
+		{
+			rc_package_spec_free (raw);
 		}
 
 #endregion

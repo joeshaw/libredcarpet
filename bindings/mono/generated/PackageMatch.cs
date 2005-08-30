@@ -14,16 +14,18 @@ namespace RC {
 		static extern IntPtr rc_package_match_get_channel_id(IntPtr raw);
 
 		[DllImport("libredcarpet")]
-		static extern void rc_package_match_set_channel_id(IntPtr raw, string cid);
+		static extern void rc_package_match_set_channel_id(IntPtr raw, IntPtr cid);
 
 		public string ChannelId { 
 			get {
 				IntPtr raw_ret = rc_package_match_get_channel_id(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
+				string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
 				return ret;
 			}
 			set {
-				rc_package_match_set_channel_id(Handle, value);
+				IntPtr cid_as_native = GLib.Marshaller.StringToPtrGStrdup (value);
+				rc_package_match_set_channel_id(Handle, cid_as_native);
+				GLib.Marshaller.Free (cid_as_native);
 			}
 		}
 
@@ -31,7 +33,7 @@ namespace RC {
 		static extern bool rc_package_match_equal(IntPtr raw, IntPtr match2);
 
 		public bool Equal(RC.PackageMatch match2) {
-			bool raw_ret = rc_package_match_equal(Handle, match2.Handle);
+			bool raw_ret = rc_package_match_equal(Handle, match2 == null ? IntPtr.Zero : match2.Handle);
 			bool ret = raw_ret;
 			return ret;
 		}
@@ -40,16 +42,18 @@ namespace RC {
 		static extern IntPtr rc_package_match_get_glob(IntPtr raw);
 
 		[DllImport("libredcarpet")]
-		static extern void rc_package_match_set_glob(IntPtr raw, string glob_str);
+		static extern void rc_package_match_set_glob(IntPtr raw, IntPtr glob_str);
 
 		public string Glob { 
 			get {
 				IntPtr raw_ret = rc_package_match_get_glob(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
+				string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
 				return ret;
 			}
 			set {
-				rc_package_match_set_glob(Handle, value);
+				IntPtr glob_str_as_native = GLib.Marshaller.StringToPtrGStrdup (value);
+				rc_package_match_set_glob(Handle, glob_str_as_native);
+				GLib.Marshaller.Free (glob_str_as_native);
 			}
 		}
 
@@ -74,15 +78,8 @@ namespace RC {
 
 		public RC.Channel Channel { 
 			set {
-				rc_package_match_set_channel(Handle, value.Handle);
+				rc_package_match_set_channel(Handle, value == null ? IntPtr.Zero : value.Handle);
 			}
-		}
-
-		[DllImport("libredcarpet")]
-		static extern void rc_package_match_free(IntPtr raw);
-
-		public void Free() {
-			rc_package_match_free(Handle);
 		}
 
 		[DllImport("libredcarpet")]
@@ -94,15 +91,11 @@ namespace RC {
 		public RC.PackageDep Dep { 
 			get {
 				IntPtr raw_ret = rc_package_match_get_dep(Handle);
-				RC.PackageDep ret;
-				if (raw_ret == IntPtr.Zero)
-					ret = null;
-				else
-					ret = new RC.PackageDep(raw_ret);
+				RC.PackageDep ret = raw_ret == IntPtr.Zero ? null : (RC.PackageDep) GLib.Opaque.GetOpaque (raw_ret, typeof (RC.PackageDep), false);
 				return ret;
 			}
 			set {
-				rc_package_match_set_dep(Handle, value.Handle);
+				rc_package_match_set_dep(Handle, value == null ? IntPtr.Zero : value.Handle);
 			}
 		}
 
@@ -114,6 +107,14 @@ namespace RC {
 		public PackageMatch () 
 		{
 			Raw = rc_package_match_new();
+		}
+
+		[DllImport("libredcarpet")]
+		static extern void rc_package_match_free(IntPtr raw);
+
+		protected override void Free (IntPtr raw)
+		{
+			rc_package_match_free (raw);
 		}
 
 #endregion
@@ -160,7 +161,7 @@ namespace RC {
         if (reader.LocalName == "dep") {
             PackageDep dep = new PackageDep (reader);
             match.Dep = dep;
-            dep.Unref ();
+            //dep.Unref ();
 
             // Move reader to start of next element
             while (reader.Read ())

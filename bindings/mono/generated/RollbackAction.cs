@@ -16,11 +16,7 @@ namespace RC {
 		public RC.PackageUpdate PackageUpdate { 
 			get {
 				IntPtr raw_ret = rc_rollback_action_get_package_update(Handle);
-				RC.PackageUpdate ret;
-				if (raw_ret == IntPtr.Zero)
-					ret = null;
-				else
-					ret = new RC.PackageUpdate(raw_ret);
+				RC.PackageUpdate ret = raw_ret == IntPtr.Zero ? null : (RC.PackageUpdate) GLib.Opaque.GetOpaque (raw_ret, typeof (RC.PackageUpdate), false);
 				return ret;
 			}
 		}
@@ -33,23 +29,12 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern void rc_rollback_action_free(IntPtr raw);
-
-		public void Free() {
-			rc_rollback_action_free(Handle);
-		}
-
-		[DllImport("libredcarpet")]
 		static extern IntPtr rc_rollback_action_get_synth_package(IntPtr raw);
 
 		public RC.Package SynthPackage { 
 			get {
 				IntPtr raw_ret = rc_rollback_action_get_synth_package(Handle);
-				RC.Package ret;
-				if (raw_ret == IntPtr.Zero)
-					ret = null;
-				else
-					ret = new RC.Package(raw_ret);
+				RC.Package ret = raw_ret == IntPtr.Zero ? null : (RC.Package) GLib.Opaque.GetOpaque (raw_ret, typeof (RC.Package), false);
 				return ret;
 			}
 		}
@@ -71,16 +56,20 @@ namespace RC {
 		public RC.Package Package { 
 			get {
 				IntPtr raw_ret = rc_rollback_action_get_package(Handle);
-				RC.Package ret;
-				if (raw_ret == IntPtr.Zero)
-					ret = null;
-				else
-					ret = new RC.Package(raw_ret);
+				RC.Package ret = raw_ret == IntPtr.Zero ? null : (RC.Package) GLib.Opaque.GetOpaque (raw_ret, typeof (RC.Package), false);
 				return ret;
 			}
 		}
 
 		public RollbackAction(IntPtr raw) : base(raw) {}
+
+		[DllImport("libredcarpet")]
+		static extern void rc_rollback_action_free(IntPtr raw);
+
+		protected override void Free (IntPtr raw)
+		{
+			rc_rollback_action_free (raw);
+		}
 
 #endregion
 	}

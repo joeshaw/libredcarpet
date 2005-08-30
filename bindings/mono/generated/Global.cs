@@ -10,11 +10,13 @@ namespace RC {
 	public class Global {
 
 		[DllImport("libredcarpet")]
-		static extern bool rc_url_is_absolute(string url);
+		static extern bool rc_url_is_absolute(IntPtr url);
 
 		public static bool UrlIsAbsolute(string url) {
-			bool raw_ret = rc_url_is_absolute(url);
+			IntPtr url_as_native = GLib.Marshaller.StringToPtrGStrdup (url);
+			bool raw_ret = rc_url_is_absolute(url_as_native);
 			bool ret = raw_ret;
+			GLib.Marshaller.Free (url_as_native);
 			return ret;
 		}
 
@@ -37,11 +39,13 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern int rc_arch_from_string(string arch_name);
+		static extern int rc_arch_from_string(IntPtr arch_name);
 
 		public static RC.Arch ArchFromString(string arch_name) {
-			int raw_ret = rc_arch_from_string(arch_name);
+			IntPtr arch_name_as_native = GLib.Marshaller.StringToPtrGStrdup (arch_name);
+			int raw_ret = rc_arch_from_string(arch_name_as_native);
 			RC.Arch ret = (RC.Arch) raw_ret;
+			GLib.Marshaller.Free (arch_name_as_native);
 			return ret;
 		}
 
@@ -55,20 +59,26 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern int rc_string_to_package_importance(string importance);
+		static extern int rc_string_to_package_importance(IntPtr importance);
 
 		public static RC.PackageImportance PackageImportanceFromString(string importance) {
-			int raw_ret = rc_string_to_package_importance(importance);
+			IntPtr importance_as_native = GLib.Marshaller.StringToPtrGStrdup (importance);
+			int raw_ret = rc_string_to_package_importance(importance_as_native);
 			RC.PackageImportance ret = (RC.PackageImportance) raw_ret;
+			GLib.Marshaller.Free (importance_as_native);
 			return ret;
 		}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_maybe_merge_paths(string parent_path, string child_path);
+		static extern IntPtr rc_maybe_merge_paths(IntPtr parent_path, IntPtr child_path);
 
 		public static string MaybeMergePaths(string parent_path, string child_path) {
-			IntPtr raw_ret = rc_maybe_merge_paths(parent_path, child_path);
+			IntPtr parent_path_as_native = GLib.Marshaller.StringToPtrGStrdup (parent_path);
+			IntPtr child_path_as_native = GLib.Marshaller.StringToPtrGStrdup (child_path);
+			IntPtr raw_ret = rc_maybe_merge_paths(parent_path_as_native, child_path_as_native);
 			string ret = GLib.Marshaller.PtrToStringGFree(raw_ret);
+			GLib.Marshaller.Free (parent_path_as_native);
+			GLib.Marshaller.Free (child_path_as_native);
 			return ret;
 		}
 
@@ -77,25 +87,18 @@ namespace RC {
 
 		public static string ImportanceToString(RC.PackageImportance importance) {
 			IntPtr raw_ret = rc_package_importance_to_string((int) importance);
-			string ret = Marshal.PtrToStringAnsi(raw_ret);
+			string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
 			return ret;
 		}
 
 		[DllImport("libredcarpet")]
-		static extern int rc_string_to_package_section(string section);
+		static extern int rc_string_to_package_section(IntPtr section);
 
 		public static RC.PackageSection StringToPackageSection(string section) {
-			int raw_ret = rc_string_to_package_section(section);
+			IntPtr section_as_native = GLib.Marshaller.StringToPtrGStrdup (section);
+			int raw_ret = rc_string_to_package_section(section_as_native);
 			RC.PackageSection ret = (RC.PackageSection) raw_ret;
-			return ret;
-		}
-
-		[DllImport("libredcarpet")]
-		static extern IntPtr rc_dep_string_to_or_dep_slist(string munged);
-
-		public static GLib.SList DepStringToOrDepSlist(string munged) {
-			IntPtr raw_ret = rc_dep_string_to_or_dep_slist(munged);
-			GLib.SList ret = new GLib.SList(raw_ret);
+			GLib.Marshaller.Free (section_as_native);
 			return ret;
 		}
 
@@ -104,7 +107,7 @@ namespace RC {
 
 		public static string ArchToString(RC.Arch arch) {
 			IntPtr raw_ret = rc_arch_to_string((int) arch);
-			string ret = Marshal.PtrToStringAnsi(raw_ret);
+			string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
 			return ret;
 		}
 

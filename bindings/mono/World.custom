@@ -29,7 +29,7 @@
     public RC.WorldRefreshDelegate RefreshDelegate { 
         set {
             RCSharp.WorldRefreshDelegateWrapper value_wrapper = null;
-            value_wrapper = new RCSharp.WorldRefreshDelegateWrapper (value, this);
+            value_wrapper = new RCSharp.WorldRefreshDelegateWrapper (value);
             rc_world_set_refresh_function(Handle, value_wrapper.NativeDelegate);
         }
     }

@@ -31,21 +31,50 @@ namespace RC {
 			Raw = rc_world_multi_new();
 		}
 
-		delegate void SubworldRemovedDelegate (IntPtr multi, IntPtr subworld);
+		[DllImport("libredcarpet")]
+		static extern IntPtr rc_world_multi_get_subworlds(IntPtr raw);
 
-		static SubworldRemovedDelegate SubworldRemovedCallback;
+		public GLib.SList Subworlds {
+			get  {
+				IntPtr raw_ret = rc_world_multi_get_subworlds(Handle);
+				GLib.SList ret = new GLib.SList(raw_ret);
+				return ret;
+			}
+		}
+
+		[GLib.CDeclCallback]
+		delegate void SubworldRemovedSignalDelegate (IntPtr arg0, IntPtr arg1, IntPtr gch);
+
+		static void SubworldRemovedSignalCallback (IntPtr arg0, IntPtr arg1, IntPtr gch)
+		{
+			GLib.Signal sig = ((GCHandle) gch).Target as GLib.Signal;
+			if (sig == null)
+				throw new Exception("Unknown signal GC handle received " + gch);
+
+			RC.SubworldRemovedArgs args = new RC.SubworldRemovedArgs ();
+			args.Args = new object[1];
+			args.Args[0] = GLib.Object.GetObject(arg1) as RC.World;
+			RC.SubworldRemovedHandler handler = (RC.SubworldRemovedHandler) sig.Handler;
+			handler (GLib.Object.GetObject (arg0), args);
+
+		}
+
+		[GLib.CDeclCallback]
+		delegate void SubworldRemovedVMDelegate (IntPtr multi, IntPtr subworld);
+
+		static SubworldRemovedVMDelegate SubworldRemovedVMCallback;
 
 		static void subworldremoved_cb (IntPtr multi, IntPtr subworld)
 		{
-			WorldMulti obj = GLib.Object.GetObject (multi, false) as WorldMulti;
-			obj.OnSubworldRemoved ((RC.World) GLib.Object.GetObject(subworld));
+			WorldMulti multi_managed = GLib.Object.GetObject (multi, false) as WorldMulti;
+			multi_managed.OnSubworldRemoved (GLib.Object.GetObject(subworld) as RC.World);
 		}
 
 		private static void OverrideSubworldRemoved (GLib.GType gtype)
 		{
-			if (SubworldRemovedCallback == null)
-				SubworldRemovedCallback = new SubworldRemovedDelegate (subworldremoved_cb);
-			OverrideVirtualMethod (gtype, "subworld_removed", SubworldRemovedCallback);
+			if (SubworldRemovedVMCallback == null)
+				SubworldRemovedVMCallback = new SubworldRemovedVMDelegate (subworldremoved_cb);
+			OverrideVirtualMethod (gtype, "subworld_removed", SubworldRemovedVMCallback);
 		}
 
 		[GLib.DefaultSignalHandler(Type=typeof(RC.WorldMulti), ConnectionMethod="OverrideSubworldRemoved")]
@@ -59,61 +88,55 @@ namespace RC {
 			vals [1] = new GLib.Value (subworld);
 			inst_and_params.Append (vals [1]);
 			g_signal_chain_from_overridden (inst_and_params.ArrayPtr, ref ret);
+			foreach (GLib.Value v in vals)
+				v.Dispose ();
 		}
 
 		[GLib.Signal("subworld_removed")]
 		public event RC.SubworldRemovedHandler SubworldRemoved {
 			add {
-				if (value.Method.GetCustomAttributes(typeof(GLib.ConnectBeforeAttribute), false).Length > 0) {
-					if (BeforeHandlers["subworld_removed"] == null)
-						BeforeSignals["subworld_removed"] = new RCSharp.voidObjectObjectSignal(this, "subworld_removed", value, typeof (RC.SubworldRemovedArgs), 0);
-					else
-						((GLib.SignalCallback) BeforeSignals ["subworld_removed"]).AddDelegate (value);
-					BeforeHandlers.AddHandler("subworld_removed", value);
-				} else {
-					if (AfterHandlers["subworld_removed"] == null)
-						AfterSignals["subworld_removed"] = new RCSharp.voidObjectObjectSignal(this, "subworld_removed", value, typeof (RC.SubworldRemovedArgs), 1);
-					else
-						((GLib.SignalCallback) AfterSignals ["subworld_removed"]).AddDelegate (value);
-					AfterHandlers.AddHandler("subworld_removed", value);
-				}
+				GLib.Signal sig = GLib.Signal.Lookup (this, "subworld_removed", new SubworldRemovedSignalDelegate(SubworldRemovedSignalCallback));
+				sig.AddDelegate (value);
 			}
 			remove {
-				System.ComponentModel.EventHandlerList event_list = AfterHandlers;
-				Hashtable signals = AfterSignals;
-				if (value.Method.GetCustomAttributes(typeof(GLib.ConnectBeforeAttribute), false).Length > 0) {
-					event_list = BeforeHandlers;
-					signals = BeforeSignals;
-				}
-				GLib.SignalCallback cb = signals ["subworld_removed"] as GLib.SignalCallback;
-				event_list.RemoveHandler("subworld_removed", value);
-				if (cb == null)
-					return;
-
-				cb.RemoveDelegate (value);
-
-				if (event_list["subworld_removed"] == null) {
-					signals.Remove("subworld_removed");
-					cb.Dispose ();
-				}
+				GLib.Signal sig = GLib.Signal.Lookup (this, "subworld_removed", new SubworldRemovedSignalDelegate(SubworldRemovedSignalCallback));
+				sig.RemoveDelegate (value);
 			}
 		}
 
-		delegate void SubworldAddedDelegate (IntPtr multi, IntPtr subworld);
+		[GLib.CDeclCallback]
+		delegate void SubworldAddedSignalDelegate (IntPtr arg0, IntPtr arg1, IntPtr gch);
 
-		static SubworldAddedDelegate SubworldAddedCallback;
+		static void SubworldAddedSignalCallback (IntPtr arg0, IntPtr arg1, IntPtr gch)
+		{
+			GLib.Signal sig = ((GCHandle) gch).Target as GLib.Signal;
+			if (sig == null)
+				throw new Exception("Unknown signal GC handle received " + gch);
+
+			RC.SubworldAddedArgs args = new RC.SubworldAddedArgs ();
+			args.Args = new object[1];
+			args.Args[0] = GLib.Object.GetObject(arg1) as RC.World;
+			RC.SubworldAddedHandler handler = (RC.SubworldAddedHandler) sig.Handler;
+			handler (GLib.Object.GetObject (arg0), args);
+
+		}
+
+		[GLib.CDeclCallback]
+		delegate void SubworldAddedVMDelegate (IntPtr multi, IntPtr subworld);
+
+		static SubworldAddedVMDelegate SubworldAddedVMCallback;
 
 		static void subworldadded_cb (IntPtr multi, IntPtr subworld)
 		{
-			WorldMulti obj = GLib.Object.GetObject (multi, false) as WorldMulti;
-			obj.OnSubworldAdded ((RC.World) GLib.Object.GetObject(subworld));
+			WorldMulti multi_managed = GLib.Object.GetObject (multi, false) as WorldMulti;
+			multi_managed.OnSubworldAdded (GLib.Object.GetObject(subworld) as RC.World);
 		}
 
 		private static void OverrideSubworldAdded (GLib.GType gtype)
 		{
-			if (SubworldAddedCallback == null)
-				SubworldAddedCallback = new SubworldAddedDelegate (subworldadded_cb);
-			OverrideVirtualMethod (gtype, "subworld_added", SubworldAddedCallback);
+			if (SubworldAddedVMCallback == null)
+				SubworldAddedVMCallback = new SubworldAddedVMDelegate (subworldadded_cb);
+			OverrideVirtualMethod (gtype, "subworld_added", SubworldAddedVMCallback);
 		}
 
 		[GLib.DefaultSignalHandler(Type=typeof(RC.WorldMulti), ConnectionMethod="OverrideSubworldAdded")]
@@ -127,43 +150,19 @@ namespace RC {
 			vals [1] = new GLib.Value (subworld);
 			inst_and_params.Append (vals [1]);
 			g_signal_chain_from_overridden (inst_and_params.ArrayPtr, ref ret);
+			foreach (GLib.Value v in vals)
+				v.Dispose ();
 		}
 
 		[GLib.Signal("subworld_added")]
 		public event RC.SubworldAddedHandler SubworldAdded {
 			add {
-				if (value.Method.GetCustomAttributes(typeof(GLib.ConnectBeforeAttribute), false).Length > 0) {
-					if (BeforeHandlers["subworld_added"] == null)
-						BeforeSignals["subworld_added"] = new RCSharp.voidObjectObjectSignal(this, "subworld_added", value, typeof (RC.SubworldAddedArgs), 0);
-					else
-						((GLib.SignalCallback) BeforeSignals ["subworld_added"]).AddDelegate (value);
-					BeforeHandlers.AddHandler("subworld_added", value);
-				} else {
-					if (AfterHandlers["subworld_added"] == null)
-						AfterSignals["subworld_added"] = new RCSharp.voidObjectObjectSignal(this, "subworld_added", value, typeof (RC.SubworldAddedArgs), 1);
-					else
-						((GLib.SignalCallback) AfterSignals ["subworld_added"]).AddDelegate (value);
-					AfterHandlers.AddHandler("subworld_added", value);
-				}
+				GLib.Signal sig = GLib.Signal.Lookup (this, "subworld_added", new SubworldAddedSignalDelegate(SubworldAddedSignalCallback));
+				sig.AddDelegate (value);
 			}
 			remove {
-				System.ComponentModel.EventHandlerList event_list = AfterHandlers;
-				Hashtable signals = AfterSignals;
-				if (value.Method.GetCustomAttributes(typeof(GLib.ConnectBeforeAttribute), false).Length > 0) {
-					event_list = BeforeHandlers;
-					signals = BeforeSignals;
-				}
-				GLib.SignalCallback cb = signals ["subworld_added"] as GLib.SignalCallback;
-				event_list.RemoveHandler("subworld_added", value);
-				if (cb == null)
-					return;
-
-				cb.RemoveDelegate (value);
-
-				if (event_list["subworld_added"] == null) {
-					signals.Remove("subworld_added");
-					cb.Dispose ();
-				}
+				GLib.Signal sig = GLib.Signal.Lookup (this, "subworld_added", new SubworldAddedSignalDelegate(SubworldAddedSignalCallback));
+				sig.RemoveDelegate (value);
 			}
 		}
 
@@ -171,7 +170,7 @@ namespace RC {
 		static extern void rc_world_multi_remove_subworld(IntPtr raw, IntPtr arg1);
 
 		public void RemoveSubworld(RC.World arg1) {
-			rc_world_multi_remove_subworld(Handle, arg1.Handle);
+			rc_world_multi_remove_subworld(Handle, arg1 == null ? IntPtr.Zero : arg1.Handle);
 		}
 
 		[DllImport("libredcarpet")]
@@ -189,58 +188,41 @@ namespace RC {
 		static extern int rc_world_multi_foreach_subworld_by_type(IntPtr raw, IntPtr type, RCSharp.WorldDelegateNative cb, IntPtr user_data);
 
 		public int ForeachSubworldByType(GLib.GType type, RC.WorldDelegate cb) {
-			RCSharp.WorldDelegateWrapper cb_wrapper = null;
-			cb_wrapper = new RCSharp.WorldDelegateWrapper (cb, this);
+			RCSharp.WorldDelegateWrapper cb_wrapper = new RCSharp.WorldDelegateWrapper (cb);
 			int raw_ret = rc_world_multi_foreach_subworld_by_type(Handle, type.Val, cb_wrapper.NativeDelegate, IntPtr.Zero);
 			int ret = raw_ret;
 			return ret;
 		}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_world_multi_lookup_service_by_id(IntPtr raw, string id);
+		static extern IntPtr rc_world_multi_lookup_service_by_id(IntPtr raw, IntPtr id);
 
 		public RC.WorldService LookupServiceById(string id) {
-			IntPtr raw_ret = rc_world_multi_lookup_service_by_id(Handle, id);
-			RC.WorldService ret;
-			if (raw_ret == IntPtr.Zero)
-				ret = null;
-			else
-				ret = (RC.WorldService) GLib.Object.GetObject(raw_ret);
+			IntPtr id_as_native = GLib.Marshaller.StringToPtrGStrdup (id);
+			IntPtr raw_ret = rc_world_multi_lookup_service_by_id(Handle, id_as_native);
+			RC.WorldService ret = GLib.Object.GetObject(raw_ret) as RC.WorldService;
+			GLib.Marshaller.Free (id_as_native);
 			return ret;
-		}
-
-		[DllImport("libredcarpet")]
-		static extern IntPtr rc_world_multi_get_subworlds(IntPtr raw);
-
-		public GLib.SList Subworlds { 
-			get {
-				IntPtr raw_ret = rc_world_multi_get_subworlds(Handle);
-				GLib.SList ret = new GLib.SList(raw_ret);
-				return ret;
-			}
 		}
 
 		[DllImport("libredcarpet")]
 		static extern int rc_world_multi_foreach_subworld(IntPtr raw, RCSharp.WorldDelegateNative cb, IntPtr user_data);
 
 		public int ForeachSubworld(RC.WorldDelegate cb) {
-			RCSharp.WorldDelegateWrapper cb_wrapper = null;
-			cb_wrapper = new RCSharp.WorldDelegateWrapper (cb, this);
+			RCSharp.WorldDelegateWrapper cb_wrapper = new RCSharp.WorldDelegateWrapper (cb);
 			int raw_ret = rc_world_multi_foreach_subworld(Handle, cb_wrapper.NativeDelegate, IntPtr.Zero);
 			int ret = raw_ret;
 			return ret;
 		}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_world_multi_lookup_service(IntPtr raw, string url);
+		static extern IntPtr rc_world_multi_lookup_service(IntPtr raw, IntPtr url);
 
 		public RC.WorldService LookupService(string url) {
-			IntPtr raw_ret = rc_world_multi_lookup_service(Handle, url);
-			RC.WorldService ret;
-			if (raw_ret == IntPtr.Zero)
-				ret = null;
-			else
-				ret = (RC.WorldService) GLib.Object.GetObject(raw_ret);
+			IntPtr url_as_native = GLib.Marshaller.StringToPtrGStrdup (url);
+			IntPtr raw_ret = rc_world_multi_lookup_service(Handle, url_as_native);
+			RC.WorldService ret = GLib.Object.GetObject(raw_ret) as RC.WorldService;
+			GLib.Marshaller.Free (url_as_native);
 			return ret;
 		}
 
@@ -248,7 +230,7 @@ namespace RC {
 		static extern void rc_world_multi_add_subworld(IntPtr raw, IntPtr arg1);
 
 		public void AddSubworld(RC.World arg1) {
-			rc_world_multi_add_subworld(Handle, arg1.Handle);
+			rc_world_multi_add_subworld(Handle, arg1 == null ? IntPtr.Zero : arg1.Handle);
 		}
 
 

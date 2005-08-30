@@ -1,6 +1,6 @@
 
 public static RC.Distro ParseXml () {
-    IntPtr raw_ret = rc_distro_parse_xml(null, 0);
+    IntPtr raw_ret = rc_distro_parse_xml(IntPtr.Zero, 0);
     RC.Distro ret = new RC.Distro(raw_ret);
 
     return ret;

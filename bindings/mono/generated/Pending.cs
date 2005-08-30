@@ -20,31 +20,152 @@ namespace RC {
 		public Pending(IntPtr raw) : base(raw) {}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_pending_new(string description);
+		static extern IntPtr rc_pending_new(IntPtr description);
 
 		public Pending (string description) : base (IntPtr.Zero)
 		{
 			if (GetType () != typeof (Pending)) {
 				throw new InvalidOperationException ("Can't override this constructor.");
 			}
-			Raw = rc_pending_new(description);
+			IntPtr description_as_native = GLib.Marshaller.StringToPtrGStrdup (description);
+			Raw = rc_pending_new(description_as_native);
+			GLib.Marshaller.Free (description_as_native);
 		}
 
-		delegate void UpdatedDelegate (IntPtr arg1);
+		[DllImport("libredcarpet")]
+		static extern IntPtr rc_pending_get_error_msg(IntPtr raw);
 
-		static UpdatedDelegate UpdatedCallback;
+		public string ErrorMsg {
+			get  {
+				IntPtr raw_ret = rc_pending_get_error_msg(Handle);
+				string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
+				return ret;
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern IntPtr rc_pending_get_messages(IntPtr raw);
+
+		public GLib.SList Messages {
+			get  {
+				IntPtr raw_ret = rc_pending_get_messages(Handle);
+				GLib.SList ret = new GLib.SList(raw_ret);
+				return ret;
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern int rc_pending_get_total_size(IntPtr raw);
+
+		public int TotalSize {
+			get  {
+				int raw_ret = rc_pending_get_total_size(Handle);
+				int ret = raw_ret;
+				return ret;
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern int rc_pending_get_completed_size(IntPtr raw);
+
+		public int CompletedSize {
+			get  {
+				int raw_ret = rc_pending_get_completed_size(Handle);
+				int ret = raw_ret;
+				return ret;
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern IntPtr rc_pending_get_last_time(IntPtr raw);
+
+		public System.DateTime LastTime {
+			get  {
+				IntPtr raw_ret = rc_pending_get_last_time(Handle);
+				System.DateTime ret = GLib.Marshaller.time_tToDateTime (raw_ret);
+				return ret;
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern IntPtr rc_pending_get_description(IntPtr raw);
+
+		[DllImport("libredcarpet")]
+		static extern void rc_pending_set_description(IntPtr raw, IntPtr desc);
+
+		public string Description {
+			get  {
+				IntPtr raw_ret = rc_pending_get_description(Handle);
+				string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
+				return ret;
+			}
+			set  {
+				IntPtr desc_as_native = GLib.Marshaller.StringToPtrGStrdup (value);
+				rc_pending_set_description(Handle, desc_as_native);
+				GLib.Marshaller.Free (desc_as_native);
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern IntPtr rc_pending_get_start_time(IntPtr raw);
+
+		public System.DateTime StartTime {
+			get  {
+				IntPtr raw_ret = rc_pending_get_start_time(Handle);
+				System.DateTime ret = GLib.Marshaller.time_tToDateTime (raw_ret);
+				return ret;
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern int rc_pending_get_status(IntPtr raw);
+
+		public RC.PendingStatus Status {
+			get  {
+				int raw_ret = rc_pending_get_status(Handle);
+				RC.PendingStatus ret = (RC.PendingStatus) raw_ret;
+				return ret;
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern int rc_pending_get_id(IntPtr raw);
+
+		public int Id {
+			get  {
+				int raw_ret = rc_pending_get_id(Handle);
+				int ret = raw_ret;
+				return ret;
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern double rc_pending_get_percent_complete(IntPtr raw);
+
+		public double PercentComplete {
+			get  {
+				double raw_ret = rc_pending_get_percent_complete(Handle);
+				double ret = raw_ret;
+				return ret;
+			}
+		}
+
+		[GLib.CDeclCallback]
+		delegate void UpdatedVMDelegate (IntPtr arg1);
+
+		static UpdatedVMDelegate UpdatedVMCallback;
 
 		static void updated_cb (IntPtr arg1)
 		{
-			Pending obj = GLib.Object.GetObject (arg1, false) as Pending;
-			obj.OnUpdated ();
+			Pending arg1_managed = GLib.Object.GetObject (arg1, false) as Pending;
+			arg1_managed.OnUpdated ();
 		}
 
 		private static void OverrideUpdated (GLib.GType gtype)
 		{
-			if (UpdatedCallback == null)
-				UpdatedCallback = new UpdatedDelegate (updated_cb);
-			OverrideVirtualMethod (gtype, "update", UpdatedCallback);
+			if (UpdatedVMCallback == null)
+				UpdatedVMCallback = new UpdatedVMDelegate (updated_cb);
+			OverrideVirtualMethod (gtype, "update", UpdatedVMCallback);
 		}
 
 		[GLib.DefaultSignalHandler(Type=typeof(RC.Pending), ConnectionMethod="OverrideUpdated")]
@@ -56,61 +177,38 @@ namespace RC {
 			vals [0] = new GLib.Value (this);
 			inst_and_params.Append (vals [0]);
 			g_signal_chain_from_overridden (inst_and_params.ArrayPtr, ref ret);
+			foreach (GLib.Value v in vals)
+				v.Dispose ();
 		}
 
 		[GLib.Signal("update")]
 		public event System.EventHandler Updated {
 			add {
-				if (value.Method.GetCustomAttributes(typeof(GLib.ConnectBeforeAttribute), false).Length > 0) {
-					if (BeforeHandlers["update"] == null)
-						BeforeSignals["update"] = new RCSharp.voidObjectSignal(this, "update", value, typeof (System.EventArgs), 0);
-					else
-						((GLib.SignalCallback) BeforeSignals ["update"]).AddDelegate (value);
-					BeforeHandlers.AddHandler("update", value);
-				} else {
-					if (AfterHandlers["update"] == null)
-						AfterSignals["update"] = new RCSharp.voidObjectSignal(this, "update", value, typeof (System.EventArgs), 1);
-					else
-						((GLib.SignalCallback) AfterSignals ["update"]).AddDelegate (value);
-					AfterHandlers.AddHandler("update", value);
-				}
+				GLib.Signal sig = GLib.Signal.Lookup (this, "update");
+				sig.AddDelegate (value);
 			}
 			remove {
-				System.ComponentModel.EventHandlerList event_list = AfterHandlers;
-				Hashtable signals = AfterSignals;
-				if (value.Method.GetCustomAttributes(typeof(GLib.ConnectBeforeAttribute), false).Length > 0) {
-					event_list = BeforeHandlers;
-					signals = BeforeSignals;
-				}
-				GLib.SignalCallback cb = signals ["update"] as GLib.SignalCallback;
-				event_list.RemoveHandler("update", value);
-				if (cb == null)
-					return;
-
-				cb.RemoveDelegate (value);
-
-				if (event_list["update"] == null) {
-					signals.Remove("update");
-					cb.Dispose ();
-				}
+				GLib.Signal sig = GLib.Signal.Lookup (this, "update");
+				sig.RemoveDelegate (value);
 			}
 		}
 
-		delegate void MessageDelegate (IntPtr arg1);
+		[GLib.CDeclCallback]
+		delegate void MessageVMDelegate (IntPtr arg1);
 
-		static MessageDelegate MessageCallback;
+		static MessageVMDelegate MessageVMCallback;
 
 		static void message_cb (IntPtr arg1)
 		{
-			Pending obj = GLib.Object.GetObject (arg1, false) as Pending;
-			obj.OnMessage ();
+			Pending arg1_managed = GLib.Object.GetObject (arg1, false) as Pending;
+			arg1_managed.OnMessage ();
 		}
 
 		private static void OverrideMessage (GLib.GType gtype)
 		{
-			if (MessageCallback == null)
-				MessageCallback = new MessageDelegate (message_cb);
-			OverrideVirtualMethod (gtype, "message", MessageCallback);
+			if (MessageVMCallback == null)
+				MessageVMCallback = new MessageVMDelegate (message_cb);
+			OverrideVirtualMethod (gtype, "message", MessageVMCallback);
 		}
 
 		[GLib.DefaultSignalHandler(Type=typeof(RC.Pending), ConnectionMethod="OverrideMessage")]
@@ -122,61 +220,38 @@ namespace RC {
 			vals [0] = new GLib.Value (this);
 			inst_and_params.Append (vals [0]);
 			g_signal_chain_from_overridden (inst_and_params.ArrayPtr, ref ret);
+			foreach (GLib.Value v in vals)
+				v.Dispose ();
 		}
 
 		[GLib.Signal("message")]
 		public event System.EventHandler Message {
 			add {
-				if (value.Method.GetCustomAttributes(typeof(GLib.ConnectBeforeAttribute), false).Length > 0) {
-					if (BeforeHandlers["message"] == null)
-						BeforeSignals["message"] = new RCSharp.voidObjectSignal(this, "message", value, typeof (System.EventArgs), 0);
-					else
-						((GLib.SignalCallback) BeforeSignals ["message"]).AddDelegate (value);
-					BeforeHandlers.AddHandler("message", value);
-				} else {
-					if (AfterHandlers["message"] == null)
-						AfterSignals["message"] = new RCSharp.voidObjectSignal(this, "message", value, typeof (System.EventArgs), 1);
-					else
-						((GLib.SignalCallback) AfterSignals ["message"]).AddDelegate (value);
-					AfterHandlers.AddHandler("message", value);
-				}
+				GLib.Signal sig = GLib.Signal.Lookup (this, "message");
+				sig.AddDelegate (value);
 			}
 			remove {
-				System.ComponentModel.EventHandlerList event_list = AfterHandlers;
-				Hashtable signals = AfterSignals;
-				if (value.Method.GetCustomAttributes(typeof(GLib.ConnectBeforeAttribute), false).Length > 0) {
-					event_list = BeforeHandlers;
-					signals = BeforeSignals;
-				}
-				GLib.SignalCallback cb = signals ["message"] as GLib.SignalCallback;
-				event_list.RemoveHandler("message", value);
-				if (cb == null)
-					return;
-
-				cb.RemoveDelegate (value);
-
-				if (event_list["message"] == null) {
-					signals.Remove("message");
-					cb.Dispose ();
-				}
+				GLib.Signal sig = GLib.Signal.Lookup (this, "message");
+				sig.RemoveDelegate (value);
 			}
 		}
 
-		delegate void CompleteDelegate (IntPtr arg1);
+		[GLib.CDeclCallback]
+		delegate void CompleteVMDelegate (IntPtr arg1);
 
-		static CompleteDelegate CompleteCallback;
+		static CompleteVMDelegate CompleteVMCallback;
 
 		static void complete_cb (IntPtr arg1)
 		{
-			Pending obj = GLib.Object.GetObject (arg1, false) as Pending;
-			obj.OnComplete ();
+			Pending arg1_managed = GLib.Object.GetObject (arg1, false) as Pending;
+			arg1_managed.OnComplete ();
 		}
 
 		private static void OverrideComplete (GLib.GType gtype)
 		{
-			if (CompleteCallback == null)
-				CompleteCallback = new CompleteDelegate (complete_cb);
-			OverrideVirtualMethod (gtype, "complete", CompleteCallback);
+			if (CompleteVMCallback == null)
+				CompleteVMCallback = new CompleteVMDelegate (complete_cb);
+			OverrideVirtualMethod (gtype, "complete", CompleteVMCallback);
 		}
 
 		[GLib.DefaultSignalHandler(Type=typeof(RC.Pending), ConnectionMethod="OverrideComplete")]
@@ -188,43 +263,19 @@ namespace RC {
 			vals [0] = new GLib.Value (this);
 			inst_and_params.Append (vals [0]);
 			g_signal_chain_from_overridden (inst_and_params.ArrayPtr, ref ret);
+			foreach (GLib.Value v in vals)
+				v.Dispose ();
 		}
 
 		[GLib.Signal("complete")]
 		public event System.EventHandler Complete {
 			add {
-				if (value.Method.GetCustomAttributes(typeof(GLib.ConnectBeforeAttribute), false).Length > 0) {
-					if (BeforeHandlers["complete"] == null)
-						BeforeSignals["complete"] = new RCSharp.voidObjectSignal(this, "complete", value, typeof (System.EventArgs), 0);
-					else
-						((GLib.SignalCallback) BeforeSignals ["complete"]).AddDelegate (value);
-					BeforeHandlers.AddHandler("complete", value);
-				} else {
-					if (AfterHandlers["complete"] == null)
-						AfterSignals["complete"] = new RCSharp.voidObjectSignal(this, "complete", value, typeof (System.EventArgs), 1);
-					else
-						((GLib.SignalCallback) AfterSignals ["complete"]).AddDelegate (value);
-					AfterHandlers.AddHandler("complete", value);
-				}
+				GLib.Signal sig = GLib.Signal.Lookup (this, "complete");
+				sig.AddDelegate (value);
 			}
 			remove {
-				System.ComponentModel.EventHandlerList event_list = AfterHandlers;
-				Hashtable signals = AfterSignals;
-				if (value.Method.GetCustomAttributes(typeof(GLib.ConnectBeforeAttribute), false).Length > 0) {
-					event_list = BeforeHandlers;
-					signals = BeforeSignals;
-				}
-				GLib.SignalCallback cb = signals ["complete"] as GLib.SignalCallback;
-				event_list.RemoveHandler("complete", value);
-				if (cb == null)
-					return;
-
-				cb.RemoveDelegate (value);
-
-				if (event_list["complete"] == null) {
-					signals.Remove("complete");
-					cb.Dispose ();
-				}
+				GLib.Signal sig = GLib.Signal.Lookup (this, "complete");
+				sig.RemoveDelegate (value);
 			}
 		}
 
@@ -236,33 +287,11 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern int rc_pending_get_id(IntPtr raw);
-
-		public int Id { 
-			get {
-				int raw_ret = rc_pending_get_id(Handle);
-				int ret = raw_ret;
-				return ret;
-			}
-		}
-
-		[DllImport("libredcarpet")]
 		static extern int rc_pending_get_elapsed_secs(IntPtr raw);
 
 		public int ElapsedSecs { 
 			get {
 				int raw_ret = rc_pending_get_elapsed_secs(Handle);
-				int ret = raw_ret;
-				return ret;
-			}
-		}
-
-		[DllImport("libredcarpet")]
-		static extern int rc_pending_get_total_size(IntPtr raw);
-
-		public int TotalSize { 
-			get {
-				int raw_ret = rc_pending_get_total_size(Handle);
 				int ret = raw_ret;
 				return ret;
 			}
@@ -298,10 +327,12 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern void rc_pending_add_message(IntPtr raw, string message);
+		static extern void rc_pending_add_message(IntPtr raw, IntPtr message);
 
 		public void AddMessage(string message) {
-			rc_pending_add_message(Handle, message);
+			IntPtr message_as_native = GLib.Marshaller.StringToPtrGStrdup (message);
+			rc_pending_add_message(Handle, message_as_native);
+			GLib.Marshaller.Free (message_as_native);
 		}
 
 		[DllImport("libredcarpet")]
@@ -323,30 +354,8 @@ namespace RC {
 
 		public static string StatusToString(RC.PendingStatus status) {
 			IntPtr raw_ret = rc_pending_status_to_string((int) status);
-			string ret = Marshal.PtrToStringAnsi(raw_ret);
+			string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
 			return ret;
-		}
-
-		[DllImport("libredcarpet")]
-		static extern int rc_pending_get_completed_size(IntPtr raw);
-
-		public int CompletedSize { 
-			get {
-				int raw_ret = rc_pending_get_completed_size(Handle);
-				int ret = raw_ret;
-				return ret;
-			}
-		}
-
-		[DllImport("libredcarpet")]
-		static extern IntPtr rc_pending_get_last_time(IntPtr raw);
-
-		public System.DateTime LastTime { 
-			get {
-				IntPtr raw_ret = rc_pending_get_last_time(Handle);
-				System.DateTime ret = GLib.Marshaller.time_tToDateTime (raw_ret);
-				return ret;
-			}
 		}
 
 		[DllImport("libredcarpet")]
@@ -379,43 +388,12 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_pending_get_messages(IntPtr raw);
-
-		public GLib.SList Messages { 
-			get {
-				IntPtr raw_ret = rc_pending_get_messages(Handle);
-				GLib.SList ret = new GLib.SList(raw_ret);
-				return ret;
-			}
-		}
-
-		[DllImport("libredcarpet")]
-		static extern void rc_pending_fail(IntPtr raw, int retval, string error_msg);
+		static extern void rc_pending_fail(IntPtr raw, int retval, IntPtr error_msg);
 
 		public void Fail(int retval, string error_msg) {
-			rc_pending_fail(Handle, retval, error_msg);
-		}
-
-		[DllImport("libredcarpet")]
-		static extern int rc_pending_get_status(IntPtr raw);
-
-		public RC.PendingStatus Status { 
-			get {
-				int raw_ret = rc_pending_get_status(Handle);
-				RC.PendingStatus ret = (RC.PendingStatus) raw_ret;
-				return ret;
-			}
-		}
-
-		[DllImport("libredcarpet")]
-		static extern IntPtr rc_pending_get_error_msg(IntPtr raw);
-
-		public string ErrorMsg { 
-			get {
-				IntPtr raw_ret = rc_pending_get_error_msg(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
-				return ret;
-			}
+			IntPtr error_msg_as_native = GLib.Marshaller.StringToPtrGStrdup (error_msg);
+			rc_pending_fail(Handle, retval, error_msg_as_native);
+			GLib.Marshaller.Free (error_msg_as_native);
 		}
 
 		[DllImport("libredcarpet")]
@@ -423,51 +401,8 @@ namespace RC {
 
 		public static RC.Pending LookupById(int id) {
 			IntPtr raw_ret = rc_pending_lookup_by_id(id);
-			RC.Pending ret;
-			if (raw_ret == IntPtr.Zero)
-				ret = null;
-			else
-				ret = (RC.Pending) GLib.Object.GetObject(raw_ret);
+			RC.Pending ret = GLib.Object.GetObject(raw_ret) as RC.Pending;
 			return ret;
-		}
-
-		[DllImport("libredcarpet")]
-		static extern IntPtr rc_pending_get_description(IntPtr raw);
-
-		[DllImport("libredcarpet")]
-		static extern void rc_pending_set_description(IntPtr raw, string desc);
-
-		public string Description { 
-			get {
-				IntPtr raw_ret = rc_pending_get_description(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
-				return ret;
-			}
-			set {
-				rc_pending_set_description(Handle, value);
-			}
-		}
-
-		[DllImport("libredcarpet")]
-		static extern IntPtr rc_pending_get_start_time(IntPtr raw);
-
-		public System.DateTime StartTime { 
-			get {
-				IntPtr raw_ret = rc_pending_get_start_time(Handle);
-				System.DateTime ret = GLib.Marshaller.time_tToDateTime (raw_ret);
-				return ret;
-			}
-		}
-
-		[DllImport("libredcarpet")]
-		static extern double rc_pending_get_percent_complete(IntPtr raw);
-
-		public double PercentComplete { 
-			get {
-				double raw_ret = rc_pending_get_percent_complete(Handle);
-				double ret = raw_ret;
-				return ret;
-			}
 		}
 
 		[DllImport("libredcarpet")]
@@ -487,7 +422,7 @@ namespace RC {
 		public string LatestMessage { 
 			get {
 				IntPtr raw_ret = rc_pending_get_latest_message(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
+				string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
 				return ret;
 			}
 		}

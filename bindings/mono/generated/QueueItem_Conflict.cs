@@ -11,28 +11,48 @@ namespace RC {
 	[StructLayout(LayoutKind.Sequential)]
 	public struct QueueItem_Conflict {
 
-		public RC.QueueItem Parent;
-		private IntPtr _dep;
-
-		public RC.PackageDep dep {
-			get { 
-				RC.PackageDep ret = new RC.PackageDep(_dep);
-				if (ret == null) ret = new RC.PackageDep(_dep);
-				return ret;
+		private IntPtr _parent;
+		public RC.QueueItem Parent {
+			get {
+				return _parent == IntPtr.Zero ? null : (RC.QueueItem) GLib.Opaque.GetOpaque (_parent, typeof (RC.QueueItem), false);
 			}
-			set { _dep = value.Handle; }
+			set {
+				_parent = value == null ? IntPtr.Zero : value.Handle;
+			}
+		}
+		private IntPtr _dep;
+		public RC.PackageDep Dep {
+			get {
+				return _dep == IntPtr.Zero ? null : (RC.PackageDep) GLib.Opaque.GetOpaque (_dep, typeof (RC.PackageDep), false);
+			}
+			set {
+				_dep = value == null ? IntPtr.Zero : value.Handle;
+			}
 		}
 		private IntPtr _conflicting_package;
-
-		public RC.Package conflicting_package {
-			get { 
-				RC.Package ret = new RC.Package(_conflicting_package);
-				if (ret == null) ret = new RC.Package(_conflicting_package);
-				return ret;
+		public RC.Package ConflictingPackage {
+			get {
+				return _conflicting_package == IntPtr.Zero ? null : (RC.Package) GLib.Opaque.GetOpaque (_conflicting_package, typeof (RC.Package), false);
 			}
-			set { _conflicting_package = value.Handle; }
+			set {
+				_conflicting_package = value == null ? IntPtr.Zero : value.Handle;
+			}
 		}
 		private uint _bitfield0;
+
+		[DllImport ("libredcarpetsharpglue-0")]
+		extern static bool rcsharp_rc_queueitem_conflict_get_actually_an_obsolete (ref RC.QueueItem_Conflict raw);
+		[DllImport ("libredcarpetsharpglue-0")]
+		extern static void rcsharp_rc_queueitem_conflict_set_actually_an_obsolete (ref RC.QueueItem_Conflict raw, bool value);
+		public bool ActuallyAnObsolete {
+			get {
+				return rcsharp_rc_queueitem_conflict_get_actually_an_obsolete (ref this);
+			}
+			set {
+				rcsharp_rc_queueitem_conflict_set_actually_an_obsolete (ref this, value);
+			}
+		}
+
 
 		public static RC.QueueItem_Conflict Zero = new RC.QueueItem_Conflict ();
 

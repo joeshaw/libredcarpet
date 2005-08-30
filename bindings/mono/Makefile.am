@@ -1,3 +1,5 @@
+SUBDIRS = . glue
+
 SOURCES=libredcarpet-sources.xml
 API=libredcarpet-api.xml
 MCS=mcs
@@ -19,10 +21,13 @@ $(API):
 update-generated: $(API) RC.metadata
 	$(GAPI_FIXUP) --api=$(API) --metadata=RC.metadata && \
 	$(GAPI_CODEGEN) --generate $(API) --outdir=generated \
-	--customdir=. --assembly-name=libredcarpet-sharp && touch generated-stamp
+	--customdir=. --assembly-name=libredcarpet-sharp \
+	--gluelib-name=libredcarpetsharpglue-0 --glue-filename=glue/generated.c \
+	--glue-includes=libredcarpet.h && \
+	touch generated-stamp
 
-$(ASSEMBLY): generated/*.cs
-	$(MCS) --unsafe -target:library -pkg:gtk-sharp -o $(ASSEMBLY) --recurse '*.cs'
+$(ASSEMBLY): generated-stamp
+	$(MCS) -unsafe -target:library -pkg:gtk-sharp-2.0 -out:$(ASSEMBLY) -recurse:'*.cs'
 
 update-docs:
 	$(DOC_UPDATER) $(ASSEMBLY) -o en -f

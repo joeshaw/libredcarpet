@@ -13,7 +13,6 @@ namespace RC {
 
 		private IntPtr _data;
 		private UIntPtr size;
-
 		public ulong Size {
 			get {
 				return (ulong) size;
@@ -43,11 +42,13 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_buffer_map_file(string filename);
+		static extern IntPtr rc_buffer_map_file(IntPtr filename);
 
 		public static RC.Buffer MapFile(string filename) {
-			IntPtr raw_ret = rc_buffer_map_file(filename);
+			IntPtr filename_as_native = GLib.Marshaller.StringToPtrGStrdup (filename);
+			IntPtr raw_ret = rc_buffer_map_file(filename_as_native);
 			RC.Buffer ret = RC.Buffer.New (raw_ret);
+			GLib.Marshaller.Free (filename_as_native);
 			return ret;
 		}
 

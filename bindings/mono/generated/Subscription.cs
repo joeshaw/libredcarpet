@@ -13,17 +13,19 @@ namespace RC {
 		static extern bool rc_subscription_get_status(IntPtr channel);
 
 		public static bool GetStatus(RC.Channel channel) {
-			bool raw_ret = rc_subscription_get_status(channel.Handle);
+			bool raw_ret = rc_subscription_get_status(channel == null ? IntPtr.Zero : channel.Handle);
 			bool ret = raw_ret;
 			return ret;
 		}
 
 		[DllImport("libredcarpet")]
-		static extern void rc_subscription_set_file(string file);
+		static extern void rc_subscription_set_file(IntPtr file);
 
 		public static string File { 
 			set {
-				rc_subscription_set_file(value);
+				IntPtr file_as_native = GLib.Marshaller.StringToPtrGStrdup (value);
+				rc_subscription_set_file(file_as_native);
+				GLib.Marshaller.Free (file_as_native);
 			}
 		}
 
@@ -31,7 +33,7 @@ namespace RC {
 		static extern void rc_subscription_set_status(IntPtr channel, bool channel_is_subscribed);
 
 		public static void SetStatus(RC.Channel channel, bool channel_is_subscribed) {
-			rc_subscription_set_status(channel.Handle, channel_is_subscribed);
+			rc_subscription_set_status(channel == null ? IntPtr.Zero : channel.Handle, channel_is_subscribed);
 		}
 
 #endregion

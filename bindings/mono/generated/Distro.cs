@@ -27,7 +27,7 @@ namespace RC {
 		public string Name { 
 			get {
 				IntPtr raw_ret = rc_distro_get_name(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
+				string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
 				return ret;
 			}
 		}
@@ -49,21 +49,19 @@ namespace RC {
 		public string Target { 
 			get {
 				IntPtr raw_ret = rc_distro_get_target(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
+				string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
 				return ret;
 			}
 		}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_distro_parse_xml(string xml_buf, uint compressed_length);
+		static extern IntPtr rc_distro_parse_xml(IntPtr xml_buf, uint compressed_length);
 
 		public static RC.Distro ParseXml(string xml_buf) {
-			IntPtr raw_ret = rc_distro_parse_xml(xml_buf, (uint) xml_buf.Length);
-			RC.Distro ret;
-			if (raw_ret == IntPtr.Zero)
-				ret = null;
-			else
-				ret = new RC.Distro(raw_ret);
+			IntPtr xml_buf_as_native = GLib.Marshaller.StringToPtrGStrdup (xml_buf);
+			IntPtr raw_ret = rc_distro_parse_xml(xml_buf_as_native, (uint) xml_buf.Length);
+			RC.Distro ret = raw_ret == IntPtr.Zero ? null : (RC.Distro) GLib.Opaque.GetOpaque (raw_ret, typeof (RC.Distro), false);
+			GLib.Marshaller.Free (xml_buf_as_native);
 			return ret;
 		}
 
@@ -73,7 +71,7 @@ namespace RC {
 		public string Role { 
 			get {
 				IntPtr raw_ret = rc_distro_get_role(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
+				string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
 				return ret;
 			}
 		}
@@ -87,13 +85,6 @@ namespace RC {
 				RC.DistroPackageType ret = (RC.DistroPackageType) raw_ret;
 				return ret;
 			}
-		}
-
-		[DllImport("libredcarpet")]
-		static extern void rc_distro_free(IntPtr raw);
-
-		public void Free() {
-			rc_distro_free(Handle);
 		}
 
 		[DllImport("libredcarpet")]
@@ -113,11 +104,7 @@ namespace RC {
 		public static RC.Distro Current { 
 			get {
 				IntPtr raw_ret = rc_distro_get_current();
-				RC.Distro ret;
-				if (raw_ret == IntPtr.Zero)
-					ret = null;
-				else
-					ret = new RC.Distro(raw_ret);
+				RC.Distro ret = raw_ret == IntPtr.Zero ? null : (RC.Distro) GLib.Opaque.GetOpaque (raw_ret, typeof (RC.Distro), false);
 				return ret;
 			}
 		}
@@ -128,19 +115,27 @@ namespace RC {
 		public string Version { 
 			get {
 				IntPtr raw_ret = rc_distro_get_version(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
+				string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
 				return ret;
 			}
 		}
 
 		public Distro(IntPtr raw) : base(raw) {}
 
+		[DllImport("libredcarpet")]
+		static extern void rc_distro_free(IntPtr raw);
+
+		protected override void Free (IntPtr raw)
+		{
+			rc_distro_free (raw);
+		}
+
 #endregion
 #region Customized extensions
 #line 1 "Distro.custom"
 
 public static RC.Distro ParseXml () {
-    IntPtr raw_ret = rc_distro_parse_xml(null, 0);
+    IntPtr raw_ret = rc_distro_parse_xml(IntPtr.Zero, 0);
     RC.Distro ret = new RC.Distro(raw_ret);
 
     return ret;

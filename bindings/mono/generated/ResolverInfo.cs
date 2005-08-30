@@ -13,31 +13,30 @@ namespace RC {
 
 		public RC.ResolverInfoType Type;
 		private IntPtr _package;
-
-		public RC.Package package {
-			get { 
-				RC.Package ret = new RC.Package(_package);
-				if (ret == null) ret = new RC.Package(_package);
-				return ret;
+		public RC.Package Package {
+			get {
+				return _package == IntPtr.Zero ? null : (RC.Package) GLib.Opaque.GetOpaque (_package, typeof (RC.Package), false);
 			}
-			set { _package = value.Handle; }
+			set {
+				_package = value == null ? IntPtr.Zero : value.Handle;
+			}
 		}
 		public int Priority;
 		private IntPtr _package_list;
 		private IntPtr _missing_req;
-
-		public RC.PackageDep missing_req {
-			get { 
-				RC.PackageDep ret = new RC.PackageDep(_missing_req);
-				if (ret == null) ret = new RC.PackageDep(_missing_req);
-				return ret;
+		public RC.PackageDep MissingReq {
+			get {
+				return _missing_req == IntPtr.Zero ? null : (RC.PackageDep) GLib.Opaque.GetOpaque (_missing_req, typeof (RC.PackageDep), false);
 			}
-			set { _missing_req = value.Handle; }
+			set {
+				_missing_req = value == null ? IntPtr.Zero : value.Handle;
+			}
 		}
 		public string Msg;
 		public string Action;
 		public string Trigger;
 		private uint _bitfield0;
+
 
 		public static RC.ResolverInfo Zero = new RC.ResolverInfo ();
 
@@ -72,42 +71,44 @@ namespace RC {
 		static extern IntPtr rc_resolver_info_child_of_new(IntPtr package, IntPtr dependency);
 
 		public static RC.ResolverInfo ChildOfNew(RC.Package package, RC.Package dependency) {
-			IntPtr raw_ret = rc_resolver_info_child_of_new(package.Handle, dependency.Handle);
+			IntPtr raw_ret = rc_resolver_info_child_of_new(package == null ? IntPtr.Zero : package.Handle, dependency == null ? IntPtr.Zero : dependency.Handle);
 			RC.ResolverInfo ret = RC.ResolverInfo.New (raw_ret);
 			return ret;
 		}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_resolver_info_misc_new(IntPtr package, int priority, string msg);
+		static extern IntPtr rc_resolver_info_misc_new(IntPtr package, int priority, IntPtr msg);
 
 		public static RC.ResolverInfo MiscNew(RC.Package package, int priority, string msg) {
-			IntPtr raw_ret = rc_resolver_info_misc_new(package.Handle, priority, msg);
+			IntPtr raw_ret = rc_resolver_info_misc_new(package == null ? IntPtr.Zero : package.Handle, priority, GLib.Marshaller.StringToPtrGStrdup(msg));
 			RC.ResolverInfo ret = RC.ResolverInfo.New (raw_ret);
 			return ret;
 		}
 
 		[DllImport("libredcarpet")]
-		static extern void rc_resolver_info_misc_add_action(ref RC.ResolverInfo raw, string action_msg);
+		static extern void rc_resolver_info_misc_add_action(ref RC.ResolverInfo raw, IntPtr action_msg);
 
 		public void MiscAddAction(string action_msg) {
-			rc_resolver_info_misc_add_action(ref this, action_msg);
+			rc_resolver_info_misc_add_action(ref this, GLib.Marshaller.StringToPtrGStrdup(action_msg));
 		}
 
 		[DllImport("libredcarpet")]
 		static extern bool rc_resolver_info_is_about(ref RC.ResolverInfo raw, IntPtr arg1);
 
 		public bool IsAbout(RC.Package arg1) {
-			bool raw_ret = rc_resolver_info_is_about(ref this, arg1.Handle);
+			bool raw_ret = rc_resolver_info_is_about(ref this, arg1 == null ? IntPtr.Zero : arg1.Handle);
 			bool ret = raw_ret;
 			return ret;
 		}
 
 		[DllImport("libredcarpet")]
-		static extern int rc_resolver_info_type_from_string(string arg1);
+		static extern int rc_resolver_info_type_from_string(IntPtr arg1);
 
 		public static RC.ResolverInfoType TypeFromString(string arg1) {
-			int raw_ret = rc_resolver_info_type_from_string(arg1);
+			IntPtr arg1_as_native = GLib.Marshaller.StringToPtrGStrdup (arg1);
+			int raw_ret = rc_resolver_info_type_from_string(arg1_as_native);
 			RC.ResolverInfoType ret = (RC.ResolverInfoType) raw_ret;
+			GLib.Marshaller.Free (arg1_as_native);
 			return ret;
 		}
 
@@ -123,17 +124,17 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern void rc_resolver_info_misc_add_trigger(ref RC.ResolverInfo raw, string trigger_msg);
+		static extern void rc_resolver_info_misc_add_trigger(ref RC.ResolverInfo raw, IntPtr trigger_msg);
 
 		public void MiscAddTrigger(string trigger_msg) {
-			rc_resolver_info_misc_add_trigger(ref this, trigger_msg);
+			rc_resolver_info_misc_add_trigger(ref this, GLib.Marshaller.StringToPtrGStrdup(trigger_msg));
 		}
 
 		[DllImport("libredcarpet")]
 		static extern IntPtr rc_resolver_info_conflicts_with_new(IntPtr package, IntPtr conflicts_with);
 
 		public static RC.ResolverInfo ConflictsWithNew(RC.Package package, RC.Package conflicts_with) {
-			IntPtr raw_ret = rc_resolver_info_conflicts_with_new(package.Handle, conflicts_with.Handle);
+			IntPtr raw_ret = rc_resolver_info_conflicts_with_new(package == null ? IntPtr.Zero : package.Handle, conflicts_with == null ? IntPtr.Zero : conflicts_with.Handle);
 			RC.ResolverInfo ret = RC.ResolverInfo.New (raw_ret);
 			return ret;
 		}
@@ -160,7 +161,7 @@ namespace RC {
 		static extern bool rc_resolver_info_mentions(ref RC.ResolverInfo raw, IntPtr arg1);
 
 		public bool Mentions(RC.Package arg1) {
-			bool raw_ret = rc_resolver_info_mentions(ref this, arg1.Handle);
+			bool raw_ret = rc_resolver_info_mentions(ref this, arg1 == null ? IntPtr.Zero : arg1.Handle);
 			bool ret = raw_ret;
 			return ret;
 		}
@@ -169,7 +170,7 @@ namespace RC {
 		static extern IntPtr rc_resolver_info_depends_on_new(IntPtr package, IntPtr dependency);
 
 		public static RC.ResolverInfo DependsOnNew(RC.Package package, RC.Package dependency) {
-			IntPtr raw_ret = rc_resolver_info_depends_on_new(package.Handle, dependency.Handle);
+			IntPtr raw_ret = rc_resolver_info_depends_on_new(package == null ? IntPtr.Zero : package.Handle, dependency == null ? IntPtr.Zero : dependency.Handle);
 			RC.ResolverInfo ret = RC.ResolverInfo.New (raw_ret);
 			return ret;
 		}
@@ -178,7 +179,7 @@ namespace RC {
 		static extern IntPtr rc_resolver_info_obsoletes_new(IntPtr package, IntPtr obsoletes);
 
 		public static RC.ResolverInfo ObsoletesNew(RC.Package package, RC.Package obsoletes) {
-			IntPtr raw_ret = rc_resolver_info_obsoletes_new(package.Handle, obsoletes.Handle);
+			IntPtr raw_ret = rc_resolver_info_obsoletes_new(package == null ? IntPtr.Zero : package.Handle, obsoletes == null ? IntPtr.Zero : obsoletes.Handle);
 			RC.ResolverInfo ret = RC.ResolverInfo.New (raw_ret);
 			return ret;
 		}
@@ -187,7 +188,7 @@ namespace RC {
 		static extern IntPtr rc_resolver_info_needed_by_new(IntPtr package);
 
 		public static RC.ResolverInfo NeededByNew(RC.Package package) {
-			IntPtr raw_ret = rc_resolver_info_needed_by_new(package.Handle);
+			IntPtr raw_ret = rc_resolver_info_needed_by_new(package == null ? IntPtr.Zero : package.Handle);
 			RC.ResolverInfo ret = RC.ResolverInfo.New (raw_ret);
 			return ret;
 		}
@@ -203,7 +204,7 @@ namespace RC {
 		static extern IntPtr rc_resolver_info_missing_req_new(IntPtr package, IntPtr missing_req);
 
 		public static RC.ResolverInfo MissingReqNew(RC.Package package, RC.PackageDep missing_req) {
-			IntPtr raw_ret = rc_resolver_info_missing_req_new(package.Handle, missing_req.Handle);
+			IntPtr raw_ret = rc_resolver_info_missing_req_new(package == null ? IntPtr.Zero : package.Handle, missing_req == null ? IntPtr.Zero : missing_req.Handle);
 			RC.ResolverInfo ret = RC.ResolverInfo.New (raw_ret);
 			return ret;
 		}
@@ -212,7 +213,7 @@ namespace RC {
 		static extern void rc_resolver_info_add_related_package(ref RC.ResolverInfo raw, IntPtr arg1);
 
 		public void AddRelatedPackage(RC.Package arg1) {
-			rc_resolver_info_add_related_package(ref this, arg1.Handle);
+			rc_resolver_info_add_related_package(ref this, arg1 == null ? IntPtr.Zero : arg1.Handle);
 		}
 
 		[DllImport("libredcarpet")]
@@ -220,7 +221,7 @@ namespace RC {
 
 		public static string TypeToString(RC.ResolverInfoType arg1) {
 			IntPtr raw_ret = rc_resolver_info_type_to_string((int) arg1);
-			string ret = Marshal.PtrToStringAnsi(raw_ret);
+			string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
 			return ret;
 		}
 
@@ -251,7 +252,7 @@ namespace RC {
 		static extern void rc_resolver_info_needed_add(ref RC.ResolverInfo raw, IntPtr needed_by);
 
 		public void NeededAdd(RC.Package needed_by) {
-			rc_resolver_info_needed_add(ref this, needed_by.Handle);
+			rc_resolver_info_needed_add(ref this, needed_by == null ? IntPtr.Zero : needed_by.Handle);
 		}
 
 		[DllImport("libredcarpet")]

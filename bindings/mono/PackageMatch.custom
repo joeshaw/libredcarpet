@@ -39,7 +39,7 @@
         if (reader.LocalName == "dep") {
             PackageDep dep = new PackageDep (reader);
             match.Dep = dep;
-            dep.Unref ();
+            //dep.Unref ();
 
             // Move reader to start of next element
             while (reader.Read ())

@@ -10,48 +10,47 @@ namespace RC {
 	public class Extract {
 
 		[DllImport("libredcarpet")]
-		static extern int rc_extract_packages_from_helix_file(string filename, IntPtr channel, RCSharp.PackageDelegateNative cb, IntPtr user_data);
+		static extern int rc_extract_packages_from_helix_file(IntPtr filename, IntPtr channel, RCSharp.PackageDelegateNative cb, IntPtr user_data);
 
 		public static int PackagesFromHelixFile(string filename, RC.Channel channel, RC.PackageDelegate cb) {
-			RCSharp.PackageDelegateWrapper cb_wrapper = null;
-			cb_wrapper = new RCSharp.PackageDelegateWrapper (cb, null);
-			int raw_ret = rc_extract_packages_from_helix_file(filename, channel.Handle, cb_wrapper.NativeDelegate, IntPtr.Zero);
+			IntPtr filename_as_native = GLib.Marshaller.StringToPtrGStrdup (filename);
+			RCSharp.PackageDelegateWrapper cb_wrapper = new RCSharp.PackageDelegateWrapper (cb);
+			int raw_ret = rc_extract_packages_from_helix_file(filename_as_native, channel == null ? IntPtr.Zero : channel.Handle, cb_wrapper.NativeDelegate, IntPtr.Zero);
 			int ret = raw_ret;
+			GLib.Marshaller.Free (filename_as_native);
 			return ret;
 		}
 
 		[DllImport("libredcarpet")]
-		static extern int rc_extract_packages_from_directory(string path, IntPtr channel, IntPtr packman, bool recursive, RCSharp.PackageDelegateNative cb, IntPtr user_data);
+		static extern int rc_extract_packages_from_directory(IntPtr path, IntPtr channel, IntPtr packman, bool recursive, RCSharp.PackageDelegateNative cb, IntPtr user_data);
 
 		public static int PackagesFromDirectory(string path, RC.Channel channel, RC.Packman packman, bool recursive, RC.PackageDelegate cb) {
-			RCSharp.PackageDelegateWrapper cb_wrapper = null;
-			cb_wrapper = new RCSharp.PackageDelegateWrapper (cb, null);
-			int raw_ret = rc_extract_packages_from_directory(path, channel.Handle, packman.Handle, recursive, cb_wrapper.NativeDelegate, IntPtr.Zero);
+			IntPtr path_as_native = GLib.Marshaller.StringToPtrGStrdup (path);
+			RCSharp.PackageDelegateWrapper cb_wrapper = new RCSharp.PackageDelegateWrapper (cb);
+			int raw_ret = rc_extract_packages_from_directory(path_as_native, channel == null ? IntPtr.Zero : channel.Handle, packman == null ? IntPtr.Zero : packman.Handle, recursive, cb_wrapper.NativeDelegate, IntPtr.Zero);
 			int ret = raw_ret;
+			GLib.Marshaller.Free (path_as_native);
 			return ret;
 		}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_extract_yum_package(out byte data, int len, IntPtr packman, string url);
+		static extern IntPtr rc_extract_yum_package(out byte data, int len, IntPtr packman, IntPtr url);
 
 		public static RC.Package YumPackage(out byte data, int len, RC.Packman packman, string url) {
-			IntPtr raw_ret = rc_extract_yum_package(out data, len, packman.Handle, url);
-			RC.Package ret;
-			if (raw_ret == IntPtr.Zero)
-				ret = null;
-			else
-				ret = new RC.Package(raw_ret);
+			IntPtr raw_ret = rc_extract_yum_package(out data, len, packman == null ? IntPtr.Zero : packman.Handle, GLib.Marshaller.StringToPtrGStrdup(url));
+			RC.Package ret = raw_ret == IntPtr.Zero ? null : (RC.Package) GLib.Opaque.GetOpaque (raw_ret, typeof (RC.Package), false);
 			return ret;
 		}
 
 		[DllImport("libredcarpet")]
-		static extern int rc_extract_packages_from_debian_file(string filename, IntPtr channel, RCSharp.PackageDelegateNative cb, IntPtr user_data);
+		static extern int rc_extract_packages_from_debian_file(IntPtr filename, IntPtr channel, RCSharp.PackageDelegateNative cb, IntPtr user_data);
 
 		public static int PackagesFromDebianFile(string filename, RC.Channel channel, RC.PackageDelegate cb) {
-			RCSharp.PackageDelegateWrapper cb_wrapper = null;
-			cb_wrapper = new RCSharp.PackageDelegateWrapper (cb, null);
-			int raw_ret = rc_extract_packages_from_debian_file(filename, channel.Handle, cb_wrapper.NativeDelegate, IntPtr.Zero);
+			IntPtr filename_as_native = GLib.Marshaller.StringToPtrGStrdup (filename);
+			RCSharp.PackageDelegateWrapper cb_wrapper = new RCSharp.PackageDelegateWrapper (cb);
+			int raw_ret = rc_extract_packages_from_debian_file(filename_as_native, channel == null ? IntPtr.Zero : channel.Handle, cb_wrapper.NativeDelegate, IntPtr.Zero);
 			int ret = raw_ret;
+			GLib.Marshaller.Free (filename_as_native);
 			return ret;
 		}
 
@@ -59,12 +58,9 @@ namespace RC {
 		static extern int rc_extract_packages_from_undump_buffer(out byte data, int len, RCSharp.ChannelAndSubdFnNative channel_callback, RCSharp.PackageDelegateNative package_callback, RCSharp.PackageMatchDelegateNative lock_callback, IntPtr user_data);
 
 		public static int PackagesFromUndumpBuffer(out byte data, int len, RC.ChannelAndSubdFn channel_callback, RC.PackageDelegate package_callback, RC.PackageMatchDelegate lock_callback) {
-			RCSharp.ChannelAndSubdFnWrapper channel_callback_wrapper = null;
-			channel_callback_wrapper = new RCSharp.ChannelAndSubdFnWrapper (channel_callback, null);
-			RCSharp.PackageDelegateWrapper package_callback_wrapper = null;
-			package_callback_wrapper = new RCSharp.PackageDelegateWrapper (package_callback, null);
-			RCSharp.PackageMatchDelegateWrapper lock_callback_wrapper = null;
-			lock_callback_wrapper = new RCSharp.PackageMatchDelegateWrapper (lock_callback, null);
+			RCSharp.ChannelAndSubdFnWrapper channel_callback_wrapper = new RCSharp.ChannelAndSubdFnWrapper (channel_callback);
+			RCSharp.PackageDelegateWrapper package_callback_wrapper = new RCSharp.PackageDelegateWrapper (package_callback);
+			RCSharp.PackageMatchDelegateWrapper lock_callback_wrapper = new RCSharp.PackageMatchDelegateWrapper (lock_callback);
 			int raw_ret = rc_extract_packages_from_undump_buffer(out data, len, channel_callback_wrapper.NativeDelegate, package_callback_wrapper.NativeDelegate, lock_callback_wrapper.NativeDelegate, IntPtr.Zero);
 			int ret = raw_ret;
 			return ret;
@@ -74,8 +70,7 @@ namespace RC {
 		static extern int rc_extract_channels_from_helix_buffer(out byte data, int len, RCSharp.ChannelDelegateNative cb, IntPtr user_data);
 
 		public static int ChannelsFromHelixBuffer(out byte data, int len, RC.ChannelDelegate cb) {
-			RCSharp.ChannelDelegateWrapper cb_wrapper = null;
-			cb_wrapper = new RCSharp.ChannelDelegateWrapper (cb, null);
+			RCSharp.ChannelDelegateWrapper cb_wrapper = new RCSharp.ChannelDelegateWrapper (cb);
 			int raw_ret = rc_extract_channels_from_helix_buffer(out data, len, cb_wrapper.NativeDelegate, IntPtr.Zero);
 			int ret = raw_ret;
 			return ret;
@@ -85,36 +80,35 @@ namespace RC {
 		static extern int rc_extract_packages_from_aptrpm_buffer(out byte data, int len, IntPtr packman, IntPtr channel, RCSharp.PackageDelegateNative cb, IntPtr user_data);
 
 		public static int PackagesFromAptrpmBuffer(out byte data, int len, RC.Packman packman, RC.Channel channel, RC.PackageDelegate cb) {
-			RCSharp.PackageDelegateWrapper cb_wrapper = null;
-			cb_wrapper = new RCSharp.PackageDelegateWrapper (cb, null);
-			int raw_ret = rc_extract_packages_from_aptrpm_buffer(out data, len, packman.Handle, channel.Handle, cb_wrapper.NativeDelegate, IntPtr.Zero);
+			RCSharp.PackageDelegateWrapper cb_wrapper = new RCSharp.PackageDelegateWrapper (cb);
+			int raw_ret = rc_extract_packages_from_aptrpm_buffer(out data, len, packman == null ? IntPtr.Zero : packman.Handle, channel == null ? IntPtr.Zero : channel.Handle, cb_wrapper.NativeDelegate, IntPtr.Zero);
 			int ret = raw_ret;
 			return ret;
 		}
 
 		[DllImport("libredcarpet")]
-		static extern int rc_extract_channels_from_helix_file(string filename, RCSharp.ChannelDelegateNative cb, IntPtr user_data);
+		static extern int rc_extract_channels_from_helix_file(IntPtr filename, RCSharp.ChannelDelegateNative cb, IntPtr user_data);
 
 		public static int ChannelsFromHelixFile(string filename, RC.ChannelDelegate cb) {
-			RCSharp.ChannelDelegateWrapper cb_wrapper = null;
-			cb_wrapper = new RCSharp.ChannelDelegateWrapper (cb, null);
-			int raw_ret = rc_extract_channels_from_helix_file(filename, cb_wrapper.NativeDelegate, IntPtr.Zero);
+			IntPtr filename_as_native = GLib.Marshaller.StringToPtrGStrdup (filename);
+			RCSharp.ChannelDelegateWrapper cb_wrapper = new RCSharp.ChannelDelegateWrapper (cb);
+			int raw_ret = rc_extract_channels_from_helix_file(filename_as_native, cb_wrapper.NativeDelegate, IntPtr.Zero);
 			int ret = raw_ret;
+			GLib.Marshaller.Free (filename_as_native);
 			return ret;
 		}
 
 		[DllImport("libredcarpet")]
-		static extern int rc_extract_packages_from_undump_file(string filename, RCSharp.ChannelAndSubdFnNative channel_callback, RCSharp.PackageDelegateNative package_callback, RCSharp.PackageMatchDelegateNative lock_callback, IntPtr user_data);
+		static extern int rc_extract_packages_from_undump_file(IntPtr filename, RCSharp.ChannelAndSubdFnNative channel_callback, RCSharp.PackageDelegateNative package_callback, RCSharp.PackageMatchDelegateNative lock_callback, IntPtr user_data);
 
 		public static int PackagesFromUndumpFile(string filename, RC.ChannelAndSubdFn channel_callback, RC.PackageDelegate package_callback, RC.PackageMatchDelegate lock_callback) {
-			RCSharp.ChannelAndSubdFnWrapper channel_callback_wrapper = null;
-			channel_callback_wrapper = new RCSharp.ChannelAndSubdFnWrapper (channel_callback, null);
-			RCSharp.PackageDelegateWrapper package_callback_wrapper = null;
-			package_callback_wrapper = new RCSharp.PackageDelegateWrapper (package_callback, null);
-			RCSharp.PackageMatchDelegateWrapper lock_callback_wrapper = null;
-			lock_callback_wrapper = new RCSharp.PackageMatchDelegateWrapper (lock_callback, null);
-			int raw_ret = rc_extract_packages_from_undump_file(filename, channel_callback_wrapper.NativeDelegate, package_callback_wrapper.NativeDelegate, lock_callback_wrapper.NativeDelegate, IntPtr.Zero);
+			IntPtr filename_as_native = GLib.Marshaller.StringToPtrGStrdup (filename);
+			RCSharp.ChannelAndSubdFnWrapper channel_callback_wrapper = new RCSharp.ChannelAndSubdFnWrapper (channel_callback);
+			RCSharp.PackageDelegateWrapper package_callback_wrapper = new RCSharp.PackageDelegateWrapper (package_callback);
+			RCSharp.PackageMatchDelegateWrapper lock_callback_wrapper = new RCSharp.PackageMatchDelegateWrapper (lock_callback);
+			int raw_ret = rc_extract_packages_from_undump_file(filename_as_native, channel_callback_wrapper.NativeDelegate, package_callback_wrapper.NativeDelegate, lock_callback_wrapper.NativeDelegate, IntPtr.Zero);
 			int ret = raw_ret;
+			GLib.Marshaller.Free (filename_as_native);
 			return ret;
 		}
 
@@ -122,9 +116,8 @@ namespace RC {
 		static extern int rc_extract_packages_from_debian_buffer(out byte data, int len, IntPtr channel, RCSharp.PackageDelegateNative cb, IntPtr user_data);
 
 		public static int PackagesFromDebianBuffer(out byte data, int len, RC.Channel channel, RC.PackageDelegate cb) {
-			RCSharp.PackageDelegateWrapper cb_wrapper = null;
-			cb_wrapper = new RCSharp.PackageDelegateWrapper (cb, null);
-			int raw_ret = rc_extract_packages_from_debian_buffer(out data, len, channel.Handle, cb_wrapper.NativeDelegate, IntPtr.Zero);
+			RCSharp.PackageDelegateWrapper cb_wrapper = new RCSharp.PackageDelegateWrapper (cb);
+			int raw_ret = rc_extract_packages_from_debian_buffer(out data, len, channel == null ? IntPtr.Zero : channel.Handle, cb_wrapper.NativeDelegate, IntPtr.Zero);
 			int ret = raw_ret;
 			return ret;
 		}
@@ -133,27 +126,34 @@ namespace RC {
 #region Customized extensions
 #line 1 "Extract.custom"
 
-		[DllImport("libredcarpet")]
-                static extern int rc_extract_packages_from_aptrpm_file(string filename, IntPtr packman, IntPtr channel, RCSharp.PackageDelegateNative cb, IntPtr user_data);
+        [DllImport("libredcarpet")]
+        static extern int rc_extract_packages_from_aptrpm_file (string filename, IntPtr packman, IntPtr channel,
+                                                                RCSharp.PackageDelegateNative cb, IntPtr user_data);
 
-		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.Synchronized)]
-		public static int PackagesFromAptrpmFile(string filename, RC.Packman packman, RC.Channel channel, RC.PackageDelegate cb) {
-                        RCSharp.PackageDelegateWrapper cb_wrapper = null;                         cb_wrapper = new RCSharp.PackageDelegateWrapper (cb, null);
-                        int raw_ret = rc_extract_packages_from_aptrpm_file(filename, packman.Handle, channel.Handle, cb_wrapper.NativeDelegate, IntPtr.Zero);
-                        int ret = raw_ret;                         return ret;
-                }
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.Synchronized)]
+        public static int PackagesFromAptrpmFile (string filename, RC.Packman packman, RC.Channel channel,
+                                                  RC.PackageDelegate cb) {
+            RCSharp.PackageDelegateWrapper cb_wrapper = null;
+            cb_wrapper = new RCSharp.PackageDelegateWrapper (cb);
+            int raw_ret = rc_extract_packages_from_aptrpm_file (filename, packman.Handle, channel.Handle,
+                                                                cb_wrapper.NativeDelegate, IntPtr.Zero);
+            int ret = raw_ret;
+            return ret;
+        }
 
-		[DllImport("libredcarpet")]
-		static extern int rc_extract_packages_from_helix_buffer(byte[] data, int len, IntPtr channel, RCSharp.PackageDelegateNative cb, IntPtr user_data);
+        [DllImport("libredcarpet")]
+        static extern int rc_extract_packages_from_helix_buffer (byte[] data, int len, IntPtr channel,
+                                                                 RCSharp.PackageDelegateNative cb, IntPtr user_data);
 
-		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.Synchronized)] 
-		public static int PackagesFromHelixBuffer(byte[] data, int len, RC.Channel channel, RC.PackageDelegate cb) {
-			RCSharp.PackageDelegateWrapper cb_wrapper = null;
-			cb_wrapper = new RCSharp.PackageDelegateWrapper (cb, null);
-			int raw_ret = rc_extract_packages_from_helix_buffer(data, len, channel.Handle, cb_wrapper.NativeDelegate, IntPtr.Zero);
-			int ret = raw_ret;
-			return ret;
-		}
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.Synchronized)] 
+        public static int PackagesFromHelixBuffer (byte[] data, int len, RC.Channel channel, RC.PackageDelegate cb) {
+            RCSharp.PackageDelegateWrapper cb_wrapper = null;
+            cb_wrapper = new RCSharp.PackageDelegateWrapper (cb);
+            int raw_ret = rc_extract_packages_from_helix_buffer(data, len, channel.Handle,
+                                                                cb_wrapper.NativeDelegate, IntPtr.Zero);
+            int ret = raw_ret;
+            return ret;
+        }
 
 #endregion
 	}

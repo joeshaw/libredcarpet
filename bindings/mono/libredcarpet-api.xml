@@ -32,16 +32,6 @@
       <member cname="RC_CHANNEL_TYPE_APTRPM" name="Aptrpm" />
       <member cname="RC_CHANNEL_TYPE_YUM" name="Yum" />
     </enum>
-    <enum name="DebugLevel" cname="RCDebugLevel" type="enum">
-      <member cname="RC_DEBUG_LEVEL_ALWAYS" name="Always" value="-1" />
-      <member cname="RC_DEBUG_LEVEL_NONE" name="None" />
-      <member cname="RC_DEBUG_LEVEL_ERROR" name="Error" value="1" />
-      <member cname="RC_DEBUG_LEVEL_CRITICAL" name="Critical" value="2" />
-      <member cname="RC_DEBUG_LEVEL_WARNING" name="Warning" value="3" />
-      <member cname="RC_DEBUG_LEVEL_MESSAGE" name="Message" value="4" />
-      <member cname="RC_DEBUG_LEVEL_INFO" name="Info" value="5" />
-      <member cname="RC_DEBUG_LEVEL_DEBUG" name="Debug" value="6" />
-    </enum>
     <enum name="DistroPackageType" cname="RCDistroPackageType" type="enum">
       <member cname="RC_DISTRO_PACKAGE_TYPE_UNKNOWN" name="Unknown" />
       <member cname="RC_DISTRO_PACKAGE_TYPE_RPM" name="Rpm" />
@@ -65,14 +55,14 @@
     </enum>
     <enum name="PackageRelation" cname="RCPackageRelation" type="enum">
       <member cname="RC_RELATION_INVALID" name="Invalid" value="-1" />
-      <member cname="RC_RELATION_ANY" name="Any" />
-      <member cname="RC_RELATION_EQUAL" name="Equal" />
-      <member cname="RC_RELATION_LESS" name="Less" />
-      <member cname="RC_RELATION_LESS_EQUAL" name="LessEqual" />
-      <member cname="RC_RELATION_GREATER" name="Greater" />
-      <member cname="RC_RELATION_GREATER_EQUAL" name="GreaterEqual" />
-      <member cname="RC_RELATION_NOT_EQUAL" name="NotEqual" />
-      <member cname="RC_RELATION_NONE" name="None" />
+      <member cname="RC_RELATION_ANY" name="Any" value="0" />
+      <member cname="RC_RELATION_EQUAL" name="Equal" value="1" />
+      <member cname="RC_RELATION_LESS" name="Less" value="2" />
+      <member cname="RC_RELATION_LESS_EQUAL" name="LessEqual" value="3" />
+      <member cname="RC_RELATION_GREATER" name="Greater" value="4" />
+      <member cname="RC_RELATION_GREATER_EQUAL" name="GreaterEqual" value="5" />
+      <member cname="RC_RELATION_NOT_EQUAL" name="NotEqual" value="6" />
+      <member cname="RC_RELATION_NONE" name="None" value="8" />
     </enum>
     <enum name="PackageSection" cname="RCPackageSection" type="enum">
       <member cname="RC_SECTION_OFFICE" name="Office" />
@@ -148,7 +138,7 @@
       <member cname="RC_VERIFICATION_STATUS_PASS" name="Pass" />
     </enum>
     <enum name="VerificationType" cname="RCVerificationType" type="flags">
-      <member cname="RC_VERIFICATION_TYPE_ALL" name="All" />
+      <member cname="RC_VERIFICATION_TYPE_ALL" name="All" value="~0" />
       <member cname="RC_VERIFICATION_TYPE_SANITY" name="Sanity" value="1" />
       <member cname="RC_VERIFICATION_TYPE_SIZE" name="Size" value="1 &lt;&lt; 1" />
       <member cname="RC_VERIFICATION_TYPE_MD5" name="Md5" value="1 &lt;&lt; 2" />
@@ -167,14 +157,6 @@
       <parameters>
         <parameter type="RCChannel*" name="channel" />
         <parameter type="gpointer" name="data" />
-      </parameters>
-    </callback>
-    <callback name="DebugFn" cname="RCDebugFn">
-      <return-type type="void" />
-      <parameters>
-        <parameter type="const-char*" name="message" />
-        <parameter type="RCDebugLevel" name="level" />
-        <parameter type="gpointer" name="user_data" />
       </parameters>
     </callback>
     <callback cname="RCMarkedPackageFn" name="MarkedPackageDelegate">
@@ -390,7 +372,7 @@
       </parameters>
     </callback>
     <object name="Packman" cname="RCPackman" parent="GObject">
-      <field cname="priv" type="RCPackmanPrivate*" />
+      <field name="Priv" cname="priv" type="RCPackmanPrivate*" />
       <signal name="TransactStart" cname="transact_start" when="LAST">
         <return-type type="void" />
         <parameters>
@@ -448,12 +430,25 @@
           <parameter type="int" name="flags" />
         </parameters>
       </virtual_method>
+      <virtual_method name="RcPackmanRealQuery" cname="rc_packman_real_query">
+        <return-type type="RCPackageSList*" />
+        <parameters>
+          <parameter type="RCPackman*" name="packman" />
+          <parameter type="const-char*" name="name" />
+        </parameters>
+      </virtual_method>
       <virtual_method name="RcPackmanRealQueryFile" cname="rc_packman_real_query_file">
         <return-type type="RCPackage*" />
         <parameters>
           <parameter type="RCPackman*" name="packman" />
           <parameter type="const-gchar*" name="filename" />
           <parameter type="gboolean" name="filter_file_deps" />
+        </parameters>
+      </virtual_method>
+      <virtual_method name="RcPackmanRealQueryAll" cname="rc_packman_real_query_all">
+        <return-type type="RCPackageSList*" />
+        <parameters>
+          <parameter type="RCPackman*" name="packman" />
         </parameters>
       </virtual_method>
       <virtual_method name="RcPackmanRealVersionCompare" cname="rc_packman_real_version_compare">
@@ -464,6 +459,17 @@
           <parameter type="RCPackageSpec*" name="spec2" />
         </parameters>
       </virtual_method>
+      <virtual_method name="RcPackmanRealParseVersion" cname="rc_packman_real_parse_version">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCPackman*" name="packman" />
+          <parameter type="const-gchar*" name="input" />
+          <parameter type="gboolean*" name="has_epoch" />
+          <parameter type="guint32*" name="epoch" />
+          <parameter type="gchar**" name="version" />
+          <parameter type="gchar**" name="release" />
+        </parameters>
+      </virtual_method>
       <virtual_method name="RcPackmanRealVerify" cname="rc_packman_real_verify">
         <return-type type="RCVerificationSList*" />
         <parameters>
@@ -472,8 +478,21 @@
           <parameter type="guint32" name="type" />
         </parameters>
       </virtual_method>
+      <virtual_method name="RcPackmanRealFindFile" cname="rc_packman_real_find_file">
+        <return-type type="RCPackageSList*" />
+        <parameters>
+          <parameter type="RCPackman*" name="packman" />
+          <parameter type="const-gchar*" name="filename" />
+        </parameters>
+      </virtual_method>
       <virtual_method name="RcPackmanRealLock" cname="rc_packman_real_lock">
         <return-type type="gboolean" />
+        <parameters>
+          <parameter type="RCPackman*" name="packman" />
+        </parameters>
+      </virtual_method>
+      <virtual_method name="RcPackmanRealUnlock" cname="rc_packman_real_unlock">
+        <return-type type="void" />
         <parameters>
           <parameter type="RCPackman*" name="packman" />
         </parameters>
@@ -482,6 +501,13 @@
         <return-type type="gboolean" />
         <parameters>
           <parameter type="RCPackman*" name="packman" />
+        </parameters>
+      </virtual_method>
+      <virtual_method name="RcPackmanRealFileList" cname="rc_packman_real_file_list">
+        <return-type type="RCPackageFileSList*" />
+        <parameters>
+          <parameter type="RCPackman*" name="packman" />
+          <parameter type="RCPackage*" name="package" />
         </parameters>
       </virtual_method>
       <virtual_method name="RcPackmanRealPatchParents" cname="rc_packman_real_patch_parents">
@@ -609,18 +635,18 @@
       </method>
     </object>
     <object name="Pending" cname="RCPending" parent="GObject">
-      <field cname="description" type="char*" />
-      <field cname="id" type="gint" />
-      <field cname="status" type="RCPendingStatus" />
-      <field cname="percent_complete" type="double" />
-      <field cname="completed_size" type="int" />
-      <field cname="total_size" type="int" />
-      <field cname="start_time" type="time_t" />
-      <field cname="last_time" type="time_t" />
-      <field cname="poll_time" type="time_t" />
-      <field cname="retval" type="gint" />
-      <field cname="error_msg" type="char*" />
-      <field cname="messages" type="GSList*" />
+      <field name="Description" cname="description" type="char*" />
+      <field name="Id" cname="id" type="gint" />
+      <field name="Status" cname="status" type="RCPendingStatus" />
+      <field name="PercentComplete" cname="percent_complete" type="double" />
+      <field name="CompletedSize" cname="completed_size" type="int" />
+      <field name="TotalSize" cname="total_size" type="int" />
+      <field name="StartTime" cname="start_time" type="time_t" />
+      <field name="LastTime" cname="last_time" type="time_t" />
+      <field name="PollTime" cname="poll_time" type="time_t" />
+      <field name="Retval" cname="retval" type="gint" />
+      <field name="ErrorMsg" cname="error_msg" type="char*" />
+      <field name="Messages" cname="messages" type="GSList*" />
       <signal cname="update" when="FIRST" name="Updated">
         <return-type type="void" />
         <parameters>
@@ -756,6 +782,13 @@
       </method>
     </object>
     <object name="World" cname="RCWorld" parent="GObject">
+      <field name="SeqNoPackages" cname="seq_no_packages" type="guint" />
+      <field name="SeqNoChannels" cname="seq_no_channels" type="guint" />
+      <field name="SeqNoSubscriptions" cname="seq_no_subscriptions" type="guint" />
+      <field name="SeqNoLocks" cname="seq_no_locks" type="guint" />
+      <field name="LockStore" cname="lock_store" type="GList*" />
+      <field name="RefreshPending" cname="refresh_pending" bits="1" type="guint" />
+      <field name="NoChangedSignals" cname="no_changed_signals" bits="1" type="guint" />
       <signal name="ChangedPackages" cname="changed_packages" when="LAST">
         <return-type type="void" />
         <parameters>
@@ -1085,13 +1118,13 @@
       </method>
     </object>
     <object name="WorldLocalDir" cname="RCWorldLocalDir" parent="RCWorldService">
-      <field cname="path" type="char*" />
-      <field cname="alias" type="char*" />
-      <field cname="description" type="char*" />
-      <field cname="mtime" type="time_t" />
-      <field cname="recursive" type="gboolean" />
-      <field cname="channel" type="RCChannel*" />
-      <field cname="frozen" type="gboolean" />
+      <field name="Path" cname="path" type="char*" />
+      <field name="Alias" cname="alias" type="char*" />
+      <field name="Description" cname="description" type="char*" />
+      <field name="Mtime" cname="mtime" type="time_t" />
+      <field name="Recursive" cname="recursive" type="gboolean" />
+      <field name="Channel" cname="channel" type="RCChannel*" />
+      <field name="Frozen" cname="frozen" type="gboolean" />
       <method name="GetType" cname="rc_world_local_dir_get_type" shared="true">
         <return-type type="GType" />
       </method>
@@ -1117,10 +1150,10 @@
       </method>
     </object>
     <object name="WorldMulti" cname="RCWorldMulti" parent="RCWorld">
-      <field cname="mounts" type="GHashTable*" />
-      <field cname="subworlds" type="GSList*" />
-      <field cname="multi_pending" type="RCPending*" />
-      <field cname="subworld_pendings" type="GSList*" />
+      <field name="Mounts" cname="mounts" type="GHashTable*" />
+      <field name="Subworlds" cname="subworlds" type="GSList*" />
+      <field name="MultiPending" cname="multi_pending" type="RCPending*" />
+      <field name="SubworldPendings" cname="subworld_pendings" type="GSList*" />
       <signal name="SubworldAdded" cname="subworld_added" when="LAST">
         <return-type type="void" />
         <parameters>
@@ -1190,13 +1223,13 @@
       </method>
     </object>
     <object name="WorldService" cname="RCWorldService" parent="RCWorldStore">
-      <field cname="url" type="char*" />
-      <field cname="name" type="char*" />
-      <field cname="unique_id" type="char*" />
-      <field cname="is_sticky" type="gboolean" />
-      <field cname="is_invisible" type="gboolean" />
-      <field cname="is_unsaved" type="gboolean" />
-      <field cname="is_singleton" type="gboolean" />
+      <field name="Url" cname="url" type="char*" />
+      <field name="Name" cname="name" type="char*" />
+      <field name="UniqueId" cname="unique_id" type="char*" />
+      <field name="IsSticky" cname="is_sticky" type="gboolean" />
+      <field name="IsInvisible" cname="is_invisible" type="gboolean" />
+      <field name="IsUnsaved" cname="is_unsaved" type="gboolean" />
+      <field name="IsSingleton" cname="is_singleton" type="gboolean" />
       <method name="GetId" cname="rc_world_service_get_id">
         <return-type type="char*" />
       </method>
@@ -1288,14 +1321,14 @@
       </method>
     </object>
     <object name="WorldStore" cname="RCWorldStore" parent="RCWorld">
-      <field cname="freeze_count" type="int" />
-      <field cname="packages_by_name" type="GHashTable*" />
-      <field cname="provides_by_name" type="GHashTable*" />
-      <field cname="requires_by_name" type="GHashTable*" />
-      <field cname="children_by_name" type="GHashTable*" />
-      <field cname="conflicts_by_name" type="GHashTable*" />
-      <field cname="channels" type="GSList*" />
-      <field cname="locks" type="GSList*" />
+      <field name="FreezeCount" cname="freeze_count" type="int" />
+      <field name="PackagesByName" cname="packages_by_name" type="GHashTable*" />
+      <field name="ProvidesByName" cname="provides_by_name" type="GHashTable*" />
+      <field name="RequiresByName" cname="requires_by_name" type="GHashTable*" />
+      <field name="ChildrenByName" cname="children_by_name" type="GHashTable*" />
+      <field name="ConflictsByName" cname="conflicts_by_name" type="GHashTable*" />
+      <field name="Channels" cname="channels" type="GSList*" />
+      <field name="Locks" cname="locks" type="GSList*" />
       <method name="AddChannel" cname="rc_world_store_add_channel">
         <return-type type="void" />
         <parameters>
@@ -1356,9 +1389,9 @@
       </method>
     </object>
     <object name="WorldSynthetic" cname="RCWorldSynthetic" parent="RCWorldService">
-      <field cname="database_fn" type="char*" />
-      <field cname="synthetic_channel" type="RCChannel*" />
-      <field cname="error_flag" type="gboolean" />
+      <field name="DatabaseFn" cname="database_fn" type="char*" />
+      <field name="SyntheticChannel" cname="synthetic_channel" type="RCChannel*" />
+      <field name="ErrorFlag" cname="error_flag" type="gboolean" />
       <method name="GetType" cname="rc_world_synthetic_get_type" shared="true">
         <return-type type="GType" />
       </method>
@@ -1368,10 +1401,10 @@
       </method>
     </object>
     <object name="WorldSystem" cname="RCWorldSystem" parent="RCWorldService">
-      <field cname="packman" type="RCPackman*" />
-      <field cname="system_channel" type="RCChannel*" />
-      <field cname="error_flag" type="gboolean" />
-      <field cname="database_changed_id" type="guint" />
+      <field name="Packman" cname="packman" type="RCPackman*" />
+      <field name="SystemChannel" cname="system_channel" type="RCChannel*" />
+      <field name="ErrorFlag" cname="error_flag" type="gboolean" />
+      <field name="DatabaseChangedId" cname="database_changed_id" type="guint" />
       <method name="GetType" cname="rc_world_system_get_type" shared="true">
         <return-type type="GType" />
       </method>
@@ -1381,7 +1414,7 @@
       </method>
     </object>
     <object name="WorldUndump" cname="RCWorldUndump" parent="RCWorldStore">
-      <field cname="subscriptions" type="GSList*" />
+      <field name="Subscriptions" cname="subscriptions" type="GSList*" />
       <method name="GetType" cname="rc_world_undump_get_type" shared="true">
         <return-type type="GType" />
       </method>
@@ -1398,9 +1431,9 @@
       </constructor>
     </object>
     <struct name="Buffer" cname="RCBuffer">
-      <field cname="data" type="gpointer" />
-      <field cname="size" type="gsize" />
-      <field cname="is_mmapped" type="gboolean" />
+      <field name="Data" cname="data" type="gpointer" />
+      <field name="Size" cname="size" type="gsize" />
+      <field name="IsMmapped" cname="is_mmapped" type="gboolean" />
       <method name="MapFile" cname="rc_buffer_map_file" shared="true">
         <return-type type="RCBuffer*" />
         <parameters>
@@ -1412,32 +1445,6 @@
       </method>
     </struct>
     <boxed name="Channel" cname="RCChannel" opaque="1">
-      <field cname="refs" type="gint" />
-      <field cname="world" type="struct-_RCWorld*" />
-      <field cname="id" type="gchar*" />
-      <field cname="name" type="gchar*" />
-      <field cname="alias" type="gchar*" />
-      <field cname="description" type="gchar*" />
-      <field cname="priority" type="gint" />
-      <field cname="priority_unsubd" type="gint" />
-      <field cname="distro_target" type="GSList*" />
-      <field cname="path" type="gchar*" />
-      <field cname="file_path" type="gchar*" />
-      <field cname="icon_file" type="gchar*" />
-      <field cname="pkginfo_file" type="gchar*" />
-      <field cname="pkginfo_compressed" type="gboolean" />
-      <field cname="pkgset_file" type="gchar*" />
-      <field cname="pkgset_compressed" type="gboolean" />
-      <field cname="last_update" type="time_t" />
-      <callback cname="refresh_magic">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="RCChannel*" name="arg1" />
-        </parameters>
-      </callback>
-      <field cname=": 1" type="unsigned system_flag" />
-      <field cname=": 1" type="unsigned transient" />
-      <field cname=": 1" type="unsigned silent" />
       <method name="AddDistroTarget" cname="rc_channel_add_distro_target">
         <return-type type="void" />
         <parameters>
@@ -1623,41 +1630,6 @@
       </method>
     </boxed>
     <alias name="ChannelSList" cname="RCChannelSList" type="GSList" />
-    <struct name="DepOr" cname="RCDepOr">
-      <field cname="or_dep" type="gchar*" />
-      <field cname="split_ors" type="RCPackageDepSList*" />
-      <field cname="created_provides" type="RCPackageDepSList*" />
-      <field cname="ref" type="gint" />
-      <method name="DepSlistToString" cname="rc_dep_or_dep_slist_to_string" shared="true">
-        <return-type type="gchar*" />
-        <parameters>
-          <parameter type="RCPackageDepSList*" name="dep" />
-        </parameters>
-      </method>
-      <method name="Free" cname="rc_dep_or_free">
-        <return-type type="void" />
-      </method>
-      <constructor cname="rc_dep_or_new">
-        <parameters>
-          <parameter type="RCPackageDepSList*" name="deps" />
-        </parameters>
-      </constructor>
-      <constructor cname="rc_dep_or_new_by_string">
-        <parameters>
-          <parameter type="gchar*" name="depstr" />
-        </parameters>
-      </constructor>
-      <constructor cname="rc_dep_or_new_provide">
-        <parameters>
-          <parameter type="RCDepOr*" name="dor" />
-        </parameters>
-      </constructor>
-      <constructor cname="rc_dep_or_new_provide_by_string">
-        <parameters>
-          <parameter type="gchar*" name="dor_name" />
-        </parameters>
-      </constructor>
-    </struct>
     <struct name="Distro" cname="RCDistro" opaque="true">
       <method name="Free" cname="rc_distro_free">
         <return-type type="void" />
@@ -1698,30 +1670,30 @@
       </method>
     </struct>
     <boxed name="Package" cname="RCPackage" opaque="1" parent="RCPackageSpec">
-      <field cname="spec" type="RCPackageSpec" />
-      <field cname="refs" type="gint" />
-      <field cname="section" type="RCPackageSection" />
-      <field cname="file_size" type="guint32" />
-      <field cname="installed_size" type="guint32" />
-      <field cname="channel" type="RCChannel*" />
-      <field cname="requires_a" type="RCPackageDepArray*" />
-      <field cname="provides_a" type="RCPackageDepArray*" />
-      <field cname="conflicts_a" type="RCPackageDepArray*" />
-      <field cname="obsoletes_a" type="RCPackageDepArray*" />
-      <field cname="children_a" type="RCPackageDepArray*" />
-      <field cname="suggests_a" type="RCPackageDepArray*" />
-      <field cname="recommends_a" type="RCPackageDepArray*" />
-      <field cname="pretty_name" type="gchar*" />
-      <field cname="summary" type="gchar*" />
-      <field cname="description" type="gchar*" />
-      <field cname="history" type="RCPackageUpdateSList*" />
-      <field cname="package_filename" type="gchar*" />
-      <field cname="signature_filename" type="gchar*" />
-      <field cname="installed" type="gboolean" />
-      <field cname="local_package" type="gboolean" />
-      <field cname="install_only" type="gboolean" />
-      <field cname="package_set" type="gboolean" />
-      <field cname="id" type="gchar*" />
+      <field name="Spec" cname="spec" type="RCPackageSpec" access="public" writeable="true" />
+      <field name="Refs" cname="refs" type="gint" access="public" writeable="true" hidden="1" />
+      <field name="Section" cname="section" type="RCPackageSection" access="public" writeable="true" />
+      <field name="FileSize" cname="file_size" type="guint32" access="public" writeable="true" />
+      <field name="InstalledSize" cname="installed_size" type="guint32" access="public" writeable="true" />
+      <field name="Channel" cname="channel" type="RCChannel*" access="public" writeable="true" />
+      <field name="RequiresA" cname="requires_a" type="RCPackageDepArray*" access="public" writeable="true" hidden="1" />
+      <field name="ProvidesA" cname="provides_a" type="RCPackageDepArray*" access="public" writeable="true" hidden="1" />
+      <field name="ConflictsA" cname="conflicts_a" type="RCPackageDepArray*" access="public" writeable="true" hidden="1" />
+      <field name="ObsoletesA" cname="obsoletes_a" type="RCPackageDepArray*" access="public" writeable="true" hidden="1" />
+      <field name="ChildrenA" cname="children_a" type="RCPackageDepArray*" access="public" writeable="true" hidden="1" />
+      <field name="SuggestsA" cname="suggests_a" type="RCPackageDepArray*" access="public" writeable="true" hidden="1" />
+      <field name="RecommendsA" cname="recommends_a" type="RCPackageDepArray*" access="public" writeable="true" hidden="1" />
+      <field name="PrettyName" cname="pretty_name" type="gchar*" access="public" writeable="true" hidden="1" />
+      <field name="Summary" cname="summary" type="gchar*" access="public" writeable="true" />
+      <field name="Description" cname="description" type="gchar*" access="public" writeable="true" />
+      <field name="History" cname="history" type="RCPackageUpdateSList*" access="public" writeable="true" />
+      <field name="PackageFilename" cname="package_filename" type="gchar*" access="public" writeable="true" hidden="1" />
+      <field name="SignatureFilename" cname="signature_filename" type="gchar*" access="public" writeable="true" />
+      <field name="Installed" cname="installed" type="gboolean" access="public" writeable="true" />
+      <field name="LocalPackage" cname="local_package" type="gboolean" access="public" writeable="true" />
+      <field name="InstallOnly" cname="install_only" type="gboolean" access="public" writeable="true" />
+      <field name="PackageSet" cname="package_set" type="gboolean" access="public" writeable="true" />
+      <field name="Id" cname="id" type="gchar*" access="public" writeable="true" />
       <method name="AddDummyUpdate" cname="rc_package_add_dummy_update">
         <return-type type="void" />
         <parameters>
@@ -1736,7 +1708,7 @@
         </parameters>
       </method>
       <method name="Copy" cname="rc_package_copy" hidden="1">
-        <return-type type="RCPackage*" />
+        <return-type type="RCPackage*" owned="true" />
       </method>
       <method name="GetChannel" cname="rc_package_get_channel">
         <return-type type="RCChannel*" />
@@ -2077,10 +2049,10 @@
       </method>
     </struct>
     <struct name="PackageDepArray" cname="RCPackageDepArray">
-      <field cname="data" type="RCPackageDep**" />
-      <field cname="len" type="guint" />
+      <field name="Data" cname="data" type="RCPackageDep**" />
+      <field name="Len" cname="len" type="guint" />
       <method name="Copy" cname="rc_package_dep_array_copy">
-        <return-type type="RCPackageDepArray*" />
+        <return-type type="RCPackageDepArray*" owned="true" />
       </method>
       <method name="Free" cname="rc_package_dep_array_free">
         <return-type type="void" />
@@ -2096,15 +2068,16 @@
       </method>
     </struct>
     <alias name="PackageDepSList" cname="RCPackageDepSList" type="GSList" />
-    <struct name="PackageFile" cname="RCPackageFile">
-      <field cname="filename" type="char*" />
-      <field cname="size" type="gsize" />
-      <field cname="md5sum" type="char*" />
-      <field cname="uid" type="guint" />
-      <field cname="gid" type="guint" />
-      <field cname="mode" type="guint16" />
-      <field cname="mtime" type="gint32" />
-      <field cname="ghost" type="gboolean" />
+    <struct name="PackageFile" cname="RCPackageFile" opaque="true">
+      <field name="Filename" cname="filename" type="char*" access="public" writeable="false" />
+      <field name="Size" cname="size" type="gsize" access="public" writeable="true" />
+      <field name="Md5sum" cname="md5sum" type="char*" access="public" writeable="false" />
+      <field name="Uid" cname="uid" type="guint" access="public" writeable="true" />
+      <field name="Gid" cname="gid" type="guint" access="public" writeable="true" />
+      <field name="Mode" cname="mode" type="guint16" access="public" writeable="true" />
+      <field name="Mtime" cname="mtime" type="gint32" access="public" writeable="true" />
+      <field name="Ghost" cname="ghost" type="gboolean" access="public" writeable="true" />
+      <field name="LinkTarget" cname="link_target" type="char*" access="public" writeable="false" />
       <method name="Free" cname="rc_package_file_free">
         <return-type type="void" />
       </method>
@@ -2195,12 +2168,12 @@
     </struct>
     <alias name="PackageSList" cname="RCPackageSList" type="GSList" />
     <struct name="PackageSpec" cname="RCPackageSpec" opaque="1">
-      <field cname="nameq" type="GQuark" />
-      <field cname="version" type="gchar*" />
-      <field cname="release" type="gchar*" />
-      <field cname="has_epoch" type="gboolean" />
-      <field cname="epoch" type="gint" />
-      <field cname="arch" type="RCArch" />
+      <field name="Nameq" cname="nameq" type="GQuark" access="public" writeable="true" hidden="1" />
+      <field name="Version" cname="version" type="gchar*" access="public" writeable="true" />
+      <field name="Release" cname="release" type="gchar*" access="public" writeable="true" />
+      <field name="HasEpoch" cname="has_epoch" type="gboolean" access="public" writeable="true" hidden="1" />
+      <field name="Epoch" cname="epoch" type="gint" access="public" writeable="true" />
+      <field name="Arch" cname="arch" type="RCArch" access="public" writeable="true" />
       <method name="CompareName" cname="rc_package_spec_compare_name" shared="true">
         <return-type type="gint" />
         <parameters>
@@ -2321,21 +2294,21 @@
       </method>
     </struct>
     <struct name="PackageUpdate" cname="RCPackageUpdate" opaque="1" parent="RCPackageSpec">
-      <field cname="spec" type="RCPackageSpec" />
-      <field cname="package" type="const-RCPackage*" />
-      <field cname="package_url" type="gchar*" />
-      <field cname="package_size" type="guint32" />
-      <field cname="installed_size" type="guint32" />
-      <field cname="signature_url" type="gchar*" />
-      <field cname="signature_size" type="guint32" />
-      <field cname="md5sum" type="gchar*" />
-      <field cname="importance" type="RCPackageImportance" />
-      <field cname="description" type="gchar*" />
-      <field cname="hid" type="guint" />
-      <field cname="license" type="gchar*" />
-      <field cname="parent" type="RCPackage*" />
+      <field name="Spec" cname="spec" type="RCPackageSpec" access="public" writeable="true" />
+      <field name="Package" cname="package" type="const-RCPackage*" access="public" writeable="true" />
+      <field name="PackageUrl" cname="package_url" type="gchar*" access="public" writeable="true" />
+      <field name="PackageSize" cname="package_size" type="guint32" access="public" writeable="true" />
+      <field name="InstalledSize" cname="installed_size" type="guint32" access="public" writeable="true" />
+      <field name="SignatureUrl" cname="signature_url" type="gchar*" access="public" writeable="true" />
+      <field name="SignatureSize" cname="signature_size" type="guint32" access="public" writeable="true" />
+      <field name="Md5sum" cname="md5sum" type="gchar*" access="public" writeable="true" />
+      <field name="Importance" cname="importance" type="RCPackageImportance" access="public" writeable="true" />
+      <field name="Description" cname="description" type="gchar*" access="public" writeable="true" />
+      <field name="Hid" cname="hid" type="guint" access="public" writeable="true" />
+      <field name="License" cname="license" type="gchar*" access="public" writeable="true" />
+      <field name="Parent" cname="parent" type="RCPackage*" access="public" writeable="true" />
       <method name="Copy" cname="rc_package_update_copy">
-        <return-type type="RCPackageUpdate*" />
+        <return-type type="RCPackageUpdate*" owned="true" />
       </method>
       <method name="Free" cname="rc_package_update_free">
         <return-type type="void" />
@@ -2466,12 +2439,12 @@
       </method>
     </struct>
     <alias name="PackageUpdateSList" cname="RCPackageUpdateSList" type="GSList" />
-    <struct name="QueueItem" cname="RCQueueItem">
-      <field cname="type" type="RCQueueItemType" />
-      <field cname="priority" type="int" />
-      <field cname="size" type="size_t" />
-      <field cname="pending_info" type="GSList*" />
-      <field cname="world" type="RCWorld*" />
+    <struct name="QueueItem" cname="RCQueueItem" opaque="true">
+      <field name="Type" cname="type" type="RCQueueItemType" access="public" writeable="true" />
+      <field name="Priority" cname="priority" type="int" access="public" writeable="true" />
+      <field name="Size" cname="size" type="size_t" access="public" writeable="true" />
+      <field name="PendingInfo" cname="pending_info" type="GSList*" access="public" writeable="true" />
+      <field name="World" cname="world" type="RCWorld*" access="public" writeable="true" />
       <callback cname="is_redundant">
         <return-type type="gboolean" />
         <parameters>
@@ -2548,7 +2521,7 @@
         </parameters>
       </method>
       <method name="Copy" cname="rc_queue_item_copy">
-        <return-type type="RCQueueItem*" />
+        <return-type type="RCQueueItem*" owned="true" />
       </method>
       <method name="Free" cname="rc_queue_item_free">
         <return-type type="void" />
@@ -2706,70 +2679,70 @@
       </method>
     </struct>
     <struct name="QueueItem_Branch" cname="RCQueueItem_Branch">
-      <field cname="parent" type="RCQueueItem" />
-      <field cname="label" type="char*" />
-      <field cname="possible_items" type="GSList*" />
+      <field name="Parent" cname="parent" type="RCQueueItem" />
+      <field name="Label" cname="label" type="char*" />
+      <field name="PossibleItems" cname="possible_items" type="GSList*" />
     </struct>
     <struct name="QueueItem_Conflict" cname="RCQueueItem_Conflict">
-      <field cname="parent" type="RCQueueItem" />
-      <field cname="dep" type="RCPackageDep*" />
-      <field cname="conflicting_package" type="RCPackage*" />
-      <field cname="actually_an_obsolete" bits="1" type="guint" />
+      <field name="Parent" cname="parent" type="RCQueueItem" />
+      <field name="Dep" cname="dep" type="RCPackageDep*" />
+      <field name="ConflictingPackage" cname="conflicting_package" type="RCPackage*" />
+      <field name="ActuallyAnObsolete" cname="actually_an_obsolete" bits="1" type="guint" />
     </struct>
     <struct name="QueueItem_Group" cname="RCQueueItem_Group">
-      <field cname="parent" type="RCQueueItem" />
-      <field cname="subitems" type="GSList*" />
+      <field name="Parent" cname="parent" type="RCQueueItem" />
+      <field name="Subitems" cname="subitems" type="GSList*" />
     </struct>
     <struct name="QueueItem_Install" cname="RCQueueItem_Install">
-      <field cname="parent" type="RCQueueItem" />
-      <field cname="package" type="RCPackage*" />
-      <field cname="upgrades" type="RCPackage*" />
-      <field cname="deps_satisfied_by_this_install" type="GSList*" />
-      <field cname="needed_by" type="GSList*" />
-      <field cname="channel_priority" type="int" />
-      <field cname="other_penalty" type="int" />
-      <field cname="explicitly_requested" bits="1" type="guint" />
+      <field name="Parent" cname="parent" type="RCQueueItem" />
+      <field name="Package" cname="package" type="RCPackage*" />
+      <field name="Upgrades" cname="upgrades" type="RCPackage*" />
+      <field name="DepsSatisfiedByThisInstall" cname="deps_satisfied_by_this_install" type="GSList*" />
+      <field name="NeededBy" cname="needed_by" type="GSList*" />
+      <field name="ChannelPriority" cname="channel_priority" type="int" />
+      <field name="OtherPenalty" cname="other_penalty" type="int" />
+      <field name="ExplicitlyRequested" cname="explicitly_requested" bits="1" type="guint" />
     </struct>
     <struct name="QueueItem_Require" cname="RCQueueItem_Require">
-      <field cname="parent" type="RCQueueItem" />
-      <field cname="dep" type="RCPackageDep*" />
-      <field cname="requiring_package" type="RCPackage*" />
-      <field cname="upgraded_package" type="RCPackage*" />
-      <field cname="lost_package" type="RCPackage*" />
-      <field cname="remove_only" bits="1" type="guint" />
-      <field cname="is_child" type="gboolean" />
+      <field name="Parent" cname="parent" type="RCQueueItem" />
+      <field name="Dep" cname="dep" type="RCPackageDep*" />
+      <field name="RequiringPackage" cname="requiring_package" type="RCPackage*" />
+      <field name="UpgradedPackage" cname="upgraded_package" type="RCPackage*" />
+      <field name="LostPackage" cname="lost_package" type="RCPackage*" />
+      <field name="RemoveOnly" cname="remove_only" bits="1" type="guint" />
+      <field name="IsChild" cname="is_child" type="gboolean" />
     </struct>
     <struct name="QueueItem_Uninstall" cname="RCQueueItem_Uninstall">
-      <field cname="parent" type="RCQueueItem" />
-      <field cname="package" type="RCPackage*" />
-      <field cname="reason" type="char*" />
-      <field cname="dep_leading_to_uninstall" type="RCPackageDep*" />
-      <field cname="upgraded_to" type="RCPackage*" />
-      <field cname="explicitly_requested" bits="1" type="guint" />
-      <field cname="remove_only" bits="1" type="guint" />
-      <field cname="due_to_conflict" bits="1" type="guint" />
-      <field cname="due_to_obsolete" bits="1" type="guint" />
-      <field cname="unlink" bits="1" type="guint" />
+      <field name="Parent" cname="parent" type="RCQueueItem" />
+      <field name="Package" cname="package" type="RCPackage*" />
+      <field name="Reason" cname="reason" type="char*" />
+      <field name="DepLeadingToUninstall" cname="dep_leading_to_uninstall" type="RCPackageDep*" />
+      <field name="UpgradedTo" cname="upgraded_to" type="RCPackage*" />
+      <field name="ExplicitlyRequested" cname="explicitly_requested" bits="1" type="guint" />
+      <field name="RemoveOnly" cname="remove_only" bits="1" type="guint" />
+      <field name="DueToConflict" cname="due_to_conflict" bits="1" type="guint" />
+      <field name="DueToObsolete" cname="due_to_obsolete" bits="1" type="guint" />
+      <field name="Unlink" cname="unlink" bits="1" type="guint" />
     </struct>
     <boxed name="Resolver" cname="RCResolver" opaque="1">
-      <field cname="current_channel" type="RCChannel*" />
-      <field cname="world" type="RCWorld*" />
-      <field cname="timeout_seconds" type="int" />
-      <field cname="verifying" type="gboolean" />
-      <field cname="initial_items" type="GSList*" />
-      <field cname="packages_to_install" type="GSList*" />
-      <field cname="packages_to_remove" type="GSList*" />
-      <field cname="packages_to_verify" type="GSList*" />
-      <field cname="extra_deps" type="GSList*" />
-      <field cname="extra_conflicts" type="GSList*" />
-      <field cname="pending_queues" type="GSList*" />
-      <field cname="pruned_queues" type="GSList*" />
-      <field cname="complete_queues" type="GSList*" />
-      <field cname="deferred_queues" type="GSList*" />
-      <field cname="invalid_queues" type="GSList*" />
-      <field cname="valid_solution_count" type="int" />
-      <field cname="best_context" type="RCResolverContext*" />
-      <field cname="timed_out" type="gboolean" />
+      <field name="CurrentChannel" cname="current_channel" type="RCChannel*" access="public" writeable="true" />
+      <field name="World" cname="world" type="RCWorld*" access="public" writeable="true" />
+      <field name="TimeoutSeconds" cname="timeout_seconds" type="int" access="public" writeable="true" />
+      <field name="Verifying" cname="verifying" type="gboolean" access="public" writeable="true" />
+      <field name="InitialItems" cname="initial_items" type="GSList*" access="public" writeable="true" />
+      <field name="PackagesToInstall" cname="packages_to_install" type="GSList*" access="public" writeable="true" />
+      <field name="PackagesToRemove" cname="packages_to_remove" type="GSList*" access="public" writeable="true" />
+      <field name="PackagesToVerify" cname="packages_to_verify" type="GSList*" access="public" writeable="true" />
+      <field name="ExtraDeps" cname="extra_deps" type="GSList*" access="public" writeable="true" />
+      <field name="ExtraConflicts" cname="extra_conflicts" type="GSList*" access="public" writeable="true" />
+      <field name="PendingQueues" cname="pending_queues" type="GSList*" access="public" writeable="true" />
+      <field name="PrunedQueues" cname="pruned_queues" type="GSList*" access="public" writeable="true" />
+      <field name="CompleteQueues" cname="complete_queues" type="GSList*" access="public" writeable="true" />
+      <field name="DeferredQueues" cname="deferred_queues" type="GSList*" access="public" writeable="true" />
+      <field name="InvalidQueues" cname="invalid_queues" type="GSList*" access="public" writeable="false" />
+      <field name="ValidSolutionCount" cname="valid_solution_count" type="int" access="public" writeable="true" />
+      <field name="BestContext" cname="best_context" type="RCResolverContext*" access="public" writeable="false" />
+      <field name="TimedOut" cname="timed_out" type="gboolean" access="public" writeable="true" />
       <method name="AddExtraConflict" cname="rc_resolver_add_extra_conflict">
         <return-type type="void" />
         <parameters>
@@ -2854,22 +2827,22 @@
       </method>
     </boxed>
     <boxed name="ResolverContext" cname="RCResolverContext" opaque="1">
-      <field cname="refs" type="int" />
-      <field cname="world" type="RCWorld*" />
-      <field cname="status" type="GHashTable*" />
-      <field cname="last_checked_package" type="RCPackage*" />
-      <field cname="last_checked_status" type="RCPackageStatus" />
-      <field cname="log" type="GList*" />
-      <field cname="download_size" type="guint32" />
-      <field cname="install_size" type="guint32" />
-      <field cname="total_priority" type="int" />
-      <field cname="min_priority" type="int" />
-      <field cname="max_priority" type="int" />
-      <field cname="other_penalties" type="int" />
-      <field cname="current_channel" type="RCChannel*" />
-      <field cname="parent" type="RCResolverContext*" />
-      <field cname="verifying" bits="1" type="guint" />
-      <field cname="invalid" bits="1" type="guint" />
+      <field name="Refs" cname="refs" type="int" access="public" writeable="true" />
+      <field name="World" cname="world" type="RCWorld*" access="public" writeable="true" />
+      <field name="Status" cname="status" type="GHashTable*" access="public" writeable="true" />
+      <field name="LastCheckedPackage" cname="last_checked_package" type="RCPackage*" access="public" writeable="true" />
+      <field name="LastCheckedStatus" cname="last_checked_status" type="RCPackageStatus" access="public" writeable="true" />
+      <field name="Log" cname="log" type="GList*" access="public" writeable="true" />
+      <field name="DownloadSize" cname="download_size" type="guint32" access="public" writeable="true" />
+      <field name="InstallSize" cname="install_size" type="guint32" access="public" writeable="true" />
+      <field name="TotalPriority" cname="total_priority" type="int" access="public" writeable="true" />
+      <field name="MinPriority" cname="min_priority" type="int" access="public" writeable="true" />
+      <field name="MaxPriority" cname="max_priority" type="int" access="public" writeable="true" />
+      <field name="OtherPenalties" cname="other_penalties" type="int" access="public" writeable="true" />
+      <field name="CurrentChannel" cname="current_channel" type="RCChannel*" access="public" writeable="true" />
+      <field name="Parent" cname="parent" type="RCResolverContext*" access="public" writeable="true" />
+      <field name="Verifying" cname="verifying" bits="1" type="guint" access="public" writeable="true" />
+      <field name="Invalid" cname="invalid" bits="1" type="guint" access="public" writeable="true" />
       <method name="AddErrorStr" cname="rc_resolver_context_add_error_str">
         <return-type type="void" />
         <parameters>
@@ -3078,16 +3051,16 @@
       </method>
     </boxed>
     <struct name="ResolverInfo" cname="RCResolverInfo">
-      <field cname="type" type="RCResolverInfoType" />
-      <field cname="package" type="RCPackage*" />
-      <field cname="priority" type="int" />
-      <field cname="package_list" type="GSList*" />
-      <field cname="missing_req" type="RCPackageDep*" />
-      <field cname="msg" type="char*" />
-      <field cname="action" type="char*" />
-      <field cname="trigger" type="char*" />
-      <field cname="is_error" bits="1" type="guint" />
-      <field cname="is_important" bits="1" type="guint" />
+      <field name="Type" cname="type" type="RCResolverInfoType" />
+      <field name="Package" cname="package" type="RCPackage*" />
+      <field name="Priority" cname="priority" type="int" />
+      <field name="PackageList" cname="package_list" type="GSList*" />
+      <field name="MissingReq" cname="missing_req" type="RCPackageDep*" />
+      <field name="Msg" cname="msg" type="char*" />
+      <field name="Action" cname="action" type="char*" />
+      <field name="Trigger" cname="trigger" type="char*" />
+      <field name="IsError" cname="is_error" bits="1" type="guint" hidden="1" />
+      <field name="IsImportant" cname="is_important" bits="1" type="guint" hidden="1" />
       <method name="AddRelatedPackage" cname="rc_resolver_info_add_related_package">
         <return-type type="void" />
         <parameters>
@@ -3109,7 +3082,7 @@
         </parameters>
       </method>
       <method name="Copy" cname="rc_resolver_info_copy">
-        <return-type type="RCResolverInfo*" />
+        <return-type type="RCResolverInfo*" owned="true" />
       </method>
       <method name="DependsOnNew" cname="rc_resolver_info_depends_on_new" shared="true">
         <return-type type="RCResolverInfo*" />
@@ -3229,8 +3202,8 @@
       </method>
     </struct>
     <struct name="ResolverQueue" cname="RCResolverQueue" opaque="1">
-      <field cname="context" type="RCResolverContext*" />
-      <field cname="items" type="GSList*" />
+      <field name="Context" cname="context" type="RCResolverContext*" access="public" writeable="false" />
+      <field name="Items" cname="items" type="GSList*" access="public" writeable="true" />
       <method name="AddExtraConflict" cname="rc_resolver_queue_add_extra_conflict">
         <return-type type="void" />
         <parameters>
@@ -3349,10 +3322,10 @@
         <return-type type="void" />
       </method>
     </struct>
-    <struct name="Verification" cname="RCVerification">
-      <field cname="type" type="RCVerificationType" />
-      <field cname="status" type="RCVerificationStatus" />
-      <field cname="info" type="gchar*" />
+    <struct name="Verification" cname="RCVerification" opaque="true">
+      <field name="Type" cname="type" type="RCVerificationType" access="public" writeable="true" />
+      <field name="Status" cname="status" type="RCVerificationStatus" access="public" writeable="true" />
+      <field name="Info" cname="info" type="gchar*" access="public" writeable="false" />
       <method name="Cleanup" cname="rc_verification_cleanup" shared="true">
         <return-type type="void" />
       </method>
@@ -3407,12 +3380,6 @@
         <return-type type="const-char*" />
         <parameters>
           <parameter type="RCArch" name="arch" />
-        </parameters>
-      </method>
-      <method name="DepStringToOrDepSlist" cname="rc_dep_string_to_or_dep_slist" shared="true">
-        <return-type type="RCPackageDepSList*" />
-        <parameters>
-          <parameter type="const-gchar*" name="munged" />
         </parameters>
       </method>
       <method name="DistmanNew" cname="rc_distman_new" shared="true" hidden="1">
@@ -3509,30 +3476,6 @@
         <return-type type="const-gchar*" />
         <parameters>
           <parameter type="RCPackageImportance" name="importance" />
-        </parameters>
-      </method>
-    </class>
-    <class name="Debug" cname="RcDebug_">
-      <method name="AddHandler" cname="rc_debug_add_handler" shared="true">
-        <return-type type="guint" />
-        <parameters>
-          <parameter type="RCDebugFn" name="fn" />
-          <parameter type="RCDebugLevel" name="level" />
-          <parameter type="gpointer" name="user_data" />
-        </parameters>
-      </method>
-      <method name="Full" cname="rc_debug_full" shared="true">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="RCDebugLevel" name="level" />
-          <parameter type="const-char*" name="format" />
-          <parameter ellipsis="true" />
-        </parameters>
-      </method>
-      <method name="RemoveHandler" cname="rc_debug_remove_handler" shared="true">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="guint" name="id" />
         </parameters>
       </method>
     </class>

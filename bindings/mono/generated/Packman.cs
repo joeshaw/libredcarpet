@@ -31,21 +31,41 @@ namespace RC {
 			Raw = rc_packman_new();
 		}
 
-		delegate void TransactStepDelegate (IntPtr packman, int seqno, int step, string name);
+		[GLib.CDeclCallback]
+		delegate void TransactStepSignalDelegate (IntPtr arg0, int arg1, int arg2, IntPtr arg3, IntPtr gch);
 
-		static TransactStepDelegate TransactStepCallback;
-
-		static void transactstep_cb (IntPtr packman, int seqno, int step, string name)
+		static void TransactStepSignalCallback (IntPtr arg0, int arg1, int arg2, IntPtr arg3, IntPtr gch)
 		{
-			Packman obj = GLib.Object.GetObject (packman, false) as Packman;
-			obj.OnTransactStep (seqno, (RC.PackmanStep) step, name);
+			GLib.Signal sig = ((GCHandle) gch).Target as GLib.Signal;
+			if (sig == null)
+				throw new Exception("Unknown signal GC handle received " + gch);
+
+			RC.TransactStepArgs args = new RC.TransactStepArgs ();
+			args.Args = new object[3];
+			args.Args[0] = arg1;
+			args.Args[1] = (RC.PackmanStep) arg2;
+			args.Args[2] = GLib.Marshaller.PtrToStringGFree(arg3);
+			RC.TransactStepHandler handler = (RC.TransactStepHandler) sig.Handler;
+			handler (GLib.Object.GetObject (arg0), args);
+
+		}
+
+		[GLib.CDeclCallback]
+		delegate void TransactStepVMDelegate (IntPtr packman, int seqno, int step, IntPtr name);
+
+		static TransactStepVMDelegate TransactStepVMCallback;
+
+		static void transactstep_cb (IntPtr packman, int seqno, int step, IntPtr name)
+		{
+			Packman packman_managed = GLib.Object.GetObject (packman, false) as Packman;
+			packman_managed.OnTransactStep (seqno, (RC.PackmanStep) step, GLib.Marshaller.PtrToStringGFree(name));
 		}
 
 		private static void OverrideTransactStep (GLib.GType gtype)
 		{
-			if (TransactStepCallback == null)
-				TransactStepCallback = new TransactStepDelegate (transactstep_cb);
-			OverrideVirtualMethod (gtype, "transact_step", TransactStepCallback);
+			if (TransactStepVMCallback == null)
+				TransactStepVMCallback = new TransactStepVMDelegate (transactstep_cb);
+			OverrideVirtualMethod (gtype, "transact_step", TransactStepVMCallback);
 		}
 
 		[GLib.DefaultSignalHandler(Type=typeof(RC.Packman), ConnectionMethod="OverrideTransactStep")]
@@ -63,61 +83,38 @@ namespace RC {
 			vals [3] = new GLib.Value (name);
 			inst_and_params.Append (vals [3]);
 			g_signal_chain_from_overridden (inst_and_params.ArrayPtr, ref ret);
+			foreach (GLib.Value v in vals)
+				v.Dispose ();
 		}
 
 		[GLib.Signal("transact_step")]
 		public event RC.TransactStepHandler TransactStep {
 			add {
-				if (value.Method.GetCustomAttributes(typeof(GLib.ConnectBeforeAttribute), false).Length > 0) {
-					if (BeforeHandlers["transact_step"] == null)
-						BeforeSignals["transact_step"] = new RCSharp.voidObjectintPackmanStepstringSignal(this, "transact_step", value, typeof (RC.TransactStepArgs), 0);
-					else
-						((GLib.SignalCallback) BeforeSignals ["transact_step"]).AddDelegate (value);
-					BeforeHandlers.AddHandler("transact_step", value);
-				} else {
-					if (AfterHandlers["transact_step"] == null)
-						AfterSignals["transact_step"] = new RCSharp.voidObjectintPackmanStepstringSignal(this, "transact_step", value, typeof (RC.TransactStepArgs), 1);
-					else
-						((GLib.SignalCallback) AfterSignals ["transact_step"]).AddDelegate (value);
-					AfterHandlers.AddHandler("transact_step", value);
-				}
+				GLib.Signal sig = GLib.Signal.Lookup (this, "transact_step", new TransactStepSignalDelegate(TransactStepSignalCallback));
+				sig.AddDelegate (value);
 			}
 			remove {
-				System.ComponentModel.EventHandlerList event_list = AfterHandlers;
-				Hashtable signals = AfterSignals;
-				if (value.Method.GetCustomAttributes(typeof(GLib.ConnectBeforeAttribute), false).Length > 0) {
-					event_list = BeforeHandlers;
-					signals = BeforeSignals;
-				}
-				GLib.SignalCallback cb = signals ["transact_step"] as GLib.SignalCallback;
-				event_list.RemoveHandler("transact_step", value);
-				if (cb == null)
-					return;
-
-				cb.RemoveDelegate (value);
-
-				if (event_list["transact_step"] == null) {
-					signals.Remove("transact_step");
-					cb.Dispose ();
-				}
+				GLib.Signal sig = GLib.Signal.Lookup (this, "transact_step", new TransactStepSignalDelegate(TransactStepSignalCallback));
+				sig.RemoveDelegate (value);
 			}
 		}
 
-		delegate void TransactDoneDelegate (IntPtr packman);
+		[GLib.CDeclCallback]
+		delegate void TransactDoneVMDelegate (IntPtr packman);
 
-		static TransactDoneDelegate TransactDoneCallback;
+		static TransactDoneVMDelegate TransactDoneVMCallback;
 
 		static void transactdone_cb (IntPtr packman)
 		{
-			Packman obj = GLib.Object.GetObject (packman, false) as Packman;
-			obj.OnTransactDone ();
+			Packman packman_managed = GLib.Object.GetObject (packman, false) as Packman;
+			packman_managed.OnTransactDone ();
 		}
 
 		private static void OverrideTransactDone (GLib.GType gtype)
 		{
-			if (TransactDoneCallback == null)
-				TransactDoneCallback = new TransactDoneDelegate (transactdone_cb);
-			OverrideVirtualMethod (gtype, "transact_done", TransactDoneCallback);
+			if (TransactDoneVMCallback == null)
+				TransactDoneVMCallback = new TransactDoneVMDelegate (transactdone_cb);
+			OverrideVirtualMethod (gtype, "transact_done", TransactDoneVMCallback);
 		}
 
 		[GLib.DefaultSignalHandler(Type=typeof(RC.Packman), ConnectionMethod="OverrideTransactDone")]
@@ -129,61 +126,38 @@ namespace RC {
 			vals [0] = new GLib.Value (this);
 			inst_and_params.Append (vals [0]);
 			g_signal_chain_from_overridden (inst_and_params.ArrayPtr, ref ret);
+			foreach (GLib.Value v in vals)
+				v.Dispose ();
 		}
 
 		[GLib.Signal("transact_done")]
 		public event System.EventHandler TransactDone {
 			add {
-				if (value.Method.GetCustomAttributes(typeof(GLib.ConnectBeforeAttribute), false).Length > 0) {
-					if (BeforeHandlers["transact_done"] == null)
-						BeforeSignals["transact_done"] = new RCSharp.voidObjectSignal(this, "transact_done", value, typeof (System.EventArgs), 0);
-					else
-						((GLib.SignalCallback) BeforeSignals ["transact_done"]).AddDelegate (value);
-					BeforeHandlers.AddHandler("transact_done", value);
-				} else {
-					if (AfterHandlers["transact_done"] == null)
-						AfterSignals["transact_done"] = new RCSharp.voidObjectSignal(this, "transact_done", value, typeof (System.EventArgs), 1);
-					else
-						((GLib.SignalCallback) AfterSignals ["transact_done"]).AddDelegate (value);
-					AfterHandlers.AddHandler("transact_done", value);
-				}
+				GLib.Signal sig = GLib.Signal.Lookup (this, "transact_done");
+				sig.AddDelegate (value);
 			}
 			remove {
-				System.ComponentModel.EventHandlerList event_list = AfterHandlers;
-				Hashtable signals = AfterSignals;
-				if (value.Method.GetCustomAttributes(typeof(GLib.ConnectBeforeAttribute), false).Length > 0) {
-					event_list = BeforeHandlers;
-					signals = BeforeSignals;
-				}
-				GLib.SignalCallback cb = signals ["transact_done"] as GLib.SignalCallback;
-				event_list.RemoveHandler("transact_done", value);
-				if (cb == null)
-					return;
-
-				cb.RemoveDelegate (value);
-
-				if (event_list["transact_done"] == null) {
-					signals.Remove("transact_done");
-					cb.Dispose ();
-				}
+				GLib.Signal sig = GLib.Signal.Lookup (this, "transact_done");
+				sig.RemoveDelegate (value);
 			}
 		}
 
-		delegate void DatabaseChangedDelegate (IntPtr packman);
+		[GLib.CDeclCallback]
+		delegate void DatabaseChangedVMDelegate (IntPtr packman);
 
-		static DatabaseChangedDelegate DatabaseChangedCallback;
+		static DatabaseChangedVMDelegate DatabaseChangedVMCallback;
 
 		static void databasechanged_cb (IntPtr packman)
 		{
-			Packman obj = GLib.Object.GetObject (packman, false) as Packman;
-			obj.OnDatabaseChanged ();
+			Packman packman_managed = GLib.Object.GetObject (packman, false) as Packman;
+			packman_managed.OnDatabaseChanged ();
 		}
 
 		private static void OverrideDatabaseChanged (GLib.GType gtype)
 		{
-			if (DatabaseChangedCallback == null)
-				DatabaseChangedCallback = new DatabaseChangedDelegate (databasechanged_cb);
-			OverrideVirtualMethod (gtype, "database_changed", DatabaseChangedCallback);
+			if (DatabaseChangedVMCallback == null)
+				DatabaseChangedVMCallback = new DatabaseChangedVMDelegate (databasechanged_cb);
+			OverrideVirtualMethod (gtype, "database_changed", DatabaseChangedVMCallback);
 		}
 
 		[GLib.DefaultSignalHandler(Type=typeof(RC.Packman), ConnectionMethod="OverrideDatabaseChanged")]
@@ -195,61 +169,55 @@ namespace RC {
 			vals [0] = new GLib.Value (this);
 			inst_and_params.Append (vals [0]);
 			g_signal_chain_from_overridden (inst_and_params.ArrayPtr, ref ret);
+			foreach (GLib.Value v in vals)
+				v.Dispose ();
 		}
 
 		[GLib.Signal("database_changed")]
 		public event System.EventHandler DatabaseChanged {
 			add {
-				if (value.Method.GetCustomAttributes(typeof(GLib.ConnectBeforeAttribute), false).Length > 0) {
-					if (BeforeHandlers["database_changed"] == null)
-						BeforeSignals["database_changed"] = new RCSharp.voidObjectSignal(this, "database_changed", value, typeof (System.EventArgs), 0);
-					else
-						((GLib.SignalCallback) BeforeSignals ["database_changed"]).AddDelegate (value);
-					BeforeHandlers.AddHandler("database_changed", value);
-				} else {
-					if (AfterHandlers["database_changed"] == null)
-						AfterSignals["database_changed"] = new RCSharp.voidObjectSignal(this, "database_changed", value, typeof (System.EventArgs), 1);
-					else
-						((GLib.SignalCallback) AfterSignals ["database_changed"]).AddDelegate (value);
-					AfterHandlers.AddHandler("database_changed", value);
-				}
+				GLib.Signal sig = GLib.Signal.Lookup (this, "database_changed");
+				sig.AddDelegate (value);
 			}
 			remove {
-				System.ComponentModel.EventHandlerList event_list = AfterHandlers;
-				Hashtable signals = AfterSignals;
-				if (value.Method.GetCustomAttributes(typeof(GLib.ConnectBeforeAttribute), false).Length > 0) {
-					event_list = BeforeHandlers;
-					signals = BeforeSignals;
-				}
-				GLib.SignalCallback cb = signals ["database_changed"] as GLib.SignalCallback;
-				event_list.RemoveHandler("database_changed", value);
-				if (cb == null)
-					return;
-
-				cb.RemoveDelegate (value);
-
-				if (event_list["database_changed"] == null) {
-					signals.Remove("database_changed");
-					cb.Dispose ();
-				}
+				GLib.Signal sig = GLib.Signal.Lookup (this, "database_changed");
+				sig.RemoveDelegate (value);
 			}
 		}
 
-		delegate void TransactStartDelegate (IntPtr packman, int total_steps);
+		[GLib.CDeclCallback]
+		delegate void TransactStartSignalDelegate (IntPtr arg0, int arg1, IntPtr gch);
 
-		static TransactStartDelegate TransactStartCallback;
+		static void TransactStartSignalCallback (IntPtr arg0, int arg1, IntPtr gch)
+		{
+			GLib.Signal sig = ((GCHandle) gch).Target as GLib.Signal;
+			if (sig == null)
+				throw new Exception("Unknown signal GC handle received " + gch);
+
+			RC.TransactStartArgs args = new RC.TransactStartArgs ();
+			args.Args = new object[1];
+			args.Args[0] = arg1;
+			RC.TransactStartHandler handler = (RC.TransactStartHandler) sig.Handler;
+			handler (GLib.Object.GetObject (arg0), args);
+
+		}
+
+		[GLib.CDeclCallback]
+		delegate void TransactStartVMDelegate (IntPtr packman, int total_steps);
+
+		static TransactStartVMDelegate TransactStartVMCallback;
 
 		static void transactstart_cb (IntPtr packman, int total_steps)
 		{
-			Packman obj = GLib.Object.GetObject (packman, false) as Packman;
-			obj.OnTransactStart (total_steps);
+			Packman packman_managed = GLib.Object.GetObject (packman, false) as Packman;
+			packman_managed.OnTransactStart (total_steps);
 		}
 
 		private static void OverrideTransactStart (GLib.GType gtype)
 		{
-			if (TransactStartCallback == null)
-				TransactStartCallback = new TransactStartDelegate (transactstart_cb);
-			OverrideVirtualMethod (gtype, "transact_start", TransactStartCallback);
+			if (TransactStartVMCallback == null)
+				TransactStartVMCallback = new TransactStartVMDelegate (transactstart_cb);
+			OverrideVirtualMethod (gtype, "transact_start", TransactStartVMCallback);
 		}
 
 		[GLib.DefaultSignalHandler(Type=typeof(RC.Packman), ConnectionMethod="OverrideTransactStart")]
@@ -263,61 +231,38 @@ namespace RC {
 			vals [1] = new GLib.Value (total_steps);
 			inst_and_params.Append (vals [1]);
 			g_signal_chain_from_overridden (inst_and_params.ArrayPtr, ref ret);
+			foreach (GLib.Value v in vals)
+				v.Dispose ();
 		}
 
 		[GLib.Signal("transact_start")]
 		public event RC.TransactStartHandler TransactStart {
 			add {
-				if (value.Method.GetCustomAttributes(typeof(GLib.ConnectBeforeAttribute), false).Length > 0) {
-					if (BeforeHandlers["transact_start"] == null)
-						BeforeSignals["transact_start"] = new RCSharp.voidObjectintSignal(this, "transact_start", value, typeof (RC.TransactStartArgs), 0);
-					else
-						((GLib.SignalCallback) BeforeSignals ["transact_start"]).AddDelegate (value);
-					BeforeHandlers.AddHandler("transact_start", value);
-				} else {
-					if (AfterHandlers["transact_start"] == null)
-						AfterSignals["transact_start"] = new RCSharp.voidObjectintSignal(this, "transact_start", value, typeof (RC.TransactStartArgs), 1);
-					else
-						((GLib.SignalCallback) AfterSignals ["transact_start"]).AddDelegate (value);
-					AfterHandlers.AddHandler("transact_start", value);
-				}
+				GLib.Signal sig = GLib.Signal.Lookup (this, "transact_start", new TransactStartSignalDelegate(TransactStartSignalCallback));
+				sig.AddDelegate (value);
 			}
 			remove {
-				System.ComponentModel.EventHandlerList event_list = AfterHandlers;
-				Hashtable signals = AfterSignals;
-				if (value.Method.GetCustomAttributes(typeof(GLib.ConnectBeforeAttribute), false).Length > 0) {
-					event_list = BeforeHandlers;
-					signals = BeforeSignals;
-				}
-				GLib.SignalCallback cb = signals ["transact_start"] as GLib.SignalCallback;
-				event_list.RemoveHandler("transact_start", value);
-				if (cb == null)
-					return;
-
-				cb.RemoveDelegate (value);
-
-				if (event_list["transact_start"] == null) {
-					signals.Remove("transact_start");
-					cb.Dispose ();
-				}
+				GLib.Signal sig = GLib.Signal.Lookup (this, "transact_start", new TransactStartSignalDelegate(TransactStartSignalCallback));
+				sig.RemoveDelegate (value);
 			}
 		}
 
-		delegate void DatabaseLockedDelegate (IntPtr packman);
+		[GLib.CDeclCallback]
+		delegate void DatabaseLockedVMDelegate (IntPtr packman);
 
-		static DatabaseLockedDelegate DatabaseLockedCallback;
+		static DatabaseLockedVMDelegate DatabaseLockedVMCallback;
 
 		static void databaselocked_cb (IntPtr packman)
 		{
-			Packman obj = GLib.Object.GetObject (packman, false) as Packman;
-			obj.OnDatabaseLocked ();
+			Packman packman_managed = GLib.Object.GetObject (packman, false) as Packman;
+			packman_managed.OnDatabaseLocked ();
 		}
 
 		private static void OverrideDatabaseLocked (GLib.GType gtype)
 		{
-			if (DatabaseLockedCallback == null)
-				DatabaseLockedCallback = new DatabaseLockedDelegate (databaselocked_cb);
-			OverrideVirtualMethod (gtype, "database_locked", DatabaseLockedCallback);
+			if (DatabaseLockedVMCallback == null)
+				DatabaseLockedVMCallback = new DatabaseLockedVMDelegate (databaselocked_cb);
+			OverrideVirtualMethod (gtype, "database_locked", DatabaseLockedVMCallback);
 		}
 
 		[GLib.DefaultSignalHandler(Type=typeof(RC.Packman), ConnectionMethod="OverrideDatabaseLocked")]
@@ -329,61 +274,56 @@ namespace RC {
 			vals [0] = new GLib.Value (this);
 			inst_and_params.Append (vals [0]);
 			g_signal_chain_from_overridden (inst_and_params.ArrayPtr, ref ret);
+			foreach (GLib.Value v in vals)
+				v.Dispose ();
 		}
 
 		[GLib.Signal("database_locked")]
 		public event System.EventHandler DatabaseLocked {
 			add {
-				if (value.Method.GetCustomAttributes(typeof(GLib.ConnectBeforeAttribute), false).Length > 0) {
-					if (BeforeHandlers["database_locked"] == null)
-						BeforeSignals["database_locked"] = new RCSharp.voidObjectSignal(this, "database_locked", value, typeof (System.EventArgs), 0);
-					else
-						((GLib.SignalCallback) BeforeSignals ["database_locked"]).AddDelegate (value);
-					BeforeHandlers.AddHandler("database_locked", value);
-				} else {
-					if (AfterHandlers["database_locked"] == null)
-						AfterSignals["database_locked"] = new RCSharp.voidObjectSignal(this, "database_locked", value, typeof (System.EventArgs), 1);
-					else
-						((GLib.SignalCallback) AfterSignals ["database_locked"]).AddDelegate (value);
-					AfterHandlers.AddHandler("database_locked", value);
-				}
+				GLib.Signal sig = GLib.Signal.Lookup (this, "database_locked");
+				sig.AddDelegate (value);
 			}
 			remove {
-				System.ComponentModel.EventHandlerList event_list = AfterHandlers;
-				Hashtable signals = AfterSignals;
-				if (value.Method.GetCustomAttributes(typeof(GLib.ConnectBeforeAttribute), false).Length > 0) {
-					event_list = BeforeHandlers;
-					signals = BeforeSignals;
-				}
-				GLib.SignalCallback cb = signals ["database_locked"] as GLib.SignalCallback;
-				event_list.RemoveHandler("database_locked", value);
-				if (cb == null)
-					return;
-
-				cb.RemoveDelegate (value);
-
-				if (event_list["database_locked"] == null) {
-					signals.Remove("database_locked");
-					cb.Dispose ();
-				}
+				GLib.Signal sig = GLib.Signal.Lookup (this, "database_locked");
+				sig.RemoveDelegate (value);
 			}
 		}
 
-		delegate void TransactProgressDelegate (IntPtr packman, UIntPtr amount, UIntPtr total);
+		[GLib.CDeclCallback]
+		delegate void TransactProgressSignalDelegate (IntPtr arg0, UIntPtr arg1, UIntPtr arg2, IntPtr gch);
 
-		static TransactProgressDelegate TransactProgressCallback;
+		static void TransactProgressSignalCallback (IntPtr arg0, UIntPtr arg1, UIntPtr arg2, IntPtr gch)
+		{
+			GLib.Signal sig = ((GCHandle) gch).Target as GLib.Signal;
+			if (sig == null)
+				throw new Exception("Unknown signal GC handle received " + gch);
+
+			RC.TransactProgressArgs args = new RC.TransactProgressArgs ();
+			args.Args = new object[2];
+			args.Args[0] = (ulong) arg1;
+			args.Args[1] = (ulong) arg2;
+			RC.TransactProgressHandler handler = (RC.TransactProgressHandler) sig.Handler;
+			handler (GLib.Object.GetObject (arg0), args);
+
+		}
+
+		[GLib.CDeclCallback]
+		delegate void TransactProgressVMDelegate (IntPtr packman, UIntPtr amount, UIntPtr total);
+
+		static TransactProgressVMDelegate TransactProgressVMCallback;
 
 		static void transactprogress_cb (IntPtr packman, UIntPtr amount, UIntPtr total)
 		{
-			Packman obj = GLib.Object.GetObject (packman, false) as Packman;
-			obj.OnTransactProgress ((ulong) amount, (ulong) total);
+			Packman packman_managed = GLib.Object.GetObject (packman, false) as Packman;
+			packman_managed.OnTransactProgress ((ulong) amount, (ulong) total);
 		}
 
 		private static void OverrideTransactProgress (GLib.GType gtype)
 		{
-			if (TransactProgressCallback == null)
-				TransactProgressCallback = new TransactProgressDelegate (transactprogress_cb);
-			OverrideVirtualMethod (gtype, "transact_progress", TransactProgressCallback);
+			if (TransactProgressVMCallback == null)
+				TransactProgressVMCallback = new TransactProgressVMDelegate (transactprogress_cb);
+			OverrideVirtualMethod (gtype, "transact_progress", TransactProgressVMCallback);
 		}
 
 		[GLib.DefaultSignalHandler(Type=typeof(RC.Packman), ConnectionMethod="OverrideTransactProgress")]
@@ -399,61 +339,38 @@ namespace RC {
 			vals [2] = new GLib.Value (total);
 			inst_and_params.Append (vals [2]);
 			g_signal_chain_from_overridden (inst_and_params.ArrayPtr, ref ret);
+			foreach (GLib.Value v in vals)
+				v.Dispose ();
 		}
 
 		[GLib.Signal("transact_progress")]
 		public event RC.TransactProgressHandler TransactProgress {
 			add {
-				if (value.Method.GetCustomAttributes(typeof(GLib.ConnectBeforeAttribute), false).Length > 0) {
-					if (BeforeHandlers["transact_progress"] == null)
-						BeforeSignals["transact_progress"] = new RCSharp.voidObjectulongulongSignal(this, "transact_progress", value, typeof (RC.TransactProgressArgs), 0);
-					else
-						((GLib.SignalCallback) BeforeSignals ["transact_progress"]).AddDelegate (value);
-					BeforeHandlers.AddHandler("transact_progress", value);
-				} else {
-					if (AfterHandlers["transact_progress"] == null)
-						AfterSignals["transact_progress"] = new RCSharp.voidObjectulongulongSignal(this, "transact_progress", value, typeof (RC.TransactProgressArgs), 1);
-					else
-						((GLib.SignalCallback) AfterSignals ["transact_progress"]).AddDelegate (value);
-					AfterHandlers.AddHandler("transact_progress", value);
-				}
+				GLib.Signal sig = GLib.Signal.Lookup (this, "transact_progress", new TransactProgressSignalDelegate(TransactProgressSignalCallback));
+				sig.AddDelegate (value);
 			}
 			remove {
-				System.ComponentModel.EventHandlerList event_list = AfterHandlers;
-				Hashtable signals = AfterSignals;
-				if (value.Method.GetCustomAttributes(typeof(GLib.ConnectBeforeAttribute), false).Length > 0) {
-					event_list = BeforeHandlers;
-					signals = BeforeSignals;
-				}
-				GLib.SignalCallback cb = signals ["transact_progress"] as GLib.SignalCallback;
-				event_list.RemoveHandler("transact_progress", value);
-				if (cb == null)
-					return;
-
-				cb.RemoveDelegate (value);
-
-				if (event_list["transact_progress"] == null) {
-					signals.Remove("transact_progress");
-					cb.Dispose ();
-				}
+				GLib.Signal sig = GLib.Signal.Lookup (this, "transact_progress", new TransactProgressSignalDelegate(TransactProgressSignalCallback));
+				sig.RemoveDelegate (value);
 			}
 		}
 
-		delegate void DatabaseUnlockedDelegate (IntPtr packman);
+		[GLib.CDeclCallback]
+		delegate void DatabaseUnlockedVMDelegate (IntPtr packman);
 
-		static DatabaseUnlockedDelegate DatabaseUnlockedCallback;
+		static DatabaseUnlockedVMDelegate DatabaseUnlockedVMCallback;
 
 		static void databaseunlocked_cb (IntPtr packman)
 		{
-			Packman obj = GLib.Object.GetObject (packman, false) as Packman;
-			obj.OnDatabaseUnlocked ();
+			Packman packman_managed = GLib.Object.GetObject (packman, false) as Packman;
+			packman_managed.OnDatabaseUnlocked ();
 		}
 
 		private static void OverrideDatabaseUnlocked (GLib.GType gtype)
 		{
-			if (DatabaseUnlockedCallback == null)
-				DatabaseUnlockedCallback = new DatabaseUnlockedDelegate (databaseunlocked_cb);
-			OverrideVirtualMethod (gtype, "database_unlocked", DatabaseUnlockedCallback);
+			if (DatabaseUnlockedVMCallback == null)
+				DatabaseUnlockedVMCallback = new DatabaseUnlockedVMDelegate (databaseunlocked_cb);
+			OverrideVirtualMethod (gtype, "database_unlocked", DatabaseUnlockedVMCallback);
 		}
 
 		[GLib.DefaultSignalHandler(Type=typeof(RC.Packman), ConnectionMethod="OverrideDatabaseUnlocked")]
@@ -465,43 +382,19 @@ namespace RC {
 			vals [0] = new GLib.Value (this);
 			inst_and_params.Append (vals [0]);
 			g_signal_chain_from_overridden (inst_and_params.ArrayPtr, ref ret);
+			foreach (GLib.Value v in vals)
+				v.Dispose ();
 		}
 
 		[GLib.Signal("database_unlocked")]
 		public event System.EventHandler DatabaseUnlocked {
 			add {
-				if (value.Method.GetCustomAttributes(typeof(GLib.ConnectBeforeAttribute), false).Length > 0) {
-					if (BeforeHandlers["database_unlocked"] == null)
-						BeforeSignals["database_unlocked"] = new RCSharp.voidObjectSignal(this, "database_unlocked", value, typeof (System.EventArgs), 0);
-					else
-						((GLib.SignalCallback) BeforeSignals ["database_unlocked"]).AddDelegate (value);
-					BeforeHandlers.AddHandler("database_unlocked", value);
-				} else {
-					if (AfterHandlers["database_unlocked"] == null)
-						AfterSignals["database_unlocked"] = new RCSharp.voidObjectSignal(this, "database_unlocked", value, typeof (System.EventArgs), 1);
-					else
-						((GLib.SignalCallback) AfterSignals ["database_unlocked"]).AddDelegate (value);
-					AfterHandlers.AddHandler("database_unlocked", value);
-				}
+				GLib.Signal sig = GLib.Signal.Lookup (this, "database_unlocked");
+				sig.AddDelegate (value);
 			}
 			remove {
-				System.ComponentModel.EventHandlerList event_list = AfterHandlers;
-				Hashtable signals = AfterSignals;
-				if (value.Method.GetCustomAttributes(typeof(GLib.ConnectBeforeAttribute), false).Length > 0) {
-					event_list = BeforeHandlers;
-					signals = BeforeSignals;
-				}
-				GLib.SignalCallback cb = signals ["database_unlocked"] as GLib.SignalCallback;
-				event_list.RemoveHandler("database_unlocked", value);
-				if (cb == null)
-					return;
-
-				cb.RemoveDelegate (value);
-
-				if (event_list["database_unlocked"] == null) {
-					signals.Remove("database_unlocked");
-					cb.Dispose ();
-				}
+				GLib.Signal sig = GLib.Signal.Lookup (this, "database_unlocked");
+				sig.RemoveDelegate (value);
 			}
 		}
 
@@ -509,7 +402,7 @@ namespace RC {
 		static extern IntPtr rc_packman_verify(IntPtr raw, IntPtr package, uint type);
 
 		public GLib.SList Verify(RC.Package package, uint type) {
-			IntPtr raw_ret = rc_packman_verify(Handle, package.Handle, type);
+			IntPtr raw_ret = rc_packman_verify(Handle, package == null ? IntPtr.Zero : package.Handle, type);
 			GLib.SList ret = new GLib.SList(raw_ret);
 			return ret;
 		}
@@ -518,7 +411,7 @@ namespace RC {
 		static extern IntPtr rc_packman_patch_parents(IntPtr raw, IntPtr package);
 
 		public GLib.SList PatchParents(RC.Package package) {
-			IntPtr raw_ret = rc_packman_patch_parents(Handle, package.Handle);
+			IntPtr raw_ret = rc_packman_patch_parents(Handle, package == null ? IntPtr.Zero : package.Handle);
 			GLib.SList ret = new GLib.SList(raw_ret);
 			return ret;
 		}
@@ -527,7 +420,7 @@ namespace RC {
 		static extern int rc_packman_version_compare(IntPtr raw, IntPtr spec1, IntPtr spec2);
 
 		public int VersionCompare(RC.PackageSpec spec1, RC.PackageSpec spec2) {
-			int raw_ret = rc_packman_version_compare(Handle, spec1.Handle, spec2.Handle);
+			int raw_ret = rc_packman_version_compare(Handle, spec1 == null ? IntPtr.Zero : spec1.Handle, spec2 == null ? IntPtr.Zero : spec2.Handle);
 			int ret = raw_ret;
 			return ret;
 		}
@@ -545,17 +438,19 @@ namespace RC {
 		static extern IntPtr rc_packman_file_list(IntPtr raw, IntPtr package);
 
 		public GLib.SList FileList(RC.Package package) {
-			IntPtr raw_ret = rc_packman_file_list(Handle, package.Handle);
-			GLib.SList ret = new GLib.SList(raw_ret, typeof (RC.PackageFile));
+			IntPtr raw_ret = rc_packman_file_list(Handle, package == null ? IntPtr.Zero : package.Handle);
+			GLib.SList ret = new GLib.SList(raw_ret);
 			return ret;
 		}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_packman_query(IntPtr raw, string name);
+		static extern IntPtr rc_packman_query(IntPtr raw, IntPtr name);
 
 		public GLib.SList Query(string name) {
-			IntPtr raw_ret = rc_packman_query(Handle, name);
+			IntPtr name_as_native = GLib.Marshaller.StringToPtrGStrdup (name);
+			IntPtr raw_ret = rc_packman_query(Handle, name_as_native);
 			GLib.SList ret = new GLib.SList(raw_ret);
+			GLib.Marshaller.Free (name_as_native);
 			return ret;
 		}
 
@@ -635,11 +530,13 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_packman_find_file(IntPtr raw, string filename);
+		static extern IntPtr rc_packman_find_file(IntPtr raw, IntPtr filename);
 
 		public GLib.SList FindFile(string filename) {
-			IntPtr raw_ret = rc_packman_find_file(Handle, filename);
-			GLib.SList ret = new GLib.SList(raw_ret, typeof (RC.Package));
+			IntPtr filename_as_native = GLib.Marshaller.StringToPtrGStrdup (filename);
+			IntPtr raw_ret = rc_packman_find_file(Handle, filename_as_native);
+			GLib.SList ret = new GLib.SList(raw_ret);
+			GLib.Marshaller.Free (filename_as_native);
 			return ret;
 		}
 
@@ -649,7 +546,7 @@ namespace RC {
 		public string FileExtension { 
 			get {
 				IntPtr raw_ret = rc_packman_get_file_extension(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
+				string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
 				return ret;
 			}
 		}
@@ -666,11 +563,17 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern bool rc_packman_parse_version(IntPtr raw, string input, out bool has_epoch, out uint epoch, out string version, out string release);
+		static extern bool rc_packman_parse_version(IntPtr raw, IntPtr input, out bool has_epoch, out uint epoch, out IntPtr version, out IntPtr release);
 
 		public bool ParseVersion(string input, out bool has_epoch, out uint epoch, out string version, out string release) {
-			bool raw_ret = rc_packman_parse_version(Handle, input, out has_epoch, out epoch, out version, out release);
+			IntPtr input_as_native = GLib.Marshaller.StringToPtrGStrdup (input);
+			IntPtr version_as_native;
+			IntPtr release_as_native;
+			bool raw_ret = rc_packman_parse_version(Handle, input_as_native, out has_epoch, out epoch, out version_as_native, out release_as_native);
 			bool ret = raw_ret;
+			GLib.Marshaller.Free (input_as_native);
+			version = GLib.Marshaller.PtrToStringGFree(version_as_native);
+			release = GLib.Marshaller.PtrToStringGFree(release_as_native);
 			return ret;
 		}
 
@@ -680,7 +583,7 @@ namespace RC {
 		public string Reason { 
 			get {
 				IntPtr raw_ret = rc_packman_get_reason(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
+				string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
 				return ret;
 			}
 		}
@@ -730,7 +633,7 @@ namespace RC {
         if (raw_ret == IntPtr.Zero)
             ret = null;
         else
-            ret = new RC.Package(raw_ret, true);
+            ret = new RC.Package(raw_ret);
         return ret;
     }
 

@@ -31,19 +31,6 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_package_dep_ref(IntPtr raw);
-
-		public RC.PackageDep Ref() {
-			IntPtr raw_ret = rc_package_dep_ref(Handle);
-			RC.PackageDep ret;
-			if (raw_ret == IntPtr.Zero)
-				ret = null;
-			else
-				ret = new RC.PackageDep(raw_ret);
-			return ret;
-		}
-
-		[DllImport("libredcarpet")]
 		static extern int rc_package_dep_get_relation(IntPtr raw);
 
 		public RC.PackageRelation Relation { 
@@ -59,13 +46,6 @@ namespace RC {
 
 		public static void SpewCache() {
 			rc_package_dep_spew_cache();
-		}
-
-		[DllImport("libredcarpet")]
-		static extern void rc_package_dep_unref(IntPtr raw);
-
-		public void Unref() {
-			rc_package_dep_unref(Handle);
 		}
 
 		[DllImport("libredcarpet")]
@@ -90,7 +70,7 @@ namespace RC {
 		static extern bool rc_package_dep_verify_relation(IntPtr packman, IntPtr dep, IntPtr prov);
 
 		public static bool VerifyRelation(RC.Packman packman, RC.PackageDep dep, RC.PackageDep prov) {
-			bool raw_ret = rc_package_dep_verify_relation(packman.Handle, dep.Handle, prov.Handle);
+			bool raw_ret = rc_package_dep_verify_relation(packman == null ? IntPtr.Zero : packman.Handle, dep == null ? IntPtr.Zero : dep.Handle, prov == null ? IntPtr.Zero : prov.Handle);
 			bool ret = raw_ret;
 			return ret;
 		}
@@ -101,11 +81,7 @@ namespace RC {
 		public RC.Channel Channel { 
 			get {
 				IntPtr raw_ret = rc_package_dep_get_channel(Handle);
-				RC.Channel ret;
-				if (raw_ret == IntPtr.Zero)
-					ret = null;
-				else
-					ret = new RC.Channel(raw_ret);
+				RC.Channel ret = raw_ret == IntPtr.Zero ? null : (RC.Channel) GLib.Opaque.GetOpaque (raw_ret, typeof (RC.Channel), false);
 				return ret;
 			}
 		}
@@ -122,11 +98,17 @@ namespace RC {
 		public PackageDep(IntPtr raw) : base(raw) {}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_package_dep_new(string name, bool has_epoch, uint epoch, string version, string release, int relation, IntPtr channel, bool pre, bool is_or);
+		static extern IntPtr rc_package_dep_new(IntPtr name, bool has_epoch, uint epoch, IntPtr version, IntPtr release, int relation, IntPtr channel, bool pre, bool is_or);
 
 		public PackageDep (string name, bool has_epoch, uint epoch, string version, string release, RC.PackageRelation relation, RC.Channel channel, bool pre, bool is_or) 
 		{
-			Raw = rc_package_dep_new(name, has_epoch, epoch, version, release, (int) relation, channel.Handle, pre, is_or);
+			IntPtr name_as_native = GLib.Marshaller.StringToPtrGStrdup (name);
+			IntPtr version_as_native = GLib.Marshaller.StringToPtrGStrdup (version);
+			IntPtr release_as_native = GLib.Marshaller.StringToPtrGStrdup (release);
+			Raw = rc_package_dep_new(name_as_native, has_epoch, epoch, version_as_native, release_as_native, (int) relation, channel == null ? IntPtr.Zero : channel.Handle, pre, is_or);
+			GLib.Marshaller.Free (name_as_native);
+			GLib.Marshaller.Free (version_as_native);
+			GLib.Marshaller.Free (release_as_native);
 		}
 
 		[DllImport("libredcarpet")]
@@ -134,7 +116,29 @@ namespace RC {
 
 		public PackageDep (RC.PackageSpec spec, RC.PackageRelation relation, RC.Channel channel, bool pre, bool is_or) 
 		{
-			Raw = rc_package_dep_new_from_spec(spec.Handle, (int) relation, channel.Handle, pre, is_or);
+			Raw = rc_package_dep_new_from_spec(spec == null ? IntPtr.Zero : spec.Handle, (int) relation, channel == null ? IntPtr.Zero : channel.Handle, pre, is_or);
+		}
+
+		[DllImport("libredcarpet")]
+		static extern IntPtr rc_package_dep_ref(IntPtr raw);
+
+		protected override void Ref (IntPtr raw)
+		{
+			if (!Owned) {
+				rc_package_dep_ref (raw);
+				Owned = true;
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern void rc_package_dep_unref(IntPtr raw);
+
+		protected override void Unref (IntPtr raw)
+		{
+			if (Owned) {
+				rc_package_dep_unref (raw);
+				Owned = false;
+			}
 		}
 
 #endregion
@@ -151,8 +155,10 @@ namespace RC {
         PackageDep[] ret = new PackageDep[slist.Count];
 
         int i = 0;
-        foreach (PackageDep d in slist)
-            ret[i++] = d.Ref ();
+        foreach (PackageDep d in slist) {
+            d.Ref (d.Handle);
+            ret[i++] = d;
+        }
 
         PackageDep.SlistFree (slist);
 
@@ -216,8 +222,15 @@ namespace RC {
             }
         }
 
-        Raw = rc_package_dep_new (name, has_epoch, epoch, version, release,
+        IntPtr name_as_native = GLib.Marshaller.StringToPtrGStrdup (name);
+        IntPtr version_as_native = GLib.Marshaller.StringToPtrGStrdup (version);
+        IntPtr release_as_native = GLib.Marshaller.StringToPtrGStrdup (release);
+        Raw = rc_package_dep_new (name_as_native, has_epoch, epoch,
+                                  version_as_native, release_as_native,
                                   (int) relation, channel.Handle, false, false);
+        GLib.Marshaller.Free (name_as_native);
+        GLib.Marshaller.Free (version_as_native);
+        GLib.Marshaller.Free (release_as_native);
     }
 
     public PackageDep (System.Xml.XmlTextReader reader) {

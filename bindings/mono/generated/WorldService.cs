@@ -25,79 +25,38 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern bool rc_world_service_get_is_invisible(IntPtr raw);
-
-		[DllImport("libredcarpet")]
-		static extern void rc_world_service_set_is_invisible(IntPtr raw, bool invisible);
-
-		public bool IsInvisible { 
-			get {
-				bool raw_ret = rc_world_service_get_is_invisible(Handle);
-				bool ret = raw_ret;
-				return ret;
-			}
-			set {
-				rc_world_service_set_is_invisible(Handle, value);
-			}
-		}
-
-		[DllImport("libredcarpet")]
-		static extern IntPtr rc_world_service_get_name(IntPtr raw);
-
-		[DllImport("libredcarpet")]
-		static extern void rc_world_service_set_name(IntPtr raw, string name);
-
-		public string Name { 
-			get {
-				IntPtr raw_ret = rc_world_service_get_name(Handle);
-				string ret = GLib.Marshaller.PtrToStringGFree(raw_ret);
-				return ret;
-			}
-			set {
-				rc_world_service_set_name(Handle, value);
-			}
-		}
-
-		[DllImport("libredcarpet")]
 		static extern IntPtr rc_world_service_get_url(IntPtr raw);
 
 		[DllImport("libredcarpet")]
-		static extern void rc_world_service_set_url(IntPtr raw, string url);
+		static extern void rc_world_service_set_url(IntPtr raw, IntPtr url);
 
-		public string Url { 
-			get {
+		public string Url {
+			get  {
 				IntPtr raw_ret = rc_world_service_get_url(Handle);
 				string ret = GLib.Marshaller.PtrToStringGFree(raw_ret);
 				return ret;
 			}
-			set {
-				rc_world_service_set_url(Handle, value);
+			set  {
+				IntPtr url_as_native = GLib.Marshaller.StringToPtrGStrdup (value);
+				rc_world_service_set_url(Handle, url_as_native);
+				GLib.Marshaller.Free (url_as_native);
 			}
 		}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_world_service_lookup(string scheme);
-
-		public static GLib.GType Lookup(string scheme) {
-			IntPtr raw_ret = rc_world_service_lookup(scheme);
-			GLib.GType ret = new GLib.GType(raw_ret);
-			return ret;
-		}
+		static extern bool rc_world_service_get_is_sticky(IntPtr raw);
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_world_service_get_id(IntPtr raw);
+		static extern void rc_world_service_set_is_sticky(IntPtr raw, bool sticky);
 
-		[DllImport("libredcarpet")]
-		static extern void rc_world_service_set_id(IntPtr raw, string id);
-
-		public string Id { 
-			get {
-				IntPtr raw_ret = rc_world_service_get_id(Handle);
-				string ret = GLib.Marshaller.PtrToStringGFree(raw_ret);
+		public bool IsSticky {
+			get  {
+				bool raw_ret = rc_world_service_get_is_sticky(Handle);
+				bool ret = raw_ret;
 				return ret;
 			}
-			set {
-				rc_world_service_set_id(Handle, value);
+			set  {
+				rc_world_service_set_is_sticky(Handle, value);
 			}
 		}
 
@@ -107,39 +66,90 @@ namespace RC {
 		[DllImport("libredcarpet")]
 		static extern void rc_world_service_set_is_singleton(IntPtr raw, bool singleton);
 
-		public bool IsSingleton { 
-			get {
+		public bool IsSingleton {
+			get  {
 				bool raw_ret = rc_world_service_get_is_singleton(Handle);
 				bool ret = raw_ret;
 				return ret;
 			}
-			set {
+			set  {
 				rc_world_service_set_is_singleton(Handle, value);
 			}
 		}
 
 		[DllImport("libredcarpet")]
-		static extern void rc_world_service_unregister(string scheme);
-
-		public static void Unregister(string scheme) {
-			rc_world_service_unregister(scheme);
-		}
+		static extern bool rc_world_service_get_is_invisible(IntPtr raw);
 
 		[DllImport("libredcarpet")]
-		static extern bool rc_world_service_get_is_sticky(IntPtr raw);
+		static extern void rc_world_service_set_is_invisible(IntPtr raw, bool invisible);
 
-		[DllImport("libredcarpet")]
-		static extern void rc_world_service_set_is_sticky(IntPtr raw, bool sticky);
-
-		public bool IsSticky { 
-			get {
-				bool raw_ret = rc_world_service_get_is_sticky(Handle);
+		public bool IsInvisible {
+			get  {
+				bool raw_ret = rc_world_service_get_is_invisible(Handle);
 				bool ret = raw_ret;
 				return ret;
 			}
-			set {
-				rc_world_service_set_is_sticky(Handle, value);
+			set  {
+				rc_world_service_set_is_invisible(Handle, value);
 			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern IntPtr rc_world_service_get_name(IntPtr raw);
+
+		[DllImport("libredcarpet")]
+		static extern void rc_world_service_set_name(IntPtr raw, IntPtr name);
+
+		public string Name {
+			get  {
+				IntPtr raw_ret = rc_world_service_get_name(Handle);
+				string ret = GLib.Marshaller.PtrToStringGFree(raw_ret);
+				return ret;
+			}
+			set  {
+				IntPtr name_as_native = GLib.Marshaller.StringToPtrGStrdup (value);
+				rc_world_service_set_name(Handle, name_as_native);
+				GLib.Marshaller.Free (name_as_native);
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern IntPtr rc_world_service_lookup(IntPtr scheme);
+
+		public static GLib.GType Lookup(string scheme) {
+			IntPtr scheme_as_native = GLib.Marshaller.StringToPtrGStrdup (scheme);
+			IntPtr raw_ret = rc_world_service_lookup(scheme_as_native);
+			GLib.GType ret = new GLib.GType(raw_ret);
+			GLib.Marshaller.Free (scheme_as_native);
+			return ret;
+		}
+
+		[DllImport("libredcarpet")]
+		static extern IntPtr rc_world_service_get_id(IntPtr raw);
+
+		[DllImport("libredcarpet")]
+		static extern void rc_world_service_set_id(IntPtr raw, IntPtr id);
+
+		public string Id { 
+			get {
+				IntPtr raw_ret = rc_world_service_get_id(Handle);
+				string ret = GLib.Marshaller.PtrToStringGFree(raw_ret);
+				return ret;
+			}
+			set {
+				IntPtr id_as_native = GLib.Marshaller.StringToPtrGStrdup (value);
+				rc_world_service_set_id(Handle, id_as_native);
+				GLib.Marshaller.Free (id_as_native);
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern void rc_world_service_unregister(IntPtr scheme);
+
+		public static void Unregister(string scheme) {
+			IntPtr scheme_as_native = GLib.Marshaller.StringToPtrGStrdup (scheme);
+			rc_world_service_unregister(scheme_as_native);
+			GLib.Marshaller.Free (scheme_as_native);
 		}
 
 		[DllImport("libredcarpet")]

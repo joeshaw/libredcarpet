@@ -13,16 +13,16 @@ namespace GtkSharp.LibredcarpetSharp {
 				return;
 
 			initialized = true;
-			GLib.ObjectManager.RegisterType("RCWorldUndump", "RC.WorldUndump,libredcarpet-sharp");
-			GLib.ObjectManager.RegisterType("RCWorldSystem", "RC.WorldSystem,libredcarpet-sharp");
-			GLib.ObjectManager.RegisterType("RCWorld", "RC.World,libredcarpet-sharp");
-			GLib.ObjectManager.RegisterType("RCWorldLocalDir", "RC.WorldLocalDir,libredcarpet-sharp");
-			GLib.ObjectManager.RegisterType("RCWorldMulti", "RC.WorldMulti,libredcarpet-sharp");
-			GLib.ObjectManager.RegisterType("RCWorldStore", "RC.WorldStore,libredcarpet-sharp");
-			GLib.ObjectManager.RegisterType("RCWorldService", "RC.WorldService,libredcarpet-sharp");
-			GLib.ObjectManager.RegisterType("RCPending", "RC.Pending,libredcarpet-sharp");
-			GLib.ObjectManager.RegisterType("RCWorldSynthetic", "RC.WorldSynthetic,libredcarpet-sharp");
-			GLib.ObjectManager.RegisterType("RCPackman", "RC.Packman,libredcarpet-sharp");
+			GLib.GType.Register (RC.WorldUndump.GType, typeof (RC.WorldUndump));
+			GLib.GType.Register (RC.WorldSystem.GType, typeof (RC.WorldSystem));
+			GLib.GType.Register (RC.World.GType, typeof (RC.World));
+			GLib.GType.Register (RC.WorldLocalDir.GType, typeof (RC.WorldLocalDir));
+			GLib.GType.Register (RC.WorldMulti.GType, typeof (RC.WorldMulti));
+			GLib.GType.Register (RC.WorldStore.GType, typeof (RC.WorldStore));
+			GLib.GType.Register (RC.WorldService.GType, typeof (RC.WorldService));
+			GLib.GType.Register (RC.Pending.GType, typeof (RC.Pending));
+			GLib.GType.Register (RC.WorldSynthetic.GType, typeof (RC.WorldSynthetic));
+			GLib.GType.Register (RC.Packman.GType, typeof (RC.Packman));
 		}
 	}
 }

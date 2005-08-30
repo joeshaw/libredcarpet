@@ -11,32 +11,52 @@ namespace RC {
 	[StructLayout(LayoutKind.Sequential)]
 	public struct QueueItem_Install {
 
-		public RC.QueueItem Parent;
-		private IntPtr _package;
-
-		public RC.Package package {
-			get { 
-				RC.Package ret = new RC.Package(_package);
-				if (ret == null) ret = new RC.Package(_package);
-				return ret;
+		private IntPtr _parent;
+		public RC.QueueItem Parent {
+			get {
+				return _parent == IntPtr.Zero ? null : (RC.QueueItem) GLib.Opaque.GetOpaque (_parent, typeof (RC.QueueItem), false);
 			}
-			set { _package = value.Handle; }
+			set {
+				_parent = value == null ? IntPtr.Zero : value.Handle;
+			}
+		}
+		private IntPtr _package;
+		public RC.Package Package {
+			get {
+				return _package == IntPtr.Zero ? null : (RC.Package) GLib.Opaque.GetOpaque (_package, typeof (RC.Package), false);
+			}
+			set {
+				_package = value == null ? IntPtr.Zero : value.Handle;
+			}
 		}
 		private IntPtr _upgrades;
-
-		public RC.Package upgrades {
-			get { 
-				RC.Package ret = new RC.Package(_upgrades);
-				if (ret == null) ret = new RC.Package(_upgrades);
-				return ret;
+		public RC.Package Upgrades {
+			get {
+				return _upgrades == IntPtr.Zero ? null : (RC.Package) GLib.Opaque.GetOpaque (_upgrades, typeof (RC.Package), false);
 			}
-			set { _upgrades = value.Handle; }
+			set {
+				_upgrades = value == null ? IntPtr.Zero : value.Handle;
+			}
 		}
 		private IntPtr _deps_satisfied_by_this_install;
 		private IntPtr _needed_by;
 		public int ChannelPriority;
 		public int OtherPenalty;
 		private uint _bitfield0;
+
+		[DllImport ("libredcarpetsharpglue-0")]
+		extern static bool rcsharp_rc_queueitem_install_get_explicitly_requested (ref RC.QueueItem_Install raw);
+		[DllImport ("libredcarpetsharpglue-0")]
+		extern static void rcsharp_rc_queueitem_install_set_explicitly_requested (ref RC.QueueItem_Install raw, bool value);
+		public bool ExplicitlyRequested {
+			get {
+				return rcsharp_rc_queueitem_install_get_explicitly_requested (ref this);
+			}
+			set {
+				rcsharp_rc_queueitem_install_set_explicitly_requested (ref this, value);
+			}
+		}
+
 
 		public static RC.QueueItem_Install Zero = new RC.QueueItem_Install ();
 

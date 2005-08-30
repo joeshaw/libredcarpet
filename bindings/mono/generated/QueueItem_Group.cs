@@ -11,7 +11,15 @@ namespace RC {
 	[StructLayout(LayoutKind.Sequential)]
 	public struct QueueItem_Group {
 
-		public RC.QueueItem Parent;
+		private IntPtr _parent;
+		public RC.QueueItem Parent {
+			get {
+				return _parent == IntPtr.Zero ? null : (RC.QueueItem) GLib.Opaque.GetOpaque (_parent, typeof (RC.QueueItem), false);
+			}
+			set {
+				_parent = value == null ? IntPtr.Zero : value.Handle;
+			}
+		}
 		private IntPtr _subitems;
 
 		public static RC.QueueItem_Group Zero = new RC.QueueItem_Group ();

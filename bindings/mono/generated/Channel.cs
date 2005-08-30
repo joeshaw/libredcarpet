@@ -16,7 +16,7 @@ namespace RC {
 		public GLib.SList Packages { 
 			get {
 				IntPtr raw_ret = rc_channel_get_packages(Handle);
-				GLib.SList ret = new GLib.SList(raw_ret, typeof (RC.Package));
+				GLib.SList ret = new GLib.SList(raw_ret);
 				return ret;
 			}
 		}
@@ -33,11 +33,13 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern int rc_channel_priority_parse(string arg1);
+		static extern int rc_channel_priority_parse(IntPtr arg1);
 
 		public static int PriorityParse(string arg1) {
-			int raw_ret = rc_channel_priority_parse(arg1);
+			IntPtr arg1_as_native = GLib.Marshaller.StringToPtrGStrdup (arg1);
+			int raw_ret = rc_channel_priority_parse(arg1_as_native);
 			int ret = raw_ret;
+			GLib.Marshaller.Free (arg1_as_native);
 			return ret;
 		}
 
@@ -59,16 +61,18 @@ namespace RC {
 		static extern IntPtr rc_channel_get_legacy_id(IntPtr raw);
 
 		[DllImport("libredcarpet")]
-		static extern void rc_channel_set_legacy_id(IntPtr raw, string legacy_id);
+		static extern void rc_channel_set_legacy_id(IntPtr raw, IntPtr legacy_id);
 
 		public string LegacyId { 
 			get {
 				IntPtr raw_ret = rc_channel_get_legacy_id(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
+				string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
 				return ret;
 			}
 			set {
-				rc_channel_set_legacy_id(Handle, value);
+				IntPtr legacy_id_as_native = GLib.Marshaller.StringToPtrGStrdup (value);
+				rc_channel_set_legacy_id(Handle, legacy_id_as_native);
+				GLib.Marshaller.Free (legacy_id_as_native);
 			}
 		}
 
@@ -76,16 +80,18 @@ namespace RC {
 		static extern IntPtr rc_channel_get_icon_file(IntPtr raw);
 
 		[DllImport("libredcarpet")]
-		static extern void rc_channel_set_icon_file(IntPtr raw, string icon_file);
+		static extern void rc_channel_set_icon_file(IntPtr raw, IntPtr icon_file);
 
 		public string IconFile { 
 			get {
 				IntPtr raw_ret = rc_channel_get_icon_file(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
+				string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
 				return ret;
 			}
 			set {
-				rc_channel_set_icon_file(Handle, value);
+				IntPtr icon_file_as_native = GLib.Marshaller.StringToPtrGStrdup (value);
+				rc_channel_set_icon_file(Handle, icon_file_as_native);
+				GLib.Marshaller.Free (icon_file_as_native);
 			}
 		}
 
@@ -93,16 +99,18 @@ namespace RC {
 		static extern IntPtr rc_channel_get_alias(IntPtr raw);
 
 		[DllImport("libredcarpet")]
-		static extern void rc_channel_set_alias(IntPtr raw, string path);
+		static extern void rc_channel_set_alias(IntPtr raw, IntPtr path);
 
 		public string Alias { 
 			get {
 				IntPtr raw_ret = rc_channel_get_alias(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
+				string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
 				return ret;
 			}
 			set {
-				rc_channel_set_alias(Handle, value);
+				IntPtr path_as_native = GLib.Marshaller.StringToPtrGStrdup (value);
+				rc_channel_set_alias(Handle, path_as_native);
+				GLib.Marshaller.Free (path_as_native);
 			}
 		}
 
@@ -117,16 +125,18 @@ namespace RC {
 		static extern IntPtr rc_channel_get_path(IntPtr raw);
 
 		[DllImport("libredcarpet")]
-		static extern void rc_channel_set_path(IntPtr raw, string path);
+		static extern void rc_channel_set_path(IntPtr raw, IntPtr path);
 
 		public string Path { 
 			get {
 				IntPtr raw_ret = rc_channel_get_path(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
+				string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
 				return ret;
 			}
 			set {
-				rc_channel_set_path(Handle, value);
+				IntPtr path_as_native = GLib.Marshaller.StringToPtrGStrdup (value);
+				rc_channel_set_path(Handle, path_as_native);
+				GLib.Marshaller.Free (path_as_native);
 			}
 		}
 
@@ -147,17 +157,19 @@ namespace RC {
 		public string Description { 
 			get {
 				IntPtr raw_ret = rc_channel_get_description(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
+				string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
 				return ret;
 			}
 		}
 
 		[DllImport("libredcarpet")]
-		static extern void rc_channel_set_id_prefix(IntPtr raw, string prefix);
+		static extern void rc_channel_set_id_prefix(IntPtr raw, IntPtr prefix);
 
 		public string IdPrefix { 
 			set {
-				rc_channel_set_id_prefix(Handle, value);
+				IntPtr prefix_as_native = GLib.Marshaller.StringToPtrGStrdup (value);
+				rc_channel_set_id_prefix(Handle, prefix_as_native);
+				GLib.Marshaller.Free (prefix_as_native);
 			}
 		}
 
@@ -167,7 +179,7 @@ namespace RC {
 		public string Id { 
 			get {
 				IntPtr raw_ret = rc_channel_get_id(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
+				string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
 				return ret;
 			}
 		}
@@ -176,16 +188,18 @@ namespace RC {
 		static extern IntPtr rc_channel_get_file_path(IntPtr raw);
 
 		[DllImport("libredcarpet")]
-		static extern void rc_channel_set_file_path(IntPtr raw, string file_path);
+		static extern void rc_channel_set_file_path(IntPtr raw, IntPtr file_path);
 
 		public string FilePath { 
 			get {
 				IntPtr raw_ret = rc_channel_get_file_path(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
+				string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
 				return ret;
 			}
 			set {
-				rc_channel_set_file_path(Handle, value);
+				IntPtr file_path_as_native = GLib.Marshaller.StringToPtrGStrdup (value);
+				rc_channel_set_file_path(Handle, file_path_as_native);
+				GLib.Marshaller.Free (file_path_as_native);
 			}
 		}
 
@@ -200,7 +214,7 @@ namespace RC {
 		static extern bool rc_channel_equal(IntPtr raw, IntPtr b);
 
 		public bool Equal(RC.Channel b) {
-			bool raw_ret = rc_channel_equal(Handle, b.Handle);
+			bool raw_ret = rc_channel_equal(Handle, b == null ? IntPtr.Zero : b.Handle);
 			bool ret = raw_ret;
 			return ret;
 		}
@@ -217,23 +231,12 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_channel_ref(IntPtr raw);
-
-		public RC.Channel Ref() {
-			IntPtr raw_ret = rc_channel_ref(Handle);
-			RC.Channel ret;
-			if (raw_ret == IntPtr.Zero)
-				ret = null;
-			else
-				ret = new RC.Channel(raw_ret);
-			return ret;
-		}
-
-		[DllImport("libredcarpet")]
-		static extern void rc_channel_add_distro_target(IntPtr raw, string target);
+		static extern void rc_channel_add_distro_target(IntPtr raw, IntPtr target);
 
 		public void AddDistroTarget(string target) {
-			rc_channel_add_distro_target(Handle, target);
+			IntPtr target_as_native = GLib.Marshaller.StringToPtrGStrdup (target);
+			rc_channel_add_distro_target(Handle, target_as_native);
+			GLib.Marshaller.Free (target_as_native);
 		}
 
 		[DllImport("libredcarpet")]
@@ -251,24 +254,19 @@ namespace RC {
 		static extern IntPtr rc_channel_get_name(IntPtr raw);
 
 		[DllImport("libredcarpet")]
-		static extern void rc_channel_set_name(IntPtr raw, string path);
+		static extern void rc_channel_set_name(IntPtr raw, IntPtr path);
 
 		public string Name { 
 			get {
 				IntPtr raw_ret = rc_channel_get_name(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
+				string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
 				return ret;
 			}
 			set {
-				rc_channel_set_name(Handle, value);
+				IntPtr path_as_native = GLib.Marshaller.StringToPtrGStrdup (value);
+				rc_channel_set_name(Handle, path_as_native);
+				GLib.Marshaller.Free (path_as_native);
 			}
-		}
-
-		[DllImport("libredcarpet")]
-		static extern void rc_channel_unref(IntPtr raw);
-
-		public void Unref() {
-			rc_channel_unref(Handle);
 		}
 
 		[DllImport("libredcarpet")]
@@ -290,11 +288,13 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern bool rc_channel_has_distro_target(IntPtr raw, string target);
+		static extern bool rc_channel_has_distro_target(IntPtr raw, IntPtr target);
 
 		public bool HasDistroTarget(string target) {
-			bool raw_ret = rc_channel_has_distro_target(Handle, target);
+			IntPtr target_as_native = GLib.Marshaller.StringToPtrGStrdup (target);
+			bool raw_ret = rc_channel_has_distro_target(Handle, target_as_native);
 			bool ret = raw_ret;
+			GLib.Marshaller.Free (target_as_native);
 			return ret;
 		}
 
@@ -339,36 +339,70 @@ namespace RC {
 		static extern IntPtr rc_channel_get_pkginfo_file(IntPtr raw);
 
 		[DllImport("libredcarpet")]
-		static extern void rc_channel_set_pkginfo_file(IntPtr raw, string pkginfo_file);
+		static extern void rc_channel_set_pkginfo_file(IntPtr raw, IntPtr pkginfo_file);
 
 		public string PkginfoFile { 
 			get {
 				IntPtr raw_ret = rc_channel_get_pkginfo_file(Handle);
-				string ret = Marshal.PtrToStringAnsi(raw_ret);
+				string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
 				return ret;
 			}
 			set {
-				rc_channel_set_pkginfo_file(Handle, value);
+				IntPtr pkginfo_file_as_native = GLib.Marshaller.StringToPtrGStrdup (value);
+				rc_channel_set_pkginfo_file(Handle, pkginfo_file_as_native);
+				GLib.Marshaller.Free (pkginfo_file_as_native);
 			}
 		}
 
 		[DllImport("libredcarpet")]
-		static extern bool rc_channel_equal_id(IntPtr raw, string id);
+		static extern bool rc_channel_equal_id(IntPtr raw, IntPtr id);
 
 		public bool EqualId(string id) {
-			bool raw_ret = rc_channel_equal_id(Handle, id);
+			IntPtr id_as_native = GLib.Marshaller.StringToPtrGStrdup (id);
+			bool raw_ret = rc_channel_equal_id(Handle, id_as_native);
 			bool ret = raw_ret;
+			GLib.Marshaller.Free (id_as_native);
 			return ret;
 		}
 
 		public Channel(IntPtr raw) : base(raw) {}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_channel_new(string id, string name, string alias, string description);
+		static extern IntPtr rc_channel_new(IntPtr id, IntPtr name, IntPtr alias, IntPtr description);
 
 		public Channel (string id, string name, string alias, string description) 
 		{
-			Raw = rc_channel_new(id, name, alias, description);
+			IntPtr id_as_native = GLib.Marshaller.StringToPtrGStrdup (id);
+			IntPtr name_as_native = GLib.Marshaller.StringToPtrGStrdup (name);
+			IntPtr alias_as_native = GLib.Marshaller.StringToPtrGStrdup (alias);
+			IntPtr description_as_native = GLib.Marshaller.StringToPtrGStrdup (description);
+			Raw = rc_channel_new(id_as_native, name_as_native, alias_as_native, description_as_native);
+			GLib.Marshaller.Free (id_as_native);
+			GLib.Marshaller.Free (name_as_native);
+			GLib.Marshaller.Free (alias_as_native);
+			GLib.Marshaller.Free (description_as_native);
+		}
+
+		[DllImport("libredcarpet")]
+		static extern IntPtr rc_channel_ref(IntPtr raw);
+
+		protected override void Ref (IntPtr raw)
+		{
+			if (!Owned) {
+				rc_channel_ref (raw);
+				Owned = true;
+			}
+		}
+
+		[DllImport("libredcarpet")]
+		static extern void rc_channel_unref(IntPtr raw);
+
+		protected override void Unref (IntPtr raw)
+		{
+			if (Owned) {
+				rc_channel_unref (raw);
+				Owned = false;
+			}
 		}
 
 #endregion

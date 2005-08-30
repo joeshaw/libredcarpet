@@ -1,3 +1,7 @@
+2005-08-30  Tambet Ingo  <tambet@ximian.com>
+
+	* Port over to use gtk-sharp-2.0.
+
 2005-08-02  Tambet Ingo  <tambet@ximian.com>
 
 	* README: Add to CVS.

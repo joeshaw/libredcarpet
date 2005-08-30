@@ -11,39 +11,110 @@ namespace RC {
 	[StructLayout(LayoutKind.Sequential)]
 	public struct QueueItem_Uninstall {
 
-		public RC.QueueItem Parent;
-		private IntPtr _package;
-
-		public RC.Package package {
-			get { 
-				RC.Package ret = new RC.Package(_package);
-				if (ret == null) ret = new RC.Package(_package);
-				return ret;
+		private IntPtr _parent;
+		public RC.QueueItem Parent {
+			get {
+				return _parent == IntPtr.Zero ? null : (RC.QueueItem) GLib.Opaque.GetOpaque (_parent, typeof (RC.QueueItem), false);
 			}
-			set { _package = value.Handle; }
+			set {
+				_parent = value == null ? IntPtr.Zero : value.Handle;
+			}
+		}
+		private IntPtr _package;
+		public RC.Package Package {
+			get {
+				return _package == IntPtr.Zero ? null : (RC.Package) GLib.Opaque.GetOpaque (_package, typeof (RC.Package), false);
+			}
+			set {
+				_package = value == null ? IntPtr.Zero : value.Handle;
+			}
 		}
 		public string Reason;
 		private IntPtr _dep_leading_to_uninstall;
-
-		public RC.PackageDep dep_leading_to_uninstall {
-			get { 
-				RC.PackageDep ret = new RC.PackageDep(_dep_leading_to_uninstall);
-				if (ret == null) ret = new RC.PackageDep(_dep_leading_to_uninstall);
-				return ret;
+		public RC.PackageDep DepLeadingToUninstall {
+			get {
+				return _dep_leading_to_uninstall == IntPtr.Zero ? null : (RC.PackageDep) GLib.Opaque.GetOpaque (_dep_leading_to_uninstall, typeof (RC.PackageDep), false);
 			}
-			set { _dep_leading_to_uninstall = value.Handle; }
+			set {
+				_dep_leading_to_uninstall = value == null ? IntPtr.Zero : value.Handle;
+			}
 		}
 		private IntPtr _upgraded_to;
-
-		public RC.Package upgraded_to {
-			get { 
-				RC.Package ret = new RC.Package(_upgraded_to);
-				if (ret == null) ret = new RC.Package(_upgraded_to);
-				return ret;
+		public RC.Package UpgradedTo {
+			get {
+				return _upgraded_to == IntPtr.Zero ? null : (RC.Package) GLib.Opaque.GetOpaque (_upgraded_to, typeof (RC.Package), false);
 			}
-			set { _upgraded_to = value.Handle; }
+			set {
+				_upgraded_to = value == null ? IntPtr.Zero : value.Handle;
+			}
 		}
 		private uint _bitfield0;
+
+		[DllImport ("libredcarpetsharpglue-0")]
+		extern static bool rcsharp_rc_queueitem_uninstall_get_explicitly_requested (ref RC.QueueItem_Uninstall raw);
+		[DllImport ("libredcarpetsharpglue-0")]
+		extern static void rcsharp_rc_queueitem_uninstall_set_explicitly_requested (ref RC.QueueItem_Uninstall raw, bool value);
+		public bool ExplicitlyRequested {
+			get {
+				return rcsharp_rc_queueitem_uninstall_get_explicitly_requested (ref this);
+			}
+			set {
+				rcsharp_rc_queueitem_uninstall_set_explicitly_requested (ref this, value);
+			}
+		}
+
+		[DllImport ("libredcarpetsharpglue-0")]
+		extern static bool rcsharp_rc_queueitem_uninstall_get_remove_only (ref RC.QueueItem_Uninstall raw);
+		[DllImport ("libredcarpetsharpglue-0")]
+		extern static void rcsharp_rc_queueitem_uninstall_set_remove_only (ref RC.QueueItem_Uninstall raw, bool value);
+		public bool RemoveOnly {
+			get {
+				return rcsharp_rc_queueitem_uninstall_get_remove_only (ref this);
+			}
+			set {
+				rcsharp_rc_queueitem_uninstall_set_remove_only (ref this, value);
+			}
+		}
+
+		[DllImport ("libredcarpetsharpglue-0")]
+		extern static bool rcsharp_rc_queueitem_uninstall_get_due_to_conflict (ref RC.QueueItem_Uninstall raw);
+		[DllImport ("libredcarpetsharpglue-0")]
+		extern static void rcsharp_rc_queueitem_uninstall_set_due_to_conflict (ref RC.QueueItem_Uninstall raw, bool value);
+		public bool DueToConflict {
+			get {
+				return rcsharp_rc_queueitem_uninstall_get_due_to_conflict (ref this);
+			}
+			set {
+				rcsharp_rc_queueitem_uninstall_set_due_to_conflict (ref this, value);
+			}
+		}
+
+		[DllImport ("libredcarpetsharpglue-0")]
+		extern static bool rcsharp_rc_queueitem_uninstall_get_due_to_obsolete (ref RC.QueueItem_Uninstall raw);
+		[DllImport ("libredcarpetsharpglue-0")]
+		extern static void rcsharp_rc_queueitem_uninstall_set_due_to_obsolete (ref RC.QueueItem_Uninstall raw, bool value);
+		public bool DueToObsolete {
+			get {
+				return rcsharp_rc_queueitem_uninstall_get_due_to_obsolete (ref this);
+			}
+			set {
+				rcsharp_rc_queueitem_uninstall_set_due_to_obsolete (ref this, value);
+			}
+		}
+
+		[DllImport ("libredcarpetsharpglue-0")]
+		extern static bool rcsharp_rc_queueitem_uninstall_get_unlink (ref RC.QueueItem_Uninstall raw);
+		[DllImport ("libredcarpetsharpglue-0")]
+		extern static void rcsharp_rc_queueitem_uninstall_set_unlink (ref RC.QueueItem_Uninstall raw, bool value);
+		public bool Unlink {
+			get {
+				return rcsharp_rc_queueitem_uninstall_get_unlink (ref this);
+			}
+			set {
+				rcsharp_rc_queueitem_uninstall_set_unlink (ref this, value);
+			}
+		}
+
 
 		public static RC.QueueItem_Uninstall Zero = new RC.QueueItem_Uninstall ();
 

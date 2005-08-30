@@ -11,13 +11,6 @@ namespace RC {
 	public class RollbackInfo : GLib.Opaque {
 
 		[DllImport("libredcarpet")]
-		static extern void rc_rollback_info_free(IntPtr raw);
-
-		public void Free() {
-			rc_rollback_info_free(Handle);
-		}
-
-		[DllImport("libredcarpet")]
 		static extern void rc_rollback_info_save(IntPtr raw);
 
 		public void Save() {
@@ -39,8 +32,16 @@ namespace RC {
 		public unsafe RollbackInfo (RC.World world, GLib.SList install_packages, GLib.SList remove_packages) 
 		{
 			IntPtr error = IntPtr.Zero;
-			Raw = rc_rollback_info_new(world.Handle, install_packages.Handle, remove_packages.Handle, out error);
+			Raw = rc_rollback_info_new(world == null ? IntPtr.Zero : world.Handle, install_packages.Handle, remove_packages.Handle, out error);
 			if (error != IntPtr.Zero) throw new GLib.GException (error);
+		}
+
+		[DllImport("libredcarpet")]
+		static extern void rc_rollback_info_free(IntPtr raw);
+
+		protected override void Free (IntPtr raw)
+		{
+			rc_rollback_info_free (raw);
 		}
 
 #endregion

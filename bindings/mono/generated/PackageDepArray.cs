@@ -12,14 +12,13 @@ namespace RC {
 	public struct PackageDepArray {
 
 		private IntPtr _data;
-
-		public RC.PackageDep data {
-			get { 
-				RC.PackageDep ret = new RC.PackageDep(_data);
-				if (ret == null) ret = new RC.PackageDep(_data);
-				return ret;
+		public RC.PackageDep Data {
+			get {
+				return _data == IntPtr.Zero ? null : (RC.PackageDep) GLib.Opaque.GetOpaque (_data, typeof (RC.PackageDep), false);
 			}
-			set { _data = value.Handle; }
+			set {
+				_data = value == null ? IntPtr.Zero : value.Handle;
+			}
 		}
 		public uint Len;
 

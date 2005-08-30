@@ -9,8 +9,10 @@
         PackageDep[] ret = new PackageDep[slist.Count];
 
         int i = 0;
-        foreach (PackageDep d in slist)
-            ret[i++] = d.Ref ();
+        foreach (PackageDep d in slist) {
+            d.Ref (d.Handle);
+            ret[i++] = d;
+        }
 
         PackageDep.SlistFree (slist);
 
@@ -74,8 +76,15 @@
             }
         }
 
-        Raw = rc_package_dep_new (name, has_epoch, epoch, version, release,
+        IntPtr name_as_native = GLib.Marshaller.StringToPtrGStrdup (name);
+        IntPtr version_as_native = GLib.Marshaller.StringToPtrGStrdup (version);
+        IntPtr release_as_native = GLib.Marshaller.StringToPtrGStrdup (release);
+        Raw = rc_package_dep_new (name_as_native, has_epoch, epoch,
+                                  version_as_native, release_as_native,
                                   (int) relation, channel.Handle, false, false);
+        GLib.Marshaller.Free (name_as_native);
+        GLib.Marshaller.Free (version_as_native);
+        GLib.Marshaller.Free (release_as_native);
     }
 
     public PackageDep (System.Xml.XmlTextReader reader) {

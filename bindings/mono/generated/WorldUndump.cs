@@ -20,14 +20,16 @@ namespace RC {
 		public WorldUndump(IntPtr raw) : base(raw) {}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_world_undump_new(string filename);
+		static extern IntPtr rc_world_undump_new(IntPtr filename);
 
 		public WorldUndump (string filename) : base (IntPtr.Zero)
 		{
 			if (GetType () != typeof (WorldUndump)) {
 				throw new InvalidOperationException ("Can't override this constructor.");
 			}
-			Raw = rc_world_undump_new(filename);
+			IntPtr filename_as_native = GLib.Marshaller.StringToPtrGStrdup (filename);
+			Raw = rc_world_undump_new(filename_as_native);
+			GLib.Marshaller.Free (filename_as_native);
 		}
 
 		[DllImport("libredcarpet")]
@@ -42,10 +44,12 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern void rc_world_undump_load(IntPtr raw, string filename);
+		static extern void rc_world_undump_load(IntPtr raw, IntPtr filename);
 
 		public void Load(string filename) {
-			rc_world_undump_load(Handle, filename);
+			IntPtr filename_as_native = GLib.Marshaller.StringToPtrGStrdup (filename);
+			rc_world_undump_load(Handle, filename_as_native);
+			GLib.Marshaller.Free (filename_as_native);
 		}
 
 

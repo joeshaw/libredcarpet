@@ -35,7 +35,7 @@ namespace RC {
 		static extern void rc_world_store_remove_packages(IntPtr raw, IntPtr channel);
 
 		public void RemovePackages(RC.Channel channel) {
-			rc_world_store_remove_packages(Handle, channel.Handle);
+			rc_world_store_remove_packages(Handle, channel == null ? IntPtr.Zero : channel.Handle);
 		}
 
 		[DllImport("libredcarpet")]
@@ -49,21 +49,21 @@ namespace RC {
 		static extern void rc_world_store_add_lock(IntPtr raw, IntPtr _lock);
 
 		public new void AddLock(RC.PackageMatch _lock) {
-			rc_world_store_add_lock(Handle, _lock.Handle);
+			rc_world_store_add_lock(Handle, _lock == null ? IntPtr.Zero : _lock.Handle);
 		}
 
 		[DllImport("libredcarpet")]
 		static extern void rc_world_store_add_channel(IntPtr raw, IntPtr channel);
 
 		public void AddChannel(RC.Channel channel) {
-			rc_world_store_add_channel(Handle, channel.Handle);
+			rc_world_store_add_channel(Handle, channel == null ? IntPtr.Zero : channel.Handle);
 		}
 
 		[DllImport("libredcarpet")]
 		static extern bool rc_world_store_add_package(IntPtr raw, IntPtr package);
 
 		public bool AddPackage(RC.Package package) {
-			bool raw_ret = rc_world_store_add_package(Handle, package.Handle);
+			bool raw_ret = rc_world_store_add_package(Handle, package == null ? IntPtr.Zero : package.Handle);
 			bool ret = raw_ret;
 			return ret;
 		}
@@ -72,7 +72,7 @@ namespace RC {
 		static extern void rc_world_store_remove_channel(IntPtr raw, IntPtr channel);
 
 		public void RemoveChannel(RC.Channel channel) {
-			rc_world_store_remove_channel(Handle, channel.Handle);
+			rc_world_store_remove_channel(Handle, channel == null ? IntPtr.Zero : channel.Handle);
 		}
 
 		[DllImport("libredcarpet")]
@@ -86,7 +86,7 @@ namespace RC {
 		static extern void rc_world_store_remove_lock(IntPtr raw, IntPtr _lock);
 
 		public new void RemoveLock(RC.PackageMatch _lock) {
-			rc_world_store_remove_lock(Handle, _lock.Handle);
+			rc_world_store_remove_lock(Handle, _lock == null ? IntPtr.Zero : _lock.Handle);
 		}
 
 		[DllImport("libredcarpet")]
@@ -111,7 +111,7 @@ namespace RC {
 		static extern void rc_world_store_remove_package(IntPtr raw, IntPtr package);
 
 		public void RemovePackage(RC.Package package) {
-			rc_world_store_remove_package(Handle, package.Handle);
+			rc_world_store_remove_package(Handle, package == null ? IntPtr.Zero : package.Handle);
 		}
 
 
