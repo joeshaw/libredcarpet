@@ -455,6 +455,54 @@
                 </detect>
         </distro>
 
+        <distro>
+                <name>Fedora Core</name>
+                <version>3</version>
+                <arch>i386</arch>
+                <type>rpm</type>
+                <target>fedora-3-i386</target>
+                <status>supported</status>
+                <detect>
+                        <file source="/etc/fedora-release" substring="Fedora Core release 3 (Heidelberg)"/>
+                </detect>
+        </distro>
+
+        <distro>
+                <name>Fedora Core</name>
+                <version>3</version>
+                <arch>x86_64</arch>
+                <type>rpm</type>
+                <target>fedora-3-x86_64</target>
+                <status>supported</status>
+                <detect>
+                        <file source="/etc/fedora-release" substring="Fedora Core release 3 (Heidelberg)"/>
+                </detect>
+        </distro>
+
+        <distro>
+                <name>Fedora Core</name>
+                <version>4</version>
+                <arch>i386</arch>
+                <type>rpm</type>
+                <target>fedora-4-i386</target>
+                <status>supported</status>
+                <detect>
+                        <file source="/etc/fedora-release" substring="Fedora Core release 4 (Stentz)"/>
+                </detect>
+        </distro>
+
+        <distro>
+                <name>Fedora Core</name>
+                <version>4</version>
+                <arch>x86_64</arch>
+                <type>rpm</type>
+                <target>fedora-4-x86_64</target>
+                <status>supported</status>
+                <detect>
+                        <file source="/etc/fedora-release" substring="Fedora Core release 4 (Stentz)"/>
+                </detect>
+        </distro>
+
 	<distro>
 		<name>TurboLinux</name>
 		<version>6.0</version>
@@ -759,6 +807,17 @@
 		<arch>i586</arch>
 		<type>rpm</type>
 		<target>suse-91-i586</target>
+		<status>supported</status>
+		<detect>
+			<file source="/etc/SuSE-release" substring="SuSE Linux 9.1"/>
+		</detect>
+	</distro>
+	<distro>
+		<name>SuSE Linux</name>
+		<version>9.1</version>
+		<arch>x86_64</arch>
+		<type>rpm</type>
+		<target>suse-91-x86_64</target>
 		<status>supported</status>
 		<detect>
 			<file source="/etc/SuSE-release" substring="SuSE Linux 9.1"/>

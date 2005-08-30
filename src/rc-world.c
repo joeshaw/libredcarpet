@@ -30,6 +30,7 @@
 #include "rc-dep-or.h"
 #include "rc-marshal.h"
 #include "rc-rollback.h"
+#include "rc-packman-private.h"
 #include "rc-subscription.h"
 #include "rc-util.h"
 #include "rc-xml.h"
@@ -1618,8 +1619,9 @@ rc_world_transact (RCWorld *world,
     for (iter = install_packages; iter != NULL; iter = iter->next) {
         RCPackage *pkg = iter->data;
         if (! rc_world_can_transact_package (world, pkg)) {
-            g_warning ("World can't install package '%s'",
-                       rc_package_to_str_static (pkg));
+            rc_debug (RC_DEBUG_LEVEL_ERROR,
+                      "World can't install package '%s'",
+                      rc_package_to_str_static (pkg));
             had_problem = TRUE;
         }
     }
@@ -1627,8 +1629,9 @@ rc_world_transact (RCWorld *world,
     for (iter = remove_packages; iter != NULL; iter = iter->next) {
         RCPackage *pkg = iter->data;
         if (! rc_world_can_transact_package (world, pkg)) {
-            g_warning ("World can't remove package '%s'",
-                       rc_package_to_str_static (pkg));
+            rc_debug (RC_DEBUG_LEVEL_ERROR,
+                      "World can't remove package '%s'",
+                      rc_package_to_str_static (pkg));
             had_problem = TRUE;
         }
     }
@@ -1655,6 +1658,9 @@ rc_world_transact (RCWorld *world,
             /* Lame error reporting */
             rc_debug (RC_DEBUG_LEVEL_ERROR, "Rollback preparation failed: %s",
                       err->message);
+            rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
+                                  "Rollback preparation failed: %s",
+                                  err->message);
             g_error_free (err);
             return FALSE;
         }

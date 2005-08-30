@@ -221,6 +221,8 @@ rc_world_local_dir_assemble_fn (RCWorldService *service, GError **error)
                 g_free (tmp);
             }
         }
+
+        g_strfreev (tokens);
     }
 
     if (!name)

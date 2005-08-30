@@ -33,6 +33,12 @@
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
+/* When adding packages to RCWorldStore, allocate
+   this amount of GSLists at once, this should be
+   an avarage size based on testing. */
+
+#define RC_WORLD_STORE_ALLOCATOR_SIZE 25000
+
 typedef struct _SListAnchor SListAnchor;
 struct _SListAnchor {
     GQuark key;
@@ -160,94 +166,10 @@ rc_package_and_dep_verify_relation (RCPackageAndDep *pad, RCPackageDep *dep)
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
-typedef struct _ChannelInfo ChannelInfo;
-struct _ChannelInfo {
-    RCChannel *channel;
-};
-
-static ChannelInfo *
-channel_info_new (RCChannel *channel)
-{
-    ChannelInfo *info = g_new0 (ChannelInfo, 1);
-    info->channel = rc_channel_ref (channel);
-    return info;
-}
-
-static void
-channel_info_free (ChannelInfo *info)
-{
-    if (info != NULL) {
-        rc_channel_unref (info->channel);
-        g_free (info);
-    }
-}
-
-#if 0
-static ChannelInfo *
-rc_world_store_find_channel_info (RCWorldStore *store, RCChannel *channel)
-{
-    GSList *iter;
-    for (iter = store->channels; iter != NULL; iter = iter->next) {
-        ChannelInfo *info = iter->data;
-        if (info->channel == channel)
-            return info;
-    }
-    return NULL;
-}
-#endif
-
-/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
-
-typedef struct {
-    RCWorld *old_world;
-    RCWorld *new_world;
-} DupInfo;
-
-static gboolean
-package_dup_fn (RCPackage *package,
-                gpointer user_data)
-{
-    DupInfo *info = user_data;
-    rc_world_store_add_package (RC_WORLD_STORE (info->new_world), package);
-
-    return TRUE;
-}
-
-static gboolean
-channel_dup_fn (RCChannel *channel,
-                gpointer user_data)
-{
-    DupInfo *info = user_data;
-
-    rc_world_store_add_channel (RC_WORLD_STORE (info->new_world), channel);
-    rc_world_foreach_package (info->old_world, channel,
-                              package_dup_fn,
-                              info);
-
-    return TRUE;
-}
-
 static RCWorld *
 rc_world_store_dup_fn (RCWorld *old_world)
 {
-    RCWorld *new_world;
-    DupInfo info;
-    GSList *l;
-
-    new_world = g_object_new (G_TYPE_FROM_INSTANCE (old_world), NULL);
-
-    info.old_world = old_world;
-    info.new_world = new_world;
-    
-    rc_world_foreach_channel (old_world,
-                              channel_dup_fn,
-                              &info);
-    for (l = RC_WORLD_STORE (old_world)->locks; l; l = l->next) {
-        rc_world_store_add_lock (RC_WORLD_STORE (new_world),
-                                 (RCPackageMatch *)l->data);
-    }    
-
-    return new_world;
+    return g_object_new (G_TYPE_FROM_INSTANCE (old_world), NULL);
 }
 
 static int
@@ -261,9 +183,9 @@ rc_world_store_foreach_channel_fn (RCWorld    *world,
 
     iter = store->channels;
     while (iter) {
-        ChannelInfo *info = iter->data;
+        RCChannel *channel = iter->data;
         next = iter->next;
-        if (! callback (info->channel, user_data))
+        if (! callback (channel, user_data))
             return -1;
         iter = next;
         ++count;
@@ -621,10 +543,13 @@ rc_world_store_finalize (GObject *obj)
     hashed_slist_destroy (store->children_by_name);
     hashed_slist_destroy (store->conflicts_by_name);
 
-    g_slist_foreach (store->channels, (GFunc) channel_info_free, NULL);
+    g_slist_foreach (store->channels, (GFunc) rc_channel_unref, NULL);
     g_slist_free (store->channels);
 
     rc_world_store_clear_locks (store);
+
+    if (store->allocator)
+        g_allocator_free (store->allocator);
 
     if (G_OBJECT_CLASS (parent_class)->finalize)
         G_OBJECT_CLASS (parent_class)->finalize (obj);
@@ -889,6 +814,16 @@ rc_world_store_add_package (RCWorldStore *store,
     /* The world holds a reference to the package */
     rc_package_ref (package);
 
+    if (!store->allocator) {
+        static uint counter = 0;
+        gchar *tmp = g_strdup_printf ("world-store-%d", ++counter);
+        store->allocator = g_allocator_new (tmp,
+                                            RC_WORLD_STORE_ALLOCATOR_SIZE);
+        g_free (tmp);
+    }
+
+    g_slist_push_allocator (store->allocator);
+
     /* Store all of our packages in a hash by name. */
     hashed_slist_add (store->packages_by_name,
                       package->spec.nameq,
@@ -954,6 +889,7 @@ rc_world_store_add_package (RCWorldStore *store,
                               pad);
         }
 
+    g_slist_pop_allocator ();
     
  finished:
     /* Clean-up */
@@ -1020,6 +956,9 @@ rc_world_store_remove_package (RCWorldStore *store,
     if (! (package->channel && rc_channel_is_hidden (package->channel)))
         rc_world_touch_package_sequence_number (world);
 
+    if (store->allocator)
+        g_slist_push_allocator (store->allocator);
+
     /* FIXME: This is fairly inefficient */
 
     hashed_slist_foreach_remove (store->provides_by_name,
@@ -1041,6 +980,9 @@ rc_world_store_remove_package (RCWorldStore *store,
     hashed_slist_foreach_remove (store->packages_by_name,
                                  remove_package_cb,
                                  package);
+
+    if (store->allocator)
+        g_slist_pop_allocator ();
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
@@ -1087,6 +1029,9 @@ rc_world_store_remove_packages (RCWorldStore *store,
 
     rc_world_store_freeze (store);
 
+    if (store->allocator)
+        g_slist_push_allocator (store->allocator);
+
     hashed_slist_foreach_remove (store->provides_by_name,
                                  remove_package_struct_by_channel_cb,
                                  channel);
@@ -1107,6 +1052,9 @@ rc_world_store_remove_packages (RCWorldStore *store,
                                  remove_package_by_channel_cb,
                                  channel);
 
+    if (store->allocator)
+        g_slist_pop_allocator ();
+
     rc_world_store_thaw (store);
 }
 
@@ -1116,6 +1064,11 @@ rc_world_store_clear (RCWorldStore *store)
     g_return_if_fail (store != NULL && RC_IS_WORLD_STORE (store));
 
     rc_world_store_remove_packages (store, RC_CHANNEL_ANY);
+
+    if (store->allocator) {
+        g_allocator_free (store->allocator);
+        store->allocator = NULL;
+    }
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
@@ -1124,18 +1077,14 @@ void
 rc_world_store_add_channel (RCWorldStore *store,
                             RCChannel    *channel)
 {
-    ChannelInfo *info;
-
     g_return_if_fail (store != NULL && RC_IS_WORLD_STORE (store));
     g_return_if_fail (channel != NULL);
 
     rc_channel_set_world (channel, (RCWorld *) store);
     rc_channel_make_immutable (channel);
 
-    info = channel_info_new (channel);
-
-    store->channels = g_slist_prepend (store->channels, 
-                                       info);
+    store->channels = g_slist_prepend (store->channels,
+                                       rc_channel_ref (channel));
 
     rc_world_touch_channel_sequence_number (RC_WORLD (store));
 }
@@ -1145,7 +1094,7 @@ rc_world_store_remove_channel (RCWorldStore *store,
                                RCChannel    *channel)
 {
     GSList *iter;
-    ChannelInfo *info = NULL;
+    RCChannel *c = NULL;
 
     g_return_if_fail (store != NULL && RC_IS_WORLD_STORE (store));
 
@@ -1156,14 +1105,14 @@ rc_world_store_remove_channel (RCWorldStore *store,
     rc_world_store_remove_packages (store, channel);
 
     for (iter = store->channels; iter != NULL; iter = iter->next) {
-        info = iter->data;
-        if (rc_channel_equal (info->channel, channel))
+        c = iter->data;
+        if (rc_channel_equal (c, channel))
             break;
     }
 
-    if (info != NULL) {
-        channel_info_free (info);
+    if (c != NULL) {
         store->channels = g_slist_remove_link (store->channels, iter);
+        rc_channel_unref (c);
         rc_world_touch_channel_sequence_number (RC_WORLD (store));
     }
 }

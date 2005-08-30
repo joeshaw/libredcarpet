@@ -31,9 +31,22 @@
 #include "rc-packman.h"
 #include "xml-util.h"
 
-/* Our pool of RCPackageDep structures.  We try to return a match from
- * here rather than allocating new ones, when possible */
-static GHashTable *global_deps = NULL;
+/* deps: Our pool of RCPackageDep structures.  We try to return a match from
+ *       here rather than allocating new ones, when possible
+ * chunk: Memory chunk for allocating RCPackageDep structures. There are
+ *       usually a lot of RCPackageDeps so instead of allocating them
+ *       one-by-one, we use bigger chunks to reduce malloc calls.
+ * allocator: GSList allocator used by deps hash. GLib never frees the
+ *        internally used GAllocator, this should fix that.
+ */
+
+typedef struct {
+    GHashTable *deps;
+    GMemChunk  *chunk;
+    GAllocator *allocator;
+} GlobalInfo;
+
+static GlobalInfo *global_info = NULL;
 
 RCPackageRelation
 rc_package_relation_from_string (const gchar *relation)
@@ -93,6 +106,30 @@ struct _RCPackageDep {
     guint         is_pre   : 1;
 };
 
+static GlobalInfo *
+global_info_init (void)
+{
+    if (!global_info) {
+        global_info = g_new (GlobalInfo, 1);
+        global_info->deps = g_hash_table_new (NULL, NULL);
+        global_info->chunk = g_mem_chunk_create (RCPackageDep, 20000,
+                                                 G_ALLOC_AND_FREE);
+        global_info->allocator = g_allocator_new ("RCPackageDep", 20000);
+    }
+
+    return global_info;
+}
+
+static void
+global_info_free (void)
+{
+    g_hash_table_destroy (global_info->deps);
+    g_mem_chunk_destroy (global_info->chunk);
+    g_allocator_free (global_info->allocator);
+    g_free (global_info);
+    global_info = NULL;
+}
+
 RCPackageDep *
 rc_package_dep_ref (RCPackageDep *dep)
 {
@@ -116,28 +153,36 @@ rc_package_dep_unref (RCPackageDep *dep)
             GSList *list;
 
             /* Remove this dep from the hash table */
-            g_assert (global_deps);
+            g_assert (global_info);
 
-            list = g_hash_table_lookup (global_deps,
+            list = g_hash_table_lookup (global_info->deps,
                                         GINT_TO_POINTER (dep->spec.nameq));
             g_assert (list);
+
+            g_slist_push_allocator (global_info->allocator);
             list = g_slist_remove (list, dep);
+            g_slist_pop_allocator ();
 
             /* If there's still data in the list (ie, there are still
              * other deps with the same spec.name), we need to replace
              * it in the hash.  Otherwise, we need to pull it from the
              * hash. */
             if (list)
-                g_hash_table_replace (global_deps,
+                g_hash_table_replace (global_info->deps,
                                       GINT_TO_POINTER (dep->spec.nameq), list);
             else
-                g_hash_table_remove (global_deps,
+                g_hash_table_remove (global_info->deps,
                                      GINT_TO_POINTER (dep->spec.nameq));
 
             /* Free the dep */
             rc_channel_unref (dep->channel);
             rc_package_spec_free_members (RC_PACKAGE_SPEC (dep));
-            g_free (dep);
+            g_chunk_free (dep, global_info->chunk);
+
+            if (g_hash_table_size (global_info->deps) < 1) {
+                /* No RCPackageDeps left */
+                global_info_free ();
+            }
         }
     }
 }
@@ -154,7 +199,7 @@ dep_new (const gchar       *name,
          gboolean           is_pre,
          gboolean           is_or)
 {
-    RCPackageDep *dep = g_new0 (RCPackageDep, 1);
+    RCPackageDep *dep = g_chunk_new (RCPackageDep, global_info->chunk);
 
     rc_package_spec_init (RC_PACKAGE_SPEC (dep), name, has_epoch, epoch,
                           version, release, RC_ARCH_NOARCH);
@@ -224,10 +269,9 @@ rc_package_dep_new (const gchar       *name,
 {
     GSList *list;
 
-    if (!global_deps)
-        global_deps = g_hash_table_new (NULL, NULL);
+    global_info_init ();
 
-    list = g_hash_table_lookup (global_deps,
+    list = g_hash_table_lookup (global_info->deps,
                                 GINT_TO_POINTER (g_quark_try_string (name)));
 
     if (!list) {
@@ -238,8 +282,11 @@ rc_package_dep_new (const gchar       *name,
 
         dep = dep_new (name, has_epoch, epoch, version, release, relation,
                        channel, is_pre, is_or);
+        g_slist_push_allocator (global_info->allocator);
         list = g_slist_append (NULL, dep);
-        g_hash_table_insert (global_deps, GINT_TO_POINTER (dep->spec.nameq),
+        g_slist_pop_allocator ();
+        g_hash_table_insert (global_info->deps,
+                             GINT_TO_POINTER (dep->spec.nameq),
                              list);
 
         return dep;
@@ -267,8 +314,11 @@ rc_package_dep_new (const gchar       *name,
          * table. */
         dep = dep_new (name, has_epoch, epoch, version, release, relation,
                        channel, is_pre, is_or);
+        g_slist_push_allocator (global_info->allocator);
         list = g_slist_prepend (list, dep);
-        g_hash_table_replace (global_deps, GINT_TO_POINTER (dep->spec.nameq),
+        g_slist_pop_allocator ();
+        g_hash_table_replace (global_info->deps,
+                              GINT_TO_POINTER (dep->spec.nameq),
                               list);
 
         return dep;
@@ -592,5 +642,6 @@ spew_cache_cb (gpointer key, gpointer val, gpointer user_data)
 void
 rc_package_dep_spew_cache (void)
 {
-    g_hash_table_foreach (global_deps, spew_cache_cb, NULL);
+    if (global_info)
+        g_hash_table_foreach (global_info->deps, spew_cache_cb, NULL);
 }

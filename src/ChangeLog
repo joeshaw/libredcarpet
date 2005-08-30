@@ -1,3 +1,37 @@
+2005-08-30  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-xml.c: Use custom GSList allocator for dependencies.
+
+	* rc-world.c (rc_world_transact): Use rc_debug instead of g_warning.
+	Set global packman error if rollback preparation fails so the user
+	sees a better error than "transaction failed".
+
+	* rc-world-store.h: Add GAllocator to RCWorldStore.
+
+	* rc-world-store.c: Use custom GAllocator for internal GSLists.
+	There are usually A LOT of GSLists allocated, usually around 50000.
+	(channel_info_new): Remove. There's no point in having a structure
+	with one member.
+	(channel_info_free): Ditto.
+	(rc_world_store_find_channel_info): Ditto.
+	(rc_world_store_dup_fn): Don't do a deep copy, all libredcarpet
+	worlds expect shallow copy.
+
+	* rc-world-local-dir.c (rc_world_local_dir_assemble_fn): Free
+	tokens.
+
+	* rc-rpmman.c (rc_rpmman_query_all_v4): Use custom GAllocator.
+
+	* rc-package.h: Don't define RC_PACKAGE_FIND_LEAKS, it's a
+	developer helper, for users, it only wastes memory.
+
+	* rc-package-dep.c: Use GMemChunks for RCPackageDep allocation.
+	Use custom GAllocator for internally used GSLists.
+	(global_info_init): Implement.
+	(global_info_free): Ditto.
+
+	* distributions.xml: Sync with 2-2 branch.
+
 2005-08-11  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-rpmman.c (rc_rpmman_transact): Try a bit harder when getting

@@ -58,6 +58,7 @@ struct _RCPackageSAXContext {
     RCPackageDepSList **current_dep_list;
 
     char *text_buffer;
+    GAllocator *list_allocator;
 };
 
 /* Like g_strstrip(), only returns NULL on an empty string */
@@ -289,7 +290,8 @@ parser_dep_start(RCPackageSAXContext *ctx,
         gboolean is_obsolete;
 
         is_obsolete = parse_dep_attrs(&dep, attrs);
-        
+
+        g_slist_push_allocator (ctx->list_allocator);
         if (is_obsolete)
             ctx->current_obsoletes =
                 g_slist_append (ctx->current_obsoletes, dep);
@@ -297,6 +299,7 @@ parser_dep_start(RCPackageSAXContext *ctx,
             *ctx->current_dep_list = g_slist_append (
                 *ctx->current_dep_list, dep);
         }
+        g_slist_pop_allocator ();
     }
     else if (!strcmp(name, "or"))
         ctx->current_dep_list = g_new0(RCPackageDepSList *, 1);
@@ -399,6 +402,7 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
         ctx->current_package->obsoletes = g_slist_concat (
             ctx->current_package->obsoletes, ctx->obsoletes);
 #endif
+        g_slist_push_allocator (ctx->list_allocator);
 
         ctx->current_package->requires_a =
             rc_package_dep_array_from_slist (
@@ -423,6 +427,8 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
         ctx->current_package->recommends_a =
             rc_package_dep_array_from_slist (
                 &ctx->current_recommends);
+
+        g_slist_pop_allocator ();
 
         /* Hack for the old XML */
         if (ctx->current_package->spec.arch == RC_ARCH_UNKNOWN)
@@ -743,10 +749,11 @@ rc_package_sax_context_done(RCPackageSAXContext *ctx)
     }
 
     g_free (ctx->text_buffer);
+    g_allocator_free (ctx->list_allocator);
 
     all_packages = ctx->all_packages;
 
-    g_free(ctx);
+    g_free (ctx);
 
     return all_packages;
 } /* rc_package_sax_context_done */
@@ -758,6 +765,7 @@ rc_package_sax_context_new(RCChannel *channel)
 
     ctx = g_new0(RCPackageSAXContext, 1);
     ctx->channel = channel;
+    ctx->list_allocator = g_allocator_new ("package-xml-parser", 1024);
 
     if (getenv ("RC_SPEW_XML"))
         rc_debug (RC_DEBUG_LEVEL_ALWAYS, "* Context created (%p)", ctx);

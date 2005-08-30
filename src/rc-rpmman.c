@@ -55,7 +55,7 @@
  * and have changed cordering from version to version.  It could be
  * very dangerous to call the wrong function.
  */
-#define LATEST_SUPPORTED_RPM_VERSION 40303
+#define LATEST_SUPPORTED_RPM_VERSION 40401
 
 #define GTKFLUSH {while (g_main_pending ()) g_main_iteration (TRUE);}
 
@@ -2298,6 +2298,7 @@ rc_rpmman_query_all_v4 (RCPackman *packman)
     RCPackageSList *list = NULL;
     rc_rpmdbMatchIterator mi = NULL;
     Header header;
+    GAllocator *allocator;
     RCRpmman *rpmman = RC_RPMMAN (packman);
 
     if (rpmman->version >= 40100) {
@@ -2314,6 +2315,8 @@ rc_rpmman_query_all_v4 (RCPackman *packman)
         goto ERROR;
     }
 
+    allocator = g_allocator_new ("rc_rpmman_depends_fill", 60);
+
     while ((header = rpmman->rpmdbNextIterator (mi))) {
         RCPackage *package = rc_package_new ();
 
@@ -2321,12 +2324,15 @@ rc_rpmman_query_all_v4 (RCPackman *packman)
 
         package->installed = TRUE;
 
+        g_slist_push_allocator (allocator);
         rc_rpmman_depends_fill (rpmman, header, package, TRUE);
+        g_slist_pop_allocator ();
 
         list = g_slist_prepend (list, package);
     }
 
     rpmman->rpmdbFreeIterator(mi);
+    g_allocator_free (allocator);
 
     return (list);
 
@@ -3262,7 +3268,7 @@ load_fake_syms (RCRpmman *rpmman)
     rpmman->rc_fdClose = &fdClose;
     /* Look for hdrVec in load_rpm_syms for an explanation of what's
      * going on */
-#if RPM_VERSION >= 40100 && RPM_VERSION <= 40301 /* RPM 4.1 to 4.3.1 inclusive */
+#if RPM_VERSION >= 40100 && RPM_VERSION <= 40401 /* RPM 4.1 to 4.4.1 inclusive */
     /* FIXME: untested */
     rpmman->headerGetEntry = ((void **)hdrVec)[16];
     rpmman->headerFree = ((void **)hdrVec)[2];
@@ -3412,7 +3418,7 @@ load_rpm_syms (RCRpmman *rpmman)
             rpmman->headerLoad = *(*hdrfuncs + 9);
         }
         else if (rpmman->version >= 40100 &&
-                 rpmman->version <= 40303) { /* RPM 4.1-4.3.3 inclusive */
+                 rpmman->version <= 40401) { /* RPM 4.1-4.4.1 inclusive */
             rpmman->headerLink = **hdrfuncs;
             rpmman->headerFree = *(*hdrfuncs + 2);
             rpmman->headerGetEntry = *(*hdrfuncs + 16);
@@ -3761,6 +3767,9 @@ write_objects (void)
         } ObjectInfo;
 
         ObjectInfo objects[] = {
+            { "rc-{rpm_rpmio_rpmdb}-4.4.so",
+              rc_rpm_rpmio_rpmdb_4_4_so,
+              rc_rpm_rpmio_rpmdb_4_4_so_len },
             { "rc-{rpm_rpmio_rpmdb}-4.3.so",
               rc_rpm_rpmio_rpmdb_4_3_so,
               rc_rpm_rpmio_rpmdb_4_3_so_len },
@@ -3842,6 +3851,7 @@ rc_rpmman_init (RCRpmman *obj)
     gchar *so_file;
     char *object_dir;
     const char *objects[] = {
+        "rc-{rpm_rpmio_rpmdb}-4.4.so",
         "rc-{rpm_rpmio_rpmdb}-4.3.so",
         "rc-{rpm_rpmio_rpmdb}-4.2.so",
         "rc-{rpm_rpmio_rpmdb}-4.1-popt.so.1.so",
