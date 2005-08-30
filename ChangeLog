@@ -1,3 +1,7 @@
+2005-08-30  Tambet Ingo  <tambet@ximian.com>
+
+	* configure.in: Check for gtk-sharp-2.0.
+
 2005-08-19  James Willcox  <james@ximian.com>
 
 	* configure.in: jack version to 7.0.0
