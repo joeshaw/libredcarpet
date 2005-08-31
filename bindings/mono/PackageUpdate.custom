@@ -1,15 +1,21 @@
 /* -*- Mode: csharp; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 
-//namespace {
+// {
+    public RC.PackageSpec Spec {
+        get { return new RC.PackageSpec (Handle); }
+    }
+
     public void ToXml (System.Xml.XmlTextWriter writer)
     {
         writer.WriteStartElement ("update");
 
-        if (this.HasEpoch)
-            writer.WriteElementString ("epoch", System.Xml.XmlConvert.ToString (this.Epoch));
+		using (RC.PackageSpec spec = Spec) {
+			if (spec.HasEpoch)
+				writer.WriteElementString ("epoch", System.Xml.XmlConvert.ToString (spec.Epoch));
 
-        writer.WriteElementString ("version", this.Version);
-        writer.WriteElementString ("release", this.Release);
+			writer.WriteElementString ("version", spec.Version);
+			writer.WriteElementString ("release", spec.Release);
+		}
 
         if (this.PackageUrl != null)
             writer.WriteElementString ("filename", System.IO.Path.GetFileName (this.PackageUrl));

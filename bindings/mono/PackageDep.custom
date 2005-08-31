@@ -1,6 +1,9 @@
 /* -*- Mode: csharp; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+//{
+    public RC.PackageSpec Spec {
+        get { return new RC.PackageSpec (Handle); }
+    }
 
-//namespace {
     internal static PackageDep[] FromSListPtr (IntPtr ptr) {
         if (ptr == IntPtr.Zero)
             return new PackageDep[0];
@@ -33,20 +36,22 @@
 
         writer.WriteStartElement ("dep");
 
-        writer.WriteAttributeString ("name", this.Name);
+		using (RC.PackageSpec spec = Spec) {
+			writer.WriteAttributeString ("name", spec.Name);
 
-        if (this.Relation != PackageRelation.Any) {
-            writer.WriteAttributeString ("op", Package.RelationToString (this.Relation, 0));
+			if (this.Relation != PackageRelation.Any) {
+				writer.WriteAttributeString ("op", Package.RelationToString (this.Relation, 0));
 
-            if (this.HasEpoch)
-                writer.WriteAttributeString ("epoch", System.Xml.XmlConvert.ToString (this.Epoch));
+				if (spec.HasEpoch)
+					writer.WriteAttributeString ("epoch", System.Xml.XmlConvert.ToString (spec.Epoch));
 
-            if (this.Version != null)
-                writer.WriteAttributeString ("version", this.Version);
+				if (spec.Version != null)
+					writer.WriteAttributeString ("version", spec.Version);
 
-            if (this.Release != null)
-                writer.WriteAttributeString ("release", this.Release);
-        }
+				if (spec.Release != null)
+					writer.WriteAttributeString ("release", spec.Release);
+			}
+		}
 
         writer.WriteEndElement ();
     }

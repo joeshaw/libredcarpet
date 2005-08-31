@@ -1,3 +1,25 @@
+2005-08-31  Tambet Ingo  <tambet@ximian.com>
+
+	* libredcarpet-api.xml: Regenerate.
+
+	* generated/*.cs: Regenerate.
+
+	* PackageSpec.cs: Implement manually.
+
+	* RC.symbols: New file.
+
+	* RC.metadata: Clean commented out lines, hide PackageSpec generation,
+	it's implemented manually now.
+
+	* PackageUpdate.custom: Implement get_Spec manually.
+	Update ToXml().
+
+	* PackageDep.custom: ditto.
+
+	* Package.custom: ditto.
+
+	* Makefile.am: Use RC.symbols on gapi fixup.
+
 2005-08-30  Tambet Ingo  <tambet@ximian.com>
 
 	* Port over to use gtk-sharp-2.0.

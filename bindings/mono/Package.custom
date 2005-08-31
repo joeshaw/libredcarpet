@@ -1,4 +1,8 @@
-    
+
+    public RC.PackageSpec Spec {
+        get { return new RC.PackageSpec (Handle); }
+    }
+
     [DllImport("libredcarpet")]
     static extern IntPtr rc_package_get_updates(IntPtr raw);
 
@@ -18,15 +22,6 @@
             return ret;
         }
     }
-
-    [DllImport("libredcarpet")]
-    static extern IntPtr rc_package_ref(IntPtr raw);
-
-    [DllImport("libredcarpet")]
-    static extern void rc_package_unref(IntPtr raw);
-
-    [DllImport("libredcarpet")]
-    static extern IntPtr rc_package_copy(IntPtr raw);
 
     // ICloneable
     public Object Clone () {
@@ -154,21 +149,23 @@
         }
     }
 
-
     public void ToXml (System.Xml.XmlTextWriter writer)
     {
         writer.WriteStartElement ("package");
 
         writer.WriteElementString ("name", this.Name);
 
-        if (this.HasEpoch)
-            writer.WriteElementString ("epoch", System.Xml.XmlConvert.ToString (this.Epoch));
+		using (RC.PackageSpec spec = Spec) {
+			if (spec.HasEpoch)
+				writer.WriteElementString ("epoch", System.Xml.XmlConvert.ToString (spec.Epoch));
 
-        writer.WriteElementString ("version", this.Version);
-        writer.WriteElementString ("release", this.Release);
+			writer.WriteElementString ("version", spec.Version);
+			writer.WriteElementString ("release", spec.Release);
+			writer.WriteElementString ("arch", RC.Global.ArchToString (spec.Arch));
+		}
+
         writer.WriteElementString ("summary", this.Summary);
         writer.WriteElementString ("description", this.Description);
-        writer.WriteElementString ("arch", RC.Global.ArchToString (this.Arch));
         writer.WriteElementString ("section", Package.SectionToString (this.Section));
         writer.WriteElementString ("filesize", System.Xml.XmlConvert.ToString (this.FileSize));
         writer.WriteElementString ("installedsize", System.Xml.XmlConvert.ToString (this.InstalledSize));

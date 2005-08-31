@@ -14,7 +14,7 @@ namespace RCSharp {
 		public bool NativeCallback (IntPtr pkg, IntPtr spec, IntPtr data)
 		{
 			RC.Package _arg0 = pkg == IntPtr.Zero ? null : (RC.Package) GLib.Opaque.GetOpaque (pkg, typeof (RC.Package), false);
-			RC.PackageSpec _arg1 = spec == IntPtr.Zero ? null : (RC.PackageSpec) GLib.Opaque.GetOpaque (spec, typeof (RC.PackageSpec), false);
+			RC.PackageSpec _arg1 = new RC.PackageSpec(spec);
 			return (bool) managed ( _arg0,  _arg1);
 		}
 

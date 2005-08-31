@@ -3,6 +3,14 @@
 
 #include <libredcarpet.h>
 
+guint rcsharp_rc_package_get_installed_offset (void);
+
+guint
+rcsharp_rc_package_get_installed_offset (void)
+{
+	return (guint)G_STRUCT_OFFSET (RCPackage, installed);
+}
+
 guint rcsharp_rc_package_get_local_package_offset (void);
 
 guint
@@ -25,22 +33,6 @@ guint
 rcsharp_rc_package_get_history_offset (void)
 {
 	return (guint)G_STRUCT_OFFSET (RCPackage, history);
-}
-
-guint rcsharp_rc_package_get_installed_offset (void);
-
-guint
-rcsharp_rc_package_get_installed_offset (void)
-{
-	return (guint)G_STRUCT_OFFSET (RCPackage, installed);
-}
-
-guint rcsharp_rc_package_get_spec_offset (void);
-
-guint
-rcsharp_rc_package_get_spec_offset (void)
-{
-	return (guint)G_STRUCT_OFFSET (RCPackage, spec);
 }
 
 guint rcsharp_rc_packagefile_get_mode_offset (void);
@@ -121,14 +113,6 @@ guint
 rcsharp_rc_packageupdate_get_package_offset (void)
 {
 	return (guint)G_STRUCT_OFFSET (RCPackageUpdate, package);
-}
-
-guint rcsharp_rc_packageupdate_get_spec_offset (void);
-
-guint
-rcsharp_rc_packageupdate_get_spec_offset (void)
-{
-	return (guint)G_STRUCT_OFFSET (RCPackageUpdate, spec);
 }
 
 guint rcsharp_rc_queueitem_get_world_offset (void);

@@ -1329,6 +1329,7 @@
       <field name="ConflictsByName" cname="conflicts_by_name" type="GHashTable*" />
       <field name="Channels" cname="channels" type="GSList*" />
       <field name="Locks" cname="locks" type="GSList*" />
+      <field name="Allocator" cname="allocator" type="GAllocator*" />
       <method name="AddChannel" cname="rc_world_store_add_channel">
         <return-type type="void" />
         <parameters>
@@ -1669,8 +1670,8 @@
         </parameters>
       </method>
     </struct>
-    <boxed name="Package" cname="RCPackage" opaque="1" parent="RCPackageSpec">
-      <field name="Spec" cname="spec" type="RCPackageSpec" access="public" writeable="true" />
+    <boxed name="Package" cname="RCPackage" opaque="1">
+      <field name="Spec" cname="spec" type="RCPackageSpec" access="public" writeable="true" hidden="1" />
       <field name="Refs" cname="refs" type="gint" access="public" writeable="true" hidden="1" />
       <field name="Section" cname="section" type="RCPackageSection" access="public" writeable="true" />
       <field name="FileSize" cname="file_size" type="guint32" access="public" writeable="true" />
@@ -1707,7 +1708,7 @@
           <parameter type="RCPackageUpdate*" name="update" />
         </parameters>
       </method>
-      <method name="Copy" cname="rc_package_copy" hidden="1">
+      <method name="Copy" cname="rc_package_copy">
         <return-type type="RCPackage*" owned="true" />
       </method>
       <method name="GetChannel" cname="rc_package_get_channel">
@@ -1740,7 +1741,7 @@
       <method name="GetLatestUpdate" cname="rc_package_get_latest_update">
         <return-type type="RCPackageUpdate*" />
       </method>
-      <method name="GetName" cname="rc_package_get_name" hidden="1">
+      <method name="GetName" cname="rc_package_get_name">
         <return-type type="const-char*" />
       </method>
       <method name="GetObsoletes" cname="rc_package_get_obsoletes" hidden="1">
@@ -1801,7 +1802,7 @@
         <return-type type="gboolean" />
       </method>
       <constructor cname="rc_package_new" />
-      <method name="Ref" cname="rc_package_ref" hidden="1">
+      <method name="Ref" cname="rc_package_ref">
         <return-type type="RCPackage*" />
       </method>
       <method name="RelationFromString" cname="rc_package_relation_from_string" shared="true">
@@ -1970,11 +1971,11 @@
       <method name="ToStrStatic" cname="rc_package_to_str_static" hidden="1">
         <return-type type="const-char*" />
       </method>
-      <method name="Unref" cname="rc_package_unref" hidden="1">
+      <method name="Unref" cname="rc_package_unref">
         <return-type type="void" />
       </method>
     </boxed>
-    <struct name="PackageDep" cname="RCPackageDep" opaque="1" parent="RCPackageSpec">
+    <struct name="PackageDep" cname="RCPackageDep" opaque="true">
       <method name="GetChannel" cname="rc_package_dep_get_channel">
         <return-type type="RCChannel*" />
       </method>
@@ -2167,11 +2168,11 @@
       </method>
     </struct>
     <alias name="PackageSList" cname="RCPackageSList" type="GSList" />
-    <struct name="PackageSpec" cname="RCPackageSpec" opaque="1">
-      <field name="Nameq" cname="nameq" type="GQuark" access="public" writeable="true" hidden="1" />
+    <struct name="PackageSpec" cname="RCPackageSpec" opaque="true" hidden="1">
+      <field name="Nameq" cname="nameq" type="GQuark" access="public" writeable="true" />
       <field name="Version" cname="version" type="gchar*" access="public" writeable="true" />
       <field name="Release" cname="release" type="gchar*" access="public" writeable="true" />
-      <field name="HasEpoch" cname="has_epoch" type="gboolean" access="public" writeable="true" hidden="1" />
+      <field name="HasEpoch" cname="has_epoch" type="gboolean" access="public" writeable="true" />
       <field name="Epoch" cname="epoch" type="gint" access="public" writeable="true" />
       <field name="Arch" cname="arch" type="RCArch" access="public" writeable="true" />
       <method name="CompareName" cname="rc_package_spec_compare_name" shared="true">
@@ -2187,7 +2188,7 @@
           <parameter type="RCPackageSpec*" name="old" />
         </parameters>
       </method>
-      <method name="Equal" cname="rc_package_spec_equal" shared="true" hidden="1">
+      <method name="Equal" cname="rc_package_spec_equal" shared="true">
         <return-type type="gint" />
         <parameters>
           <parameter type="gconstpointer" name="ptra" />
@@ -2236,7 +2237,7 @@
         </parameters>
       </method>
       <constructor cname="rc_package_spec_new" />
-      <method name="NotEqual" cname="rc_package_spec_not_equal" shared="true" hidden="1">
+      <method name="NotEqual" cname="rc_package_spec_not_equal" shared="true">
         <return-type type="gint" />
         <parameters>
           <parameter type="gconstpointer" name="a" />
@@ -2280,21 +2281,21 @@
           <parameter type="const-gchar*" name="name" />
         </parameters>
       </method>
-      <method cname="rc_package_spec_to_str" name="ToString">
+      <method name="ToStr" cname="rc_package_spec_to_str">
         <return-type type="gchar*" />
       </method>
-      <method name="ToStrStatic" cname="rc_package_spec_to_str_static" hidden="1">
+      <method name="ToStrStatic" cname="rc_package_spec_to_str_static">
         <return-type type="const-gchar*" />
       </method>
-      <method cname="rc_package_spec_version_to_str" name="VersionToString">
+      <method name="VersionToStr" cname="rc_package_spec_version_to_str">
         <return-type type="gchar*" />
       </method>
-      <method name="VersionToStrStatic" cname="rc_package_spec_version_to_str_static" hidden="1">
+      <method name="VersionToStrStatic" cname="rc_package_spec_version_to_str_static">
         <return-type type="const-gchar*" />
       </method>
     </struct>
-    <struct name="PackageUpdate" cname="RCPackageUpdate" opaque="1" parent="RCPackageSpec">
-      <field name="Spec" cname="spec" type="RCPackageSpec" access="public" writeable="true" />
+    <struct name="PackageUpdate" cname="RCPackageUpdate" opaque="true">
+      <field name="Spec" cname="spec" type="RCPackageSpec" access="public" writeable="true" hidden="1" />
       <field name="Package" cname="package" type="const-RCPackage*" access="public" writeable="true" />
       <field name="PackageUrl" cname="package_url" type="gchar*" access="public" writeable="true" />
       <field name="PackageSize" cname="package_size" type="guint32" access="public" writeable="true" />
@@ -3693,4 +3694,6 @@
       </method>
     </class>
   </namespace>
+  <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />
+  <symbol type="manual" cname="RCPackageSpec" name="RC.PackageSpec" />
 </api>

@@ -16,12 +16,7 @@
   <attr path="/api/namespace/class[@cname='Global']/method[@name='StringToGuint32WithDefault']" name="hidden">1</attr>
   <attr path="/api/namespace/boxed[@cname='RCPackage']/method[@name='ToStr']" name="name">ToString</attr>
   <attr path="/api/namespace/boxed[@cname='RCPackage']/method[@name='ToStrStatic']" name="hidden">1</attr>
-  <attr path="/api/namespace/struct[@cname='RCPackageSpec']/method[@name='ToStr']" name="name">ToString</attr>
-  <attr path="/api/namespace/struct[@cname='RCPackageSpec']/method[@name='ToStrStatic']" name="hidden">1</attr>
-  <attr path="/api/namespace/struct[@cname='RCPackageSpec']/method[@name='VersionToStr']" name="name">VersionToString</attr>
-  <attr path="/api/namespace/struct[@cname='RCPackageSpec']/method[@name='VersionToStrStatic']" name="hidden">1</attr>
-  <attr path="/api/namespace/struct[@cname='RCPackageSpec']/method[@name='NotEqual']" name="hidden">1</attr>
-  <attr path="/api/namespace/struct[@cname='RCPackageSpec']/method[@name='Equal']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='RCPackageSpec']" name="hidden">1</attr>
   <attr path="/api/namespace/struct[@cname='RCPackageDep']/method[@name='ToStringStatic']" name="hidden">1</attr>
   <!--
   <attr path="/api/namespace/object[@cname='RCWorld']/method[@cname='rc_world_refresh']" name="hidden">1</attr>
@@ -49,15 +44,12 @@
   <attr path="/api/namespace/struct[@name='ResolverInfo']/method[@cname='rc_resolver_info_type']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@name='WorldLocalDir']/method[@cname='rc_world_local_dir_set_name']" name="hidden">1</attr>
   <attr path="/api/namespace/struct[@cname='RCResolverQueue']" name="opaque">1</attr>
-  <attr path="/api/namespace/struct[@cname='RCPackageSpec']" name="opaque">1</attr>
 
   <attr path="/api/namespace/boxed[@cname='RCPackage']" name="opaque">1</attr>
-  <attr path="/api/namespace/boxed[@cname='RCPackage']" name="parent">RCPackageSpec</attr>
-  <attr path="/api/namespace/boxed[@cname='RCPackage']/method[@cname='rc_package_ref']" name="hidden">1</attr>
-  <attr path="/api/namespace/boxed[@cname='RCPackage']/method[@cname='rc_package_unref']" name="hidden">1</attr>
-  <attr path="/api/namespace/boxed[@cname='RCPackage']/method[@cname='rc_package_copy']" name="hidden">1</attr>
-  <attr path="/api/namespace/boxed[@cname='RCPackage']/method[@cname='rc_package_get_name']" name="hidden">1</attr>
   <attr path="/api/namespace/boxed[@cname='RCPackage']/method[@cname='rc_package_get_spec']" name="hidden">1</attr>
+  <attr path="/api/namespace/boxed[@cname='RCPackage']/field[@cname='spec']" name="hidden">1</attr>
+  
+
   <attr path="/api/namespace/boxed[@cname='RCPackage']/method[@cname='rc_package_get_updates']" name="hidden">1</attr>
   <attr path="/api/namespace/boxed[@cname='RCPackage']/method[@cname='rc_package_get_children']" name="hidden">1</attr>
   <attr path="/api/namespace/boxed[@cname='RCPackage']/method[@cname='rc_package_set_children']" name="hidden">1</attr>
@@ -74,13 +66,11 @@
   <attr path="/api/namespace/boxed[@cname='RCPackage']/method[@cname='rc_package_get_suggests']" name="hidden">1</attr>
   <attr path="/api/namespace/boxed[@cname='RCPackage']/method[@cname='rc_package_set_suggests']" name="hidden">1</attr>
 
-  <attr path="/api/namespace/struct[@cname='RCPackageUpdate']" name="opaque">1</attr>
-  <attr path="/api/namespace/struct[@cname='RCPackageUpdate']" name="parent">RCPackageSpec</attr>
   <attr path="/api/namespace/struct[@cname='RCPackageUpdate']/method[@cname='rc_package_update_get_spec']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='RCPackageUpdate']/field[@cname='spec']" name="hidden">1</attr>
 
-  <attr path="/api/namespace/struct[@cname='RCPackageDep']" name="opaque">1</attr>
-  <attr path="/api/namespace/struct[@cname='RCPackageDep']" name="parent">RCPackageSpec</attr>
   <attr path="/api/namespace/struct[@cname='RCPackageDep']/method[@cname='rc_package_dep_get_spec']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='RCPackageDep']/field[@cname='spec']" name="hidden">1</attr>
 
   <attr path="/api/namespace/boxed[@cname='RCChannel']" name="opaque">1</attr>
   <attr path="/api/namespace/boxed[@cname='RCResolver']" name="opaque">1</attr>
@@ -159,8 +149,6 @@
    <attr path="/api/namespace/boxed[@cname='RCResolver']/field[@cname='invalid_queues']" name="writeable">false</attr>
    <attr path="/api/namespace/boxed[@cname='RCResolver']/field[@cname='best_context']" name="writeable">false</attr>
    <attr path="/api/namespace/struct[@cname='RCResolverQueue']/field[@cname='context']" name="writeable">false</attr>
-   <attr path="/api/namespace/struct[@cname='RCPackageSpec']/field[@cname='nameq']" name="hidden">1</attr>
-   <attr path="/api/namespace/struct[@cname='RCPackageSpec']/field[@cname='has_epoch']" name="hidden">1</attr>
    <attr path="/api/namespace/struct[@cname='RCResolverInfo']/field[@cname='is_important']" name="hidden">1</attr>
    <attr path="/api/namespace/struct[@cname='RCResolverInfo']/field[@cname='is_error']" name="hidden">1</attr>
    <attr path="/api/namespace/boxed[@cname='RCPackage']/field[@cname='refs']" name="hidden">1</attr>

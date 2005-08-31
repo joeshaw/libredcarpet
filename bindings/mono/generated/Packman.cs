@@ -420,7 +420,7 @@ namespace RC {
 		static extern int rc_packman_version_compare(IntPtr raw, IntPtr spec1, IntPtr spec2);
 
 		public int VersionCompare(RC.PackageSpec spec1, RC.PackageSpec spec2) {
-			int raw_ret = rc_packman_version_compare(Handle, spec1 == null ? IntPtr.Zero : spec1.Handle, spec2 == null ? IntPtr.Zero : spec2.Handle);
+			int raw_ret = rc_packman_version_compare(Handle, spec1.Handle, spec2.Handle);
 			int ret = raw_ret;
 			return ret;
 		}

@@ -18,8 +18,8 @@ all: $(ASSEMBLY)
 $(API):
 	$(GAPI_PARSER) $(SOURCES)
 
-update-generated: $(API) RC.metadata
-	$(GAPI_FIXUP) --api=$(API) --metadata=RC.metadata && \
+update-generated: $(API) RC.metadata RC.symbols
+	$(GAPI_FIXUP) --api=$(API) --metadata=RC.metadata --symbols=RC.symbols && \
 	$(GAPI_CODEGEN) --generate $(API) --outdir=generated \
 	--customdir=. --assembly-name=libredcarpet-sharp \
 	--gluelib-name=libredcarpetsharpglue-0 --glue-filename=glue/generated.c \
@@ -69,6 +69,7 @@ EXTRA_DIST =				\
 	libredcarpet-sharp.pc.in	\
 	libredcarpet-sources.xml 	\
 	RC.metadata			\
+	RC.symbols			\
 	libredcarpet-sharp-docs.source	\
 	Channel.custom			\
 	Extract.custom			\
