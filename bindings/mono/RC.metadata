@@ -29,17 +29,17 @@
   <attr path="/api/namespace/object[@cname='RCWorldService']/method[@cname='rc_world_service_set_assemble_function']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='RCWorldService']/method[@name='Mount']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='RCWorldService']/method[@name='Register']" name="hidden">1</attr>
-  <attr path="/api/namespace/object[@cname='RCWorld']/method[@name='GetChannels']/return-type" name="element_type">RC.Channel</attr>
-  <attr path="/api/namespace/object[@cname='RCWorld']/method[@name='GetLocks']/return-type" name="element_type">RC.PackageMatch</attr>
-  <attr path="/api/namespace/object[@cname='RCWorld']/method[@name='GetUpgrades']/return-type" name="element_type">RC.Package</attr>
-  <attr path="/api/namespace/boxed[@cname='RCChannel']/method[@name='GetPackages']/return-type" name="element_type">RC.Package</attr>
+  <attr path="/api/namespace/object[@cname='RCWorld']/method[@name='GetChannels']/return-type" name="element_type">RCChannel</attr>
+  <attr path="/api/namespace/object[@cname='RCWorld']/method[@name='GetLocks']/return-type" name="element_type">RCPackageMatch</attr>
+  <attr path="/api/namespace/object[@cname='RCWorld']/method[@name='GetUpgrades']/return-type" name="element_type">RCPackage</attr>
+  <attr path="/api/namespace/boxed[@cname='RCChannel']/method[@name='GetPackages']/return-type" name="element_type">RCPackage</attr>
   <attr path="/api/namespace/boxed[@cname='RCChannel']/method[@cname='rc_channel_set_subscription']" name="name">SetSubscribed</attr>
   <attr path="/api/namespace/boxed[@cname='RCChannel']/method[@cname='rc_channel_is_subscribed']" name="name">GetSubscribed</attr>
-  <attr path="/api/namespace/boxed[@cname='RCResolverContext']/method[@name='GetInstalls']/return-type" name="element_type">RC.Package</attr>
-  <attr path="/api/namespace/boxed[@cname='RCResolverContext']/method[@name='GetUninstalls']/return-type" name="element_type">RC.Package</attr>
-  <attr path="/api/namespace/boxed[@cname='RCResolverContext']/method[@name='GetMarkedPackages']/return-type" name="element_type">RC.Package</attr>
-  <attr path="/api/namespace/boxed[@cname='RCResolverContext']/method[@name='GetUpgrades']/return-type" name="element_type">RC.Package</attr>
-  <attr path="/api/namespace/boxed[@cname='RCResolverContext']/method[@name='GetInfo']/return-type" name="element_type">string</attr>
+  <attr path="/api/namespace/boxed[@cname='RCResolverContext']/method[@name='GetInstalls']/return-type" name="element_type">RCPackage</attr>
+  <attr path="/api/namespace/boxed[@cname='RCResolverContext']/method[@name='GetUninstalls']/return-type" name="element_type">RCPackage</attr>
+  <attr path="/api/namespace/boxed[@cname='RCResolverContext']/method[@name='GetMarkedPackages']/return-type" name="element_type">RCPackage</attr>
+  <attr path="/api/namespace/boxed[@cname='RCResolverContext']/method[@name='GetUpgrades']/return-type" name="element_type">RCPackage</attr>
+  <attr path="/api/namespace/boxed[@cname='RCResolverContext']/method[@name='GetInfo']/return-type" name="element_type">gchar*</attr>
   <attr path="/api/namespace/struct[@name='QueueItem']/method[@cname='rc_queue_item_type']" name="hidden">1</attr>
   <attr path="/api/namespace/struct[@name='ResolverInfo']/method[@cname='rc_resolver_info_type']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@name='WorldLocalDir']/method[@cname='rc_world_local_dir_set_name']" name="hidden">1</attr>
@@ -76,10 +76,10 @@
   <attr path="/api/namespace/boxed[@cname='RCResolver']" name="opaque">1</attr>
   <attr path="/api/namespace/boxed[@cname='RCResolverContext']" name="opaque">1</attr>
   <attr path="/api/namespace/object[@cname='RCWorldMulti']/method[@cname='rc_world_multi_mount_service']" name="hidden">1</attr>
-  <attr path="/api/namespace/boxed[@cname='RCResolver']/method[@cname='rc_resolver_get_invalid_queues']/return-type" name="element_type">RC.ResolverQueue</attr>
+  <attr path="/api/namespace/boxed[@cname='RCResolver']/method[@cname='rc_resolver_get_invalid_queues']/return-type" name="element_type">RCResolverQueue</attr>
 
-  <attr path="/api/namespace/object[@cname='RCPackman']/method[@cname='rc_packman_file_list']/return-type" name="element_type">RC.PackageFile</attr>
-  <attr path="/api/namespace/object[@cname='RCPackman']/method[@cname='rc_packman_find_file']/return-type" name="element_type">RC.Package</attr>
+  <attr path="/api/namespace/object[@cname='RCPackman']/method[@cname='rc_packman_file_list']/return-type" name="element_type">RCPackageFile</attr>
+  <attr path="/api/namespace/object[@cname='RCPackman']/method[@cname='rc_packman_find_file']/return-type" name="element_type">RCPackage</attr>
 
   <attr path="/api/namespace/object[@cname='RCPackman']/method[@cname='rc_packman_get_global']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='RCPackman']/method[@cname='rc_packman_set_global']" name="hidden">1</attr>

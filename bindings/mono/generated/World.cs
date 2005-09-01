@@ -313,9 +313,9 @@ namespace RC {
 		[DllImport("libredcarpet")]
 		static extern IntPtr rc_world_get_upgrades(IntPtr raw, IntPtr package, IntPtr channel);
 
-		public GLib.SList GetUpgrades(RC.Package package, RC.Channel channel) {
+		public RC.Package[] GetUpgrades(RC.Package package, RC.Channel channel) {
 			IntPtr raw_ret = rc_world_get_upgrades(Handle, package == null ? IntPtr.Zero : package.Handle, channel == null ? IntPtr.Zero : channel.Handle);
-			GLib.SList ret = new GLib.SList(raw_ret);
+			RC.Package[] ret = (RC.Package[]) GLib.Marshaller.ListToArray (new GLib.SList(raw_ret, typeof (RC.Package), false, false), typeof (RC.Package));
 			return ret;
 		}
 
@@ -512,10 +512,10 @@ namespace RC {
 		[DllImport("libredcarpet")]
 		static extern IntPtr rc_world_get_locks(IntPtr raw);
 
-		public GLib.SList Locks { 
+		public RC.PackageMatch[] Locks { 
 			get {
 				IntPtr raw_ret = rc_world_get_locks(Handle);
-				GLib.SList ret = new GLib.SList(raw_ret);
+				RC.PackageMatch[] ret = (RC.PackageMatch[]) GLib.Marshaller.ListToArray (new GLib.SList(raw_ret, typeof (RC.PackageMatch), false, false), typeof (RC.PackageMatch));
 				return ret;
 			}
 		}
@@ -523,10 +523,10 @@ namespace RC {
 		[DllImport("libredcarpet")]
 		static extern IntPtr rc_world_get_channels(IntPtr raw);
 
-		public GLib.SList Channels { 
+		public RC.Channel[] Channels { 
 			get {
 				IntPtr raw_ret = rc_world_get_channels(Handle);
-				GLib.SList ret = new GLib.SList(raw_ret);
+				RC.Channel[] ret = (RC.Channel[]) GLib.Marshaller.ListToArray (new GLib.SList(raw_ret, typeof (RC.Channel), false, false), typeof (RC.Channel));
 				return ret;
 			}
 		}
@@ -730,7 +730,7 @@ namespace RC {
             return ret;
         }
         set {
-            rc_set_world((value == null) ? IntPtr.Zero : value.Handle);
+            rc_set_world (value == null ? IntPtr.Zero : value.Handle);
         }
     }
 

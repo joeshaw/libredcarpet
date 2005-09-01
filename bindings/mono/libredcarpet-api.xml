@@ -518,13 +518,13 @@
         </parameters>
       </virtual_method>
       <method name="FileList" cname="rc_packman_file_list">
-        <return-type type="RCPackageFileSList*" element_type="RC.PackageFile" />
+        <return-type type="RCPackageFileSList*" element_type="RCPackageFile" />
         <parameters>
           <parameter type="RCPackage*" name="package" />
         </parameters>
       </method>
       <method name="FindFile" cname="rc_packman_find_file">
-        <return-type type="RCPackageSList*" element_type="RC.Package" />
+        <return-type type="RCPackageSList*" element_type="RCPackage" />
         <parameters>
           <parameter type="const-gchar*" name="filename" />
         </parameters>
@@ -978,13 +978,13 @@
         <return-type type="guint" />
       </method>
       <method name="GetChannels" cname="rc_world_get_channels">
-        <return-type type="GSList*" element_type="RC.Channel" />
+        <return-type type="GSList*" element_type="RCChannel" />
       </method>
       <method name="GetLockSequenceNumber" cname="rc_world_get_lock_sequence_number">
         <return-type type="guint" />
       </method>
       <method name="GetLocks" cname="rc_world_get_locks">
-        <return-type type="GSList*" element_type="RC.PackageMatch" />
+        <return-type type="GSList*" element_type="RCPackageMatch" />
       </method>
       <method name="GetPackage" cname="rc_world_get_package">
         <return-type type="RCPackage*" />
@@ -1020,7 +1020,7 @@
         <return-type type="GType" />
       </method>
       <method name="GetUpgrades" cname="rc_world_get_upgrades">
-        <return-type type="GSList*" element_type="RC.Package" />
+        <return-type type="GSList*" element_type="RCPackage" />
         <parameters>
           <parameter type="RCPackage*" name="package" />
           <parameter type="RCChannel*" name="channel" />
@@ -1489,7 +1489,7 @@
         <return-type type="const-char*" />
       </method>
       <method name="GetPackages" cname="rc_channel_get_packages">
-        <return-type type="GSList*" element_type="RC.Package" />
+        <return-type type="GSList*" element_type="RCPackage" />
       </method>
       <method name="GetPath" cname="rc_channel_get_path">
         <return-type type="const-char*" />
@@ -2793,7 +2793,7 @@
         <return-type type="RCResolverContext*" />
       </method>
       <method name="GetInvalidQueues" cname="rc_resolver_get_invalid_queues">
-        <return-type type="GSList*" element_type="RC.ResolverQueue" />
+        <return-type type="GSList*" element_type="RCResolverQueue" />
       </method>
       <method name="GetType" cname="rc_resolver_get_type" shared="true">
         <return-type type="GType" />
@@ -2915,13 +2915,13 @@
         </parameters>
       </method>
       <method name="GetInfo" cname="rc_resolver_context_get_info">
-        <return-type type="GSList*" element_type="string" />
+        <return-type type="GSList*" element_type="gchar*" />
       </method>
       <method name="GetInstalls" cname="rc_resolver_context_get_installs">
-        <return-type type="GSList*" element_type="RC.Package" />
+        <return-type type="GSList*" element_type="RCPackage" />
       </method>
       <method name="GetMarkedPackages" cname="rc_resolver_context_get_marked_packages">
-        <return-type type="GSList*" element_type="RC.Package" />
+        <return-type type="GSList*" element_type="RCPackage" />
       </method>
       <method name="GetStatus" cname="rc_resolver_context_get_status">
         <return-type type="RCPackageStatus" />
@@ -2933,10 +2933,10 @@
         <return-type type="GType" />
       </method>
       <method name="GetUninstalls" cname="rc_resolver_context_get_uninstalls">
-        <return-type type="GSList*" element_type="RC.Package" />
+        <return-type type="GSList*" element_type="RCPackage" />
       </method>
       <method name="GetUpgrades" cname="rc_resolver_context_get_upgrades">
-        <return-type type="GSList*" element_type="RC.Package" />
+        <return-type type="GSList*" element_type="RCPackage" />
       </method>
       <method name="GetWorld" cname="rc_resolver_context_get_world">
         <return-type type="RCWorld*" />
@@ -3694,6 +3694,20 @@
       </method>
     </class>
   </namespace>
+  <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />
+  <symbol type="manual" cname="RCPackageSpec" name="RC.PackageSpec" />
+  <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />
+  <symbol type="manual" cname="RCPackageSpec" name="RC.PackageSpec" />
+  <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />
+  <symbol type="manual" cname="RCPackageSpec" name="RC.PackageSpec" />
+  <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />
+  <symbol type="manual" cname="RCPackageSpec" name="RC.PackageSpec" />
+  <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />
+  <symbol type="manual" cname="RCPackageSpec" name="RC.PackageSpec" />
+  <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />
+  <symbol type="manual" cname="RCPackageSpec" name="RC.PackageSpec" />
+  <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />
+  <symbol type="manual" cname="RCPackageSpec" name="RC.PackageSpec" />
   <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />
   <symbol type="manual" cname="RCPackageSpec" name="RC.PackageSpec" />
 </api>

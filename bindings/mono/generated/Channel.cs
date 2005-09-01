@@ -13,10 +13,10 @@ namespace RC {
 		[DllImport("libredcarpet")]
 		static extern IntPtr rc_channel_get_packages(IntPtr raw);
 
-		public GLib.SList Packages { 
+		public RC.Package[] Packages { 
 			get {
 				IntPtr raw_ret = rc_channel_get_packages(Handle);
-				GLib.SList ret = new GLib.SList(raw_ret);
+				RC.Package[] ret = (RC.Package[]) GLib.Marshaller.ListToArray (new GLib.SList(raw_ret, typeof (RC.Package), false, false), typeof (RC.Package));
 				return ret;
 			}
 		}

@@ -19,7 +19,7 @@
             return ret;
         }
         set {
-            rc_set_world((value == null) ? IntPtr.Zero : value.Handle);
+            rc_set_world (value == null ? IntPtr.Zero : value.Handle);
         }
     }
 

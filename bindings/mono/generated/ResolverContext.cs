@@ -353,10 +353,10 @@ namespace RC {
 		[DllImport("libredcarpet")]
 		static extern IntPtr rc_resolver_context_get_uninstalls(IntPtr raw);
 
-		public GLib.SList Uninstalls { 
+		public RC.Package[] Uninstalls { 
 			get {
 				IntPtr raw_ret = rc_resolver_context_get_uninstalls(Handle);
-				GLib.SList ret = new GLib.SList(raw_ret);
+				RC.Package[] ret = (RC.Package[]) GLib.Marshaller.ListToArray (new GLib.SList(raw_ret, typeof (RC.Package), false, false), typeof (RC.Package));
 				return ret;
 			}
 		}
@@ -364,10 +364,10 @@ namespace RC {
 		[DllImport("libredcarpet")]
 		static extern IntPtr rc_resolver_context_get_upgrades(IntPtr raw);
 
-		public GLib.SList Upgrades { 
+		public RC.Package[] Upgrades { 
 			get {
 				IntPtr raw_ret = rc_resolver_context_get_upgrades(Handle);
-				GLib.SList ret = new GLib.SList(raw_ret);
+				RC.Package[] ret = (RC.Package[]) GLib.Marshaller.ListToArray (new GLib.SList(raw_ret, typeof (RC.Package), false, false), typeof (RC.Package));
 				return ret;
 			}
 		}
@@ -517,10 +517,10 @@ namespace RC {
 		[DllImport("libredcarpet")]
 		static extern IntPtr rc_resolver_context_get_installs(IntPtr raw);
 
-		public GLib.SList Installs { 
+		public RC.Package[] Installs { 
 			get {
 				IntPtr raw_ret = rc_resolver_context_get_installs(Handle);
-				GLib.SList ret = new GLib.SList(raw_ret);
+				RC.Package[] ret = (RC.Package[]) GLib.Marshaller.ListToArray (new GLib.SList(raw_ret, typeof (RC.Package), false, false), typeof (RC.Package));
 				return ret;
 			}
 		}
@@ -580,10 +580,10 @@ namespace RC {
 		[DllImport("libredcarpet")]
 		static extern IntPtr rc_resolver_context_get_marked_packages(IntPtr raw);
 
-		public GLib.SList MarkedPackages { 
+		public RC.Package[] MarkedPackages { 
 			get {
 				IntPtr raw_ret = rc_resolver_context_get_marked_packages(Handle);
-				GLib.SList ret = new GLib.SList(raw_ret);
+				RC.Package[] ret = (RC.Package[]) GLib.Marshaller.ListToArray (new GLib.SList(raw_ret, typeof (RC.Package), false, false), typeof (RC.Package));
 				return ret;
 			}
 		}
@@ -591,10 +591,10 @@ namespace RC {
 		[DllImport("libredcarpet")]
 		static extern IntPtr rc_resolver_context_get_info(IntPtr raw);
 
-		public GLib.SList Info { 
+		public string[] Info { 
 			get {
 				IntPtr raw_ret = rc_resolver_context_get_info(Handle);
-				GLib.SList ret = new GLib.SList(raw_ret);
+				string[] ret = (string[]) GLib.Marshaller.ListToArray (new GLib.SList(raw_ret, typeof (string), false, false), typeof (string));
 				return ret;
 			}
 		}

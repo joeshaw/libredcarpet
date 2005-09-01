@@ -39,7 +39,7 @@
         }
 
         set {
-            rc_packman_set_global ((value == null) ? IntPtr.Zero : value.Handle);
+            rc_packman_set_global (value == null ? IntPtr.Zero : value.Handle);
         }
     }
 

@@ -239,10 +239,10 @@ namespace RC {
 		[DllImport("libredcarpet")]
 		static extern IntPtr rc_resolver_get_invalid_queues(IntPtr raw);
 
-		public GLib.SList InvalidQueues {
+		public RC.ResolverQueue[] InvalidQueues {
 			get  {
 				IntPtr raw_ret = rc_resolver_get_invalid_queues(Handle);
-				GLib.SList ret = new GLib.SList(raw_ret);
+				RC.ResolverQueue[] ret = (RC.ResolverQueue[]) GLib.Marshaller.ListToArray (new GLib.SList(raw_ret, typeof (RC.ResolverQueue), false, false), typeof (RC.ResolverQueue));
 				return ret;
 			}
 		}

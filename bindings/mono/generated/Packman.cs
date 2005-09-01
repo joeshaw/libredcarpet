@@ -437,9 +437,9 @@ namespace RC {
 		[DllImport("libredcarpet")]
 		static extern IntPtr rc_packman_file_list(IntPtr raw, IntPtr package);
 
-		public GLib.SList FileList(RC.Package package) {
+		public RC.PackageFile[] FileList(RC.Package package) {
 			IntPtr raw_ret = rc_packman_file_list(Handle, package == null ? IntPtr.Zero : package.Handle);
-			GLib.SList ret = new GLib.SList(raw_ret);
+			RC.PackageFile[] ret = (RC.PackageFile[]) GLib.Marshaller.ListToArray (new GLib.SList(raw_ret, typeof (RC.PackageFile), false, false), typeof (RC.PackageFile));
 			return ret;
 		}
 
@@ -532,10 +532,10 @@ namespace RC {
 		[DllImport("libredcarpet")]
 		static extern IntPtr rc_packman_find_file(IntPtr raw, IntPtr filename);
 
-		public GLib.SList FindFile(string filename) {
+		public RC.Package[] FindFile(string filename) {
 			IntPtr filename_as_native = GLib.Marshaller.StringToPtrGStrdup (filename);
 			IntPtr raw_ret = rc_packman_find_file(Handle, filename_as_native);
-			GLib.SList ret = new GLib.SList(raw_ret);
+			RC.Package[] ret = (RC.Package[]) GLib.Marshaller.ListToArray (new GLib.SList(raw_ret, typeof (RC.Package), false, false), typeof (RC.Package));
 			GLib.Marshaller.Free (filename_as_native);
 			return ret;
 		}
@@ -655,7 +655,7 @@ namespace RC {
         }
 
         set {
-            rc_packman_set_global ((value == null) ? IntPtr.Zero : value.Handle);
+            rc_packman_set_global (value == null ? IntPtr.Zero : value.Handle);
         }
     }
 
