@@ -479,10 +479,12 @@ namespace RC {
         s.Close ();
     }
 
-    private static void FromXml (System.Xml.XmlTextReader reader, ChannelDelegate callback)
+    private static int FromXml (System.Xml.XmlTextReader reader, ChannelDelegate callback)
     {
         reader.MoveToContent ();
         reader.ReadStartElement ("channellist");
+
+        int counter = 0;
 
         while (reader.Read ()) {
             if (reader.LocalName != "channel")
@@ -549,17 +551,23 @@ namespace RC {
             if (compressed != null && compressed == "1")
                 c.PkginfoFileCompressed = true;
 
+            counter++;
+
             if (!callback (c))
                 break;
         }
+
+        return counter;
     }
 
-    public static void FromXml (System.IO.Stream stream, ChannelDelegate callback)
+    public static int FromXml (System.IO.Stream stream, ChannelDelegate callback)
     {
         System.Xml.XmlTextReader reader = new System.Xml.XmlTextReader (stream);
-        FromXml (reader, callback);
+        int count = FromXml (reader, callback);
         reader.Close ();
         stream.Close ();
+
+        return count;
     }
 
     private class FromXmlHelper {
