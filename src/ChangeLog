@@ -1,3 +1,10 @@
+2005-09-06  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-package.c (rc_package_set_requires, rc_package_set_provides) 
+	(rc_package_set_conflicts, rc_package_set_obsoletes) 
+	(rc_package_set_children, rc_package_set_suggests) 
+	(rc_package_set_recommends): Don't make additional copy of the list.
+
 2005-08-30  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-xml.c: Use custom GSList allocator for dependencies.

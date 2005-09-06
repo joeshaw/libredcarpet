@@ -602,8 +602,7 @@ rc_package_set_requires (RCPackage *package, RCPackageDepSList *value)
     g_return_if_fail (package != NULL);
 
     rc_package_dep_array_free (package->requires_a);
-    RCPackageDepSList *copy = rc_package_dep_slist_copy (value);
-    package->requires_a = rc_package_dep_array_from_slist (&copy);
+    package->requires_a = rc_package_dep_array_from_slist (&value);
 }
 
 RCPackageDepSList *
@@ -620,8 +619,7 @@ rc_package_set_provides (RCPackage *package, RCPackageDepSList *value)
     g_return_if_fail (package != NULL);
 
     rc_package_dep_array_free (package->provides_a);
-    RCPackageDepSList *copy = rc_package_dep_slist_copy (value);
-    package->provides_a = rc_package_dep_array_from_slist (&copy);
+    package->provides_a = rc_package_dep_array_from_slist (&value);
 }
 
 RCPackageDepSList *
@@ -638,8 +636,7 @@ rc_package_set_conflicts (RCPackage *package, RCPackageDepSList *value)
     g_return_if_fail (package != NULL);
 
     rc_package_dep_array_free (package->conflicts_a);
-    RCPackageDepSList *copy = rc_package_dep_slist_copy (value);
-    package->conflicts_a = rc_package_dep_array_from_slist (&copy);
+    package->conflicts_a = rc_package_dep_array_from_slist (&value);
 }
 
 RCPackageDepSList *
@@ -656,8 +653,7 @@ rc_package_set_obsoletes (RCPackage *package, RCPackageDepSList *value)
     g_return_if_fail (package != NULL);
 
     rc_package_dep_array_free (package->obsoletes_a);
-    RCPackageDepSList *copy = rc_package_dep_slist_copy (value);
-    package->obsoletes_a = rc_package_dep_array_from_slist (&copy);
+    package->obsoletes_a = rc_package_dep_array_from_slist (&value);
 }
 
 RCPackageDepSList *
@@ -674,8 +670,7 @@ rc_package_set_children (RCPackage *package, RCPackageDepSList *value)
     g_return_if_fail (package != NULL);
 
     rc_package_dep_array_free (package->children_a);
-    RCPackageDepSList *copy = rc_package_dep_slist_copy (value);
-    package->children_a = rc_package_dep_array_from_slist (&copy);
+    package->children_a = rc_package_dep_array_from_slist (&value);
 }
 
 RCPackageDepSList *
@@ -692,8 +687,7 @@ rc_package_set_suggests (RCPackage *package, RCPackageDepSList *value)
     g_return_if_fail (package != NULL);
 
     rc_package_dep_array_free (package->suggests_a);
-    RCPackageDepSList *copy = rc_package_dep_slist_copy (value);
-    package->suggests_a = rc_package_dep_array_from_slist (&copy);
+    package->suggests_a = rc_package_dep_array_from_slist (&value);
 }
 
 RCPackageDepSList *
@@ -710,8 +704,7 @@ rc_package_set_recommends (RCPackage *package, RCPackageDepSList *value)
     g_return_if_fail (package != NULL);
 
     rc_package_dep_array_free (package->recommends_a);
-    RCPackageDepSList *copy = rc_package_dep_slist_copy (value);
-    package->recommends_a = rc_package_dep_array_from_slist (&copy);
+    package->recommends_a = rc_package_dep_array_from_slist (&value);
 }
 
 char *
