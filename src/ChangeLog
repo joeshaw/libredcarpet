@@ -1,5 +1,10 @@
 2005-09-13  James Willcox  <james@ximian.com>
 
+	* distributions.xml: by popular request, s/suse-10/suse-100/,
+	and fix the name.
+
+2005-09-13  James Willcox  <james@ximian.com>
+
 	* distributions.xml: add suse 10
 
 2005-09-06  Tambet Ingo  <tambet@ximian.com>
