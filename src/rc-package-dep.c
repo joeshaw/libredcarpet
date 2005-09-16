@@ -472,7 +472,6 @@ rc_package_dep_array_to_slist (RCPackageDepArray *array)
 
     for (i = 0; i < array->len; i++) {
         RCPackageDep *dep = array->data[i];
-        rc_package_dep_ref (dep);
         new = g_slist_prepend (new, dep);
     }
 
