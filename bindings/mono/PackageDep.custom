@@ -4,24 +4,6 @@
         get { return new RC.PackageSpec (Handle); }
     }
 
-    internal static PackageDep[] FromSListPtr (IntPtr ptr) {
-        if (ptr == IntPtr.Zero)
-            return new PackageDep[0];
-
-        GLib.SList slist = new GLib.SList (ptr, typeof (PackageDep));
-        PackageDep[] ret = new PackageDep[slist.Count];
-
-        int i = 0;
-        foreach (PackageDep d in slist) {
-            d.Ref (d.Handle);
-            ret[i++] = d;
-        }
-
-        PackageDep.SlistFree (slist);
-
-        return ret;
-    }
-
     internal static GLib.SList ToSList (PackageDep[] deps) {
         GLib.SList ret = new GLib.SList (typeof (PackageDep));
         foreach (PackageDep d in deps)

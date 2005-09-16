@@ -620,7 +620,7 @@
         <return-type type="void" />
       </method>
       <method name="Verify" cname="rc_packman_verify">
-        <return-type type="RCVerificationSList*" />
+        <return-type type="RCVerificationSList*" element_type="RCVerification" />
         <parameters>
           <parameter type="RCPackage*" name="package" />
           <parameter type="guint32" name="type" />
@@ -3694,14 +3694,6 @@
       </method>
     </class>
   </namespace>
-  <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />
-  <symbol type="manual" cname="RCPackageSpec" name="RC.PackageSpec" />
-  <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />
-  <symbol type="manual" cname="RCPackageSpec" name="RC.PackageSpec" />
-  <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />
-  <symbol type="manual" cname="RCPackageSpec" name="RC.PackageSpec" />
-  <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />
-  <symbol type="manual" cname="RCPackageSpec" name="RC.PackageSpec" />
   <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />
   <symbol type="manual" cname="RCPackageSpec" name="RC.PackageSpec" />
   <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />

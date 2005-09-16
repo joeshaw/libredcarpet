@@ -401,9 +401,9 @@ namespace RC {
 		[DllImport("libredcarpet")]
 		static extern IntPtr rc_packman_verify(IntPtr raw, IntPtr package, uint type);
 
-		public GLib.SList Verify(RC.Package package, uint type) {
+		public RC.Verification[] Verify(RC.Package package, uint type) {
 			IntPtr raw_ret = rc_packman_verify(Handle, package == null ? IntPtr.Zero : package.Handle, type);
-			GLib.SList ret = new GLib.SList(raw_ret);
+			RC.Verification[] ret = (RC.Verification[]) GLib.Marshaller.ListToArray (new GLib.SList(raw_ret, typeof (RC.Verification), false, false), typeof (RC.Verification));
 			return ret;
 		}
 

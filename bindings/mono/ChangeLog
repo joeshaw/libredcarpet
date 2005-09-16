@@ -1,3 +1,25 @@
+2005-09-16  Tambet Ingo  <tambet@ximian.com>
+
+	* libredcarpet-api.xml: Regenerate.
+
+	* PackageDep.custom (FromSListPtr): Remove. gtk-sharp already offers
+	a function to convert slists to arrays.
+
+	* Package.custom (Updates): Don't reinvent the wheel and use what
+	gtk-sharp offers.
+	(Children): Ditto.
+	(Conflicts): Ditto.
+	(Obsoletes): Ditto.
+	(Provides): Ditto.
+	(Recommends): Ditto.
+	(Requires): Ditto.
+	(Suggests): Ditto.
+
+2005-09-15  Tambet Ingo  <tambet@ximian.com>
+
+	* RC.metadata: Add element type attribute for rc_packman_verify return
+	list.
+
 2005-09-06  Tambet Ingo  <tambet@ximian.com>
 
 	* libredcarpet-api.xml: Regenerate.

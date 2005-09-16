@@ -529,16 +529,7 @@ namespace RC {
     public RC.PackageUpdate[] Updates {
         get {
             IntPtr raw_ret = rc_package_get_updates(Handle);
-            RC.PackageUpdate[] ret;
-            if (raw_ret != IntPtr.Zero) {
-                GLib.SList slist = new GLib.SList(raw_ret, typeof (RC.PackageUpdate));
-                ret = new RC.PackageUpdate[slist.Count];
-                int i = 0;
-                foreach (RC.PackageUpdate u in slist)
-                    ret[i++] = u;
-            } else
-                ret = new RC.PackageUpdate[0];
-
+            RC.PackageUpdate[] ret = (RC.PackageUpdate[]) GLib.Marshaller.ListToArray (new GLib.SList (raw_ret, typeof (RC.PackageUpdate), false, false), typeof (RC.PackageUpdate));
             return ret;
         }
     }
@@ -559,7 +550,8 @@ namespace RC {
     public PackageDep[] Children { 
         get {
             IntPtr raw_ret = rc_package_get_children(Handle);
-            return PackageDep.FromSListPtr (raw_ret);
+            PackageDep[] ret = (PackageDep[]) GLib.Marshaller.ListToArray (new GLib.SList (raw_ret, typeof (RC.PackageDep), false, false), typeof (RC.PackageDep));
+            return ret;
         }
         set {
             GLib.SList slist = PackageDep.ToSList (value);
@@ -576,7 +568,8 @@ namespace RC {
     public PackageDep[] Conflicts { 
         get {
             IntPtr raw_ret = rc_package_get_conflicts(Handle);
-            return PackageDep.FromSListPtr (raw_ret);
+            PackageDep[] ret = (PackageDep[]) GLib.Marshaller.ListToArray (new GLib.SList (raw_ret, typeof (RC.PackageDep), false, false), typeof (RC.PackageDep));
+            return ret;
         }
         set {
             GLib.SList slist = PackageDep.ToSList (value);
@@ -593,7 +586,8 @@ namespace RC {
     public PackageDep[] Obsoletes { 
         get {
             IntPtr raw_ret = rc_package_get_obsoletes(Handle);
-            return PackageDep.FromSListPtr (raw_ret);
+            PackageDep[] ret = (PackageDep[]) GLib.Marshaller.ListToArray (new GLib.SList (raw_ret, typeof (RC.PackageDep), false, false), typeof (RC.PackageDep));
+            return ret;
         }
         set {
             GLib.SList slist = PackageDep.ToSList (value);
@@ -610,7 +604,8 @@ namespace RC {
     public PackageDep[] Provides { 
         get {
             IntPtr raw_ret = rc_package_get_provides(Handle);
-            return PackageDep.FromSListPtr (raw_ret);
+            PackageDep[] ret = (PackageDep[]) GLib.Marshaller.ListToArray (new GLib.SList (raw_ret, typeof (RC.PackageDep), false, false), typeof (RC.PackageDep));
+            return ret;
         }
         set {
             GLib.SList slist = PackageDep.ToSList (value);
@@ -627,7 +622,8 @@ namespace RC {
     public PackageDep[] Recommends { 
         get {
             IntPtr raw_ret = rc_package_get_recommends(Handle);
-            return PackageDep.FromSListPtr (raw_ret);
+            PackageDep[] ret = (PackageDep[]) GLib.Marshaller.ListToArray (new GLib.SList (raw_ret, typeof (RC.PackageDep), false, false), typeof (RC.PackageDep));
+            return ret;
         }
         set {
             GLib.SList slist = PackageDep.ToSList (value);
@@ -644,7 +640,8 @@ namespace RC {
     public PackageDep[] Requires { 
         get {
             IntPtr raw_ret = rc_package_get_requires (Handle);
-            return PackageDep.FromSListPtr (raw_ret);
+            PackageDep[] ret = (PackageDep[]) GLib.Marshaller.ListToArray (new GLib.SList (raw_ret, typeof (RC.PackageDep), false, false), typeof (RC.PackageDep));
+            return ret;
         }
         set {
             GLib.SList slist = PackageDep.ToSList (value);
@@ -661,7 +658,8 @@ namespace RC {
     public PackageDep[] Suggests { 
         get {
             IntPtr raw_ret = rc_package_get_suggests(Handle);
-            return PackageDep.FromSListPtr (raw_ret);
+            PackageDep[] ret = (PackageDep[]) GLib.Marshaller.ListToArray (new GLib.SList (raw_ret, typeof (RC.PackageDep), false, false), typeof (RC.PackageDep));
+            return ret;
         }
         set {
             GLib.SList slist = PackageDep.ToSList (value);

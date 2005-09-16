@@ -84,6 +84,7 @@
   <attr path="/api/namespace/object[@cname='RCPackman']/method[@cname='rc_packman_get_global']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='RCPackman']/method[@cname='rc_packman_set_global']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='RCPackman']/method[@cname='rc_packman_query_file']" name="hidden">1</attr>
+  <attr path="/api/namespace/object[@cname='RCPackman']/method[@cname='rc_packman_verify']/return-type" name="element_type">RCVerification</attr>
 
   <attr path="/api/namespace/object[@cname='RCPackman']/method[@name='ParseVersion']/*/*[@type='gchar**']" name="pass_as">out</attr>
   <attr path="/api/namespace/class[@name='Rollback']/method[@cname='rc_rollback_get_actions']" name="hidden">1</attr>
