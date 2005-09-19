@@ -629,11 +629,7 @@ namespace RC {
 
     public RC.Package QueryFile(string filename, bool filter_file_deps) {
         IntPtr raw_ret = rc_packman_query_file(Handle, filename, filter_file_deps);
-        RC.Package ret;
-        if (raw_ret == IntPtr.Zero)
-            ret = null;
-        else
-            ret = new RC.Package(raw_ret);
+        RC.Package ret = raw_ret == IntPtr.Zero ? null : (RC.Package) GLib.Opaque.GetOpaque (raw_ret, typeof (RC.Package), true);
         return ret;
     }
 

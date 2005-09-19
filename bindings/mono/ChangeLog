@@ -1,3 +1,9 @@
+2005-09-19  Tambet Ingo  <tambet@ximian.com>
+
+	* libredcarpet-api.xml: Regenerate.
+
+	* Packman.custom (QueryFile): Returned package is owned by the caller.
+
 2005-09-16  Tambet Ingo  <tambet@ximian.com>
 
 	* libredcarpet-api.xml: Regenerate.

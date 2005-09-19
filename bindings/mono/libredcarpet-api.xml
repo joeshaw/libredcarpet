@@ -3706,4 +3706,6 @@
   <symbol type="manual" cname="RCPackageSpec" name="RC.PackageSpec" />
   <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />
   <symbol type="manual" cname="RCPackageSpec" name="RC.PackageSpec" />
+  <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />
+  <symbol type="manual" cname="RCPackageSpec" name="RC.PackageSpec" />
 </api>
