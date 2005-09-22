@@ -1,5 +1,10 @@
 2005-09-22  James Willcox  <james@ximian.com>
 
+	* generated/Packman.cs: regenerated
+	* libredcarpet-api.xml: ditto
+
+2005-09-22  James Willcox  <james@ximian.com>
+
 	* Makefile.am: add Debug.custom
 	* Debug.custom: hold a ref to the debug handler
 	* RC.metadata: hide rc_debug_add/remove_handler

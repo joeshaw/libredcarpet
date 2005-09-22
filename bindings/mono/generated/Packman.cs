@@ -44,7 +44,7 @@ namespace RC {
 			args.Args = new object[3];
 			args.Args[0] = arg1;
 			args.Args[1] = (RC.PackmanStep) arg2;
-			args.Args[2] = GLib.Marshaller.PtrToStringGFree(arg3);
+			args.Args[2] = GLib.Marshaller.Utf8PtrToString (arg3);
 			RC.TransactStepHandler handler = (RC.TransactStepHandler) sig.Handler;
 			handler (GLib.Object.GetObject (arg0), args);
 
@@ -58,7 +58,7 @@ namespace RC {
 		static void transactstep_cb (IntPtr packman, int seqno, int step, IntPtr name)
 		{
 			Packman packman_managed = GLib.Object.GetObject (packman, false) as Packman;
-			packman_managed.OnTransactStep (seqno, (RC.PackmanStep) step, GLib.Marshaller.PtrToStringGFree(name));
+			packman_managed.OnTransactStep (seqno, (RC.PackmanStep) step, GLib.Marshaller.Utf8PtrToString (name));
 		}
 
 		private static void OverrideTransactStep (GLib.GType gtype)
