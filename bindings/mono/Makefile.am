@@ -72,6 +72,7 @@ EXTRA_DIST =				\
 	RC.symbols			\
 	libredcarpet-sharp-docs.source	\
 	Channel.custom			\
+	Debug.custom			\
 	Extract.custom			\
 	Global.custom			\
 	World.custom			\

@@ -168,5 +168,7 @@
    <attr path="/api/namespace/struct[@cname='RCPackageFile']/field[@cname='filename']" name="writeable">false</attr>
    <attr path="/api/namespace/struct[@cname='RCPackageFile']/field[@cname='link_target']" name="writeable">false</attr>
    <attr path="/api/namespace/struct[@cname='RCPackageFile']/field[@cname='md5sum']" name="writeable">false</attr>
+   <attr path="/api/namespace/class[@name='Debug']/method[@cname='rc_debug_add_handler']" name="hidden">true</attr>
+   <attr path="/api/namespace/class[@name='Debug']/method[@cname='rc_debug_remove_handler']" name="hidden">true</attr>
    
 </metadata>

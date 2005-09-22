@@ -3499,7 +3499,7 @@
       </method>
     </class>
     <class name="Debug" cname="RcDebug_">
-      <method name="AddHandler" cname="rc_debug_add_handler" shared="true">
+      <method name="AddHandler" cname="rc_debug_add_handler" shared="true" hidden="true">
         <return-type type="guint" />
         <parameters>
           <parameter type="RCDebugFn" name="fn" />
@@ -3515,7 +3515,7 @@
           <parameter ellipsis="true" />
         </parameters>
       </method>
-      <method name="RemoveHandler" cname="rc_debug_remove_handler" shared="true">
+      <method name="RemoveHandler" cname="rc_debug_remove_handler" shared="true" hidden="true">
         <return-type type="void" />
         <parameters>
           <parameter type="guint" name="id" />
@@ -3736,6 +3736,10 @@
       </method>
     </class>
   </namespace>
+  <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />
+  <symbol type="manual" cname="RCPackageSpec" name="RC.PackageSpec" />
+  <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />
+  <symbol type="manual" cname="RCPackageSpec" name="RC.PackageSpec" />
   <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />
   <symbol type="manual" cname="RCPackageSpec" name="RC.PackageSpec" />
 </api>
