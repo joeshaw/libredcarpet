@@ -1,3 +1,8 @@
+2005-09-22  James Willcox  <james@ximian.com>
+
+	* fix Package/PackageSpec/PackageUpdate refcount issues.  Patch from
+	Chris Rivera.
+
 2005-09-19  Tambet Ingo  <tambet@ximian.com>
 
 	* libredcarpet-api.xml: Regenerate.

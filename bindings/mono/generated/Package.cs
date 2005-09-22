@@ -248,24 +248,6 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern void rc_package_add_update(IntPtr raw, IntPtr update);
-
-		public void AddUpdate(RC.PackageUpdate update) {
-			rc_package_add_update(Handle, update == null ? IntPtr.Zero : update.Handle);
-		}
-
-		[DllImport("libredcarpet")]
-		static extern IntPtr rc_package_get_type();
-
-		public static GLib.GType GType { 
-			get {
-				IntPtr raw_ret = rc_package_get_type();
-				GLib.GType ret = new GLib.GType(raw_ret);
-				return ret;
-			}
-		}
-
-		[DllImport("libredcarpet")]
 		static extern int rc_package_relation_from_string(IntPtr relation);
 
 		public static RC.PackageRelation RelationFromString(string relation) {
@@ -407,6 +389,17 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
+		static extern IntPtr rc_package_get_type();
+
+		public static GLib.GType GType { 
+			get {
+				IntPtr raw_ret = rc_package_get_type();
+				GLib.GType ret = new GLib.GType(raw_ret);
+				return ret;
+			}
+		}
+
+		[DllImport("libredcarpet")]
 		static extern bool rc_package_is_synthetic(IntPtr raw);
 
 		public bool IsSynthetic { 
@@ -524,6 +517,14 @@ namespace RC {
     }
 
     [DllImport("libredcarpet")]
+    static extern void rc_package_add_update(IntPtr raw, IntPtr update);
+
+    public void AddUpdate(RC.PackageUpdate update) {
+        rc_package_add_update(Handle, update == null ? IntPtr.Zero : update.Handle);
+        update.Owned = false;
+    }
+
+    [DllImport("libredcarpet")]
     static extern IntPtr rc_package_get_updates(IntPtr raw);
 
     public RC.PackageUpdate[] Updates {
@@ -556,6 +557,9 @@ namespace RC {
         set {
             GLib.SList slist = PackageDep.ToSList (value);
             rc_package_set_children(Handle, slist.Handle);
+
+            foreach (PackageDep d in value)
+                d.Owned = false;
         }
     }
 
@@ -574,6 +578,9 @@ namespace RC {
         set {
             GLib.SList slist = PackageDep.ToSList (value);
             rc_package_set_conflicts(Handle, slist.Handle);
+
+            foreach (PackageDep d in value)
+                d.Owned = false;
         }
     }
 
@@ -592,6 +599,9 @@ namespace RC {
         set {
             GLib.SList slist = PackageDep.ToSList (value);
             rc_package_set_obsoletes(Handle, slist.Handle);
+
+            foreach (PackageDep d in value)
+                d.Owned = false;
         }
     }
 
@@ -610,6 +620,9 @@ namespace RC {
         set {
             GLib.SList slist = PackageDep.ToSList (value);
             rc_package_set_provides(Handle, slist.Handle);
+
+            foreach (PackageDep d in value)
+                d.Owned = false;
         }
     }
     
@@ -628,6 +641,9 @@ namespace RC {
         set {
             GLib.SList slist = PackageDep.ToSList (value);
             rc_package_set_recommends(Handle, slist.Handle);
+
+            foreach (PackageDep d in value)
+                d.Owned = false;
         }
     }
 
@@ -646,6 +662,9 @@ namespace RC {
         set {
             GLib.SList slist = PackageDep.ToSList (value);
             rc_package_set_requires(Handle, slist.Handle);
+
+            foreach (PackageDep d in value)
+                d.Owned = false;
         }
     }
 
@@ -664,6 +683,9 @@ namespace RC {
         set {
             GLib.SList slist = PackageDep.ToSList (value);
             rc_package_set_suggests(Handle, slist.Handle);
+
+            foreach (PackageDep d in value)
+                d.Owned = false;
         }
     }
 

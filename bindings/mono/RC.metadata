@@ -21,6 +21,7 @@
   <!--
   <attr path="/api/namespace/object[@cname='RCWorld']/method[@cname='rc_world_refresh']" name="hidden">1</attr>
   -->
+  <attr path="/api/namespace/boxed[@cname='RCPackage']/method[@name='AddUpdate']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='RCWorld']/method[@cname='rc_world_set_refresh_function']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='RCWorld']/method[@cname='rc_world_spew']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='RCWorld']/method[@cname='rc_world_membership_to_xml']" name="hidden">1</attr>
@@ -29,6 +30,7 @@
   <attr path="/api/namespace/object[@cname='RCWorldService']/method[@cname='rc_world_service_set_assemble_function']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='RCWorldService']/method[@name='Mount']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='RCWorldService']/method[@name='Register']" name="hidden">1</attr>
+  <attr path="/api/namespace/object[@cname='RCWorldStore']/method[@name='AddPackage']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='RCWorld']/method[@name='GetChannels']/return-type" name="element_type">RCChannel</attr>
   <attr path="/api/namespace/object[@cname='RCWorld']/method[@name='GetLocks']/return-type" name="element_type">RCPackageMatch</attr>
   <attr path="/api/namespace/object[@cname='RCWorld']/method[@name='GetUpgrades']/return-type" name="element_type">RCPackage</attr>

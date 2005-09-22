@@ -1342,7 +1342,7 @@
           <parameter type="RCPackageMatch*" name="lock" />
         </parameters>
       </method>
-      <method name="AddPackage" cname="rc_world_store_add_package">
+      <method name="AddPackage" cname="rc_world_store_add_package" hidden="1">
         <return-type type="gboolean" />
         <parameters>
           <parameter type="RCPackage*" name="package" />
@@ -1702,7 +1702,7 @@
           <parameter type="guint32" name="package_size" />
         </parameters>
       </method>
-      <method name="AddUpdate" cname="rc_package_add_update">
+      <method name="AddUpdate" cname="rc_package_add_update" hidden="1">
         <return-type type="void" />
         <parameters>
           <parameter type="RCPackageUpdate*" name="update" />
@@ -3694,6 +3694,12 @@
       </method>
     </class>
   </namespace>
+  <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />
+  <symbol type="manual" cname="RCPackageSpec" name="RC.PackageSpec" />
+  <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />
+  <symbol type="manual" cname="RCPackageSpec" name="RC.PackageSpec" />
+  <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />
+  <symbol type="manual" cname="RCPackageSpec" name="RC.PackageSpec" />
   <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />
   <symbol type="manual" cname="RCPackageSpec" name="RC.PackageSpec" />
   <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />
