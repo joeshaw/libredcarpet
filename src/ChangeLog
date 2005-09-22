@@ -1,3 +1,8 @@
+2005-09-22  James Willcox  <james@ximian.com>
+
+	* rc-packman.h: make the 'name' arg in the transact_step signal
+	const, as it should not be freed by the callback.
+
 2005-09-16  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-package-dep.c (rc_package_dep_array_to_slist): Don't reference
