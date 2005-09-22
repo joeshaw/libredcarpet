@@ -1,5 +1,15 @@
 2005-09-22  James Willcox  <james@ximian.com>
 
+	* generated/Debug.cs:
+	* generated/DebugLevel.cs:
+	* generated/RCSharp.DebugFnNative.cs:
+	* libredcarpet-api.xml:
+
+	For some reason, the Debug class was missing from the xml
+	metadata.  Regenerated that and the code.
+
+2005-09-22  James Willcox  <james@ximian.com>
+
 	* fix Package/PackageSpec/PackageUpdate refcount issues.  Patch from
 	Chris Rivera.
 

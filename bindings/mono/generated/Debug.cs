@@ -20,8 +20,7 @@ namespace RC {
 		static extern uint rc_debug_add_handler(RCSharp.DebugFnNative fn, int level, IntPtr user_data);
 
 		public static uint AddHandler(RC.DebugFn fn, RC.DebugLevel level) {
-			RCSharp.DebugFnWrapper fn_wrapper = null;
-			fn_wrapper = new RCSharp.DebugFnWrapper (fn, null);
+			RCSharp.DebugFnWrapper fn_wrapper = new RCSharp.DebugFnWrapper (fn);
 			uint raw_ret = rc_debug_add_handler(fn_wrapper.NativeDelegate, (int) level, IntPtr.Zero);
 			uint ret = raw_ret;
 			return ret;
