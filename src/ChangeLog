@@ -1,5 +1,8 @@
 2005-09-27  Tambet Ingo  <tambet@ximian.com>
 
+	* rc-query-packages.c: Add "catalog" as an alias for "channel".
+	(channel_match): Compare channel name (or alias) instead of id.
+
 	* rc-query.c: New file.
 
 	* rc-query.h: Ditto.

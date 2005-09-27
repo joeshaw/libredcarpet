@@ -78,9 +78,15 @@ static gboolean
 channel_match (RCQueryPart *part,
                gpointer     data) 
 {
+    const char *name;
     RCPackage *pkg = data;
+    RCChannel *channel = pkg->channel;
 
-    return rc_channel_equal_id (pkg->channel, part->query_str);
+    name = rc_channel_get_name (channel);
+    if (name == NULL || name[0] == '\0')
+        name = rc_channel_get_alias (channel);
+
+    return rc_query_match_string_ci (part, name);
 }
 
 static gboolean
@@ -236,6 +242,10 @@ static RCQueryEngine query_packages_engine[] = {
       text_match },
 
     { "channel",
+      NULL, NULL, NULL,
+      channel_match },
+
+    { "catalog",
       NULL, NULL, NULL,
       channel_match },
 
