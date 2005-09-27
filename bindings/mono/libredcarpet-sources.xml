@@ -20,6 +20,8 @@
         <exclude>../../src/rc-marshal.h</exclude>
         <exclude>../../src/rc-md5.h</exclude>
         <exclude>../../src/rc-md5-private.h</exclude>
+        <exclude>../../src/rc-query.h</exclude>
+        <exclude>../../src/rc-query-packages.h</exclude>
         <exclude>../../src/rc-xml.h</exclude>
         <exclude>../../src/xml-util.h</exclude>
       </namespace>

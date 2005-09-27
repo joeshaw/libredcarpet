@@ -256,7 +256,6 @@ namespace RC {
         }
 
         this.AddSubworld (world);
-        world.Dispose ();
     }
 
 #endregion

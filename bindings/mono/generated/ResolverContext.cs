@@ -169,12 +169,11 @@ namespace RC {
 			}
 		}
 
-		[DllImport ("libredcarpetsharpglue-0")]
-		extern static uint rcsharp_rc_resolvercontext_get_world_offset ();
-
-		static uint world_offset = rcsharp_rc_resolvercontext_get_world_offset ();
 		[DllImport("libredcarpet")]
 		static extern IntPtr rc_resolver_context_get_world(IntPtr raw);
+
+		[DllImport("libredcarpet")]
+		static extern void rc_resolver_context_set_world(IntPtr raw, IntPtr world);
 
 		public RC.World World {
 			get  {
@@ -182,11 +181,8 @@ namespace RC {
 				RC.World ret = GLib.Object.GetObject(raw_ret) as RC.World;
 				return ret;
 			}
-			set {
-				unsafe {
-					IntPtr* raw_ptr = (IntPtr*)(((byte*)Handle) + world_offset);
-					*raw_ptr = value == null ? IntPtr.Zero : value.Handle;
-				}
+			set  {
+				rc_resolver_context_set_world(Handle, value == null ? IntPtr.Zero : value.Handle);
 			}
 		}
 

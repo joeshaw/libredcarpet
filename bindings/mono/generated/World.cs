@@ -378,24 +378,20 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_world_get_package_with_constraint(IntPtr raw, IntPtr channel, IntPtr name, IntPtr constraint, bool is_and);
+		static extern IntPtr rc_world_get_package_with_constraint(IntPtr raw, IntPtr channel, IntPtr constraint, bool is_and);
 
-		public RC.Package GetPackageWithConstraint(RC.Channel channel, string name, RC.PackageDep constraint, bool is_and) {
-			IntPtr name_as_native = GLib.Marshaller.StringToPtrGStrdup (name);
-			IntPtr raw_ret = rc_world_get_package_with_constraint(Handle, channel == null ? IntPtr.Zero : channel.Handle, name_as_native, constraint == null ? IntPtr.Zero : constraint.Handle, is_and);
+		public RC.Package GetPackageWithConstraint(RC.Channel channel, RC.PackageDep constraint, bool is_and) {
+			IntPtr raw_ret = rc_world_get_package_with_constraint(Handle, channel == null ? IntPtr.Zero : channel.Handle, constraint == null ? IntPtr.Zero : constraint.Handle, is_and);
 			RC.Package ret = raw_ret == IntPtr.Zero ? null : (RC.Package) GLib.Opaque.GetOpaque (raw_ret, typeof (RC.Package), false);
-			GLib.Marshaller.Free (name_as_native);
 			return ret;
 		}
 
 		[DllImport("libredcarpet")]
-		static extern IntPtr rc_world_get_package(IntPtr raw, IntPtr channel, IntPtr name);
+		static extern IntPtr rc_world_get_package(IntPtr raw, IntPtr channel, IntPtr spec);
 
-		public RC.Package GetPackage(RC.Channel channel, string name) {
-			IntPtr name_as_native = GLib.Marshaller.StringToPtrGStrdup (name);
-			IntPtr raw_ret = rc_world_get_package(Handle, channel == null ? IntPtr.Zero : channel.Handle, name_as_native);
+		public RC.Package GetPackage(RC.Channel channel, RC.PackageSpec spec) {
+			IntPtr raw_ret = rc_world_get_package(Handle, channel == null ? IntPtr.Zero : channel.Handle, spec.Handle);
 			RC.Package ret = raw_ret == IntPtr.Zero ? null : (RC.Package) GLib.Opaque.GetOpaque (raw_ret, typeof (RC.Package), false);
-			GLib.Marshaller.Free (name_as_native);
 			return ret;
 		}
 
@@ -711,7 +707,7 @@ namespace RC {
 #line 1 "World.custom"
 /* -*- Mode: csharp; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 
-// namespace {
+//{
 
     [DllImport("libredcarpet")]
     static extern IntPtr rc_get_world();
@@ -743,6 +739,46 @@ namespace RC {
             value_wrapper = new RCSharp.WorldRefreshDelegateWrapper (value);
             rc_world_set_refresh_function(Handle, value_wrapper.NativeDelegate);
         }
+    }
+
+    [DllImport("libredcarpet")]
+    static extern IntPtr rc_query_part_new (IntPtr key, int type, IntPtr query_str);
+
+    [DllImport("libredcarpet")]
+    static extern void rc_query_part_free (IntPtr raw);
+
+    [DllImport("libredcarpet")]
+	static extern IntPtr rc_query_packages (IntPtr world, IntPtr query);
+
+    public Package[] Query (params QueryPart[] queryParts) {
+        // FIXME: Set owned and items owned correctly
+        GLib.SList query = new GLib.SList (IntPtr.Zero, typeof (IntPtr));
+        foreach (QueryPart part in queryParts) {
+            IntPtr key_as_native = GLib.Marshaller.StringToPtrGStrdup (part.Key);
+            IntPtr query_str_as_native = GLib.Marshaller.StringToPtrGStrdup (part.QueryStr);
+            IntPtr rawPart = rc_query_part_new (key_as_native, (int) part.Type, query_str_as_native);
+            GLib.Marshaller.Free (key_as_native);
+            GLib.Marshaller.Free (query_str_as_native);
+
+            query.Append (rawPart);
+        }
+
+        IntPtr raw_ret = rc_query_packages (Handle, query.Handle);
+
+        foreach (IntPtr p in query)
+            rc_query_part_free (p);
+
+        query.Dispose ();
+        return (RC.Package[]) GLib.Marshaller.ListToArray (new GLib.SList (raw_ret, typeof (RC.Package), false, false),
+                                                           typeof (RC.Package));
+    }
+
+    public Package[] Query (string key, QueryType type, string queryStr) {
+        return this.Query (new QueryPart (key, type, queryStr));
+    }
+
+    public Package[] Query (string key, string type, string queryStr) {
+        return this.Query (new QueryPart (key, type, queryStr));
     }
 
     private class ToXmlHelper

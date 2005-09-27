@@ -32,16 +32,6 @@
       <member cname="RC_CHANNEL_TYPE_APTRPM" name="Aptrpm" />
       <member cname="RC_CHANNEL_TYPE_YUM" name="Yum" />
     </enum>
-    <enum name="DebugLevel" cname="RCDebugLevel" type="enum">
-      <member cname="RC_DEBUG_LEVEL_ALWAYS" name="Always" value="-1" />
-      <member cname="RC_DEBUG_LEVEL_NONE" name="None" />
-      <member cname="RC_DEBUG_LEVEL_ERROR" name="Error" value="1" />
-      <member cname="RC_DEBUG_LEVEL_CRITICAL" name="Critical" value="2" />
-      <member cname="RC_DEBUG_LEVEL_WARNING" name="Warning" value="3" />
-      <member cname="RC_DEBUG_LEVEL_MESSAGE" name="Message" value="4" />
-      <member cname="RC_DEBUG_LEVEL_INFO" name="Info" value="5" />
-      <member cname="RC_DEBUG_LEVEL_DEBUG" name="Debug" value="6" />
-    </enum>
     <enum name="DistroPackageType" cname="RCDistroPackageType" type="enum">
       <member cname="RC_DISTRO_PACKAGE_TYPE_UNKNOWN" name="Unknown" />
       <member cname="RC_DISTRO_PACKAGE_TYPE_RPM" name="Rpm" />
@@ -167,14 +157,6 @@
       <parameters>
         <parameter type="RCChannel*" name="channel" />
         <parameter type="gpointer" name="data" />
-      </parameters>
-    </callback>
-    <callback name="DebugFn" cname="RCDebugFn">
-      <return-type type="void" />
-      <parameters>
-        <parameter type="const-char*" name="message" />
-        <parameter type="RCDebugLevel" name="level" />
-        <parameter type="gpointer" name="user_data" />
       </parameters>
     </callback>
     <callback cname="RCMarkedPackageFn" name="MarkedPackageDelegate">
@@ -1008,7 +990,7 @@
         <return-type type="RCPackage*" />
         <parameters>
           <parameter type="RCChannel*" name="channel" />
-          <parameter type="const-char*" name="name" />
+          <parameter type="RCPackageSpec*" name="spec" />
         </parameters>
       </method>
       <method name="GetPackageSequenceNumber" cname="rc_world_get_package_sequence_number">
@@ -1018,7 +1000,6 @@
         <return-type type="RCPackage*" />
         <parameters>
           <parameter type="RCChannel*" name="channel" />
-          <parameter type="const-char*" name="name" />
           <parameter type="RCPackageDep*" name="constraint" />
           <parameter type="gboolean" name="is_and" />
         </parameters>
@@ -1347,7 +1328,6 @@
       <field name="ConflictsByName" cname="conflicts_by_name" type="GHashTable*" />
       <field name="Channels" cname="channels" type="GSList*" />
       <field name="Locks" cname="locks" type="GSList*" />
-      <field name="Allocator" cname="allocator" type="GAllocator*" />
       <method name="AddChannel" cname="rc_world_store_add_channel">
         <return-type type="void" />
         <parameters>
@@ -3035,6 +3015,12 @@
           <parameter type="RCPackageStatus" name="status" />
         </parameters>
       </method>
+      <method name="SetWorld" cname="rc_resolver_context_set_world">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="RCWorld*" name="world" />
+        </parameters>
+      </method>
       <method name="Spew" cname="rc_resolver_context_spew">
         <return-type type="void" />
       </method>
@@ -3498,30 +3484,6 @@
         </parameters>
       </method>
     </class>
-    <class name="Debug" cname="RcDebug_">
-      <method name="AddHandler" cname="rc_debug_add_handler" shared="true" hidden="true">
-        <return-type type="guint" />
-        <parameters>
-          <parameter type="RCDebugFn" name="fn" />
-          <parameter type="RCDebugLevel" name="level" />
-          <parameter type="gpointer" name="user_data" />
-        </parameters>
-      </method>
-      <method name="Full" cname="rc_debug_full" shared="true">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="RCDebugLevel" name="level" />
-          <parameter type="const-char*" name="format" />
-          <parameter ellipsis="true" />
-        </parameters>
-      </method>
-      <method name="RemoveHandler" cname="rc_debug_remove_handler" shared="true" hidden="true">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="guint" name="id" />
-        </parameters>
-      </method>
-    </class>
     <class name="Extract" cname="RcExtract_">
       <method name="ChannelsFromHelixBuffer" cname="rc_extract_channels_from_helix_buffer" shared="true">
         <return-type type="gint" />
@@ -3736,6 +3698,8 @@
       </method>
     </class>
   </namespace>
+  <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />
+  <symbol type="manual" cname="RCPackageSpec" name="RC.PackageSpec" />
   <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />
   <symbol type="manual" cname="RCPackageSpec" name="RC.PackageSpec" />
 </api>

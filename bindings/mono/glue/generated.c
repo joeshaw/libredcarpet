@@ -481,14 +481,6 @@ rcsharp_rc_resolvercontext_set_invalid (RCResolverContext *resolvercontext, gboo
 	resolvercontext->invalid = (gboolean)value;
 }
 
-guint rcsharp_rc_resolvercontext_get_world_offset (void);
-
-guint
-rcsharp_rc_resolvercontext_get_world_offset (void)
-{
-	return (guint)G_STRUCT_OFFSET (RCResolverContext, world);
-}
-
 guint rcsharp_rc_resolvercontext_get_total_priority_offset (void);
 
 guint

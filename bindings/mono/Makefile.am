@@ -86,7 +86,7 @@ EXTRA_DIST =				\
 	PackageUpdate.custom		\
 	PackageDep.custom		\
 	Packman.custom			\
-    WorldStore.custom       \
+	WorldStore.custom		\
 	generated/*.cs
 
 dist-hook:

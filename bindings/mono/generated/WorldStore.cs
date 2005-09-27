@@ -113,17 +113,18 @@ namespace RC {
 #endregion
 #region Customized extensions
 #line 1 "WorldStore.custom"
-        [DllImport("libredcarpet")]
-		static extern bool rc_world_store_add_package(IntPtr raw, IntPtr package);
+// {
+    [DllImport("libredcarpet")]
+    static extern bool rc_world_store_add_package(IntPtr raw, IntPtr package);
 
-		public bool AddPackage(RC.Package package) {
-			bool raw_ret = rc_world_store_add_package(Handle, package == null ? IntPtr.Zero : package.Handle);
-			bool ret = raw_ret;
-            if (ret) 
-                package.Owned = false;
+    public bool AddPackage(RC.Package package) {
+        bool raw_ret = rc_world_store_add_package(Handle, package == null ? IntPtr.Zero : package.Handle);
+        bool ret = raw_ret;
+        if (ret) 
+            package.Owned = false;
 
-			return ret;
-		}
+        return ret;
+    }
 
 #endregion
 	}
