@@ -2298,7 +2298,6 @@ rc_rpmman_query_all_v4 (RCPackman *packman)
     RCPackageSList *list = NULL;
     rc_rpmdbMatchIterator mi = NULL;
     Header header;
-    GAllocator *allocator;
     RCRpmman *rpmman = RC_RPMMAN (packman);
 
     if (rpmman->version >= 40100) {
@@ -2315,24 +2314,17 @@ rc_rpmman_query_all_v4 (RCPackman *packman)
         goto ERROR;
     }
 
-    allocator = g_allocator_new ("rc_rpmman_depends_fill", 60);
-
     while ((header = rpmman->rpmdbNextIterator (mi))) {
         RCPackage *package = rc_package_new ();
 
         rc_rpmman_read_header (rpmman, header, package);
 
         package->installed = TRUE;
-
-        g_slist_push_allocator (allocator);
         rc_rpmman_depends_fill (rpmman, header, package, TRUE);
-        g_slist_pop_allocator ();
-
         list = g_slist_prepend (list, package);
     }
 
     rpmman->rpmdbFreeIterator(mi);
-    g_allocator_free (allocator);
 
     return (list);
 

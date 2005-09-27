@@ -1,7 +1,39 @@
+2005-09-27  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-query.c: New file.
+
+	* rc-query.h: Ditto.
+
+	* rc-query-packages.c: Ditto.
+
+	* rc-query-packages.h: Ditto.
+
+	* rc-package-dep.c: Remove SList allocator. It doesn't work so
+	well in threaded environment.
+
+	* rc-rpmman.c (rc_rpmman_query_all_v4): Ditto.
+
+	* rc-world-store.c: Ditto.
+
+	* libredcarpet.h: Include rc-query.h and rc-query-packages.h.
+
+	* Makefile.am: Build rc-query.[ch] and rc-query-packages.[ch].
+
 2005-09-22  James Willcox  <james@ximian.com>
 
 	* rc-packman.h: make the 'name' arg in the transact_step signal
 	const, as it should not be freed by the callback.
+
+2005-09-19  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-resolver.c (rc_resolver_resolve_dependencies): Unreference stuff
+	correctly.
+
+	* rc-resolver-context.c (rc_resolver_context_set_world): Implement.
+	(rc_resolver_context_unref): Set context' world to NULL so the old
+	value gets unreferenced.
+	(rc_resolver_context_new_child): Use the set_world function to set
+	child's world.
 
 2005-09-16  Tambet Ingo  <tambet@ximian.com>
 

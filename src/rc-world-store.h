@@ -56,8 +56,6 @@ struct _RCWorldStore {
 
     GSList *channels;
     GSList *locks;
-
-    GAllocator *allocator;
 };
 
 struct _RCWorldStoreClass {

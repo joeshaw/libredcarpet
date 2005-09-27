@@ -50,12 +50,12 @@ libredcarpet_public_headers = 		\
 	rc-debman-general.h		\
 	rc-debug.h			\
 	rc-dep-or.h			\
-        rc-distman.h                    \
+	rc-distman.h                    \
 	rc-distro.h			\
 	rc-extract-channels.h		\
 	rc-extract-packages.h		\
 	rc-line-buf.h			\
-        rc-md5.h                        \
+	rc-md5.h                        \
 	rc-package.h			\
 	rc-package-dep.h		\
 	rc-package-file.h		\
@@ -64,8 +64,10 @@ libredcarpet_public_headers = 		\
 	rc-package-spec.h		\
 	rc-package-update.h		\
 	rc-package-section.h		\
-        rc-packman.h                    \
+	rc-packman.h                    \
 	rc-pending.h			\
+	rc-query.h			\
+	rc-query-packages.h		\
 	rc-queue-item.h			\
 	rc-resolver.h			\
 	rc-resolver-compare.h		\
@@ -85,7 +87,7 @@ libredcarpet_public_headers = 		\
 	rc-world-system.h		\
 	rc-world-undump.h		\
 	rc-xml.h			\
-        xml-util.h
+	xml-util.h
 
 libredcarpet_la_SOURCES =		\
 	$(libredcarpet_public_headers)	\
@@ -116,6 +118,8 @@ libredcarpet_la_SOURCES =		\
         rc-packman.c                    \
         rc-packman-private.h            \
 	rc-pending.c			\
+	rc-query.c                      \
+	rc-query-packages.c             \
 	rc-queue-item.c			\
 	rc-resolver.c			\
 	rc-resolver-compare.c		\

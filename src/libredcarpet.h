@@ -55,6 +55,9 @@
 #include "rc-extract-channels.h"
 #include "rc-extract-packages.h"
 
+#include "rc-query.h"
+#include "rc-query-packages.h"
+
 #include "rc-world.h"
 #include "rc-world-local-dir.h"
 #include "rc-world-multi.h"

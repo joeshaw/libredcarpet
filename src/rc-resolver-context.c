@@ -88,7 +88,8 @@ rc_resolver_context_new_child (RCResolverContext *parent)
     context->parent = rc_resolver_context_ref (parent);
     
     if (parent) {
-        context->world           = parent->world;
+        rc_resolver_context_set_world (context, parent->world);
+
         context->download_size   = parent->download_size;
         context->install_size    = parent->install_size;
         context->total_priority  = parent->total_priority;
@@ -126,6 +127,8 @@ rc_resolver_context_unref (RCResolverContext *context)
 
         if (context->refs == 0) {
 
+            rc_resolver_context_set_world (context, NULL);
+
             g_hash_table_destroy (context->status);
 
             if (context->last_checked_package)
@@ -151,6 +154,21 @@ rc_resolver_context_get_world (RCResolverContext *context)
         return context->world;
     else
         return rc_get_world ();
+}
+
+void
+rc_resolver_context_set_world (RCResolverContext *context,
+                               RCWorld *world)
+{
+    g_return_if_fail (context != NULL);
+
+    if (context->world)
+        g_object_unref (context->world);
+
+    if (world)
+        g_object_ref (world);
+
+    context->world = world;
 }
 
 void

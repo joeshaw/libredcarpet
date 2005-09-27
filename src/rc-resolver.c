@@ -316,7 +316,8 @@ remove_head (GSList *slist)
 void
 rc_resolver_resolve_dependencies (RCResolver *resolver)
 {
-    RCWorld *world, *local_world = NULL, *local_multiworld = NULL;
+    RCWorld *world;
+    RCWorldStore *local_world = NULL;
     RCResolverQueue *initial_queue;
     RCChannel *local_channel = NULL;
     GSList *iter;
@@ -341,31 +342,35 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
     }
 
     if (have_local_packages) {
-        local_multiworld = rc_world_multi_new ();
-        local_world = rc_world_store_new ();
+        RCWorldMulti *local_multiworld;
+
+        local_multiworld = (RCWorldMulti *) rc_world_multi_new ();
+        local_world = (RCWorldStore *) rc_world_store_new ();
 
         local_channel = rc_channel_new (NULL,
                                         "Local Packages",
                                         "@local",
                                         NULL);
 
-        rc_world_store_add_channel ((RCWorldStore *) local_world,
-                                    local_channel);
-        
-        rc_world_multi_add_subworld ((RCWorldMulti *) local_multiworld, 
-                                     local_world);
-        rc_world_multi_add_subworld ((RCWorldMulti *) local_multiworld,
-                                     world);
+        rc_world_store_add_channel (local_world, local_channel);
+        rc_channel_unref (local_channel);
 
-        world = g_object_ref (local_multiworld);
-    }
+        rc_world_multi_add_subworld (local_multiworld,
+                                     (RCWorld *) local_world);
+        g_object_unref (local_world);
+
+        rc_world_multi_add_subworld (local_multiworld, world);
+
+        world = RC_WORLD (local_multiworld);
+    } else
+        g_object_ref (world);
 
 
     initial_queue = rc_resolver_queue_new ();
     
     /* Stick the current/subscribed channel and world info into the context */
 
-    initial_queue->context->world = world;
+    rc_resolver_context_set_world (initial_queue->context, world);
     
     initial_queue->context->current_channel = resolver->current_channel;
 
@@ -386,7 +391,7 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
         if (pkg->local_package) {
             g_assert (local_channel != NULL);
             pkg->channel = rc_channel_ref (local_channel);
-            rc_world_store_add_package ((RCWorldStore *) local_world, pkg);
+            rc_world_store_add_package (local_world, pkg);
         }
         
         rc_resolver_queue_add_package_to_install (initial_queue, pkg);
@@ -510,11 +515,7 @@ rc_resolver_resolve_dependencies (RCResolver *resolver)
     }
 
     /* Clean up */
-    if (local_world)
-        g_object_unref (local_world);
-    
-    if (local_multiworld)
-        g_object_unref (local_multiworld);
+    g_object_unref (world);
 }
 
 RCResolverContext *

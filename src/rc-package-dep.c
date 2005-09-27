@@ -36,14 +36,11 @@
  * chunk: Memory chunk for allocating RCPackageDep structures. There are
  *       usually a lot of RCPackageDeps so instead of allocating them
  *       one-by-one, we use bigger chunks to reduce malloc calls.
- * allocator: GSList allocator used by deps hash. GLib never frees the
- *        internally used GAllocator, this should fix that.
  */
 
 typedef struct {
     GHashTable *deps;
     GMemChunk  *chunk;
-    GAllocator *allocator;
 } GlobalInfo;
 
 static GlobalInfo *global_info = NULL;
@@ -114,7 +111,6 @@ global_info_init (void)
         global_info->deps = g_hash_table_new (NULL, NULL);
         global_info->chunk = g_mem_chunk_create (RCPackageDep, 20000,
                                                  G_ALLOC_AND_FREE);
-        global_info->allocator = g_allocator_new ("RCPackageDep", 20000);
     }
 
     return global_info;
@@ -125,7 +121,6 @@ global_info_free (void)
 {
     g_hash_table_destroy (global_info->deps);
     g_mem_chunk_destroy (global_info->chunk);
-    g_allocator_free (global_info->allocator);
     g_free (global_info);
     global_info = NULL;
 }
@@ -159,9 +154,7 @@ rc_package_dep_unref (RCPackageDep *dep)
                                         GINT_TO_POINTER (dep->spec.nameq));
             g_assert (list);
 
-            g_slist_push_allocator (global_info->allocator);
             list = g_slist_remove (list, dep);
-            g_slist_pop_allocator ();
 
             /* If there's still data in the list (ie, there are still
              * other deps with the same spec.name), we need to replace
@@ -282,9 +275,7 @@ rc_package_dep_new (const gchar       *name,
 
         dep = dep_new (name, has_epoch, epoch, version, release, relation,
                        channel, is_pre, is_or);
-        g_slist_push_allocator (global_info->allocator);
         list = g_slist_append (NULL, dep);
-        g_slist_pop_allocator ();
         g_hash_table_insert (global_info->deps,
                              GINT_TO_POINTER (dep->spec.nameq),
                              list);
@@ -314,9 +305,7 @@ rc_package_dep_new (const gchar       *name,
          * table. */
         dep = dep_new (name, has_epoch, epoch, version, release, relation,
                        channel, is_pre, is_or);
-        g_slist_push_allocator (global_info->allocator);
         list = g_slist_prepend (list, dep);
-        g_slist_pop_allocator ();
         g_hash_table_replace (global_info->deps,
                               GINT_TO_POINTER (dep->spec.nameq),
                               list);

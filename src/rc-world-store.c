@@ -33,12 +33,6 @@
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
-/* When adding packages to RCWorldStore, allocate
-   this amount of GSLists at once, this should be
-   an avarage size based on testing. */
-
-#define RC_WORLD_STORE_ALLOCATOR_SIZE 25000
-
 typedef struct _SListAnchor SListAnchor;
 struct _SListAnchor {
     GQuark key;
@@ -548,9 +542,6 @@ rc_world_store_finalize (GObject *obj)
 
     rc_world_store_clear_locks (store);
 
-    if (store->allocator)
-        g_allocator_free (store->allocator);
-
     if (G_OBJECT_CLASS (parent_class)->finalize)
         G_OBJECT_CLASS (parent_class)->finalize (obj);
 }
@@ -698,7 +689,6 @@ rc_world_store_add_package (RCWorldStore *store,
     RCWorld *world = (RCWorld *) store;
     GSList *compat_arch_list;
     RCPackageAndDep *pad;
-    const char *package_name;
     int i, arch_score;
     gboolean actually_added_package = FALSE;
 
@@ -733,12 +723,9 @@ rc_world_store_add_package (RCWorldStore *store,
             goto finished;
         }
 
-        
-        package_name = g_quark_to_string (RC_PACKAGE_SPEC (package)->nameq);
         dup_package = rc_world_get_package ((RCWorld *) store,
                                             package->channel,
-                                            package_name);
-
+                                            (RCPackageSpec *) package);
 
         /* This shouldn't happen (and would be caught by the check
            below, because cmp will equal 0), but it never hurts to
@@ -747,7 +734,7 @@ rc_world_store_add_package (RCWorldStore *store,
         if (package == dup_package) {
             rc_debug (RC_DEBUG_LEVEL_WARNING,
                       "Ignoring re-add of package '%s'",
-                      package_name);
+                      rc_package_get_name (package));
             goto finished;
         }
 
@@ -814,16 +801,6 @@ rc_world_store_add_package (RCWorldStore *store,
     /* The world holds a reference to the package */
     rc_package_ref (package);
 
-    if (!store->allocator) {
-        static uint counter = 0;
-        gchar *tmp = g_strdup_printf ("world-store-%d", ++counter);
-        store->allocator = g_allocator_new (tmp,
-                                            RC_WORLD_STORE_ALLOCATOR_SIZE);
-        g_free (tmp);
-    }
-
-    g_slist_push_allocator (store->allocator);
-
     /* Store all of our packages in a hash by name. */
     hashed_slist_add (store->packages_by_name,
                       package->spec.nameq,
@@ -889,8 +866,6 @@ rc_world_store_add_package (RCWorldStore *store,
                               pad);
         }
 
-    g_slist_pop_allocator ();
-    
  finished:
     /* Clean-up */
     g_slist_free (compat_arch_list);
@@ -956,9 +931,6 @@ rc_world_store_remove_package (RCWorldStore *store,
     if (! (package->channel && rc_channel_is_hidden (package->channel)))
         rc_world_touch_package_sequence_number (world);
 
-    if (store->allocator)
-        g_slist_push_allocator (store->allocator);
-
     /* FIXME: This is fairly inefficient */
 
     hashed_slist_foreach_remove (store->provides_by_name,
@@ -980,9 +952,6 @@ rc_world_store_remove_package (RCWorldStore *store,
     hashed_slist_foreach_remove (store->packages_by_name,
                                  remove_package_cb,
                                  package);
-
-    if (store->allocator)
-        g_slist_pop_allocator ();
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
@@ -1029,9 +998,6 @@ rc_world_store_remove_packages (RCWorldStore *store,
 
     rc_world_store_freeze (store);
 
-    if (store->allocator)
-        g_slist_push_allocator (store->allocator);
-
     hashed_slist_foreach_remove (store->provides_by_name,
                                  remove_package_struct_by_channel_cb,
                                  channel);
@@ -1052,9 +1018,6 @@ rc_world_store_remove_packages (RCWorldStore *store,
                                  remove_package_by_channel_cb,
                                  channel);
 
-    if (store->allocator)
-        g_slist_pop_allocator ();
-
     rc_world_store_thaw (store);
 }
 
@@ -1064,11 +1027,6 @@ rc_world_store_clear (RCWorldStore *store)
     g_return_if_fail (store != NULL && RC_IS_WORLD_STORE (store));
 
     rc_world_store_remove_packages (store, RC_CHANNEL_ANY);
-
-    if (store->allocator) {
-        g_allocator_free (store->allocator);
-        store->allocator = NULL;
-    }
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */

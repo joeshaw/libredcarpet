@@ -96,6 +96,8 @@ RCResolverContext *rc_resolver_context_ref   (RCResolverContext *);
 void               rc_resolver_context_unref (RCResolverContext *);
 
 RCWorld           *rc_resolver_context_get_world (RCResolverContext *);
+void               rc_resolver_context_set_world (RCResolverContext *context,
+                                                  RCWorld *world);
 
 void               rc_resolver_context_set_status (RCResolverContext *, RCPackage *,
                                                    RCPackageStatus status);
