@@ -60,6 +60,15 @@ namespace RC {
 		}
 
 		[DllImport("libredcarpet")]
+		static extern bool rc_world_store_add_package(IntPtr raw, IntPtr package);
+
+		public bool AddPackage(RC.Package package) {
+			bool raw_ret = rc_world_store_add_package(Handle, package == null ? IntPtr.Zero : package.Handle);
+			bool ret = raw_ret;
+			return ret;
+		}
+
+		[DllImport("libredcarpet")]
 		static extern void rc_world_store_remove_channel(IntPtr raw, IntPtr channel);
 
 		public void RemoveChannel(RC.Channel channel) {
@@ -110,22 +119,6 @@ namespace RC {
 		{
 			GtkSharp.LibredcarpetSharp.ObjectManager.Initialize ();
 		}
-#endregion
-#region Customized extensions
-#line 1 "WorldStore.custom"
-// {
-    [DllImport("libredcarpet")]
-    static extern bool rc_world_store_add_package(IntPtr raw, IntPtr package);
-
-    public bool AddPackage(RC.Package package) {
-        bool raw_ret = rc_world_store_add_package(Handle, package == null ? IntPtr.Zero : package.Handle);
-        bool ret = raw_ret;
-        if (ret) 
-            package.Owned = false;
-
-        return ret;
-    }
-
 #endregion
 	}
 }

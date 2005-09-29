@@ -1340,7 +1340,7 @@
           <parameter type="RCPackageMatch*" name="lock" />
         </parameters>
       </method>
-      <method name="AddPackage" cname="rc_world_store_add_package" hidden="1">
+      <method name="AddPackage" cname="rc_world_store_add_package">
         <return-type type="gboolean" />
         <parameters>
           <parameter type="RCPackage*" name="package" />
@@ -3698,8 +3698,6 @@
       </method>
     </class>
   </namespace>
-  <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />
-  <symbol type="manual" cname="RCPackageSpec" name="RC.PackageSpec" />
   <symbol type="marshal" cname="RCPackageSpec" name="RC.PackageSpec" marshal_type="IntPtr" call_fmt="{0}.Handle" from_fmt="new RC.PackageSpec ({0})" />
   <symbol type="manual" cname="RCPackageSpec" name="RC.PackageSpec" />
 </api>
