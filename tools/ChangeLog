@@ -1,3 +1,8 @@
+2005-10-18  Chris Rivera  <cmr@ximian.com>
+
+	* pkg_to_xml.c: Add --dump-files flag.
+	* cur_to_xml.c: Add --dump-files flag.
+
 2005-01-04  Tambet Ingo  <tambet@ximian.com>
 
 	* pkg_to_xml.c (main): Add patch parents to XML.

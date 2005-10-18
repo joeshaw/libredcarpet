@@ -1,3 +1,7 @@
+2005-10-18  Chris Rivera <cmr@ximian.com>
+
+	* rc-xml.c: Add a function to dump package files.
+
 2005-09-27  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-query-packages.c: Add "catalog" as an alias for "channel".

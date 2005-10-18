@@ -27,6 +27,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int
 main (int argc, char **argv)
@@ -38,6 +39,10 @@ main (int argc, char **argv)
     xmlDocPtr doc;
     xmlNode *channel_node;
     xmlNode *subchannel_node;
+    gboolean dump_files = FALSE;
+
+    if (argc == 2 && !strncmp ("--dump-files", argv[1], 12))
+        dump_files = TRUE;
 
     g_type_init ();
 
@@ -59,7 +64,7 @@ main (int argc, char **argv)
 
     for (iter = packages; iter; iter = iter->next) {
         RCPackage *package = (RCPackage *)(iter->data);
-	xmlNode *package_node;
+        xmlNode *package_node;
 
         pkg_up = rc_package_update_new ();
 
@@ -73,9 +78,18 @@ main (int argc, char **argv)
 
         package->history = g_slist_append (package->history, pkg_up);
 
-	package_node = rc_package_to_xml_node (package);
+        package_node = rc_package_to_xml_node (package);
 
-	xmlAddChild (subchannel_node, package_node);
+        if (dump_files) {
+            RCPackageFileSList *files;
+            xmlNode *files_node;
+
+            files = rc_packman_file_list (packman, package);
+            files_node = rc_package_file_list_to_xml_node (files);
+            xmlAddChild (package_node, files_node);
+        }
+
+        xmlAddChild (subchannel_node, package_node);
     }
 
     doc = xmlNewDoc ("1.0");

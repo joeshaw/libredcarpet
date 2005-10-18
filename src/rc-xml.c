@@ -1623,3 +1623,31 @@ rc_package_update_to_xml_node (RCPackageUpdate *update)
 
     return (update_node);
 }
+
+xmlNode *
+rc_package_file_list_to_xml_node (RCPackageFileSList *files)
+{
+    xmlNode *ret;
+    RCPackageFileSList *iter;
+
+    ret = xmlNewNode (NULL, "filelist");
+
+    for (iter = files; iter; iter = iter->next) {
+        RCPackageFile *f = (RCPackageFile *) iter->data;
+        gchar *mt = g_strdup_printf ("%d", f->mtime);
+        gchar *sz = g_strdup_printf ("%d", f->size);
+        xmlNode *file_node;
+
+        file_node = xmlNewNode (NULL, "file");
+        xmlSetProp (file_node, "name", f->filename);
+        xmlSetProp (file_node, "md5", f->md5sum);
+        xmlSetProp (file_node, "modtime", mt);
+        xmlSetProp (file_node, "size", sz);
+        xmlAddChild (ret, file_node);
+
+        g_free (mt);
+        g_free (sz);
+    }
+
+    return ret;
+}

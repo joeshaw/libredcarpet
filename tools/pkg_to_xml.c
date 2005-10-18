@@ -39,8 +39,14 @@ main (int argc, char *argv[])
     xmlNode *root;
     gboolean failed = FALSE;
     gboolean patches_enabled = FALSE;
-    int i;
-    
+    gboolean dump_files = FALSE;
+    int i, arg_start = 1;
+   
+    if (argc >= 2 && !strncmp ("--dump-files", argv[1], 12)) {
+        dump_files = TRUE;
+        arg_start = 2;
+    }
+ 
     g_type_init ();
 
     if (getenv ("RC_DEBUG")) {
@@ -71,7 +77,7 @@ main (int argc, char *argv[])
     root = xmlNewNode (NULL, "packages");
     xmlDocSetRootElement (doc, root);
 
-    for (i = 1; i < argc; ++i) {
+    for (i = arg_start; i < argc; ++i) {
         RCPackage *pkg;
         xmlNode *node = NULL;
 
@@ -97,6 +103,16 @@ main (int argc, char *argv[])
             } else {
 
                 node = rc_package_to_xml_node (pkg);
+                
+                if (dump_files == TRUE) {
+                    RCPackageFileSList *files;
+                    xmlNode *files_node;
+
+                    files = rc_packman_file_list (packman, pkg);
+                    files_node = rc_package_file_list_to_xml_node (files);
+                    xmlAddChild (node, files_node);
+                }
+
                 if (patches_enabled) {
                     GSList *parents = rc_packman_patch_parents (packman, pkg);
 
