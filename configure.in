@@ -289,15 +289,16 @@ fi
 AM_CONDITIONAL(ENABLE_MONO, test "$enable_mono" = "yes")
 
 
+dnl bindings/mono/Makefile
+dnl bindings/mono/glue/Makefile
+dnl bindings/mono/libredcarpet-sharp.pc
+
 AC_OUTPUT([
 Makefile
 src/Makefile
 dependency-tests/Makefile
 tools/Makefile
 bindings/Makefile
-bindings/mono/Makefile
-bindings/mono/glue/Makefile
-bindings/mono/libredcarpet-sharp.pc
 bindings/python/Makefile
 libredcarpet.pc
 ])
