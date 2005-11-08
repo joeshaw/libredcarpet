@@ -1,3 +1,10 @@
+2005-11-07  James Willcox  <james@ximian.com>
+
+	* bindings/Makefile.am:
+	* configure.in:
+
+	Don't build the mono bindings
+
 2005-08-30  Tambet Ingo  <tambet@ximian.com>
 
 	* configure.in: Check for gtk-sharp-2.0.
