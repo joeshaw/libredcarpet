@@ -365,7 +365,8 @@ rc_package_dep_to_string (RCPackageDep *dep)
     g_return_val_if_fail (dep != NULL, NULL);
 
     spec_str = rc_package_spec_to_str (&dep->spec);
-    str = g_strconcat (rc_package_relation_to_string (dep->relation, 0),
+    str = g_strconcat (rc_package_relation_to_string (dep->relation, 1),
+                       " ",
                        spec_str,
                        dep->channel ? "[" : NULL,
                        dep->channel ? rc_channel_get_name (dep->channel) : "",
