@@ -1,3 +1,7 @@
+2005-12-20  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-rpmman.c: Add support for RPM version 4.4.2.
+
 2005-11-30  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-package-dep.c (rc_package_dep_to_string): Use words for
