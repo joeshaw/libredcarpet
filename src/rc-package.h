@@ -92,7 +92,7 @@ struct _RCPackage {
     gboolean install_only; /* Only install, don't upgrade this package */
     gboolean package_set;
 
-    gchar *id;
+    gint64 id;
 };
 
 GType      rc_package_get_type (void);
