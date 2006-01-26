@@ -1026,7 +1026,7 @@ foreach_by_type_cb (RCWorld *subworld, gpointer user_data)
 {
     ForeachByTypeInfo *info = user_data;
 
-    if (g_type_is_a (G_TYPE_FROM_INSTANCE (subworld), info->type)
+    if (G_TYPE_FROM_INSTANCE (subworld) == info->type
         && info->callback)
     {
         if (! info->callback (subworld, info->user_data)) {
