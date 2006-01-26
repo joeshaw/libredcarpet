@@ -103,8 +103,8 @@ RCPackage *rc_package_copy  (RCPackage *package);
 
 void       rc_package_spew_leaks (void);
 
-char      *rc_package_get_id (RCPackage *package);
-void       rc_package_set_id (RCPackage *package, const char *id);
+guint64    rc_package_get_id (RCPackage *package);
+void       rc_package_set_id (RCPackage *package, guint64 id);
 
 char       *rc_package_to_str        (RCPackage *package);
 const char *rc_package_to_str_static (RCPackage *package);

@@ -1,3 +1,11 @@
+2006-01-26  James Willcox  <james@ximian.com>
+
+	* rc-package.c: (rc_package_copy), (rc_package_get_id),
+	(rc_package_set_id):
+	* rc-package.h:
+
+	Fix some things that were assuming that 'id' was a string.
+
 2006-01-26  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-world-multi.c (foreach_by_type_cb): Don't use g_type_is_a for
