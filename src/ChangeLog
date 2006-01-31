@@ -1,3 +1,9 @@
+2006-01-30  James Willcox  <james@ximian.com>
+
+	* rc-package-spec.c: (rc_package_spec_version_to_str):
+
+	Don't print epoch if it's zero
+
 2006-01-30  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-package.h: Also, make sure the type we use is the same in the
