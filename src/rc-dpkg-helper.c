@@ -21,10 +21,10 @@
  * Ugly little thing.
  */
 
-#define NULL ((void *) 0)
+#define __GNU_SOURCE
+#include <stdio.h>
+#include <dlfcn.h>
 
-extern void printf (const char *, ...);
-extern int __libc_read (int ifd, void *vbf, long nb);
 extern char *getenv (const char *);
 extern int atoi (const char *);
 extern void *dlopen (const char *, int);
@@ -42,6 +42,7 @@ int read (int ifd, void *vbf, long nb)
 {
     char *pidstr;
     static int pid = 0;
+    static int (*real_read)(int ifd, void *vbf, long nb) = NULL;
 
     if (ifd == 0 && pid != -1) { /* stdin */
         if (!pid) {
@@ -57,13 +58,18 @@ int read (int ifd, void *vbf, long nb)
         }
     }
 
-    return __libc_read (ifd, vbf, nb);
+    if (!real_read) {
+        real_read = dlsym ((void *) -1l, "read");
+    }
+
+    return real_read (ifd, vbf, nb);
 }
 
 int __read (int ifd, void *vbf, long nb)
 {
     char *pidstr;
     static int pid = 0;
+    static int (*real_read)(int ifd, void *vbf, long nb) = NULL;
 
     if (ifd == 0 && pid != -1) { /* stdin */
         if (!pid) {
@@ -79,5 +85,9 @@ int __read (int ifd, void *vbf, long nb)
         }
     }
 
-    return __libc_read (ifd, vbf, nb);
+    if (!real_read) {
+        real_read = dlsym ((void *) -1l, "__read");
+    }
+
+    return real_read (ifd, vbf, nb);
 }

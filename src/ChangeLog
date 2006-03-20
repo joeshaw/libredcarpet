@@ -1,3 +1,9 @@
+2006-03-20  James Willcox  <james@ximian.com>
+
+	* rc-arch.c: add 'amd64'
+	* rc-dpkg-helper.c: (read), (__read): use dlsym to lookup the real
+	function and use that instead of __libc_read.
+
 2006-01-31  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-rpmman.c (rc_rpmman_get_file_deps): Add "/lib64/" to the file

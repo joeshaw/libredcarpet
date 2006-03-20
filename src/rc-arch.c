@@ -46,6 +46,7 @@ static RCArchAndName arch_table[] = {
     { "i586",    RC_ARCH_I586 },
     { "i686",    RC_ARCH_I686 },
     { "x86_64",  RC_ARCH_X86_64 },
+    { "amd64",   RC_ARCH_X86_64 },
     { "ia32e",   RC_ARCH_IA32E },
     { "athlon",  RC_ARCH_ATHLON },
     { "ppc",     RC_ARCH_PPC },
