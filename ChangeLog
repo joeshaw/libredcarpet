@@ -1,3 +1,7 @@
+2006-04-26 James Willcox  <james@ximian.com>
+
+	* configure.in: version 7.1.0
+
 2005-11-07  James Willcox  <james@ximian.com>
 
 	* bindings/Makefile.am:
