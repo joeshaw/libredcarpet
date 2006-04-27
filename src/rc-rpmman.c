@@ -2105,6 +2105,7 @@ rc_rpmman_get_file_deps (RCRpmman *rpmman,
         "/usr/games/",
         "/usr/share/dict/words",
         "/usr/share/magic.mime",
+        "/usr/share/desktop-menu-patches", /* red hat uses this for stuff */
         "/etc/",
         "/opt/gnome/bin",
         "/opt/gnome/sbin",
