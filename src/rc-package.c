@@ -264,7 +264,7 @@ rc_package_get_install_only (RCPackage *package)
 void
 rc_package_set_install_only (RCPackage *package, gboolean val)
 {
-    g_return_val_if_fail (package != NULL, FALSE);
+    g_return_if_fail (package != NULL);
 
     package->install_only = val;
 }
@@ -348,7 +348,7 @@ rc_package_add_update (RCPackage *package,
     g_return_if_fail (update != NULL);
 
     g_assert (update->package == NULL || update->package == package);
-    update->package = package;
+    update->package = rc_package_ref (package);
 
     if (package->history != NULL) {
         for (l = package->history; l; l = l->next) {

@@ -1,3 +1,10 @@
+2006-06-21  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-package.c (rc_package_set_install_only): Don't try to return
+	value from function returning void.
+	(rc_package_add_update): Reference update's parent package, it's
+	unreferenced in rc_package_update_free.
+
 2006-04-27  James Willcox  <james@ximian.com>
 
 	* rc-rpmman.c: include /usr/share/desktop-menu-patches in the
