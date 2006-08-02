@@ -1,3 +1,21 @@
+2006-08-02  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-world-system.c: Use the streaming interface when querying the
+	rpm database.
+
+	* rc-rpmman.c (rc_rpmman_query_all): Implement streaming interface.
+	(rc_rpmman_read_header): Read Sha1Header from rpm package, use it as
+	the package key.
+
+	* rc-packman.c (rc_packman_query_all): Implement streaming interface.
+	Instead of returning all packages when done, execute a callback for
+	each package.
+
+	* rc-package.c: Add 'key' property.
+
+	* rc-debman.c (rc_debman_query_all): Implement streaming querying that
+	is needed by the RCPackman class now.
+
 2006-06-21  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-package.c (rc_package_set_install_only): Don't try to return

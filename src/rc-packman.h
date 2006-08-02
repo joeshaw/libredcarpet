@@ -137,7 +137,9 @@ struct _RCPackmanClass {
                                              const gchar *filename,
                                              gboolean filter_file_deps);
 
-    RCPackageSList *(*rc_packman_real_query_all)(RCPackman *packman);
+    void (*rc_packman_real_query_all)(RCPackman *packman,
+                                      RCPackageFn callback,
+                                      gpointer user_data);
 
     gint (*rc_packman_real_version_compare)(RCPackman *packman,
                                             RCPackageSpec *spec1,
@@ -189,7 +191,9 @@ RCPackageSList *rc_packman_query_file_list (RCPackman *packman,
                                             GSList *filenames,
                                             gboolean filter_file_deps);
 
-RCPackageSList *rc_packman_query_all (RCPackman *packman);
+void rc_packman_query_all (RCPackman *packman,
+                           RCPackageFn callback,
+                           gpointer user_data);
 
 gint rc_packman_version_compare (RCPackman *packman,
                                  RCPackageSpec *spec1,

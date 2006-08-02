@@ -93,6 +93,7 @@ struct _RCPackage {
     gboolean package_set;
 
     guint64 id;
+    gchar *key;
 };
 
 GType      rc_package_get_type (void);

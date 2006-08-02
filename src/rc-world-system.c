@@ -33,40 +33,33 @@
 static RCWorldServiceClass *parent_class;
 
 static gboolean
+load_packages_cb (RCPackage *package, gpointer user_data)
+{
+    RCWorldSystem *world = (RCWorldSystem *) user_data;
+
+    package->channel = rc_channel_ref (world->system_channel);
+    rc_world_store_add_package ((RCWorldStore *) world, package);
+
+    return TRUE;
+}
+
+static gboolean
 rc_world_system_load_packages (RCWorldSystem *system)
 {
-    RCPackageSList *system_packages = NULL, *iter;
     RCPackman *packman = rc_packman_get_global ();
-    gboolean retval = FALSE;
-    RCWorldStore *store = RC_WORLD_STORE (system);
 
     rc_debug (RC_DEBUG_LEVEL_MESSAGE, "Loading system packages");
 
-    system_packages = rc_packman_query_all (packman);
+    rc_world_store_clear ((RCWorldStore *) system);
+    rc_packman_query_all (packman, load_packages_cb, system);
     if (rc_packman_get_error (packman)) {
         rc_debug (RC_DEBUG_LEVEL_ERROR,
                   "System query failed: %s", rc_packman_get_reason (packman));
-
-        goto finished;
-    }
-
-    rc_world_store_clear (store);
-
-    for (iter = system_packages; iter; iter = iter->next) {
-        RCPackage *pkg = iter->data;
-        pkg->channel = rc_channel_ref (system->system_channel);
-        rc_world_store_add_package (store, pkg);
+        return FALSE;
     }
 
     rc_debug (RC_DEBUG_LEVEL_MESSAGE, "Done loading system packages");
-
-    retval = TRUE;
-
- finished:
-    rc_package_slist_unref (system_packages);
-    g_slist_free (system_packages);
-
-    return retval;
+    return TRUE;
 }
 
 static RCPending *

@@ -103,6 +103,8 @@ rc_package_unref (RCPackage *package)
             
                 g_free (package->package_filename);
                 g_free (package->signature_filename);
+
+                g_free (package->key);
             }
 
 #ifdef RC_PACKAGE_FIND_LEAKS
@@ -151,6 +153,7 @@ rc_package_copy (RCPackage *src)
     dest->install_only  = src->install_only;
     dest->package_set   = src->package_set;
     dest->id            = src->id;
+    dest->key           = g_strdup (src->key);
 
     return dest;
 }

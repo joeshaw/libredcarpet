@@ -361,12 +361,15 @@ rc_packman_query_file_list (RCPackman *packman,
     return (ret);
 }
 
-RCPackageSList *
-rc_packman_query_all (RCPackman *packman)
+void
+rc_packman_query_all (RCPackman *packman,
+                      RCPackageFn callback,
+                      gpointer user_data)
 {
     RCPackmanClass *klass;
 
-    g_return_val_if_fail (packman, NULL);
+    g_return_if_fail (packman);
+    g_return_if_fail (callback);
 
     rc_packman_clear_error (packman);
 
@@ -374,7 +377,7 @@ rc_packman_query_all (RCPackman *packman)
 
     g_assert (klass->rc_packman_real_query_all);
 
-    return (klass->rc_packman_real_query_all (packman));
+    klass->rc_packman_real_query_all (packman, callback, user_data);
 }
 
 gint

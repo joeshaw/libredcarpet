@@ -2803,26 +2803,34 @@ rc_debman_query_all_real (RCPackman *packman)
     close (fd);
 }
 
+typedef struct {
+    RCPackageFn callback;
+    gpointer user_data;
+} QueryAllInfo;
+
 static void
-package_list_append (GQuark name, RCPackage *package,
-                     RCPackageSList **package_list)
+query_all_cb (GQuark name, RCPackage *package,
+              QueryAllInfo *info)
 {
-    *package_list = g_slist_prepend (*package_list, rc_package_ref (package));
+    info->callback (package, info->user_data);
 }
 
-static RCPackageSList *
-rc_debman_query_all (RCPackman *packman)
+static void
+rc_debman_query_all (RCPackman *packman,
+                     RCPackageFn callback,
+                     gpointer user_data)
 {
-    RCPackageSList *packages = NULL;
+    QueryAllInfo info;
 
     if (!(RC_DEBMAN (packman)->priv->hash_valid)) {
         rc_debman_query_all_real (packman);
     }
 
-    g_hash_table_foreach (RC_DEBMAN (packman)->priv->package_hash,
-                          (GHFunc) package_list_append, &packages);
+    info.callback = callback;
+    info.user_data = user_data;
 
-    return packages;
+    g_hash_table_foreach (RC_DEBMAN (packman)->priv->package_hash,
+                          (GHFunc) query_all_cb, &info);
 }
 
 static RCPackageSList *

@@ -1912,6 +1912,16 @@ rc_rpmman_read_header (RCRpmman *rpmman, Header header, RCPackage *package)
     }
     else
         package->description = NULL;
+
+    g_free (package->key);
+    rpmman->headerGetEntry (header, RPMTAG_SHA1HEADER, &type, (void **)&tmpc,
+                            &count);
+    if (count && (type == RPM_STRING_TYPE) && tmpc && tmpc[0])
+        package->key = g_strdup (tmpc);
+    else {
+        /* Ugh, this sucks */
+        package->key = rc_package_spec_to_str (&package->spec);
+    }
 }
 
 /* Takes an array of strings, which may be of the form <version>, or
@@ -2294,10 +2304,11 @@ rc_rpmman_query_file (RCPackman *packman,
 
 /* Query all of the packages on the system */
 
-static RCPackageSList *
-rc_rpmman_query_all_v4 (RCPackman *packman)
+static void
+rc_rpmman_query_all_v4 (RCPackman *packman,
+                        RCPackageFn callback,
+                        gpointer user_data)
 {
-    RCPackageSList *list = NULL;
     rc_rpmdbMatchIterator mi = NULL;
     Header header;
     RCRpmman *rpmman = RC_RPMMAN (packman);
@@ -2323,24 +2334,23 @@ rc_rpmman_query_all_v4 (RCPackman *packman)
 
         package->installed = TRUE;
         rc_rpmman_depends_fill (rpmman, header, package, TRUE);
-        list = g_slist_prepend (list, package);
+        callback (package, user_data);
+        rc_package_unref (package);
     }
 
-    rpmman->rpmdbFreeIterator(mi);
-
-    return (list);
+    rpmman->rpmdbFreeIterator (mi);
+    return;
 
   ERROR:
     rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                           "System query failed");
-
-    return (NULL);
 } /* rc_rpmman_query_all */
 
-static RCPackageSList *
-rc_rpmman_query_all_v3 (RCPackman *packman)
+static void
+rc_rpmman_query_all_v3 (RCPackman *packman,
+                        RCPackageFn callback,
+                        gpointer user_data)
 {
-    RCPackageSList *list = NULL;
     guint recno;
     RCRpmman *rpmman = RC_RPMMAN (packman);
 
@@ -2358,48 +2368,31 @@ rc_rpmman_query_all_v3 (RCPackman *packman)
         if (!(header = rpmman->rpmdbGetRecord (rpmman->db, recno))) {
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "Unable to read RPM database entry");
-
-            rc_package_slist_unref (list);
-            g_slist_free (list);
-
             goto ERROR;
         }
 
         package = rc_package_new ();
-
         rc_rpmman_read_header (rpmman, header, package);
-
         package->installed = TRUE;
-
         rc_rpmman_depends_fill (rpmman, header, package, TRUE);
+        rpmman->headerFree (header);
 
-        list = g_slist_prepend (list, package);
-
-        rpmman->headerFree(header);
+        callback (package, user_data);
+        rc_package_unref (package);
     }
 
-    return (list);
+    return;
 
   ERROR:
     rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                           "System query failed");
-
-    return (NULL);
 } /* rc_rpmman_query_all */
 
-static RCPackageSList *
-rc_rpmman_query_all (RCPackman *packman)
+static void
+rc_rpmman_query_all (RCPackman *packman,
+                     RCPackageFn callback,
+                     gpointer user_data)
 {
-    RCPackageSList *packages;
-#if 0
-    RCPackage *internal;
-    int *relations;
-    char **verrels, **names;
-    char **versions, **releases;
-    guint32 *epochs;
-    int i;
-    int count;
-#endif
     gboolean close_db = FALSE;
 
     /* Sigh */
@@ -2413,61 +2406,19 @@ rc_rpmman_query_all (RCPackman *packman)
         if (!open_database (RC_RPMMAN (packman), FALSE)) {
             rc_packman_set_error (packman, RC_PACKMAN_ERROR_ABORT,
                                   "unable to query packages");
-            return NULL;
+            return;
         }
         close_db = TRUE;
     }
 
     if (RC_RPMMAN (packman)->major_version == 4) {
-        packages = rc_rpmman_query_all_v4 (packman);
+        rc_rpmman_query_all_v4 (packman, callback, user_data);
     } else {
-        packages = rc_rpmman_query_all_v3 (packman);
+        rc_rpmman_query_all_v3 (packman, callback, user_data);
     }
-
-#if 0
-    internal = rc_package_new ();
-
-    internal->spec.name = g_strdup ("rpmlib-internal");
-
-    count = RC_RPMMAN (packman)->rpmGetRpmlibProvides (
-        &names, &relations, &verrels);
-
-    parse_versions (verrels, &epochs, &versions, &releases, count);
-
-    for (i = 0; i < count; i++) {
-        RCPackageDep *dep;
-        RCPackageRelation relation = RC_RELATION_ANY;
-
-        if (relations[i] & RPMSENSE_LESS) {
-            relation |= RC_RELATION_LESS;
-        }
-        if (relations[i] & RPMSENSE_GREATER) {
-            relation |= RC_RELATION_GREATER;
-        }
-        if (relations[i] & RPMSENSE_EQUAL) {
-            relation |= RC_RELATION_EQUAL;
-        }
-
-        dep = rc_package_dep_new (names[i], epochs[i], versions[i],
-                                  releases[i], relation);
-
-        internal->provides = g_slist_prepend (internal->provides, dep);
-    }
-
-    free (names);
-    free (verrels);
-
-    g_free (epochs);
-    g_strfreev (versions);
-    g_strfreev (releases);
-
-    packages = g_slist_prepend (packages, internal);
-#endif
 
     if (close_db)
         close_database (RC_RPMMAN (packman));
-
-    return packages;
 }
 
 static gboolean
