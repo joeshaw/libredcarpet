@@ -1,3 +1,7 @@
+2006-08-02  Tambet Ingo  <tambet@ximian.com>
+
+	* cur_to_xml.c (main): Fix to use the new rc_packman_query_all.
+
 2005-10-18  Chris Rivera  <cmr@ximian.com>
 
 	* pkg_to_xml.c: Add --dump-files flag.
