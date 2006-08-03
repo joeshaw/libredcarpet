@@ -31,7 +31,6 @@
 #include "rc-marshal.h"
 #include "rc-rollback.h"
 #include "rc-packman-private.h"
-#include "rc-subscription.h"
 #include "rc-util.h"
 #include "rc-xml.h"
 
@@ -498,6 +497,8 @@ rc_world_is_subscribed (RCWorld *world,
     klass = RC_WORLD_GET_CLASS (world);
     if (klass->get_subscribed_fn)
         return klass->get_subscribed_fn (world, channel) ? TRUE : FALSE;
+
+    return FALSE;
 }
 
 struct FindChannelInfo {
