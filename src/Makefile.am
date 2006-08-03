@@ -75,7 +75,6 @@ libredcarpet_public_headers = 		\
 	rc-resolver-info.h		\
 	rc-resolver-queue.h		\
 	rc-rollback.h			\
-	rc-subscription.h		\
 	rc-util.h			\
 	rc-verification.h		\
 	rc-world.h			\
@@ -127,7 +126,6 @@ libredcarpet_la_SOURCES =		\
 	rc-resolver-info.c		\
 	rc-resolver-queue.c		\
 	rc-rollback.c			\
-	rc-subscription.c		\
 	rc-util.c			\
 	rc-verification.c		\
 	rc-verification-private.h	\

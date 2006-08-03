@@ -473,8 +473,6 @@ rc_world_set_subscription (RCWorld *world,
     klass = RC_WORLD_GET_CLASS (world);
     if (klass->set_subscribed_fn)
         klass->set_subscribed_fn (world, channel, is_subscribed);
-    else
-        rc_subscription_set_status (channel, is_subscribed);
 
     if (curr_subs_status != rc_world_is_subscribed (world, channel))
         rc_world_touch_subscription_sequence_number (world);
@@ -500,8 +498,6 @@ rc_world_is_subscribed (RCWorld *world,
     klass = RC_WORLD_GET_CLASS (world);
     if (klass->get_subscribed_fn)
         return klass->get_subscribed_fn (world, channel) ? TRUE : FALSE;
-
-    return rc_subscription_get_status (channel) ? TRUE : FALSE;
 }
 
 struct FindChannelInfo {
