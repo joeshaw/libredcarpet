@@ -35,7 +35,6 @@
 #include "rc-package.h"
 
 #include "rc-channel.h"
-#include "rc-subscription.h"
 
 #include "rc-distro.h"
 
