@@ -344,6 +344,13 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
             }
         }
 
+        ctx->current_package->key = g_strdup_printf ("%s%d%s%s%d",
+                                                     rc_package_get_name (ctx->current_package),
+                                                     ctx->current_package->spec.epoch,
+                                                     ctx->current_package->spec.version,
+                                                     ctx->current_package->spec.release,
+                                                     ctx->current_package->spec.arch);
+
         ctx->current_package->requires_a =
             rc_package_dep_array_from_slist (
                 &ctx->current_requires);
