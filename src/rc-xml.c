@@ -27,6 +27,7 @@
 /* SAX Parser */
 
 typedef enum   _RCPackageSAXContextState RCPackageSAXContextState;
+typedef struct _RCPackageSAXContext      RCPackageSAXContext;
 
 enum _RCPackageSAXContextState {
     PARSER_TOPLEVEL = 0,
@@ -38,11 +39,9 @@ enum _RCPackageSAXContextState {
 
 struct _RCPackageSAXContext {
     RCChannel *channel;
-    gboolean processing;
-    xmlParserCtxt *xml_context;
     RCPackageSAXContextState state;
-
-    RCPackageSList *all_packages;
+    RCPackageFn package_fn;
+    gpointer user_data;
 
     /* Temporary state */
     RCPackage *current_package;
@@ -57,8 +56,8 @@ struct _RCPackageSAXContext {
     RCPackageDepSList **toplevel_dep_list;
     RCPackageDepSList **current_dep_list;
 
+    int count;
     char *text_buffer;
-    GAllocator *list_allocator;
 };
 
 /* Like g_strstrip(), only returns NULL on an empty string */
@@ -79,29 +78,9 @@ rc_xml_strip (char *str)
 }
 
 static void
-sax_start_document(void *data)
+sax_end_document (void *data)
 {
     RCPackageSAXContext *ctx = (RCPackageSAXContext *) data;
-
-    g_return_if_fail(!ctx->processing);
-
-    if (getenv ("RC_SPEW_XML"))
-        rc_debug (RC_DEBUG_LEVEL_ALWAYS, "* Start document");
-
-    ctx->processing = TRUE;
-} /* sax_start_document */
-
-static void
-sax_end_document(void *data)
-{
-    RCPackageSAXContext *ctx = (RCPackageSAXContext *) data;
-
-    g_return_if_fail(ctx->processing);
-
-    if (getenv ("RC_SPEW_XML"))
-        rc_debug (RC_DEBUG_LEVEL_ALWAYS, "* End document");
-
-    ctx->processing = FALSE;
 
     g_free (ctx->text_buffer);
     ctx->text_buffer = NULL;
@@ -129,10 +108,6 @@ parser_toplevel_start(RCPackageSAXContext *ctx,
 
         ctx->current_package->channel = ctx->channel;
         rc_channel_ref (ctx->channel);
-    }
-    else {
-        if (getenv ("RC_SPEW_XML"))
-            rc_debug (RC_DEBUG_LEVEL_ALWAYS, "! Not handling %s", name);
     }
 } /* parser_toplevel_start */
 
@@ -204,10 +179,6 @@ parser_package_start(RCPackageSAXContext *ctx,
         ctx->current_dep_list = ctx->toplevel_dep_list =
             &ctx->current_children;
     } 
-    else {
-        if (getenv ("RC_SPEW_XML"))
-            rc_debug (RC_DEBUG_LEVEL_ALWAYS, "! Not handling %s", name);
-    }
 } /* parser_package_start */
 
 static void
@@ -224,10 +195,6 @@ parser_history_start(RCPackageSAXContext *ctx,
         ctx->current_update->spec.nameq = ctx->current_package->spec.nameq;
         
         ctx->state = PARSER_UPDATE;
-    }
-    else {
-        if (getenv ("RC_SPEW_XML"))
-            rc_debug (RC_DEBUG_LEVEL_ALWAYS, "! Not handling %s", name);
     }
 }
 
@@ -264,11 +231,6 @@ parse_dep_attrs(RCPackageDep **dep, const xmlChar **attrs)
             tmp_release = value;
         else if (!g_strcasecmp (attr, "obsoletes"))
             is_obsolete = TRUE;
-        else {
-            if (getenv ("RC_SPEW_XML"))
-                rc_debug (RC_DEBUG_LEVEL_ALWAYS, "! Unknown attribute: %s = %s", attr, value);
-        }
-
     }
 
     /* FIXME: should get channel from XML */
@@ -291,7 +253,6 @@ parser_dep_start(RCPackageSAXContext *ctx,
 
         is_obsolete = parse_dep_attrs(&dep, attrs);
 
-        g_slist_push_allocator (ctx->list_allocator);
         if (is_obsolete)
             ctx->current_obsoletes =
                 g_slist_append (ctx->current_obsoletes, dep);
@@ -299,14 +260,9 @@ parser_dep_start(RCPackageSAXContext *ctx,
             *ctx->current_dep_list = g_slist_append (
                 *ctx->current_dep_list, dep);
         }
-        g_slist_pop_allocator ();
     }
     else if (!strcmp(name, "or"))
         ctx->current_dep_list = g_new0(RCPackageDepSList *, 1);
-    else {
-        if (getenv ("RC_SPEW_XML"))
-            rc_debug (RC_DEBUG_LEVEL_ALWAYS, "! Not handling %s", name);
-    }
 } /* parser_dep_start */
 
 static void
@@ -318,16 +274,6 @@ sax_start_element(void *data, const xmlChar *name, const xmlChar **attrs)
     if (ctx->text_buffer) {
         g_free (ctx->text_buffer);
         ctx->text_buffer = NULL;
-    }
-
-    if (getenv ("RC_SPEW_XML"))
-        rc_debug (RC_DEBUG_LEVEL_ALWAYS, "* Start element (%s)", name);
-
-    if (attrs) {
-        for (i = 0; attrs[i]; i += 2) {
-            if (getenv ("RC_SPEW_XML"))
-                rc_debug (RC_DEBUG_LEVEL_ALWAYS, "   - Attribute (%s=%s)", attrs[i], attrs[i+1]);
-        }
     }
 
     if (!strcmp(name, "channel") || !strcmp(name, "subchannel")) {
@@ -398,12 +344,6 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
             }
         }
 
-#if 0
-        ctx->current_package->obsoletes = g_slist_concat (
-            ctx->current_package->obsoletes, ctx->obsoletes);
-#endif
-        g_slist_push_allocator (ctx->list_allocator);
-
         ctx->current_package->requires_a =
             rc_package_dep_array_from_slist (
                 &ctx->current_requires);
@@ -428,15 +368,16 @@ parser_package_end(RCPackageSAXContext *ctx, const xmlChar *name)
             rc_package_dep_array_from_slist (
                 &ctx->current_recommends);
 
-        g_slist_pop_allocator ();
-
         /* Hack for the old XML */
         if (ctx->current_package->spec.arch == RC_ARCH_UNKNOWN)
             ctx->current_package->spec.arch = rc_arch_get_system_arch ();
 
-        ctx->all_packages = g_slist_prepend (ctx->all_packages,
-                                             ctx->current_package);
-        
+        if (ctx->package_fn)
+            ctx->package_fn (ctx->current_package, ctx->user_data);
+
+        ctx->count++;
+
+        rc_package_unref (ctx->current_package);
         ctx->current_package = NULL;
         ctx->state = PARSER_TOPLEVEL;
     }
@@ -606,9 +547,6 @@ sax_end_element(void *data, const xmlChar *name)
 {
     RCPackageSAXContext *ctx = (RCPackageSAXContext *) data;
 
-    if (getenv ("RC_SPEW_XML"))
-        rc_debug (RC_DEBUG_LEVEL_ALWAYS, "* End element (%s)", name);
-    
     if (!strcmp(name, "channel") || !strcmp(name, "subchannel")) {
         /* Unneeded container tags.  Ignore */
         goto DONE;
@@ -651,9 +589,6 @@ sax_characters(void *data, const xmlChar *ch, int len)
     } else {
         ctx->text_buffer = g_strndup(ch, len);
     }
-
-    if (getenv ("RC_SPEW_XML"))
-        rc_debug (RC_DEBUG_LEVEL_ALWAYS, "* Characters: \"%s\"", ctx->text_buffer);
 } /* sax_characters */
 
 static void
@@ -699,7 +634,7 @@ static xmlSAXHandler sax_handler = {
     NULL,      /* elementDecl */
     NULL,      /* unparsedEntityDecl */
     NULL,      /* setDocumentLocator */
-    sax_start_document,      /* startDocument */
+    NULL,      /* startDocument */
     sax_end_document,        /* endDocument */
     sax_start_element,       /* startElement */
     sax_end_element,         /* endElement */
@@ -713,64 +648,38 @@ static xmlSAXHandler sax_handler = {
     sax_error,      /* fatalError */
 };
 
-void
-rc_package_sax_context_parse_chunk(RCPackageSAXContext *ctx,
-                                   const char *xmlbuf, int size)
+int
+rc_xml_parse (const char *filename,
+              RCChannel *channel,
+              RCPackageFn callback,
+              gpointer user_data)
 {
-    xmlSubstituteEntitiesDefault(TRUE);
-    
-    if (!ctx->xml_context) {
-        ctx->xml_context = xmlCreatePushParserCtxt(
-            &sax_handler, ctx, NULL, 0, NULL);
+    RCPackageSAXContext ctx;
+    int rc;
+
+    g_return_val_if_fail (filename != NULL, -1);
+
+    memset (&ctx, 0, sizeof (RCPackageSAXContext));
+    ctx.channel = channel;
+    ctx.package_fn = callback;
+    ctx.user_data = user_data;
+
+    xmlSubstituteEntitiesDefault (TRUE);
+    rc = xmlSAXUserParseFile (&sax_handler, &ctx, filename);
+
+    if (ctx.current_package) {
+        g_warning ("Incomplete package lost");
+        rc_package_unref (ctx.current_package);
     }
 
-    xmlParseChunk(ctx->xml_context, xmlbuf, size, 0);
-}
-
-RCPackageSList *
-rc_package_sax_context_done(RCPackageSAXContext *ctx)
-{
-    RCPackageSList *all_packages = NULL;
-
-    if (ctx->processing)
-        xmlParseChunk(ctx->xml_context, NULL, 0, 1);
-
-    if (ctx->xml_context)
-        xmlFreeParserCtxt(ctx->xml_context);
-    
-    if (ctx->current_package) {
-        g_warning("Incomplete package lost");
-        rc_package_unref (ctx->current_package);
+    if (ctx.current_update) {
+        g_warning ("Incomplete update lost");
+        rc_package_update_free (ctx.current_update);
     }
 
-    if (ctx->current_update) {
-        g_warning("Incomplete update lost");
-        rc_package_update_free (ctx->current_update);
-    }
+    g_free (ctx.text_buffer);
 
-    g_free (ctx->text_buffer);
-    g_allocator_free (ctx->list_allocator);
-
-    all_packages = ctx->all_packages;
-
-    g_free (ctx);
-
-    return all_packages;
-} /* rc_package_sax_context_done */
-
-RCPackageSAXContext *
-rc_package_sax_context_new(RCChannel *channel)
-{
-    RCPackageSAXContext *ctx;
-
-    ctx = g_new0(RCPackageSAXContext, 1);
-    ctx->channel = channel;
-    ctx->list_allocator = g_allocator_new ("package-xml-parser", 1024);
-
-    if (getenv ("RC_SPEW_XML"))
-        rc_debug (RC_DEBUG_LEVEL_ALWAYS, "* Context created (%p)", ctx);
-
-    return ctx;
+    return ctx.count;
 }
 
 /* ------ */

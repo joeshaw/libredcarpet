@@ -1,3 +1,27 @@
+2006-08-04  Tambet Ingo  <tambet@ximian.com>
+
+	* rc-xml.c: Make the public API streaming. Instead of collecting all
+	packages and returning the least, exec a user provided callback for
+	each package.
+	Get rid of debugging getenv() calls, turns out these waste 1/3 of the
+	total parsing time.
+
+	* rc-package.c (rc_package_add_update): Don't increment the refcount
+	when adding an update, there's never anything that unrefs it.
+
+	* rc-package-update.c (rc_package_update_copy): Don't reference the
+	package, packages own updates and not the vice verca.
+	(rc_package_update_free): Don't unref the package.
+	(rc_package_update_set_parent): Remove.
+
+	* rc-extract-packages.c (rc_extract_packages_from_helix_buffer):
+	Remove. libxml is smart enough to get the buffer from a file.
+	(rc_extract_packages_from_helix_file): Rewrite. Don't read the whole
+	file, don't uncompress it to memory, libxml can read from compressed
+	files as well.
+	(add_fake_history): Remove. It's the same as
+	rc_package_add_dummy_update.
+
 2006-08-03  Tambet Ingo  <tambet@ximian.com>
 
 	* rc-world.c (rc_world_is_subscribed): Return FALSE if the class'

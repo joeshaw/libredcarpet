@@ -112,7 +112,6 @@ void    rc_package_update_set_hid            (RCPackageUpdate *update,
 
 
 RCPackage *rc_package_update_get_parent      (RCPackageUpdate *update);
-void       rc_package_update_set_parent      (RCPackageUpdate *update, RCPackage *parent);
 
 RCPackageUpdateSList
 *rc_package_update_slist_copy (RCPackageUpdateSList *old_update);

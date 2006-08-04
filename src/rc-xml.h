@@ -26,13 +26,11 @@
 #include "xml-util.h"
 
 /* SAX Parser */
-typedef struct _RCPackageSAXContext      RCPackageSAXContext;
 
-RCPackageSAXContext *rc_package_sax_context_new (RCChannel *channel);
-void rc_package_sax_context_parse_chunk (RCPackageSAXContext *ctx,
-                                         const char *xmlbuf,
-                                         int size);
-RCPackageSList *rc_package_sax_context_done (RCPackageSAXContext *ctx);
+int rc_xml_parse (const char *filename,
+                  RCChannel *channel,
+                  RCPackageFn callback,
+                  gpointer user_data);
 
 /* Old stuff */
 RCPackage *rc_xml_node_to_package (const xmlNode *node,

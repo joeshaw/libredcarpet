@@ -93,58 +93,13 @@ rc_extract_packages_from_xml_node (xmlNode *node,
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
-gint 
-rc_extract_packages_from_helix_buffer (const guint8 *data, int len,
-                                       RCChannel *channel,
-                                       RCPackageFn callback,
-                                       gpointer user_data)
-{
-    guint count = 0;
-    RCPackageSAXContext *ctx;
-    RCPackageSList *packages, *iter;
-
-    if (data == NULL || len == 0)
-        return 0;
-
-    ctx = rc_package_sax_context_new (channel);
-    rc_package_sax_context_parse_chunk (ctx, data, len);
-    packages = rc_package_sax_context_done (ctx);
-    
-    count = g_slist_length (packages);
-        
-    if (callback) {
-        for (iter = packages; iter != NULL; iter = iter->next) {
-            callback ((RCPackage *) iter->data, user_data);
-        }
-    }
-  
-    rc_package_slist_unref (packages);
-    g_slist_free (packages);
-
-    return count;
-}
-
 gint
 rc_extract_packages_from_helix_file (const char *filename,
                                      RCChannel *channel,
                                      RCPackageFn callback,
                                      gpointer user_data)
 {
-    RCBuffer *buf;
-    int count;
-
-    g_return_val_if_fail (filename != NULL, -1);
-
-    buf = rc_buffer_map_file (filename);
-    if (buf == NULL)
-        return -1;
-
-    count = rc_extract_packages_from_helix_buffer (buf->data, buf->size,
-                                                   channel,
-                                                   callback, user_data);
-    rc_buffer_unmap_file (buf);
-
-    return count;
+    return rc_xml_parse (filename, channel, callback, user_data);
 }
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
@@ -828,17 +783,6 @@ hash_iter_cb (gpointer key, gpointer val, gpointer user_data)
 }
 
 
-static void
-add_fake_history (RCPackage *pkg)
-{
-    RCPackageUpdate *up;
-
-    up = rc_package_update_new ();
-    rc_package_spec_copy (&up->spec, &pkg->spec);
-    up->importance = RC_IMPORTANCE_SUGGESTED;
-    rc_package_add_update (pkg, up);
-}
-
 typedef struct {
     RCPackageFn user_callback;
     gpointer    user_data;
@@ -1014,7 +958,7 @@ rc_extract_packages_from_directory (const char *path,
                 pkg->channel = rc_channel_ref (channel);
                 pkg->package_filename = g_strdup (file_path);
                 pkg->local_package = FALSE;
-                add_fake_history (pkg);
+                rc_package_add_dummy_update (pkg, file_path, 0);
                 package_into_hash (pkg, packman, hash);
                 rc_package_unref (pkg);
             }

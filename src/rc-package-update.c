@@ -52,7 +52,6 @@ rc_package_update_copy (RCPackageUpdate *src)
     dest->description    = g_strdup (src->description);
     dest->hid            = src->hid;
     dest->license        = g_strdup (src->license);
-    dest->parent         = rc_package_ref (src->parent);
     
     return dest;
 }
@@ -75,8 +74,6 @@ rc_package_update_free (RCPackageUpdate *update)
     g_free (update->license);
 
     g_free (update);
-
-    rc_package_unref (update->parent);
 } /* rc_package_update_free */
 
 RCPackageSpec *
@@ -300,10 +297,4 @@ RCPackage *
 rc_package_update_get_parent (RCPackageUpdate *update)
 {
     return update->parent;
-}
-
-void
-rc_package_update_set_parent (RCPackageUpdate *update, RCPackage *parent)
-{
-    update->parent = rc_package_ref (parent);
 }
